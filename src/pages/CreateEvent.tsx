@@ -17,7 +17,7 @@ const eventSchema = z.object({
   date: z.string().min(1, "تاريخ الفعالية مطلوب"),
   time: z.string().min(1, "وقت الفعالية مطلوب"),
   location: z.string().min(1, "موقع الفعالية مطلوب"),
-  imageUrl: z.string(),
+  imageUrl: z.string().min(1, "رابط الصورة مطلوب"),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -42,6 +42,8 @@ const CreateEvent = () => {
     console.log("Form submitted:", data);
     
     // Add the new event to our store
+    // Since our schema ensures all fields are required strings,
+    // the data will match the Event interface
     addEvent(data);
     
     // Show success message
