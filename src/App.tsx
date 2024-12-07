@@ -10,21 +10,21 @@ import EventDetails from "./pages/EventDetails";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
       <div className="font-sans">
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+        <TooltipProvider>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/create" element={<CreateEvent />} />
             <Route path="/event/:id" element={<EventDetails />} />
           </Routes>
-        </BrowserRouter>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
       </div>
-    </TooltipProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </BrowserRouter>
 );
 
 export default App;
