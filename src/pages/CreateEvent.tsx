@@ -1,15 +1,140 @@
 import { Navigation } from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+
+interface EventFormData {
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  imageUrl: string;
+}
 
 const CreateEvent = () => {
+  const navigate = useNavigate();
+  const form = useForm<EventFormData>({
+    defaultValues: {
+      title: "",
+      description: "",
+      date: "",
+      time: "",
+      location: "",
+      imageUrl: "",
+    },
+  });
+
+  const onSubmit = (data: EventFormData) => {
+    console.log("Form submitted:", data);
+    // TODO: Implement event creation logic
+    navigate("/");
+  };
+
   return (
-    <div>
+    <div dir="rtl">
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-3xl font-bold mb-8">إنشاء فعالية جديدة</h1>
-        {/* سيتم إضافة نموذج إنشاء الفعالية لاحقاً */}
-        <div className="text-center text-gray-500">
-          سيتم إضافة نموذج إنشاء الفعالية قريباً
-        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>عنوان الفعالية</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل عنوان الفعالية" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>وصف الفعالية</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="أدخل وصف الفعالية" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>التاريخ</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الوقت</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>الموقع</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل موقع الفعالية" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>رابط الصورة</FormLabel>
+                  <FormControl>
+                    <Input placeholder="أدخل رابط صورة الفعالية" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-4">
+              <Button type="button" variant="outline" onClick={() => navigate("/")}>
+                إلغاء
+              </Button>
+              <Button type="submit">إنشاء الفعالية</Button>
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );
