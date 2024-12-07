@@ -7,6 +7,7 @@ export interface Event {
   time: string;
   location: string;
   imageUrl: string;
+  attendees: number; // Added this line to resolve the TypeScript error
 }
 
 interface EventStore {
