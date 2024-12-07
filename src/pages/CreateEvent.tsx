@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEventStore } from "@/store/eventStore";
+import { useEventStore, Event } from "@/store/eventStore";
 
 // Form validation schema
 const eventSchema = z.object({
@@ -43,8 +43,8 @@ const CreateEvent = () => {
     
     // Add the new event to our store
     // Since our schema ensures all fields are required strings,
-    // the data will match the Event interface
-    addEvent(data);
+    // we can safely cast the data as Event since the types match exactly
+    addEvent(data as Event);
     
     // Show success message
     toast.success("تم إنشاء الفعالية بنجاح");
