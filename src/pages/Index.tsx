@@ -1,7 +1,8 @@
 import { Navigation } from "@/components/Navigation";
 import { EventCard } from "@/components/EventCard";
+import { useEventStore } from "@/store/eventStore";
 
-// Temporary mock data combined with dynamic events
+// Temporary mock data
 const mockEvents = [
   {
     id: "1",
@@ -26,14 +27,13 @@ const mockEvents = [
   },
 ];
 
-// Get the events array from CreateEvent component
-declare const events: any[];
-
 const Index = () => {
+  const storeEvents = useEventStore((state) => state.events);
+
   // Combine mock events with dynamically created events
   const allEvents = [
     ...mockEvents,
-    ...events.map((event, index) => ({
+    ...storeEvents.map((event, index) => ({
       id: `dynamic-${index + 1}`,
       title: event.title,
       date: event.date,

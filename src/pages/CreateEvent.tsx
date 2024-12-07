@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEventStore } from "@/store/eventStore";
 
 // Form validation schema
 const eventSchema = z.object({
@@ -21,11 +22,10 @@ const eventSchema = z.object({
 
 type EventFormData = z.infer<typeof eventSchema>;
 
-// Temporary events storage
-let events: EventFormData[] = [];
-
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const addEvent = useEventStore((state) => state.addEvent);
+  
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -41,8 +41,8 @@ const CreateEvent = () => {
   const onSubmit = (data: EventFormData) => {
     console.log("Form submitted:", data);
     
-    // Add the new event to our temporary storage
-    events.push(data);
+    // Add the new event to our store
+    addEvent(data);
     
     // Show success message
     toast.success("تم إنشاء الفعالية بنجاح");
