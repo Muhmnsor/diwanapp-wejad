@@ -5,19 +5,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-interface EventFormData {
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  imageUrl: string;
-}
+// Form validation schema
+const eventSchema = z.object({
+  title: z.string().min(1, "عنوان الفعالية مطلوب"),
+  description: z.string().min(1, "وصف الفعالية مطلوب"),
+  date: z.string().min(1, "تاريخ الفعالية مطلوب"),
+  time: z.string().min(1, "وقت الفعالية مطلوب"),
+  location: z.string().min(1, "موقع الفعالية مطلوب"),
+  imageUrl: z.string(),
+});
+
+type EventFormData = z.infer<typeof eventSchema>;
+
+// Temporary events storage
+let events: EventFormData[] = [];
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const form = useForm<EventFormData>({
+    resolver: zodResolver(eventSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -30,8 +40,17 @@ const CreateEvent = () => {
 
   const onSubmit = (data: EventFormData) => {
     console.log("Form submitted:", data);
-    // TODO: Implement event creation logic
-    navigate("/");
+    
+    // Add the new event to our temporary storage
+    events.push(data);
+    
+    // Show success message
+    toast.success("تم إنشاء الفعالية بنجاح");
+    
+    // Navigate back to home page
+    setTimeout(() => {
+      navigate("/");
+    }, 1000);
   };
 
   return (
