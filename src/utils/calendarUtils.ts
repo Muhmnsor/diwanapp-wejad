@@ -15,8 +15,8 @@ export const createCalendarUrl = (event: CalendarEvent) => {
   console.log("Device detection:", { isAndroid, isIOS, userAgent });
 
   if (isIOS) {
-    // صيغة رابط تقويم آيفون - تم تحديثه ليعمل مع تطبيق التقويم مباشرة
-    return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${event.startDate}/${event.endDate}&sf=true&output=xml`;
+    // صيغة رابط تقويم آيفون - تم تحديثه لفتح تطبيق التقويم مباشرة
+    return `webcal://calendar.google.com/calendar/ical/${encodeURIComponent(event.title)}/${event.startDate}/${event.endDate}.ics?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${event.startDate}/${event.endDate}`;
   } else if (isAndroid) {
     // صيغة رابط تقويم أندرويد
     return `content://com.android.calendar/events?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${event.startDate}/${event.endDate}`;
