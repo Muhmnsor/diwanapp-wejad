@@ -1,18 +1,26 @@
-import { Share2, CalendarPlus } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { ShareButton } from "./ShareButton";
 
 interface EventActionsProps {
   onShare: () => Promise<void>;
   onAddToCalendar: () => void;
+  eventTitle?: string;
+  eventDescription?: string;
 }
 
-export const EventActions = ({ onShare, onAddToCalendar }: EventActionsProps) => {
+export const EventActions = ({ 
+  onAddToCalendar, 
+  eventTitle,
+  eventDescription 
+}: EventActionsProps) => {
   return (
     <div className="flex gap-2">
-      <Button variant="outline" size="icon" onClick={onShare}>
-        <Share2 className="h-4 w-4" />
-      </Button>
+      <ShareButton 
+        title={eventTitle}
+        text={eventDescription}
+        url={window.location.href}
+      />
       <Button variant="outline" size="icon" onClick={onAddToCalendar}>
         <CalendarPlus className="h-4 w-4" />
       </Button>

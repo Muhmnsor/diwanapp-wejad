@@ -23,7 +23,6 @@ const EventDetails = () => {
   const [open, setOpen] = useState(false);
   const storeEvents = useEventStore((state) => state.events);
 
-  // Mock events data
   const mockEvents = [
     {
       id: "1",
@@ -60,35 +59,6 @@ const EventDetails = () => {
   const event = id?.startsWith('dynamic-')
     ? storeEvents[parseInt(id.replace('dynamic-', '')) - 1]
     : mockEvents.find(event => event.id === id);
-
-  const handleShare = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "تم نسخ الرابط",
-        description: "تم نسخ رابط الفعالية إلى الحافظة",
-      });
-      
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: event?.title,
-            text: event?.description,
-            url: window.location.href,
-          });
-        } catch (shareError) {
-          console.log("Share failed:", shareError);
-        }
-      }
-    } catch (error) {
-      console.error('Error copying link:', error);
-      toast({
-        title: "حدث خطأ",
-        description: "لم نتمكن من نسخ الرابط",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleAddToCalendar = () => {
     if (!event) return;
@@ -159,7 +129,9 @@ const EventDetails = () => {
             <div className="flex justify-between items-start mb-6">
               <h1 className="text-3xl font-bold">{event.title}</h1>
               <EventActions
-                onShare={handleShare}
+                eventTitle={event.title}
+                eventDescription={event.description}
+                onShare={async () => {}} // Empty function since sharing is now handled in ShareButton
                 onAddToCalendar={handleAddToCalendar}
               />
             </div>
