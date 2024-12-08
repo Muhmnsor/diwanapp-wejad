@@ -3,6 +3,9 @@ export const arabicToEnglishNum = (str: string) => {
 };
 
 export const convertArabicDate = (dateStr: string, timeStr: string) => {
+  console.log("Converting date and time:", { dateStr, timeStr });
+  
+  // تحويل التاريخ
   const [day, month, year] = dateStr.split(' ');
   const arabicMonths: { [key: string]: string } = {
     'يناير': 'January', 'فبراير': 'February', 'مارس': 'March',
@@ -12,5 +15,18 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
   };
   
   const englishMonth = arabicMonths[month] || month;
-  return `${englishMonth} ${day} ${year} ${timeStr.replace('ص', 'AM').replace('م', 'PM')}`;
+  
+  // معالجة الوقت
+  let cleanTimeStr = timeStr
+    .replace('مساءً', 'PM')
+    .replace('صباحاً', 'AM')
+    .replace('ص', 'AM')
+    .replace('م', 'PM');
+  
+  console.log("Cleaned time string:", cleanTimeStr);
+  
+  const dateString = `${englishMonth} ${day} ${year} ${cleanTimeStr}`;
+  console.log("Final date string:", dateString);
+  
+  return dateString;
 };
