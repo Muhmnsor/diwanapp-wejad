@@ -15,6 +15,7 @@ import { EventInfo } from "@/components/events/EventInfo";
 import { EventActions } from "@/components/events/EventActions";
 import { RegistrationForm } from "@/components/events/RegistrationForm";
 import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
+import { createCalendarUrl } from "@/utils/calendarUtils";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -110,7 +111,16 @@ const EventDetails = () => {
         throw new Error('Invalid date conversion');
       }
 
-      const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`;
+      const calendarEvent = {
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        startDate: eventDate.toISOString().replace(/[-:]/g, '').split('.')[0],
+        endDate: endDate.toISOString().replace(/[-:]/g, '').split('.')[0],
+      };
+
+      const calendarUrl = createCalendarUrl(calendarEvent);
+      console.log("Calendar URL:", calendarUrl);
 
       window.open(calendarUrl, '_blank');
     } catch (error) {
