@@ -1,7 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Clock, MapPin, Share2, Users, CalendarPlus } from "lucide-react";
 import { useEventStore } from "@/store/eventStore";
 import {
   Dialog,
@@ -10,23 +9,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { EventInfo } from "@/components/events/EventInfo";
+import { EventActions } from "@/components/events/EventActions";
+import { RegistrationForm } from "@/components/events/RegistrationForm";
+import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
 
 const EventDetails = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
-  console.log("Event ID:", id);
-
-  // Get all events from the store
   const storeEvents = useEventStore((state) => state.events);
 
   // Mock events data
@@ -63,32 +56,18 @@ const EventDetails = () => {
     },
   ];
 
-  // Find the event from either mock events or store events
   const event = id?.startsWith('dynamic-')
     ? storeEvents[parseInt(id.replace('dynamic-', '')) - 1]
     : mockEvents.find(event => event.id === id);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted:", formData);
-    toast({
-      title: "تم التسجيل بنجاح",
-      description: "سيتم التواصل معك قريباً",
-    });
-    setOpen(false);
-    setFormData({ name: "", email: "", phone: "" });
-  };
-
   const handleShare = async () => {
     try {
-      // نحاول نسخ الرابط أولاً كحل أساسي
       await navigator.clipboard.writeText(window.location.href);
       toast({
         title: "تم نسخ الرابط",
         description: "تم نسخ رابط الفعالية إلى الحافظة",
       });
       
-      // ثم نحاول استخدام واجهة المشاركة إذا كانت متوفرة
       if (navigator.share) {
         try {
           await navigator.share({
@@ -98,7 +77,6 @@ const EventDetails = () => {
           });
         } catch (shareError) {
           console.log("Share failed:", shareError);
-          // لا نحتاج لإظهار خطأ للمستخدم لأننا نجحنا في نسخ الرابط على الأقل
         }
       }
     } catch (error) {
@@ -115,31 +93,15 @@ const EventDetails = () => {
     if (!event) return;
 
     try {
-      // تحويل التاريخ العربي إلى تاريخ قابل للمعالجة
-      const arabicToEnglishNum = (str: string) => {
-        return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
-      };
-
       const dateStr = arabicToEnglishNum(event.date);
       const timeStr = arabicToEnglishNum(event.time);
       
       console.log("Converting date:", dateStr, timeStr);
-
-      // تحويل التاريخ إلى كائن Date
-      const [day, month, year] = dateStr.split(' ');
-      const arabicMonths: { [key: string]: string } = {
-        'يناير': 'January', 'فبراير': 'February', 'مارس': 'March',
-        'ابريل': 'April', 'مايو': 'May', 'يونيو': 'June',
-        'يوليو': 'July', 'اغسطس': 'August', 'سبتمبر': 'September',
-        'اكتوبر': 'October', 'نوفمبر': 'November', 'ديسمبر': 'December'
-      };
-      
-      const englishMonth = arabicMonths[month] || month;
-      const dateString = `${englishMonth} ${day} ${year} ${timeStr.replace('ص', 'AM').replace('م', 'PM')}`;
+      const dateString = convertArabicDate(dateStr, timeStr);
       console.log("Parsed date string:", dateString);
 
       const eventDate = new Date(dateString);
-      const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000)); // إضافة ساعتين
+      const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000));
 
       console.log("Event date:", eventDate);
       console.log("End date:", endDate);
@@ -186,34 +148,18 @@ const EventDetails = () => {
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="flex justify-between items-start mb-6">
               <h1 className="text-3xl font-bold">{event.title}</h1>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={handleShare}>
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={handleAddToCalendar}>
-                  <CalendarPlus className="h-4 w-4" />
-                </Button>
-              </div>
+              <EventActions
+                onShare={handleShare}
+                onAddToCalendar={handleAddToCalendar}
+              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="flex items-center gap-3 text-gray-600">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                <span>{event.date}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Clock className="h-5 w-5 text-primary" />
-                <span>{event.time}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <MapPin className="h-5 w-5 text-primary" />
-                <span>{event.location}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <Users className="h-5 w-5 text-primary" />
-                <span>{event.attendees} مشارك</span>
-              </div>
-            </div>
+            <EventInfo
+              date={event.date}
+              time={event.time}
+              location={event.location}
+              attendees={event.attendees}
+            />
 
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4">عن الفعالية</h2>
@@ -231,38 +177,10 @@ const EventDetails = () => {
                   <DialogHeader>
                     <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-right block">الاسم</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-right block">البريد الإلكتروني</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-right block">رقم الجوال</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full">تأكيد التسجيل</Button>
-                  </form>
+                  <RegistrationForm
+                    eventTitle={event.title}
+                    onSubmit={() => setOpen(false)}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
