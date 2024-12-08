@@ -3,9 +3,27 @@ import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, Clock, MapPin, Share2, Users } from "lucide-react";
 import { useEventStore } from "@/store/eventStore";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const EventDetails = () => {
   const { id } = useParams();
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
   console.log("Event ID:", id);
 
   // Get all events from the store
@@ -49,6 +67,17 @@ const EventDetails = () => {
   const event = id?.startsWith('dynamic-')
     ? storeEvents[parseInt(id.replace('dynamic-', '')) - 1]
     : mockEvents.find(event => event.id === id);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submitted:", formData);
+    toast({
+      title: "تم التسجيل بنجاح",
+      description: "سيتم التواصل معك قريباً",
+    });
+    setOpen(false);
+    setFormData({ name: "", email: "", phone: "" });
+  };
 
   if (!event) {
     return (
@@ -95,7 +124,7 @@ const EventDetails = () => {
               </div>
               <div className="flex items-center gap-3 text-gray-600">
                 <Users className="h-5 w-5 text-primary" />
-                <span>{event.attendees || 0} مشارك</span>
+                <span>{event.attendees} مشارك</span>
               </div>
             </div>
 
@@ -105,9 +134,50 @@ const EventDetails = () => {
             </div>
 
             <div className="flex justify-center">
-              <Button size="lg" className="w-full md:w-auto">
-                تسجيل الحضور
-              </Button>
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="w-full md:w-auto">
+                    تسجيل الحضور
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-right block">الاسم</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-right block">البريد الإلكتروني</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-right block">رقم الجوال</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full">تأكيد التسجيل</Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
