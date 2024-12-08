@@ -1,7 +1,7 @@
 import { Navigation } from "@/components/Navigation";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Clock, MapPin, Share2, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Share2, Users, CalendarPlus } from "lucide-react";
 import { useEventStore } from "@/store/eventStore";
 import {
   Dialog,
@@ -79,6 +79,43 @@ const EventDetails = () => {
     setFormData({ name: "", email: "", phone: "" });
   };
 
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: event?.title,
+          text: event?.description,
+          url: window.location.href,
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "تم نسخ الرابط",
+          description: "تم نسخ رابط الفعالية إلى الحافظة",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  const handleAddToCalendar = () => {
+    if (!event) return;
+
+    // Convert Arabic date to English format (assuming date is in format "DD month YYYY")
+    const dateStr = event.date.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
+    const timeStr = event.time.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
+    
+    // Create calendar event URL
+    const eventDate = new Date(`${dateStr} ${timeStr}`);
+    const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours duration
+
+    const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`;
+
+    window.open(calendarUrl, '_blank');
+  };
+
   if (!event) {
     return (
       <div dir="rtl" className="container mx-auto px-4 py-8">
@@ -104,9 +141,14 @@ const EventDetails = () => {
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="flex justify-between items-start mb-6">
               <h1 className="text-3xl font-bold">{event.title}</h1>
-              <Button variant="outline" size="icon">
-                <Share2 className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="icon" onClick={handleShare}>
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={handleAddToCalendar}>
+                  <CalendarPlus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
