@@ -81,39 +81,84 @@ const EventDetails = () => {
 
   const handleShare = async () => {
     try {
+      // نحاول نسخ الرابط أولاً كحل أساسي
+      await navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "تم نسخ الرابط",
+        description: "تم نسخ رابط الفعالية إلى الحافظة",
+      });
+      
+      // ثم نحاول استخدام واجهة المشاركة إذا كانت متوفرة
       if (navigator.share) {
-        await navigator.share({
-          title: event?.title,
-          text: event?.description,
-          url: window.location.href,
-        });
-      } else {
-        // Fallback for browsers that don't support Web Share API
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "تم نسخ الرابط",
-          description: "تم نسخ رابط الفعالية إلى الحافظة",
-        });
+        try {
+          await navigator.share({
+            title: event?.title,
+            text: event?.description,
+            url: window.location.href,
+          });
+        } catch (shareError) {
+          console.log("Share failed:", shareError);
+          // لا نحتاج لإظهار خطأ للمستخدم لأننا نجحنا في نسخ الرابط على الأقل
+        }
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error('Error copying link:', error);
+      toast({
+        title: "حدث خطأ",
+        description: "لم نتمكن من نسخ الرابط",
+        variant: "destructive",
+      });
     }
   };
 
   const handleAddToCalendar = () => {
     if (!event) return;
 
-    // Convert Arabic date to English format (assuming date is in format "DD month YYYY")
-    const dateStr = event.date.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
-    const timeStr = event.time.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
-    
-    // Create calendar event URL
-    const eventDate = new Date(`${dateStr} ${timeStr}`);
-    const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000)); // Add 2 hours duration
+    try {
+      // تحويل التاريخ العربي إلى تاريخ قابل للمعالجة
+      const arabicToEnglishNum = (str: string) => {
+        return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
+      };
 
-    const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`;
+      const dateStr = arabicToEnglishNum(event.date);
+      const timeStr = arabicToEnglishNum(event.time);
+      
+      console.log("Converting date:", dateStr, timeStr);
 
-    window.open(calendarUrl, '_blank');
+      // تحويل التاريخ إلى كائن Date
+      const [day, month, year] = dateStr.split(' ');
+      const arabicMonths: { [key: string]: string } = {
+        'يناير': 'January', 'فبراير': 'February', 'مارس': 'March',
+        'ابريل': 'April', 'مايو': 'May', 'يونيو': 'June',
+        'يوليو': 'July', 'اغسطس': 'August', 'سبتمبر': 'September',
+        'اكتوبر': 'October', 'نوفمبر': 'November', 'ديسمبر': 'December'
+      };
+      
+      const englishMonth = arabicMonths[month] || month;
+      const dateString = `${englishMonth} ${day} ${year} ${timeStr.replace('ص', 'AM').replace('م', 'PM')}`;
+      console.log("Parsed date string:", dateString);
+
+      const eventDate = new Date(dateString);
+      const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000)); // إضافة ساعتين
+
+      console.log("Event date:", eventDate);
+      console.log("End date:", endDate);
+
+      if (isNaN(eventDate.getTime())) {
+        throw new Error('Invalid date conversion');
+      }
+
+      const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${eventDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`;
+
+      window.open(calendarUrl, '_blank');
+    } catch (error) {
+      console.error('Error creating calendar event:', error);
+      toast({
+        title: "حدث خطأ",
+        description: "لم نتمكن من إضافة الفعالية إلى التقويم",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!event) {
