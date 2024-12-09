@@ -22,7 +22,6 @@ import { toast } from "sonner";
 
 const EventDetails = () => {
   const { id } = useParams();
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const storeEvents = useEventStore((state) => state.events);
   const { user } = useAuthStore();
@@ -108,11 +107,7 @@ const EventDetails = () => {
       window.open(calendarUrl, '_blank');
     } catch (error) {
       console.error('Error creating calendar event:', error);
-      toast({
-        title: "حدث خطأ",
-        description: "لم نتمكن من إضافة الفعالية إلى التقويم",
-        variant: "destructive",
-      });
+      toast.error("لم نتمكن من إضافة الفعالية إلى التقويم");
     }
   };
 
