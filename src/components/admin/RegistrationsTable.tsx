@@ -13,43 +13,24 @@ interface RegistrationsTableProps {
 }
 
 export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) => {
-  console.log('Raw registrations received:', registrations);
-  
-  // Ensure registrations is an array and convert objects to safe string representations
-  const registrationsArray = Array.isArray(registrations) 
-    ? registrations.map(reg => {
-        console.log('Processing registration:', reg);
-        
-        // Convert the date first
-        let formattedDate = '';
-        try {
-          if (reg.created_at) {
-            const date = new Date(reg.created_at);
-            formattedDate = date.toLocaleString('ar-SA');
-            console.log('Formatted date:', formattedDate);
-          }
-        } catch (error) {
-          console.error('Error formatting date:', error);
-          formattedDate = 'Invalid Date';
-        }
+  if (!Array.isArray(registrations)) {
+    console.error('Registrations is not an array:', registrations);
+    return <div>خطأ في تحميل البيانات</div>;
+  }
 
-        // Format registration number to show only the last part after the last hyphen
-        const shortRegistrationNumber = reg.registration_number
-          ? reg.registration_number.split('-').pop() || reg.registration_number
-          : '';
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('ar-SA');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'تاريخ غير صالح';
+    }
+  };
 
-        return {
-          id: reg.id || '',
-          registration_number: shortRegistrationNumber,
-          name: reg.name || '',
-          email: reg.email || '',
-          phone: reg.phone || '',
-          created_at: formattedDate
-        };
-      })
-    : [];
-
-  console.log('Final processed registrations:', registrationsArray);
+  const formatRegistrationNumber = (number: string) => {
+    return number.split('-').pop() || number;
+  };
 
   return (
     <div className="rounded-md border">
@@ -64,13 +45,17 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
           </TableRow>
         </TableHeader>
         <TableBody>
-          {registrationsArray.map((reg) => (
-            <TableRow key={reg.id}>
-              <TableCell className="text-right">{reg.registration_number}</TableCell>
-              <TableCell className="text-right">{reg.name}</TableCell>
-              <TableCell className="text-right">{reg.email}</TableCell>
-              <TableCell className="text-right">{reg.phone}</TableCell>
-              <TableCell className="text-right">{reg.created_at}</TableCell>
+          {registrations.map((registration) => (
+            <TableRow key={registration.id}>
+              <TableCell className="text-right">
+                {formatRegistrationNumber(registration.registration_number)}
+              </TableCell>
+              <TableCell className="text-right">{registration.name}</TableCell>
+              <TableCell className="text-right">{registration.email}</TableCell>
+              <TableCell className="text-right">{registration.phone}</TableCell>
+              <TableCell className="text-right">
+                {formatDate(registration.created_at)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
