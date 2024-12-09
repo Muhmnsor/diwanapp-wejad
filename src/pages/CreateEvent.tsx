@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEventStore, Event } from "@/store/eventStore";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 const eventSchema = z.object({
   title: z.string().min(1, "عنوان الفعالية مطلوب"),
@@ -17,9 +18,11 @@ const eventSchema = z.object({
   date: z.string().min(1, "تاريخ الفعالية مطلوب"),
   time: z.string().min(1, "وقت الفعالية مطلوب"),
   location: z.string().min(1, "موقع الفعالية مطلوب"),
-  imageUrl: z.string().min(1, "رابط الصورة مطلوب"),
+  imageFile: z.instanceof(File, { message: "الصورة مطلوبة" }).optional(),
+  imagePreview: z.string().optional(),
   eventType: z.enum(["online", "in-person"]),
-  price: z.union([z.literal("free"), z.number().positive()]),
+  priceType: z.enum(["free", "paid"]),
+  priceAmount: z.number().min(0).optional(),
   maxAttendees: z.number().min(1, "عدد المقاعد مطلوب"),
 });
 
@@ -37,37 +40,50 @@ const CreateEvent = () => {
       date: "",
       time: "",
       location: "",
-      imageUrl: "",
+      imagePreview: "",
       eventType: "in-person",
-      price: "free",
+      priceType: "free",
+      priceAmount: 0,
       maxAttendees: 1,
     },
   });
 
-  const onSubmit = (data: EventFormData) => {
-    console.log("Form submitted:", data);
-    
-    // Create event object with all required properties
-    const eventData: Event = {
-      title: data.title,
-      description: data.description,
-      date: data.date,
-      time: data.time,
-      location: data.location,
-      imageUrl: data.imageUrl,
-      eventType: data.eventType,
-      price: data.price,
-      maxAttendees: data.maxAttendees,
-      attendees: 0, // Initialize with 0 attendees
-    };
-    
-    addEvent(eventData);
-    toast.success("تم إنشاء الفعالية بنجاح");
-    
-    setTimeout(() => {
-      navigate("/");
-    }, 1000);
+  const onSubmit = async (data: EventFormData) => {
+    try {
+      let imageUrl = "";
+      
+      if (data.imageFile) {
+        // In a real application, you would upload the file to a server here
+        // For now, we'll create a temporary URL
+        imageUrl = URL.createObjectURL(data.imageFile);
+      }
+
+      const eventData: Event = {
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        time: data.time,
+        location: data.location,
+        imageUrl: imageUrl,
+        eventType: data.eventType,
+        price: data.priceType === "free" ? "free" : data.priceAmount || 0,
+        maxAttendees: data.maxAttendees,
+        attendees: 0,
+      };
+
+      addEvent(eventData);
+      toast.success("تم إنشاء الفعالية بنجاح");
+      
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast.error("حدث خطأ أثناء إنشاء الفعالية");
+    }
   };
+
+  const watchPriceType = form.watch("priceType");
 
   return (
     <div dir="rtl">
@@ -150,12 +166,19 @@ const CreateEvent = () => {
 
             <FormField
               control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
+              name="imageFile"
+              render={({ field: { onChange, value, ...field } }) => (
                 <FormItem>
-                  <FormLabel>رابط الصورة</FormLabel>
+                  <FormLabel>صورة الفعالية</FormLabel>
                   <FormControl>
-                    <Input placeholder="أدخل رابط صورة الفعالية" {...field} />
+                    <ImageUpload
+                      onChange={(file) => {
+                        onChange(file);
+                        const previewUrl = URL.createObjectURL(file);
+                        form.setValue("imagePreview", previewUrl);
+                      }}
+                      value={form.watch("imagePreview")}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -187,27 +210,19 @@ const CreateEvent = () => {
 
               <FormField
                 control={form.control}
-                name="price"
+                name="priceType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>السعر</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        const price = value === "free" ? "free" : Number(value);
-                        field.onChange(price);
-                      }} 
-                      defaultValue={String(field.value)}
-                    >
+                    <FormLabel>نوع السعر</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="اختر سعر الفعالية" />
+                          <SelectValue placeholder="اختر نوع السعر" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="free">مجاني</SelectItem>
-                        <SelectItem value="50">50 ريال</SelectItem>
-                        <SelectItem value="100">100 ريال</SelectItem>
-                        <SelectItem value="200">200 ريال</SelectItem>
+                        <SelectItem value="paid">مدفوع</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -215,6 +230,28 @@ const CreateEvent = () => {
                 )}
               />
             </div>
+
+            {watchPriceType === "paid" && (
+              <FormField
+                control={form.control}
+                name="priceAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>السعر (ريال)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="أدخل السعر"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
