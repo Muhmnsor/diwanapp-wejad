@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { QRCodeSVG } from "qrcode.react";
 import * as htmlToImage from "html-to-image";
@@ -88,14 +87,12 @@ export const RegistrationConfirmation = ({
           e.preventDefault();
         }}
       >
-        <DialogHeader>
-          <DialogTitle className="text-center mb-2">تم التسجيل بنجاح!</DialogTitle>
-          <DialogDescription className="text-center">
-            <div className="space-y-2">
-              <span className="block">سيتم التواصل معك قريباً</span>
-              <span className="block font-medium">يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق</span>
-            </div>
-          </DialogDescription>
+        <DialogHeader className="space-y-2">
+          <DialogTitle className="text-center">تم التسجيل بنجاح!</DialogTitle>
+          <div className="text-center text-sm text-muted-foreground space-y-1">
+            <div>سيتم التواصل معك قريباً</div>
+            <div className="font-medium">يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق</div>
+          </div>
         </DialogHeader>
         
         <div id="confirmation-card" className="bg-white p-6 rounded-lg space-y-4">
