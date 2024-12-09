@@ -46,11 +46,14 @@ export const EventDetailsView = ({
     onDelete();
   };
 
+  // Handle both imageUrl and image_url properties
+  const imageUrl = event.imageUrl || event.image_url;
+
   return (
-    <div className="max-w-4xl mx-auto">
-      {event.imageUrl && (
+    <div className="max-w-4xl mx-auto" dir="rtl">
+      {imageUrl && (
         <img
-          src={event.imageUrl}
+          src={imageUrl}
           alt={event.title}
           className="w-full h-[400px] object-cover rounded-lg mb-8"
         />
