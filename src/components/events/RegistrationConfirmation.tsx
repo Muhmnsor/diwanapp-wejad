@@ -1,11 +1,9 @@
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { ConfirmationActions } from "./ConfirmationActions";
@@ -39,7 +37,6 @@ export const RegistrationConfirmation = ({
   formData,
   onPayment,
 }: RegistrationConfirmationProps) => {
-  const { toast } = useToast();
   const [isClosing, setIsClosing] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
 

@@ -1,10 +1,11 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { CalendarDays, MapPin, Clock, Download } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
-import { Logo } from "@/components/Logo";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { exportCardAsImage } from "@/utils/cardExport";
+import { Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { exportCardAsImage } from "@/utils/cardExport";
+import { ConfirmationHeader } from "./ConfirmationHeader";
+import { ConfirmationQR } from "./ConfirmationQR";
+import { ConfirmationDetails } from "./ConfirmationDetails";
 
 interface ConfirmationCardProps {
   eventTitle: string;
@@ -58,54 +59,17 @@ export const ConfirmationCard = ({
   return (
     <div className="space-y-4" dir="rtl">
       <Card id="confirmation-card" className="bg-white p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="text-right space-y-2">
-            <h3 className="font-bold text-xl">{eventTitle}</h3>
-            <p className="text-sm text-muted-foreground">رقم التسجيل: {registrationId.split('-').pop()}</p>
-          </div>
-          <Logo className="w-16 h-16" />
-        </div>
-
-        <div className="flex justify-center py-4">
-          <QRCodeSVG
-            value={registrationId}
-            size={150}
-            level="H"
-            includeMargin={true}
-          />
-        </div>
-
-        <div className="space-y-4 text-right">
-          <div className="space-y-2">
-            <p className="text-sm font-medium">معلومات المسجل:</p>
-            <div className="text-sm space-y-1">
-              <p>الاسم: {formData.name}</p>
-              <p>البريد الإلكتروني: {formData.email}</p>
-              <p>رقم الجوال: {formData.phone}</p>
-            </div>
-          </div>
-
-          {eventDate && (
-            <div className="flex items-center gap-3 text-sm">
-              <CalendarDays size={20} className="text-primary shrink-0" />
-              <span className="font-medium">{eventDate}</span>
-            </div>
-          )}
-          
-          {eventTime && (
-            <div className="flex items-center gap-3 text-sm">
-              <Clock size={20} className="text-primary shrink-0" />
-              <span className="font-medium">{eventTime}</span>
-            </div>
-          )}
-          
-          {eventLocation && (
-            <div className="flex items-center gap-3 text-sm">
-              <MapPin size={20} className="text-primary shrink-0" />
-              <span className="font-medium">{eventLocation}</span>
-            </div>
-          )}
-        </div>
+        <ConfirmationHeader 
+          eventTitle={eventTitle} 
+          registrationId={registrationId} 
+        />
+        <ConfirmationQR registrationId={registrationId} />
+        <ConfirmationDetails
+          formData={formData}
+          eventDate={eventDate}
+          eventTime={eventTime}
+          eventLocation={eventLocation}
+        />
       </Card>
 
       <Button 
