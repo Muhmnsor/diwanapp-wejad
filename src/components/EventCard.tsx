@@ -44,7 +44,7 @@ export const EventCard = ({
   const status = getRegistrationStatus();
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full max-w-[380px]">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full max-w-[420px]">
       <img src={image_url} alt={title} className="w-full h-40 object-cover" />
       <CardHeader className="p-4">
         <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
