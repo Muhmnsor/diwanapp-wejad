@@ -46,6 +46,7 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         throw error;
       }
       
+      // Ensure we always return an array
       return (data || []) as Registration[];
     }
   });
