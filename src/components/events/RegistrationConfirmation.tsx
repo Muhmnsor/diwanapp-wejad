@@ -68,20 +68,29 @@ export const RegistrationConfirmation = ({
     const element = document.getElementById("confirmation-card");
     if (element) {
       try {
+        // First, modify the element's style temporarily
+        const originalTransform = element.style.transform;
+        element.style.transform = 'none';
+        
         const dataUrl = await htmlToImage.toPng(element, {
           quality: 1.0,
           pixelRatio: 3,
           backgroundColor: '#ffffff',
+          width: element.offsetWidth,
+          height: element.offsetHeight,
           style: {
-            transform: 'none'
+            margin: '0',
+            padding: '20px',
           },
           filter: (node) => {
-            // Skip elements with class 'no-export' if you have any
             return !node.classList?.contains('no-export');
           }
         });
         
-        // Create a temporary link element
+        // Restore the original transform
+        element.style.transform = originalTransform;
+        
+        // Create and trigger download
         const link = document.createElement("a");
         link.download = `تأكيد-التسجيل-${eventTitle}.png`;
         link.href = dataUrl;

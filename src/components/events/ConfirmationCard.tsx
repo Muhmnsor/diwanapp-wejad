@@ -29,7 +29,7 @@ export const ConfirmationCard = ({
 }: ConfirmationCardProps) => {
   return (
     <div className="space-y-4" dir="rtl">
-      <Card id="confirmation-card" className="bg-white p-6 space-y-6">
+      <Card id="confirmation-card" className="bg-white p-6 space-y-6 relative">
         <div className="flex items-center justify-between">
           <div className="text-right space-y-2">
             <h3 className="font-bold text-xl">{eventTitle}</h3>
@@ -48,6 +48,15 @@ export const ConfirmationCard = ({
         </div>
 
         <div className="space-y-4 text-right">
+          <div className="space-y-2">
+            <p className="text-sm font-medium">معلومات المسجل:</p>
+            <div className="text-sm space-y-1">
+              <p>الاسم: {formData.name}</p>
+              <p>البريد الإلكتروني: {formData.email}</p>
+              <p>رقم الجوال: {formData.phone}</p>
+            </div>
+          </div>
+
           {eventDate && (
             <div className="flex items-center gap-3 text-sm">
               <CalendarDays size={20} className="text-primary shrink-0" />
@@ -71,16 +80,6 @@ export const ConfirmationCard = ({
         </div>
       </Card>
 
-      {/* Event Image */}
-      <div className="rounded-lg overflow-hidden h-48">
-        <img 
-          src="/lovable-uploads/4ab86edd-10cb-4a50-a6cf-2b343c2361db.png"
-          alt={eventTitle}
-          className="w-full h-full object-contain bg-secondary/50"
-        />
-      </div>
-
-      {/* Save Button */}
       <Button 
         onClick={onSave} 
         className="w-full gap-2"
