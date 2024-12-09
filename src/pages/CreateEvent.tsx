@@ -50,11 +50,13 @@ const CreateEvent = () => {
   });
 
   const onSubmit = async (data: EventFormData) => {
+    console.log("Starting event creation with data:", data);
     setIsSubmitting(true);
     try {
       let imageUrl = "";
       
       if (data.imageFile) {
+        console.log("Uploading image file:", data.imageFile.name);
         const fileExt = data.imageFile.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `event-images/${fileName}`;
@@ -65,6 +67,7 @@ const CreateEvent = () => {
           .upload(filePath, data.imageFile);
 
         if (uploadError) {
+          console.error("Error uploading image:", uploadError);
           throw uploadError;
         }
 
@@ -73,27 +76,36 @@ const CreateEvent = () => {
           .from('event-images')
           .getPublicUrl(filePath);
 
+        console.log("Image uploaded successfully. Public URL:", publicUrl);
         imageUrl = publicUrl;
       }
 
+      const eventData = {
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        time: data.time,
+        location: data.location,
+        image_url: imageUrl,
+        event_type: data.eventType,
+        price: data.priceType === "free" ? null : data.priceAmount,
+        max_attendees: data.maxAttendees,
+      };
+
+      console.log("Inserting event data into Supabase:", eventData);
+
       // Insert event data into Supabase
-      const { data: eventData, error } = await supabase
+      const { data: createdEvent, error } = await supabase
         .from('events')
-        .insert({
-          title: data.title,
-          description: data.description,
-          date: data.date,
-          time: data.time,
-          location: data.location,
-          image_url: imageUrl,
-          event_type: data.eventType,
-          price: data.priceType === "free" ? null : data.priceAmount,
-          max_attendees: data.maxAttendees,
-        })
+        .insert(eventData)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting event data:", error);
+        throw error;
+      }
 
+      console.log("Event created successfully:", createdEvent);
       toast.success("تم إنشاء الفعالية بنجاح");
       
       setTimeout(() => {
