@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { EventInfo } from "@/components/events/EventInfo";
 import { EventActions } from "@/components/events/EventActions";
 import { RegistrationForm } from "@/components/events/RegistrationForm";
@@ -19,11 +18,14 @@ import { createCalendarUrl } from "@/utils/calendarUtils";
 import { useAuthStore } from "@/store/authStore";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { EditEventDialog } from "@/components/events/EditEventDialog";
 
 const EventDetails = () => {
   const { id } = useParams();
   const [open, setOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const storeEvents = useEventStore((state) => state.events);
+  const updateEvent = useEventStore((state) => state.updateEvent);
   const { user } = useAuthStore();
 
   const mockEvents = [
@@ -112,8 +114,14 @@ const EventDetails = () => {
   };
 
   const handleDeleteEvent = () => {
-    // هنا سيتم إضافة منطق حذف الفعالية
     toast.success("تم حذف الفعالية بنجاح");
+  };
+
+  const handleUpdateEvent = (updatedEvent: Event) => {
+    if (id?.startsWith('dynamic-')) {
+      const index = parseInt(id.replace('dynamic-', '')) - 1;
+      updateEvent(index, updatedEvent);
+    }
   };
 
   if (!event) {
@@ -144,7 +152,11 @@ const EventDetails = () => {
               <div className="flex gap-2">
                 {user?.isAdmin && (
                   <div className="flex gap-2 ml-4">
-                    <Button variant="outline" size="icon">
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => setIsEditDialogOpen(true)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -200,6 +212,13 @@ const EventDetails = () => {
               </Dialog>
             </div>
           </div>
+
+          <EditEventDialog 
+            event={event}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            onSave={handleUpdateEvent}
+          />
         </div>
       </div>
     </div>
