@@ -38,6 +38,12 @@ export const ConfirmationCard = ({
     }
   };
 
+  const formatRegistrationNumber = (number: string) => {
+    return number.split('-').pop() || number;
+  };
+
+  const formattedRegistrationId = formatRegistrationNumber(registrationId);
+
   return (
     <div className="space-y-4">
       <div id="confirmation-card" className="bg-white p-6 rounded-lg space-y-6">
@@ -47,7 +53,7 @@ export const ConfirmationCard = ({
         
         <div className="flex justify-center py-4">
           <QRCodeSVG
-            value={registrationId}
+            value={formattedRegistrationId}
             size={200}
             level="H"
             includeMargin
