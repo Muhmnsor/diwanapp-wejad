@@ -2,7 +2,6 @@ import { Navigation } from "@/components/Navigation";
 import { EventCard } from "@/components/EventCard";
 import { useEventStore } from "@/store/eventStore";
 
-// Temporary mock data
 const mockEvents = [
   {
     id: "1",
@@ -10,6 +9,8 @@ const mockEvents = [
     date: "١٥ مايو ٢٠٢٤",
     location: "الرياض",
     imageUrl: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
+    eventType: "in-person" as const,
+    price: 500,
   },
   {
     id: "2",
@@ -17,6 +18,8 @@ const mockEvents = [
     date: "٢٠ مايو ٢٠٢٤",
     location: "جدة",
     imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
+    eventType: "online" as const,
+    price: "free" as const,
   },
   {
     id: "3",
@@ -24,13 +27,14 @@ const mockEvents = [
     date: "٢٥ مايو ٢٠٢٤",
     location: "الدمام",
     imageUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
+    eventType: "in-person" as const,
+    price: 100,
   },
 ];
 
 const Index = () => {
   const storeEvents = useEventStore((state) => state.events);
 
-  // Combine mock events with dynamically created events
   const allEvents = [
     ...mockEvents,
     ...storeEvents.map((event, index) => ({
@@ -38,7 +42,9 @@ const Index = () => {
       title: event.title,
       date: event.date,
       location: event.location,
-      imageUrl: event.imageUrl || "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
+      imageUrl: event.imageUrl,
+      eventType: event.eventType,
+      price: event.price,
     }))
   ];
 

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,7 +11,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEventStore, Event } from "@/store/eventStore";
 
-// Form validation schema
 const eventSchema = z.object({
   title: z.string().min(1, "عنوان الفعالية مطلوب"),
   description: z.string().min(1, "وصف الفعالية مطلوب"),
@@ -18,6 +18,9 @@ const eventSchema = z.object({
   time: z.string().min(1, "وقت الفعالية مطلوب"),
   location: z.string().min(1, "موقع الفعالية مطلوب"),
   imageUrl: z.string().min(1, "رابط الصورة مطلوب"),
+  eventType: z.enum(["online", "in-person"]),
+  price: z.union([z.literal("free"), z.number().positive()]),
+  maxAttendees: z.number().min(1, "عدد المقاعد مطلوب"),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -35,21 +38,23 @@ const CreateEvent = () => {
       time: "",
       location: "",
       imageUrl: "",
+      eventType: "in-person",
+      price: "free",
+      maxAttendees: 1,
     },
   });
 
   const onSubmit = (data: EventFormData) => {
     console.log("Form submitted:", data);
     
-    // Add the new event to our store
-    // Since our schema ensures all fields are required strings,
-    // we can safely cast the data as Event since the types match exactly
-    addEvent(data as Event);
+    const eventData: Event = {
+      ...data,
+      attendees: 0,
+    };
     
-    // Show success message
+    addEvent(eventData);
     toast.success("تم إنشاء الفعالية بنجاح");
     
-    // Navigate back to home page
     setTimeout(() => {
       navigate("/");
     }, 1000);
@@ -142,6 +147,79 @@ const CreateEvent = () => {
                   <FormLabel>رابط الصورة</FormLabel>
                   <FormControl>
                     <Input placeholder="أدخل رابط صورة الفعالية" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="eventType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع الفعالية</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع الفعالية" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="in-person">حضوري</SelectItem>
+                        <SelectItem value="online">عن بعد</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>السعر</FormLabel>
+                    <Select 
+                      onValueChange={(value) => {
+                        const price = value === "free" ? "free" : Number(value);
+                        field.onChange(price);
+                      }} 
+                      defaultValue={String(field.value)}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر سعر الفعالية" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="free">مجاني</SelectItem>
+                        <SelectItem value="50">50 ريال</SelectItem>
+                        <SelectItem value="100">100 ريال</SelectItem>
+                        <SelectItem value="200">200 ريال</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="maxAttendees"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>عدد المقاعد</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min="1"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
