@@ -5,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { QRCodeSVG } from "qrcode.react";
 import * as htmlToImage from "html-to-image";
@@ -91,16 +90,18 @@ export const RegistrationConfirmation = ({
       >
         <DialogHeader>
           <DialogTitle className="text-center mb-2">تم التسجيل بنجاح!</DialogTitle>
-          <DialogDescription className="text-center space-y-2">
-            <p>سيتم التواصل معك قريباً</p>
-            <p className="font-medium">يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق</p>
+          <DialogDescription className="text-center">
+            <div className="space-y-2">
+              <span className="block">سيتم التواصل معك قريباً</span>
+              <span className="block font-medium">يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق</span>
+            </div>
           </DialogDescription>
         </DialogHeader>
         
         <div id="confirmation-card" className="bg-white p-6 rounded-lg space-y-4">
           <div className="text-center space-y-2">
             <h3 className="font-bold text-xl">{eventTitle}</h3>
-            <p className="text-muted-foreground">رقم التسجيل: {registrationId}</p>
+            <div className="text-muted-foreground">رقم التسجيل: {registrationId}</div>
           </div>
           
           <div className="flex justify-center py-4">
@@ -113,10 +114,10 @@ export const RegistrationConfirmation = ({
           </div>
 
           <div className="space-y-2">
-            <p className="font-semibold">معلومات المسجل:</p>
-            <p>الاسم: {formData.name}</p>
-            <p>البريد الإلكتروني: {formData.email}</p>
-            <p>رقم الجوال: {formData.phone}</p>
+            <div className="font-semibold">معلومات المسجل:</div>
+            <div>الاسم: {formData.name}</div>
+            <div>البريد الإلكتروني: {formData.email}</div>
+            <div>رقم الجوال: {formData.phone}</div>
           </div>
         </div>
 
