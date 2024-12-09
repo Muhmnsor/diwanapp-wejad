@@ -70,14 +70,24 @@ export const RegistrationConfirmation = ({
       try {
         const dataUrl = await htmlToImage.toPng(element, {
           quality: 1.0,
-          pixelRatio: 2,
+          pixelRatio: 3,
           backgroundColor: '#ffffff',
+          style: {
+            transform: 'none'
+          },
+          filter: (node) => {
+            // Skip elements with class 'no-export' if you have any
+            return !node.classList?.contains('no-export');
+          }
         });
         
+        // Create a temporary link element
         const link = document.createElement("a");
         link.download = `تأكيد-التسجيل-${eventTitle}.png`;
         link.href = dataUrl;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         
         setHasDownloaded(true);
         toast({
