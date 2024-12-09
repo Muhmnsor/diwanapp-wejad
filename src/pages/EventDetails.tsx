@@ -232,6 +232,9 @@ const EventDetails = () => {
           onOpenChange={setIsRegistrationOpen}
           eventTitle={event.title}
           eventPrice={event.price}
+          eventDate={event.date}
+          eventTime={event.time}
+          eventLocation={event.location}
         />
 
         <EditEventDialog
