@@ -16,12 +16,16 @@ import { EventActions } from "@/components/events/EventActions";
 import { RegistrationForm } from "@/components/events/RegistrationForm";
 import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
 import { createCalendarUrl } from "@/utils/calendarUtils";
+import { useAuthStore } from "@/store/authStore";
+import { Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 const EventDetails = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const storeEvents = useEventStore((state) => state.events);
+  const { user } = useAuthStore();
 
   const mockEvents = [
     {
@@ -112,6 +116,11 @@ const EventDetails = () => {
     }
   };
 
+  const handleDeleteEvent = () => {
+    // هنا سيتم إضافة منطق حذف الفعالية
+    toast.success("تم حذف الفعالية بنجاح");
+  };
+
   if (!event) {
     return (
       <div dir="rtl" className="container mx-auto px-4 py-8">
@@ -137,12 +146,28 @@ const EventDetails = () => {
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="flex justify-between items-start mb-6">
               <h1 className="text-3xl font-bold">{event.title}</h1>
-              <EventActions
-                eventTitle={event.title}
-                eventDescription={event.description}
-                onShare={async () => {}}
-                onAddToCalendar={handleAddToCalendar}
-              />
+              <div className="flex gap-2">
+                {user?.isAdmin && (
+                  <div className="flex gap-2 ml-4">
+                    <Button variant="outline" size="icon">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="icon"
+                      onClick={handleDeleteEvent}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                <EventActions
+                  eventTitle={event.title}
+                  eventDescription={event.description}
+                  onShare={async () => {}}
+                  onAddToCalendar={handleAddToCalendar}
+                />
+              </div>
             </div>
 
             <EventInfo
