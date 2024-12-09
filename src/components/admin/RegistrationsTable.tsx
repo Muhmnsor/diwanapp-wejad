@@ -19,9 +19,14 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
   const registrationsArray = Array.isArray(registrations) 
     ? registrations.map(reg => ({
         ...reg,
-        created_at: reg.created_at ? new Date(reg.created_at).toLocaleString('ar-SA') : ''
+        // Ensure created_at is a string before trying to convert it
+        created_at: typeof reg.created_at === 'string' 
+          ? new Date(reg.created_at).toLocaleString('ar-SA') 
+          : ''
       }))
     : [];
+
+  console.log('Processed registrations array:', registrationsArray);
 
   return (
     <div className="rounded-md border">
@@ -38,11 +43,11 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
         <TableBody>
           {registrationsArray.map((reg) => (
             <TableRow key={reg.id}>
-              <TableCell>{reg.registration_number || ''}</TableCell>
-              <TableCell>{reg.name || ''}</TableCell>
-              <TableCell>{reg.email || ''}</TableCell>
-              <TableCell>{reg.phone || ''}</TableCell>
-              <TableCell>{reg.created_at || ''}</TableCell>
+              <TableCell>{String(reg.registration_number || '')}</TableCell>
+              <TableCell>{String(reg.name || '')}</TableCell>
+              <TableCell>{String(reg.email || '')}</TableCell>
+              <TableCell>{String(reg.phone || '')}</TableCell>
+              <TableCell>{String(reg.created_at || '')}</TableCell>
             </TableRow>
           ))}
         </TableBody>
