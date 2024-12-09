@@ -43,46 +43,50 @@ export const EventCard = ({
 
   const status = getRegistrationStatus();
 
+  console.log('Rendering EventCard with max-width:', '420px');
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full max-w-[420px]">
-      <img src={image_url} alt={title} className="w-full h-40 object-cover" />
-      <CardHeader className="p-4">
-        <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 p-4 pt-0">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant={event_type === "online" ? "secondary" : "default"}>
-            {event_type === "online" ? "عن بعد" : "حضوري"}
-          </Badge>
-          <Badge variant={!price ? "secondary" : "default"}>
-            {!price ? "مجاني" : `${price} ريال`}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2 text-gray-600 text-sm">
-          <CalendarDays size={16} />
-          <span>{date}</span>
-        </div>
-        <div className="flex items-center gap-2 text-gray-600 text-sm">
-          <MapPin size={16} />
-          <span>{location}</span>
-        </div>
-        {max_attendees > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-gray-600 text-sm">
-              <Users size={16} />
-              <span>{attendees} من {max_attendees} مشارك</span>
-            </div>
-            <Badge variant={status.variant} className="w-full justify-center">
-              {status.text}
+    <div className="w-full flex justify-center">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full w-full max-w-[420px]">
+        <img src={image_url} alt={title} className="w-full h-40 object-cover" />
+        <CardHeader className="p-4">
+          <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 p-4 pt-0">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant={event_type === "online" ? "secondary" : "default"}>
+              {event_type === "online" ? "عن بعد" : "حضوري"}
+            </Badge>
+            <Badge variant={!price ? "secondary" : "default"}>
+              {!price ? "مجاني" : `${price} ريال`}
             </Badge>
           </div>
-        )}
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full" size="sm">
-          <Link to={`/event/${id}`}>عرض التفاصيل</Link>
-        </Button>
-      </CardFooter>
-    </Card>
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
+            <CalendarDays size={16} />
+            <span>{date}</span>
+          </div>
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
+            <MapPin size={16} />
+            <span>{location}</span>
+          </div>
+          {max_attendees > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-gray-600 text-sm">
+                <Users size={16} />
+                <span>{attendees} من {max_attendees} مشارك</span>
+              </div>
+              <Badge variant={status.variant} className="w-full justify-center">
+                {status.text}
+              </Badge>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="p-4 pt-0">
+          <Button asChild className="w-full" size="sm">
+            <Link to={`/event/${id}`}>عرض التفاصيل</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
