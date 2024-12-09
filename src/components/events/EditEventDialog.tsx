@@ -65,7 +65,6 @@ export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEvent
     console.log('Submitting form data:', formData);
     
     try {
-      // تحديث الصورة في قاعدة البيانات
       const updateData = {
         ...formData,
         image_url: formData.imageUrl || formData.image_url
@@ -82,17 +81,23 @@ export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEvent
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle>تعديل الفعالية</DialogTitle>
+        <DialogHeader className="text-right">
+          <DialogTitle className="text-right">تعديل الفعالية</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[calc(90vh-120px)] pr-4">
+        <ScrollArea className="h-[calc(90vh-120px)] pl-4 pr-0">
           <form onSubmit={handleSubmit} className="space-y-4">
             <EventFormFields 
               formData={formData} 
               setFormData={setFormData}
               onImageChange={handleImageUpload}
             />
-            <div className="flex justify-end gap-2 sticky bottom-0 bg-background py-4">
+            <div className="flex justify-start gap-2 sticky bottom-0 bg-background py-4">
+              <Button 
+                type="submit"
+                disabled={isUploading}
+              >
+                {isUploading ? "جاري الرفع..." : "حفظ التغييرات"}
+              </Button>
               <Button 
                 type="button" 
                 variant="outline" 
@@ -100,12 +105,6 @@ export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEvent
                 disabled={isUploading}
               >
                 إلغاء
-              </Button>
-              <Button 
-                type="submit"
-                disabled={isUploading}
-              >
-                {isUploading ? "جاري الرفع..." : "حفظ التغييرات"}
               </Button>
             </div>
           </form>

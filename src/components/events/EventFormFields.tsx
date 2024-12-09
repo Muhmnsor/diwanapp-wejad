@@ -14,53 +14,58 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
   console.log('Form data in EventFormFields:', formData);
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-right" dir="rtl">
       <div>
-        <label className="text-sm font-medium">عنوان الفعالية</label>
+        <label className="text-sm font-medium block mb-1.5">عنوان الفعالية</label>
         <Input
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="text-right"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">وصف الفعالية</label>
+        <label className="text-sm font-medium block mb-1.5">وصف الفعالية</label>
         <Textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="text-right"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">التاريخ</label>
+        <label className="text-sm font-medium block mb-1.5">التاريخ</label>
         <Input
           type="date"
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+          className="text-right"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">الوقت</label>
+        <label className="text-sm font-medium block mb-1.5">الوقت</label>
         <Input
           type="time"
           value={formData.time}
           onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+          className="text-right"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">الموقع</label>
+        <label className="text-sm font-medium block mb-1.5">الموقع</label>
         <Input
           value={formData.location}
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          className="text-right"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">نوع الفعالية</label>
+        <label className="text-sm font-medium block mb-1.5">نوع الفعالية</label>
         <Select
           value={formData.eventType}
           onValueChange={(value: "online" | "in-person") => 
             setFormData({ ...formData, eventType: value })
           }
         >
-          <SelectTrigger>
+          <SelectTrigger className="text-right">
             <SelectValue placeholder="اختر نوع الفعالية" />
           </SelectTrigger>
           <SelectContent>
@@ -70,7 +75,7 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
         </Select>
       </div>
       <div>
-        <label className="text-sm font-medium">السعر (اتركه فارغاً للفعاليات المجانية)</label>
+        <label className="text-sm font-medium block mb-1.5">السعر (اتركه فارغاً للفعاليات المجانية)</label>
         <Input
           type="number"
           value={formData.price === "free" ? "" : formData.price}
@@ -82,19 +87,21 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
             });
           }}
           placeholder="أدخل السعر"
+          className="text-right"
         />
       </div>
       <div>
-        <label className="text-sm font-medium">عدد المقاعد</label>
+        <label className="text-sm font-medium block mb-1.5">عدد المقاعد</label>
         <Input
           type="number"
           value={formData.maxAttendees}
           onChange={(e) => setFormData({ ...formData, maxAttendees: Number(e.target.value) })}
+          className="text-right"
         />
       </div>
       {onImageChange && (
         <div>
-          <label className="text-sm font-medium">صورة الفعالية</label>
+          <label className="text-sm font-medium block mb-1.5">صورة الفعالية</label>
           <ImageUpload
             onChange={onImageChange}
             value={formData.imageUrl || formData.image_url}
