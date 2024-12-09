@@ -7,7 +7,10 @@ export interface Event {
   time: string;
   location: string;
   imageUrl: string;
-  attendees: number; // Added this line to resolve the TypeScript error
+  attendees: number;
+  maxAttendees: number;
+  eventType: "online" | "in-person";
+  price: number | "free";
 }
 
 interface EventStore {
