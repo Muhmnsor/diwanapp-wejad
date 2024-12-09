@@ -34,6 +34,13 @@ export const EventDetailsView = ({
   const { user } = useAuthStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  console.log('Event data in EventDetailsView:', event);
+
+  if (!event) {
+    console.error('No event data provided to EventDetailsView');
+    return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
+  }
+
   const handleDelete = () => {
     setIsDeleteDialogOpen(false);
     onDelete();
@@ -41,11 +48,13 @@ export const EventDetailsView = ({
 
   return (
     <div className="max-w-4xl mx-auto">
-      <img
-        src={event.imageUrl}
-        alt={event.title}
-        className="w-full h-[400px] object-cover rounded-lg mb-8"
-      />
+      {event.imageUrl && (
+        <img
+          src={event.imageUrl}
+          alt={event.title}
+          className="w-full h-[400px] object-cover rounded-lg mb-8"
+        />
+      )}
 
       <div className="bg-white rounded-lg shadow-lg p-8">
         <div className="flex justify-between items-start mb-6">
