@@ -1,7 +1,7 @@
 import { Navigation } from "@/components/Navigation";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useEventStore } from "@/store/eventStore";
+import { useEventStore, Event as CustomEvent } from "@/store/eventStore";
 import {
   Dialog,
   DialogContent,
@@ -117,7 +117,7 @@ const EventDetails = () => {
     toast.success("تم حذف الفعالية بنجاح");
   };
 
-  const handleUpdateEvent = (updatedEvent: Event) => {
+  const handleUpdateEvent = (updatedEvent: CustomEvent) => {
     if (id?.startsWith('dynamic-')) {
       const index = parseInt(id.replace('dynamic-', '')) - 1;
       updateEvent(index, updatedEvent);

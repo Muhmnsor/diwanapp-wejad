@@ -7,20 +7,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Event } from "@/store/eventStore";
+import { Event as CustomEvent } from "@/store/eventStore";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface EditEventDialogProps {
-  event: Event;
+  event: CustomEvent;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (updatedEvent: Event) => void;
+  onSave: (updatedEvent: CustomEvent) => void;
 }
 
 export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEventDialogProps) => {
-  const [formData, setFormData] = useState<Event>(event);
+  const [formData, setFormData] = useState<CustomEvent>(event);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
