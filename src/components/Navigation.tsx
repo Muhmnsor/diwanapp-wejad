@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Plus, LogIn, LogOut } from "lucide-react";
+import { Plus, LogIn, LogOut, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Logo } from "./Logo";
 import { useAuthStore } from "@/store/authStore";
 
 export const Navigation = () => {
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, logout, user } = useAuthStore();
 
   return (
     <nav className="border-b">
@@ -23,6 +23,14 @@ export const Navigation = () => {
                   فعالية جديدة
                 </Link>
               </Button>
+              {user?.isAdmin && (
+                <Button asChild variant="outline">
+                  <Link to="/users" className="flex items-center gap-2">
+                    <Users size={20} />
+                    إدارة المستخدمين
+                  </Link>
+                </Button>
+              )}
               <Button variant="outline" onClick={logout}>
                 <LogOut size={20} className="ml-2" />
                 تسجيل الخروج

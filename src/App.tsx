@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import CreateEvent from "./pages/CreateEvent";
 import EventDetails from "./pages/EventDetails";
 import Login from "./pages/Login";
+import Users from "./pages/Users";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,14 @@ const App = () => (
               }
             />
             <Route path="/event/:id" element={<EventDetails />} />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
           <Toaster />
           <Sonner />
