@@ -9,11 +9,15 @@ import { createCalendarUrl } from "@/utils/calendarUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Event } from "@/store/eventStore";
+import { useAuthStore } from "@/store/authStore";
+import { EventDashboard } from "@/components/admin/EventDashboard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const { user } = useAuthStore();
 
   const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ['event', id],
@@ -32,7 +36,6 @@ const EventDetails = () => {
 
       console.log('Fetched event details:', data);
       
-      // Transform the data to match our Event type
       const transformedEvent: Event = {
         title: data.title,
         description: data.description || '',
@@ -40,7 +43,7 @@ const EventDetails = () => {
         time: data.time,
         location: data.location,
         imageUrl: data.image_url,
-        attendees: 0, // This will be updated by the registrations count
+        attendees: 0,
         maxAttendees: data.max_attendees,
         eventType: data.event_type as "online" | "in-person",
         price: data.price === null ? "free" : data.price,
@@ -117,7 +120,7 @@ const EventDetails = () => {
     );
   }
 
-  if (!event) {
+  if (!event || !id) {
     return (
       <div dir="rtl">
         <Navigation />
@@ -134,16 +137,40 @@ const EventDetails = () => {
     <div dir="rtl">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <EventDetailsView
-          event={{
-            ...event,
-            attendees: registrationsCount,
-          }}
-          onEdit={() => {}}
-          onDelete={() => {}}
-          onAddToCalendar={handleAddToCalendar}
-          onRegister={() => setIsRegistrationOpen(true)}
-        />
+        {user?.isAdmin ? (
+          <Tabs defaultValue="details" className="mb-8">
+            <TabsList className="mb-4">
+              <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
+              <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details">
+              <EventDetailsView
+                event={{
+                  ...event,
+                  attendees: registrationsCount,
+                }}
+                onEdit={() => {}}
+                onDelete={() => {}}
+                onAddToCalendar={handleAddToCalendar}
+                onRegister={() => setIsRegistrationOpen(true)}
+              />
+            </TabsContent>
+            <TabsContent value="dashboard">
+              <EventDashboard eventId={id} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <EventDetailsView
+            event={{
+              ...event,
+              attendees: registrationsCount,
+            }}
+            onEdit={() => {}}
+            onDelete={() => {}}
+            onAddToCalendar={handleAddToCalendar}
+            onRegister={() => setIsRegistrationOpen(true)}
+          />
+        )}
 
         <EventRegistrationDialog
           open={isRegistrationOpen}
