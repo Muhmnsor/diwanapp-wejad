@@ -9,8 +9,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEventStore, Event } from "@/store/eventStore";
+import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { useState } from "react";
 
 const eventSchema = z.object({
   title: z.string().min(1, "عنوان الفعالية مطلوب"),
@@ -30,7 +31,7 @@ type EventFormData = z.infer<typeof eventSchema>;
 
 const CreateEvent = () => {
   const navigate = useNavigate();
-  const addEvent = useEventStore((state) => state.addEvent);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -49,29 +50,50 @@ const CreateEvent = () => {
   });
 
   const onSubmit = async (data: EventFormData) => {
+    setIsSubmitting(true);
     try {
       let imageUrl = "";
       
       if (data.imageFile) {
-        // In a real application, you would upload the file to a server here
-        // For now, we'll create a temporary URL
-        imageUrl = URL.createObjectURL(data.imageFile);
+        const fileExt = data.imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `event-images/${fileName}`;
+
+        // Upload image to Supabase storage
+        const { error: uploadError } = await supabase.storage
+          .from('event-images')
+          .upload(filePath, data.imageFile);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // Get public URL for the uploaded image
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
       }
 
-      const eventData: Event = {
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        time: data.time,
-        location: data.location,
-        imageUrl: imageUrl,
-        eventType: data.eventType,
-        price: data.priceType === "free" ? "free" : data.priceAmount || 0,
-        maxAttendees: data.maxAttendees,
-        attendees: 0,
-      };
+      // Insert event data into Supabase
+      const { data: eventData, error } = await supabase
+        .from('events')
+        .insert({
+          title: data.title,
+          description: data.description,
+          date: data.date,
+          time: data.time,
+          location: data.location,
+          image_url: imageUrl,
+          event_type: data.eventType,
+          price: data.priceType === "free" ? null : data.priceAmount,
+          max_attendees: data.maxAttendees,
+        })
+        .select();
 
-      addEvent(eventData);
+      if (error) throw error;
+
       toast.success("تم إنشاء الفعالية بنجاح");
       
       setTimeout(() => {
@@ -80,6 +102,8 @@ const CreateEvent = () => {
     } catch (error) {
       console.error("Error creating event:", error);
       toast.error("حدث خطأ أثناء إنشاء الفعالية");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -276,7 +300,9 @@ const CreateEvent = () => {
               <Button type="button" variant="outline" onClick={() => navigate("/")}>
                 إلغاء
               </Button>
-              <Button type="submit">إنشاء الفعالية</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "جاري الإنشاء..." : "إنشاء الفعالية"}
+              </Button>
             </div>
           </form>
         </Form>
