@@ -31,12 +31,41 @@ export const RegistrationForm = ({
   const [registrationId, setRegistrationId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const checkExistingRegistration = async (email: string) => {
+    console.log("Checking for existing registration...");
+    const { data: existingRegistrations, error } = await supabase
+      .from('registrations')
+      .select('id')
+      .eq('event_id', eventId)
+      .eq('email', email)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+      console.error('Error checking registration:', error);
+      throw error;
+    }
+
+    return existingRegistrations;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Starting registration process...");
     setIsSubmitting(true);
 
     try {
+      // التحقق من وجود تسجيل سابق
+      const existingRegistration = await checkExistingRegistration(formData.email);
+      
+      if (existingRegistration) {
+        toast({
+          variant: "destructive",
+          title: "لا يمكن إكمال التسجيل",
+          description: "لقد قمت بالتسجيل في هذه الفعالية مسبقاً",
+        });
+        return;
+      }
+
       // Generate a unique registration number
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
