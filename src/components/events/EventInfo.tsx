@@ -5,7 +5,7 @@ interface EventInfoProps {
   date: string;
   time: string;
   location: string;
-  attendees: number;
+  attendees: number | Array<any>;
   maxAttendees: number;
   eventType: "online" | "in-person";
   price: number | "free";
@@ -20,7 +20,9 @@ export const EventInfo = ({
   eventType,
   price 
 }: EventInfoProps) => {
-  const remainingSeats = maxAttendees - attendees;
+  // Handle attendees count whether it's a number or an array
+  const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees;
+  const remainingSeats = maxAttendees - attendeesCount;
   
   return (
     <div className="space-y-6 mb-8">
@@ -53,7 +55,7 @@ export const EventInfo = ({
         <div className="flex items-center gap-3 text-gray-600">
           <Users className="h-5 w-5 text-primary" />
           <span>
-            {attendees} مشارك 
+            {attendeesCount} مشارك 
             {remainingSeats > 0 && ` (متبقي ${remainingSeats} مقعد)`}
           </span>
         </div>
