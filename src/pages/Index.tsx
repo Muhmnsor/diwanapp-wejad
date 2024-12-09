@@ -13,7 +13,8 @@ const Index = () => {
     const fetchEvents = async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching events:', error);
@@ -28,7 +29,6 @@ const Index = () => {
     const fetchRegistrations = async () => {
       const { data, error } = await supabase
         .from('registrations')
-        .select('event_id, count')
         .select('event_id');
       
       if (error) {
@@ -84,16 +84,20 @@ const Index = () => {
       <Navigation />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">الفعاليات القادمة</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
-          {events.map((event) => (
-            <div key={event.id} className="w-full">
-              <EventCard 
-                {...event}
-                attendees={registrations[event.id] || 0}
-              />
-            </div>
-          ))}
-        </div>
+        {events.length === 0 ? (
+          <div className="text-center text-gray-500">لا توجد فعاليات حالياً</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
+            {events.map((event) => (
+              <div key={event.id} className="w-full">
+                <EventCard 
+                  {...event}
+                  attendees={registrations[event.id] || 0}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
