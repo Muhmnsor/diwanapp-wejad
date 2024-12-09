@@ -1,4 +1,5 @@
 import { QRCodeSVG } from "qrcode.react";
+import { Logo } from "@/components/Logo";
 
 interface ConfirmationCardProps {
   eventTitle: string;
@@ -13,13 +14,11 @@ interface ConfirmationCardProps {
 export const ConfirmationCard = ({
   eventTitle,
   registrationId,
-  formData,
 }: ConfirmationCardProps) => {
   return (
-    <div id="confirmation-card" className="bg-white p-6 rounded-lg space-y-4">
-      <div className="text-center space-y-2">
+    <div id="confirmation-card" className="bg-white p-6 rounded-lg space-y-6">
+      <div className="text-center">
         <h3 className="font-bold text-xl">{eventTitle}</h3>
-        <div className="text-muted-foreground">رقم التسجيل: {registrationId}</div>
       </div>
       
       <div className="flex justify-center py-4">
@@ -32,11 +31,8 @@ export const ConfirmationCard = ({
         />
       </div>
 
-      <div className="space-y-2">
-        <div className="font-semibold">معلومات المسجل:</div>
-        <div>الاسم: {formData.name}</div>
-        <div>البريد الإلكتروني: {formData.email}</div>
-        <div>رقم الجوال: {formData.phone}</div>
+      <div className="flex justify-center pt-4">
+        <Logo />
       </div>
     </div>
   );
