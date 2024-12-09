@@ -28,7 +28,7 @@ export const EventCard = ({
   max_attendees = 0
 }: EventCardProps) => {
   const remainingSeats = max_attendees - attendees;
-  const isAlmostFull = remainingSeats <= max_attendees * 0.2; // Less than 20% seats remaining
+  const isAlmostFull = remainingSeats <= max_attendees * 0.2;
   const isFull = remainingSeats <= 0;
 
   const getRegistrationStatus = () => {
@@ -43,11 +43,11 @@ export const EventCard = ({
 
   const status = getRegistrationStatus();
 
-  console.log('Rendering EventCard with max-width:', '420px');
+  console.log('Rendering EventCard with max-width:', '400px');
 
   return (
     <div className="w-full flex justify-center">
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full w-full max-w-[420px]">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full w-full max-w-[400px]">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
         <CardHeader className="p-4">
           <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
