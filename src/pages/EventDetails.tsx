@@ -8,6 +8,7 @@ import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
 import { createCalendarUrl } from "@/utils/calendarUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { Event } from "@/store/eventStore";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -30,7 +31,22 @@ const EventDetails = () => {
       }
 
       console.log('Fetched event details:', data);
-      return data;
+      
+      // Transform the data to match our Event type
+      const transformedEvent: Event = {
+        title: data.title,
+        description: data.description || '',
+        date: data.date,
+        time: data.time,
+        location: data.location,
+        imageUrl: data.image_url,
+        attendees: 0, // This will be updated by the registrations count
+        maxAttendees: data.max_attendees,
+        eventType: data.event_type as "online" | "in-person",
+        price: data.price === null ? "free" : data.price,
+      };
+
+      return transformedEvent;
     },
   });
 
