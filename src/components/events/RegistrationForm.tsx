@@ -77,8 +77,10 @@ export const RegistrationForm = ({ eventTitle, eventPrice, onSubmit }: Registrat
   };
 
   const handleCloseDialog = () => {
-    // Only close if user explicitly clicks close button
-    setShowConfirmation(false);
+    // Only close if user explicitly clicks the close button
+    if (window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ تأكد من حفظ التأكيد أولاً.")) {
+      setShowConfirmation(false);
+    }
   };
 
   return (
@@ -126,12 +128,17 @@ export const RegistrationForm = ({ eventTitle, eventPrice, onSubmit }: Registrat
         <Button type="submit" className="w-full">تأكيد التسجيل</Button>
       </form>
 
-      <Dialog open={showConfirmation} onOpenChange={handleCloseDialog}>
-        <DialogContent className="max-w-md">
+      <Dialog 
+        open={showConfirmation} 
+        onOpenChange={handleCloseDialog}
+      >
+        <DialogContent className="max-w-md" onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}>
           <DialogHeader>
             <DialogTitle className="text-center mb-4">تأكيد التسجيل</DialogTitle>
             <DialogDescription className="text-center">
-              يرجى حفظ هذا التأكيد أو تصويره
+              يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق
             </DialogDescription>
           </DialogHeader>
           
