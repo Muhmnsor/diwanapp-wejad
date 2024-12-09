@@ -14,6 +14,10 @@ interface DashboardRegistrationsProps {
 export const DashboardRegistrations = ({ registrations, eventTitle }: DashboardRegistrationsProps) => {
   const [isExporting, setIsExporting] = useState(false);
 
+  const formatRegistrationNumber = (number: string) => {
+    return number.split('-').pop() || number;
+  };
+
   const exportToExcel = async () => {
     if (!registrations?.length) {
       toast.error("لا يوجد بيانات للتصدير");
@@ -23,7 +27,7 @@ export const DashboardRegistrations = ({ registrations, eventTitle }: DashboardR
     setIsExporting(true);
     try {
       const exportData = registrations.map(reg => ({
-        'رقم التسجيل': reg.registration_number,
+        'رقم التسجيل': formatRegistrationNumber(reg.registration_number),
         'الاسم': reg.name,
         'البريد الإلكتروني': reg.email,
         'رقم الجوال': reg.phone,

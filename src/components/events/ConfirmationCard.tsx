@@ -38,11 +38,8 @@ export const ConfirmationCard = ({
     }
   };
 
-  const formatRegistrationNumber = (number: string) => {
-    return number.split('-').pop() || number;
-  };
-
-  const formattedRegistrationId = formatRegistrationNumber(registrationId);
+  // استخراج الرقم المختصر مباشرة
+  const shortRegistrationId = registrationId.split('-').pop() || registrationId;
 
   return (
     <div className="space-y-4">
@@ -53,7 +50,7 @@ export const ConfirmationCard = ({
         
         <div className="flex justify-center py-4">
           <QRCodeSVG
-            value={formattedRegistrationId}
+            value={shortRegistrationId}
             size={200}
             level="H"
             includeMargin
