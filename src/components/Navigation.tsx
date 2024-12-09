@@ -9,6 +9,15 @@ export const Navigation = () => {
 
   return (
     <nav className="border-b">
+      <div className="bg-white py-4 border-b">
+        <div className="container mx-auto px-4">
+          <img 
+            src="/lovable-uploads/4ab86edd-10cb-4a50-a6cf-2b343c2361db.png" 
+            alt="ديوان الشبابية" 
+            className="h-24 mx-auto"
+          />
+        </div>
+      </div>
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link to="/" className="text-2xl font-bold text-primary flex items-center">
           <Logo />
