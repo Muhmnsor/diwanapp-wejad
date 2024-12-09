@@ -57,9 +57,9 @@ export const ConfirmationCard = ({
 
         <div className="flex justify-center pt-4">
           <img 
-            src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
-            alt="Logo"
-            className="h-12 w-auto object-contain"
+            src="/lovable-uploads/5779ac2f-5bd9-4178-8726-fa477d637cbf.png"
+            alt="ديوان الشبابية"
+            className="h-16 w-auto object-contain"
           />
         </div>
       </div>
