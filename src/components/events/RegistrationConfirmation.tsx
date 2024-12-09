@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { QRCodeSVG } from "qrcode.react";
 import * as htmlToImage from "html-to-image";
@@ -68,8 +69,8 @@ export const RegistrationConfirmation = ({
 
   return (
     <Dialog 
-      open={open} 
-      onOpenChange={handleCloseDialog}
+      open={open}
+      modal={true}
     >
       <DialogContent 
         className="max-w-md"
@@ -77,6 +78,9 @@ export const RegistrationConfirmation = ({
           e.preventDefault();
         }}
         onEscapeKeyDown={(e) => {
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
           e.preventDefault();
         }}
       >
@@ -119,6 +123,9 @@ export const RegistrationConfirmation = ({
               الانتقال للدفع
             </Button>
           )}
+          <Button onClick={handleCloseDialog} variant="outline" className="flex-1">
+            إغلاق
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
