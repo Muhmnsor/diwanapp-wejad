@@ -1,18 +1,12 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import * as XLSX from 'xlsx';
-import { DashboardStats } from "./DashboardStats";
-import { ExportButton } from "./ExportButton";
-import { RegistrationsTable } from "./RegistrationsTable";
 import { Registration } from "./types";
+import { DashboardOverview } from "./DashboardOverview";
+import { DashboardRegistrations } from "./DashboardRegistrations";
 
 export const EventDashboard = ({ eventId }: { eventId: string }) => {
-  const [isExporting, setIsExporting] = useState(false);
-
   // Fetch event details
   const { data: event, isLoading: eventLoading, error: eventError } = useQuery({
     queryKey: ['event', eventId],
@@ -53,7 +47,6 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         throw error;
       }
       
-      // Ensure we always return an array
       return (data || []) as Registration[];
     },
     retry: 3,
@@ -65,38 +58,6 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
       }
     }
   });
-
-  const exportToExcel = async () => {
-    if (!registrations?.length) {
-      toast.error("لا يوجد بيانات للتصدير");
-      return;
-    }
-    
-    setIsExporting(true);
-    try {
-      const exportData = registrations.map(reg => ({
-        'رقم التسجيل': reg.registration_number,
-        'الاسم': reg.name,
-        'البريد الإلكتروني': reg.email,
-        'رقم الجوال': reg.phone,
-        'تاريخ التسجيل': new Date(reg.created_at).toLocaleString('ar-SA')
-      }));
-
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "المسجلين");
-      
-      const fileName = `المسجلين-${event?.title}-${new Date().toLocaleDateString('ar-SA')}.xlsx`;
-      
-      XLSX.writeFile(wb, fileName);
-      toast.success("تم تصدير البيانات بنجاح");
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      toast.error("حدث خطأ أثناء تصدير البيانات");
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   if (eventLoading || registrationsLoading) {
     return <div className="text-center p-8">جاري التحميل...</div>;
@@ -119,7 +80,7 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         </TabsList>
         
         <TabsContent value="overview">
-          <DashboardStats
+          <DashboardOverview
             registrationCount={registrationCount}
             remainingSeats={remainingSeats}
             occupancyRate={occupancyRate}
@@ -129,22 +90,10 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         </TabsContent>
 
         <TabsContent value="registrations">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>قائمة المسجلين</CardTitle>
-              <ExportButton
-                onClick={exportToExcel}
-                isExporting={isExporting}
-                disabled={!registrations?.length}
-              />
-            </CardHeader>
-            <CardContent>
-              <RegistrationsTable 
-                registrations={registrations} 
-                eventTitle={event.title}
-              />
-            </CardContent>
-          </Card>
+          <DashboardRegistrations
+            registrations={registrations}
+            eventTitle={event.title}
+          />
         </TabsContent>
       </Tabs>
     </div>
