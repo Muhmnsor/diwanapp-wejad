@@ -1,5 +1,6 @@
 import { CalendarDays, Clock, MapPin, Users, Monitor, Ticket, CreditCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 
 interface EventInfoProps {
   date: string;
@@ -24,6 +25,10 @@ export const EventInfo = ({
   const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees;
   const remainingSeats = maxAttendees - attendeesCount;
   
+  // تنسيق التاريخ والوقت
+  const formattedDate = formatDateWithDay(date);
+  const formattedTime = formatTime12Hour(time);
+  
   return (
     <div className="space-y-6 mb-8">
       <div className="flex flex-wrap gap-2">
@@ -38,11 +43,11 @@ export const EventInfo = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex items-center gap-3 text-gray-600">
           <CalendarDays className="h-5 w-5 text-primary" />
-          <span>{date}</span>
+          <span>{formattedDate}</span>
         </div>
         <div className="flex items-center gap-3 text-gray-600">
           <Clock className="h-5 w-5 text-primary" />
-          <span>{time}</span>
+          <span>{formattedTime}</span>
         </div>
         <div className="flex items-center gap-3 text-gray-600">
           {eventType === "online" ? (
