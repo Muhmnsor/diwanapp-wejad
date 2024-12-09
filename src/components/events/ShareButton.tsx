@@ -1,4 +1,4 @@
-import { Share2, Twitter, Facebook, MessageCircle } from "lucide-react";
+import { Share2, X, Facebook, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -91,11 +91,11 @@ export const ShareButton = ({ title, text, url }: ShareButtonProps) => {
         {navigator.share && (
           <DropdownMenuItem onClick={() => handleShare('native')} className="gap-2">
             <Share2 className="h-4 w-4" />
-            مشاركة الفعالية
+            مشاركة عبر الجهاز
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => handleShare('x')} className="gap-2">
-          <Twitter className="h-4 w-4" />
+          <X className="h-4 w-4" />
           مشاركة على X
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleShare('facebook')} className="gap-2">
