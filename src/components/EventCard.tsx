@@ -43,10 +43,10 @@ export const EventCard = ({
 
   const status = getRegistrationStatus();
 
-  console.log('Rendering EventCard with max-width:', '400px');
+  console.log('Rendering EventCard with max-width:', '380px');
 
   return (
-    <div className="w-[400px] mx-auto">
+    <div className="w-[380px] mx-auto">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
         <CardHeader className="p-4">
