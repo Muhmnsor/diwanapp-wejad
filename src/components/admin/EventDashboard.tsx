@@ -13,7 +13,7 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
   const [isExporting, setIsExporting] = useState(false);
 
   // Fetch event details
-  const { data: event, isLoading: eventLoading } = useQuery({
+  const { data: event, isLoading: eventLoading, error: eventError } = useQuery({
     queryKey: ['event', eventId],
     queryFn: async () => {
       console.log('Fetching event details for dashboard:', eventId);
@@ -28,11 +28,17 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         throw error;
       }
       return data;
-    }
+    },
+    retry: 3,
+    retryDelay: 1000
   });
 
   // Fetch registrations
-  const { data: registrations = [], isLoading: registrationsLoading } = useQuery({
+  const { 
+    data: registrations = [], 
+    isLoading: registrationsLoading,
+    error: registrationsError 
+  } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
       console.log('Fetching registrations for event:', eventId);
@@ -48,6 +54,12 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
       
       // Ensure we always return an array
       return (data || []) as Registration[];
+    },
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('Error in registrations query:', error);
+      toast.error("حدث خطأ في تحميل بيانات المسجلين");
     }
   });
 
@@ -87,8 +99,8 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
     return <div className="text-center p-8">جاري التحميل...</div>;
   }
 
-  if (!event) {
-    return <div className="text-center p-8">لم يتم العثور على الفعالية</div>;
+  if (eventError || !event) {
+    return <div className="text-center p-8 text-red-500">حدث خطأ في تحميل بيانات الفعالية</div>;
   }
 
   const registrationCount = registrations?.length || 0;
