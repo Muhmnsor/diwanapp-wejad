@@ -57,9 +57,11 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
     },
     retry: 3,
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Error in registrations query:', error);
-      toast.error("حدث خطأ في تحميل بيانات المسجلين");
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error in registrations query:', error);
+        toast.error("حدث خطأ في تحميل بيانات المسجلين");
+      }
     }
   });
 
