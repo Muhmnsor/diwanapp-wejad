@@ -4,6 +4,17 @@ import { EventActions } from "./EventActions";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface EventDetailsViewProps {
   event: CustomEvent;
@@ -21,6 +32,12 @@ export const EventDetailsView = ({
   onRegister 
 }: EventDetailsViewProps) => {
   const { user } = useAuthStore();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleDelete = () => {
+    setIsDeleteDialogOpen(false);
+    onDelete();
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -46,7 +63,7 @@ export const EventDetailsView = ({
                 <Button 
                   variant="destructive" 
                   size="icon"
-                  onClick={onDelete}
+                  onClick={() => setIsDeleteDialogOpen(true)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -82,6 +99,23 @@ export const EventDetailsView = ({
           </Button>
         </div>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذه الفعالية؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف الفعالية بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

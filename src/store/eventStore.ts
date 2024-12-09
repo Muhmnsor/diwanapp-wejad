@@ -17,6 +17,7 @@ interface EventStore {
   events: Event[];
   addEvent: (event: Event) => void;
   updateEvent: (index: number, event: Event) => void;
+  deleteEvent: (index: number) => void;
 }
 
 export const useEventStore = create<EventStore>((set) => ({
@@ -35,4 +36,9 @@ export const useEventStore = create<EventStore>((set) => ({
       return { events: newEvents };
     });
   },
+  deleteEvent: (index) => set((state) => {
+    const newEvents = [...state.events];
+    newEvents.splice(index, 1);
+    return { events: newEvents };
+  }),
 }));

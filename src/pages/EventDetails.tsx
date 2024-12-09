@@ -1,5 +1,5 @@
 import { Navigation } from "@/components/Navigation";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEventStore, Event as CustomEvent } from "@/store/eventStore";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,10 +11,12 @@ import { createCalendarUrl } from "@/utils/calendarUtils";
 
 const EventDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const storeEvents = useEventStore((state) => state.events);
   const updateEvent = useEventStore((state) => state.updateEvent);
+  const deleteEvent = useEventStore((state) => state.deleteEvent);
 
   const mockEvents = [
     {
@@ -97,7 +99,12 @@ const EventDetails = () => {
   };
 
   const handleDeleteEvent = () => {
-    toast.success("تم حذف الفعالية بنجاح");
+    if (id?.startsWith('dynamic-')) {
+      const index = parseInt(id.replace('dynamic-', '')) - 1;
+      deleteEvent(index);
+      toast.success("تم حذف الفعالية بنجاح");
+      navigate('/');
+    }
   };
 
   const handleUpdateEvent = (updatedEvent: CustomEvent) => {
@@ -110,10 +117,6 @@ const EventDetails = () => {
       updateEvent(index, updatedEvent);
       toast.success("تم تحديث الفعالية بنجاح");
       setIsEditDialogOpen(false);
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
     }
   };
 
