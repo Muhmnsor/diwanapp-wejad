@@ -72,37 +72,28 @@ export const RegistrationConfirmation = ({
     }
 
     try {
-      // Reset any transformations
-      const computedStyle = window.getComputedStyle(element);
-      const originalTransform = computedStyle.transform;
-      element.style.transform = 'none';
+      // Create a clone of the element to modify
+      const clone = element.cloneNode(true) as HTMLElement;
+      document.body.appendChild(clone);
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.backgroundColor = '#ffffff';
 
-      // Add a white background temporarily
-      element.style.backgroundColor = '#ffffff';
-      
-      // Capture the image with improved settings
-      const dataUrl = await htmlToImage.toPng(element, {
-        quality: 1.0,
-        pixelRatio: 3,
-        cacheBust: true,
-        skipAutoScale: true,
-        style: {
-          transform: 'none',
-          margin: '0',
-          padding: '0',
-        },
-        filter: (node) => {
-          return !node.classList?.contains('no-export');
-        }
+      // Generate image from the clone
+      const dataUrl = await htmlToImage.toJpeg(clone, {
+        quality: 0.95,
+        backgroundColor: '#ffffff',
+        canvasWidth: element.offsetWidth * 2,
+        canvasHeight: element.offsetHeight * 2,
+        pixelRatio: 2,
       });
 
-      // Restore original styles
-      element.style.transform = originalTransform;
-      element.style.backgroundColor = '';
+      // Remove the clone
+      document.body.removeChild(clone);
 
-      // Create download link
+      // Create and trigger download
       const link = document.createElement("a");
-      link.download = `تأكيد-التسجيل-${eventTitle}.png`;
+      link.download = `تأكيد-التسجيل-${eventTitle}.jpg`;
       link.href = dataUrl;
       document.body.appendChild(link);
       
@@ -111,7 +102,6 @@ export const RegistrationConfirmation = ({
       
       // Cleanup
       document.body.removeChild(link);
-      URL.revokeObjectURL(dataUrl);
       
       setHasDownloaded(true);
       toast({
