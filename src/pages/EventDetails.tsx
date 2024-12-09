@@ -1,32 +1,20 @@
 import { Navigation } from "@/components/Navigation";
 import { useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useEventStore, Event as CustomEvent } from "@/store/eventStore";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useState } from "react";
-import { EventInfo } from "@/components/events/EventInfo";
-import { EventActions } from "@/components/events/EventActions";
-import { RegistrationForm } from "@/components/events/RegistrationForm";
-import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
-import { createCalendarUrl } from "@/utils/calendarUtils";
-import { useAuthStore } from "@/store/authStore";
-import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { EditEventDialog } from "@/components/events/EditEventDialog";
+import { EventDetailsView } from "@/components/events/EventDetailsView";
+import { EventRegistrationDialog } from "@/components/events/EventRegistrationDialog";
+import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
+import { createCalendarUrl } from "@/utils/calendarUtils";
 
 const EventDetails = () => {
   const { id } = useParams();
-  const [open, setOpen] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const storeEvents = useEventStore((state) => state.events);
   const updateEvent = useEventStore((state) => state.updateEvent);
-  const { user } = useAuthStore();
 
   const mockEvents = [
     {
@@ -40,7 +28,7 @@ const EventDetails = () => {
       attendees: 150,
       maxAttendees: 200,
       eventType: "in-person" as const,
-      price: 500 // Changed from "500" to 500 (number)
+      price: 500
     },
     {
       id: "2",
@@ -66,7 +54,7 @@ const EventDetails = () => {
       attendees: 200,
       maxAttendees: 300,
       eventType: "in-person" as const,
-      price: 100 // Changed from "100" to 100 (number)
+      price: 100
     },
   ];
 
@@ -88,9 +76,6 @@ const EventDetails = () => {
       const eventDate = new Date(dateString);
       const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000));
 
-      console.log("Event date:", eventDate);
-      console.log("End date:", endDate);
-
       if (isNaN(eventDate.getTime())) {
         throw new Error('Invalid date conversion');
       }
@@ -104,8 +89,6 @@ const EventDetails = () => {
       };
 
       const calendarUrl = createCalendarUrl(calendarEvent);
-      console.log("Calendar URL:", calendarUrl);
-
       window.open(calendarUrl, '_blank');
     } catch (error) {
       console.error('Error creating calendar event:', error);
@@ -128,7 +111,6 @@ const EventDetails = () => {
       toast.success("تم تحديث الفعالية بنجاح");
       setIsEditDialogOpen(false);
       
-      // Force re-render
       setTimeout(() => {
         window.location.reload();
       }, 100);
@@ -150,87 +132,27 @@ const EventDetails = () => {
     <div dir="rtl">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <img
-            src={event.imageUrl}
-            alt={event.title}
-            className="w-full h-[400px] object-cover rounded-lg mb-8"
-          />
+        <EventDetailsView
+          event={event}
+          onEdit={() => setIsEditDialogOpen(true)}
+          onDelete={handleDeleteEvent}
+          onAddToCalendar={handleAddToCalendar}
+          onRegister={() => setIsRegistrationOpen(true)}
+        />
 
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="flex justify-between items-start mb-6">
-              <h1 className="text-3xl font-bold">{event.title}</h1>
-              <div className="flex gap-2">
-                {user?.isAdmin && (
-                  <div className="flex gap-2 ml-4">
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => setIsEditDialogOpen(true)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="icon"
-                      onClick={handleDeleteEvent}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-                <EventActions
-                  eventTitle={event.title}
-                  eventDescription={event.description}
-                  onShare={async () => {}}
-                  onAddToCalendar={handleAddToCalendar}
-                />
-              </div>
-            </div>
+        <EditEventDialog 
+          event={event}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSave={handleUpdateEvent}
+        />
 
-            <EventInfo
-              date={event.date}
-              time={event.time}
-              location={event.location}
-              attendees={event.attendees}
-              maxAttendees={event.maxAttendees}
-              eventType={event.eventType}
-              price={event.price}
-            />
-
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">عن الفعالية</h2>
-              <p className="text-gray-600 leading-relaxed">{event.description}</p>
-            </div>
-
-            <div className="flex justify-center">
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="w-full md:w-auto">
-                    تسجيل الحضور
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
-                  </DialogHeader>
-                  <RegistrationForm
-                    eventTitle={event.title}
-                    eventPrice={event.price}
-                    onSubmit={() => setOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-
-          <EditEventDialog 
-            event={event}
-            open={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            onSave={handleUpdateEvent}
-          />
-        </div>
+        <EventRegistrationDialog
+          open={isRegistrationOpen}
+          onOpenChange={setIsRegistrationOpen}
+          eventTitle={event.title}
+          eventPrice={event.price}
+        />
       </div>
     </div>
   );
