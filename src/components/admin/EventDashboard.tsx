@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
 import { DashboardStats } from "./DashboardStats";
@@ -111,27 +112,38 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
 
   return (
     <div className="space-y-6">
-      <DashboardStats
-        registrationCount={registrationCount}
-        remainingSeats={remainingSeats}
-        occupancyRate={occupancyRate}
-        eventDate={event.date}
-        eventTime={event.time}
-      />
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>قائمة المسجلين</CardTitle>
-          <ExportButton
-            onClick={exportToExcel}
-            isExporting={isExporting}
-            disabled={!registrations?.length}
+      <Tabs defaultValue="overview" dir="rtl">
+        <TabsList>
+          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="registrations">المسجلين</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview">
+          <DashboardStats
+            registrationCount={registrationCount}
+            remainingSeats={remainingSeats}
+            occupancyRate={occupancyRate}
+            eventDate={event.date}
+            eventTime={event.time}
           />
-        </CardHeader>
-        <CardContent>
-          <RegistrationsTable registrations={registrations} />
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="registrations">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>قائمة المسجلين</CardTitle>
+              <ExportButton
+                onClick={exportToExcel}
+                isExporting={isExporting}
+                disabled={!registrations?.length}
+              />
+            </CardHeader>
+            <CardContent>
+              <RegistrationsTable registrations={registrations} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
