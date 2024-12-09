@@ -29,11 +29,13 @@ export const RegistrationForm = ({
   });
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registrationId, setRegistrationId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    
+    console.log("Starting registration process...");
+    setIsSubmitting(true);
+
     try {
       // Generate a unique registration number
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -74,6 +76,8 @@ export const RegistrationForm = ({
         title: "حدث خطأ",
         description: "لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -92,7 +96,9 @@ export const RegistrationForm = ({
           setFormData={setFormData}
           eventPrice={eventPrice}
         />
-        <Button type="submit" className="w-full">تأكيد التسجيل</Button>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? "جاري التسجيل..." : "تأكيد التسجيل"}
+        </Button>
       </form>
 
       <RegistrationConfirmation
