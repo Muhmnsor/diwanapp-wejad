@@ -80,11 +80,11 @@ export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEvent
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] [&_[data-radix-scroll-area-viewport]]:!pl-4 [&_[data-radix-scroll-area-viewport]]:!pr-0" dir="rtl">
         <DialogHeader className="text-right">
           <DialogTitle className="text-right">تعديل الفعالية</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[calc(90vh-120px)] pl-4 pr-0">
+        <ScrollArea className="h-[calc(90vh-120px)]">
           <form onSubmit={handleSubmit} className="space-y-4">
             <EventFormFields 
               formData={formData} 
