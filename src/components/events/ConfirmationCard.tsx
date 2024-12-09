@@ -29,13 +29,13 @@ export const ConfirmationCard = ({
 }: ConfirmationCardProps) => {
   return (
     <div className="space-y-4" dir="rtl">
-      <Card id="confirmation-card" className="bg-white p-6 space-y-4">
+      <Card id="confirmation-card" className="bg-white p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="text-right space-y-2">
             <h3 className="font-bold text-xl">{eventTitle}</h3>
             <p className="text-sm text-muted-foreground">رقم التسجيل: {registrationId.split('-').pop()}</p>
           </div>
-          <Logo />
+          <Logo className="w-16 h-16" />
         </div>
 
         <div className="flex justify-center py-4">
@@ -47,46 +47,47 @@ export const ConfirmationCard = ({
           />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4 text-right">
           {eventDate && (
-            <div className="flex items-center gap-2 text-sm">
-              <CalendarDays size={16} className="text-primary" />
-              <span>{eventDate}</span>
+            <div className="flex items-center gap-3 text-sm">
+              <CalendarDays size={20} className="text-primary shrink-0" />
+              <span className="font-medium">{eventDate}</span>
             </div>
           )}
           
           {eventTime && (
-            <div className="flex items-center gap-2 text-sm">
-              <Clock size={16} className="text-primary" />
-              <span>{eventTime}</span>
+            <div className="flex items-center gap-3 text-sm">
+              <Clock size={20} className="text-primary shrink-0" />
+              <span className="font-medium">{eventTime}</span>
             </div>
           )}
           
           {eventLocation && (
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin size={16} className="text-primary" />
-              <span>{eventLocation}</span>
+            <div className="flex items-center gap-3 text-sm">
+              <MapPin size={20} className="text-primary shrink-0" />
+              <span className="font-medium">{eventLocation}</span>
             </div>
           )}
         </div>
       </Card>
 
       {/* Event Image */}
-      <div className="rounded-lg overflow-hidden">
+      <div className="rounded-lg overflow-hidden h-48">
         <img 
           src="/lovable-uploads/4ab86edd-10cb-4a50-a6cf-2b343c2361db.png"
           alt={eventTitle}
-          className="w-full h-48 object-cover"
+          className="w-full h-full object-contain bg-secondary/50"
         />
       </div>
 
       {/* Save Button */}
       <Button 
         onClick={onSave} 
-        className="w-full"
+        className="w-full gap-2"
         variant="secondary"
+        size="lg"
       >
-        <Download className="ml-2" />
+        <Download className="w-5 h-5" />
         حفظ البطاقة
       </Button>
     </div>

@@ -68,7 +68,12 @@ export const RegistrationConfirmation = ({
     const element = document.getElementById("confirmation-card");
     if (element) {
       try {
-        const dataUrl = await htmlToImage.toPng(element);
+        const dataUrl = await htmlToImage.toPng(element, {
+          quality: 1.0,
+          pixelRatio: 2,
+          backgroundColor: '#ffffff',
+        });
+        
         const link = document.createElement("a");
         link.download = `تأكيد-التسجيل-${eventTitle}.png`;
         link.href = dataUrl;
