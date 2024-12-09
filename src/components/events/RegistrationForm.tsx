@@ -10,12 +10,18 @@ import { useParams } from "react-router-dom";
 interface RegistrationFormProps {
   eventTitle: string;
   eventPrice: number | "free";
+  eventDate: string;
+  eventTime: string;
+  eventLocation: string;
   onSubmit: () => void;
 }
 
 export const RegistrationForm = ({ 
   eventTitle, 
   eventPrice,
+  eventDate,
+  eventTime,
+  eventLocation,
   onSubmit 
 }: RegistrationFormProps) => {
   const { toast } = useToast();
@@ -134,6 +140,9 @@ export const RegistrationForm = ({
         registrationId={registrationId}
         eventTitle={eventTitle}
         eventPrice={eventPrice}
+        eventDate={eventDate}
+        eventTime={eventTime}
+        eventLocation={eventLocation}
         formData={formData}
         onPayment={handlePayment}
       />

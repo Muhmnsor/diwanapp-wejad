@@ -17,6 +17,9 @@ interface RegistrationConfirmationProps {
   registrationId: string;
   eventTitle: string;
   eventPrice: number | "free";
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
   formData: {
     name: string;
     email: string;
@@ -31,6 +34,9 @@ export const RegistrationConfirmation = ({
   registrationId,
   eventTitle,
   eventPrice,
+  eventDate,
+  eventTime,
+  eventLocation,
   formData,
   onPayment,
 }: RegistrationConfirmationProps) => {
@@ -112,6 +118,9 @@ export const RegistrationConfirmation = ({
           eventTitle={eventTitle}
           registrationId={registrationId}
           formData={formData}
+          eventDate={eventDate}
+          eventTime={eventTime}
+          eventLocation={eventLocation}
         />
 
         <ConfirmationActions
