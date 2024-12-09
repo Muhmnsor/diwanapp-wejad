@@ -21,11 +21,18 @@ interface EventStore {
 
 export const useEventStore = create<EventStore>((set) => ({
   events: [],
-  addEvent: (event) => set((state) => ({ events: [...state.events, event] })),
-  updateEvent: (index, updatedEvent) => 
-    set((state) => ({
-      events: state.events.map((event, i) => 
-        i === index ? { ...event, ...updatedEvent } : event
-      )
-    })),
+  addEvent: (event) => set((state) => ({ 
+    events: [...state.events, event] 
+  })),
+  updateEvent: (index, updatedEvent) => {
+    console.log('Updating event at index:', index);
+    console.log('Updated event data:', updatedEvent);
+    
+    set((state) => {
+      const newEvents = [...state.events];
+      newEvents[index] = updatedEvent;
+      console.log('New events array:', newEvents);
+      return { events: newEvents };
+    });
+  },
 }));

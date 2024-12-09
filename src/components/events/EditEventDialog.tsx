@@ -8,7 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Event as CustomEvent } from "@/store/eventStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -22,13 +22,19 @@ interface EditEventDialogProps {
 export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEventDialogProps) => {
   const [formData, setFormData] = useState<CustomEvent>(event);
 
+  useEffect(() => {
+    setFormData(event);
+  }, [event]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Submitting form data:', formData);
+    
     try {
       onSave(formData);
-      onOpenChange(false);
       toast.success("تم تحديث الفعالية بنجاح");
     } catch (error) {
+      console.error('Error updating event:', error);
       toast.error("حدث خطأ أثناء تحديث الفعالية");
     }
   };

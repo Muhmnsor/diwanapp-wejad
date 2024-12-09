@@ -118,14 +118,20 @@ const EventDetails = () => {
   };
 
   const handleUpdateEvent = (updatedEvent: CustomEvent) => {
+    console.log('Handling update event:', updatedEvent);
+    
     if (id?.startsWith('dynamic-')) {
       const index = parseInt(id.replace('dynamic-', '')) - 1;
+      console.log('Updating event at index:', index);
+      
       updateEvent(index, updatedEvent);
       toast.success("تم تحديث الفعالية بنجاح");
       setIsEditDialogOpen(false);
       
-      // Force re-render by updating state
-      window.location.reload();
+      // Force re-render
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     }
   };
 
