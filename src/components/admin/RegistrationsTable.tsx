@@ -33,10 +33,15 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
           formattedDate = '';
         }
 
+        // Format registration number to show only the last part
+        const shortRegistrationNumber = String(reg.registration_number || '')
+          .split('-')
+          .pop() || '';
+
         // Create a new object with all string values
         const processedReg = {
           id: String(reg.id || ''),
-          registration_number: String(reg.registration_number || ''),
+          registration_number: shortRegistrationNumber,
           name: String(reg.name || ''),
           email: String(reg.email || ''),
           phone: String(reg.phone || ''),
