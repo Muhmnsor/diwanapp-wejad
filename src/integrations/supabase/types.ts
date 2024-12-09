@@ -9,7 +9,86 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          event_type: string
+          id: string
+          image_url: string
+          location: string
+          max_attendees: number
+          price: number | null
+          time: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          event_type: string
+          id?: string
+          image_url: string
+          location: string
+          max_attendees?: number
+          price?: number | null
+          time: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          image_url?: string
+          location?: string
+          max_attendees?: number
+          price?: number | null
+          time?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      registrations: {
+        Row: {
+          created_at: string
+          email: string
+          event_id: string | null
+          id: string
+          name: string
+          phone: string
+          registration_number: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_id?: string | null
+          id?: string
+          name: string
+          phone: string
+          registration_number: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_id?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          registration_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

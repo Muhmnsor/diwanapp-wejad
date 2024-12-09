@@ -9,11 +9,11 @@ interface EventCardProps {
   title: string;
   date: string;
   location: string;
-  imageUrl: string;
-  eventType: "online" | "in-person";
-  price: number | "free";
+  image_url: string;
+  event_type: "online" | "in-person";
+  price: number | null;
   attendees?: number;
-  maxAttendees?: number;
+  max_attendees?: number;
 }
 
 export const EventCard = ({ 
@@ -21,28 +21,28 @@ export const EventCard = ({
   title, 
   date, 
   location, 
-  imageUrl, 
-  eventType, 
+  image_url, 
+  event_type, 
   price,
   attendees = 0,
-  maxAttendees = 0
+  max_attendees = 0
 }: EventCardProps) => {
-  const remainingSeats = maxAttendees - attendees;
-  const isAlmostFull = remainingSeats <= maxAttendees * 0.2; // Less than 20% seats remaining
+  const remainingSeats = max_attendees - attendees;
+  const isAlmostFull = remainingSeats <= max_attendees * 0.2; // Less than 20% seats remaining
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
-      <img src={imageUrl} alt={title} className="w-full h-40 object-cover" />
+      <img src={image_url} alt={title} className="w-full h-40 object-cover" />
       <CardHeader className="p-4">
         <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 p-4 pt-0">
         <div className="flex flex-wrap gap-2">
-          <Badge variant={eventType === "online" ? "secondary" : "default"}>
-            {eventType === "online" ? "عن بعد" : "حضوري"}
+          <Badge variant={event_type === "online" ? "secondary" : "default"}>
+            {event_type === "online" ? "عن بعد" : "حضوري"}
           </Badge>
-          <Badge variant={price === "free" ? "secondary" : "default"}>
-            {price === "free" ? "مجاني" : `${price} ريال`}
+          <Badge variant={!price ? "secondary" : "default"}>
+            {!price ? "مجاني" : `${price} ريال`}
           </Badge>
         </div>
         <div className="flex items-center gap-2 text-gray-600 text-sm">
@@ -53,7 +53,7 @@ export const EventCard = ({
           <MapPin size={16} />
           <span>{location}</span>
         </div>
-        {maxAttendees > 0 && (
+        {max_attendees > 0 && (
           <div className={`flex items-center gap-2 ${isAlmostFull ? 'text-red-600' : 'text-green-600'} font-medium`}>
             <Users size={16} />
             <span>
