@@ -30,30 +30,26 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
           }
         } catch (error) {
           console.error('Error formatting date:', error);
-          formattedDate = '';
+          formattedDate = 'Invalid Date';
         }
 
-        // Format registration number to show only the last part
-        const shortRegistrationNumber = String(reg.registration_number || '')
-          .split('-')
-          .pop() || '';
+        // Format registration number to show only the last part after the last hyphen
+        const shortRegistrationNumber = reg.registration_number
+          ? reg.registration_number.split('-').pop() || reg.registration_number
+          : '';
 
-        // Create a new object with all string values
-        const processedReg = {
-          id: String(reg.id || ''),
+        return {
+          id: reg.id || '',
           registration_number: shortRegistrationNumber,
-          name: String(reg.name || ''),
-          email: String(reg.email || ''),
-          phone: String(reg.phone || ''),
+          name: reg.name || '',
+          email: reg.email || '',
+          phone: reg.phone || '',
           created_at: formattedDate
         };
-        
-        console.log('Processed registration:', processedReg);
-        return processedReg;
       })
     : [];
 
-  console.log('Final registrations array:', registrationsArray);
+  console.log('Final processed registrations:', registrationsArray);
 
   return (
     <div className="rounded-md border">
