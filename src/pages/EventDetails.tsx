@@ -7,17 +7,20 @@ import { EventRegistrationDialog } from "@/components/events/EventRegistrationDi
 import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
 import { createCalendarUrl } from "@/utils/calendarUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Event } from "@/store/eventStore";
 import { useAuthStore } from "@/store/authStore";
 import { EventDashboard } from "@/components/admin/EventDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EditEventDialog } from "@/components/events/EditEventDialog";
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ['event', id],
@@ -37,6 +40,7 @@ const EventDetails = () => {
       console.log('Fetched event details:', data);
       
       const transformedEvent: Event = {
+        id: data.id,
         title: data.title,
         description: data.description || '',
         date: data.date,
@@ -105,6 +109,54 @@ const EventDetails = () => {
     }
   };
 
+  const handleEdit = () => {
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success("تم حذف الفعالية بنجاح");
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error("حدث خطأ أثناء حذف الفعالية");
+    }
+  };
+
+  const handleSaveEdit = async (updatedEvent: Event) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: updatedEvent.title,
+          description: updatedEvent.description,
+          date: updatedEvent.date,
+          time: updatedEvent.time,
+          location: updatedEvent.location,
+          event_type: updatedEvent.eventType,
+          max_attendees: updatedEvent.maxAttendees,
+          price: updatedEvent.price === "free" ? null : updatedEvent.price,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['event', id] });
+      setIsEditDialogOpen(false);
+      toast.success("تم تحديث الفعالية بنجاح");
+    } catch (error) {
+      console.error('Error updating event:', error);
+      toast.error("حدث خطأ أثناء تحديث الفعالية");
+    }
+  };
+
   const isLoading = eventLoading || registrationsLoading;
 
   if (isLoading) {
@@ -149,8 +201,8 @@ const EventDetails = () => {
                   ...event,
                   attendees: registrationsCount,
                 }}
-                onEdit={() => {}}
-                onDelete={() => {}}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
                 onAddToCalendar={handleAddToCalendar}
                 onRegister={() => setIsRegistrationOpen(true)}
               />
@@ -165,8 +217,8 @@ const EventDetails = () => {
               ...event,
               attendees: registrationsCount,
             }}
-            onEdit={() => {}}
-            onDelete={() => {}}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
             onAddToCalendar={handleAddToCalendar}
             onRegister={() => setIsRegistrationOpen(true)}
           />
@@ -177,6 +229,13 @@ const EventDetails = () => {
           onOpenChange={setIsRegistrationOpen}
           eventTitle={event.title}
           eventPrice={event.price}
+        />
+
+        <EditEventDialog
+          event={event}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSave={handleSaveEdit}
         />
       </div>
     </div>

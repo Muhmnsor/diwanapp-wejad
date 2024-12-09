@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export interface Event {
+  id?: string;
   title: string;
   description: string;
   date: string;
