@@ -139,7 +139,10 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
               />
             </CardHeader>
             <CardContent>
-              <RegistrationsTable registrations={registrations} />
+              <RegistrationsTable 
+                registrations={registrations} 
+                eventTitle={event.title}
+              />
             </CardContent>
           </Card>
         </TabsContent>
