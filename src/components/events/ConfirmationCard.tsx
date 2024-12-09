@@ -29,7 +29,7 @@ export const ConfirmationCard = ({
 }: ConfirmationCardProps) => {
   return (
     <div className="space-y-4" dir="rtl">
-      <Card id="confirmation-card" className="bg-white p-6 space-y-6 relative">
+      <Card id="confirmation-card" className="bg-white p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="text-right space-y-2">
             <h3 className="font-bold text-xl">{eventTitle}</h3>

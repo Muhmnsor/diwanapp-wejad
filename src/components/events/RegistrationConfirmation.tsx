@@ -66,52 +66,66 @@ export const RegistrationConfirmation = ({
   const handleSaveConfirmation = async () => {
     console.log("Attempting to save confirmation");
     const element = document.getElementById("confirmation-card");
-    if (element) {
-      try {
-        // First, modify the element's style temporarily
-        const originalTransform = element.style.transform;
-        element.style.transform = 'none';
-        
-        const dataUrl = await htmlToImage.toPng(element, {
-          quality: 1.0,
-          pixelRatio: 3,
-          backgroundColor: '#ffffff',
-          width: element.offsetWidth,
-          height: element.offsetHeight,
-          style: {
-            margin: '0',
-            padding: '20px',
-          },
-          filter: (node) => {
-            return !node.classList?.contains('no-export');
-          }
-        });
-        
-        // Restore the original transform
-        element.style.transform = originalTransform;
-        
-        // Create and trigger download
-        const link = document.createElement("a");
-        link.download = `تأكيد-التسجيل-${eventTitle}.png`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setHasDownloaded(true);
-        toast({
-          title: "تم حفظ التأكيد بنجاح",
-          description: "يمكنك الآن إغلاق النافذة",
-        });
-        console.log("Confirmation saved successfully");
-      } catch (error) {
-        console.error("Error saving confirmation:", error);
-        toast({
-          title: "خطأ",
-          description: "حدث خطأ أثناء حفظ التأكيد",
-          variant: "destructive",
-        });
-      }
+    if (!element) {
+      console.error("Confirmation card element not found");
+      return;
+    }
+
+    try {
+      // Reset any transformations
+      const computedStyle = window.getComputedStyle(element);
+      const originalTransform = computedStyle.transform;
+      element.style.transform = 'none';
+
+      // Add a white background temporarily
+      element.style.backgroundColor = '#ffffff';
+      
+      // Capture the image with improved settings
+      const dataUrl = await htmlToImage.toPng(element, {
+        quality: 1.0,
+        pixelRatio: 3,
+        cacheBust: true,
+        skipAutoScale: true,
+        style: {
+          transform: 'none',
+          margin: '0',
+          padding: '0',
+        },
+        filter: (node) => {
+          return !node.classList?.contains('no-export');
+        }
+      });
+
+      // Restore original styles
+      element.style.transform = originalTransform;
+      element.style.backgroundColor = '';
+
+      // Create download link
+      const link = document.createElement("a");
+      link.download = `تأكيد-التسجيل-${eventTitle}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      
+      console.log("Triggering download");
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(dataUrl);
+      
+      setHasDownloaded(true);
+      toast({
+        title: "تم حفظ التأكيد بنجاح",
+        description: "يمكنك الآن إغلاق النافذة",
+      });
+      console.log("Confirmation saved successfully");
+    } catch (error) {
+      console.error("Error saving confirmation:", error);
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء حفظ التأكيد",
+        variant: "destructive",
+      });
     }
   };
 
