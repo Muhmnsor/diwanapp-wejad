@@ -15,8 +15,13 @@ interface RegistrationsTableProps {
 export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) => {
   console.log('Registrations received in table:', registrations);
   
-  // Ensure registrations is an array
-  const registrationsArray = Array.isArray(registrations) ? registrations : [];
+  // Ensure registrations is an array and convert objects to safe string representations
+  const registrationsArray = Array.isArray(registrations) 
+    ? registrations.map(reg => ({
+        ...reg,
+        created_at: reg.created_at ? new Date(reg.created_at).toLocaleString('ar-SA') : ''
+      }))
+    : [];
 
   return (
     <div className="rounded-md border">
@@ -33,13 +38,11 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
         <TableBody>
           {registrationsArray.map((reg) => (
             <TableRow key={reg.id}>
-              <TableCell>{reg.registration_number}</TableCell>
-              <TableCell>{reg.name}</TableCell>
-              <TableCell>{reg.email}</TableCell>
-              <TableCell>{reg.phone}</TableCell>
-              <TableCell>
-                {new Date(reg.created_at).toLocaleString('ar-SA')}
-              </TableCell>
+              <TableCell>{reg.registration_number || ''}</TableCell>
+              <TableCell>{reg.name || ''}</TableCell>
+              <TableCell>{reg.email || ''}</TableCell>
+              <TableCell>{reg.phone || ''}</TableCell>
+              <TableCell>{reg.created_at || ''}</TableCell>
             </TableRow>
           ))}
         </TableBody>
