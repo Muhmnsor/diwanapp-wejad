@@ -140,7 +140,7 @@ const EventDetails = () => {
               <EventActions
                 eventTitle={event.title}
                 eventDescription={event.description}
-                onShare={async () => {}} // Empty function since sharing is now handled in ShareButton
+                onShare={async () => {}}
                 onAddToCalendar={handleAddToCalendar}
               />
             </div>
@@ -173,6 +173,7 @@ const EventDetails = () => {
                   </DialogHeader>
                   <RegistrationForm
                     eventTitle={event.title}
+                    eventPrice={event.price}
                     onSubmit={() => setOpen(false)}
                   />
                 </DialogContent>
