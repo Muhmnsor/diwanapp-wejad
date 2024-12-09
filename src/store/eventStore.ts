@@ -6,7 +6,8 @@ export interface Event {
   date: string;
   time: string;
   location: string;
-  imageUrl: string;
+  imageUrl?: string;
+  image_url?: string;
   attendees: number;
   maxAttendees: number;
   eventType: "online" | "in-person";
