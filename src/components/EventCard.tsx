@@ -46,8 +46,8 @@ export const EventCard = ({
   console.log('Rendering EventCard with max-width:', '400px');
 
   return (
-    <div className="w-full flex justify-center">
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full w-full max-w-[400px]">
+    <div className="w-[400px] mx-auto">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
         <CardHeader className="p-4">
           <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
