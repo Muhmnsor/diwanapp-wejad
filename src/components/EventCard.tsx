@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays, MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface EventCardProps {
@@ -12,9 +12,24 @@ interface EventCardProps {
   imageUrl: string;
   eventType: "online" | "in-person";
   price: number | "free";
+  attendees?: number;
+  maxAttendees?: number;
 }
 
-export const EventCard = ({ id, title, date, location, imageUrl, eventType, price }: EventCardProps) => {
+export const EventCard = ({ 
+  id, 
+  title, 
+  date, 
+  location, 
+  imageUrl, 
+  eventType, 
+  price,
+  attendees = 0,
+  maxAttendees = 0
+}: EventCardProps) => {
+  const remainingSeats = maxAttendees - attendees;
+  const isAlmostFull = remainingSeats <= maxAttendees * 0.2; // Less than 20% seats remaining
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
       <img src={imageUrl} alt={title} className="w-full h-40 object-cover" />
@@ -38,6 +53,16 @@ export const EventCard = ({ id, title, date, location, imageUrl, eventType, pric
           <MapPin size={16} />
           <span>{location}</span>
         </div>
+        {maxAttendees > 0 && (
+          <div className={`flex items-center gap-2 ${isAlmostFull ? 'text-red-600' : 'text-green-600'} font-medium`}>
+            <Users size={16} />
+            <span>
+              {remainingSeats > 0 
+                ? `${remainingSeats} مقعد متبقي`
+                : 'اكتمل العدد'}
+            </span>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full" size="sm">
