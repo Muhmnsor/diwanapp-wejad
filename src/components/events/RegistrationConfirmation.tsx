@@ -8,6 +8,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import * as htmlToImage from "html-to-image";
 import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useState } from "react";
 
 interface RegistrationConfirmationProps {
   open: boolean;
@@ -33,14 +34,31 @@ export const RegistrationConfirmation = ({
   onPayment,
 }: RegistrationConfirmationProps) => {
   const { toast } = useToast();
+  const [isClosing, setIsClosing] = useState(false);
+  const [hasDownloaded, setHasDownloaded] = useState(false);
+
+  // Reset states when dialog opens
+  useEffect(() => {
+    if (open) {
+      setIsClosing(false);
+      setHasDownloaded(false);
+      console.log("Dialog opened, states reset");
+    }
+  }, [open]);
 
   const handleCloseDialog = () => {
-    if (window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ تأكد من حفظ التأكيد أولاً.")) {
-      onOpenChange(false);
+    if (!hasDownloaded) {
+      const shouldClose = window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ لم تقم بحفظ التأكيد بعد.");
+      if (!shouldClose) {
+        return;
+      }
     }
+    setIsClosing(true);
+    onOpenChange(false);
   };
 
   const handleSaveConfirmation = async () => {
+    console.log("Attempting to save confirmation");
     const element = document.getElementById("confirmation-card");
     if (element) {
       try {
@@ -50,10 +68,12 @@ export const RegistrationConfirmation = ({
         link.href = dataUrl;
         link.click();
         
+        setHasDownloaded(true);
         toast({
           title: "تم حفظ التأكيد بنجاح",
           description: "يمكنك الآن إغلاق النافذة",
         });
+        console.log("Confirmation saved successfully");
       } catch (error) {
         console.error("Error saving confirmation:", error);
         toast({
@@ -65,18 +85,22 @@ export const RegistrationConfirmation = ({
     }
   };
 
+  if (!open && !isClosing) {
+    return null;
+  }
+
   return (
     <Dialog 
       open={open}
       modal={true}
-      onOpenChange={(open) => {
-        if (!open) {
+      onOpenChange={(newOpen) => {
+        if (!newOpen) {
           handleCloseDialog();
         }
       }}
     >
       <DialogContent 
-        className="max-w-md"
+        className="max-w-md mx-auto"
         onPointerDownOutside={(e) => {
           e.preventDefault();
         }}
@@ -107,6 +131,7 @@ export const RegistrationConfirmation = ({
               size={200}
               level="H"
               includeMargin
+              className="border-8 border-white"
             />
           </div>
 
