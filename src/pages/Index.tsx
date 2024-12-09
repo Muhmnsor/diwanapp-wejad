@@ -87,9 +87,9 @@ const Index = () => {
         {events.length === 0 ? (
           <div className="text-center text-gray-500">لا توجد فعاليات حالياً</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {events.map((event) => (
-              <div key={event.id} className="w-full">
+              <div key={event.id} className="flex justify-center">
                 <EventCard 
                   {...event}
                   attendees={registrations[event.id] || 0}

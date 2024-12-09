@@ -29,9 +29,22 @@ export const EventCard = ({
 }: EventCardProps) => {
   const remainingSeats = max_attendees - attendees;
   const isAlmostFull = remainingSeats <= max_attendees * 0.2; // Less than 20% seats remaining
+  const isFull = remainingSeats <= 0;
+
+  const getRegistrationStatus = () => {
+    if (isFull) {
+      return { text: "اكتمل التسجيل", variant: "destructive" as const };
+    }
+    if (isAlmostFull) {
+      return { text: "التسجيل متاح - الأماكن محدودة", variant: "accent" as const };
+    }
+    return { text: "التسجيل متاح", variant: "secondary" as const };
+  };
+
+  const status = getRegistrationStatus();
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full max-w-[320px]">
       <img src={image_url} alt={title} className="w-full h-40 object-cover" />
       <CardHeader className="p-4">
         <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
@@ -54,13 +67,14 @@ export const EventCard = ({
           <span>{location}</span>
         </div>
         {max_attendees > 0 && (
-          <div className={`flex items-center gap-2 ${isAlmostFull ? 'text-red-600' : 'text-green-600'} font-medium`}>
-            <Users size={16} />
-            <span>
-              {remainingSeats > 0 
-                ? `${remainingSeats} مقعد متبقي`
-                : 'اكتمل العدد'}
-            </span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-gray-600 text-sm">
+              <Users size={16} />
+              <span>{attendees} من {max_attendees} مشارك</span>
+            </div>
+            <Badge variant={status.variant} className="w-full justify-center">
+              {status.text}
+            </Badge>
           </div>
         )}
       </CardContent>
