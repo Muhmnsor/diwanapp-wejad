@@ -31,13 +31,17 @@ export const RegistrationForm = ({
     const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setRegistrationId(uniqueId);
     
-    toast({
-      title: "تم التسجيل بنجاح",
-      description: "سيتم التواصل معك قريباً",
-    });
-
+    // أولاً نظهر نافذة التأكيد
     setShowConfirmation(true);
-    onSubmit();
+    
+    // ثم نظهر رسالة النجاح بعد تأخير بسيط
+    setTimeout(() => {
+      toast({
+        title: "تم التسجيل بنجاح",
+        description: "سيتم التواصل معك قريباً",
+      });
+      onSubmit();
+    }, 500);
   };
 
   const handlePayment = () => {
