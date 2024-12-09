@@ -72,46 +72,25 @@ export const RegistrationConfirmation = ({
     }
 
     try {
-      // Reset any transformations
-      const computedStyle = window.getComputedStyle(element);
-      const originalTransform = computedStyle.transform;
-      element.style.transform = 'none';
-
-      // Add a white background temporarily
+      // Set background color
       element.style.backgroundColor = '#ffffff';
-      
-      // Capture the image with improved settings
-      const dataUrl = await htmlToImage.toPng(element, {
-        quality: 1.0,
+
+      // Create a canvas with higher resolution
+      const canvas = await htmlToImage.toCanvas(element, {
         pixelRatio: 3,
-        cacheBust: true,
-        skipAutoScale: true,
-        style: {
-          transform: 'none',
-          margin: '0',
-          padding: '0',
-        },
-        filter: (node) => {
-          return !node.classList?.contains('no-export');
-        }
+        backgroundColor: '#ffffff'
       });
 
-      // Restore original styles
-      element.style.transform = originalTransform;
-      element.style.backgroundColor = '';
+      // Convert canvas to PNG
+      const dataUrl = canvas.toDataURL('image/png');
 
       // Create download link
       const link = document.createElement("a");
       link.download = `تأكيد-التسجيل-${eventTitle}.png`;
       link.href = dataUrl;
-      document.body.appendChild(link);
       
       console.log("Triggering download");
       link.click();
-      
-      // Cleanup
-      document.body.removeChild(link);
-      URL.revokeObjectURL(dataUrl);
       
       setHasDownloaded(true);
       toast({
