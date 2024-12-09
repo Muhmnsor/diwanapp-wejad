@@ -63,21 +63,21 @@ export const ShareButton = ({ title, text, url }: ShareButtonProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
-        <DropdownMenuItem onClick={() => handleShare('x')} className="gap-2 flex-row-reverse">
-          <X className="h-4 w-4 ml-2" />
+        <DropdownMenuItem onClick={() => handleShare('x')} className="flex items-center justify-end text-right">
           مشاركة على X
+          <X className="h-4 w-4 mr-2" />
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('facebook')} className="gap-2 flex-row-reverse">
-          <Facebook className="h-4 w-4 ml-2" />
+        <DropdownMenuItem onClick={() => handleShare('facebook')} className="flex items-center justify-end text-right">
           مشاركة على فيسبوك
+          <Facebook className="h-4 w-4 mr-2" />
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="gap-2 flex-row-reverse">
-          <MessageCircle className="h-4 w-4 ml-2" />
+        <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="flex items-center justify-end text-right">
           مشاركة عبر واتساب
+          <MessageCircle className="h-4 w-4 mr-2" />
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('copy')} className="gap-2 flex-row-reverse">
-          <Share2 className="h-4 w-4 ml-2" />
+        <DropdownMenuItem onClick={() => handleShare('copy')} className="flex items-center justify-end text-right">
           نسخ الرابط
+          <Share2 className="h-4 w-4 mr-2" />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
