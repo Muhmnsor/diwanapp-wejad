@@ -11,6 +11,8 @@ const mockEvents = [
     imageUrl: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
     eventType: "in-person" as const,
     price: 500,
+    attendees: 80,
+    maxAttendees: 100,
   },
   {
     id: "2",
@@ -20,6 +22,8 @@ const mockEvents = [
     imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
     eventType: "online" as const,
     price: "free" as const,
+    attendees: 45,
+    maxAttendees: 50,
   },
   {
     id: "3",
@@ -29,6 +33,8 @@ const mockEvents = [
     imageUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
     eventType: "in-person" as const,
     price: 100,
+    attendees: 20,
+    maxAttendees: 200,
   },
 ];
 
@@ -45,6 +51,8 @@ const Index = () => {
       imageUrl: event.imageUrl,
       eventType: event.eventType,
       price: event.price,
+      attendees: event.attendees,
+      maxAttendees: event.maxAttendees,
     }))
   ];
 
