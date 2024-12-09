@@ -35,7 +35,7 @@ const EventDetails = () => {
       attendees: 150,
       maxAttendees: 200,
       eventType: "in-person" as const,
-      price: 500
+      price: 500 // Changed from "500" to 500 (number)
     },
     {
       id: "2",
@@ -48,7 +48,7 @@ const EventDetails = () => {
       attendees: 50,
       maxAttendees: 100,
       eventType: "online" as const,
-      price: "free"
+      price: "free" as const
     },
     {
       id: "3",
@@ -61,7 +61,7 @@ const EventDetails = () => {
       attendees: 200,
       maxAttendees: 300,
       eventType: "in-person" as const,
-      price: 100
+      price: 100 // Changed from "100" to 100 (number)
     },
   ];
 
