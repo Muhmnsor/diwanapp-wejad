@@ -72,7 +72,6 @@ export const RegistrationConfirmation = ({
       open={open}
       modal={true}
       onOpenChange={(open) => {
-        // منع الإغلاق التلقائي تماماً
         if (!open) {
           handleCloseDialog();
         }
@@ -91,9 +90,10 @@ export const RegistrationConfirmation = ({
         }}
       >
         <DialogHeader>
-          <DialogTitle className="text-center mb-4">تأكيد التسجيل</DialogTitle>
-          <DialogDescription className="text-center">
-            يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق
+          <DialogTitle className="text-center mb-2">تم التسجيل بنجاح!</DialogTitle>
+          <DialogDescription className="text-center space-y-2">
+            <p>سيتم التواصل معك قريباً</p>
+            <p className="font-medium">يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق</p>
           </DialogDescription>
         </DialogHeader>
         
