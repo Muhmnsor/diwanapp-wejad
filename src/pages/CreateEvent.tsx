@@ -47,9 +47,18 @@ const CreateEvent = () => {
   const onSubmit = (data: EventFormData) => {
     console.log("Form submitted:", data);
     
+    // Create event object with all required properties
     const eventData: Event = {
-      ...data,
-      attendees: 0,
+      title: data.title,
+      description: data.description,
+      date: data.date,
+      time: data.time,
+      location: data.location,
+      imageUrl: data.imageUrl,
+      eventType: data.eventType,
+      price: data.price,
+      maxAttendees: data.maxAttendees,
+      attendees: 0, // Initialize with 0 attendees
     };
     
     addEvent(eventData);
