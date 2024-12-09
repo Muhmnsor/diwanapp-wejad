@@ -4,7 +4,7 @@ import { Logo } from "@/components/Logo";
 interface ConfirmationCardProps {
   eventTitle: string;
   registrationId: string;
-  formData: {
+  formData?: {
     name: string;
     email: string;
     phone: string;
