@@ -17,35 +17,10 @@ interface ShareButtonProps {
 export const ShareButton = ({ title, text, url }: ShareButtonProps) => {
   const { toast } = useToast();
   
-  const handleShare = async (method: 'native' | 'copy' | 'x' | 'facebook' | 'whatsapp') => {
+  const handleShare = async (method: 'copy' | 'x' | 'facebook' | 'whatsapp') => {
     const shareText = `${title}\n${text}\n`;
     
     switch (method) {
-      case 'native':
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title,
-              text,
-              url,
-            });
-            toast({
-              title: "تمت المشاركة بنجاح",
-              description: "تم مشاركة الفعالية",
-            });
-          } catch (error) {
-            if ((error as Error).name !== 'AbortError') {
-              console.error('Error sharing:', error);
-              toast({
-                title: "حدث خطأ",
-                description: "لم نتمكن من مشاركة الفعالية",
-                variant: "destructive",
-              });
-            }
-          }
-        }
-        break;
-      
       case 'copy':
         try {
           await navigator.clipboard.writeText(url);
@@ -88,12 +63,6 @@ export const ShareButton = ({ title, text, url }: ShareButtonProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {navigator.share && (
-          <DropdownMenuItem onClick={() => handleShare('native')} className="gap-2">
-            <Share2 className="h-4 w-4" />
-            مشاركة عبر الجهاز
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem onClick={() => handleShare('x')} className="gap-2">
           <X className="h-4 w-4" />
           مشاركة على X
