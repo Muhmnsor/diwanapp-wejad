@@ -56,27 +56,27 @@ export const ShareButton = ({ title, text, url }: ShareButtonProps) => {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu dir="rtl">
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
           <Share2 className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => handleShare('x')} className="gap-2">
-          <X className="h-4 w-4" />
+      <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuItem onClick={() => handleShare('x')} className="gap-2 flex-row-reverse">
+          <X className="h-4 w-4 ml-2" />
           مشاركة على X
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('facebook')} className="gap-2">
-          <Facebook className="h-4 w-4" />
+        <DropdownMenuItem onClick={() => handleShare('facebook')} className="gap-2 flex-row-reverse">
+          <Facebook className="h-4 w-4 ml-2" />
           مشاركة على فيسبوك
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="gap-2">
-          <MessageCircle className="h-4 w-4" />
+        <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="gap-2 flex-row-reverse">
+          <MessageCircle className="h-4 w-4 ml-2" />
           مشاركة عبر واتساب
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('copy')} className="gap-2">
-          <Share2 className="h-4 w-4" />
+        <DropdownMenuItem onClick={() => handleShare('copy')} className="gap-2 flex-row-reverse">
+          <Share2 className="h-4 w-4 ml-2" />
           نسخ الرابط
         </DropdownMenuItem>
       </DropdownMenuContent>
