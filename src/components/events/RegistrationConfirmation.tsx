@@ -121,6 +121,7 @@ export const RegistrationConfirmation = ({
           eventDate={eventDate}
           eventTime={eventTime}
           eventLocation={eventLocation}
+          onSave={handleSaveConfirmation}
         />
 
         <ConfirmationActions
