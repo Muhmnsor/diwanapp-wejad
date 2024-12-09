@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { EventFormFields } from "./EventFormFields";
 import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EditEventDialogProps {
   event: CustomEvent;
@@ -59,12 +60,18 @@ export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEvent
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Submitting form data:', formData);
     
     try {
-      onSave(formData);
+      // تحديث الصورة في قاعدة البيانات
+      const updateData = {
+        ...formData,
+        image_url: formData.imageUrl || formData.image_url
+      };
+      
+      onSave(updateData);
       toast.success("تم تحديث الفعالية بنجاح");
     } catch (error) {
       console.error('Error updating event:', error);
@@ -74,33 +81,35 @@ export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEvent
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
         <DialogHeader>
           <DialogTitle>تعديل الفعالية</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <EventFormFields 
-            formData={formData} 
-            setFormData={setFormData}
-            onImageChange={handleImageUpload}
-          />
-          <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isUploading}
-            >
-              إلغاء
-            </Button>
-            <Button 
-              type="submit"
-              disabled={isUploading}
-            >
-              {isUploading ? "جاري الرفع..." : "حفظ التغييرات"}
-            </Button>
-          </div>
-        </form>
+        <ScrollArea className="h-[calc(90vh-120px)] pr-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <EventFormFields 
+              formData={formData} 
+              setFormData={setFormData}
+              onImageChange={handleImageUpload}
+            />
+            <div className="flex justify-end gap-2 sticky bottom-0 bg-background py-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={isUploading}
+              >
+                إلغاء
+              </Button>
+              <Button 
+                type="submit"
+                disabled={isUploading}
+              >
+                {isUploading ? "جاري الرفع..." : "حفظ التغييرات"}
+              </Button>
+            </div>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

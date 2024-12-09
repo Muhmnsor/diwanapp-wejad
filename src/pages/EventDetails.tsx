@@ -132,6 +132,8 @@ const EventDetails = () => {
 
   const handleSaveEdit = async (updatedEvent: Event) => {
     try {
+      console.log('Saving updated event:', updatedEvent);
+      
       const { error } = await supabase
         .from('events')
         .update({
@@ -143,6 +145,7 @@ const EventDetails = () => {
           event_type: updatedEvent.eventType,
           max_attendees: updatedEvent.maxAttendees,
           price: updatedEvent.price === "free" ? null : updatedEvent.price,
+          image_url: updatedEvent.imageUrl || updatedEvent.image_url,
         })
         .eq('id', id);
 
