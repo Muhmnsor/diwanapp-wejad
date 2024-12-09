@@ -5,10 +5,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { QRCodeSVG } from "qrcode.react";
 import * as htmlToImage from "html-to-image";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
+import { ConfirmationCard } from "./ConfirmationCard";
+import { ConfirmationActions } from "./ConfirmationActions";
 
 interface RegistrationConfirmationProps {
   open: boolean;
@@ -37,7 +38,6 @@ export const RegistrationConfirmation = ({
   const [isClosing, setIsClosing] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
 
-  // Reset states when dialog opens
   useEffect(() => {
     if (open) {
       setIsClosing(false);
@@ -119,43 +119,18 @@ export const RegistrationConfirmation = ({
           </div>
         </DialogHeader>
         
-        <div id="confirmation-card" className="bg-white p-6 rounded-lg space-y-4">
-          <div className="text-center space-y-2">
-            <h3 className="font-bold text-xl">{eventTitle}</h3>
-            <div className="text-muted-foreground">رقم التسجيل: {registrationId}</div>
-          </div>
-          
-          <div className="flex justify-center py-4">
-            <QRCodeSVG
-              value={registrationId}
-              size={200}
-              level="H"
-              includeMargin
-              className="border-8 border-white"
-            />
-          </div>
+        <ConfirmationCard
+          eventTitle={eventTitle}
+          registrationId={registrationId}
+          formData={formData}
+        />
 
-          <div className="space-y-2">
-            <div className="font-semibold">معلومات المسجل:</div>
-            <div>الاسم: {formData.name}</div>
-            <div>البريد الإلكتروني: {formData.email}</div>
-            <div>رقم الجوال: {formData.phone}</div>
-          </div>
-        </div>
-
-        <div className="flex gap-2 mt-4">
-          <Button onClick={handleSaveConfirmation} className="flex-1">
-            حفظ التأكيد
-          </Button>
-          {eventPrice !== "free" && (
-            <Button onClick={onPayment} variant="secondary" className="flex-1">
-              الانتقال للدفع
-            </Button>
-          )}
-          <Button onClick={handleCloseDialog} variant="outline" className="flex-1">
-            إغلاق
-          </Button>
-        </div>
+        <ConfirmationActions
+          onSave={handleSaveConfirmation}
+          onClose={handleCloseDialog}
+          onPayment={onPayment}
+          showPayment={eventPrice !== "free"}
+        />
       </DialogContent>
     </Dialog>
   );
