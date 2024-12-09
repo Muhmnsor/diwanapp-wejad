@@ -14,6 +14,8 @@ interface EventCardProps {
   price: number | null;
   attendees?: number;
   max_attendees?: number;
+  registration_start_date?: string | null;
+  registration_end_date?: string | null;
 }
 
 export const EventCard = ({ 
@@ -25,19 +27,35 @@ export const EventCard = ({
   event_type, 
   price,
   attendees = 0,
-  max_attendees = 0
+  max_attendees = 0,
+  registration_start_date,
+  registration_end_date
 }: EventCardProps) => {
   const remainingSeats = max_attendees - attendees;
   const isAlmostFull = remainingSeats <= max_attendees * 0.2;
   const isFull = remainingSeats <= 0;
 
   const getRegistrationStatus = () => {
+    const now = new Date();
+    const startDate = registration_start_date ? new Date(registration_start_date) : null;
+    const endDate = registration_end_date ? new Date(registration_end_date) : null;
+
     if (isFull) {
       return { text: "اكتمل التسجيل", variant: "destructive" as const };
     }
+
+    if (startDate && now < startDate) {
+      return { text: "لم يبدأ التسجيل", variant: "secondary" as const };
+    }
+
+    if (endDate && now > endDate) {
+      return { text: "انتهى التسجيل", variant: "destructive" as const };
+    }
+
     if (isAlmostFull) {
       return { text: "التسجيل متاح - الأماكن محدودة", variant: "accent" as const };
     }
+
     return { text: "التسجيل متاح", variant: "secondary" as const };
   };
 

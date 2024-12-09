@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useState } from "react";
+import { RegistrationPeriodFields } from "@/components/events/RegistrationPeriodFields";
 
 const eventSchema = z.object({
   title: z.string().min(1, "عنوان الفعالية مطلوب"),
@@ -25,6 +26,8 @@ const eventSchema = z.object({
   priceType: z.enum(["free", "paid"]),
   priceAmount: z.number().min(0).optional(),
   maxAttendees: z.number().min(1, "عدد المقاعد مطلوب"),
+  registration_start_date: z.string().optional(),
+  registration_end_date: z.string().optional(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -46,6 +49,8 @@ const CreateEvent = () => {
       priceType: "free",
       priceAmount: 0,
       maxAttendees: 1,
+      registration_start_date: "",
+      registration_end_date: "",
     },
   });
 
@@ -90,6 +95,8 @@ const CreateEvent = () => {
         event_type: data.eventType,
         price: data.priceType === "free" ? null : data.priceAmount,
         max_attendees: data.maxAttendees,
+        registration_start_date: data.registration_start_date || null,
+        registration_end_date: data.registration_end_date || null,
       };
 
       console.log("Inserting event data into Supabase:", eventData);
@@ -307,6 +314,8 @@ const CreateEvent = () => {
                 </FormItem>
               )}
             />
+
+            <RegistrationPeriodFields form={form} />
 
             <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" onClick={() => navigate("/")}>
