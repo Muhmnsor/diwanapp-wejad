@@ -3,6 +3,8 @@ import { CalendarDays, MapPin, Clock, Download } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { exportCardAsImage } from "@/utils/cardExport";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ConfirmationCardProps {
   eventTitle: string;
@@ -27,6 +29,32 @@ export const ConfirmationCard = ({
   eventLocation,
   onSave
 }: ConfirmationCardProps) => {
+  const { toast } = useToast();
+
+  const handleSaveCard = async () => {
+    console.log("Save card button clicked");
+    const success = await exportCardAsImage(
+      "confirmation-card",
+      `تأكيد-التسجيل-${eventTitle}.png`
+    );
+
+    if (success) {
+      console.log("Card saved successfully");
+      toast({
+        title: "تم حفظ البطاقة بنجاح",
+        description: "تم تنزيل البطاقة على جهازك",
+      });
+      if (onSave) onSave();
+    } else {
+      console.log("Failed to save card");
+      toast({
+        title: "حدث خطأ",
+        description: "لم نتمكن من حفظ البطاقة، يرجى المحاولة مرة أخرى",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4" dir="rtl">
       <Card id="confirmation-card" className="bg-white p-6 space-y-6">
@@ -81,7 +109,7 @@ export const ConfirmationCard = ({
       </Card>
 
       <Button 
-        onClick={onSave} 
+        onClick={handleSaveCard} 
         className="w-full gap-2"
         variant="secondary"
         size="lg"

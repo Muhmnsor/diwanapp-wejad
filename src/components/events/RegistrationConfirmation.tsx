@@ -5,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import * as htmlToImage from "html-to-image";
 import { useToast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
@@ -63,49 +62,8 @@ export const RegistrationConfirmation = ({
     onOpenChange(false);
   };
 
-  const handleSaveConfirmation = async () => {
-    console.log("Attempting to save confirmation");
-    const element = document.getElementById("confirmation-card");
-    if (!element) {
-      console.error("Confirmation card element not found");
-      return;
-    }
-
-    try {
-      // Set background color
-      element.style.backgroundColor = '#ffffff';
-
-      // Create a canvas with higher resolution
-      const canvas = await htmlToImage.toCanvas(element, {
-        pixelRatio: 3,
-        backgroundColor: '#ffffff'
-      });
-
-      // Convert canvas to PNG
-      const dataUrl = canvas.toDataURL('image/png');
-
-      // Create download link
-      const link = document.createElement("a");
-      link.download = `تأكيد-التسجيل-${eventTitle}.png`;
-      link.href = dataUrl;
-      
-      console.log("Triggering download");
-      link.click();
-      
-      setHasDownloaded(true);
-      toast({
-        title: "تم حفظ التأكيد بنجاح",
-        description: "يمكنك الآن إغلاق النافذة",
-      });
-      console.log("Confirmation saved successfully");
-    } catch (error) {
-      console.error("Error saving confirmation:", error);
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء حفظ التأكيد",
-        variant: "destructive",
-      });
-    }
+  const handleSaveConfirmation = () => {
+    setHasDownloaded(true);
   };
 
   return (
