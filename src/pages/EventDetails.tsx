@@ -4,15 +4,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { EventDetailsView } from "@/components/events/EventDetailsView";
 import { EventRegistrationDialog } from "@/components/events/EventRegistrationDialog";
-import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
-import { createCalendarUrl } from "@/utils/calendarUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Event } from "@/store/eventStore";
 import { useAuthStore } from "@/store/authStore";
-import { EventDashboard } from "@/components/admin/EventDashboard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditEventDialog } from "@/components/events/EditEventDialog";
+import { EventLoadingState } from "@/components/events/EventLoadingState";
+import { EventNotFound } from "@/components/events/EventNotFound";
+import { EventAdminView } from "@/components/events/EventAdminView";
+import { handleAddToCalendar } from "@/components/events/EventCalendarHelper";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -75,40 +75,6 @@ const EventDetails = () => {
     },
   });
 
-  const handleAddToCalendar = () => {
-    if (!event) return;
-
-    try {
-      const dateStr = arabicToEnglishNum(event.date);
-      const timeStr = arabicToEnglishNum(event.time);
-      
-      console.log("Converting date:", dateStr, timeStr);
-      const dateString = convertArabicDate(dateStr, timeStr);
-      console.log("Parsed date string:", dateString);
-
-      const eventDate = new Date(dateString);
-      const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000));
-
-      if (isNaN(eventDate.getTime())) {
-        throw new Error('Invalid date conversion');
-      }
-
-      const calendarEvent = {
-        title: event.title,
-        description: event.description,
-        location: event.location,
-        startDate: eventDate.toISOString().replace(/[-:]/g, '').split('.')[0],
-        endDate: endDate.toISOString().replace(/[-:]/g, '').split('.')[0],
-      };
-
-      const calendarUrl = createCalendarUrl(calendarEvent);
-      window.open(calendarUrl, '_blank');
-    } catch (error) {
-      console.error('Error creating calendar event:', error);
-      toast.error("لم نتمكن من إضافة الفعالية إلى التقويم");
-    }
-  };
-
   const handleEdit = () => {
     setIsEditDialogOpen(true);
   };
@@ -163,66 +129,37 @@ const EventDetails = () => {
   const isLoading = eventLoading || registrationsLoading;
 
   if (isLoading) {
-    return (
-      <div dir="rtl">
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center min-h-[400px]">
-            <div className="text-xl">جاري تحميل تفاصيل الفعالية...</div>
-          </div>
-        </div>
-      </div>
-    );
+    return <EventLoadingState />;
   }
 
   if (!event || !id) {
-    return (
-      <div dir="rtl">
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">لم يتم العثور على الفعالية</h1>
-          </div>
-        </div>
-      </div>
-    );
+    return <EventNotFound />;
   }
+
+  const eventWithAttendees = {
+    ...event,
+    attendees: registrationsCount,
+  };
 
   return (
     <div dir="rtl">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         {user?.isAdmin ? (
-          <Tabs defaultValue="details" className="mb-8">
-            <TabsList className="mb-4">
-              <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
-              <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-            </TabsList>
-            <TabsContent value="details">
-              <EventDetailsView
-                event={{
-                  ...event,
-                  attendees: registrationsCount,
-                }}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onAddToCalendar={handleAddToCalendar}
-                onRegister={() => setIsRegistrationOpen(true)}
-              />
-            </TabsContent>
-            <TabsContent value="dashboard">
-              <EventDashboard eventId={id} />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <EventDetailsView
-            event={{
-              ...event,
-              attendees: registrationsCount,
-            }}
+          <EventAdminView
+            event={eventWithAttendees}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            onAddToCalendar={handleAddToCalendar}
+            onAddToCalendar={() => handleAddToCalendar(event)}
+            onRegister={() => setIsRegistrationOpen(true)}
+            id={id}
+          />
+        ) : (
+          <EventDetailsView
+            event={eventWithAttendees}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddToCalendar={() => handleAddToCalendar(event)}
             onRegister={() => setIsRegistrationOpen(true)}
           />
         )}
