@@ -1,68 +1,56 @@
 import { Navigation } from "@/components/Navigation";
 import { useParams, useNavigate } from "react-router-dom";
-import { useEventStore, Event as CustomEvent } from "@/store/eventStore";
 import { useState } from "react";
 import { toast } from "sonner";
-import { EditEventDialog } from "@/components/events/EditEventDialog";
 import { EventDetailsView } from "@/components/events/EventDetailsView";
 import { EventRegistrationDialog } from "@/components/events/EventRegistrationDialog";
 import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
 import { createCalendarUrl } from "@/utils/calendarUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const storeEvents = useEventStore((state) => state.events);
-  const updateEvent = useEventStore((state) => state.updateEvent);
-  const deleteEvent = useEventStore((state) => state.deleteEvent);
 
-  const mockEvents = [
-    {
-      id: "1",
-      title: "مؤتمر التكنولوجيا السنوي",
-      description: "انضم إلينا في مؤتمر التكنولوجيا السنوي حيث نستكشف أحدث التقنيات والاتجاهات في عالم التكنولوجيا. سيتضمن المؤتمر متحدثين بارزين، وورش عمل تفاعلية، وفرص للتواصل مع خبراء الصناعة.",
-      date: "١٥ مايو ٢٠٢٤",
-      time: "٢:٠٠ مساءً",
-      location: "فندق الريتز كارلتون، الرياض",
-      imageUrl: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
-      attendees: 150,
-      maxAttendees: 200,
-      eventType: "in-person" as const,
-      price: 500
-    },
-    {
-      id: "2",
-      title: "ورشة عمل تطوير التطبيقات",
-      description: "ورشة عمل متخصصة في تطوير التطبيقات الحديثة باستخدام أحدث التقنيات والأدوات.",
-      date: "٢٠ مايو ٢٠٢٤",
-      time: "١٠:٠٠ صباحاً",
-      location: "منصة زوم",
-      imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
-      attendees: 50,
-      maxAttendees: 100,
-      eventType: "online" as const,
-      price: "free" as const
-    },
-    {
-      id: "3",
-      title: "معرض الفنون التشكيلية",
-      description: "معرض فني يجمع أعمال فنانين محليين وعالميين في مجال الفنون التشكيلية.",
-      date: "٢٥ مايو ٢٠٢٤",
-      time: "٤:٠٠ مساءً",
-      location: "الدمام",
-      imageUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80",
-      attendees: 200,
-      maxAttendees: 300,
-      eventType: "in-person" as const,
-      price: 100
-    },
-  ];
+  const { data: event, isLoading } = useQuery({
+    queryKey: ['event', id],
+    queryFn: async () => {
+      console.log('Fetching event details for ID:', id);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-  const event = id?.startsWith('dynamic-')
-    ? storeEvents[parseInt(id.replace('dynamic-', '')) - 1]
-    : mockEvents.find(event => event.id === id);
+      if (error) {
+        console.error('Error fetching event:', error);
+        throw error;
+      }
+
+      console.log('Fetched event details:', data);
+      return data;
+    },
+  });
+
+  const { data: registrationsCount = 0 } = useQuery({
+    queryKey: ['registrations', id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', id);
+
+      if (error) {
+        console.error('Error fetching registrations count:', error);
+        throw error;
+      }
+
+      console.log('Fetched registrations count:', count);
+      return count;
+    },
+  });
 
   const handleAddToCalendar = () => {
     if (!event) return;
@@ -98,34 +86,27 @@ const EventDetails = () => {
     }
   };
 
-  const handleDeleteEvent = () => {
-    if (id?.startsWith('dynamic-')) {
-      const index = parseInt(id.replace('dynamic-', '')) - 1;
-      deleteEvent(index);
-      toast.success("تم حذف الفعالية بنجاح");
-      navigate('/');
-    }
-  };
-
-  const handleUpdateEvent = (updatedEvent: CustomEvent) => {
-    console.log('Handling update event:', updatedEvent);
-    
-    if (id?.startsWith('dynamic-')) {
-      const index = parseInt(id.replace('dynamic-', '')) - 1;
-      console.log('Updating event at index:', index);
-      
-      updateEvent(index, updatedEvent);
-      toast.success("تم تحديث الفعالية بنجاح");
-      setIsEditDialogOpen(false);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div dir="rtl">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-xl">جاري تحميل تفاصيل الفعالية...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!event) {
     return (
-      <div dir="rtl" className="container mx-auto px-4 py-8">
+      <div dir="rtl">
         <Navigation />
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">لم يتم العثور على الفعالية</h1>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">لم يتم العثور على الفعالية</h1>
+          </div>
         </div>
       </div>
     );
@@ -136,18 +117,14 @@ const EventDetails = () => {
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <EventDetailsView
-          event={event}
-          onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={handleDeleteEvent}
+          event={{
+            ...event,
+            attendees: registrationsCount,
+          }}
+          onEdit={() => {}}
+          onDelete={() => {}}
           onAddToCalendar={handleAddToCalendar}
           onRegister={() => setIsRegistrationOpen(true)}
-        />
-
-        <EditEventDialog 
-          event={event}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          onSave={handleUpdateEvent}
         />
 
         <EventRegistrationDialog
