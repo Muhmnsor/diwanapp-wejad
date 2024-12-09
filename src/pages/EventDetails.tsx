@@ -121,6 +121,11 @@ const EventDetails = () => {
     if (id?.startsWith('dynamic-')) {
       const index = parseInt(id.replace('dynamic-', '')) - 1;
       updateEvent(index, updatedEvent);
+      toast.success("تم تحديث الفعالية بنجاح");
+      setIsEditDialogOpen(false);
+      
+      // Force re-render by updating state
+      window.location.reload();
     }
   };
 
