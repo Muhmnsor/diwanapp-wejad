@@ -15,7 +15,7 @@ interface RegistrationFormProps {
 
 export const RegistrationForm = ({ 
   eventTitle, 
-  eventPrice, 
+  eventPrice,
   onSubmit 
 }: RegistrationFormProps) => {
   const { toast } = useToast();
@@ -94,7 +94,6 @@ export const RegistrationForm = ({
       
       setRegistrationId(uniqueId);
       setShowConfirmation(true);
-      onSubmit();
       
       console.log('Registration successful:', uniqueId);
     } catch (error) {

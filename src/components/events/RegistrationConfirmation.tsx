@@ -85,14 +85,9 @@ export const RegistrationConfirmation = ({
     }
   };
 
-  if (!open && !isClosing) {
-    return null;
-  }
-
   return (
     <Dialog 
-      open={open}
-      modal={true}
+      open={open} 
       onOpenChange={(newOpen) => {
         if (!newOpen) {
           handleCloseDialog();
@@ -101,15 +96,9 @@ export const RegistrationConfirmation = ({
     >
       <DialogContent 
         className="max-w-md mx-auto"
-        onPointerDownOutside={(e) => {
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          e.preventDefault();
-        }}
-        onInteractOutside={(e) => {
-          e.preventDefault();
-        }}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-center">تم التسجيل بنجاح!</DialogTitle>
