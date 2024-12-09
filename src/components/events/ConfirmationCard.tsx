@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarDays, MapPin, Clock } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 interface ConfirmationCardProps {
   eventTitle: string;
@@ -29,6 +30,15 @@ export const ConfirmationCard = ({
         <p className="text-sm text-muted-foreground">رقم التسجيل: {registrationId.split('-').pop()}</p>
       </div>
 
+      <div className="flex justify-center py-4">
+        <QRCodeSVG
+          value={registrationId}
+          size={150}
+          level="H"
+          includeMargin={true}
+        />
+      </div>
+
       <div className="space-y-3">
         {eventDate && (
           <div className="flex items-center gap-2 text-sm">
@@ -50,18 +60,6 @@ export const ConfirmationCard = ({
             <span>{eventLocation}</span>
           </div>
         )}
-      </div>
-
-      <div className="border-t pt-4 space-y-2">
-        <div className="text-sm">
-          <span className="font-medium">الاسم:</span> {formData.name}
-        </div>
-        <div className="text-sm">
-          <span className="font-medium">البريد الإلكتروني:</span> {formData.email}
-        </div>
-        <div className="text-sm">
-          <span className="font-medium">رقم الجوال:</span> {formData.phone}
-        </div>
       </div>
     </Card>
   );
