@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 interface RegistrationFormProps {
@@ -69,12 +70,15 @@ export const RegistrationForm = ({ eventTitle, eventPrice, onSubmit }: Registrat
   };
 
   const handlePayment = () => {
-    // Here you would integrate with your payment gateway
-    // For now, we'll just show a message
     toast({
       title: "جاري تحويلك لبوابة الدفع",
       description: "يرجى الانتظار...",
     });
+  };
+
+  const handleCloseDialog = () => {
+    // Only close if user explicitly clicks close button
+    setShowConfirmation(false);
   };
 
   return (
@@ -122,10 +126,13 @@ export const RegistrationForm = ({ eventTitle, eventPrice, onSubmit }: Registrat
         <Button type="submit" className="w-full">تأكيد التسجيل</Button>
       </form>
 
-      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+      <Dialog open={showConfirmation} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center mb-4">تأكيد التسجيل</DialogTitle>
+            <DialogDescription className="text-center">
+              يرجى حفظ هذا التأكيد أو تصويره
+            </DialogDescription>
           </DialogHeader>
           
           <div id="confirmation-card" className="bg-white p-6 rounded-lg space-y-4">
