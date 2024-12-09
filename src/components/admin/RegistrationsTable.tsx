@@ -17,13 +17,26 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
   
   // Ensure registrations is an array and convert objects to safe string representations
   const registrationsArray = Array.isArray(registrations) 
-    ? registrations.map(reg => ({
-        ...reg,
-        // Ensure created_at is a string before trying to convert it
-        created_at: typeof reg.created_at === 'string' 
-          ? new Date(reg.created_at).toLocaleString('ar-SA') 
-          : ''
-      }))
+    ? registrations.map(reg => {
+        // Convert the date first
+        let formattedDate = '';
+        try {
+          if (reg.created_at) {
+            formattedDate = new Date(reg.created_at).toLocaleString('ar-SA');
+          }
+        } catch (error) {
+          console.error('Error formatting date:', error);
+        }
+
+        return {
+          id: String(reg.id || ''),
+          registration_number: String(reg.registration_number || ''),
+          name: String(reg.name || ''),
+          email: String(reg.email || ''),
+          phone: String(reg.phone || ''),
+          created_at: formattedDate
+        };
+      })
     : [];
 
   console.log('Processed registrations array:', registrationsArray);
@@ -43,11 +56,11 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
         <TableBody>
           {registrationsArray.map((reg) => (
             <TableRow key={reg.id}>
-              <TableCell>{String(reg.registration_number || '')}</TableCell>
-              <TableCell>{String(reg.name || '')}</TableCell>
-              <TableCell>{String(reg.email || '')}</TableCell>
-              <TableCell>{String(reg.phone || '')}</TableCell>
-              <TableCell>{String(reg.created_at || '')}</TableCell>
+              <TableCell>{reg.registration_number}</TableCell>
+              <TableCell>{reg.name}</TableCell>
+              <TableCell>{reg.email}</TableCell>
+              <TableCell>{reg.phone}</TableCell>
+              <TableCell>{reg.created_at}</TableCell>
             </TableRow>
           ))}
         </TableBody>
