@@ -71,6 +71,12 @@ export const RegistrationConfirmation = ({
     <Dialog 
       open={open}
       modal={true}
+      onOpenChange={(open) => {
+        // منع الإغلاق التلقائي تماماً
+        if (!open) {
+          handleCloseDialog();
+        }
+      }}
     >
       <DialogContent 
         className="max-w-md"
