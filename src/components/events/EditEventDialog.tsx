@@ -63,15 +63,23 @@ export const EditEventDialog = ({ event, open, onOpenChange, onSave }: EditEvent
           <div>
             <label className="text-sm font-medium">التاريخ</label>
             <Input
+              type="date"
               value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              onChange={(e) => {
+                console.log('Selected date:', e.target.value);
+                setFormData({ ...formData, date: e.target.value });
+              }}
             />
           </div>
           <div>
             <label className="text-sm font-medium">الوقت</label>
             <Input
+              type="time"
               value={formData.time}
-              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+              onChange={(e) => {
+                console.log('Selected time:', e.target.value);
+                setFormData({ ...formData, time: e.target.value });
+              }}
             />
           </div>
           <div>
