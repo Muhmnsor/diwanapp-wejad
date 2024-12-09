@@ -50,6 +50,11 @@ export const RegistrationConfirmation = ({
         link.download = `تأكيد-التسجيل-${eventTitle}.png`;
         link.href = dataUrl;
         link.click();
+        
+        toast({
+          title: "تم حفظ التأكيد بنجاح",
+          description: "يمكنك الآن إغلاق النافذة",
+        });
       } catch (error) {
         console.error("Error saving confirmation:", error);
         toast({
@@ -62,10 +67,16 @@ export const RegistrationConfirmation = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleCloseDialog}>
+    <Dialog 
+      open={open} 
+      onOpenChange={handleCloseDialog}
+    >
       <DialogContent 
-        className="max-w-md" 
+        className="max-w-md"
         onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
           e.preventDefault();
         }}
       >
