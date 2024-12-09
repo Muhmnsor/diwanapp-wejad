@@ -30,13 +30,16 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         .eq('id', eventId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching event:', error);
+        throw error;
+      }
       return data;
     }
   });
 
   // Fetch registrations
-  const { data: registrations, isLoading: registrationsLoading } = useQuery({
+  const { data: registrations = [], isLoading: registrationsLoading } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
       console.log('Fetching registrations for event:', eventId);
@@ -45,13 +48,21 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         .select('*')
         .eq('event_id', eventId);
 
-      if (error) throw error;
-      return data as Registration[];
+      if (error) {
+        console.error('Error fetching registrations:', error);
+        throw error;
+      }
+      
+      // Ensure we always return an array
+      return (data || []) as Registration[];
     }
   });
 
   const exportToExcel = async () => {
-    if (!registrations) return;
+    if (!registrations?.length) {
+      toast.error("لا يوجد بيانات للتصدير");
+      return;
+    }
     
     setIsExporting(true);
     try {
@@ -159,7 +170,7 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
                 </tr>
               </thead>
               <tbody>
-                {registrations?.map((reg) => (
+                {registrations.map((reg) => (
                   <tr key={reg.id} className="border-b">
                     <td className="p-2">{reg.registration_number}</td>
                     <td className="p-2">{reg.name}</td>
