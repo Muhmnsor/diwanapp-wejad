@@ -15,7 +15,7 @@ const EventDetails = () => {
   const navigate = useNavigate();
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
-  const { data: event, isLoading } = useQuery({
+  const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ['event', id],
     queryFn: async () => {
       console.log('Fetching event details for ID:', id);
@@ -50,7 +50,7 @@ const EventDetails = () => {
     },
   });
 
-  const { data: registrationsCount = 0 } = useQuery({
+  const { data: registrationsCount = 0, isLoading: registrationsLoading } = useQuery({
     queryKey: ['registrations', id],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -64,7 +64,7 @@ const EventDetails = () => {
       }
 
       console.log('Fetched registrations count:', count);
-      return count;
+      return count || 0;
     },
   });
 
@@ -101,6 +101,8 @@ const EventDetails = () => {
       toast.error("لم نتمكن من إضافة الفعالية إلى التقويم");
     }
   };
+
+  const isLoading = eventLoading || registrationsLoading;
 
   if (isLoading) {
     return (
