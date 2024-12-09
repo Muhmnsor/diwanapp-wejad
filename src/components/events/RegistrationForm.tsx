@@ -33,19 +33,18 @@ export const RegistrationForm = ({
 
   const checkExistingRegistration = async (email: string) => {
     console.log("Checking for existing registration...");
-    const { data: existingRegistrations, error } = await supabase
+    const { data, error } = await supabase
       .from('registrations')
       .select('id')
       .eq('event_id', eventId)
-      .eq('email', email)
-      .single();
+      .eq('email', email);
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (error) {
       console.error('Error checking registration:', error);
       throw error;
     }
 
-    return existingRegistrations;
+    return data && data.length > 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,9 +54,9 @@ export const RegistrationForm = ({
 
     try {
       // التحقق من وجود تسجيل سابق
-      const existingRegistration = await checkExistingRegistration(formData.email);
+      const hasExistingRegistration = await checkExistingRegistration(formData.email);
       
-      if (existingRegistration) {
+      if (hasExistingRegistration) {
         toast({
           variant: "destructive",
           title: "لا يمكن إكمال التسجيل",
