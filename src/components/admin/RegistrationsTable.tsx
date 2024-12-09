@@ -104,6 +104,11 @@ export const RegistrationsTable = ({ registrations, eventTitle }: RegistrationsT
             <ConfirmationCard
               eventTitle={eventTitle}
               registrationId={selectedRegistration.registration_number}
+              formData={{
+                name: selectedRegistration.name,
+                email: selectedRegistration.email,
+                phone: selectedRegistration.phone
+              }}
             />
           )}
         </DialogContent>

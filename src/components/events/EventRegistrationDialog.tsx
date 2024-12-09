@@ -11,6 +11,9 @@ interface EventRegistrationDialogProps {
   onOpenChange: (open: boolean) => void;
   eventTitle: string;
   eventPrice: number | "free";
+  eventDate: string;
+  eventTime: string;
+  eventLocation: string;
 }
 
 export const EventRegistrationDialog = ({
@@ -18,6 +21,9 @@ export const EventRegistrationDialog = ({
   onOpenChange,
   eventTitle,
   eventPrice,
+  eventDate,
+  eventTime,
+  eventLocation,
 }: EventRegistrationDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -28,6 +34,9 @@ export const EventRegistrationDialog = ({
         <RegistrationForm
           eventTitle={eventTitle}
           eventPrice={eventPrice}
+          eventDate={eventDate}
+          eventTime={eventTime}
+          eventLocation={eventLocation}
           onSubmit={() => onOpenChange(false)}
         />
       </DialogContent>
