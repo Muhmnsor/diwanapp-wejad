@@ -13,22 +13,28 @@ interface RegistrationsTableProps {
 }
 
 export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) => {
-  console.log('Registrations received in table:', registrations);
+  console.log('Raw registrations received:', registrations);
   
   // Ensure registrations is an array and convert objects to safe string representations
   const registrationsArray = Array.isArray(registrations) 
     ? registrations.map(reg => {
+        console.log('Processing registration:', reg);
+        
         // Convert the date first
         let formattedDate = '';
         try {
           if (reg.created_at) {
-            formattedDate = new Date(reg.created_at).toLocaleString('ar-SA');
+            const date = new Date(reg.created_at);
+            formattedDate = date.toLocaleString('ar-SA');
+            console.log('Formatted date:', formattedDate);
           }
         } catch (error) {
           console.error('Error formatting date:', error);
+          formattedDate = '';
         }
 
-        return {
+        // Create a new object with all string values
+        const processedReg = {
           id: String(reg.id || ''),
           registration_number: String(reg.registration_number || ''),
           name: String(reg.name || ''),
@@ -36,10 +42,13 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
           phone: String(reg.phone || ''),
           created_at: formattedDate
         };
+        
+        console.log('Processed registration:', processedReg);
+        return processedReg;
       })
     : [];
 
-  console.log('Processed registrations array:', registrationsArray);
+  console.log('Final registrations array:', registrationsArray);
 
   return (
     <div className="rounded-md border">
@@ -56,11 +65,11 @@ export const RegistrationsTable = ({ registrations }: RegistrationsTableProps) =
         <TableBody>
           {registrationsArray.map((reg) => (
             <TableRow key={reg.id}>
-              <TableCell>{reg.registration_number}</TableCell>
-              <TableCell>{reg.name}</TableCell>
-              <TableCell>{reg.email}</TableCell>
-              <TableCell>{reg.phone}</TableCell>
-              <TableCell>{reg.created_at}</TableCell>
+              <TableCell className="text-right">{reg.registration_number}</TableCell>
+              <TableCell className="text-right">{reg.name}</TableCell>
+              <TableCell className="text-right">{reg.email}</TableCell>
+              <TableCell className="text-right">{reg.phone}</TableCell>
+              <TableCell className="text-right">{reg.created_at}</TableCell>
             </TableRow>
           ))}
         </TableBody>
