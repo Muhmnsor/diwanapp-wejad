@@ -12,6 +12,7 @@ export const ConfirmationQR = ({ registrationId }: ConfirmationQRProps) => {
         size={150}
         level="H"
         includeMargin={true}
+        className="qr-code"
       />
     </div>
   );

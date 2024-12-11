@@ -20,6 +20,9 @@ export const exportCardAsImage = async (elementId: string, fileName: string): Pr
     clone.style.direction = 'rtl';
     document.body.appendChild(clone);
 
+    // Wait for QR code to be fully rendered
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Convert to canvas with high quality settings
     console.log("Converting to canvas");
     const canvas = await htmlToImage.toCanvas(clone, {
@@ -31,7 +34,11 @@ export const exportCardAsImage = async (elementId: string, fileName: string): Pr
       style: {
         direction: 'rtl',
         textAlign: 'right'
-      }
+      },
+      // Ensure SVG elements (like QR code) are captured
+      includeQueryParams: true,
+      skipAutoScale: true,
+      cacheBust: true
     });
 
     // Convert canvas to blob
