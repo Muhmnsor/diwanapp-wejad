@@ -42,7 +42,8 @@ export const RegistrationFormInputs = ({
   };
 
   const validatePhone = (value: string) => {
-    if (!/^05\d{8}$/.test(value)) {
+    // Allow typing but show error if format is incorrect
+    if (value && !/^05\d{8}$/.test(value)) {
       setErrors(prev => ({ ...prev, phone: "الرجاء إدخال رقم جوال صحيح يبدأ ب 05" }));
       return false;
     }
@@ -52,22 +53,22 @@ export const RegistrationFormInputs = ({
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (validateName(value)) {
-      setFormData({ ...formData, name: value });
-    }
+    setFormData({ ...formData, name: value });
+    validateName(value);
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (validateEmail(value)) {
-      setFormData({ ...formData, email: value });
-    }
+    setFormData({ ...formData, email: value });
+    validateEmail(value);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (validatePhone(value)) {
+    // Allow only numbers and limit to 10 digits
+    if (value === '' || /^\d{0,10}$/.test(value)) {
       setFormData({ ...formData, phone: value });
+      validatePhone(value);
     }
   };
 
