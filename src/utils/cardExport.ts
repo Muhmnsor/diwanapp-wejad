@@ -35,8 +35,8 @@ export const exportCardAsImage = async (elementId: string, fileName: string): Pr
       backgroundColor: '#ffffff',
       width: container.offsetWidth,
       height: container.offsetHeight,
+      quality: 1,
       style: {
-        quality: 1,
         direction: 'rtl',
         transform: 'none',
         transformOrigin: 'center'
