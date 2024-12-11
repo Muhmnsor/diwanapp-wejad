@@ -6,6 +6,7 @@ import { exportCardAsImage } from "@/utils/cardExport";
 import { ConfirmationHeader } from "./ConfirmationHeader";
 import { ConfirmationQR } from "./ConfirmationQR";
 import { ConfirmationDetails } from "./ConfirmationDetails";
+import { formatTime12Hour } from "@/utils/dateTimeUtils";
 
 interface ConfirmationCardProps {
   eventTitle: string;
@@ -31,6 +32,7 @@ export const ConfirmationCard = ({
   onSave
 }: ConfirmationCardProps) => {
   const { toast } = useToast();
+  const formattedTime = eventTime ? formatTime12Hour(eventTime) : undefined;
 
   const handleSaveCard = async () => {
     console.log("Save card button clicked");
@@ -67,7 +69,7 @@ export const ConfirmationCard = ({
         <ConfirmationDetails
           formData={formData}
           eventDate={eventDate}
-          eventTime={eventTime}
+          eventTime={formattedTime}
           eventLocation={eventLocation}
         />
       </Card>

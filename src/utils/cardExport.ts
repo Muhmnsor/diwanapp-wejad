@@ -16,17 +16,22 @@ export const exportCardAsImage = async (elementId: string, fileName: string): Pr
     const clone = element.cloneNode(true) as HTMLElement;
     clone.style.backgroundColor = '#ffffff';
     clone.style.padding = '20px';
-    clone.style.borderRadius = '0';
+    clone.style.borderRadius = '12px';
+    clone.style.direction = 'rtl';
     document.body.appendChild(clone);
 
     // Convert to canvas with high quality settings
     console.log("Converting to canvas");
     const canvas = await htmlToImage.toCanvas(clone, {
-      pixelRatio: 2,
+      pixelRatio: 3,
       backgroundColor: '#ffffff',
       quality: 1,
       width: element.offsetWidth,
-      height: element.offsetHeight
+      height: element.offsetHeight,
+      style: {
+        direction: 'rtl',
+        textAlign: 'right'
+      }
     });
 
     // Convert canvas to blob

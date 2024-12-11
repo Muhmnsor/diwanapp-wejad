@@ -4,9 +4,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { useState } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
-import { ConfirmationActions } from "./ConfirmationActions";
 
 interface RegistrationConfirmationProps {
   open: boolean;
@@ -30,23 +31,13 @@ export const RegistrationConfirmation = ({
   onOpenChange,
   registrationId,
   eventTitle,
-  eventPrice,
   eventDate,
   eventTime,
   eventLocation,
   formData,
-  onPayment,
 }: RegistrationConfirmationProps) => {
   const [isClosing, setIsClosing] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setIsClosing(false);
-      setHasDownloaded(false);
-      console.log("Dialog opened, states reset");
-    }
-  }, [open]);
 
   const handleCloseDialog = () => {
     if (!hasDownloaded) {
@@ -57,10 +48,6 @@ export const RegistrationConfirmation = ({
     }
     setIsClosing(true);
     onOpenChange(false);
-  };
-
-  const handleSaveConfirmation = () => {
-    setHasDownloaded(true);
   };
 
   return (
@@ -93,15 +80,17 @@ export const RegistrationConfirmation = ({
           eventDate={eventDate}
           eventTime={eventTime}
           eventLocation={eventLocation}
-          onSave={handleSaveConfirmation}
+          onSave={() => setHasDownloaded(true)}
         />
 
-        <ConfirmationActions
-          onSave={handleSaveConfirmation}
-          onClose={handleCloseDialog}
-          onPayment={onPayment}
-          showPayment={eventPrice !== "free"}
-        />
+        <Button 
+          variant="outline" 
+          className="w-full mt-2"
+          onClick={handleCloseDialog}
+        >
+          <X className="w-4 h-4 mr-2" />
+          إغلاق
+        </Button>
       </DialogContent>
     </Dialog>
   );
