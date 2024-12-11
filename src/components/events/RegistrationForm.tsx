@@ -36,6 +36,7 @@ export const RegistrationForm = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registrationId, setRegistrationId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const checkExistingRegistration = async (email: string) => {
     console.log("Checking for existing registration...");
@@ -59,7 +60,6 @@ export const RegistrationForm = ({
     setIsSubmitting(true);
 
     try {
-      // التحقق من وجود تسجيل سابق
       const hasExistingRegistration = await checkExistingRegistration(formData.email);
       
       if (hasExistingRegistration) {
@@ -71,10 +71,8 @@ export const RegistrationForm = ({
         return;
       }
 
-      // Generate a unique registration number
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Insert the registration into Supabase
       const { error } = await supabase
         .from('registrations')
         .insert({
@@ -95,11 +93,11 @@ export const RegistrationForm = ({
         return;
       }
 
-      // Update the registration count in the UI
       await queryClient.invalidateQueries({ queryKey: ['registrations', eventId] });
       
       setRegistrationId(uniqueId);
       setShowConfirmation(true);
+      setIsRegistered(true);
       
       console.log('Registration successful:', uniqueId);
     } catch (error) {
@@ -123,16 +121,18 @@ export const RegistrationForm = ({
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-        <RegistrationFormInputs
-          formData={formData}
-          setFormData={setFormData}
-          eventPrice={eventPrice}
-        />
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "جاري التسجيل..." : "تأكيد التسجيل"}
-        </Button>
-      </form>
+      {!isRegistered && (
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <RegistrationFormInputs
+            formData={formData}
+            setFormData={setFormData}
+            eventPrice={eventPrice}
+          />
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "جاري التسجيل..." : "تأكيد التسجيل"}
+          </Button>
+        </form>
+      )}
 
       <RegistrationConfirmation
         open={showConfirmation}
