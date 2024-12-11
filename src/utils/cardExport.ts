@@ -12,33 +12,50 @@ export const exportCardAsImage = async (elementId: string, fileName: string): Pr
   try {
     console.log("Setting up export configuration");
     
-    // Clone the element to avoid modifying the original
+    // Create a container with fixed dimensions
+    const container = document.createElement('div');
+    container.style.width = '400px'; // Fixed width
+    container.style.backgroundColor = '#ffffff';
+    container.style.padding = '24px';
+    container.style.borderRadius = '12px';
+    container.style.direction = 'rtl';
+    
+    // Clone the element
     const clone = element.cloneNode(true) as HTMLElement;
-    clone.style.backgroundColor = '#ffffff';
-    clone.style.padding = '20px';
-    clone.style.borderRadius = '12px';
-    clone.style.direction = 'rtl';
-    document.body.appendChild(clone);
+    container.appendChild(clone);
+    document.body.appendChild(container);
 
-    // Wait for QR code to be fully rendered
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Ensure QR code and images are loaded
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Convert to canvas with high quality settings
+    // Convert to canvas with specific settings for SVG/QR support
     console.log("Converting to canvas");
-    const canvas = await htmlToImage.toCanvas(clone, {
-      pixelRatio: 3,
+    const canvas = await htmlToImage.toCanvas(container, {
+      pixelRatio: 2,
       backgroundColor: '#ffffff',
-      quality: 1,
-      width: element.offsetWidth,
-      height: element.offsetHeight,
+      width: container.offsetWidth,
+      height: container.offsetHeight,
       style: {
+        quality: 1,
         direction: 'rtl',
-        textAlign: 'right'
+        transform: 'none',
+        transformOrigin: 'center'
       },
-      // Ensure SVG elements (like QR code) are captured
+      filter: (node) => {
+        // Keep QR code and logo visible
+        if (node instanceof HTMLElement) {
+          const isQRCode = node.className.includes('qr-code');
+          const isLogo = node.tagName === 'IMG' && node.className.includes('logo');
+          return true;
+        }
+        return true;
+      },
+      // SVG/QR specific options
       includeQueryParams: true,
       skipAutoScale: true,
-      cacheBust: true
+      cacheBust: true,
+      imagePlaceholder: undefined,
+      preferredFontFormat: "woff2"
     });
 
     // Convert canvas to blob
@@ -64,7 +81,7 @@ export const exportCardAsImage = async (elementId: string, fileName: string): Pr
     // Cleanup
     console.log("Cleaning up");
     document.body.removeChild(link);
-    document.body.removeChild(clone);
+    document.body.removeChild(container);
     URL.revokeObjectURL(url);
 
     return true;

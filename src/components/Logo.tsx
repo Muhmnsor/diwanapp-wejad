@@ -9,7 +9,7 @@ export const Logo = ({ className }: LogoProps) => {
     <img 
       src="/lovable-uploads/8f06dc5f-92e3-4f27-8dbb-9769d6e9d178.png" 
       alt="Logo" 
-      className={cn("w-16 h-16", className)}
+      className={cn("w-16 h-16 logo", className)}
     />
   );
 };

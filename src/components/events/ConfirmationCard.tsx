@@ -60,7 +60,7 @@ export const ConfirmationCard = ({
 
   return (
     <div className="space-y-4" dir="rtl">
-      <Card id="confirmation-card" className="bg-white p-6 space-y-6">
+      <Card id="confirmation-card" className="bg-white p-6 space-y-6 max-w-md mx-auto">
         <ConfirmationHeader 
           eventTitle={eventTitle} 
           registrationId={registrationId} 
