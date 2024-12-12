@@ -13,6 +13,8 @@ export interface Event {
   maxAttendees: number;
   eventType: "online" | "in-person";
   price: number | "free";
+  registrationStartDate?: string | null;
+  registrationEndDate?: string | null;
 }
 
 interface EventStore {
