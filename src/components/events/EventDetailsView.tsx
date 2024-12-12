@@ -15,7 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import { ConfirmationCard } from "./ConfirmationCard";
+import { Badge } from "@/components/ui/badge";
+import { getEventStatus } from "@/utils/eventUtils";
 
 interface EventDetailsViewProps {
   event: CustomEvent;
@@ -50,8 +51,31 @@ export const EventDetailsView = ({
   // Handle both imageUrl and image_url properties
   const imageUrl = event.imageUrl || event.image_url;
 
+  const eventStatus = getEventStatus(event);
+  const statusColors = {
+    available: "bg-green-500 hover:bg-green-600",
+    full: "bg-yellow-500 hover:bg-yellow-600",
+    ended: "bg-red-500 hover:bg-red-600",
+    notStarted: "bg-blue-500 hover:bg-blue-600"
+  };
+
+  const statusText = {
+    available: "التسجيل متاح",
+    full: "اكتمل التسجيل",
+    ended: "انتهى التسجيل",
+    notStarted: "لم يبدأ التسجيل"
+  };
+
   return (
     <div className="max-w-4xl mx-auto" dir="rtl">
+      <div className="flex justify-between items-center mb-8">
+        <img
+          src="/lovable-uploads/8f06dc5f-92e3-4f27-8dbb-9769d6e9d178.png"
+          alt="Logo"
+          className="w-16 h-16"
+        />
+      </div>
+
       {imageUrl && (
         <img
           src={imageUrl}
@@ -107,9 +131,19 @@ export const EventDetailsView = ({
         </div>
 
         <div className="flex justify-center">
-          <Button size="lg" className="w-full" onClick={onRegister}>
-            تسجيل الحضور
-          </Button>
+          {eventStatus === 'available' ? (
+            <Button size="lg" className="w-full" onClick={onRegister}>
+              تسجيل الحضور
+            </Button>
+          ) : (
+            <Button 
+              size="lg" 
+              className={`w-full text-white ${statusColors[eventStatus]}`}
+              disabled
+            >
+              {statusText[eventStatus]}
+            </Button>
+          )}
         </div>
       </div>
 

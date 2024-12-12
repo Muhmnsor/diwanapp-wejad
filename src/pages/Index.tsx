@@ -3,7 +3,7 @@ import { EventCard } from "@/components/EventCard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter, Globe } from "lucide-react";
 
 const Index = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -126,14 +126,27 @@ const Index = () => {
 
         <footer className="mt-16 py-8 border-t border-gray-200">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Logo className="w-24 h-24" />
-              <div className="text-center space-y-2">
-                <h3 className="font-bold text-xl">جمعية ديوان الشبابية</h3>
-                <p className="text-gray-600">المملكة العربية السعودية - المدينة المنورة</p>
-                <p className="text-gray-600">رقم الترخيص 5531</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+              <div className="flex items-center justify-center md:justify-start">
+                <Logo className="w-24 h-24" />
               </div>
-              <div className="flex space-x-4 rtl:space-x-reverse">
+              
+              <div className="text-center">
+                <h3 className="font-bold text-xl mb-2">جمعية ديوان الشبابية</h3>
+                <p className="text-gray-600 mb-1">المملكة العربية السعودية - المدينة المنورة</p>
+                <p className="text-gray-600 mb-2">رقم الترخيص 5531</p>
+                <a 
+                  href="https://www.dfy.org.sa" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-primary hover:text-primary/80 flex items-center justify-center gap-2"
+                >
+                  <Globe className="w-4 h-4" />
+                  www.dfy.org.sa
+                </a>
+              </div>
+
+              <div className="flex justify-center md:justify-end space-x-4 rtl:space-x-reverse">
                 <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-primary">
                   <Twitter className="w-6 h-6" />
                 </a>
