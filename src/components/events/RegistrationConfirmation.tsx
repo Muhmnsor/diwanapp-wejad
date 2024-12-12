@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
+import { useNavigate } from "react-router-dom";
 
 interface RegistrationConfirmationProps {
   open: boolean;
@@ -38,6 +39,7 @@ export const RegistrationConfirmation = ({
 }: RegistrationConfirmationProps) => {
   const [isClosing, setIsClosing] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
+  const navigate = useNavigate();
 
   const handleCloseDialog = () => {
     if (!hasDownloaded) {
@@ -48,6 +50,7 @@ export const RegistrationConfirmation = ({
     }
     setIsClosing(true);
     onOpenChange(false);
+    navigate('/');
   };
 
   return (

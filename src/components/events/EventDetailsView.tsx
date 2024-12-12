@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { ConfirmationCard } from "./ConfirmationCard";
 
 interface EventDetailsViewProps {
   event: CustomEvent;
@@ -106,7 +107,7 @@ export const EventDetailsView = ({
         </div>
 
         <div className="flex justify-center">
-          <Button size="lg" className="w-full md:w-auto" onClick={onRegister}>
+          <Button size="lg" className="w-full" onClick={onRegister}>
             تسجيل الحضور
           </Button>
         </div>

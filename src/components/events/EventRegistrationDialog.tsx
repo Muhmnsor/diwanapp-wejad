@@ -5,6 +5,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { RegistrationForm } from "./RegistrationForm";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface EventRegistrationDialogProps {
   open: boolean;
@@ -14,6 +16,8 @@ interface EventRegistrationDialogProps {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
+  registrationStartDate?: string | null;
+  registrationEndDate?: string | null;
 }
 
 export const EventRegistrationDialog = ({
@@ -24,21 +28,59 @@ export const EventRegistrationDialog = ({
   eventDate,
   eventTime,
   eventLocation,
+  registrationStartDate,
+  registrationEndDate,
 }: EventRegistrationDialogProps) => {
+  const checkRegistrationPeriod = () => {
+    const now = new Date();
+    const startDate = registrationStartDate ? new Date(registrationStartDate) : null;
+    const endDate = registrationEndDate ? new Date(registrationEndDate) : null;
+
+    if (startDate && now < startDate) {
+      return {
+        canRegister: false,
+        message: "لم يبدأ التسجيل بعد"
+      };
+    }
+
+    if (endDate && now > endDate) {
+      return {
+        canRegister: false,
+        message: "انتهى التسجيل"
+      };
+    }
+
+    return {
+      canRegister: true,
+      message: ""
+    };
+  };
+
+  const registrationStatus = checkRegistrationPeriod();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {eventTitle}</DialogTitle>
         </DialogHeader>
-        <RegistrationForm
-          eventTitle={eventTitle}
-          eventPrice={eventPrice}
-          eventDate={eventDate}
-          eventTime={eventTime}
-          eventLocation={eventLocation}
-          onSubmit={() => onOpenChange(false)}
-        />
+        {!registrationStatus.canRegister ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {registrationStatus.message}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <RegistrationForm
+            eventTitle={eventTitle}
+            eventPrice={eventPrice}
+            eventDate={eventDate}
+            eventTime={eventTime}
+            eventLocation={eventLocation}
+            onSubmit={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
