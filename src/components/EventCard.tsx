@@ -41,22 +41,22 @@ export const EventCard = ({
     const endDate = registration_end_date ? new Date(registration_end_date) : null;
 
     if (isFull) {
-      return { text: "اكتمل التسجيل", variant: "destructive" as const };
+      return { text: "اكتمل التسجيل", variant: "destructive" as const, color: "bg-purple-500" };
     }
 
     if (startDate && now < startDate) {
-      return { text: "لم يبدأ التسجيل", variant: "secondary" as const };
+      return { text: "لم يبدأ التسجيل", variant: "secondary" as const, color: "bg-gray-500" };
     }
 
     if (endDate && now > endDate) {
-      return { text: "انتهى التسجيل", variant: "destructive" as const };
+      return { text: "انتهى التسجيل", variant: "destructive" as const, color: "bg-red-500" };
     }
 
     if (isAlmostFull) {
-      return { text: "التسجيل متاح - الأماكن محدودة", variant: "accent" as const };
+      return { text: "التسجيل متاح - الأماكن محدودة", variant: "accent" as const, color: "bg-yellow-500" };
     }
 
-    return { text: "التسجيل متاح", variant: "secondary" as const };
+    return { text: "التسجيل متاح", variant: "secondary" as const, color: "bg-green-500" };
   };
 
   const status = getRegistrationStatus();
@@ -93,9 +93,9 @@ export const EventCard = ({
                 <Users size={16} />
                 <span>{attendees} من {max_attendees} مشارك</span>
               </div>
-              <Badge variant={status.variant} className="w-full justify-center">
+              <div className={`text-center py-1 px-2 rounded-md text-white ${status.color}`}>
                 {status.text}
-              </Badge>
+              </div>
             </div>
           )}
         </CardContent>

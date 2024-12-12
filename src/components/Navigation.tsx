@@ -1,56 +1,39 @@
-import { Button } from "@/components/ui/button";
-import { Plus, LogIn, LogOut, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Logo } from "./Logo";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
+import { Logo } from "./Logo";
 
 export const Navigation = () => {
-  const { isAuthenticated, logout, user } = useAuthStore();
+  const { user, signOut } = useAuthStore();
 
   return (
-    <nav className="border-b">
-      <div className="bg-white py-4 border-b">
-        <div className="container mx-auto px-4">
-          <img 
-            src="/lovable-uploads/4ab86edd-10cb-4a50-a6cf-2b343c2361db.png" 
-            alt="ديوان الشبابية" 
-            className="h-24 mx-auto"
-          />
+    <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <div className="container flex h-20 items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link to="/" className="flex items-center gap-4">
+            <Logo />
+            <span className="text-2xl font-bold text-primary" style={{ fontFamily: 'Noto Kufi Arabic, sans-serif' }}>
+              ديوان الفعاليات
+            </span>
+          </Link>
         </div>
-      </div>
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold text-primary flex items-center">
-          <Logo />
-          ديوان الفعاليات
-        </Link>
-        <div className="flex gap-2">
-          {isAuthenticated ? (
+
+        <div className="flex items-center gap-4">
+          {user?.isAdmin && (
             <>
-              <Button asChild>
-                <Link to="/create" className="flex items-center gap-2">
-                  <Plus size={20} />
-                  فعالية جديدة
-                </Link>
+              <Button variant="ghost" asChild>
+                <Link to="/users">المستخدمين</Link>
               </Button>
-              {user?.isAdmin && (
-                <Button asChild variant="outline">
-                  <Link to="/users" className="flex items-center gap-2">
-                    <Users size={20} />
-                    إدارة المستخدمين
-                  </Link>
-                </Button>
-              )}
-              <Button variant="outline" onClick={logout}>
-                <LogOut size={20} className="ml-2" />
-                تسجيل الخروج
+              <Button variant="ghost" asChild>
+                <Link to="/create">إنشاء فعالية</Link>
               </Button>
             </>
+          )}
+          {user ? (
+            <Button variant="outline" onClick={signOut}>تسجيل خروج</Button>
           ) : (
-            <Button asChild>
-              <Link to="/login" className="flex items-center gap-2">
-                <LogIn size={20} />
-                تسجيل الدخول
-              </Link>
+            <Button variant="outline" asChild>
+              <Link to="/login">تسجيل دخول</Link>
             </Button>
           )}
         </div>
