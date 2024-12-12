@@ -68,7 +68,7 @@ export const EventDetailsView = ({
 
   return (
     <div className="max-w-4xl mx-auto" dir="rtl">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-end items-center mb-8">
         <img
           src="/lovable-uploads/8f06dc5f-92e3-4f27-8dbb-9769d6e9d178.png"
           alt="Logo"
@@ -131,20 +131,26 @@ export const EventDetailsView = ({
         </div>
 
         <div className="flex justify-center">
-          {eventStatus === 'available' ? (
-            <Button size="lg" className="w-full" onClick={onRegister}>
-              تسجيل الحضور
-            </Button>
-          ) : (
-            <Button 
-              size="lg" 
-              className={`w-full text-white ${statusColors[eventStatus]}`}
-              disabled
-            >
-              {statusText[eventStatus]}
-            </Button>
-          )}
+          <Button 
+            size="lg" 
+            className={`w-full text-white ${statusColors[eventStatus]}`}
+            onClick={eventStatus === 'available' ? onRegister : undefined}
+            disabled={eventStatus !== 'available'}
+          >
+            {statusText[eventStatus]}
+          </Button>
         </div>
+      </div>
+
+      <div className="mt-8 text-center">
+        <a 
+          href="https://www.dfy.org.sa" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          www.dfy.org.sa
+        </a>
       </div>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
