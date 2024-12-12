@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 import { Logo } from "./Logo";
 
 export const Navigation = () => {
-  const { user, signOut } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
   return (
     <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -30,7 +30,7 @@ export const Navigation = () => {
             </>
           )}
           {user ? (
-            <Button variant="outline" onClick={signOut}>تسجيل خروج</Button>
+            <Button variant="outline" onClick={logout}>تسجيل خروج</Button>
           ) : (
             <Button variant="outline" asChild>
               <Link to="/login">تسجيل دخول</Link>
