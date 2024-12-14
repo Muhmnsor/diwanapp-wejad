@@ -6,6 +6,8 @@ interface EventRegisterButtonProps {
 }
 
 export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonProps) => {
+  console.log('EventRegisterButton status:', status);
+  
   const statusConfig = {
     available: {
       text: "تسجيل الحضور",
@@ -14,17 +16,17 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
     },
     full: {
       text: "اكتمل التسجيل",
-      className: "bg-yellow-500 cursor-not-allowed",
+      className: "bg-yellow-500 cursor-not-allowed opacity-60",
       disabled: true
     },
     ended: {
       text: "انتهى التسجيل",
-      className: "bg-red-500 cursor-not-allowed",
+      className: "bg-red-500 cursor-not-allowed opacity-60",
       disabled: true
     },
     notStarted: {
       text: "لم يبدأ التسجيل",
-      className: "bg-blue-500 cursor-not-allowed",
+      className: "bg-gray-500 cursor-not-allowed opacity-60",
       disabled: true
     }
   };

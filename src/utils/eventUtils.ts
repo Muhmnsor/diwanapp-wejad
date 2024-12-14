@@ -35,21 +35,33 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
 
 export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
   const now = new Date();
-  const eventDate = new Date(event.date);
   
-  // Check if registration period is defined
-  if (event.registrationStartDate && new Date(event.registrationStartDate) > now) {
-    return 'notStarted';
+  // تحقق من تاريخ بدء التسجيل
+  if (event.registrationStartDate) {
+    const startDate = new Date(event.registrationStartDate);
+    console.log('Registration start date:', startDate);
+    console.log('Current date:', now);
+    if (now < startDate) {
+      console.log('Registration has not started yet');
+      return 'notStarted';
+    }
   }
   
-  if (event.registrationEndDate && new Date(event.registrationEndDate) < now) {
-    return 'ended';
+  // تحقق من تاريخ انتهاء التسجيل
+  if (event.registrationEndDate) {
+    const endDate = new Date(event.registrationEndDate);
+    if (now > endDate) {
+      console.log('Registration has ended');
+      return 'ended';
+    }
   }
   
-  // Check if event is full
+  // تحقق من اكتمال العدد
   if (event.attendees >= event.maxAttendees) {
+    console.log('Event is full');
     return 'full';
   }
   
+  console.log('Registration is available');
   return 'available';
 };

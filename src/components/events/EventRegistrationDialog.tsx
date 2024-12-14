@@ -36,6 +36,11 @@ export const EventRegistrationDialog = ({
     
     if (registrationStartDate) {
       const startDate = new Date(registrationStartDate);
+      console.log('Checking registration start date:', {
+        now,
+        startDate,
+        registrationStartDate
+      });
       if (now < startDate) {
         return {
           canRegister: false,
@@ -63,8 +68,9 @@ export const EventRegistrationDialog = ({
   const registrationStatus = checkRegistrationPeriod();
   console.log('Registration status:', registrationStatus);
 
-  // Close dialog if registration is not allowed
+  // إغلاق النافذة إذا كان التسجيل غير متاح
   if (!registrationStatus.canRegister && open) {
+    console.log('Closing dialog because registration is not allowed');
     onOpenChange(false);
     return null;
   }
