@@ -88,10 +88,14 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <Navigation />
       <main className="container mx-auto px-4 py-8">
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-8">الفعاليات القادمة</h2>
+        <section className="mb-12 bg-white rounded-lg shadow-lg p-8">
+          <div className="border-r-4 border-primary pr-4 mb-8">
+            <h2 className="text-3xl font-bold text-primary">الفعاليات القادمة</h2>
+          </div>
           {upcomingEvents.length === 0 ? (
-            <div className="text-center text-gray-500">لا توجد فعاليات قادمة حالياً</div>
+            <div className="text-center text-gray-500 p-8 bg-gray-50 rounded-lg">
+              لا توجد فعاليات قادمة حالياً
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
               {upcomingEvents.map((event) => (
@@ -106,14 +110,18 @@ const Index = () => {
           )}
         </section>
 
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-8">الفعاليات السابقة</h2>
+        <section className="mb-12 bg-gray-100 rounded-lg shadow-lg p-8">
+          <div className="border-r-4 border-gray-400 pr-4 mb-8">
+            <h2 className="text-3xl font-bold text-gray-600">الفعاليات السابقة</h2>
+          </div>
           {pastEvents.length === 0 ? (
-            <div className="text-center text-gray-500">لا توجد فعاليات سابقة</div>
+            <div className="text-center text-gray-500 p-8 bg-white rounded-lg">
+              لا توجد فعاليات سابقة
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
               {pastEvents.map((event) => (
-                <div key={event.id} className="flex justify-center">
+                <div key={event.id} className="flex justify-center opacity-75">
                   <EventCard 
                     {...event}
                     attendees={registrations[event.id] || 0}

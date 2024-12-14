@@ -6,29 +6,40 @@ interface EventRegisterButtonProps {
 }
 
 export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonProps) => {
-  const statusColors = {
-    available: "bg-primary hover:bg-primary/90",
-    full: "bg-yellow-500 hover:bg-yellow-500",
-    ended: "bg-red-500 hover:bg-red-500",
-    notStarted: "bg-blue-500 hover:bg-blue-500"
+  const statusConfig = {
+    available: {
+      text: "تسجيل الحضور",
+      className: "bg-primary hover:bg-primary/90",
+      disabled: false
+    },
+    full: {
+      text: "اكتمل التسجيل",
+      className: "bg-yellow-500 cursor-not-allowed",
+      disabled: true
+    },
+    ended: {
+      text: "انتهى التسجيل",
+      className: "bg-red-500 cursor-not-allowed",
+      disabled: true
+    },
+    notStarted: {
+      text: "لم يبدأ التسجيل",
+      className: "bg-blue-500 cursor-not-allowed",
+      disabled: true
+    }
   };
 
-  const statusText = {
-    available: "تسجيل الحضور",
-    full: "اكتمل التسجيل",
-    ended: "انتهى التسجيل",
-    notStarted: "لم يبدأ التسجيل"
-  };
+  const config = statusConfig[status];
 
   return (
     <div className="flex justify-center mt-8">
       <Button 
         size="lg" 
-        className={`w-full text-white ${statusColors[status]}`}
+        className={`w-full text-white ${config.className}`}
         onClick={onRegister}
-        disabled={status !== 'available'}
+        disabled={config.disabled}
       >
-        {statusText[status]}
+        {config.text}
       </Button>
     </div>
   );
