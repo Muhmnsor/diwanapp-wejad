@@ -33,21 +33,25 @@ export const EventRegistrationDialog = ({
 }: EventRegistrationDialogProps) => {
   const checkRegistrationPeriod = () => {
     const now = new Date();
-    const startDate = registrationStartDate ? new Date(registrationStartDate) : null;
-    const endDate = registrationEndDate ? new Date(registrationEndDate) : null;
-
-    if (startDate && now < startDate) {
-      return {
-        canRegister: false,
-        message: "لم يبدأ التسجيل بعد"
-      };
+    
+    if (registrationStartDate) {
+      const startDate = new Date(registrationStartDate);
+      if (now < startDate) {
+        return {
+          canRegister: false,
+          message: "لم يبدأ التسجيل بعد"
+        };
+      }
     }
 
-    if (endDate && now > endDate) {
-      return {
-        canRegister: false,
-        message: "انتهى التسجيل"
-      };
+    if (registrationEndDate) {
+      const endDate = new Date(registrationEndDate);
+      if (now > endDate) {
+        return {
+          canRegister: false,
+          message: "انتهى التسجيل"
+        };
+      }
     }
 
     return {

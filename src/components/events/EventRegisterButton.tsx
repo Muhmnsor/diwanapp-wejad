@@ -7,10 +7,10 @@ interface EventRegisterButtonProps {
 
 export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonProps) => {
   const statusColors = {
-    available: "bg-green-500 hover:bg-green-600",
-    full: "bg-yellow-500",
-    ended: "bg-red-500",
-    notStarted: "bg-blue-500"
+    available: "bg-primary hover:bg-primary/90",
+    full: "bg-yellow-500 hover:bg-yellow-500",
+    ended: "bg-red-500 hover:bg-red-500",
+    notStarted: "bg-blue-500 hover:bg-blue-500"
   };
 
   const statusText = {
@@ -21,7 +21,7 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center mt-8">
       <Button 
         size="lg" 
         className={`w-full text-white ${statusColors[status]}`}
