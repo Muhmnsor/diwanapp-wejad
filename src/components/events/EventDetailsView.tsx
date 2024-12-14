@@ -51,6 +51,7 @@ export const EventDetailsView = ({
 
   const handleRegister = () => {
     const status = getEventStatus(event);
+    console.log('Current event status:', status);
     if (status === 'available') {
       onRegister();
     }
@@ -59,6 +60,8 @@ export const EventDetailsView = ({
   // Handle both imageUrl and image_url properties
   const imageUrl = event.imageUrl || event.image_url;
   const eventStatus = getEventStatus(event);
+
+  console.log('Event status before rendering button:', eventStatus);
 
   return (
     <div className="max-w-4xl mx-auto" dir="rtl">

@@ -61,6 +61,13 @@ export const EventRegistrationDialog = ({
   };
 
   const registrationStatus = checkRegistrationPeriod();
+  console.log('Registration status:', registrationStatus);
+
+  // Close dialog if registration is not allowed
+  if (!registrationStatus.canRegister && open) {
+    onOpenChange(false);
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
