@@ -49,6 +49,13 @@ export const EventDetailsView = ({
     onDelete();
   };
 
+  const handleRegister = () => {
+    const status = getEventStatus(event);
+    if (status === 'available') {
+      onRegister();
+    }
+  };
+
   // Handle both imageUrl and image_url properties
   const imageUrl = event.imageUrl || event.image_url;
   const eventStatus = getEventStatus(event);
@@ -86,7 +93,7 @@ export const EventDetailsView = ({
 
         <EventRegisterButton 
           status={eventStatus}
-          onRegister={onRegister}
+          onRegister={handleRegister}
         />
       </div>
 
