@@ -1,8 +1,5 @@
 import { Event as CustomEvent } from "@/store/eventStore";
 import { EventInfo } from "./EventInfo";
-import { EventActions } from "./EventActions";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import {
   AlertDialog,
@@ -15,8 +12,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { getEventStatus } from "@/utils/eventUtils";
+import { EventHeader } from "./EventHeader";
+import { EventImage } from "./EventImage";
+import { EventTitle } from "./EventTitle";
+import { EventDescription } from "./EventDescription";
+import { EventRegisterButton } from "./EventRegisterButton";
 
 interface EventDetailsViewProps {
   event: CustomEvent;
@@ -50,71 +51,26 @@ export const EventDetailsView = ({
 
   // Handle both imageUrl and image_url properties
   const imageUrl = event.imageUrl || event.image_url;
-
   const eventStatus = getEventStatus(event);
-  const statusColors = {
-    available: "bg-green-500 hover:bg-green-600",
-    full: "bg-yellow-500",
-    ended: "bg-red-500",
-    notStarted: "bg-blue-500"
-  };
-
-  const statusText = {
-    available: "تسجيل الحضور",
-    full: "اكتمل التسجيل",
-    ended: "انتهى التسجيل",
-    notStarted: "لم يبدأ التسجيل"
-  };
 
   return (
     <div className="max-w-4xl mx-auto" dir="rtl">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">ديوان</h1>
-        <img
-          src="/lovable-uploads/8f06dc5f-92e3-4f27-8dbb-9769d6e9d178.png"
-          alt="Logo"
-          className="w-16 h-16"
-        />
-      </div>
+      <EventHeader 
+        title="ديوان"
+        logoUrl="/lovable-uploads/8f06dc5f-92e3-4f27-8dbb-9769d6e9d178.png"
+      />
 
-      {imageUrl && (
-        <img
-          src={imageUrl}
-          alt={event.title}
-          className="w-full h-[400px] object-cover rounded-lg mb-8"
-        />
-      )}
+      <EventImage imageUrl={imageUrl} title={event.title} />
 
       <div className="bg-white rounded-lg shadow-lg p-8">
-        <div className="flex justify-between items-start mb-6">
-          <h1 className="text-3xl font-bold">{event.title}</h1>
-          <div className="flex gap-2">
-            {user?.isAdmin && (
-              <div className="flex gap-2 ml-4">
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={onEdit}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="icon"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            <EventActions
-              eventTitle={event.title}
-              eventDescription={event.description}
-              onShare={async () => {}}
-              onAddToCalendar={onAddToCalendar}
-            />
-          </div>
-        </div>
+        <EventTitle
+          title={event.title}
+          isAdmin={user?.isAdmin}
+          onEdit={onEdit}
+          onDelete={() => setIsDeleteDialogOpen(true)}
+          onShare={async () => {}}
+          onAddToCalendar={onAddToCalendar}
+        />
 
         <EventInfo
           date={event.date}
@@ -126,21 +82,12 @@ export const EventDetailsView = ({
           price={event.price}
         />
 
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">عن الفعالية</h2>
-          <p className="text-gray-600 leading-relaxed break-words whitespace-pre-wrap">{event.description}</p>
-        </div>
+        <EventDescription description={event.description} />
 
-        <div className="flex justify-center">
-          <Button 
-            size="lg" 
-            className={`w-full text-white ${statusColors[eventStatus]}`}
-            onClick={onRegister}
-            disabled={eventStatus !== 'available'}
-          >
-            {statusText[eventStatus]}
-          </Button>
-        </div>
+        <EventRegisterButton 
+          status={eventStatus}
+          onRegister={onRegister}
+        />
       </div>
 
       <div className="mt-8 text-center">
