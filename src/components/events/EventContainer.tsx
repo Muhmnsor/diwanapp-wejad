@@ -4,7 +4,7 @@ interface EventContainerProps {
 
 export const EventContainer = ({ children }: EventContainerProps) => {
   return (
-    <div className="max-w-4xl mx-auto bg-white border border-gray-200 rounded-lg">
+    <div className="max-w-4xl mx-auto bg-white rounded-lg border border-gray-100 shadow-sm" dir="rtl">
       {children}
     </div>
   );

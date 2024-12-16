@@ -11,22 +11,22 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
   const statusConfig = {
     available: {
       text: "تسجيل الحضور",
-      className: "bg-primary hover:bg-primary/90 border-primary",
+      className: "bg-primary hover:bg-primary/90 text-white",
       disabled: false
     },
     full: {
       text: "اكتمل التسجيل",
-      className: "bg-yellow-500 border-yellow-500 cursor-not-allowed opacity-60",
+      className: "bg-gray-100 text-gray-500 cursor-not-allowed",
       disabled: true
     },
     ended: {
       text: "للأسف فاتتك هذه الفعالية. تابعنا لتنضم إلى الفعالية القادمة ✨",
-      className: "bg-transparent text-gray-500 border-gray-300 cursor-not-allowed",
+      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
       disabled: true
     },
     notStarted: {
       text: "لم يبدأ التسجيل",
-      className: "bg-transparent text-gray-500 border-gray-300 cursor-not-allowed",
+      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
       disabled: true
     }
   };
@@ -37,7 +37,6 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
     <div className="flex justify-center mt-8">
       <Button 
         size="lg" 
-        variant="outline"
         className={`w-full ${config.className}`}
         onClick={onRegister}
         disabled={config.disabled}

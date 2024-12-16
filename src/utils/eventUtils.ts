@@ -33,7 +33,7 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
 
 export const isEventPassed = (event: Event): boolean => {
   const now = new Date();
-  const eventDateTime = new Date(event.date + ' ' + event.time);
+  const eventDateTime = new Date(`${event.date} ${event.time}`);
   return eventDateTime < now;
 };
 
