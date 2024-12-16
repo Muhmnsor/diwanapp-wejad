@@ -1,5 +1,4 @@
 import { Event as CustomEvent } from "@/store/eventStore";
-import { EventInfo } from "./EventInfo";
 import { useAuthStore } from "@/store/authStore";
 import {
   AlertDialog,
@@ -12,20 +11,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import { getEventStatus } from "@/utils/eventUtils";
 import { EventHeader } from "./EventHeader";
 import { EventImage } from "./EventImage";
 import { EventTitle } from "./EventTitle";
-import { EventDescription } from "./EventDescription";
-import { EventRegisterButton } from "./EventRegisterButton";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
+import { EventContainer } from "./EventContainer";
+import { EventContent } from "./EventContent";
+import { EventFooter } from "./EventFooter";
 
 interface EventDetailsViewProps {
   event: CustomEvent;
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
-  onRegister: () => void;  // Added this prop
+  onRegister: () => void;
 }
 
 export const EventDetailsView = ({ 
@@ -52,21 +51,14 @@ export const EventDetailsView = ({
   };
 
   const handleRegister = () => {
-    const status = getEventStatus(event);
-    console.log('Current event status:', status);
-    if (status === 'available') {
-      setIsRegistrationOpen(true);
-    }
+    setIsRegistrationOpen(true);
   };
 
   // Handle both imageUrl and image_url properties
   const imageUrl = event.imageUrl || event.image_url;
-  const eventStatus = getEventStatus(event);
-
-  console.log('Event status before rendering button:', eventStatus);
 
   return (
-    <div className="max-w-4xl mx-auto" dir="rtl">
+    <EventContainer>
       <EventHeader 
         title="ديوان"
         showLogo={false}
@@ -74,7 +66,7 @@ export const EventDetailsView = ({
 
       <EventImage imageUrl={imageUrl} title={event.title} />
 
-      <div className="bg-white rounded-lg shadow-lg p-8">
+      <div className="border-t border-gray-200">
         <EventTitle
           title={event.title}
           isAdmin={user?.isAdmin}
@@ -84,34 +76,13 @@ export const EventDetailsView = ({
           onAddToCalendar={onAddToCalendar}
         />
 
-        <EventInfo
-          date={event.date}
-          time={event.time}
-          location={event.location}
-          attendees={event.attendees}
-          maxAttendees={event.maxAttendees}
-          eventType={event.eventType}
-          price={event.price}
-        />
-
-        <EventDescription description={event.description} />
-
-        <EventRegisterButton 
-          status={eventStatus}
+        <EventContent 
+          event={event}
           onRegister={handleRegister}
         />
       </div>
 
-      <div className="mt-8 text-center">
-        <a 
-          href="https://www.dfy.org.sa" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
-          www.dfy.org.sa
-        </a>
-      </div>
+      <EventFooter />
 
       <EventRegistrationDialog
         open={isRegistrationOpen}
@@ -135,6 +106,6 @@ export const EventDetailsView = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </EventContainer>
   );
 };

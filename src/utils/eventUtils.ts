@@ -33,19 +33,12 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
 
 export const isEventPassed = (event: Event): boolean => {
   const now = new Date();
-  const [eventDate, eventTime] = [event.date, event.time];
-  const eventDateTime = new Date(`${eventDate}T${eventTime}`);
+  const eventDateTime = new Date(event.date + ' ' + event.time);
   return eventDateTime < now;
 };
 
 export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
   console.log('Checking event status for:', event.title);
-  
-  // تحقق ما إذا كان الحدث قد انتهى
-  if (isEventPassed(event)) {
-    console.log('Event has passed:', event.title);
-    return 'ended';
-  }
   
   // تحقق من تاريخ بدء التسجيل
   if (event.registrationStartDate) {
@@ -57,14 +50,11 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
     }
   }
   
-  // تحقق من تاريخ انتهاء التسجيل
-  if (event.registrationEndDate) {
-    const endDate = new Date(event.registrationEndDate);
-    const now = new Date();
-    if (now > endDate) {
-      console.log('Registration has ended for:', event.title);
-      return 'ended';
-    }
+  // تحقق من تاريخ انتهاء التسجيل أو موعد الفعالية
+  const isEventEnded = isEventPassed(event);
+  if (isEventEnded || (event.registrationEndDate && new Date() > new Date(event.registrationEndDate))) {
+    console.log('Event or registration has ended for:', event.title);
+    return 'ended';
   }
   
   // تحقق من اكتمال العدد
