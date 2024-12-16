@@ -25,6 +25,7 @@ interface EventDetailsViewProps {
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
+  onRegister: () => void;  // Added this prop
 }
 
 export const EventDetailsView = ({ 
@@ -32,6 +33,7 @@ export const EventDetailsView = ({
   onEdit, 
   onDelete, 
   onAddToCalendar,
+  onRegister,
 }: EventDetailsViewProps) => {
   const { user } = useAuthStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
