@@ -7,94 +7,63 @@ import {
 import { RegistrationForm } from "./RegistrationForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { getEventStatus } from "@/utils/eventUtils";
+import { Event } from "@/store/eventStore";
 
 interface EventRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  eventTitle: string;
-  eventPrice: number | "free";
-  eventDate: string;
-  eventTime: string;
-  eventLocation: string;
-  registrationStartDate?: string | null;
-  registrationEndDate?: string | null;
+  event: Event;
 }
 
 export const EventRegistrationDialog = ({
   open,
   onOpenChange,
-  eventTitle,
-  eventPrice,
-  eventDate,
-  eventTime,
-  eventLocation,
-  registrationStartDate,
-  registrationEndDate,
+  event,
 }: EventRegistrationDialogProps) => {
-  const checkRegistrationPeriod = () => {
-    const now = new Date();
-    
-    if (registrationStartDate) {
-      const startDate = new Date(registrationStartDate);
-      console.log('Checking registration start date:', {
-        now,
-        startDate,
-        registrationStartDate
-      });
-      if (now < startDate) {
-        return {
-          canRegister: false,
-          message: "لم يبدأ التسجيل بعد"
-        };
-      }
-    }
-
-    if (registrationEndDate) {
-      const endDate = new Date(registrationEndDate);
-      if (now > endDate) {
-        return {
-          canRegister: false,
-          message: "انتهى التسجيل"
-        };
-      }
-    }
-
-    return {
-      canRegister: true,
-      message: ""
-    };
-  };
-
-  const registrationStatus = checkRegistrationPeriod();
-  console.log('Registration status:', registrationStatus);
+  const status = getEventStatus(event);
+  console.log('Registration status in dialog:', status);
 
   // إغلاق النافذة إذا كان التسجيل غير متاح
-  if (!registrationStatus.canRegister && open) {
+  if (status !== 'available' && open) {
     console.log('Closing dialog because registration is not allowed');
     onOpenChange(false);
     return null;
   }
 
+  const getStatusMessage = () => {
+    switch (status) {
+      case 'full':
+        return "اكتمل التسجيل";
+      case 'ended':
+        return "انتهى التسجيل";
+      case 'notStarted':
+        return "لم يبدأ التسجيل بعد";
+      default:
+        return "";
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-right">تسجيل الحضور في {eventTitle}</DialogTitle>
+          <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
         </DialogHeader>
-        {!registrationStatus.canRegister ? (
+        {status !== 'available' ? (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {registrationStatus.message}
+              {getStatusMessage()}
             </AlertDescription>
           </Alert>
         ) : (
           <RegistrationForm
-            eventTitle={eventTitle}
-            eventPrice={eventPrice}
-            eventDate={eventDate}
-            eventTime={eventTime}
-            eventLocation={eventLocation}
+            eventTitle={event.title}
+            eventPrice={event.price}
+            eventDate={event.date}
+            eventTime={event.time}
+            eventLocation={event.location}
             onSubmit={() => onOpenChange(false)}
           />
         )}

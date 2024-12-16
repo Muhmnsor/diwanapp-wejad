@@ -18,13 +18,13 @@ import { EventImage } from "./EventImage";
 import { EventTitle } from "./EventTitle";
 import { EventDescription } from "./EventDescription";
 import { EventRegisterButton } from "./EventRegisterButton";
+import { EventRegistrationDialog } from "./EventRegistrationDialog";
 
 interface EventDetailsViewProps {
   event: CustomEvent;
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
-  onRegister: () => void;
 }
 
 export const EventDetailsView = ({ 
@@ -32,10 +32,10 @@ export const EventDetailsView = ({
   onEdit, 
   onDelete, 
   onAddToCalendar,
-  onRegister 
 }: EventDetailsViewProps) => {
   const { user } = useAuthStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
   console.log('Event data in EventDetailsView:', event);
 
@@ -53,7 +53,7 @@ export const EventDetailsView = ({
     const status = getEventStatus(event);
     console.log('Current event status:', status);
     if (status === 'available') {
-      onRegister();
+      setIsRegistrationOpen(true);
     }
   };
 
@@ -110,6 +110,12 @@ export const EventDetailsView = ({
           www.dfy.org.sa
         </a>
       </div>
+
+      <EventRegistrationDialog
+        open={isRegistrationOpen}
+        onOpenChange={setIsRegistrationOpen}
+        event={event}
+      />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent dir="rtl">

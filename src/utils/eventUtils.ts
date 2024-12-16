@@ -7,7 +7,6 @@ export const arabicToEnglishNum = (str: string) => {
 export const convertArabicDate = (dateStr: string, timeStr: string) => {
   console.log("Converting date and time:", { dateStr, timeStr });
   
-  // تحويل التاريخ
   const [day, month, year] = dateStr.split(' ');
   const arabicMonths: { [key: string]: string } = {
     'يناير': 'January', 'فبراير': 'February', 'مارس': 'March',
@@ -18,7 +17,6 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
   
   const englishMonth = arabicMonths[month] || month;
   
-  // معالجة الوقت
   let cleanTimeStr = timeStr
     .replace('مساءً', 'PM')
     .replace('صباحاً', 'AM')
@@ -33,23 +31,28 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
   return dateString;
 };
 
-export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
+export const isEventPassed = (event: Event): boolean => {
   const now = new Date();
-  const eventDate = new Date(`${event.date} ${event.time}`);
+  const [eventDate, eventTime] = [event.date, event.time];
+  const eventDateTime = new Date(`${eventDate}T${eventTime}`);
+  return eventDateTime < now;
+};
+
+export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
+  console.log('Checking event status for:', event.title);
   
   // تحقق ما إذا كان الحدث قد انتهى
-  if (eventDate < now) {
-    console.log('Event has already passed');
+  if (isEventPassed(event)) {
+    console.log('Event has passed:', event.title);
     return 'ended';
   }
   
   // تحقق من تاريخ بدء التسجيل
   if (event.registrationStartDate) {
     const startDate = new Date(event.registrationStartDate);
-    console.log('Registration start date:', startDate);
-    console.log('Current date:', now);
+    const now = new Date();
     if (now < startDate) {
-      console.log('Registration has not started yet');
+      console.log('Registration has not started yet for:', event.title);
       return 'notStarted';
     }
   }
@@ -57,18 +60,19 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
   // تحقق من تاريخ انتهاء التسجيل
   if (event.registrationEndDate) {
     const endDate = new Date(event.registrationEndDate);
+    const now = new Date();
     if (now > endDate) {
-      console.log('Registration has ended');
+      console.log('Registration has ended for:', event.title);
       return 'ended';
     }
   }
   
   // تحقق من اكتمال العدد
   if (event.attendees >= event.maxAttendees) {
-    console.log('Event is full');
+    console.log('Event is full:', event.title);
     return 'full';
   }
   
-  console.log('Registration is available');
+  console.log('Registration is available for:', event.title);
   return 'available';
 };
