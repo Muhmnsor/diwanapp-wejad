@@ -67,7 +67,7 @@ export const EventDetailsView = ({
     <div className="max-w-4xl mx-auto" dir="rtl">
       <EventHeader 
         title="ديوان"
-        logoUrl="/lovable-uploads/8f06dc5f-92e3-4f27-8dbb-9769d6e9d178.png"
+        showLogo={false}
       />
 
       <EventImage imageUrl={imageUrl} title={event.title} />

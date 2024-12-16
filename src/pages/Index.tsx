@@ -121,11 +121,13 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
               {pastEvents.map((event) => (
-                <div key={event.id} className="flex justify-center opacity-75">
-                  <EventCard 
-                    {...event}
-                    attendees={registrations[event.id] || 0}
-                  />
+                <div key={event.id} className="flex justify-center">
+                  <div className="opacity-50 transition-opacity hover:opacity-70">
+                    <EventCard 
+                      {...event}
+                      attendees={registrations[event.id] || 0}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

@@ -35,6 +35,13 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
 
 export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
   const now = new Date();
+  const eventDate = new Date(`${event.date} ${event.time}`);
+  
+  // تحقق ما إذا كان الحدث قد انتهى
+  if (eventDate < now) {
+    console.log('Event has already passed');
+    return 'ended';
+  }
   
   // تحقق من تاريخ بدء التسجيل
   if (event.registrationStartDate) {
