@@ -25,7 +25,7 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
       disabled: true
     },
     notStarted: {
-      text: "لم يبدأ التسجيل",
+      text: "لم يبدأ التسجيل بعد",
       className: "bg-gray-50 text-gray-400 cursor-not-allowed",
       disabled: true
     }

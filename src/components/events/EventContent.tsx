@@ -12,9 +12,14 @@ interface EventContentProps {
 export const EventContent = ({ event, onRegister }: EventContentProps) => {
   const handleRegister = () => {
     const status = getEventStatus(event);
-    console.log('Current event status:', status);
+    console.log('Attempting registration with status:', status);
+    
+    // فقط السماح بالتسجيل إذا كانت الحالة "available"
     if (status === 'available') {
+      console.log('Registration allowed, proceeding...');
       onRegister();
+    } else {
+      console.log('Registration not allowed for status:', status);
     }
   };
 
