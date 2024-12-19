@@ -40,20 +40,40 @@ export const isEventPassed = (event: Event): boolean => {
 export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
   console.log('Checking event status for:', event.title);
   
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Reset time to start of day for date comparison
+
   // تحقق من تاريخ بدء التسجيل
   if (event.registrationStartDate) {
     const startDate = new Date(event.registrationStartDate);
-    const now = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    
+    console.log('Registration start date:', startDate);
+    console.log('Current date:', now);
+    
     if (now < startDate) {
       console.log('Registration has not started yet for:', event.title);
       return 'notStarted';
     }
   }
   
-  // تحقق من تاريخ انتهاء التسجيل أو موعد الفعالية
+  // تحقق من تاريخ انتهاء التسجيل
+  if (event.registrationEndDate) {
+    const endDate = new Date(event.registrationEndDate);
+    endDate.setHours(23, 59, 59, 999); // Set to end of day
+    
+    console.log('Registration end date:', endDate);
+    
+    if (now > endDate) {
+      console.log('Registration period has ended for:', event.title);
+      return 'ended';
+    }
+  }
+  
+  // تحقق من موعد الفعالية
   const isEventEnded = isEventPassed(event);
-  if (isEventEnded || (event.registrationEndDate && new Date() > new Date(event.registrationEndDate))) {
-    console.log('Event or registration has ended for:', event.title);
+  if (isEventEnded) {
+    console.log('Event has already passed:', event.title);
     return 'ended';
   }
   
