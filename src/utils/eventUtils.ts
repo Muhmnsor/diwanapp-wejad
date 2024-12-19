@@ -39,6 +39,10 @@ export const isEventPassed = (event: Event): boolean => {
 
 export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
   console.log('Checking event status for:', event.title);
+  console.log('Event registration dates:', {
+    start: event.registrationStartDate,
+    end: event.registrationEndDate
+  });
   
   const now = new Date();
   now.setHours(0, 0, 0, 0); // Reset time to start of day for date comparison
@@ -48,11 +52,11 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
     const startDate = new Date(event.registrationStartDate);
     startDate.setHours(0, 0, 0, 0);
     
-    console.log('Registration start date:', startDate);
-    console.log('Current date:', now);
+    console.log('Registration start date:', startDate.toISOString());
+    console.log('Current date:', now.toISOString());
     
     if (now < startDate) {
-      console.log('Registration has not started yet for:', event.title);
+      console.log('Registration has not started yet - current date is before start date');
       return 'notStarted';
     }
   }
@@ -62,10 +66,10 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
     const endDate = new Date(event.registrationEndDate);
     endDate.setHours(23, 59, 59, 999); // Set to end of day
     
-    console.log('Registration end date:', endDate);
+    console.log('Registration end date:', endDate.toISOString());
     
     if (now > endDate) {
-      console.log('Registration period has ended for:', event.title);
+      console.log('Registration period has ended - current date is after end date');
       return 'ended';
     }
   }
@@ -73,16 +77,16 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
   // تحقق من موعد الفعالية
   const isEventEnded = isEventPassed(event);
   if (isEventEnded) {
-    console.log('Event has already passed:', event.title);
+    console.log('Event has already passed');
     return 'ended';
   }
   
   // تحقق من اكتمال العدد
   if (event.attendees >= event.maxAttendees) {
-    console.log('Event is full:', event.title);
+    console.log('Event is full - no more seats available');
     return 'full';
   }
   
-  console.log('Registration is available for:', event.title);
+  console.log('Registration is available');
   return 'available';
 };
