@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, MapPin, Users, Monitor, Ticket, CreditCard } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Users, Monitor } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 
@@ -39,25 +39,25 @@ export const EventInfo = ({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-3">
           <CalendarDays className="h-5 w-5 text-primary shrink-0" />
-          <span className="text-sm">{formattedDate}</span>
+          <span className="text-gray-600">{formattedDate}</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-3">
           <Clock className="h-5 w-5 text-primary shrink-0" />
-          <span className="text-sm">{formattedTime}</span>
+          <span className="text-gray-600">{formattedTime}</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-3">
           {eventType === "online" ? (
             <Monitor className="h-5 w-5 text-primary shrink-0" />
           ) : (
             <MapPin className="h-5 w-5 text-primary shrink-0" />
           )}
-          <span className="text-sm">{location}</span>
+          <span className="text-gray-600">{location}</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-3">
           <Users className="h-5 w-5 text-primary shrink-0" />
-          <span className="text-sm">
+          <span className="text-gray-600">
             {attendeesCount} مشارك 
             {remainingSeats > 0 && ` (متبقي ${remainingSeats} مقعد)`}
           </span>
