@@ -54,7 +54,6 @@ export const EventDetailsView = ({
     setIsRegistrationOpen(true);
   };
 
-  // Handle both imageUrl and image_url properties
   const imageUrl = event.imageUrl || event.image_url;
 
   return (
@@ -66,7 +65,7 @@ export const EventDetailsView = ({
 
       <EventImage imageUrl={imageUrl} title={event.title} />
 
-      <div className="border-t border-gray-200">
+      <div className="pt-6">
         <EventTitle
           title={event.title}
           isAdmin={user?.isAdmin}

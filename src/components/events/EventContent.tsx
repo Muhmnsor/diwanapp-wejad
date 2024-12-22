@@ -14,7 +14,6 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     const status = getEventStatus(event);
     console.log('Attempting registration with status:', status);
     
-    // فقط السماح بالتسجيل إذا كانت الحالة "available"
     if (status === 'available') {
       console.log('Registration allowed, proceeding...');
       onRegister();
@@ -27,7 +26,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
   console.log('Event status in content:', eventStatus);
 
   return (
-    <div className="p-8 border-t border-gray-100">
+    <div className="p-8">
       <EventInfo
         date={event.date}
         time={event.time}
