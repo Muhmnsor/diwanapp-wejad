@@ -45,12 +45,10 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
   });
   
   const now = new Date();
-  now.setHours(0, 0, 0, 0); // Reset time to start of day for date comparison
-
+  
   // تحقق من تاريخ بدء التسجيل
   if (event.registrationStartDate) {
     const startDate = new Date(event.registrationStartDate);
-    startDate.setHours(0, 0, 0, 0);
     
     console.log('Registration start date:', startDate.toISOString());
     console.log('Current date:', now.toISOString());
@@ -64,7 +62,6 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
   // تحقق من تاريخ انتهاء التسجيل
   if (event.registrationEndDate) {
     const endDate = new Date(event.registrationEndDate);
-    endDate.setHours(23, 59, 59, 999); // Set to end of day
     
     console.log('Registration end date:', endDate.toISOString());
     
@@ -75,8 +72,8 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
   }
   
   // تحقق من موعد الفعالية
-  const isEventEnded = isEventPassed(event);
-  if (isEventEnded) {
+  const eventDate = new Date(event.date);
+  if (now > eventDate) {
     console.log('Event has already passed');
     return 'ended';
   }
