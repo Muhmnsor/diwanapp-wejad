@@ -26,7 +26,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
   console.log('Event status in content:', eventStatus);
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-white shadow-sm rounded-b-lg">
       <EventInfo
         date={event.date}
         time={event.time}

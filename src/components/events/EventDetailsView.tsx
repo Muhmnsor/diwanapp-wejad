@@ -65,7 +65,7 @@ export const EventDetailsView = ({
 
       <EventImage imageUrl={imageUrl} title={event.title} />
 
-      <div className="pt-6">
+      <div className="bg-white shadow-sm">
         <EventTitle
           title={event.title}
           isAdmin={user?.isAdmin}
