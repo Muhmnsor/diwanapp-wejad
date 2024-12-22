@@ -28,36 +28,44 @@ export const EventInfo = ({
   const formattedTime = formatTime12Hour(time);
   
   return (
-    <div className="space-y-6 mb-8">
+    <div className="space-y-8 mb-12 px-8">
       <div className="flex flex-wrap gap-2">
-        <Badge variant={eventType === "online" ? "secondary" : "default"}>
+        <Badge variant={eventType === "online" ? "secondary" : "default"} className="rounded-full px-4 py-1">
           {eventType === "online" ? "عن بعد" : "حضوري"}
         </Badge>
-        <Badge variant={price === "free" ? "secondary" : "default"}>
+        <Badge variant={price === "free" ? "secondary" : "default"} className="rounded-full px-4 py-1">
           {price === "free" ? "مجاني" : `${price} ريال`}
         </Badge>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex items-center gap-3">
-          <CalendarDays className="h-5 w-5 text-primary shrink-0" />
-          <span className="text-gray-600">{formattedDate}</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            <CalendarDays className="h-5 w-5 text-primary" />
+          </div>
+          <span className="text-[#1A1F2C]">{formattedDate}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-primary shrink-0" />
-          <span className="text-gray-600">{formattedTime}</span>
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            <Clock className="h-5 w-5 text-primary" />
+          </div>
+          <span className="text-[#1A1F2C]">{formattedTime}</span>
         </div>
-        <div className="flex items-center gap-3">
-          {eventType === "online" ? (
-            <Monitor className="h-5 w-5 text-primary shrink-0" />
-          ) : (
-            <MapPin className="h-5 w-5 text-primary shrink-0" />
-          )}
-          <span className="text-gray-600">{location}</span>
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            {eventType === "online" ? (
+              <Monitor className="h-5 w-5 text-primary" />
+            ) : (
+              <MapPin className="h-5 w-5 text-primary" />
+            )}
+          </div>
+          <span className="text-[#1A1F2C]">{location}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Users className="h-5 w-5 text-primary shrink-0" />
-          <span className="text-gray-600">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <span className="text-[#1A1F2C]">
             {attendeesCount} مشارك 
             {remainingSeats > 0 && ` (متبقي ${remainingSeats} مقعد)`}
           </span>

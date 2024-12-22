@@ -5,7 +5,7 @@ export const EventFooter = () => {
         href="https://www.dfy.org.sa" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-primary hover:underline"
+        className="text-primary hover:text-primary/80 transition-colors"
       >
         www.dfy.org.sa
       </a>
