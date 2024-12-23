@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       events: {
         Row: {
+          beneficiary_type: string
           created_at: string
           date: string
           description: string | null
@@ -26,6 +27,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          beneficiary_type?: string
           created_at?: string
           date: string
           description?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           title: string
         }
         Update: {
+          beneficiary_type?: string
           created_at?: string
           date?: string
           description?: string | null

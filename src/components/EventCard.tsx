@@ -16,6 +16,7 @@ interface EventCardProps {
   max_attendees?: number;
   registration_start_date?: string | null;
   registration_end_date?: string | null;
+  beneficiary_type: string;
 }
 
 export const EventCard = ({ 
@@ -29,7 +30,8 @@ export const EventCard = ({
   attendees = 0,
   max_attendees = 0,
   registration_start_date,
-  registration_end_date
+  registration_end_date,
+  beneficiary_type
 }: EventCardProps) => {
   const remainingSeats = max_attendees - attendees;
   const isAlmostFull = remainingSeats <= max_attendees * 0.2;
@@ -59,9 +61,18 @@ export const EventCard = ({
     return { text: "التسجيل متاح", variant: "secondary" as const, color: "bg-green-500" };
   };
 
-  const status = getRegistrationStatus();
+  const getBeneficiaryLabel = (type: string) => {
+    switch (type) {
+      case 'men':
+        return 'رجال';
+      case 'women':
+        return 'نساء';
+      default:
+        return 'رجال ونساء';
+    }
+  };
 
-  console.log('Rendering EventCard with max-width:', '380px');
+  const status = getRegistrationStatus();
 
   return (
     <div className="w-[380px] mx-auto">
@@ -77,6 +88,9 @@ export const EventCard = ({
             </Badge>
             <Badge variant={!price ? "secondary" : "default"}>
               {!price ? "مجاني" : `${price} ريال`}
+            </Badge>
+            <Badge variant="outline" className="text-primary">
+              {getBeneficiaryLabel(beneficiary_type)}
             </Badge>
           </div>
           <div className="flex items-center gap-2 text-gray-600 text-sm">

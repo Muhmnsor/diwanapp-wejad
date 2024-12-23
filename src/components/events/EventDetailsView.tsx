@@ -1,4 +1,4 @@
-import { Event as CustomEvent } from "@/store/eventStore";
+import { EventType } from "@/types/event";
 import { useAuthStore } from "@/store/authStore";
 import {
   AlertDialog,
@@ -12,15 +12,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { EventHeader } from "./EventHeader";
-import { EventImage } from "./EventImage";
-import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { EventContainer } from "./EventContainer";
-import { EventContent } from "./EventContent";
 import { EventFooter } from "./EventFooter";
+import { EventDetailsHeader } from "./details/EventDetailsHeader";
+import { EventDetailsContent } from "./details/EventDetailsContent";
 
 interface EventDetailsViewProps {
-  event: CustomEvent;
+  event: EventType;
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
@@ -38,10 +37,7 @@ export const EventDetailsView = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
-  console.log('Event data in EventDetailsView:', event);
-
   if (!event) {
-    console.error('No event data provided to EventDetailsView');
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
   }
 
@@ -54,32 +50,23 @@ export const EventDetailsView = ({
     setIsRegistrationOpen(true);
   };
 
-  const imageUrl = event.imageUrl || event.image_url;
-
   return (
     <EventContainer>
-      <EventHeader 
-        title="ديوان"
-        showLogo={false}
+      <EventHeader title="ديوان" showLogo={false} />
+
+      <EventDetailsHeader
+        event={event}
+        isAdmin={user?.isAdmin}
+        onEdit={onEdit}
+        onDelete={() => setIsDeleteDialogOpen(true)}
+        onShare={async () => {}}
+        onAddToCalendar={onAddToCalendar}
       />
 
-      <EventImage imageUrl={imageUrl} title={event.title} />
-
-      <div className="bg-white shadow-sm">
-        <EventTitle
-          title={event.title}
-          isAdmin={user?.isAdmin}
-          onEdit={onEdit}
-          onDelete={() => setIsDeleteDialogOpen(true)}
-          onShare={async () => {}}
-          onAddToCalendar={onAddToCalendar}
-        />
-
-        <EventContent 
-          event={event}
-          onRegister={handleRegister}
-        />
-      </div>
+      <EventDetailsContent 
+        event={event}
+        onRegister={handleRegister}
+      />
 
       <EventFooter />
 
