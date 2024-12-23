@@ -3,6 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Event } from "@/store/eventStore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { BeneficiaryType } from "@/types/event";
 
 interface EventFormFieldsProps {
   formData: Event;
@@ -78,7 +79,7 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
         <label className="text-sm font-medium block mb-1.5">نوع المستفيدين</label>
         <Select
           value={formData.beneficiaryType}
-          onValueChange={(value) => 
+          onValueChange={(value: BeneficiaryType) => 
             setFormData({ ...formData, beneficiaryType: value })
           }
         >
