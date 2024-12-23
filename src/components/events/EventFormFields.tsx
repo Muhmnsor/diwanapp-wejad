@@ -75,6 +75,24 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
         </Select>
       </div>
       <div>
+        <label className="text-sm font-medium block mb-1.5">نوع المستفيدين</label>
+        <Select
+          value={formData.beneficiaryType}
+          onValueChange={(value) => 
+            setFormData({ ...formData, beneficiaryType: value })
+          }
+        >
+          <SelectTrigger className="text-right">
+            <SelectValue placeholder="اختر نوع المستفيدين" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="men">رجال</SelectItem>
+            <SelectItem value="women">نساء</SelectItem>
+            <SelectItem value="both">رجال ونساء</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
         <label className="text-sm font-medium block mb-1.5">السعر (اتركه فارغاً للفعاليات المجانية)</label>
         <Input
           type="number"
@@ -96,6 +114,24 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
           type="number"
           value={formData.maxAttendees}
           onChange={(e) => setFormData({ ...formData, maxAttendees: Number(e.target.value) })}
+          className="text-right"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">تاريخ بدء التسجيل</label>
+        <Input
+          type="date"
+          value={formData.registrationStartDate || ''}
+          onChange={(e) => setFormData({ ...formData, registrationStartDate: e.target.value })}
+          className="text-right"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">تاريخ انتهاء التسجيل</label>
+        <Input
+          type="date"
+          value={formData.registrationEndDate || ''}
+          onChange={(e) => setFormData({ ...formData, registrationEndDate: e.target.value })}
           className="text-right"
         />
       </div>

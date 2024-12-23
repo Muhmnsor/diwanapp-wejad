@@ -26,6 +26,7 @@ const eventSchema = z.object({
   priceType: z.enum(["free", "paid"]),
   priceAmount: z.number().min(0).optional(),
   maxAttendees: z.number().min(1, "عدد المقاعد مطلوب"),
+  beneficiaryType: z.enum(["men", "women", "both"]),
   registration_start_date: z.string().optional(),
   registration_end_date: z.string().optional(),
 });
@@ -49,6 +50,7 @@ const CreateEvent = () => {
       priceType: "free",
       priceAmount: 0,
       maxAttendees: 1,
+      beneficiaryType: "both",
       registration_start_date: "",
       registration_end_date: "",
     },
@@ -66,7 +68,6 @@ const CreateEvent = () => {
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `event-images/${fileName}`;
 
-        // Upload image to Supabase storage
         const { error: uploadError } = await supabase.storage
           .from('event-images')
           .upload(filePath, data.imageFile);
@@ -76,7 +77,6 @@ const CreateEvent = () => {
           throw uploadError;
         }
 
-        // Get public URL for the uploaded image
         const { data: { publicUrl } } = supabase.storage
           .from('event-images')
           .getPublicUrl(filePath);
@@ -95,13 +95,13 @@ const CreateEvent = () => {
         event_type: data.eventType,
         price: data.priceType === "free" ? null : data.priceAmount,
         max_attendees: data.maxAttendees,
+        beneficiary_type: data.beneficiaryType,
         registration_start_date: data.registration_start_date || null,
         registration_end_date: data.registration_end_date || null,
       };
 
       console.log("Inserting event data into Supabase:", eventData);
 
-      // Insert event data into Supabase
       const { data: createdEvent, error } = await supabase
         .from('events')
         .insert(eventData)
@@ -253,6 +253,31 @@ const CreateEvent = () => {
 
               <FormField
                 control={form.control}
+                name="beneficiaryType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع المستفيدين</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع المستفيدين" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="men">رجال</SelectItem>
+                        <SelectItem value="women">نساء</SelectItem>
+                        <SelectItem value="both">رجال ونساء</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
                 name="priceType"
                 render={({ field }) => (
                   <FormItem>
@@ -272,29 +297,29 @@ const CreateEvent = () => {
                   </FormItem>
                 )}
               />
-            </div>
 
-            {watchPriceType === "paid" && (
-              <FormField
-                control={form.control}
-                name="priceAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>السعر (ريال)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="أدخل السعر"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+              {watchPriceType === "paid" && (
+                <FormField
+                  control={form.control}
+                  name="priceAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>السعر (ريال)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="أدخل السعر"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
 
             <FormField
               control={form.control}
