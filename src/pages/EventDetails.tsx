@@ -13,6 +13,7 @@ import { EventLoadingState } from "@/components/events/EventLoadingState";
 import { EventNotFound } from "@/components/events/EventNotFound";
 import { EventAdminView } from "@/components/events/EventAdminView";
 import { handleAddToCalendar } from "@/components/events/EventCalendarHelper";
+import { BeneficiaryType } from "@/types/event";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -51,6 +52,9 @@ const EventDetails = () => {
         maxAttendees: data.max_attendees,
         eventType: data.event_type as "online" | "in-person",
         price: data.price === null ? "free" : data.price,
+        beneficiaryType: data.beneficiary_type as BeneficiaryType,
+        registrationStartDate: data.registration_start_date,
+        registrationEndDate: data.registration_end_date,
       };
 
       return transformedEvent;
@@ -112,6 +116,7 @@ const EventDetails = () => {
           max_attendees: updatedEvent.maxAttendees,
           price: updatedEvent.price === "free" ? null : updatedEvent.price,
           image_url: updatedEvent.imageUrl || updatedEvent.image_url,
+          beneficiary_type: updatedEvent.beneficiaryType,
         })
         .eq('id', id);
 

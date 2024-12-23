@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { BeneficiaryType } from '@/types/event';
 
 export interface Event {
   id?: string;
@@ -15,6 +16,7 @@ export interface Event {
   price: number | "free";
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
+  beneficiaryType: BeneficiaryType;
 }
 
 interface EventStore {
