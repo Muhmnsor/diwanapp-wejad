@@ -37,48 +37,39 @@ export const isEventPassed = (event: Event): boolean => {
   return eventDateTime < now;
 };
 
-export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | 'notStarted' => {
+export type EventStatus = 'available' | 'full' | 'ended' | 'notStarted' | 'eventStarted';
+
+export const getEventStatus = (event: Event): EventStatus => {
   console.log('Checking event status for:', event.title);
-  console.log('Event registration dates:', {
-    start: event.registrationStartDate,
-    end: event.registrationEndDate
-  });
   
   const now = new Date();
+  const eventDate = new Date(`${event.date} ${event.time}`);
   
-  // تحقق من تاريخ بدء التسجيل
+  // Check if event has started
+  if (now >= eventDate) {
+    console.log('Event has already started or ended');
+    return 'eventStarted';
+  }
+  
+  // Check registration start date
   if (event.registrationStartDate) {
     const startDate = new Date(event.registrationStartDate);
-    
-    console.log('Registration start date:', startDate.toISOString());
-    console.log('Current date:', now.toISOString());
-    
     if (now < startDate) {
-      console.log('Registration has not started yet - current date is before start date');
+      console.log('Registration has not started yet');
       return 'notStarted';
     }
   }
   
-  // تحقق من تاريخ انتهاء التسجيل
+  // Check registration end date
   if (event.registrationEndDate) {
     const endDate = new Date(event.registrationEndDate);
-    
-    console.log('Registration end date:', endDate.toISOString());
-    
     if (now > endDate) {
-      console.log('Registration period has ended - current date is after end date');
+      console.log('Registration period has ended');
       return 'ended';
     }
   }
   
-  // تحقق من موعد الفعالية
-  const eventDate = new Date(event.date);
-  if (now > eventDate) {
-    console.log('Event has already passed');
-    return 'ended';
-  }
-  
-  // تحقق من اكتمال العدد
+  // Check if event is full
   if (event.attendees >= event.maxAttendees) {
     console.log('Event is full - no more seats available');
     return 'full';
@@ -86,4 +77,36 @@ export const getEventStatus = (event: Event): 'available' | 'full' | 'ended' | '
   
   console.log('Registration is available');
   return 'available';
+};
+
+export const getStatusConfig = (status: EventStatus) => {
+  const configs = {
+    available: {
+      text: "تسجيل الحضور",
+      className: "bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all",
+      disabled: false
+    },
+    full: {
+      text: "اكتمل التسجيل",
+      className: "bg-gray-100 text-gray-500 cursor-not-allowed",
+      disabled: true
+    },
+    ended: {
+      text: "انتهى التسجيل",
+      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
+      disabled: true
+    },
+    notStarted: {
+      text: "لم يبدأ التسجيل بعد",
+      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
+      disabled: true
+    },
+    eventStarted: {
+      text: "بدأت الفعالية",
+      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
+      disabled: true
+    }
+  };
+
+  return configs[status];
 };

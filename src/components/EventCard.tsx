@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getEventStatus } from "@/utils/eventUtils";
 
 interface EventCardProps {
   id: string;
@@ -35,30 +36,32 @@ export const EventCard = ({
 }: EventCardProps) => {
   const remainingSeats = max_attendees - attendees;
   const isAlmostFull = remainingSeats <= max_attendees * 0.2;
-  const isFull = remainingSeats <= 0;
 
   const getRegistrationStatus = () => {
-    const now = new Date();
-    const startDate = registration_start_date ? new Date(registration_start_date) : null;
-    const endDate = registration_end_date ? new Date(registration_end_date) : null;
+    const status = getEventStatus({
+      date,
+      time: "00:00", // Since we don't have time in card view, we use default
+      attendees,
+      maxAttendees: max_attendees,
+      registrationStartDate: registration_start_date,
+      registrationEndDate: registration_end_date,
+      beneficiaryType: beneficiary_type
+    } as any); // Using 'as any' since we don't have all Event properties in card view
 
-    if (isFull) {
-      return { text: "اكتمل التسجيل", variant: "destructive" as const, color: "bg-purple-500" };
+    switch (status) {
+      case 'eventStarted':
+        return { text: "انتهت الفعالية", variant: "destructive" as const, color: "bg-gray-500" };
+      case 'full':
+        return { text: "اكتمل التسجيل", variant: "destructive" as const, color: "bg-purple-500" };
+      case 'notStarted':
+        return { text: "لم يبدأ التسجيل", variant: "secondary" as const, color: "bg-gray-500" };
+      case 'ended':
+        return { text: "انتهى التسجيل", variant: "destructive" as const, color: "bg-red-500" };
+      default:
+        return isAlmostFull 
+          ? { text: "التسجيل متاح - الأماكن محدودة", variant: "accent" as const, color: "bg-yellow-500" }
+          : { text: "التسجيل متاح", variant: "secondary" as const, color: "bg-green-500" };
     }
-
-    if (startDate && now < startDate) {
-      return { text: "لم يبدأ التسجيل", variant: "secondary" as const, color: "bg-gray-500" };
-    }
-
-    if (endDate && now > endDate) {
-      return { text: "انتهى التسجيل", variant: "destructive" as const, color: "bg-red-500" };
-    }
-
-    if (isAlmostFull) {
-      return { text: "التسجيل متاح - الأماكن محدودة", variant: "accent" as const, color: "bg-yellow-500" };
-    }
-
-    return { text: "التسجيل متاح", variant: "secondary" as const, color: "bg-green-500" };
   };
 
   const getBeneficiaryLabel = (type: string) => {
@@ -67,6 +70,10 @@ export const EventCard = ({
         return 'رجال';
       case 'women':
         return 'نساء';
+      case 'children':
+        return 'أطفال';
+      case 'all':
+        return 'الجميع';
       default:
         return 'رجال ونساء';
     }
