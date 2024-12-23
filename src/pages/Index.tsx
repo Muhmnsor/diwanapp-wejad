@@ -85,15 +85,16 @@ const Index = () => {
   const pastEvents = events.filter(event => new Date(event.date) < today);
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-[#FFFFFF] dark:bg-[#1A1F2C]" dir="rtl">
       <Navigation />
-      <main className="container mx-auto px-4 py-8">
-        <section className="mb-12 bg-white rounded-lg shadow-lg p-8">
+      <main className="container mx-auto px-4 py-8 space-y-12">
+        {/* Upcoming Events Section */}
+        <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
           <div className="border-r-4 border-primary pr-4 mb-8">
-            <h2 className="text-3xl font-bold text-primary">الفعاليات القادمة</h2>
+            <h2 className="text-3xl font-bold text-[#403E43] dark:text-white">الفعاليات القادمة</h2>
           </div>
           {upcomingEvents.length === 0 ? (
-            <div className="text-center text-gray-500 p-8 bg-gray-50 rounded-lg">
+            <div className="text-center text-[#9F9EA1] p-8 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
               لا توجد فعاليات قادمة حالياً
             </div>
           ) : (
@@ -110,31 +111,30 @@ const Index = () => {
           )}
         </section>
 
-        <section className="mb-12 bg-gray-100 rounded-lg shadow-lg p-8">
-          <div className="border-r-4 border-gray-400 pr-4 mb-8">
-            <h2 className="text-3xl font-bold text-gray-600">الفعاليات السابقة</h2>
+        {/* Past Events Section */}
+        <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
+          <div className="border-r-4 border-[#9F9EA1] pr-4 mb-8">
+            <h2 className="text-3xl font-bold text-[#403E43] dark:text-white">الفعاليات السابقة</h2>
           </div>
           {pastEvents.length === 0 ? (
-            <div className="text-center text-gray-500 p-8 bg-white rounded-lg">
+            <div className="text-center text-[#9F9EA1] p-8 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
               لا توجد فعاليات سابقة
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
               {pastEvents.map((event) => (
                 <div key={event.id} className="flex justify-center">
-                  <div className="opacity-50 transition-opacity hover:opacity-70">
-                    <EventCard 
-                      {...event}
-                      attendees={registrations[event.id] || 0}
-                    />
-                  </div>
+                  <EventCard 
+                    {...event}
+                    attendees={registrations[event.id] || 0}
+                  />
                 </div>
               ))}
             </div>
           )}
         </section>
 
-        <footer className="mt-16 py-8 border-t border-gray-200">
+        <footer className="mt-16 py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
               <div className="flex items-center justify-center md:justify-start">
@@ -142,9 +142,9 @@ const Index = () => {
               </div>
               
               <div className="text-center">
-                <h3 className="font-bold text-xl mb-2">جمعية ديوان الشبابية</h3>
-                <p className="text-gray-600 mb-1">المملكة العربية السعودية - المدينة المنورة</p>
-                <p className="text-gray-600 mb-2">رقم الترخيص 5531</p>
+                <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
+                <p className="text-[#9F9EA1] mb-1">المملكة العربية السعودية - المدينة المنورة</p>
+                <p className="text-[#9F9EA1] mb-2">رقم الترخيص 5531</p>
                 <a 
                   href="https://www.dfy.org.sa" 
                   target="_blank" 
@@ -157,13 +157,13 @@ const Index = () => {
               </div>
 
               <div className="flex justify-center md:justify-end space-x-4 rtl:space-x-reverse">
-                <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-primary">
+                <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
                   <Twitter className="w-6 h-6" />
                 </a>
-                <a href="https://instagram.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-primary">
+                <a href="https://instagram.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
                   <Instagram className="w-6 h-6" />
                 </a>
-                <a href="https://linkedin.com/company/d4ymed" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-primary">
+                <a href="https://linkedin.com/company/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
                   <Linkedin className="w-6 h-6" />
                 </a>
               </div>
