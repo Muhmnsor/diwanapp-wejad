@@ -5,7 +5,7 @@ import { Event as CustomEvent } from "@/store/eventStore";
 export const handleImageUpload = async (
   file: File,
   setIsUploading: (value: boolean) => void,
-  setFormData: (value: CustomEvent) => void
+  setFormData: React.Dispatch<React.SetStateAction<CustomEvent>>
 ) => {
   setIsUploading(true);
   try {
@@ -23,8 +23,8 @@ export const handleImageUpload = async (
       .from('event-images')
       .getPublicUrl(filePath);
 
-    setFormData(prev => ({
-      ...prev,
+    setFormData(prevData => ({
+      ...prevData,
       imageUrl: publicUrl,
       image_url: publicUrl
     }));
