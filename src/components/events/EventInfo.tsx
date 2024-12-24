@@ -1,6 +1,7 @@
 import { CalendarDays, Clock, MapPin, Users, Monitor } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
+import { BeneficiaryType } from "@/types/event";
 
 interface EventInfoProps {
   date: string;
@@ -10,6 +11,7 @@ interface EventInfoProps {
   maxAttendees: number;
   eventType: "online" | "in-person";
   price: number | "free";
+  beneficiaryType: BeneficiaryType;
 }
 
 export const EventInfo = ({ 
@@ -19,22 +21,38 @@ export const EventInfo = ({
   attendees, 
   maxAttendees,
   eventType,
-  price 
+  price,
+  beneficiaryType
 }: EventInfoProps) => {
   const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees;
   const remainingSeats = maxAttendees - attendeesCount;
   
   const formattedDate = formatDateWithDay(date);
   const formattedTime = formatTime12Hour(time);
+
+  const getBeneficiaryLabel = (type: string) => {
+    switch (type) {
+      case 'men':
+        return 'رجال';
+      case 'women':
+        return 'نساء';
+      default:
+        return 'رجال ونساء';
+    }
+  };
   
   return (
-    <div className="space-y-8 mb-12 px-8">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-8 mb-12">
+      <div className="flex flex-wrap items-center gap-2">
         <Badge variant={eventType === "online" ? "secondary" : "default"} className="rounded-full px-4 py-1">
           {eventType === "online" ? "عن بعد" : "حضوري"}
         </Badge>
-        <Badge variant={price === "free" ? "secondary" : "default"} className="rounded-full px-4 py-1">
+        <Badge variant="outline" className="rounded-full px-4 py-1">
           {price === "free" ? "مجاني" : `${price} ريال`}
+        </Badge>
+        <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
+          <Users className="w-4 h-4" />
+          {getBeneficiaryLabel(beneficiaryType)}
         </Badge>
       </div>
       
