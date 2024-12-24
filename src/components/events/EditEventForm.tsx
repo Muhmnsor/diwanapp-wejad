@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button";
 import { Event as CustomEvent } from "@/store/eventStore";
 import { EventFormFields } from "./EventFormFields";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { EventFormActions } from "./form/EventFormActions";
+import { handleImageUpload } from "./form/EventImageUpload";
 
 interface EditEventFormProps {
   event: CustomEvent;
@@ -15,38 +15,6 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
   const [formData, setFormData] = useState<CustomEvent>(event);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleImageUpload = async (file: File) => {
-    setIsUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `event-images/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('event-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(filePath);
-
-      setFormData(prev => ({
-        ...prev,
-        imageUrl: publicUrl,
-        image_url: publicUrl
-      }));
-
-      toast.success("تم رفع الصورة بنجاح");
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error("حدث خطأ أثناء رفع الصورة");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Submitting form data:', formData);
@@ -54,9 +22,12 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     try {
       const updateData = {
         ...formData,
-        image_url: formData.imageUrl || formData.image_url
+        image_url: formData.imageUrl || formData.image_url,
+        registration_start_date: formData.registrationStartDate,
+        registration_end_date: formData.registrationEndDate
       };
       
+      console.log('Updating event with data:', updateData);
       onSave(updateData);
       toast.success("تم تحديث الفعالية بنجاح");
     } catch (error) {
@@ -65,29 +36,21 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     }
   };
 
+  const handleImageChange = async (file: File) => {
+    await handleImageUpload(file, setIsUploading, setFormData);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <EventFormFields 
         formData={formData} 
         setFormData={setFormData}
-        onImageChange={handleImageUpload}
+        onImageChange={handleImageChange}
       />
-      <div className="flex justify-start gap-2 sticky bottom-0 bg-background py-4">
-        <Button 
-          type="submit"
-          disabled={isUploading}
-        >
-          {isUploading ? "جاري الرفع..." : "حفظ التغييرات"}
-        </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel}
-          disabled={isUploading}
-        >
-          إلغاء
-        </Button>
-      </div>
+      <EventFormActions 
+        isUploading={isUploading}
+        onCancel={onCancel}
+      />
     </form>
   );
 };

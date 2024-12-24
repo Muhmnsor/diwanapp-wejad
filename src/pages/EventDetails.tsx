@@ -117,6 +117,8 @@ const EventDetails = () => {
           price: updatedEvent.price === "free" ? null : updatedEvent.price,
           image_url: updatedEvent.imageUrl || updatedEvent.image_url,
           beneficiary_type: updatedEvent.beneficiaryType,
+          registration_start_date: updatedEvent.registrationStartDate,
+          registration_end_date: updatedEvent.registrationEndDate
         })
         .eq('id', id);
 
