@@ -3,7 +3,7 @@ import { EventInfo } from "./EventInfo";
 import { EventDescription } from "./EventDescription";
 import { EventRegisterButton } from "./EventRegisterButton";
 import { getEventStatus } from "@/utils/eventUtils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface EventContentProps {
   event: Event;
@@ -11,6 +11,8 @@ interface EventContentProps {
 }
 
 export const EventContent = ({ event, onRegister }: EventContentProps) => {
+  const [eventStatus, setEventStatus] = useState(() => getEventStatus(event));
+
   useEffect(() => {
     console.log('Event data in content updated:', {
       title: event.title,
@@ -18,9 +20,22 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       registrationDates: {
         start: event.registrationStartDate,
         end: event.registrationEndDate
-      }
+      },
+      attendees: event.attendees,
+      maxAttendees: event.maxAttendees
     });
-  }, [event]);
+
+    // تحديث حالة الزر عندما تتغير بيانات الفعالية
+    const newStatus = getEventStatus(event);
+    console.log('New event status:', newStatus);
+    setEventStatus(newStatus);
+  }, [
+    event.date, 
+    event.registrationStartDate, 
+    event.registrationEndDate,
+    event.attendees,
+    event.maxAttendees
+  ]);
 
   const handleRegister = () => {
     const status = getEventStatus(event);
@@ -33,9 +48,6 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       console.log('Registration not allowed for status:', status);
     }
   };
-
-  const eventStatus = getEventStatus(event);
-  console.log('Event status in content:', eventStatus);
 
   return (
     <div className="bg-white">
