@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { EventStatus, getStatusConfig } from "@/utils/eventUtils";
+import { useEffect } from "react";
 
 interface EventRegisterButtonProps {
   status: EventStatus;
@@ -7,7 +8,9 @@ interface EventRegisterButtonProps {
 }
 
 export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonProps) => {
-  console.log('EventRegisterButton status:', status);
+  useEffect(() => {
+    console.log('EventRegisterButton status updated:', status);
+  }, [status]);
   
   const config = getStatusConfig(status);
 

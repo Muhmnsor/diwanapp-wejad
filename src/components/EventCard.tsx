@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getEventStatus } from "@/utils/eventUtils";
+import { useEffect } from "react";
 
 interface EventCardProps {
   id: string;
@@ -36,6 +37,17 @@ export const EventCard = ({
 }: EventCardProps) => {
   const remainingSeats = max_attendees - attendees;
   const isAlmostFull = remainingSeats <= max_attendees * 0.2;
+
+  useEffect(() => {
+    console.log('EventCard data updated:', {
+      title,
+      date,
+      registrationDates: {
+        start: registration_start_date,
+        end: registration_end_date
+      }
+    });
+  }, [title, date, registration_start_date, registration_end_date]);
 
   const getRegistrationStatus = () => {
     const status = getEventStatus({

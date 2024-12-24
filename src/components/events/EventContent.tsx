@@ -3,6 +3,7 @@ import { EventInfo } from "./EventInfo";
 import { EventDescription } from "./EventDescription";
 import { EventRegisterButton } from "./EventRegisterButton";
 import { getEventStatus } from "@/utils/eventUtils";
+import { useEffect } from "react";
 
 interface EventContentProps {
   event: Event;
@@ -10,6 +11,17 @@ interface EventContentProps {
 }
 
 export const EventContent = ({ event, onRegister }: EventContentProps) => {
+  useEffect(() => {
+    console.log('Event data in content updated:', {
+      title: event.title,
+      date: event.date,
+      registrationDates: {
+        start: event.registrationStartDate,
+        end: event.registrationEndDate
+      }
+    });
+  }, [event]);
+
   const handleRegister = () => {
     const status = getEventStatus(event);
     console.log('Attempting registration with status:', status);

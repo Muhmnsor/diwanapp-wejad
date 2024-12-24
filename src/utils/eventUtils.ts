@@ -32,6 +32,10 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
 };
 
 export const isEventPassed = (event: Event): boolean => {
+  if (!event) {
+    console.log('Event is undefined in isEventPassed');
+    return false;
+  }
   const now = new Date();
   const eventDateTime = new Date(`${event.date} ${event.time}`);
   return eventDateTime < now;
@@ -40,7 +44,20 @@ export const isEventPassed = (event: Event): boolean => {
 export type EventStatus = 'available' | 'full' | 'ended' | 'notStarted' | 'eventStarted';
 
 export const getEventStatus = (event: Event): EventStatus => {
-  console.log('Checking event status for:', event.title);
+  if (!event) {
+    console.log('Event is undefined in getEventStatus');
+    return 'notStarted';
+  }
+
+  console.log('Checking event status for:', {
+    title: event.title,
+    date: event.date,
+    time: event.time,
+    registrationStartDate: event.registrationStartDate,
+    registrationEndDate: event.registrationEndDate,
+    attendees: event.attendees,
+    maxAttendees: event.maxAttendees
+  });
   
   const now = new Date();
   const eventDate = new Date(`${event.date} ${event.time}`);
