@@ -59,6 +59,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         maxAttendees={event.maxAttendees}
         eventType={event.eventType}
         price={event.price}
+        beneficiaryType={event.beneficiaryType}
       />
 
       <EventDescription description={event.description} />
