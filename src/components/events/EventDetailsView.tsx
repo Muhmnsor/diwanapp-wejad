@@ -52,8 +52,6 @@ export const EventDetailsView = ({
 
   return (
     <EventContainer>
-      <EventHeader title="ديوان" showLogo={false} />
-
       <EventDetailsHeader
         event={event}
         isAdmin={user?.isAdmin}
