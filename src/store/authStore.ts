@@ -8,12 +8,6 @@ interface User {
   isAdmin: boolean;
 }
 
-interface SupabaseUserRoleResponse {
-  roles: {
-    name: string;
-  }[];
-}
-
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -45,6 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('No user data available');
       }
 
+      // Set initial user state
       const initialUserState: User = {
         id: authData.user.id,
         email: authData.user.email ?? '',
@@ -53,25 +48,34 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       console.log("AuthStore: Setting initial user state:", initialUserState);
 
+      // First set the basic user info
       set({
         user: initialUserState,
         isAuthenticated: true
       });
 
+      // Then fetch user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select('roles (name)')
-        .eq('user_id', authData.user.id)
-        .single();
+        .select(`
+          roles (
+            name
+          )
+        `)
+        .eq('user_id', authData.user.id);
 
       console.log("AuthStore: User roles response:", { userRoles, rolesError });
 
       if (rolesError) {
         console.error("AuthStore: Error fetching user roles:", rolesError);
+        return;
       }
 
-      // Fix: Check if the first role in the array is 'admin'
-      if ((userRoles as SupabaseUserRoleResponse)?.roles[0]?.name === 'admin') {
+      // Check if user has admin role
+      const isAdmin = userRoles?.some(role => role.roles?.name === 'admin');
+      console.log("AuthStore: Is user admin?", isAdmin);
+
+      if (isAdmin) {
         console.log("AuthStore: User is admin, updating state");
         set(state => ({
           user: {
