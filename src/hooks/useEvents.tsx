@@ -7,7 +7,7 @@ export const useEvents = () => {
     queryKey: ["events"],
     queryFn: async () => {
       try {
-        console.log("🔄 بدء جلب الفعاليات من Supabase...");
+        console.log("🔄 جاري جلب الفعاليات...");
         
         const { data, error } = await supabase
           .from("events")
@@ -30,6 +30,6 @@ export const useEvents = () => {
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: false
+    retry: 1
   });
 };

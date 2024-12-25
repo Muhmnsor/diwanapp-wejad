@@ -7,7 +7,7 @@ export const useRegistrations = () => {
     queryKey: ["registrations"],
     queryFn: async () => {
       try {
-        console.log("🔄 بدء جلب التسجيلات من Supabase...");
+        console.log("🔄 جاري جلب التسجيلات...");
         
         const { data, error } = await supabase
           .from("registrations")
@@ -21,6 +21,7 @@ export const useRegistrations = () => {
 
         console.log("✅ تم جلب التسجيلات بنجاح، العدد:", data?.length);
         
+        // تحويل البيانات إلى تنسيق العد
         const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
           if (registration.event_id) {
             acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
@@ -38,6 +39,6 @@ export const useRegistrations = () => {
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: false
+    retry: 1
   });
 };

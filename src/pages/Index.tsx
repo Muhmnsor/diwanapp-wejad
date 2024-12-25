@@ -3,7 +3,6 @@ import { Hero } from "@/components/home/Hero";
 import { EventsTabs } from "@/components/home/EventsTabs";
 import { useEvents } from "@/hooks/useEvents";
 import { useRegistrations } from "@/hooks/useRegistrations";
-import { toast } from "sonner";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("all");
