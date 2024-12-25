@@ -7,8 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
-import { useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
@@ -22,15 +21,15 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((state) => state.login);
-  const authCheckCompleted = useRef(false);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    if (authCheckCompleted.current || !isAuthenticated) return;
-
-    const from = location.state?.from || "/";
-    navigate(from, { replace: true });
-    authCheckCompleted.current = true;
+    console.log("Login - Checking authentication state:", isAuthenticated);
+    if (isAuthenticated) {
+      const from = location.state?.from || "/";
+      console.log("Login - User is authenticated, redirecting to:", from);
+      navigate(from, { replace: true });
+    }
   }, [isAuthenticated, location.state, navigate]);
 
   const form = useForm<LoginFormData>({
@@ -42,13 +41,15 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log("Login - Attempting login");
     try {
       await login(data.email, data.password);
       const from = location.state?.from || "/";
+      console.log("Login - Login successful, redirecting to:", from);
       navigate(from, { replace: true });
       toast.success('تم تسجيل الدخول بنجاح');
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login - Login error:', error);
       toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
     }
   };
