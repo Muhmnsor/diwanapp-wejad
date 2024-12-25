@@ -119,7 +119,9 @@ const EventDetails = () => {
           image_url: updatedEvent.imageUrl || updatedEvent.image_url,
           beneficiary_type: updatedEvent.beneficiaryType,
           registration_start_date: updatedEvent.registrationStartDate,
-          registration_end_date: updatedEvent.registrationEndDate
+          registration_end_date: updatedEvent.registrationEndDate,
+          certificate_type: updatedEvent.certificateType,
+          event_hours: updatedEvent.eventHours
         })
         .eq('id', id);
 
