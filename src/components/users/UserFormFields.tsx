@@ -22,6 +22,9 @@ export const UserFormFields = ({
   setSelectedRole,
   roles,
 }: UserFormFieldsProps) => {
+  console.log('Available roles:', roles);
+  console.log('Selected role:', selectedRole);
+
   const getRoleDisplayName = (roleName: string) => {
     switch (roleName) {
       case 'admin': return 'مشرف';
