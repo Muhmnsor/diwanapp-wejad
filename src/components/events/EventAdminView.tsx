@@ -6,26 +6,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EventReportDialog } from "./EventReportDialog";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase
-
-سأقوم بفحص المشكلة خطوة بخطوة:
-
-1. أولاً، أرى في الكود أن زر إنشاء التقرير يظهر فقط للمستخدمين الذين لديهم دور 'admin' أو 'event_executor'
-2. من خلال فحص السجلات، يبدو أن هناك مشكلة في استعلام الأدوار
-3. دعنا نقوم بتحسين استعلام الأدوار وإضافة المزيد من سجلات التتبع للتأكد من أن الأدوار يتم جلبها بشكل صحيح
-
-<lov-code>
-Let's update the EventAdminView component to improve the roles query and add more logging:
-
-<lov-write file_path="src/components/events/EventAdminView.tsx">
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EventDetailsView } from "./EventDetailsView";
-import { EventDashboard } from "@/components/admin/EventDashboard";
-import { Event } from "@/store/eventStore";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { EventReportDialog } from "./EventReportDialog";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EventAdminViewProps {
