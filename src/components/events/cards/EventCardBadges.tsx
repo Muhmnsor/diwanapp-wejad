@@ -42,6 +42,9 @@ export const EventCardBadges = ({
     }
   };
 
+  const shouldShowCertificate = certificateType && certificateType !== 'none';
+  const shouldShowHours = eventHours && eventHours > 0;
+
   return (
     <div className="flex flex-wrap gap-2">
       <Badge variant={eventType === "online" ? "secondary" : "default"}>
@@ -53,16 +56,16 @@ export const EventCardBadges = ({
       <Badge variant="outline" className="text-primary">
         {getBeneficiaryLabel(beneficiaryType)}
       </Badge>
-      {certificateType && certificateType !== 'none' && (
+      {shouldShowCertificate && (
         <Badge variant="outline" className="flex items-center gap-1">
           <Award className="w-3 h-3" />
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
-      {eventHours && eventHours > 0 && (
+      {shouldShowHours && (
         <Badge variant="outline" className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          {eventHours} ساعات
+          {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'}
         </Badge>
       )}
     </div>

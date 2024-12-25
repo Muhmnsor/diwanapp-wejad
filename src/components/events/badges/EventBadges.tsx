@@ -44,8 +44,11 @@ export const EventBadges = ({
     }
   };
 
+  const shouldShowCertificate = certificateType && certificateType !== 'none';
+  const shouldShowHours = eventHours && eventHours > 0;
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 px-8 py-6">
       <Badge variant={eventType === "online" ? "secondary" : "default"} className="rounded-full px-4 py-1">
         {eventType === "online" ? "عن بعد" : "حضوري"}
       </Badge>
@@ -56,13 +59,13 @@ export const EventBadges = ({
         <Users className="w-4 h-4" />
         {getBeneficiaryLabel(beneficiaryType)}
       </Badge>
-      {certificateType && certificateType !== 'none' && (
+      {shouldShowCertificate && (
         <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
           <Award className="w-4 h-4" />
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
-      {eventHours && eventHours > 0 && (
+      {shouldShowHours && (
         <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
           <Clock className="w-4 h-4" />
           {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'} تدريبية
