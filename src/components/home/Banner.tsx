@@ -22,7 +22,6 @@ export const Banner = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // جلب بيانات البانر النشط من قاعدة البيانات
   useEffect(() => {
     const fetchActiveBanner = async () => {
       try {
@@ -76,7 +75,6 @@ export const Banner = () => {
 
     setIsSubmitting(true);
     try {
-      // تحديث البانر النشط في قاعدة البيانات
       const { error } = await supabase
         .from('banners')
         .upsert({
@@ -97,12 +95,10 @@ export const Banner = () => {
     }
   };
 
-  // إظهار أدوات التحكم فقط للمشرفين
   const showControls = user?.isAdmin;
 
   return (
-    <div className="max-w-7xl mx-auto px-4">
-      {/* أدوات التحكم للمشرفين */}
+    <div className="w-full">
       {showControls && (
         <div className="mb-6">
           <BannerControls
@@ -118,7 +114,6 @@ export const Banner = () => {
         </div>
       )}
       
-      {/* عرض البانر - يظهر للجميع */}
       <BannerDisplay
         desktopImage={desktopImage}
         mobileImage={mobileImage}

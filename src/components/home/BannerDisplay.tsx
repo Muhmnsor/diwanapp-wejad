@@ -7,14 +7,13 @@ interface BannerDisplayProps {
 }
 
 export const BannerDisplay = ({ desktopImage, mobileImage, isMobile }: BannerDisplayProps) => {
-  // استخدام صورة افتراضية في حالة عدم وجود صور
   const defaultImage = "/placeholder.svg";
   const displayImage = isMobile 
     ? (mobileImage || desktopImage || defaultImage)
     : (desktopImage || mobileImage || defaultImage);
 
   return (
-    <div className="relative bg-gray-100 rounded-lg overflow-hidden max-w-7xl mx-auto w-full">
+    <div className="relative bg-gray-100 rounded-lg overflow-hidden w-full">
       <Carousel className="w-full">
         <CarouselContent>
           <CarouselItem>
@@ -23,8 +22,8 @@ export const BannerDisplay = ({ desktopImage, mobileImage, isMobile }: BannerDis
               alt="Banner"
               className={`w-full object-cover ${
                 isMobile 
-                  ? "h-[250px]" // تقليل ارتفاع نسخة الجوال قليلاً
-                  : "h-[250px]" // تقليل ارتفاع نسخة سطح المكتب
+                  ? "h-[250px]"
+                  : "h-[250px]"
               }`}
             />
           </CarouselItem>
