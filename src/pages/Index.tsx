@@ -11,29 +11,29 @@ const Index = () => {
   const { data: events = [], isError: isEventsError } = useQuery({
     queryKey: ["events"],
     queryFn: async () => {
-      console.log("Fetching events...");
-      try {
-        const { data, error } = await supabase
-          .from("events")
-          .select("*")
-          .order("date", { ascending: true });
+      console.log("Fetching events from Supabase...");
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: true });
 
-        if (error) {
-          console.error("Error fetching events:", error);
-          throw error;
-        }
-
-        console.log("Events fetched successfully:", data);
-        return data || [];
-      } catch (error) {
-        console.error("Error in events query:", error);
-        throw error;
+      if (error) {
+        console.error("Supabase error fetching events:", error);
+        throw new Error(error.message);
       }
+
+      if (!data) {
+        console.log("No events data returned from Supabase");
+        return [];
+      }
+
+      console.log("Events fetched successfully, count:", data.length);
+      return data;
     },
     retry: 1,
     meta: {
       onError: (error: Error) => {
-        console.error("Error loading events:", error);
+        console.error("Query error loading events:", error);
         toast.error("حدث خطأ في تحميل الفعاليات");
       }
     }
@@ -42,35 +42,33 @@ const Index = () => {
   const { data: registrations = {}, isError: isRegistrationsError } = useQuery({
     queryKey: ["registrations"],
     queryFn: async () => {
-      console.log("Fetching registrations...");
-      try {
-        const { data, error } = await supabase
-          .from("registrations")
-          .select("event_id");
+      console.log("Fetching registrations from Supabase...");
+      const { data, error } = await supabase
+        .from("registrations")
+        .select("event_id");
 
-        if (error) {
-          console.error("Error fetching registrations:", error);
-          throw error;
-        }
-
-        console.log("Registrations fetched successfully:", data);
-        const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
-          if (registration.event_id) {
-            acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
-          }
-          return acc;
-        }, {});
-
-        return registrationCounts;
-      } catch (error) {
-        console.error("Error in registrations query:", error);
-        throw error;
+      if (error) {
+        console.error("Supabase error fetching registrations:", error);
+        throw new Error(error.message);
       }
+
+      if (!data) {
+        console.log("No registrations data returned from Supabase");
+        return {};
+      }
+
+      console.log("Registrations fetched successfully, count:", data.length);
+      return data.reduce((acc: { [key: string]: number }, registration) => {
+        if (registration.event_id) {
+          acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+        }
+        return acc;
+      }, {});
     },
     retry: 1,
     meta: {
       onError: (error: Error) => {
-        console.error("Error loading registrations:", error);
+        console.error("Query error loading registrations:", error);
         toast.error("حدث خطأ في تحميل التسجيلات");
       }
     }
@@ -86,6 +84,16 @@ const Index = () => {
     const eventDate = new Date(event.date);
     return eventDate < now;
   });
+
+  // Log state changes for debugging
+  useEffect(() => {
+    console.log("Current state:", {
+      eventsCount: events.length,
+      registrationsCount: Object.keys(registrations).length,
+      upcomingEventsCount: upcomingEvents.length,
+      pastEventsCount: pastEvents.length
+    });
+  }, [events, registrations, upcomingEvents, pastEvents]);
 
   return (
     <div className="min-h-screen">
