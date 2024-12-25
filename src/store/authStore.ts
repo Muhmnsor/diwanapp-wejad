@@ -8,6 +8,12 @@ interface User {
   isAdmin: boolean;
 }
 
+interface UserRoleResponse {
+  roles: {
+    name: string;
+  };
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -72,7 +78,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       // Check if user has admin role
-      const isAdmin = userRoles?.some(role => role.roles?.name === 'admin');
+      const isAdmin = (userRoles as UserRoleResponse[])?.some(role => role.roles.name === 'admin');
       console.log("AuthStore: Is user admin?", isAdmin);
 
       if (isAdmin) {
