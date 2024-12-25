@@ -2,7 +2,6 @@ import { Navigation } from "@/components/Navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EventsSection } from "@/components/events/EventsSection";
-import { Footer } from "@/components/layout/Footer";
 
 const Index = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -100,7 +99,6 @@ const Index = () => {
           isPastEvents
         />
       </main>
-      <Footer />
     </div>
   );
 };
