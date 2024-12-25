@@ -13,36 +13,24 @@ export const useUserRoles = () => {
         return [];
       }
 
-      // First get the user's role IDs
-      const { data: userRoles, error: userRolesError } = await supabase
+      // Get user roles with a single query
+      const { data: userRolesData, error } = await supabase
         .from('user_roles')
-        .select('role_id')
+        .select(`
+          roles (
+            name
+          )
+        `)
         .eq('user_id', user.id);
 
-      if (userRolesError) {
-        console.error('Error fetching user role IDs:', userRolesError);
-        throw userRolesError;
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        throw error;
       }
 
-      if (!userRoles?.length) {
-        console.log('No roles found for user');
-        return [];
-      }
-
-      // Then get the role names using the role IDs
-      const roleIds = userRoles.map(ur => ur.role_id);
-      const { data: roles, error: rolesError } = await supabase
-        .from('roles')
-        .select('name')
-        .in('id', roleIds);
-
-      if (rolesError) {
-        console.error('Error fetching role names:', rolesError);
-        throw rolesError;
-      }
-
-      console.log('Processed user roles:', roles?.map(r => r.name) || []);
-      return roles?.map(r => r.name) || [];
+      const roleNames = userRolesData?.map(ur => ur.roles.name) || [];
+      console.log('Processed user roles:', roleNames);
+      return roleNames;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 2
