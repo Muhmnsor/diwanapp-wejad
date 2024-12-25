@@ -88,7 +88,6 @@ const Index = () => {
     return eventDate < now;
   });
 
-  // Log state changes for debugging
   useEffect(() => {
     console.log("Current state:", {
       eventsCount: events.length,
