@@ -22,20 +22,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process');
       
-      // Trim inputs to prevent whitespace issues
+      // Trim inputs
       const trimmedEmail = email.trim();
       const trimmedPassword = password.trim();
       
       console.log('Attempting login with email:', trimmedEmail);
       
-      // First check if user exists
-      const { data: { user: existingUser }, error: userError } = await supabase.auth.getUser();
+      // Sign out any existing session first
+      await supabase.auth.signOut();
       
-      if (existingUser) {
-        console.log('User already logged in, signing out first');
-        await supabase.auth.signOut();
-      }
-
       // Attempt sign in
       const { data, error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
@@ -45,15 +40,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (error) {
         console.error('Authentication error:', error);
         
+        // Handle specific error cases
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
         
-        throw new Error('حدث خطأ أثناء تسجيل الدخول');
+        throw error;
       }
 
       if (!data?.user) {
-        console.error('No user data in response');
+        console.error('No user data received');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
@@ -99,8 +95,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     try {
       console.log('Starting logout process');
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
       set({ user: null, isAuthenticated: false });
       toast.success("تم تسجيل الخروج بنجاح");
       console.log('Logout successful');

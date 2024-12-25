@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صالح"),
@@ -18,6 +20,18 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const Login = () => {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('Existing session found, redirecting to home');
+        navigate("/");
+      }
+    };
+    checkSession();
+  }, [navigate]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
