@@ -1,20 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface UserRole {
-  role_id: string;
-  roles: {
-    name: string;
-  };
-}
-
-interface SupabaseUserRole {
-  role_id: string;
-  roles: {
-    name: string;
-  };
-}
-
 export const useUserRoles = () => {
   return useQuery({
     queryKey: ['user-roles'],
@@ -27,20 +13,36 @@ export const useUserRoles = () => {
         return [];
       }
 
-      const { data: userRolesData, error: userRolesError } = await supabase
+      // First get the user's role IDs
+      const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
-        .select('role_id, roles:role_id(name)')
+        .select('role_id')
         .eq('user_id', user.id);
 
       if (userRolesError) {
-        console.error('Error fetching user roles:', userRolesError);
+        console.error('Error fetching user role IDs:', userRolesError);
         throw userRolesError;
       }
 
-      console.log('Raw user roles data:', userRolesData);
-      const roles = (userRolesData as unknown as SupabaseUserRole[])?.map(role => role.roles.name) || [];
-      console.log('Processed user roles:', roles);
-      return roles;
+      if (!userRoles?.length) {
+        console.log('No roles found for user');
+        return [];
+      }
+
+      // Then get the role names using the role IDs
+      const roleIds = userRoles.map(ur => ur.role_id);
+      const { data: roles, error: rolesError } = await supabase
+        .from('roles')
+        .select('name')
+        .in('id', roleIds);
+
+      if (rolesError) {
+        console.error('Error fetching role names:', rolesError);
+        throw rolesError;
+      }
+
+      console.log('Processed user roles:', roles?.map(r => r.name) || []);
+      return roles?.map(r => r.name) || [];
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 2
