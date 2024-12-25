@@ -10,21 +10,26 @@ import type { Role, User } from "@/components/users/types";
 const Users = () => {
   const { user } = useAuthStore();
 
-  // Fetch roles from the database with improved error handling
+  // Fetch roles from the database with improved error handling and logging
   const { data: roles = [], isLoading: rolesLoading, error: rolesError } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      console.log('Fetching roles... Auth state:', !!user);
+      console.log('Fetching roles... Current user:', user);
+      
+      // Log the current authentication state
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current Supabase session:', session);
+
       const { data, error } = await supabase
         .from('roles')
         .select('*');
       
       if (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Detailed Supabase roles fetch error:', error);
         throw error;
       }
       
-      console.log('Fetched roles:', data);
+      console.log('Fetched roles (detailed):', data);
       return data as Role[];
     }
   });
@@ -66,7 +71,11 @@ const Users = () => {
 
   if (rolesError) {
     console.error('Roles error details:', rolesError);
-    return <div className="text-center p-8 text-red-500">خطأ في تحميل الأدوار: {rolesError.message}</div>;
+    return (
+      <div className="text-center p-8 text-red-500">
+        خطأ في تحميل الأدوار: {rolesError.message}
+      </div>
+    );
   }
 
   if (usersLoading || rolesLoading) {
