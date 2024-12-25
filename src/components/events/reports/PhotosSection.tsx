@@ -1,15 +1,18 @@
 import { ImageUpload } from "@/components/ui/image-upload";
 import { toast } from "sonner";
+import { PhotosGallery } from "./PhotosGallery";
 
 interface PhotosSectionProps {
   photos: string[];
   onPhotoUpload: (file: File) => Promise<void>;
+  onPhotoDelete: (index: number) => void;
   maxPhotos?: number;
 }
 
 export const PhotosSection = ({ 
   photos, 
   onPhotoUpload, 
+  onPhotoDelete,
   maxPhotos = 6 
 }: PhotosSectionProps) => {
   const handlePhotoUpload = async (file: File) => {
@@ -24,18 +27,7 @@ export const PhotosSection = ({
     <div className="space-y-2">
       <label className="block text-sm font-medium">صور الفعالية (الحد الأقصى: {maxPhotos} صور)</label>
       <ImageUpload onChange={handlePhotoUpload} value={photos[photos.length - 1]} />
-      {photos.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-          {photos.map((photo, index) => (
-            <img
-              key={index}
-              src={photo}
-              alt={`صورة ${index + 1}`}
-              className="w-full h-32 object-cover rounded-lg"
-            />
-          ))}
-        </div>
-      )}
+      <PhotosGallery photos={photos} onDelete={onPhotoDelete} />
     </div>
   );
 };

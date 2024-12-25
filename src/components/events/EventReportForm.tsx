@@ -6,14 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReportTextSection } from "./reports/ReportTextSection";
 import { PhotosSection } from "./reports/PhotosSection";
 import { LinksSection } from "./reports/LinksSection";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { SatisfactionLevel } from "./reports/SatisfactionLevel";
 
 interface EventReportFormProps {
   eventId: string;
@@ -35,11 +29,6 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   const queryClient = useQueryClient();
 
   const handlePhotoUpload = async (file: File) => {
-    if (photos.length >= 6) {
-      toast.error("لا يمكن إضافة أكثر من 6 صور");
-      return;
-    }
-
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
@@ -61,6 +50,11 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
       console.error('Error uploading photo:', error);
       toast.error("حدث خطأ أثناء رفع الصورة");
     }
+  };
+
+  const handlePhotoDelete = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+    toast.success("تم حذف الصورة بنجاح");
   };
 
   const handleFileUpload = (file: File) => {
@@ -136,28 +130,15 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
       
       <PhotosSection 
         photos={photos} 
-        onPhotoUpload={handlePhotoUpload} 
+        onPhotoUpload={handlePhotoUpload}
+        onPhotoDelete={handlePhotoDelete}
         maxPhotos={6} 
       />
       
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">مستوى الرضا</label>
-        <Select 
-          value={satisfactionLevel?.toString() || ""} 
-          onValueChange={(value) => setSatisfactionLevel(Number(value))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="اختر مستوى الرضا" />
-          </SelectTrigger>
-          <SelectContent>
-            {[1, 2, 3, 4, 5].map(level => (
-              <SelectItem key={level} value={level.toString()}>
-                {level} من 5
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <SatisfactionLevel 
+        value={satisfactionLevel}
+        onChange={setSatisfactionLevel}
+      />
 
       <div className="space-y-2">
         <label className="block text-sm font-medium">التعليقات</label>
