@@ -2,73 +2,79 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Hero } from "@/components/home/Hero";
 import { EventsTabs } from "@/components/home/EventsTabs";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const Index = () => {
-  const [events, setEvents] = useState<any[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [pastEvents, setPastEvents] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("all");
-  const [registrations, setRegistrations] = useState<{ [key: string]: number }>({});
-
-  useEffect(() => {
-    fetchEvents();
-    fetchRegistrations();
-  }, []);
-
-  const fetchRegistrations = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("registrations")
-        .select("event_id");
-
-      if (error) {
-        console.error("Error fetching registrations:", error);
-        return;
-      }
-
-      if (data) {
-        const registrationCounts = data.reduce((acc: { [key: string]: number }, registration) => {
-          acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
-          return acc;
-        }, {});
-        setRegistrations(registrationCounts);
-      }
-    } catch (error) {
-      console.error("Error in fetchRegistrations:", error);
-    }
-  };
 
   const fetchEvents = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("date", { ascending: true });
+    console.log("Fetching events...");
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .order("date", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching events:", error);
-        return;
-      }
-
-      if (data) {
-        const now = new Date();
-        const upcoming = data.filter((event) => {
-          const eventDate = new Date(event.date);
-          return eventDate >= now;
-        });
-        const past = data.filter((event) => {
-          const eventDate = new Date(event.date);
-          return eventDate < now;
-        });
-
-        setEvents(data);
-        setUpcomingEvents(upcoming);
-        setPastEvents(past);
-      }
-    } catch (error) {
-      console.error("Error in fetchEvents:", error);
+    if (error) {
+      console.error("Error fetching events:", error);
+      throw error;
     }
+
+    console.log("Events fetched successfully:", data);
+    return data;
   };
+
+  const fetchRegistrations = async () => {
+    console.log("Fetching registrations...");
+    const { data, error } = await supabase
+      .from("registrations")
+      .select("event_id");
+
+    if (error) {
+      console.error("Error fetching registrations:", error);
+      throw error;
+    }
+
+    console.log("Registrations fetched successfully:", data);
+    const registrationCounts = data.reduce((acc: { [key: string]: number }, registration) => {
+      acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+      return acc;
+    }, {});
+
+    return registrationCounts;
+  };
+
+  const { data: events = [], isError: isEventsError } = useQuery({
+    queryKey: ["events"],
+    queryFn: fetchEvents,
+    retry: 1
+  });
+
+  const { data: registrations = {}, isError: isRegistrationsError } = useQuery({
+    queryKey: ["registrations"],
+    queryFn: fetchRegistrations,
+    retry: 1
+  });
+
+  useEffect(() => {
+    if (isEventsError) {
+      toast.error("حدث خطأ في تحميل الفعاليات");
+    }
+    if (isRegistrationsError) {
+      toast.error("حدث خطأ في تحميل التسجيلات");
+    }
+  }, [isEventsError, isRegistrationsError]);
+
+  const now = new Date();
+  const upcomingEvents = events.filter((event: any) => {
+    const eventDate = new Date(event.date);
+    return eventDate >= now;
+  });
+
+  const pastEvents = events.filter((event: any) => {
+    const eventDate = new Date(event.date);
+    return eventDate < now;
+  });
 
   return (
     <div className="min-h-screen">

@@ -6,6 +6,8 @@ import { Logo } from "./Logo";
 export const Navigation = () => {
   const { user, logout } = useAuthStore();
 
+  console.log("Current user in Navigation:", user);
+
   return (
     <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container flex h-20 items-center justify-between">
