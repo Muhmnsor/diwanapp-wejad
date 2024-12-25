@@ -26,55 +26,52 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('البريد الإلكتروني وكلمة المرور مطلوبة');
       }
 
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // First, try to sign in
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      if (authError) {
-        console.error('Authentication error:', authError);
-        if (authError.message.includes('Invalid login credentials')) {
+      // Handle sign in errors
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        if (signInError.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
         throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
       }
 
       if (!authData?.user) {
-        console.error('No user data received');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
       // Set initial user state
-      const initialUserState = {
+      const initialUserState: User = {
         id: authData.user.id,
         email: authData.user.email ?? '',
         isAdmin: false
       };
 
+      // Update user state first
       set({
         user: initialUserState,
         isAuthenticated: true
       });
 
-      // Fetch user roles separately
-      try {
-        const { data: userRoles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('roles (name)')
-          .eq('user_id', authData.user.id)
-          .single();
+      // Then check for admin role
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('roles (name)')
+        .eq('user_id', authData.user.id)
+        .single();
 
-        if (!rolesError && userRoles?.roles?.name === 'admin') {
-          set(state => ({
-            user: {
-              ...state.user!,
-              isAdmin: true
-            }
-          }));
-        }
-      } catch (rolesError) {
-        console.warn('Error fetching roles:', rolesError);
-        // Continue as non-admin user
+      if (userRoles?.roles?.name === 'admin') {
+        set(state => ({
+          user: {
+            ...state.user!,
+            isAdmin: true
+          }
+        }));
       }
 
       toast.success('تم تسجيل الدخول بنجاح');

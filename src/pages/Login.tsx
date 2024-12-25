@@ -23,17 +23,13 @@ const Login = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Session check error:', error);
-          return;
-        }
-        if (session) {
-          navigate("/");
-        }
-      } catch (error) {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
         console.error('Session check error:', error);
+        return;
+      }
+      if (session) {
+        navigate("/");
       }
     };
 
@@ -60,7 +56,6 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      console.log('Form submitted with email:', data.email);
       await login(data.email, data.password);
       navigate("/");
     } catch (error) {
