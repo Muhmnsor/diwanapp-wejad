@@ -25,6 +25,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddUser = async () => {
     if (!newUsername || !newPassword || !selectedRole) {
@@ -32,7 +33,9 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       return;
     }
 
+    setIsSubmitting(true);
     try {
+      console.log('Creating new user with role:', selectedRole);
       const { data: authUser, error: signUpError } = await supabase.auth.signUp({
         email: newUsername,
         password: newPassword,
@@ -62,6 +65,8 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
     } catch (error) {
       console.error('Error adding user:', error);
       toast.error("حدث خطأ أثناء إضافة المستخدم");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -83,7 +88,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
           إضافة مستخدم
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>إضافة مستخدم جديد</DialogTitle>
         </DialogHeader>
@@ -95,6 +100,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
               onChange={(e) => setNewUsername(e.target.value)}
               placeholder="أدخل البريد الإلكتروني"
               type="email"
+              dir="ltr"
             />
           </div>
           <div className="space-y-2">
@@ -104,6 +110,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="أدخل كلمة المرور"
+              dir="ltr"
             />
           </div>
           <div className="space-y-2">
@@ -114,7 +121,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
               className="flex flex-col space-y-2"
             >
               {roles.map((role) => (
-                <div key={role.id} className="flex items-center space-x-2">
+                <div key={role.id} className="flex items-center space-x-2 space-x-reverse">
                   <RadioGroupItem value={role.id} id={role.id} />
                   <Label htmlFor={role.id} className="mr-2">
                     {getRoleDisplayName(role.name)}
@@ -123,8 +130,12 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
               ))}
             </RadioGroup>
           </div>
-          <Button onClick={handleAddUser} className="w-full">
-            إضافة المستخدم
+          <Button 
+            onClick={handleAddUser} 
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "جاري الإضافة..." : "إضافة المستخدم"}
           </Button>
         </div>
       </DialogContent>
