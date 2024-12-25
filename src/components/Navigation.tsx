@@ -35,7 +35,12 @@ export const Navigation = () => {
             <Button variant="outline" onClick={logout}>تسجيل خروج</Button>
           ) : (
             <Button variant="outline" asChild>
-              <Link to="/login">تسجيل دخول</Link>
+              <Link to="/login" onClick={(e) => {
+                e.preventDefault();
+                window.location.href = '/login';
+              }}>
+                تسجيل دخول
+              </Link>
             </Button>
           )}
         </div>
