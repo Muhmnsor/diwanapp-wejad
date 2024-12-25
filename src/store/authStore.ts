@@ -35,25 +35,42 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (error) {
         console.error('Authentication Error:', error);
+        console.error('Error details:', {
+          code: error.message,
+          status: error.status,
+          name: error.name
+        });
         
-        if (error.message.includes('Invalid login credentials')) {
-          toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-          throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        // Handle specific error codes
+        if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
+          const errorMsg = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+          console.error(errorMsg);
+          toast.error(errorMsg);
+          throw new Error(errorMsg);
         }
         
         if (error.message.includes('Email not confirmed')) {
-          toast.error('يرجى تأكيد بريدك الإلكتروني أولاً');
-          throw new Error('يرجى تأكيد بريدك الإلكتروني أولاً');
+          const errorMsg = 'يرجى تأكيد بريدك الإلكتروني أولاً';
+          console.error(errorMsg);
+          toast.error(errorMsg);
+          throw new Error(errorMsg);
         }
 
-        toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
+        // Generic error
+        const errorMsg = 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى';
+        console.error(errorMsg);
+        toast.error(errorMsg);
         throw error;
       }
 
       if (!data.user) {
-        toast.error('لم يتم العثور على بيانات المستخدم');
-        throw new Error('لم يتم العثور على بيانات المستخدم');
+        const errorMsg = 'لم يتم العثور على بيانات المستخدم';
+        console.error(errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
+
+      console.log('Login successful, user data:', data.user);
 
       // Set initial user state
       const initialUserState: User = {
@@ -76,7 +93,12 @@ export const useAuthStore = create<AuthState>((set) => ({
           .eq('user_id', data.user.id)
           .single();
 
-        if (!rolesError && userRoles?.roles?.name === 'admin') {
+        if (rolesError) {
+          console.error('Error checking admin role:', rolesError);
+        }
+
+        if (userRoles?.roles?.name === 'admin') {
+          console.log('User is admin, updating state');
           set(state => ({
             user: {
               ...state.user!,
@@ -89,6 +111,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         // Don't throw here, just log the error since the user is already logged in
       }
 
+      console.log('Login process completed successfully');
       toast.success('تم تسجيل الدخول بنجاح');
 
     } catch (error) {
