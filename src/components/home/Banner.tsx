@@ -14,6 +14,7 @@ export const Banner = () => {
   const [mobileImage, setMobileImage] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export const Banner = () => {
     try {
       // Here you would implement the save logic
       toast.success("تم حفظ البانر بنجاح");
+      setIsEditing(false);
     } catch (error) {
       console.error("Error saving banner:", error);
       toast.error("حدث خطأ أثناء حفظ البانر");
@@ -65,30 +67,41 @@ export const Banner = () => {
   return (
     <div className="max-w-7xl mx-auto px-4">
       {showControls && (
-        <div className="mb-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">صورة سطح المكتب</label>
-              <ImageUpload 
-                value={desktopImage} 
-                onChange={handleDesktopImageUpload}
-              />
+        <div className="mb-6">
+          {isEditing ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">صورة سطح المكتب</label>
+                  <ImageUpload 
+                    value={desktopImage} 
+                    onChange={handleDesktopImageUpload}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">صورة الجوال</label>
+                  <ImageUpload 
+                    value={mobileImage} 
+                    onChange={handleMobileImageUpload}
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={handleSave}
+                disabled={isSubmitting || !desktopImage || !mobileImage}
+                className="w-full md:w-auto"
+              >
+                {isSubmitting ? "جاري الحفظ..." : "حفظ البانر"}
+              </Button>
             </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">صورة الجوال</label>
-              <ImageUpload 
-                value={mobileImage} 
-                onChange={handleMobileImageUpload}
-              />
-            </div>
-          </div>
-          <Button 
-            onClick={handleSave}
-            disabled={isSubmitting || !desktopImage || !mobileImage}
-            className="w-full md:w-auto"
-          >
-            {isSubmitting ? "جاري الحفظ..." : "حفظ البانر"}
-          </Button>
+          ) : (
+            <Button 
+              onClick={() => setIsEditing(true)}
+              className="w-full md:w-auto"
+            >
+              تعديل البانر
+            </Button>
+          )}
         </div>
       )}
       
