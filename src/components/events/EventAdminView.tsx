@@ -2,6 +2,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDetailsView } from "./EventDetailsView";
 import { EventDashboard } from "@/components/admin/EventDashboard";
 import { Event } from "@/store/eventStore";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { EventReportDialog } from "./EventReportDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventAdminViewProps {
   event: Event & { attendees: number };
@@ -20,6 +25,26 @@ export const EventAdminView = ({
   onRegister,
   id
 }: EventAdminViewProps) => {
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+
+  const { data: userRoles } = useQuery({
+    queryKey: ['user-roles'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('roles (name)')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      return data.map(role => role.roles.name);
+    }
+  });
+
+  const isEventExecutor = userRoles?.includes('event_executor');
+
   return (
     <Tabs defaultValue="details" className="mb-8">
       <TabsList className="mb-4">
@@ -27,17 +52,32 @@ export const EventAdminView = ({
         <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
       </TabsList>
       <TabsContent value="details">
-        <EventDetailsView
-          event={event}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onAddToCalendar={onAddToCalendar}
-          onRegister={onRegister}
-        />
+        <div className="space-y-4">
+          {isEventExecutor && (
+            <div className="flex justify-end">
+              <Button onClick={() => setIsReportDialogOpen(true)}>
+                إضافة تقرير الفعالية
+              </Button>
+            </div>
+          )}
+          <EventDetailsView
+            event={event}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onAddToCalendar={onAddToCalendar}
+            onRegister={onRegister}
+          />
+        </div>
       </TabsContent>
       <TabsContent value="dashboard">
         <EventDashboard eventId={id} />
       </TabsContent>
+
+      <EventReportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        eventId={id}
+      />
     </Tabs>
   );
 };
