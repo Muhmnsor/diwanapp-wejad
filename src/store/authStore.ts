@@ -26,30 +26,28 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('البريد الإلكتروني وكلمة المرور مطلوبة');
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      if (error) {
-        console.error('Authentication error:', error);
-        
-        // Map Supabase error messages to Arabic
-        if (error.message.includes('Invalid login credentials')) {
+      if (authError) {
+        console.error('Authentication error:', authError);
+        if (authError.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
         throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
       }
 
-      if (!data?.user) {
+      if (!authData?.user) {
         console.error('No user data received');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
       // Set initial user state
       const initialUserState = {
-        id: data.user.id,
-        email: data.user.email ?? '',
+        id: authData.user.id,
+        email: authData.user.email ?? '',
         isAdmin: false
       };
 
@@ -58,20 +56,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true
       });
 
-      // Fetch user roles in a separate try-catch block
+      // Fetch user roles separately
       try {
         const { data: userRoles, error: rolesError } = await supabase
           .from('user_roles')
           .select('roles (name)')
-          .eq('user_id', data.user.id)
+          .eq('user_id', authData.user.id)
           .single();
 
-        if (rolesError) {
-          console.warn('Error fetching roles:', rolesError);
-          return; // Continue as non-admin
-        }
-
-        if (userRoles?.roles?.name === 'admin') {
+        if (!rolesError && userRoles?.roles?.name === 'admin') {
           set(state => ({
             user: {
               ...state.user!,
@@ -80,7 +73,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           }));
         }
       } catch (rolesError) {
-        console.warn('Error in roles fetch:', rolesError);
+        console.warn('Error fetching roles:', rolesError);
         // Continue as non-admin user
       }
 
