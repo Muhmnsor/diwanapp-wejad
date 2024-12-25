@@ -9,7 +9,7 @@ interface EventBasicFieldsProps {
 
 export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4">
       <FormField
         control={form.control}
         name="title"
@@ -17,7 +17,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
           <FormItem>
             <FormLabel>عنوان الفعالية</FormLabel>
             <FormControl>
-              <Input placeholder="أدخل عنوان الفعالية" {...field} />
+              <Input {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -31,7 +31,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
           <FormItem>
             <FormLabel>وصف الفعالية</FormLabel>
             <FormControl>
-              <Textarea placeholder="أدخل وصف الفعالية" {...field} />
+              <Textarea {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -44,7 +44,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>التاريخ</FormLabel>
+              <FormLabel>تاريخ الفعالية</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -58,7 +58,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
           name="time"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>الوقت</FormLabel>
+              <FormLabel>وقت الفعالية</FormLabel>
               <FormControl>
                 <Input type="time" {...field} />
               </FormControl>
@@ -73,14 +73,32 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
         name="location"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>الموقع</FormLabel>
+            <FormLabel>موقع الفعالية</FormLabel>
             <FormControl>
-              <Input placeholder="أدخل موقع الفعالية" {...field} />
+              <Input {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-    </>
+
+      <FormField
+        control={form.control}
+        name="maxAttendees"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>عدد المقاعد</FormLabel>
+            <FormControl>
+              <Input 
+                type="number" 
+                {...field} 
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   );
 };
