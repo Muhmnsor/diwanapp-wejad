@@ -12,7 +12,13 @@ interface EditEventFormProps {
 }
 
 export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) => {
-  const [formData, setFormData] = useState<CustomEvent>(event);
+  console.log('Initial event data in EditEventForm:', event);
+  
+  const [formData, setFormData] = useState<CustomEvent>({
+    ...event,
+    certificateType: event.certificateType || 'none',
+    eventHours: event.eventHours || 0
+  });
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,8 +31,8 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         image_url: formData.imageUrl || formData.image_url,
         registration_start_date: formData.registrationStartDate,
         registration_end_date: formData.registrationEndDate,
-        certificate_type: formData.certificateType || 'none',
-        event_hours: formData.eventHours || 0
+        certificate_type: formData.certificateType,
+        event_hours: formData.eventHours
       };
       
       console.log('Updating event with data:', updateData);

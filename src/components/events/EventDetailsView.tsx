@@ -37,6 +37,8 @@ export const EventDetailsView = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
+  console.log('Event data in EventDetailsView:', event);
+
   if (!event) {
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
   }
@@ -62,7 +64,11 @@ export const EventDetailsView = ({
       />
 
       <EventDetailsContent 
-        event={event}
+        event={{
+          ...event,
+          certificateType: event.certificateType || 'none',
+          eventHours: event.eventHours || 0
+        }}
         onRegister={handleRegister}
       />
 
