@@ -7,8 +7,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 
 export const Banner = () => {
@@ -106,8 +104,6 @@ export const Banner = () => {
                 />
               </CarouselItem>
             </CarouselContent>
-            <CarouselPrevious className="left-4" />
-            <CarouselNext className="right-4" />
           </Carousel>
         </div>
       )}
