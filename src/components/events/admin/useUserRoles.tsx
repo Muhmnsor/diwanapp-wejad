@@ -30,7 +30,7 @@ export const useUserRoles = () => {
       }
 
       console.log('Raw user roles data:', userRolesData);
-      const roles = userRolesData?.map(role => role.roles?.name).filter(Boolean) || [];
+      const roles = userRolesData?.map(role => role.roles.name).filter(Boolean) || [];
       console.log('Processed user roles:', roles);
       return roles;
     },
