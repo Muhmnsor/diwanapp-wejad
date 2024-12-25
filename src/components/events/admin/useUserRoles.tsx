@@ -8,6 +8,13 @@ interface UserRole {
   };
 }
 
+interface SupabaseUserRole {
+  role_id: string;
+  roles: {
+    name: string;
+  };
+}
+
 export const useUserRoles = () => {
   return useQuery({
     queryKey: ['user-roles'],
@@ -31,7 +38,7 @@ export const useUserRoles = () => {
       }
 
       console.log('Raw user roles data:', userRolesData);
-      const roles = (userRolesData as unknown as UserRole[])?.map(role => role.roles.name) || [];
+      const roles = (userRolesData as SupabaseUserRole[])?.map(role => role.roles.name) || [];
       console.log('Processed user roles:', roles);
       return roles;
     },
