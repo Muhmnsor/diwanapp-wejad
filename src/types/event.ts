@@ -18,4 +18,7 @@ export interface EventType {
   registrationEndDate?: string | null;
   certificateType?: string;
   eventHours?: number;
+  // Add support for database column names
+  certificate_type?: string;
+  event_hours?: number;
 }

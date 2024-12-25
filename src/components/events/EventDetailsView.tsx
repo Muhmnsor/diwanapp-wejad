@@ -39,8 +39,8 @@ export const EventDetailsView = ({
 
   console.log('Event data in EventDetailsView:', {
     ...event,
-    certificateType: event.certificate_type,
-    eventHours: event.event_hours
+    certificateType: event.certificateType || event.certificate_type,
+    eventHours: event.eventHours || event.event_hours
   });
 
   if (!event) {
@@ -58,8 +58,8 @@ export const EventDetailsView = ({
 
   const transformedEvent = {
     ...event,
-    certificateType: event.certificate_type,
-    eventHours: event.event_hours
+    certificateType: event.certificateType || event.certificate_type,
+    eventHours: event.eventHours || event.event_hours
   };
 
   return (
