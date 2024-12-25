@@ -1,13 +1,8 @@
-import { ImageUpload } from "@/components/ui/image-upload";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
+import { BannerControls } from "./BannerControls";
+import { BannerDisplay } from "./BannerDisplay";
 
 export const Banner = () => {
   const [desktopImage, setDesktopImage] = useState("");
@@ -69,57 +64,25 @@ export const Banner = () => {
       {/* Admin Controls */}
       {showControls && (
         <div className="mb-6">
-          {isEditing ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium">صورة سطح المكتب</label>
-                  <ImageUpload 
-                    value={desktopImage} 
-                    onChange={handleDesktopImageUpload}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium">صورة الجوال</label>
-                  <ImageUpload 
-                    value={mobileImage} 
-                    onChange={handleMobileImageUpload}
-                  />
-                </div>
-              </div>
-              <Button 
-                onClick={handleSave}
-                disabled={isSubmitting || !desktopImage || !mobileImage}
-                className="w-full md:w-auto"
-              >
-                {isSubmitting ? "جاري الحفظ..." : "حفظ البانر"}
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              onClick={() => setIsEditing(true)}
-              className="w-full md:w-auto"
-            >
-              تعديل البانر
-            </Button>
-          )}
+          <BannerControls
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+            desktopImage={desktopImage}
+            mobileImage={mobileImage}
+            onDesktopImageUpload={handleDesktopImageUpload}
+            onMobileImageUpload={handleMobileImageUpload}
+            onSave={handleSave}
+            isSubmitting={isSubmitting}
+          />
         </div>
       )}
       
       {/* Banner Display - Shown to Everyone */}
-      <div className="relative bg-gray-100 rounded-lg overflow-hidden">
-        <Carousel className="w-full">
-          <CarouselContent>
-            <CarouselItem>
-              <img
-                src={isMobile ? (mobileImage || desktopImage) : (desktopImage || mobileImage)}
-                alt="Banner"
-                className="w-full h-[300px] md:h-[400px] object-cover"
-              />
-            </CarouselItem>
-          </CarouselContent>
-        </Carousel>
-      </div>
+      <BannerDisplay
+        desktopImage={desktopImage}
+        mobileImage={mobileImage}
+        isMobile={isMobile}
+      />
     </div>
   );
 };
