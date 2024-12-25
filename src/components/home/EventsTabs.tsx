@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { EventsSection } from "@/components/events/EventsSection";
+import { useEffect } from "react";
 
 interface EventsTabsProps {
   events: any[];
@@ -18,6 +19,11 @@ export const EventsTabs = ({
   setActiveTab,
   registrations 
 }: EventsTabsProps) => {
+  // Set upcoming events as default tab on component mount
+  useEffect(() => {
+    setActiveTab("upcoming");
+  }, []);
+
   const getTitle = (tab: "all" | "upcoming" | "past") => {
     switch (tab) {
       case "all":
@@ -30,19 +36,19 @@ export const EventsTabs = ({
   };
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4" dir="rtl">
       <div className="flex justify-center gap-4 mb-8">
-        <Button
-          variant={activeTab === "all" ? "default" : "outline"}
-          onClick={() => setActiveTab("all")}
-        >
-          جميع الفعاليات
-        </Button>
         <Button
           variant={activeTab === "upcoming" ? "default" : "outline"}
           onClick={() => setActiveTab("upcoming")}
         >
           الفعاليات القادمة
+        </Button>
+        <Button
+          variant={activeTab === "all" ? "default" : "outline"}
+          onClick={() => setActiveTab("all")}
+        >
+          جميع الفعاليات
         </Button>
         <Button
           variant={activeTab === "past" ? "default" : "outline"}

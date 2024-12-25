@@ -6,7 +6,7 @@ import { useRegistrations } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("upcoming");
   
   const { 
     data: events = [], 
@@ -21,15 +21,29 @@ const Index = () => {
   } = useRegistrations();
 
   const now = new Date();
-  const upcomingEvents = events.filter((event: any) => {
-    const eventDate = new Date(event.date);
-    return eventDate >= now;
-  });
+  
+  // Sort upcoming events by date (closest first)
+  const upcomingEvents = events
+    .filter((event: any) => {
+      const eventDate = new Date(event.date);
+      return eventDate >= now;
+    })
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
 
-  const pastEvents = events.filter((event: any) => {
-    const eventDate = new Date(event.date);
-    return eventDate < now;
-  });
+  const pastEvents = events
+    .filter((event: any) => {
+      const eventDate = new Date(event.date);
+      return eventDate < now;
+    })
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB.getTime() - dateA.getTime(); // Sort past events in reverse chronological order
+    });
 
   useEffect(() => {
     if (isEventsError) {
@@ -62,7 +76,7 @@ const Index = () => {
   ]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" dir="rtl">
       <Hero />
       <EventsTabs
         events={events}
