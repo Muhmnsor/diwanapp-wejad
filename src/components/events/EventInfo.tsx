@@ -40,6 +40,10 @@ export const EventInfo = ({
         return 'رجال';
       case 'women':
         return 'نساء';
+      case 'children':
+        return 'أطفال';
+      case 'all':
+        return 'الجميع';
       default:
         return 'رجال ونساء';
     }
@@ -50,10 +54,8 @@ export const EventInfo = ({
     switch (type) {
       case 'attendance':
         return 'شهادة حضور';
-      case 'participation':
-        return 'شهادة مشاركة';
-      case 'completion':
-        return 'شهادة إتمام';
+      case 'certified':
+        return 'شهادة معتمدة';
       default:
         return type;
     }
@@ -78,6 +80,12 @@ export const EventInfo = ({
             {getCertificateLabel(certificateType)}
           </Badge>
         )}
+        {eventHours && eventHours > 0 && (
+          <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'} تدريبية
+          </Badge>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -91,14 +99,7 @@ export const EventInfo = ({
           <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
             <Clock className="h-5 w-5 text-primary" />
           </div>
-          <div className="text-[#1A1F2C]">
-            <span>{formattedTime}</span>
-            {eventHours && eventHours > 0 && (
-              <span className="block text-sm text-gray-500">
-                {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'} تدريبية
-              </span>
-            )}
-          </div>
+          <span className="text-[#1A1F2C]">{formattedTime}</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
