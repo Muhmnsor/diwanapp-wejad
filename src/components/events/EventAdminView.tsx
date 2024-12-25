@@ -56,11 +56,12 @@ export const EventAdminView = ({
 
       console.log('Raw user roles data:', userRolesData);
       
-      // Map the roles to just their names
       const roles = userRolesData?.map(role => role.roles.name) || [];
       console.log('Mapped user roles:', roles);
       return roles;
-    }
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: 2
   });
 
   // Show the button for both admin and event_executor roles
