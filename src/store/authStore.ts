@@ -26,29 +26,38 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('البريد الإلكتروني وكلمة المرور مطلوبة');
       }
 
-      // First, try to sign in
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+      // First, verify if the user exists in Supabase
+      const { data: { user }, error: userError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      // Handle sign in errors
-      if (signInError) {
-        console.error('Sign in error:', signInError);
-        if (signInError.message.includes('Invalid login credentials')) {
-          throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+      if (userError) {
+        console.error('Authentication Error:', userError);
+        
+        // More specific error handling
+        switch (userError.message) {
+          case 'Invalid login credentials':
+            toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+            throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+          case 'Email not confirmed':
+            toast.error('يرجى تأكيد بريدك الإلكتروني أولاً');
+            throw new Error('يرجى تأكيد بريدك الإلكتروني أولاً');
+          default:
+            toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
+            throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
         }
-        throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
       }
 
-      if (!authData?.user) {
+      if (!user) {
+        toast.error('لم يتم العثور على بيانات المستخدم');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
       // Set initial user state
       const initialUserState: User = {
-        id: authData.user.id,
-        email: authData.user.email ?? '',
+        id: user.id,
+        email: user.email ?? '',
         isAdmin: false
       };
 
@@ -58,11 +67,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true
       });
 
-      // Then check for admin role
+      // Check for admin role
       const { data: userRoles } = await supabase
         .from('user_roles')
         .select('roles (name)')
-        .eq('user_id', authData.user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (userRoles?.roles?.name === 'admin') {
