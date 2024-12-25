@@ -61,20 +61,24 @@ export const UserFormFields = ({
       </div>
       <div className="space-y-2">
         <Label>الدور</Label>
-        <RadioGroup
-          value={selectedRole}
-          onValueChange={setSelectedRole}
-          className="flex flex-col space-y-2"
-        >
-          {roles.map((role) => (
-            <div key={role.id} className="flex items-center space-x-2 space-x-reverse">
-              <RadioGroupItem value={role.id} id={role.id} />
-              <Label htmlFor={role.id} className="mr-2">
-                {getRoleDisplayName(role.name)}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
+        {roles && roles.length > 0 ? (
+          <RadioGroup
+            value={selectedRole}
+            onValueChange={setSelectedRole}
+            className="flex flex-col space-y-2"
+          >
+            {roles.map((role) => (
+              <div key={role.id} className="flex items-center space-x-2 space-x-reverse">
+                <RadioGroupItem value={role.id} id={role.id} />
+                <Label htmlFor={role.id} className="mr-2">
+                  {getRoleDisplayName(role.name)}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        ) : (
+          <div className="text-sm text-muted-foreground">لا توجد أدوار متاحة</div>
+        )}
       </div>
     </div>
   );

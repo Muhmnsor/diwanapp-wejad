@@ -24,6 +24,7 @@ const Users = () => {
         throw error;
       }
       
+      console.log('Fetched roles:', data);
       return data as Role[];
     }
   });
@@ -48,6 +49,7 @@ const Users = () => {
         throw error;
       }
 
+      console.log('Fetched user roles:', userRoles);
       return userRoles.map(ur => ({
         id: ur.user_id,
         role: ur.roles?.name || 'No role',
