@@ -11,26 +11,28 @@ const Index = () => {
   const { data: events = [], isError: isEventsError } = useQuery({
     queryKey: ["events"],
     queryFn: async () => {
-      console.log("Fetching events from Supabase...");
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("date", { ascending: true });
+      try {
+        console.log("Fetching events from Supabase...");
+        const response = await supabase
+          .from("events")
+          .select("*")
+          .order("date", { ascending: true });
 
-      if (error) {
-        console.error("Supabase error fetching events:", error);
-        throw new Error(error.message);
+        if (response.error) {
+          console.error("Supabase error fetching events:", response.error);
+          throw new Error(response.error.message);
+        }
+
+        const eventData = response.data || [];
+        console.log("Events fetched successfully, count:", eventData.length);
+        return eventData;
+      } catch (error) {
+        console.error("Error in events query:", error);
+        throw error;
       }
-
-      if (!data) {
-        console.log("No events data returned from Supabase");
-        return [];
-      }
-
-      console.log("Events fetched successfully, count:", data.length);
-      return data;
     },
     retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     meta: {
       onError: (error: Error) => {
         console.error("Query error loading events:", error);
@@ -42,30 +44,33 @@ const Index = () => {
   const { data: registrations = {}, isError: isRegistrationsError } = useQuery({
     queryKey: ["registrations"],
     queryFn: async () => {
-      console.log("Fetching registrations from Supabase...");
-      const { data, error } = await supabase
-        .from("registrations")
-        .select("event_id");
+      try {
+        console.log("Fetching registrations from Supabase...");
+        const response = await supabase
+          .from("registrations")
+          .select("event_id");
 
-      if (error) {
-        console.error("Supabase error fetching registrations:", error);
-        throw new Error(error.message);
-      }
-
-      if (!data) {
-        console.log("No registrations data returned from Supabase");
-        return {};
-      }
-
-      console.log("Registrations fetched successfully, count:", data.length);
-      return data.reduce((acc: { [key: string]: number }, registration) => {
-        if (registration.event_id) {
-          acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+        if (response.error) {
+          console.error("Supabase error fetching registrations:", response.error);
+          throw new Error(response.error.message);
         }
-        return acc;
-      }, {});
+
+        const registrationData = response.data || [];
+        console.log("Registrations fetched successfully, count:", registrationData.length);
+        
+        return registrationData.reduce((acc: { [key: string]: number }, registration) => {
+          if (registration.event_id) {
+            acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+          }
+          return acc;
+        }, {});
+      } catch (error) {
+        console.error("Error in registrations query:", error);
+        throw error;
+      }
     },
     retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     meta: {
       onError: (error: Error) => {
         console.error("Query error loading registrations:", error);
@@ -91,9 +96,11 @@ const Index = () => {
       eventsCount: events.length,
       registrationsCount: Object.keys(registrations).length,
       upcomingEventsCount: upcomingEvents.length,
-      pastEventsCount: pastEvents.length
+      pastEventsCount: pastEvents.length,
+      isEventsError,
+      isRegistrationsError
     });
-  }, [events, registrations, upcomingEvents, pastEvents]);
+  }, [events, registrations, upcomingEvents, pastEvents, isEventsError, isRegistrationsError]);
 
   return (
     <div className="min-h-screen">
