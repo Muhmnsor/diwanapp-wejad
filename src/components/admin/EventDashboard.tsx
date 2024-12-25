@@ -24,13 +24,20 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
       }
 
       if (!data) {
-        throw new Error('Event not found');
+        console.error('Event not found:', eventId);
+        throw new Error('لم يتم العثور على الفعالية');
       }
 
       return data;
     },
     retry: 3,
-    retryDelay: 1000
+    retryDelay: 1000,
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error in event query:', error);
+        toast.error(error.message || "حدث خطأ في تحميل بيانات الفعالية");
+      }
+    }
   });
 
   // Fetch registrations
@@ -69,7 +76,7 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
   }
 
   if (eventError || !event) {
-    return <div className="text-center p-8 text-red-500">حدث خطأ في تحميل بيانات الفعالية</div>;
+    return <div className="text-center p-8 text-red-500">لم يتم العثور على الفعالية</div>;
   }
 
   const registrationCount = registrations?.length || 0;
