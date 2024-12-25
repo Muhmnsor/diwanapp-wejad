@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, MapPin, Users, Monitor } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Users, Monitor, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 import { BeneficiaryType } from "@/types/event";
@@ -12,6 +12,8 @@ interface EventInfoProps {
   eventType: "online" | "in-person";
   price: number | "free";
   beneficiaryType: BeneficiaryType;
+  certificateType?: string;
+  eventHours?: number;
 }
 
 export const EventInfo = ({ 
@@ -22,7 +24,9 @@ export const EventInfo = ({
   maxAttendees,
   eventType,
   price,
-  beneficiaryType
+  beneficiaryType,
+  certificateType,
+  eventHours
 }: EventInfoProps) => {
   const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees;
   const remainingSeats = maxAttendees - attendeesCount;
@@ -40,6 +44,20 @@ export const EventInfo = ({
         return 'رجال ونساء';
     }
   };
+
+  const getCertificateLabel = (type: string | undefined) => {
+    if (!type || type === 'none') return null;
+    switch (type) {
+      case 'attendance':
+        return 'شهادة حضور';
+      case 'participation':
+        return 'شهادة مشاركة';
+      case 'completion':
+        return 'شهادة إتمام';
+      default:
+        return type;
+    }
+  };
   
   return (
     <div className="space-y-8 mb-12">
@@ -54,6 +72,12 @@ export const EventInfo = ({
           <Users className="w-4 h-4" />
           {getBeneficiaryLabel(beneficiaryType)}
         </Badge>
+        {certificateType && certificateType !== 'none' && (
+          <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
+            <Award className="w-4 h-4" />
+            {getCertificateLabel(certificateType)}
+          </Badge>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,7 +91,14 @@ export const EventInfo = ({
           <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
             <Clock className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-[#1A1F2C]">{formattedTime}</span>
+          <div className="text-[#1A1F2C]">
+            <span>{formattedTime}</span>
+            {eventHours && eventHours > 0 && (
+              <span className="block text-sm text-gray-500">
+                {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'} تدريبية
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">

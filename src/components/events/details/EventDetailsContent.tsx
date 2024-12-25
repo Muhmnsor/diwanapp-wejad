@@ -31,6 +31,8 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
           eventType={event.eventType}
           price={event.price}
           beneficiaryType={event.beneficiaryType}
+          certificateType={event.certificateType}
+          eventHours={event.eventHours}
         />
 
         <EventDescription description={event.description} />
