@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ImageUpload } from "@/components/ui/image-upload";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ReportTextSection } from "./reports/ReportTextSection";
+import { PhotosSection } from "./reports/PhotosSection";
+import { LinksSection } from "./reports/LinksSection";
 
 interface EventReportFormProps {
   eventId: string;
@@ -43,20 +43,6 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error("حدث خطأ أثناء رفع الصورة");
-    }
-  };
-
-  const handleAddVideoLink = () => {
-    if (currentVideoLink) {
-      setVideoLinks(prev => [...prev, currentVideoLink]);
-      setCurrentVideoLink("");
-    }
-  };
-
-  const handleAddAdditionalLink = () => {
-    if (currentAdditionalLink) {
-      setAdditionalLinks(prev => [...prev, currentAdditionalLink]);
-      setCurrentAdditionalLink("");
     }
   };
 
@@ -101,83 +87,36 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">نص التقرير</label>
-        <Textarea
-          value={reportText}
-          onChange={(e) => setReportText(e.target.value)}
-          placeholder="اكتب ملخصاً للفعالية متضمناً عدد الحضور، النجاحات، التحديات، وتعليقات المشاركين"
-          className="h-32"
-          required
-        />
-      </div>
+      <ReportTextSection value={reportText} onChange={setReportText} />
+      <PhotosSection photos={photos} onPhotoUpload={handlePhotoUpload} />
+      
+      <LinksSection
+        title="روابط الفيديو"
+        placeholder="أدخل رابط الفيديو"
+        links={videoLinks}
+        currentLink={currentVideoLink}
+        onLinkChange={setCurrentVideoLink}
+        onAddLink={() => {
+          if (currentVideoLink) {
+            setVideoLinks(prev => [...prev, currentVideoLink]);
+            setCurrentVideoLink("");
+          }
+        }}
+      />
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">صور الفعالية</label>
-        <ImageUpload onChange={handlePhotoUpload} value={photos[photos.length - 1]} />
-        {photos.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-            {photos.map((photo, index) => (
-              <img
-                key={index}
-                src={photo}
-                alt={`صورة ${index + 1}`}
-                className="w-full h-32 object-cover rounded-lg"
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">روابط الفيديو</label>
-        <div className="flex gap-2">
-          <Input
-            value={currentVideoLink}
-            onChange={(e) => setCurrentVideoLink(e.target.value)}
-            placeholder="أدخل رابط الفيديو"
-          />
-          <Button type="button" onClick={handleAddVideoLink}>
-            إضافة
-          </Button>
-        </div>
-        {videoLinks.length > 0 && (
-          <ul className="list-disc list-inside space-y-1">
-            {videoLinks.map((link, index) => (
-              <li key={index}>
-                <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  {link}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">روابط إضافية</label>
-        <div className="flex gap-2">
-          <Input
-            value={currentAdditionalLink}
-            onChange={(e) => setCurrentAdditionalLink(e.target.value)}
-            placeholder="أدخل رابط إضافي (استبيانات، مواد تدريبية، إلخ)"
-          />
-          <Button type="button" onClick={handleAddAdditionalLink}>
-            إضافة
-          </Button>
-        </div>
-        {additionalLinks.length > 0 && (
-          <ul className="list-disc list-inside space-y-1">
-            {additionalLinks.map((link, index) => (
-              <li key={index}>
-                <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  {link}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <LinksSection
+        title="روابط إضافية"
+        placeholder="أدخل رابط إضافي (استبيانات، مواد تدريبية، إلخ)"
+        links={additionalLinks}
+        currentLink={currentAdditionalLink}
+        onLinkChange={setCurrentAdditionalLink}
+        onAddLink={() => {
+          if (currentAdditionalLink) {
+            setAdditionalLinks(prev => [...prev, currentAdditionalLink]);
+            setCurrentAdditionalLink("");
+          }
+        }}
+      />
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "جاري إرسال التقرير..." : "إرسال التقرير"}
