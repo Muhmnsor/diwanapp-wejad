@@ -16,12 +16,17 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         .from('events')
         .select('*')
         .eq('id', eventId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching event:', error);
         throw error;
       }
+
+      if (!data) {
+        throw new Error('Event not found');
+      }
+
       return data;
     },
     retry: 3,
