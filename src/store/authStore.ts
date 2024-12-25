@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -28,11 +29,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (signInError) {
         console.error('Sign in error:', signInError);
+        if (signInError.message === 'Invalid login credentials') {
+          throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        }
         throw signInError;
       }
 
       if (!signInData.user) {
-        throw new Error('No user data returned');
+        throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
       // Get user roles after successful sign in
@@ -48,7 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (rolesError) {
         console.error('Error fetching user roles:', rolesError);
-        throw rolesError;
+        throw new Error('حدث خطأ أثناء جلب صلاحيات المستخدم');
       }
 
       const isAdmin = userRoles?.roles?.name === 'admin';
@@ -63,8 +67,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       console.log('Auth store updated with user:', signInData.user.id, 'isAdmin:', isAdmin);
+      toast.success('تم تسجيل الدخول بنجاح');
     } catch (error) {
       console.error('Login error:', error);
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول");
       throw error;
     }
   },
@@ -73,8 +79,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       set({ user: null, isAuthenticated: false });
+      toast.success("تم تسجيل الخروج بنجاح");
     } catch (error) {
       console.error('Logout error:', error);
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
       throw error;
     }
   }
