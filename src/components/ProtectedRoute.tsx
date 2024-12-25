@@ -11,12 +11,20 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("ProtectedRoute - Current path:", location.pathname);
     console.log("ProtectedRoute - Is authenticated:", isAuthenticated);
+    console.log("ProtectedRoute - Checking authentication...");
 
     if (!isAuthenticated && location.pathname !== '/login') {
+      console.log("ProtectedRoute - User not authenticated, redirecting to login");
       toast.error("يجب تسجيل الدخول للوصول إلى هذه الصفحة");
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
 
-  return isAuthenticated ? <>{children}</> : null;
+  if (!isAuthenticated && location.pathname !== '/login') {
+    console.log("ProtectedRoute - Rendering null for unauthenticated user");
+    return null;
+  }
+
+  console.log("ProtectedRoute - Rendering children for authenticated user");
+  return <>{children}</>;
 };
