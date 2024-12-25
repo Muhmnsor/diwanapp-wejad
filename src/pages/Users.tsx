@@ -10,11 +10,11 @@ import type { Role, User } from "@/components/users/types";
 const Users = () => {
   const { user } = useAuthStore();
 
-  // Fetch roles from the database
-  const { data: roles = [], isLoading: rolesLoading } = useQuery({
+  // Fetch roles from the database with improved error handling
+  const { data: roles = [], isLoading: rolesLoading, error: rolesError } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      console.log('Fetching roles...');
+      console.log('Fetching roles... Auth state:', !!user);
       const { data, error } = await supabase
         .from('roles')
         .select('*');
@@ -62,6 +62,11 @@ const Users = () => {
   // التحقق من صلاحيات المستخدم
   if (!user?.isAdmin) {
     return <Navigate to="/" replace />;
+  }
+
+  if (rolesError) {
+    console.error('Roles error details:', rolesError);
+    return <div className="text-center p-8 text-red-500">خطأ في تحميل الأدوار: {rolesError.message}</div>;
   }
 
   if (usersLoading || rolesLoading) {
