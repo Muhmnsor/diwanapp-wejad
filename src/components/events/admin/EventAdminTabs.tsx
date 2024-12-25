@@ -2,7 +2,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDetailsView } from "../EventDetailsView";
 import { EventDashboard } from "@/components/admin/EventDashboard";
 import { Event } from "@/store/eventStore";
-import { AddReportButton } from "./AddReportButton";
 
 interface EventAdminTabsProps {
   event: Event & { attendees: number };
@@ -32,18 +31,20 @@ export const EventAdminTabs = ({
       <TabsList className="mb-4">
         <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
         <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+        {canAddReport && (
+          <TabsTrigger value="add-report" onClick={onAddReport}>
+            إضافة تقرير
+          </TabsTrigger>
+        )}
       </TabsList>
       <TabsContent value="details">
-        <div className="space-y-4">
-          {canAddReport && <AddReportButton onClick={onAddReport} />}
-          <EventDetailsView
-            event={event}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onAddToCalendar={onAddToCalendar}
-            onRegister={onRegister}
-          />
-        </div>
+        <EventDetailsView
+          event={event}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onAddToCalendar={onAddToCalendar}
+          onRegister={onRegister}
+        />
       </TabsContent>
       <TabsContent value="dashboard">
         <EventDashboard eventId={id} />
