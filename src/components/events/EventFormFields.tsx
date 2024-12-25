@@ -94,6 +94,36 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
         </Select>
       </div>
       <div>
+        <label className="text-sm font-medium block mb-1.5">نوع الشهادة</label>
+        <Select
+          value={formData.certificateType || 'none'}
+          onValueChange={(value: string) => 
+            setFormData({ ...formData, certificateType: value })
+          }
+        >
+          <SelectTrigger className="text-right">
+            <SelectValue placeholder="اختر نوع الشهادة" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">بدون شهادة</SelectItem>
+            <SelectItem value="attendance">شهادة حضور</SelectItem>
+            <SelectItem value="certified">شهادة معتمدة</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {formData.certificateType && formData.certificateType !== 'none' && (
+        <div>
+          <label className="text-sm font-medium block mb-1.5">عدد ساعات الفعالية</label>
+          <Input
+            type="number"
+            value={formData.eventHours || 0}
+            onChange={(e) => setFormData({ ...formData, eventHours: Number(e.target.value) })}
+            min={0}
+            className="text-right"
+          />
+        </div>
+      )}
+      <div>
         <label className="text-sm font-medium block mb-1.5">السعر (اتركه فارغاً للفعاليات المجانية)</label>
         <Input
           type="number"

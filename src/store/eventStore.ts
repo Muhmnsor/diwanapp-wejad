@@ -17,6 +17,8 @@ export interface Event {
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
   beneficiaryType: BeneficiaryType;
+  certificateType?: string;
+  eventHours?: number;
 }
 
 interface EventStore {
