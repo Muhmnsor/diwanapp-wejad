@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, MapPin, Users } from "lucide-react";
+import { CalendarDays, MapPin, Users, Award, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect } from "react";
@@ -19,6 +19,8 @@ interface EventCardProps {
   registration_start_date?: string | null;
   registration_end_date?: string | null;
   beneficiary_type: string;
+  certificate_type?: string;
+  event_hours?: number;
 }
 
 export const EventCard = ({ 
@@ -33,7 +35,9 @@ export const EventCard = ({
   max_attendees = 0,
   registration_start_date,
   registration_end_date,
-  beneficiary_type
+  beneficiary_type,
+  certificate_type = 'none',
+  event_hours = 0
 }: EventCardProps) => {
   const remainingSeats = max_attendees - attendees;
   const isAlmostFull = remainingSeats <= max_attendees * 0.2;
@@ -45,20 +49,24 @@ export const EventCard = ({
       registrationDates: {
         start: registration_start_date,
         end: registration_end_date
+      },
+      certificate: {
+        type: certificate_type,
+        hours: event_hours
       }
     });
-  }, [title, date, registration_start_date, registration_end_date]);
+  }, [title, date, registration_start_date, registration_end_date, certificate_type, event_hours]);
 
   const getRegistrationStatus = () => {
     const status = getEventStatus({
       date,
-      time: "00:00", // Since we don't have time in card view, we use default
+      time: "00:00",
       attendees,
       maxAttendees: max_attendees,
       registrationStartDate: registration_start_date,
       registrationEndDate: registration_end_date,
       beneficiaryType: beneficiary_type
-    } as any); // Using 'as any' since we don't have all Event properties in card view
+    } as any);
 
     switch (status) {
       case 'eventStarted':
@@ -91,6 +99,17 @@ export const EventCard = ({
     }
   };
 
+  const getCertificateLabel = (type: string) => {
+    switch (type) {
+      case 'attendance':
+        return 'شهادة حضور';
+      case 'certified':
+        return 'شهادة معتمدة';
+      default:
+        return '';
+    }
+  };
+
   const status = getRegistrationStatus();
 
   return (
@@ -111,6 +130,18 @@ export const EventCard = ({
             <Badge variant="outline" className="text-primary">
               {getBeneficiaryLabel(beneficiary_type)}
             </Badge>
+            {certificate_type !== 'none' && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Award className="w-3 h-3" />
+                {getCertificateLabel(certificate_type)}
+              </Badge>
+            )}
+            {event_hours > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {event_hours} ساعات
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 text-gray-600 text-sm">
             <CalendarDays size={16} />

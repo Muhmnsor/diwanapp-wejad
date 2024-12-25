@@ -9,12 +9,100 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          check_in_time: string | null
+          created_at: string
+          event_id: string | null
+          id: string
+          recorded_by: string | null
+          registration_id: string | null
+          status: string | null
+        }
+        Insert: {
+          check_in_time?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          recorded_by?: string | null
+          registration_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          check_in_time?: string | null
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          recorded_by?: string | null
+          registration_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_reports: {
+        Row: {
+          additional_links: string[] | null
+          created_at: string
+          event_id: string | null
+          executor_id: string | null
+          id: string
+          photos: string[] | null
+          report_text: string
+          video_links: string[] | null
+        }
+        Insert: {
+          additional_links?: string[] | null
+          created_at?: string
+          event_id?: string | null
+          executor_id?: string | null
+          id?: string
+          photos?: string[] | null
+          report_text: string
+          video_links?: string[] | null
+        }
+        Update: {
+          additional_links?: string[] | null
+          created_at?: string
+          event_id?: string | null
+          executor_id?: string | null
+          id?: string
+          photos?: string[] | null
+          report_text?: string
+          video_links?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reports_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           beneficiary_type: string
+          certificate_type: string | null
           created_at: string
           date: string
           description: string | null
+          event_hours: number | null
           event_type: string
           id: string
           image_url: string
@@ -28,9 +116,11 @@ export type Database = {
         }
         Insert: {
           beneficiary_type?: string
+          certificate_type?: string | null
           created_at?: string
           date: string
           description?: string | null
+          event_hours?: number | null
           event_type: string
           id?: string
           image_url: string
@@ -44,9 +134,11 @@ export type Database = {
         }
         Update: {
           beneficiary_type?: string
+          certificate_type?: string | null
           created_at?: string
           date?: string
           description?: string | null
+          event_hours?: number | null
           event_type?: string
           id?: string
           image_url?: string
@@ -94,6 +186,47 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]

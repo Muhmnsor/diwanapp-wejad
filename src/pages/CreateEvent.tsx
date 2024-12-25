@@ -1,9 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,6 +9,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useState } from "react";
+import { EventBasicFields } from "@/components/events/form/EventBasicFields";
+import { EventTypeFields } from "@/components/events/form/EventTypeFields";
+import { EventCertificateFields } from "@/components/events/form/EventCertificateFields";
 import { RegistrationPeriodFields } from "@/components/events/RegistrationPeriodFields";
 
 const eventSchema = z.object({
@@ -29,6 +29,8 @@ const eventSchema = z.object({
   beneficiaryType: z.enum(["men", "women", "both"]),
   registration_start_date: z.string().optional(),
   registration_end_date: z.string().optional(),
+  certificateType: z.enum(["attendance", "certified", "none"]),
+  eventHours: z.number().min(0).optional(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -53,6 +55,8 @@ const CreateEvent = () => {
       beneficiaryType: "both",
       registration_start_date: "",
       registration_end_date: "",
+      certificateType: "none",
+      eventHours: 0,
     },
   });
 
@@ -98,6 +102,8 @@ const CreateEvent = () => {
         beneficiary_type: data.beneficiaryType,
         registration_start_date: data.registration_start_date || null,
         registration_end_date: data.registration_end_date || null,
+        certificate_type: data.certificateType,
+        event_hours: data.eventHours || 0,
       };
 
       console.log("Inserting event data into Supabase:", eventData);
@@ -126,8 +132,6 @@ const CreateEvent = () => {
     }
   };
 
-  const watchPriceType = form.watch("priceType");
-
   return (
     <div dir="rtl">
       <Navigation />
@@ -135,78 +139,8 @@ const CreateEvent = () => {
         <h1 className="text-3xl font-bold mb-8">إنشاء فعالية جديدة</h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>عنوان الفعالية</FormLabel>
-                  <FormControl>
-                    <Input placeholder="أدخل عنوان الفعالية" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>وصف الفعالية</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="أدخل وصف الفعالية" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>التاريخ</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الوقت</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>الموقع</FormLabel>
-                  <FormControl>
-                    <Input placeholder="أدخل موقع الفعالية" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            <EventBasicFields form={form} />
+            
             <FormField
               control={form.control}
               name="imageFile"
@@ -228,118 +162,8 @@ const CreateEvent = () => {
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="eventType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نوع الفعالية</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر نوع الفعالية" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="in-person">حضوري</SelectItem>
-                        <SelectItem value="online">عن بعد</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="beneficiaryType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نوع المستفيدين</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر نوع المستفيدين" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="men">رجال</SelectItem>
-                        <SelectItem value="women">نساء</SelectItem>
-                        <SelectItem value="both">رجال ونساء</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="priceType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>نوع السعر</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر نوع السعر" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="free">مجاني</SelectItem>
-                        <SelectItem value="paid">مدفوع</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {watchPriceType === "paid" && (
-                <FormField
-                  control={form.control}
-                  name="priceAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>السعر (ريال)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="أدخل السعر"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-
-            <FormField
-              control={form.control}
-              name="maxAttendees"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>عدد المقاعد</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="1"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            <EventTypeFields form={form} />
+            <EventCertificateFields form={form} />
             <RegistrationPeriodFields form={form} />
 
             <div className="flex justify-end gap-4">
