@@ -13,24 +13,25 @@ const Index = () => {
     queryFn: async () => {
       try {
         console.log("Fetching events from Supabase...");
-        const { data, error } = await supabase
+        const { data: eventsData, error: eventsError } = await supabase
           .from("events")
           .select("*")
           .order("date", { ascending: true });
 
-        if (error) {
-          console.error("Supabase error fetching events:", error);
-          throw error;
+        if (eventsError) {
+          console.error("Supabase error fetching events:", eventsError);
+          throw eventsError;
         }
 
-        console.log("Events fetched successfully, count:", data?.length);
-        return data || [];
+        console.log("Events fetched successfully, count:", eventsData?.length);
+        return eventsData || [];
       } catch (error) {
         console.error("Error in events query:", error);
         throw error;
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
     meta: {
       onError: (error: Error) => {
         console.error("Query error loading events:", error);
@@ -44,19 +45,18 @@ const Index = () => {
     queryFn: async () => {
       try {
         console.log("Fetching registrations from Supabase...");
-        const { data, error } = await supabase
+        const { data: registrationsData, error: registrationsError } = await supabase
           .from("registrations")
           .select("event_id");
 
-        if (error) {
-          console.error("Supabase error fetching registrations:", error);
-          throw error;
+        if (registrationsError) {
+          console.error("Supabase error fetching registrations:", registrationsError);
+          throw registrationsError;
         }
 
-        console.log("Registrations fetched successfully, count:", data?.length);
+        console.log("Registrations fetched successfully, count:", registrationsData?.length);
         
-        // تحويل البيانات إلى تنسيق العدد لكل فعالية
-        const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
+        const registrationCounts = (registrationsData || []).reduce((acc: { [key: string]: number }, registration) => {
           if (registration.event_id) {
             acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
           }
@@ -71,6 +71,7 @@ const Index = () => {
       }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
     meta: {
       onError: (error: Error) => {
         console.error("Query error loading registrations:", error);
