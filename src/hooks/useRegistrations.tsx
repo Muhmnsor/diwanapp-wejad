@@ -6,30 +6,38 @@ export const useRegistrations = () => {
   return useQuery({
     queryKey: ["registrations"],
     queryFn: async () => {
-      console.log("Fetching registrations from Supabase...");
-      const { data: registrationsData, error: registrationsError } = await supabase
-        .from("registrations")
-        .select("event_id");
+      try {
+        console.log("🔄 بدء جلب التسجيلات من Supabase...");
+        
+        const { data, error } = await supabase
+          .from("registrations")
+          .select("event_id");
 
-      if (registrationsError) {
-        console.error("Supabase error fetching registrations:", registrationsError);
-        toast.error("حدث خطأ في تحميل التسجيلات");
-        throw registrationsError;
-      }
-
-      console.log("Registrations fetched successfully, count:", registrationsData?.length);
-      
-      const registrationCounts = (registrationsData || []).reduce((acc: { [key: string]: number }, registration) => {
-        if (registration.event_id) {
-          acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+        if (error) {
+          console.error("❌ خطأ في جلب التسجيلات:", error);
+          toast.error("حدث خطأ في تحميل التسجيلات");
+          throw error;
         }
-        return acc;
-      }, {});
 
-      console.log("Processed registration counts:", registrationCounts);
-      return registrationCounts;
+        console.log("✅ تم جلب التسجيلات بنجاح، العدد:", data?.length);
+        
+        const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
+          if (registration.event_id) {
+            acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+          }
+          return acc;
+        }, {});
+
+        console.log("📊 إحصائيات التسجيلات:", registrationCounts);
+        return registrationCounts;
+      } catch (error) {
+        console.error("❌ خطأ غير متوقع:", error);
+        toast.error("حدث خطأ في تحميل التسجيلات");
+        throw error;
+      }
     },
+    gcTime: 1000 * 60 * 5, // 5 minutes
     staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    retry: false
   });
 };

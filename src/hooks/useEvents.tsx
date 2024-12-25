@@ -6,22 +6,30 @@ export const useEvents = () => {
   return useQuery({
     queryKey: ["events"],
     queryFn: async () => {
-      console.log("Fetching events from Supabase...");
-      const { data: eventsData, error: eventsError } = await supabase
-        .from("events")
-        .select("*")
-        .order("date", { ascending: true });
+      try {
+        console.log("🔄 بدء جلب الفعاليات من Supabase...");
+        
+        const { data, error } = await supabase
+          .from("events")
+          .select("*")
+          .order("date", { ascending: true });
 
-      if (eventsError) {
-        console.error("Supabase error fetching events:", eventsError);
+        if (error) {
+          console.error("❌ خطأ في جلب الفعاليات:", error);
+          toast.error("حدث خطأ في تحميل الفعاليات");
+          throw error;
+        }
+
+        console.log("✅ تم جلب الفعاليات بنجاح، العدد:", data?.length);
+        return data || [];
+      } catch (error) {
+        console.error("❌ خطأ غير متوقع:", error);
         toast.error("حدث خطأ في تحميل الفعاليات");
-        throw eventsError;
+        throw error;
       }
-
-      console.log("Events fetched successfully, count:", eventsData?.length);
-      return eventsData || [];
     },
+    gcTime: 1000 * 60 * 5, // 5 minutes
     staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    retry: false
   });
 };
