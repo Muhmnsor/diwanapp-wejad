@@ -22,16 +22,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process');
       
-      // Trim inputs
       const trimmedEmail = email.trim();
       const trimmedPassword = password.trim();
       
       console.log('Attempting login with email:', trimmedEmail);
-      
-      // Sign out any existing session first
-      await supabase.auth.signOut();
-      
-      // Attempt sign in
+
+      // Attempt sign in without signing out first
       const { data, error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
         password: trimmedPassword,
@@ -42,10 +38,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         
         // Handle specific error cases
         if (error.message.includes('Invalid login credentials')) {
-          throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+          throw new Error('تأكد من صحة البريد الإلكتروني وكلمة المرور');
         }
         
-        throw error;
+        throw new Error('حدث خطأ أثناء تسجيل الدخول');
       }
 
       if (!data?.user) {
