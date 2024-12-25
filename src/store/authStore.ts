@@ -20,57 +20,35 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   login: async (email: string, password: string) => {
     try {
-      console.log('Starting login process with email:', email);
+      // Clear any previous session first
+      await supabase.auth.signOut();
       
-      if (!email || !password) {
-        console.error('Missing credentials');
-        toast.error('البريد الإلكتروني وكلمة المرور مطلوبة');
-        throw new Error('البريد الإلكتروني وكلمة المرور مطلوبة');
-      }
-
+      // Attempt login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
       if (error) {
-        console.error('Authentication Error:', error);
-        console.error('Error details:', {
-          code: error.message,
-          status: error.status,
-          name: error.name
-        });
-        
-        // Handle specific error codes
-        if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
-          const errorMsg = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
-          console.error(errorMsg);
-          toast.error(errorMsg);
-          throw new Error(errorMsg);
+        if (error.message.includes('Invalid login credentials') || 
+            error.message.includes('invalid_credentials')) {
+          toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+          return;
         }
         
         if (error.message.includes('Email not confirmed')) {
-          const errorMsg = 'يرجى تأكيد بريدك الإلكتروني أولاً';
-          console.error(errorMsg);
-          toast.error(errorMsg);
-          throw new Error(errorMsg);
+          toast.error('يرجى تأكيد بريدك الإلكتروني أولاً');
+          return;
         }
 
-        // Generic error
-        const errorMsg = 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى';
-        console.error(errorMsg);
-        toast.error(errorMsg);
-        throw error;
+        toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
+        return;
       }
 
       if (!data.user) {
-        const errorMsg = 'لم يتم العثور على بيانات المستخدم';
-        console.error(errorMsg);
-        toast.error(errorMsg);
-        throw new Error(errorMsg);
+        toast.error('لم يتم العثور على بيانات المستخدم');
+        return;
       }
-
-      console.log('Login successful, user data:', data.user);
 
       // Set initial user state
       const initialUserState: User = {
@@ -79,55 +57,39 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAdmin: false
       };
 
-      // Update user state first
       set({
         user: initialUserState,
         isAuthenticated: true
       });
 
-      try {
-        // Check for admin role
-        const { data: userRoles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('roles (name)')
-          .eq('user_id', data.user.id)
-          .single();
+      // Check for admin role
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('roles (name)')
+        .eq('user_id', data.user.id)
+        .single();
 
-        if (rolesError) {
-          console.error('Error checking admin role:', rolesError);
-        }
-
-        if (userRoles?.roles?.name === 'admin') {
-          console.log('User is admin, updating state');
-          set(state => ({
-            user: {
-              ...state.user!,
-              isAdmin: true
-            }
-          }));
-        }
-      } catch (roleError) {
-        console.error('Error checking admin role:', roleError);
-        // Don't throw here, just log the error since the user is already logged in
+      if (userRoles?.roles?.name === 'admin') {
+        set(state => ({
+          user: {
+            ...state.user!,
+            isAdmin: true
+          }
+        }));
       }
 
-      console.log('Login process completed successfully');
       toast.success('تم تسجيل الدخول بنجاح');
 
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      toast.error('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى');
     }
   },
   logout: async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
+      await supabase.auth.signOut();
       set({ user: null, isAuthenticated: false });
       toast.success('تم تسجيل الخروج بنجاح');
     } catch (error) {
-      console.error('Logout error:', error);
       toast.error('حدث خطأ أثناء تسجيل الخروج');
     }
   }
