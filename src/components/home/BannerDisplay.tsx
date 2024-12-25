@@ -21,7 +21,11 @@ export const BannerDisplay = ({ desktopImage, mobileImage, isMobile }: BannerDis
             <img
               src={displayImage}
               alt="Banner"
-              className="w-full h-[300px] md:h-[400px] object-cover"
+              className={`w-full object-cover ${
+                isMobile 
+                  ? "h-[300px]" // الارتفاع للجوال يبقى كما هو
+                  : "h-[300px]" // تم تقليل ارتفاع نسخة سطح المكتب من 400px إلى 300px
+              }`}
             />
           </CarouselItem>
         </CarouselContent>
