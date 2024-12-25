@@ -31,7 +31,7 @@ export const useUserRoles = () => {
       }
 
       console.log('Raw user roles data:', userRolesData);
-      const roles = (userRolesData as UserRole[])?.map(role => role.roles.name) || [];
+      const roles = (userRolesData as unknown as UserRole[])?.map(role => role.roles.name) || [];
       console.log('Processed user roles:', roles);
       return roles;
     },
