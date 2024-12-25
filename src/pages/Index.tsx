@@ -10,88 +10,65 @@ const Index = () => {
 
   const fetchEvents = async () => {
     console.log("Fetching events...");
-    try {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("date", { ascending: true });
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .order("date", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching events:", error);
-        throw error;
-      }
-
-      console.log("Events fetched successfully:", data);
-      return data || [];
-    } catch (error) {
-      console.error("Error in fetchEvents:", error);
+    if (error) {
+      console.error("Error fetching events:", error);
       throw error;
     }
+
+    console.log("Events fetched successfully:", data);
+    return data || [];
   };
 
   const fetchRegistrations = async () => {
     console.log("Fetching registrations...");
-    try {
-      const { data, error } = await supabase
-        .from("registrations")
-        .select("event_id");
+    const { data, error } = await supabase
+      .from("registrations")
+      .select("event_id");
 
-      if (error) {
-        console.error("Error fetching registrations:", error);
-        throw error;
-      }
-
-      console.log("Registrations fetched successfully:", data);
-      const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
-        if (registration.event_id) {
-          acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
-        }
-        return acc;
-      }, {});
-
-      return registrationCounts;
-    } catch (error) {
-      console.error("Error in fetchRegistrations:", error);
+    if (error) {
+      console.error("Error fetching registrations:", error);
       throw error;
     }
+
+    console.log("Registrations fetched successfully:", data);
+    const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
+      if (registration.event_id) {
+        acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    return registrationCounts;
   };
 
-  const { data: events = [], isError: isEventsError, refetch: refetchEvents } = useQuery({
+  const { data: events = [], isError: isEventsError } = useQuery({
     queryKey: ["events"],
     queryFn: fetchEvents,
-    retry: 2,
-    retryDelay: 1000
+    retry: false,
+    meta: {
+      onError: (error: Error) => {
+        console.error("Error loading events:", error);
+        toast.error("حدث خطأ في تحميل الفعاليات");
+      }
+    }
   });
 
-  const { 
-    data: registrations = {}, 
-    isError: isRegistrationsError,
-    refetch: refetchRegistrations 
-  } = useQuery({
+  const { data: registrations = {}, isError: isRegistrationsError } = useQuery({
     queryKey: ["registrations"],
     queryFn: fetchRegistrations,
-    retry: 2,
-    retryDelay: 1000
+    retry: false,
+    meta: {
+      onError: (error: Error) => {
+        console.error("Error loading registrations:", error);
+        toast.error("حدث خطأ في تحميل التسجيلات");
+      }
+    }
   });
-
-  useEffect(() => {
-    if (isEventsError) {
-      console.error("Error loading events");
-      toast.error("حدث خطأ في تحميل الفعاليات");
-      // Retry loading events after a delay
-      setTimeout(() => {
-        refetchEvents();
-      }, 2000);
-    }
-    if (isRegistrationsError) {
-      console.error("Error loading registrations");
-      toast.error("حدث خطأ في تحميل التسجيلات");
-      // Retry loading registrations after a delay
-      setTimeout(() => {
-        refetchRegistrations();
-      }, 2000);
-    }
-  }, [isEventsError, isRegistrationsError, refetchEvents, refetchRegistrations]);
 
   const now = new Date();
   const upcomingEvents = events.filter((event: any) => {
