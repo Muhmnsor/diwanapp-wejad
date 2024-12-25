@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface UserRoleResponse {
+  roles: {
+    name: string;
+  };
+}
+
 export const useUserRoles = () => {
   return useQuery({
     queryKey: ['user-roles'],
@@ -28,7 +34,7 @@ export const useUserRoles = () => {
         throw error;
       }
 
-      const roleNames = userRolesData?.map(ur => ur.roles.name) || [];
+      const roleNames = (userRolesData as UserRoleResponse[] | null)?.map(ur => ur.roles.name) || [];
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },
