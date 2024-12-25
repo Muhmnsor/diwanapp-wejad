@@ -29,10 +29,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (error) {
         console.error('Authentication error:', error);
-        throw new Error('تأكد من صحة البريد الإلكتروني وكلمة المرور');
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        }
+        throw new Error('حدث خطأ أثناء تسجيل الدخول');
       }
 
-      if (!data.user) {
+      if (!data?.user) {
         console.error('No user data received');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
