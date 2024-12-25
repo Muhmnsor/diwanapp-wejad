@@ -7,6 +7,12 @@ interface UserRoleResponse {
   };
 }
 
+interface SupabaseUserRoleResponse {
+  roles: {
+    name: string;
+  }[];
+}
+
 export const useUserRoles = () => {
   return useQuery({
     queryKey: ['user-roles'],
@@ -33,7 +39,7 @@ export const useUserRoles = () => {
         throw userRolesError;
       }
 
-      const roles = (userRolesData as UserRoleResponse[] || []).map(role => role.roles.name);
+      const roles = (userRolesData as SupabaseUserRoleResponse[]).map(role => role.roles[0]?.name).filter(Boolean);
       console.log('User roles fetched:', roles);
       return roles;
     },

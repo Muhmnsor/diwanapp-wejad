@@ -7,12 +7,12 @@ import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { UsersTable } from "@/components/users/UsersTable";
 import type { Role, User } from "@/components/users/types";
 
-interface UserRoleResponse {
+interface SupabaseUserRoleResponse {
   user_id: string;
   roles: {
     name: string;
     description: string;
-  };
+  }[];
 }
 
 const Users = () => {
@@ -60,9 +60,9 @@ const Users = () => {
       }
 
       console.log('Fetched user roles:', userRoles);
-      return (userRoles as UserRoleResponse[]).map(ur => ({
+      return (userRoles as SupabaseUserRoleResponse[]).map(ur => ({
         id: ur.user_id,
-        role: ur.roles.name || 'No role',
+        role: ur.roles[0]?.name || 'No role',
         username: ur.user_id,
         lastLogin: '-'
       })) as User[];

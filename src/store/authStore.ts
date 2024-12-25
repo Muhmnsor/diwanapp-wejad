@@ -8,10 +8,10 @@ interface User {
   isAdmin: boolean;
 }
 
-interface UserRoleResponse {
+interface SupabaseUserRoleResponse {
   roles: {
     name: string;
-  };
+  }[];
 }
 
 interface AuthState {
@@ -57,7 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       console.log("AuthStore: User roles response:", { userRoles, rolesError });
 
-      if ((userRoles as UserRoleResponse)?.roles?.name === 'admin') {
+      if ((userRoles as SupabaseUserRoleResponse)?.roles[0]?.name === 'admin') {
         console.log("AuthStore: User is admin, updating state");
         set(state => ({
           user: {
