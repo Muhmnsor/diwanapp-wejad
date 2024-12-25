@@ -34,7 +34,10 @@ export const useUserRoles = () => {
         throw error;
       }
 
-      const roleNames = (userRolesData as UserRoleResponse[] | null)?.map(ur => ur.roles.name) || [];
+      console.log('Raw user roles data:', userRolesData);
+      
+      // Safely type and transform the response
+      const roleNames = (userRolesData as any[])?.map(ur => ur.roles.name) || [];
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },
