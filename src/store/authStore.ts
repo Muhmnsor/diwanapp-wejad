@@ -28,17 +28,26 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log("AuthStore: Starting login process");
       
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log("AuthStore: Current user:", user);
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-      if (!user) {
+      console.log("AuthStore: Sign in response:", { authData, signInError });
+
+      if (signInError) {
+        console.error("AuthStore: Sign in error:", signInError);
+        throw signInError;
+      }
+
+      if (!authData.user) {
         console.log("AuthStore: No user found after login");
         throw new Error('No user data available');
       }
 
       const initialUserState: User = {
-        id: user.id,
-        email: user.email ?? '',
+        id: authData.user.id,
+        email: authData.user.email ?? '',
         isAdmin: false
       };
 
@@ -52,12 +61,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('roles (name)')
-        .eq('user_id', user.id)
+        .eq('user_id', authData.user.id)
         .single();
 
       console.log("AuthStore: User roles response:", { userRoles, rolesError });
 
-      if ((userRoles as SupabaseUserRoleResponse)?.roles[0]?.name === 'admin') {
+      if (rolesError) {
+        console.error("AuthStore: Error fetching user roles:", rolesError);
+      }
+
+      if ((userRoles as SupabaseUserRoleResponse)?.roles?.name === 'admin') {
         console.log("AuthStore: User is admin, updating state");
         set(state => ({
           user: {
