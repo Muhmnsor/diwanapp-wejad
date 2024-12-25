@@ -1,12 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { Logo } from "./Logo";
 
 export const Navigation = () => {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
 
   console.log("Current user in Navigation:", user);
+
+  const handleLoginClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Navigation - Login button clicked, redirecting to /login");
+    navigate("/login");
+  };
 
   return (
     <nav className="border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -34,8 +41,8 @@ export const Navigation = () => {
           {user ? (
             <Button variant="outline" onClick={logout}>تسجيل خروج</Button>
           ) : (
-            <Button variant="outline" asChild>
-              <Link to="/login">تسجيل دخول</Link>
+            <Button variant="outline" onClick={handleLoginClick}>
+              تسجيل دخول
             </Button>
           )}
         </div>

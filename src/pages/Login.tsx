@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
@@ -20,6 +20,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const login = useAuthStore((state) => state.login);
 
   useEffect(() => {
@@ -27,7 +28,8 @@ const Login = () => {
       const { data: { session } } = await supabase.auth.getSession();
       console.log("Current session:", session);
       if (session) {
-        navigate("/");
+        const from = location.state?.from || "/";
+        navigate(from);
       }
     };
 
@@ -36,14 +38,15 @@ const Login = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log("Auth state changed:", _event, session);
       if (session) {
-        navigate("/");
+        const from = location.state?.from || "/";
+        navigate(from);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -56,11 +59,9 @@ const Login = () => {
   const onSubmit = async (data: LoginFormData) => {
     console.log("Attempting login with email:", data.email);
     try {
-      // First clear any existing session
       await supabase.auth.signOut();
       console.log("Previous session cleared");
 
-      // Attempt login directly with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email.trim(),
         password: data.password.trim(),
@@ -81,10 +82,10 @@ const Login = () => {
         return;
       }
 
-      // If we get here, login was successful
       await login(data.email, data.password);
       toast.success('تم تسجيل الدخول بنجاح');
-      navigate('/');
+      const from = location.state?.from || "/";
+      navigate(from);
       
     } catch (error) {
       console.error('Login error:', error);
