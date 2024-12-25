@@ -16,6 +16,11 @@ export const EventCardBadges = ({
   certificateType,
   eventHours
 }: EventCardBadgesProps) => {
+  console.log('EventCardBadges received:', {
+    certificateType,
+    eventHours
+  });
+
   const getBeneficiaryLabel = (type: string) => {
     switch (type) {
       case 'men':
