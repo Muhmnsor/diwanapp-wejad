@@ -25,6 +25,8 @@ export const EventAdminTabs = ({
   canAddReport,
   onAddReport
 }: EventAdminTabsProps) => {
+  console.log('EventAdminTabs - canAddReport:', canAddReport);
+  
   return (
     <Tabs defaultValue="details" className="mb-8">
       <TabsList className="mb-4">

@@ -6,7 +6,7 @@ export const useUserRoles = () => {
     queryKey: ['user-roles'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Fetching roles for user:', user?.id);
+      console.log('Current user:', user?.id);
       
       if (!user) {
         console.log('No authenticated user found');
@@ -28,7 +28,7 @@ export const useUserRoles = () => {
       }
 
       const roles = userRolesData?.map(role => role.roles.name) || [];
-      console.log('User roles:', roles);
+      console.log('User roles fetched:', roles);
       return roles;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes

@@ -29,7 +29,9 @@ export const EventAdminView = ({
     userRoles.includes('event_executor')
   );
   
-  console.log('Can add report:', canAddReport, 'Roles loading:', rolesLoading);
+  console.log('Can add report:', canAddReport);
+  console.log('User roles:', userRoles);
+  console.log('Roles loading:', rolesLoading);
 
   return (
     <>
