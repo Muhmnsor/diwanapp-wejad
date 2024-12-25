@@ -22,46 +22,53 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process with email:', email);
       
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      if (signInError) {
-        console.error('Sign in error:', signInError);
-        if (signInError.message.includes('Invalid login credentials')) {
+      if (error) {
+        console.error('Authentication error:', error);
+        if (error.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
         throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
       }
 
-      if (!authData?.user) {
-        console.error('No user data received after successful sign in');
+      if (!data?.user) {
+        console.error('No user data received');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
-      // After successful authentication, fetch user roles in a separate query
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('roles (name)')
-        .eq('user_id', authData.user.id)
-        .single();
-
-      const isAdmin = userRoles?.roles?.name === 'admin';
-      console.log('User roles fetched, isAdmin:', isAdmin);
-
+      // Set basic user data first
       set({
         user: {
-          id: authData.user.id,
-          email: authData.user.email ?? '',
-          isAdmin: isAdmin
+          id: data.user.id,
+          email: data.user.email ?? '',
+          isAdmin: false // Default to non-admin
         },
         isAuthenticated: true
       });
 
-      if (rolesError) {
+      // Then fetch roles separately
+      try {
+        const { data: userRoles } = await supabase
+          .from('user_roles')
+          .select('roles (name)')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (userRoles?.roles?.name === 'admin') {
+          set(state => ({
+            user: {
+              ...state.user!,
+              isAdmin: true
+            }
+          }));
+        }
+      } catch (rolesError) {
         console.warn('Error fetching roles:', rolesError);
-        // Don't throw here, just log the warning as the user is already authenticated
+        // Continue as non-admin user
       }
 
       toast.success('تم تسجيل الدخول بنجاح');
