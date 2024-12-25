@@ -1,10 +1,11 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, MapPin, Users, Award, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect } from "react";
+import { EventCardBadges } from "./events/cards/EventCardBadges";
+import { EventCardDetails } from "./events/cards/EventCardDetails";
+import { EventCardStatus } from "./events/cards/EventCardStatus";
 
 interface EventCardProps {
   id: string;
@@ -79,32 +80,6 @@ export const EventCard = ({
     }
   };
 
-  const getBeneficiaryLabel = (type: string) => {
-    switch (type) {
-      case 'men':
-        return 'رجال';
-      case 'women':
-        return 'نساء';
-      case 'children':
-        return 'أطفال';
-      case 'all':
-        return 'الجميع';
-      default:
-        return 'رجال ونساء';
-    }
-  };
-
-  const getCertificateLabel = (type: string) => {
-    switch (type) {
-      case 'attendance':
-        return 'شهادة حضور';
-      case 'certified':
-        return 'شهادة معتمدة';
-      default:
-        return '';
-    }
-  };
-
   const status = getRegistrationStatus();
 
   return (
@@ -115,47 +90,23 @@ export const EventCard = ({
           <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 p-4 pt-0">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={event_type === "online" ? "secondary" : "default"}>
-              {event_type === "online" ? "عن بعد" : "حضوري"}
-            </Badge>
-            <Badge variant={!price ? "secondary" : "default"}>
-              {!price ? "مجاني" : `${price} ريال`}
-            </Badge>
-            <Badge variant="outline" className="text-primary">
-              {getBeneficiaryLabel(beneficiary_type)}
-            </Badge>
-            {certificate_type && certificate_type !== 'none' && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Award className="w-3 h-3" />
-                {getCertificateLabel(certificate_type)}
-              </Badge>
-            )}
-            {event_hours > 0 && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {event_hours} ساعات
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-gray-600 text-sm">
-            <CalendarDays size={16} />
-            <span>{date}</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-600 text-sm">
-            <MapPin size={16} />
-            <span>{location}</span>
-          </div>
+          <EventCardBadges
+            eventType={event_type}
+            price={price}
+            beneficiaryType={beneficiary_type}
+            certificateType={certificate_type}
+            eventHours={event_hours}
+          />
+          <EventCardDetails
+            date={date}
+            location={location}
+          />
           {max_attendees > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-gray-600 text-sm">
-                <Users size={16} />
-                <span>{attendees} من {max_attendees} مشارك</span>
-              </div>
-              <div className={`text-center py-1 px-2 rounded-md text-white ${status.color}`}>
-                {status.text}
-              </div>
-            </div>
+            <EventCardStatus
+              remainingSeats={remainingSeats}
+              maxAttendees={max_attendees}
+              status={status}
+            />
           )}
         </CardContent>
         <CardFooter className="p-4 pt-0">
