@@ -30,7 +30,7 @@ export const Banner = () => {
           .from('banners')
           .select('*')
           .eq('active', true)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("خطأ في جلب البانر:", error);
@@ -41,6 +41,8 @@ export const Banner = () => {
           console.log("تم جلب البانر بنجاح:", data);
           setDesktopImage(data.desktop_image);
           setMobileImage(data.mobile_image);
+        } else {
+          console.log("لا يوجد بانر نشط حالياً");
         }
       } catch (error) {
         console.error("خطأ غير متوقع:", error);
