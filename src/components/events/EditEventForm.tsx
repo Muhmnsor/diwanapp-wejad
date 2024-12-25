@@ -12,12 +12,16 @@ interface EditEventFormProps {
 }
 
 export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) => {
-  console.log('Initial event data in EditEventForm:', event);
+  console.log('Initial event data in EditEventForm:', {
+    ...event,
+    certificateType: event.certificate_type,
+    eventHours: event.event_hours
+  });
   
   const [formData, setFormData] = useState<CustomEvent>({
     ...event,
-    certificateType: event.certificateType || 'none',
-    eventHours: event.eventHours || 0
+    certificateType: event.certificate_type || 'none',
+    eventHours: event.event_hours || 0
   });
   const [isUploading, setIsUploading] = useState(false);
 

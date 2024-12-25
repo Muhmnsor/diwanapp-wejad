@@ -37,7 +37,11 @@ export const EventDetailsView = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
-  console.log('Event data in EventDetailsView:', event);
+  console.log('Event data in EventDetailsView:', {
+    ...event,
+    certificateType: event.certificate_type,
+    eventHours: event.event_hours
+  });
 
   if (!event) {
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
@@ -52,10 +56,16 @@ export const EventDetailsView = ({
     setIsRegistrationOpen(true);
   };
 
+  const transformedEvent = {
+    ...event,
+    certificateType: event.certificate_type,
+    eventHours: event.event_hours
+  };
+
   return (
     <EventContainer>
       <EventDetailsHeader
-        event={event}
+        event={transformedEvent}
         isAdmin={user?.isAdmin}
         onEdit={onEdit}
         onDelete={() => setIsDeleteDialogOpen(true)}
@@ -64,11 +74,7 @@ export const EventDetailsView = ({
       />
 
       <EventDetailsContent 
-        event={{
-          ...event,
-          certificateType: event.certificateType || 'none',
-          eventHours: event.eventHours || 0
-        }}
+        event={transformedEvent}
         onRegister={handleRegister}
       />
 
