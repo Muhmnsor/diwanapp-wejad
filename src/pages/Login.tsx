@@ -21,16 +21,33 @@ const Login = () => {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
-  // Check for existing session on mount
+  // Check for existing session on mount and auth state changes
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Session check error:', error);
+        return;
+      }
       if (session) {
         console.log('Existing session found, redirecting to home');
         navigate("/");
       }
     };
+
     checkSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        console.log('Auth state changed: user logged in');
+        navigate("/");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const form = useForm<LoginFormData>({
