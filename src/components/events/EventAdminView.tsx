@@ -27,12 +27,16 @@ export const EventAdminView = ({
 }: EventAdminViewProps) => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
-  const { data: userRoles } = useQuery({
+  const { data: userRoles, isLoading: rolesLoading } = useQuery({
     queryKey: ['user-roles'],
     queryFn: async () => {
       console.log('Fetching user roles');
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) {
+        console.log('No user found');
+        return [];
+      }
+      console.log('Current user:', user);
 
       const { data, error } = await supabase
         .from('user_roles')
@@ -44,12 +48,16 @@ export const EventAdminView = ({
         throw error;
       }
       
-      console.log('User roles:', data);
-      return data.map(role => role.roles.name);
+      console.log('User roles data:', data);
+      const roles = data.map(role => role.roles.name);
+      console.log('Mapped user roles:', roles);
+      return roles;
     }
   });
 
+  // Show the button for both admin and event_executor roles
   const canAddReport = userRoles?.some(role => ['admin', 'event_executor'].includes(role));
+  console.log('Can add report:', canAddReport, 'User roles:', userRoles);
 
   return (
     <Tabs defaultValue="details" className="mb-8">
