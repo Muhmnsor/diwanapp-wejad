@@ -38,7 +38,6 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
     try {
       console.log('Creating new user with role:', selectedRole);
       
-      // First create the user in auth.users
       const { data: authUser, error: signUpError } = await supabase.auth.signUp({
         email: newUsername,
         password: newPassword,
@@ -55,7 +54,6 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
 
       console.log('User created successfully:', authUser.user.id);
 
-      // Then assign the role in user_roles table
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert([
