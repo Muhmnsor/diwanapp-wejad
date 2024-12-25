@@ -29,13 +29,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (signInError) {
         console.error('Sign in error:', signInError);
-        if (signInError.message === 'Invalid login credentials') {
+        if (signInError.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
-        throw signInError;
+        throw new Error('حدث خطأ أثناء تسجيل الدخول');
       }
 
-      if (!signInData.user) {
+      if (!signInData?.user) {
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
@@ -70,7 +70,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       toast.success('تم تسجيل الدخول بنجاح');
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول");
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول";
+      toast.error(errorMessage);
       throw error;
     }
   },

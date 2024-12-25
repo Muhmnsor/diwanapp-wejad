@@ -31,10 +31,10 @@ const Login = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data.email, data.password);
-      toast.success("تم تسجيل الدخول بنجاح");
       navigate("/");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول");
+      console.error('Form submission error:', error);
+      // Error is already handled in the auth store
     }
   };
 
