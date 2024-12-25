@@ -30,6 +30,7 @@ export const EventAdminView = ({
   const { data: userRoles } = useQuery({
     queryKey: ['user-roles'],
     queryFn: async () => {
+      console.log('Fetching user roles');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
@@ -38,12 +39,17 @@ export const EventAdminView = ({
         .select('roles (name)')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        throw error;
+      }
+      
+      console.log('User roles:', data);
       return data.map(role => role.roles.name);
     }
   });
 
-  const isEventExecutor = userRoles?.includes('event_executor');
+  const canAddReport = userRoles?.some(role => ['admin', 'event_executor'].includes(role));
 
   return (
     <Tabs defaultValue="details" className="mb-8">
@@ -53,7 +59,7 @@ export const EventAdminView = ({
       </TabsList>
       <TabsContent value="details">
         <div className="space-y-4">
-          {isEventExecutor && (
+          {canAddReport && (
             <div className="flex justify-end">
               <Button onClick={() => setIsReportDialogOpen(true)}>
                 إضافة تقرير الفعالية
