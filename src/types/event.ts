@@ -16,9 +16,6 @@ export interface EventType {
   beneficiaryType: BeneficiaryType;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
-  certificateType?: string;
-  eventHours?: number;
-  // Add support for database column names
-  certificate_type?: string;
-  event_hours?: number;
+  certificateType: string;
+  eventHours: number;
 }

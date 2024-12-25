@@ -37,11 +37,7 @@ export const EventDetailsView = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
-  console.log('Event data in EventDetailsView:', {
-    ...event,
-    certificateType: event.certificateType || event.certificate_type,
-    eventHours: event.eventHours || event.event_hours
-  });
+  console.log('Event data in EventDetailsView:', event);
 
   if (!event) {
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
@@ -58,8 +54,8 @@ export const EventDetailsView = ({
 
   const transformedEvent = {
     ...event,
-    certificateType: event.certificateType || event.certificate_type,
-    eventHours: event.eventHours || event.event_hours
+    certificateType: event.certificateType || 'none',
+    eventHours: event.eventHours || 0
   };
 
   return (
