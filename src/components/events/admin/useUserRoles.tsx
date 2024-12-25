@@ -1,18 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface UserRoleResponse {
-  roles: {
-    name: string;
-  };
-}
-
-interface SupabaseUserRoleResponse {
-  roles: {
-    name: string;
-  }[];
-}
-
 export const useUserRoles = () => {
   return useQuery({
     queryKey: ['user-roles'],
@@ -27,11 +15,7 @@ export const useUserRoles = () => {
 
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
-        .select(`
-          roles (
-            name
-          )
-        `)
+        .select('roles:role_id(name)')
         .eq('user_id', user.id);
 
       if (userRolesError) {
@@ -39,8 +23,9 @@ export const useUserRoles = () => {
         throw userRolesError;
       }
 
-      const roles = (userRolesData as SupabaseUserRoleResponse[]).map(role => role.roles[0]?.name).filter(Boolean);
-      console.log('User roles fetched:', roles);
+      console.log('Raw user roles data:', userRolesData);
+      const roles = userRolesData?.map(role => role.roles?.name).filter(Boolean) || [];
+      console.log('Processed user roles:', roles);
       return roles;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
