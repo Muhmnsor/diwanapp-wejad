@@ -9,28 +9,27 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      console.log("ProtectedRoute - Current path:", location.pathname);
-      console.log("ProtectedRoute - Is authenticated:", isAuthenticated);
+    if (location.pathname === '/login') {
+      return;
+    }
 
-      if (!isAuthenticated && location.pathname !== '/login') {
-        console.log("ProtectedRoute - User not authenticated, redirecting to login");
-        toast.error("يجب تسجيل الدخول للوصول إلى هذه الصفحة");
-        navigate("/login", { 
-          replace: true,
-          state: { from: location.pathname }
-        });
-      }
-    };
-
-    checkAuth();
+    if (!isAuthenticated) {
+      console.log("ProtectedRoute - User not authenticated, redirecting to login");
+      toast.error("يجب تسجيل الدخول للوصول إلى هذه الصفحة", {
+        duration: 3000,
+        onDismiss: () => {
+          navigate("/login", { 
+            replace: true,
+            state: { from: location.pathname }
+          });
+        }
+      });
+    }
   }, [isAuthenticated, location.pathname]);
 
   if (!isAuthenticated && location.pathname !== '/login') {
-    console.log("ProtectedRoute - Rendering null for unauthenticated user");
     return null;
   }
 
-  console.log("ProtectedRoute - Rendering children for authenticated user");
   return <>{children}</>;
 };

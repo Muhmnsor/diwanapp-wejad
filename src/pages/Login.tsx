@@ -23,34 +23,15 @@ const Login = () => {
   const location = useLocation();
   const login = useAuthStore((state) => state.login);
   const authCheckCompleted = useRef(false);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    if (authCheckCompleted.current) return;
+    if (authCheckCompleted.current || !isAuthenticated) return;
 
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Current session:", session);
-      if (session) {
-        const from = location.state?.from || "/";
-        navigate(from, { replace: true });
-      }
-      authCheckCompleted.current = true;
-    };
-
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session);
-      if (session) {
-        const from = location.state?.from || "/";
-        navigate(from, { replace: true });
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, location]);
+    const from = location.state?.from || "/";
+    navigate(from, { replace: true });
+    authCheckCompleted.current = true;
+  }, [isAuthenticated, location.state, navigate]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -61,36 +42,11 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log("Attempting login with email:", data.email);
     try {
-      await supabase.auth.signOut();
-      console.log("Previous session cleared");
-
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: data.email.trim(),
-        password: data.password.trim(),
-      });
-
-      console.log("Auth response:", { authData, authError });
-
-      if (authError) {
-        if (authError.message.includes('Invalid login credentials')) {
-          toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-          return;
-        }
-        throw authError;
-      }
-
-      if (!authData.user) {
-        toast.error('لم يتم العثور على بيانات المستخدم');
-        return;
-      }
-
       await login(data.email, data.password);
-      toast.success('تم تسجيل الدخول بنجاح');
       const from = location.state?.from || "/";
       navigate(from, { replace: true });
-      
+      toast.success('تم تسجيل الدخول بنجاح');
     } catch (error) {
       console.error('Login error:', error);
       toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
