@@ -5,8 +5,13 @@ import { toast } from "sonner";
 import { Registration } from "./types";
 import { DashboardOverview } from "./DashboardOverview";
 import { DashboardRegistrations } from "./DashboardRegistrations";
+import { Button } from "@/components/ui/button";
+import { EventReportDialog } from "../events/EventReportDialog";
+import { useState } from "react";
 
 export const EventDashboard = ({ eventId }: { eventId: string }) => {
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+
   // Fetch event details
   const { data: event, isLoading: eventLoading, error: eventError } = useQuery({
     queryKey: ['event', eventId],
@@ -85,6 +90,12 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setIsReportDialogOpen(true)}>
+          إضافة تقرير
+        </Button>
+      </div>
+
       <Tabs defaultValue="overview" dir="rtl">
         <TabsList>
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
@@ -108,6 +119,12 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
           />
         </TabsContent>
       </Tabs>
+
+      <EventReportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        eventId={eventId}
+      />
     </div>
   );
 };

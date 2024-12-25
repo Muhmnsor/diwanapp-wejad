@@ -21,21 +21,12 @@ export const EventAdminTabs = ({
   onAddToCalendar,
   onRegister,
   id,
-  canAddReport,
-  onAddReport
 }: EventAdminTabsProps) => {
-  console.log('EventAdminTabs - canAddReport:', canAddReport);
-  
   return (
     <Tabs defaultValue="details" className="mb-8">
       <TabsList className="mb-4">
         <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
         <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-        {canAddReport && (
-          <TabsTrigger value="add-report" onClick={onAddReport}>
-            إضافة تقرير
-          </TabsTrigger>
-        )}
       </TabsList>
       <TabsContent value="details">
         <EventDetailsView
