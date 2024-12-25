@@ -1,12 +1,14 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 
 export const Navigation = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   console.log("Current user in Navigation:", user);
+  console.log("Current location:", location.pathname);
 
   const handleLoginClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -14,14 +16,18 @@ export const Navigation = () => {
     navigate("/login");
   };
 
+  const isLoginPage = location.pathname === "/login";
+
   return (
     <div className="flex justify-start">
       {user ? (
         <Button variant="outline" onClick={logout}>تسجيل خروج</Button>
       ) : (
-        <Button variant="outline" onClick={handleLoginClick}>
-          تسجيل دخول
-        </Button>
+        !isLoginPage && (
+          <Button variant="outline" onClick={handleLoginClick}>
+            تسجيل دخول
+          </Button>
+        )
       )}
     </div>
   );
