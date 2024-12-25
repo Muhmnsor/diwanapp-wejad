@@ -22,26 +22,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process');
       
-      const trimmedEmail = email.trim();
-      const trimmedPassword = password.trim();
-      
-      console.log('Attempting login with email:', trimmedEmail);
-
-      // Attempt sign in without signing out first
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password: trimmedPassword,
+        email: email.trim(),
+        password: password.trim(),
       });
 
       if (error) {
-        console.error('Authentication error:', error);
-        
-        // Handle specific error cases
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('تأكد من صحة البريد الإلكتروني وكلمة المرور');
-        }
-        
-        throw new Error('حدث خطأ أثناء تسجيل الدخول');
+        console.error('Supabase auth error:', error);
+        throw new Error('تأكد من صحة البريد الإلكتروني وكلمة المرور');
       }
 
       if (!data?.user) {
@@ -51,7 +39,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       console.log('Successfully signed in, fetching user roles');
 
-      // Get user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select(`
