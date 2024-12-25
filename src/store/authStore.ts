@@ -22,26 +22,27 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process');
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      if (error) {
-        console.error('Authentication error:', error);
-        if (error.message.includes('Invalid login credentials')) {
+      if (authError) {
+        console.error('Authentication error:', authError);
+        if (authError.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
         throw new Error('حدث خطأ أثناء تسجيل الدخول');
       }
 
-      if (!data?.user) {
+      if (!authData?.user) {
         console.error('No user data received');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
       console.log('Successfully signed in, fetching user roles');
 
+      // Fetch user roles in a separate query
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -49,17 +50,16 @@ export const useAuthStore = create<AuthState>((set) => ({
             name
           )
         `)
-        .eq('user_id', data.user.id)
+        .eq('user_id', authData.user.id)
         .single();
 
       if (rolesError) {
         console.error('Error fetching roles:', rolesError);
         // Don't throw here, just log the error and set isAdmin to false
-        console.warn('Unable to fetch roles, defaulting to non-admin user');
         set({
           user: {
-            id: data.user.id,
-            email: data.user.email ?? '',
+            id: authData.user.id,
+            email: authData.user.email ?? '',
             isAdmin: false
           },
           isAuthenticated: true
@@ -73,8 +73,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       set({
         user: {
-          id: data.user.id,
-          email: data.user.email ?? '',
+          id: authData.user.id,
+          email: authData.user.email ?? '',
           isAdmin: isAdmin
         },
         isAuthenticated: true
