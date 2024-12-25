@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صالح"),
@@ -23,13 +24,17 @@ const Login = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          return;
+        }
+        if (session) {
+          navigate("/");
+        }
+      } catch (error) {
         console.error('Session check error:', error);
-        return;
-      }
-      if (session) {
-        navigate("/");
       }
     };
 
@@ -60,7 +65,7 @@ const Login = () => {
       navigate("/");
     } catch (error) {
       console.error('Form submission error:', error);
-      // Error is handled in the auth store
+      // Error is already handled in the auth store with toast
     }
   };
 

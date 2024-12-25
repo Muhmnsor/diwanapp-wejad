@@ -22,48 +22,30 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process with email:', email);
       
-      // First attempt authentication
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      if (authError) {
-        console.error('Authentication error:', authError);
-        
-        // Map specific error messages
-        if (authError.message.includes('Invalid login credentials')) {
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        if (signInError.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
         throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
       }
 
       if (!authData?.user) {
-        console.error('No user data received');
+        console.error('No user data received after successful sign in');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
-      // After successful authentication, fetch user roles
+      // After successful authentication, fetch user roles in a separate query
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('roles (name)')
         .eq('user_id', authData.user.id)
         .single();
-
-      if (rolesError) {
-        console.error('Error fetching roles:', rolesError);
-        // Set user without admin privileges if role fetch fails
-        set({
-          user: {
-            id: authData.user.id,
-            email: authData.user.email ?? '',
-            isAdmin: false
-          },
-          isAuthenticated: true
-        });
-        toast.success('تم تسجيل الدخول بنجاح');
-        return;
-      }
 
       const isAdmin = userRoles?.roles?.name === 'admin';
       console.log('User roles fetched, isAdmin:', isAdmin);
@@ -77,6 +59,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true
       });
 
+      if (rolesError) {
+        console.warn('Error fetching roles:', rolesError);
+        // Don't throw here, just log the warning as the user is already authenticated
+      }
+
       toast.success('تم تسجيل الدخول بنجاح');
 
     } catch (error) {
@@ -88,13 +75,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   logout: async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       set({ user: null, isAuthenticated: false });
       toast.success('تم تسجيل الخروج بنجاح');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('حدث خطأ أثناء تسجيل الخروج');
-      throw error;
     }
   }
 }));
