@@ -6,7 +6,8 @@ import { Registration } from "./types";
 import { DashboardOverview } from "./DashboardOverview";
 import { DashboardRegistrations } from "./DashboardRegistrations";
 import { Button } from "@/components/ui/button";
-import { EventReportDialog } from "../events/EventReportDialog";
+import { EventReportForm } from "../events/EventReportForm";
+import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 
 export const EventDashboard = ({ eventId }: { eventId: string }) => {
@@ -90,16 +91,11 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => setIsReportDialogOpen(true)}>
-          إضافة تقرير
-        </Button>
-      </div>
-
       <Tabs defaultValue="overview" dir="rtl">
         <TabsList>
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
           <TabsTrigger value="registrations">المسجلين</TabsTrigger>
+          <TabsTrigger value="report">إضافة تقرير</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -118,13 +114,20 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
             eventTitle={event.title}
           />
         </TabsContent>
-      </Tabs>
 
-      <EventReportDialog
-        open={isReportDialogOpen}
-        onOpenChange={setIsReportDialogOpen}
-        eventId={eventId}
-      />
+        <TabsContent value="report">
+          <Card>
+            <CardContent className="pt-6">
+              <EventReportForm 
+                eventId={eventId}
+                onSuccess={() => {
+                  toast.success("تم إضافة التقرير بنجاح");
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
