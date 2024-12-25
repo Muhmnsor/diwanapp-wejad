@@ -3,13 +3,14 @@ import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { BannerControls } from "./BannerControls";
 import { BannerDisplay } from "./BannerDisplay";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Banner = () => {
   const [desktopImage, setDesktopImage] = useState("");
   const [mobileImage, setMobileImage] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -19,6 +20,34 @@ export const Banner = () => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // جلب بيانات البانر النشط من قاعدة البيانات
+  useEffect(() => {
+    const fetchActiveBanner = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('banners')
+          .select('*')
+          .eq('active', true)
+          .single();
+
+        if (error) {
+          console.error("خطأ في جلب البانر:", error);
+          return;
+        }
+
+        if (data) {
+          console.log("تم جلب البانر بنجاح:", data);
+          setDesktopImage(data.desktop_image);
+          setMobileImage(data.mobile_image);
+        }
+      } catch (error) {
+        console.error("خطأ غير متوقع:", error);
+      }
+    };
+
+    fetchActiveBanner();
   }, []);
 
   const handleDesktopImageUpload = async (file: File) => {
@@ -45,7 +74,17 @@ export const Banner = () => {
 
     setIsSubmitting(true);
     try {
-      // Here you would implement the save logic
+      // تحديث البانر النشط في قاعدة البيانات
+      const { error } = await supabase
+        .from('banners')
+        .upsert({
+          desktop_image: desktopImage,
+          mobile_image: mobileImage,
+          active: true,
+        });
+
+      if (error) throw error;
+
       toast.success("تم حفظ البانر بنجاح");
       setIsEditing(false);
     } catch (error) {
@@ -56,12 +95,12 @@ export const Banner = () => {
     }
   };
 
-  // Only show upload controls for admin users
+  // إظهار أدوات التحكم فقط للمشرفين
   const showControls = user?.isAdmin;
 
   return (
     <div className="max-w-7xl mx-auto px-4">
-      {/* Admin Controls */}
+      {/* أدوات التحكم للمشرفين */}
       {showControls && (
         <div className="mb-6">
           <BannerControls
@@ -77,7 +116,7 @@ export const Banner = () => {
         </div>
       )}
       
-      {/* Banner Display - Shown to Everyone */}
+      {/* عرض البانر - يظهر للجميع */}
       <BannerDisplay
         desktopImage={desktopImage}
         mobileImage={mobileImage}
