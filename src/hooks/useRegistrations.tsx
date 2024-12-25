@@ -7,22 +7,21 @@ export const useRegistrations = () => {
     queryKey: ["registrations"],
     queryFn: async () => {
       try {
-        console.log("🔄 جاري جلب التسجيلات...");
+        console.log("🔄 محاولة جلب التسجيلات...");
         
-        const { data, error } = await supabase
+        const { data: registrationsData, error: registrationsError } = await supabase
           .from("registrations")
           .select("event_id");
 
-        if (error) {
-          console.error("❌ خطأ في جلب التسجيلات:", error);
+        if (registrationsError) {
+          console.error("❌ خطأ في جلب التسجيلات:", registrationsError);
           toast.error("حدث خطأ في تحميل التسجيلات");
-          throw error;
+          throw registrationsError;
         }
 
-        console.log("✅ تم جلب التسجيلات بنجاح، العدد:", data?.length);
+        console.log("✅ تم جلب التسجيلات بنجاح، العدد:", registrationsData?.length);
         
-        // تحويل البيانات إلى تنسيق العد
-        const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
+        const registrationCounts = (registrationsData || []).reduce((acc: { [key: string]: number }, registration) => {
           if (registration.event_id) {
             acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
           }
@@ -32,13 +31,14 @@ export const useRegistrations = () => {
         console.log("📊 إحصائيات التسجيلات:", registrationCounts);
         return registrationCounts;
       } catch (error) {
-        console.error("❌ خطأ غير متوقع:", error);
+        console.error("❌ خطأ غير متوقع في جلب التسجيلات:", error);
         toast.error("حدث خطأ في تحميل التسجيلات");
         throw error;
       }
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 1
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 };

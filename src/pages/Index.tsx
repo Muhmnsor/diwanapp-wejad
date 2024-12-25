@@ -3,6 +3,7 @@ import { Hero } from "@/components/home/Hero";
 import { EventsTabs } from "@/components/home/EventsTabs";
 import { useEvents } from "@/hooks/useEvents";
 import { useRegistrations } from "@/hooks/useRegistrations";
+import { toast } from "sonner";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("all");
@@ -31,6 +32,16 @@ const Index = () => {
   });
 
   useEffect(() => {
+    if (isEventsError) {
+      console.error("❌ خطأ في جلب الفعاليات:", eventsError);
+      toast.error("حدث خطأ في تحميل الفعاليات");
+    }
+
+    if (isRegistrationsError) {
+      console.error("❌ خطأ في جلب التسجيلات:", registrationsError);
+      toast.error("حدث خطأ في تحميل التسجيلات");
+    }
+
     console.log("📊 حالة البيانات:", {
       eventsCount: events.length,
       registrationsCount: Object.keys(registrations).length,
@@ -39,14 +50,6 @@ const Index = () => {
       isEventsError,
       isRegistrationsError
     });
-
-    if (isEventsError) {
-      console.error("❌ خطأ في جلب الفعاليات:", eventsError);
-    }
-
-    if (isRegistrationsError) {
-      console.error("❌ خطأ في جلب التسجيلات:", registrationsError);
-    }
   }, [
     events, 
     registrations, 

@@ -7,29 +7,30 @@ export const useEvents = () => {
     queryKey: ["events"],
     queryFn: async () => {
       try {
-        console.log("🔄 جاري جلب الفعاليات...");
+        console.log("🔄 محاولة جلب الفعاليات...");
         
-        const { data, error } = await supabase
+        const { data: eventsData, error: eventsError } = await supabase
           .from("events")
           .select("*")
           .order("date", { ascending: true });
 
-        if (error) {
-          console.error("❌ خطأ في جلب الفعاليات:", error);
+        if (eventsError) {
+          console.error("❌ خطأ في جلب الفعاليات:", eventsError);
           toast.error("حدث خطأ في تحميل الفعاليات");
-          throw error;
+          throw eventsError;
         }
 
-        console.log("✅ تم جلب الفعاليات بنجاح، العدد:", data?.length);
-        return data || [];
+        console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData?.length);
+        return eventsData || [];
       } catch (error) {
-        console.error("❌ خطأ غير متوقع:", error);
+        console.error("❌ خطأ غير متوقع في جلب الفعاليات:", error);
         toast.error("حدث خطأ في تحميل الفعاليات");
         throw error;
       }
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 1
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 };
