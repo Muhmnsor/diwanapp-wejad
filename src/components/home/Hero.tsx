@@ -2,7 +2,7 @@ import { Banner } from "./Banner";
 
 export const Hero = () => {
   return (
-    <div className="py-8 md:py-12">
+    <div className="w-full">
       <Banner />
     </div>
   );
