@@ -22,17 +22,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process');
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      if (error) {
-        console.error('Supabase auth error:', error);
+      if (authError) {
+        console.error('Authentication error:', authError);
         throw new Error('تأكد من صحة البريد الإلكتروني وكلمة المرور');
       }
 
-      if (!data?.user) {
+      if (!authData?.user) {
         console.error('No user data received');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             name
           )
         `)
-        .eq('user_id', data.user.id)
+        .eq('user_id', authData.user.id)
         .single();
 
       if (rolesError) {
@@ -59,8 +59,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       set({
         user: {
-          id: data.user.id,
-          email: data.user.email ?? '',
+          id: authData.user.id,
+          email: authData.user.email ?? '',
           isAdmin: isAdmin
         },
         isAuthenticated: true
