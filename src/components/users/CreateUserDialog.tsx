@@ -36,32 +36,46 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
     setIsSubmitting(true);
     try {
       console.log('Creating new user with role:', selectedRole);
+      
+      // First create the user in auth.users
       const { data: authUser, error: signUpError } = await supabase.auth.signUp({
         email: newUsername,
         password: newPassword,
       });
 
-      if (signUpError) throw signUpError;
-
-      if (authUser.user) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert([
-            {
-              user_id: authUser.user.id,
-              role_id: selectedRole
-            }
-          ]);
-
-        if (roleError) throw roleError;
-
-        toast.success("تم إضافة المستخدم بنجاح");
-        setIsOpen(false);
-        setNewUsername("");
-        setNewPassword("");
-        setSelectedRole("");
-        onUserCreated();
+      if (signUpError) {
+        console.error('Error creating user:', signUpError);
+        throw signUpError;
       }
+
+      if (!authUser.user) {
+        throw new Error('No user data returned');
+      }
+
+      console.log('User created successfully:', authUser.user.id);
+
+      // Then assign the role in user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert([
+          {
+            user_id: authUser.user.id,
+            role_id: selectedRole
+          }
+        ]);
+
+      if (roleError) {
+        console.error('Error assigning role:', roleError);
+        throw roleError;
+      }
+
+      console.log('Role assigned successfully');
+      toast.success("تم إضافة المستخدم بنجاح");
+      setIsOpen(false);
+      setNewUsername("");
+      setNewPassword("");
+      setSelectedRole("");
+      onUserCreated();
     } catch (error) {
       console.error('Error adding user:', error);
       toast.error("حدث خطأ أثناء إضافة المستخدم");
