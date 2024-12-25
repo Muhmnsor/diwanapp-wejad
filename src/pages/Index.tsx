@@ -13,19 +13,18 @@ const Index = () => {
     queryFn: async () => {
       try {
         console.log("Fetching events from Supabase...");
-        const response = await supabase
+        const { data, error } = await supabase
           .from("events")
           .select("*")
           .order("date", { ascending: true });
 
-        if (response.error) {
-          console.error("Supabase error fetching events:", response.error);
-          throw new Error(response.error.message);
+        if (error) {
+          console.error("Supabase error fetching events:", error);
+          throw error;
         }
 
-        const eventData = response.data || [];
-        console.log("Events fetched successfully, count:", eventData.length);
-        return eventData;
+        console.log("Events fetched successfully, count:", data?.length);
+        return data || [];
       } catch (error) {
         console.error("Error in events query:", error);
         throw error;
@@ -46,19 +45,18 @@ const Index = () => {
     queryFn: async () => {
       try {
         console.log("Fetching registrations from Supabase...");
-        const response = await supabase
+        const { data, error } = await supabase
           .from("registrations")
           .select("event_id");
 
-        if (response.error) {
-          console.error("Supabase error fetching registrations:", response.error);
-          throw new Error(response.error.message);
+        if (error) {
+          console.error("Supabase error fetching registrations:", error);
+          throw error;
         }
 
-        const registrationData = response.data || [];
-        console.log("Registrations fetched successfully, count:", registrationData.length);
+        console.log("Registrations fetched successfully, count:", data?.length);
         
-        return registrationData.reduce((acc: { [key: string]: number }, registration) => {
+        return (data || []).reduce((acc: { [key: string]: number }, registration) => {
           if (registration.event_id) {
             acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
           }
