@@ -1,37 +1,86 @@
 import { create } from 'zustand';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
-  username: string;
+  email: string;
   isAdmin: boolean;
 }
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  login: async (username: string, password: string) => {
-    // في التطبيق الحقيقي، يجب التحقق من بيانات المستخدم مع الخادم
-    if (username === "admin" && password === "admin123") {
+  login: async (email: string, password: string) => {
+    try {
+      console.log('Attempting to login with:', email);
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        throw signInError;
+      }
+
+      if (!signInData.user) {
+        throw new Error('No user data returned');
+      }
+
+      console.log('User signed in successfully:', signInData.user);
+
+      // Check if user has admin role
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select(`
+          roles (
+            name
+          )
+        `)
+        .eq('user_id', signInData.user.id);
+
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+        throw rolesError;
+      }
+
+      console.log('User roles:', userRoles);
+
+      const isAdmin = userRoles?.some(role => role.roles?.name === 'admin') ?? false;
+
       set({
         user: {
-          id: "1",
-          username: username,
-          isAdmin: true
+          id: signInData.user.id,
+          email: signInData.user.email ?? '',
+          isAdmin: isAdmin
         },
         isAuthenticated: true
       });
-    } else {
-      throw new Error("بيانات تسجيل الدخول غير صحيحة");
+
+      console.log('Auth store updated with user:', signInData.user.id, 'isAdmin:', isAdmin);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول");
+      throw error;
     }
   },
-  logout: () => {
-    set({ user: null, isAuthenticated: false });
+  logout: async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      set({ user: null, isAuthenticated: false });
+      toast.success("تم تسجيل الخروج بنجاح");
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
+    }
   }
 }));
