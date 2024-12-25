@@ -54,6 +54,8 @@ const EventDetails = () => {
         beneficiaryType: data.beneficiary_type as BeneficiaryType,
         registrationStartDate: data.registration_start_date,
         registrationEndDate: data.registration_end_date,
+        certificateType: data.certificate_type || 'none',
+        eventHours: data.event_hours || 0
       };
 
       return transformedEvent;

@@ -1,15 +1,5 @@
 import { EventType } from "@/types/event";
 import { useAuthStore } from "@/store/authStore";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { EventHeader } from "./EventHeader";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
@@ -17,6 +7,7 @@ import { EventContainer } from "./EventContainer";
 import { EventFooter } from "./EventFooter";
 import { EventDetailsHeader } from "./details/EventDetailsHeader";
 import { EventDetailsContent } from "./details/EventDetailsContent";
+import { EventDeleteDialog } from "./details/EventDeleteDialog";
 
 interface EventDetailsViewProps {
   event: EventType;
@@ -82,22 +73,11 @@ export const EventDetailsView = ({
         event={event}
       />
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent dir="rtl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد من حذف هذه الفعالية؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              سيتم حذف الفعالية بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              حذف
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <EventDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+      />
     </EventContainer>
   );
 };
