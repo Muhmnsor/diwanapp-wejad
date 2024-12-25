@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -21,6 +20,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     try {
       console.log('Attempting to login with:', email);
+      
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -35,9 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('No user data returned');
       }
 
-      console.log('User signed in successfully:', signInData.user);
-
-      // Check if user has admin role
+      // Get user roles after successful sign in
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -45,16 +43,15 @@ export const useAuthStore = create<AuthState>((set) => ({
             name
           )
         `)
-        .eq('user_id', signInData.user.id);
+        .eq('user_id', signInData.user.id)
+        .single();
 
       if (rolesError) {
         console.error('Error fetching user roles:', rolesError);
         throw rolesError;
       }
 
-      console.log('User roles:', userRoles);
-
-      const isAdmin = userRoles?.some(role => role.roles?.name === 'admin') ?? false;
+      const isAdmin = userRoles?.roles?.name === 'admin';
 
       set({
         user: {
@@ -68,7 +65,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log('Auth store updated with user:', signInData.user.id, 'isAdmin:', isAdmin);
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول");
       throw error;
     }
   },
@@ -77,10 +73,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       set({ user: null, isAuthenticated: false });
-      toast.success("تم تسجيل الخروج بنجاح");
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error("حدث خطأ أثناء تسجيل الخروج");
+      throw error;
     }
   }
 }));
