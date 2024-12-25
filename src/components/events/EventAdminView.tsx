@@ -30,19 +30,17 @@ export const EventAdminView = ({
   const { data: userRoles = [], isLoading: rolesLoading } = useQuery({
     queryKey: ['user-roles'],
     queryFn: async () => {
-      console.log('Starting to fetch user roles');
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('Fetching roles for user:', user?.id);
       
       if (!user) {
         console.log('No authenticated user found');
         return [];
       }
-      console.log('Current user ID:', user.id);
 
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
-          role_id,
           roles (
             name
           )
@@ -54,19 +52,20 @@ export const EventAdminView = ({
         throw userRolesError;
       }
 
-      console.log('Raw user roles data:', userRolesData);
-      
       const roles = userRolesData?.map(role => role.roles.name) || [];
-      console.log('Mapped user roles:', roles);
+      console.log('User roles:', roles);
       return roles;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 2
   });
 
-  // Show the button for both admin and event_executor roles
-  const canAddReport = !rolesLoading && userRoles?.some(role => ['admin', 'event_executor'].includes(role));
-  console.log('Can add report:', canAddReport, 'User roles:', userRoles);
+  const canAddReport = !rolesLoading && (
+    userRoles.includes('admin') || 
+    userRoles.includes('event_executor')
+  );
+  
+  console.log('Can add report:', canAddReport, 'Roles loading:', rolesLoading);
 
   return (
     <Tabs defaultValue="details" className="mb-8">
