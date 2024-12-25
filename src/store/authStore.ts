@@ -23,41 +23,42 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log('Starting login process with email:', email);
       
       if (!email || !password) {
+        console.error('Missing credentials');
+        toast.error('البريد الإلكتروني وكلمة المرور مطلوبة');
         throw new Error('البريد الإلكتروني وكلمة المرور مطلوبة');
       }
 
-      // First, verify if the user exists in Supabase
-      const { data: { user }, error: userError } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
       });
 
-      if (userError) {
-        console.error('Authentication Error:', userError);
+      if (error) {
+        console.error('Authentication Error:', error);
         
-        // More specific error handling
-        switch (userError.message) {
-          case 'Invalid login credentials':
-            toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-            throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-          case 'Email not confirmed':
-            toast.error('يرجى تأكيد بريدك الإلكتروني أولاً');
-            throw new Error('يرجى تأكيد بريدك الإلكتروني أولاً');
-          default:
-            toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
-            throw new Error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+          throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
+        
+        if (error.message.includes('Email not confirmed')) {
+          toast.error('يرجى تأكيد بريدك الإلكتروني أولاً');
+          throw new Error('يرجى تأكيد بريدك الإلكتروني أولاً');
+        }
+
+        toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
+        throw error;
       }
 
-      if (!user) {
+      if (!data.user) {
         toast.error('لم يتم العثور على بيانات المستخدم');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
       // Set initial user state
       const initialUserState: User = {
-        id: user.id,
-        email: user.email ?? '',
+        id: data.user.id,
+        email: data.user.email ?? '',
         isAdmin: false
       };
 
@@ -67,28 +68,31 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true
       });
 
-      // Check for admin role
-      const { data: userRoles } = await supabase
-        .from('user_roles')
-        .select('roles (name)')
-        .eq('user_id', user.id)
-        .single();
+      try {
+        // Check for admin role
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('roles (name)')
+          .eq('user_id', data.user.id)
+          .single();
 
-      if (userRoles?.roles?.name === 'admin') {
-        set(state => ({
-          user: {
-            ...state.user!,
-            isAdmin: true
-          }
-        }));
+        if (!rolesError && userRoles?.roles?.name === 'admin') {
+          set(state => ({
+            user: {
+              ...state.user!,
+              isAdmin: true
+            }
+          }));
+        }
+      } catch (roleError) {
+        console.error('Error checking admin role:', roleError);
+        // Don't throw here, just log the error since the user is already logged in
       }
 
       toast.success('تم تسجيل الدخول بنجاح');
 
     } catch (error) {
       console.error('Login error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء تسجيل الدخول';
-      toast.error(errorMessage);
       throw error;
     }
   },
