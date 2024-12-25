@@ -43,19 +43,14 @@ export const EventCard = ({
   const isAlmostFull = remainingSeats <= max_attendees * 0.2;
 
   useEffect(() => {
-    console.log('EventCard data updated:', {
+    console.log('EventCard data:', {
       title,
-      date,
-      registrationDates: {
-        start: registration_start_date,
-        end: registration_end_date
-      },
       certificate: {
         type: certificate_type,
         hours: event_hours
       }
     });
-  }, [title, date, registration_start_date, registration_end_date, certificate_type, event_hours]);
+  }, [title, certificate_type, event_hours]);
 
   const getRegistrationStatus = () => {
     const status = getEventStatus({
@@ -130,7 +125,7 @@ export const EventCard = ({
             <Badge variant="outline" className="text-primary">
               {getBeneficiaryLabel(beneficiary_type)}
             </Badge>
-            {certificate_type !== 'none' && (
+            {certificate_type && certificate_type !== 'none' && (
               <Badge variant="outline" className="flex items-center gap-1">
                 <Award className="w-3 h-3" />
                 {getCertificateLabel(certificate_type)}
