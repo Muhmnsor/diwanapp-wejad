@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
@@ -30,10 +29,12 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      console.log('Attempting login with email:', data.email);
       await login(data.email, data.password);
+      console.log('Login successful, navigating to home');
       navigate("/");
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Login submission failed:', error);
       // Error is already handled in the auth store
     }
   };

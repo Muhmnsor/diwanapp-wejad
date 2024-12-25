@@ -20,15 +20,17 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   login: async (email: string, password: string) => {
     try {
-      console.log('Attempting to login with:', email);
+      console.log('Starting login process for email:', email);
       
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
       });
 
+      console.log('Sign in response:', { data: signInData, error: signInError });
+
       if (signInError) {
-        console.error('Sign in error:', signInError);
+        console.error('Sign in error details:', signInError);
         if (signInError.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
@@ -36,8 +38,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       if (!signInData?.user) {
+        console.error('No user data in response');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
+
+      console.log('Successfully signed in user:', signInData.user.id);
 
       // Get user roles after successful sign in
       const { data: userRoles, error: rolesError } = await supabase
@@ -55,6 +60,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('حدث خطأ أثناء جلب صلاحيات المستخدم');
       }
 
+      console.log('User roles:', userRoles);
+
       const isAdmin = userRoles?.roles?.name === 'admin';
 
       set({
@@ -66,10 +73,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true
       });
 
-      console.log('Auth store updated with user:', signInData.user.id, 'isAdmin:', isAdmin);
+      console.log('Auth store updated successfully');
       toast.success('تم تسجيل الدخول بنجاح');
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login process failed:', error);
       const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول";
       toast.error(errorMessage);
       throw error;
@@ -77,10 +84,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   logout: async () => {
     try {
+      console.log('Starting logout process');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       set({ user: null, isAuthenticated: false });
       toast.success("تم تسجيل الخروج بنجاح");
+      console.log('Logout successful');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error("حدث خطأ أثناء تسجيل الخروج");
