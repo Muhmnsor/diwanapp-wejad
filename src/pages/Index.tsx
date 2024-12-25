@@ -30,7 +30,6 @@ const Index = () => {
         throw error;
       }
     },
-    retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
     meta: {
       onError: (error: Error) => {
@@ -56,18 +55,21 @@ const Index = () => {
 
         console.log("Registrations fetched successfully, count:", data?.length);
         
-        return (data || []).reduce((acc: { [key: string]: number }, registration) => {
+        // تحويل البيانات إلى تنسيق العدد لكل فعالية
+        const registrationCounts = (data || []).reduce((acc: { [key: string]: number }, registration) => {
           if (registration.event_id) {
             acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
           }
           return acc;
         }, {});
+
+        console.log("Processed registration counts:", registrationCounts);
+        return registrationCounts;
       } catch (error) {
         console.error("Error in registrations query:", error);
         throw error;
       }
     },
-    retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
     meta: {
       onError: (error: Error) => {
