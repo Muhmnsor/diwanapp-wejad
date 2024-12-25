@@ -20,31 +20,46 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   login: async (email: string, password: string) => {
     try {
-      console.log('Starting login process for email:', email);
+      console.log('Starting login process');
       
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
+      // Trim inputs to prevent whitespace issues
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+      
+      console.log('Attempting login with email:', trimmedEmail);
+      
+      // First check if user exists
+      const { data: { user: existingUser }, error: userError } = await supabase.auth.getUser();
+      
+      if (existingUser) {
+        console.log('User already logged in, signing out first');
+        await supabase.auth.signOut();
+      }
+
+      // Attempt sign in
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: trimmedPassword,
       });
 
-      console.log('Sign in response:', { data: signInData, error: signInError });
-
-      if (signInError) {
-        console.error('Sign in error details:', signInError);
-        if (signInError.message.includes('Invalid login credentials')) {
+      if (error) {
+        console.error('Authentication error:', error);
+        
+        if (error.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
+        
         throw new Error('حدث خطأ أثناء تسجيل الدخول');
       }
 
-      if (!signInData?.user) {
+      if (!data?.user) {
         console.error('No user data in response');
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
-      console.log('Successfully signed in user:', signInData.user.id);
+      console.log('Successfully signed in, fetching user roles');
 
-      // Get user roles after successful sign in
+      // Get user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -52,22 +67,21 @@ export const useAuthStore = create<AuthState>((set) => ({
             name
           )
         `)
-        .eq('user_id', signInData.user.id)
+        .eq('user_id', data.user.id)
         .single();
 
       if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
+        console.error('Error fetching roles:', rolesError);
         throw new Error('حدث خطأ أثناء جلب صلاحيات المستخدم');
       }
 
-      console.log('User roles:', userRoles);
-
       const isAdmin = userRoles?.roles?.name === 'admin';
+      console.log('User roles fetched, isAdmin:', isAdmin);
 
       set({
         user: {
-          id: signInData.user.id,
-          email: signInData.user.email ?? '',
+          id: data.user.id,
+          email: data.user.email ?? '',
           isAdmin: isAdmin
         },
         isAuthenticated: true
@@ -77,7 +91,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       toast.success('تم تسجيل الدخول بنجاح');
     } catch (error) {
       console.error('Login process failed:', error);
-      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء تسجيل الدخول";
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء تسجيل الدخول';
       toast.error(errorMessage);
       throw error;
     }

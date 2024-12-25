@@ -29,13 +29,13 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      console.log('Attempting login with email:', data.email);
+      console.log('Starting form submission');
       await login(data.email, data.password);
       console.log('Login successful, navigating to home');
       navigate("/");
     } catch (error) {
-      console.error('Login submission failed:', error);
-      // Error is already handled in the auth store
+      console.error('Form submission error:', error);
+      // Error is handled in the auth store
     }
   };
 
@@ -53,7 +53,12 @@ const Login = () => {
                 <FormItem>
                   <FormLabel>البريد الإلكتروني</FormLabel>
                   <FormControl>
-                    <Input placeholder="أدخل البريد الإلكتروني" type="email" {...field} />
+                    <Input 
+                      placeholder="أدخل البريد الإلكتروني" 
+                      type="email" 
+                      {...field} 
+                      onChange={(e) => field.onChange(e.target.value.trim())}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -67,7 +72,12 @@ const Login = () => {
                 <FormItem>
                   <FormLabel>كلمة المرور</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="أدخل كلمة المرور" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder="أدخل كلمة المرور" 
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value.trim())}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
