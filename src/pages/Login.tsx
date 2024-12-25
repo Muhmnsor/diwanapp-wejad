@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صالح"),
@@ -25,7 +24,11 @@ const Login = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          return;
+        }
         if (session) {
           navigate("/");
         }
@@ -57,6 +60,7 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      console.log('Form submitted with email:', data.email);
       await login(data.email, data.password);
       navigate("/");
     } catch (error) {

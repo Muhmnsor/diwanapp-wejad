@@ -22,6 +22,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Starting login process with email:', email);
       
+      if (!email || !password) {
+        throw new Error('البريد الإلكتروني وكلمة المرور مطلوبة');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim(),
@@ -29,6 +33,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (error) {
         console.error('Authentication error:', error);
+        
+        // Map Supabase error messages to Arabic
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         }
@@ -40,23 +46,30 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('لم يتم العثور على بيانات المستخدم');
       }
 
-      // Set basic user data first
+      // Set initial user state
+      const initialUserState = {
+        id: data.user.id,
+        email: data.user.email ?? '',
+        isAdmin: false
+      };
+
       set({
-        user: {
-          id: data.user.id,
-          email: data.user.email ?? '',
-          isAdmin: false // Default to non-admin
-        },
+        user: initialUserState,
         isAuthenticated: true
       });
 
-      // Then fetch roles separately
+      // Fetch user roles in a separate try-catch block
       try {
-        const { data: userRoles } = await supabase
+        const { data: userRoles, error: rolesError } = await supabase
           .from('user_roles')
           .select('roles (name)')
           .eq('user_id', data.user.id)
           .single();
+
+        if (rolesError) {
+          console.warn('Error fetching roles:', rolesError);
+          return; // Continue as non-admin
+        }
 
         if (userRoles?.roles?.name === 'admin') {
           set(state => ({
@@ -67,7 +80,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           }));
         }
       } catch (rolesError) {
-        console.warn('Error fetching roles:', rolesError);
+        console.warn('Error in roles fetch:', rolesError);
         // Continue as non-admin user
       }
 
