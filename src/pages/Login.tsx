@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -22,15 +22,19 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((state) => state.login);
+  const authCheckCompleted = useRef(false);
 
   useEffect(() => {
+    if (authCheckCompleted.current) return;
+
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       console.log("Current session:", session);
       if (session) {
         const from = location.state?.from || "/";
-        navigate(from);
+        navigate(from, { replace: true });
       }
+      authCheckCompleted.current = true;
     };
 
     checkSession();
@@ -39,7 +43,7 @@ const Login = () => {
       console.log("Auth state changed:", _event, session);
       if (session) {
         const from = location.state?.from || "/";
-        navigate(from);
+        navigate(from, { replace: true });
       }
     });
 
@@ -85,7 +89,7 @@ const Login = () => {
       await login(data.email, data.password);
       toast.success('تم تسجيل الدخول بنجاح');
       const from = location.state?.from || "/";
-      navigate(from);
+      navigate(from, { replace: true });
       
     } catch (error) {
       console.error('Login error:', error);
