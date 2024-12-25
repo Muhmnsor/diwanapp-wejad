@@ -27,6 +27,11 @@ export const EventInfo = ({
   certificateType,
   eventHours
 }: EventInfoProps) => {
+  console.log('EventInfo received props:', {
+    certificateType,
+    eventHours
+  });
+
   return (
     <div className="space-y-8 mb-12">
       <EventBadges
