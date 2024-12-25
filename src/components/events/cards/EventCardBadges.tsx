@@ -43,7 +43,7 @@ export const EventCardBadges = ({
   };
 
   const shouldShowCertificate = certificateType && certificateType !== 'none';
-  const shouldShowHours = eventHours && eventHours > 0;
+  const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 1;
 
   return (
     <div className="flex flex-wrap gap-2">
