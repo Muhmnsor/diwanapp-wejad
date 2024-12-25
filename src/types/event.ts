@@ -16,4 +16,6 @@ export interface EventType {
   beneficiaryType: BeneficiaryType;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
+  certificateType?: string;
+  eventHours?: number;
 }
