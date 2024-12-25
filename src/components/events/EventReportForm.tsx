@@ -6,6 +6,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReportTextSection } from "./reports/ReportTextSection";
 import { PhotosSection } from "./reports/PhotosSection";
 import { LinksSection } from "./reports/LinksSection";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface EventReportFormProps {
   eventId: string;
@@ -20,15 +28,24 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   const [additionalLinks, setAdditionalLinks] = useState<string[]>([]);
   const [currentVideoLink, setCurrentVideoLink] = useState("");
   const [currentAdditionalLink, setCurrentAdditionalLink] = useState("");
+  const [satisfactionLevel, setSatisfactionLevel] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const queryClient = useQueryClient();
 
   const handlePhotoUpload = async (file: File) => {
+    if (photos.length >= 6) {
+      toast.error("لا يمكن إضافة أكثر من 6 صور");
+      return;
+    }
+
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `event-reports/${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('event-images')
         .upload(filePath, file);
 
@@ -46,6 +63,11 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
     }
   };
 
+  const handleFileUpload = (file: File) => {
+    setFiles(prev => [...prev, file]);
+    toast.success("تم إضافة الملف بنجاح");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -58,6 +80,26 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
         return;
       }
 
+      // Upload files
+      const uploadedFiles: string[] = [];
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `event-report-files/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('event-images')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-images')
+          .getPublicUrl(filePath);
+
+        uploadedFiles.push(publicUrl);
+      }
+
       const { error } = await supabase
         .from('event_reports')
         .insert({
@@ -66,7 +108,10 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
           report_text: reportText,
           photos,
           video_links: videoLinks,
-          additional_links: additionalLinks
+          additional_links: additionalLinks,
+          satisfaction_level: satisfactionLevel,
+          comments: comments,
+          files: uploadedFiles
         });
 
       if (error) throw error;
@@ -88,8 +133,81 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   return (
     <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
       <ReportTextSection value={reportText} onChange={setReportText} />
-      <PhotosSection photos={photos} onPhotoUpload={handlePhotoUpload} />
       
+      <PhotosSection 
+        photos={photos} 
+        onPhotoUpload={handlePhotoUpload} 
+        maxPhotos={6} 
+      />
+      
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">مستوى الرضا</label>
+        <Select 
+          value={satisfactionLevel?.toString() || ""} 
+          onValueChange={(value) => setSatisfactionLevel(Number(value))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="اختر مستوى الرضا" />
+          </SelectTrigger>
+          <SelectContent>
+            {[1, 2, 3, 4, 5].map(level => (
+              <SelectItem key={level} value={level.toString()}>
+                {level} من 5
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">التعليقات</label>
+        <div className="flex gap-2">
+          <Input
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="أدخل تعليقًا"
+          />
+          <Button 
+            type="button" 
+            onClick={() => {
+              if (comment.trim()) {
+                setComments(prev => [...prev, comment.trim()]);
+                setComment("");
+              }
+            }}
+          >
+            إضافة
+          </Button>
+        </div>
+        {comments.length > 0 && (
+          <ul className="list-disc list-inside space-y-1">
+            {comments.map((comm, index) => (
+              <li key={index}>{comm}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">تحميل الملفات</label>
+        <input 
+          type="file" 
+          multiple 
+          onChange={(e) => {
+            if (e.target.files) {
+              Array.from(e.target.files).forEach(handleFileUpload);
+            }
+          }} 
+        />
+        {files.length > 0 && (
+          <ul className="list-disc list-inside space-y-1">
+            {files.map((file, index) => (
+              <li key={index}>{file.name}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <LinksSection
         title="روابط الفيديو"
         placeholder="أدخل رابط الفيديو"
