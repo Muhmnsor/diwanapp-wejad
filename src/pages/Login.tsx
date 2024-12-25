@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صالح"),
@@ -24,6 +25,7 @@ const Login = () => {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Current session:", session);
       if (session) {
         navigate("/");
       }
@@ -32,6 +34,7 @@ const Login = () => {
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session);
       if (session) {
         navigate("/");
       }
@@ -51,10 +54,41 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log("Attempting login with email:", data.email);
     try {
+      // First clear any existing session
+      await supabase.auth.signOut();
+      console.log("Previous session cleared");
+
+      // Attempt login directly with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email.trim(),
+        password: data.password.trim(),
+      });
+
+      console.log("Auth response:", { authData, authError });
+
+      if (authError) {
+        if (authError.message.includes('Invalid login credentials')) {
+          toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+          return;
+        }
+        throw authError;
+      }
+
+      if (!authData.user) {
+        toast.error('لم يتم العثور على بيانات المستخدم');
+        return;
+      }
+
+      // If we get here, login was successful
       await login(data.email, data.password);
+      toast.success('تم تسجيل الدخول بنجاح');
+      navigate('/');
+      
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Login error:', error);
+      toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
     }
   };
 

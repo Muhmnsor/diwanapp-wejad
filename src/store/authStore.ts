@@ -20,42 +20,25 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   login: async (email: string, password: string) => {
     try {
-      // Clear any previous session first
-      await supabase.auth.signOut();
+      console.log("AuthStore: Starting login process");
       
-      // Attempt login
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
-      });
+      // Get the session data
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("AuthStore: Current user:", user);
 
-      if (error) {
-        if (error.message.includes('Invalid login credentials') || 
-            error.message.includes('invalid_credentials')) {
-          toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-          return;
-        }
-        
-        if (error.message.includes('Email not confirmed')) {
-          toast.error('يرجى تأكيد بريدك الإلكتروني أولاً');
-          return;
-        }
-
-        toast.error('حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى');
-        return;
-      }
-
-      if (!data.user) {
-        toast.error('لم يتم العثور على بيانات المستخدم');
-        return;
+      if (!user) {
+        console.log("AuthStore: No user found after login");
+        throw new Error('No user data available');
       }
 
       // Set initial user state
       const initialUserState: User = {
-        id: data.user.id,
-        email: data.user.email ?? '',
+        id: user.id,
+        email: user.email ?? '',
         isAdmin: false
       };
+
+      console.log("AuthStore: Setting initial user state:", initialUserState);
 
       set({
         user: initialUserState,
@@ -63,13 +46,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       // Check for admin role
-      const { data: userRoles } = await supabase
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('roles (name)')
-        .eq('user_id', data.user.id)
+        .eq('user_id', user.id)
         .single();
 
+      console.log("AuthStore: User roles response:", { userRoles, rolesError });
+
       if (userRoles?.roles?.name === 'admin') {
+        console.log("AuthStore: User is admin, updating state");
         set(state => ({
           user: {
             ...state.user!,
@@ -78,10 +64,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         }));
       }
 
-      toast.success('تم تسجيل الدخول بنجاح');
-
     } catch (error) {
-      toast.error('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى');
+      console.error('AuthStore: Login error:', error);
+      throw error;
     }
   },
   logout: async () => {
@@ -90,6 +75,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, isAuthenticated: false });
       toast.success('تم تسجيل الخروج بنجاح');
     } catch (error) {
+      console.error('AuthStore: Logout error:', error);
       toast.error('حدث خطأ أثناء تسجيل الخروج');
     }
   }
