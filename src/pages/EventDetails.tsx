@@ -1,4 +1,3 @@
-import { Navigation } from "@/components/Navigation";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -150,7 +149,6 @@ const EventDetails = () => {
 
   return (
     <div dir="rtl">
-      <Navigation />
       <div className="container mx-auto px-4 py-8">
         {user?.isAdmin ? (
           <EventAdminView
