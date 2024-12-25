@@ -1,12 +1,29 @@
 import { Logo } from "@/components/Logo";
 import { Navigation } from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const TopHeader = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
+
   return (
     <div className="w-full bg-white py-4 border-b">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
-          <div className="flex-1">
+          <div className="flex-1 flex items-center gap-4">
+            {!isHomePage && (
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/")}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>العودة للرئيسية</span>
+              </Button>
+            )}
             <Navigation />
           </div>
           <div className="flex justify-end">
