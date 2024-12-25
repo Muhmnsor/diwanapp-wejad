@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "اسم المستخدم مطلوب"),
+  email: z.string().email("البريد الإلكتروني غير صالح"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
@@ -23,14 +23,14 @@ const Login = () => {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data.username, data.password);
+      await login(data.email, data.password);
       toast.success("تم تسجيل الدخول بنجاح");
       navigate("/");
     } catch (error) {
@@ -47,12 +47,12 @@ const Login = () => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>اسم المستخدم</FormLabel>
+                  <FormLabel>البريد الإلكتروني</FormLabel>
                   <FormControl>
-                    <Input placeholder="أدخل اسم المستخدم" {...field} />
+                    <Input placeholder="أدخل البريد الإلكتروني" type="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
