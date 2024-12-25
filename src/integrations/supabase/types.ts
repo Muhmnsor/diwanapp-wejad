@@ -54,6 +54,33 @@ export type Database = {
           },
         ]
       }
+      banners: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          desktop_image: string
+          id: string
+          mobile_image: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          desktop_image: string
+          id?: string
+          mobile_image: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          desktop_image?: string
+          id?: string
+          mobile_image?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       event_reports: {
         Row: {
           additional_links: string[] | null
