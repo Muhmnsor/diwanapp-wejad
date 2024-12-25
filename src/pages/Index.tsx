@@ -19,7 +19,6 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from("registrations")
-        .select("event_id, count")
         .select("event_id");
 
       if (error) {
@@ -73,17 +72,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <main className="container mx-auto px-4">
-        <Hero />
-        <EventsTabs
-          events={events}
-          upcomingEvents={upcomingEvents}
-          pastEvents={pastEvents}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          registrations={registrations}
-        />
-      </main>
+      <Hero />
+      <EventsTabs
+        events={events}
+        upcomingEvents={upcomingEvents}
+        pastEvents={pastEvents}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        registrations={registrations}
+      />
     </div>
   );
 };

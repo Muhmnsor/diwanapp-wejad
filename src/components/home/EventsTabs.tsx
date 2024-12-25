@@ -30,7 +30,7 @@ export const EventsTabs = ({
   };
 
   return (
-    <div>
+    <div className="container mx-auto px-4">
       <div className="flex justify-center gap-4 mb-8">
         <Button
           variant={activeTab === "all" ? "default" : "outline"}
