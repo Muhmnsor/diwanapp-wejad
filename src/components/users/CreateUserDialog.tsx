@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Role } from "./types";
 
@@ -105,6 +106,9 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-right">إضافة مستخدم جديد</DialogTitle>
+          <DialogDescription className="text-right">
+            قم بإدخال بيانات المستخدم الجديد وتحديد دوره في النظام
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
