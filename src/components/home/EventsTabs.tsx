@@ -7,6 +7,7 @@ interface EventsTabsProps {
   pastEvents: any[];
   activeTab: "all" | "upcoming" | "past";
   setActiveTab: (tab: "all" | "upcoming" | "past") => void;
+  registrations: { [key: string]: number };
 }
 
 export const EventsTabs = ({ 
@@ -14,8 +15,20 @@ export const EventsTabs = ({
   upcomingEvents, 
   pastEvents, 
   activeTab, 
-  setActiveTab 
+  setActiveTab,
+  registrations 
 }: EventsTabsProps) => {
+  const getTitle = (tab: "all" | "upcoming" | "past") => {
+    switch (tab) {
+      case "all":
+        return "جميع الفعاليات";
+      case "upcoming":
+        return "الفعاليات القادمة";
+      case "past":
+        return "الفعاليات السابقة";
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-center gap-4 mb-8">
@@ -40,7 +53,9 @@ export const EventsTabs = ({
       </div>
 
       <EventsSection
+        title={getTitle(activeTab)}
         events={activeTab === "all" ? events : activeTab === "upcoming" ? upcomingEvents : pastEvents}
+        registrations={registrations}
         isPastEvents={activeTab === "past"}
       />
     </div>

@@ -8,10 +8,36 @@ const Index = () => {
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [pastEvents, setPastEvents] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("all");
+  const [registrations, setRegistrations] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     fetchEvents();
+    fetchRegistrations();
   }, []);
+
+  const fetchRegistrations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("registrations")
+        .select("event_id, count")
+        .select("event_id");
+
+      if (error) {
+        console.error("Error fetching registrations:", error);
+        return;
+      }
+
+      if (data) {
+        const registrationCounts = data.reduce((acc: { [key: string]: number }, registration) => {
+          acc[registration.event_id] = (acc[registration.event_id] || 0) + 1;
+          return acc;
+        }, {});
+        setRegistrations(registrationCounts);
+      }
+    } catch (error) {
+      console.error("Error in fetchRegistrations:", error);
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -55,6 +81,7 @@ const Index = () => {
           pastEvents={pastEvents}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          registrations={registrations}
         />
       </main>
     </div>
