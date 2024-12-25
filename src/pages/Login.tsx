@@ -21,7 +21,6 @@ const Login = () => {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
-  // Check for existing session on mount and auth state changes
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -30,17 +29,14 @@ const Login = () => {
         return;
       }
       if (session) {
-        console.log('Existing session found, redirecting to home');
         navigate("/");
       }
     };
 
     checkSession();
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        console.log('Auth state changed: user logged in');
         navigate("/");
       }
     });
@@ -60,9 +56,7 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      console.log('Starting form submission');
       await login(data.email, data.password);
-      console.log('Login successful, navigating to home');
       navigate("/");
     } catch (error) {
       console.error('Form submission error:', error);
@@ -88,7 +82,6 @@ const Login = () => {
                       placeholder="أدخل البريد الإلكتروني" 
                       type="email" 
                       {...field} 
-                      onChange={(e) => field.onChange(e.target.value.trim())}
                     />
                   </FormControl>
                   <FormMessage />
@@ -107,7 +100,6 @@ const Login = () => {
                       type="password" 
                       placeholder="أدخل كلمة المرور" 
                       {...field}
-                      onChange={(e) => field.onChange(e.target.value.trim())}
                     />
                   </FormControl>
                   <FormMessage />
