@@ -8,6 +8,12 @@ interface User {
   isAdmin: boolean;
 }
 
+interface UserRoleResponse {
+  roles: {
+    name: string;
+  };
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -22,7 +28,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log("AuthStore: Starting login process");
       
-      // Get the session data
       const { data: { user } } = await supabase.auth.getUser();
       console.log("AuthStore: Current user:", user);
 
@@ -31,7 +36,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         throw new Error('No user data available');
       }
 
-      // Set initial user state
       const initialUserState: User = {
         id: user.id,
         email: user.email ?? '',
@@ -45,7 +49,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true
       });
 
-      // Check for admin role
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('roles (name)')
@@ -54,7 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       console.log("AuthStore: User roles response:", { userRoles, rolesError });
 
-      if (userRoles?.roles?.name === 'admin') {
+      if ((userRoles as UserRoleResponse)?.roles?.name === 'admin') {
         console.log("AuthStore: User is admin, updating state");
         set(state => ({
           user: {
