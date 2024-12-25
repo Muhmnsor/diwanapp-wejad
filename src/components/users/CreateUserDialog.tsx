@@ -102,9 +102,9 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
           إضافة مستخدم
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة مستخدم جديد</DialogTitle>
+          <DialogTitle className="text-right">إضافة مستخدم جديد</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -115,6 +115,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
               placeholder="أدخل البريد الإلكتروني"
               type="email"
               dir="ltr"
+              className="text-right"
             />
           </div>
           <div className="space-y-2">
@@ -125,6 +126,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="أدخل كلمة المرور"
               dir="ltr"
+              className="text-right"
             />
           </div>
           <div className="space-y-2">
