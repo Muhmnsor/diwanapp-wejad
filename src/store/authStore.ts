@@ -70,7 +70,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         console.error("AuthStore: Error fetching user roles:", rolesError);
       }
 
-      if ((userRoles as SupabaseUserRoleResponse)?.roles?.name === 'admin') {
+      // Fix: Check if the first role in the array is 'admin'
+      if ((userRoles as SupabaseUserRoleResponse)?.roles[0]?.name === 'admin') {
         console.log("AuthStore: User is admin, updating state");
         set(state => ({
           user: {
