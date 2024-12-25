@@ -6,6 +6,26 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EventReportDialog } from "./EventReportDialog";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase
+
+سأقوم بفحص المشكلة خطوة بخطوة:
+
+1. أولاً، أرى في الكود أن زر إنشاء التقرير يظهر فقط للمستخدمين الذين لديهم دور 'admin' أو 'event_executor'
+2. من خلال فحص السجلات، يبدو أن هناك مشكلة في استعلام الأدوار
+3. دعنا نقوم بتحسين استعلام الأدوار وإضافة المزيد من سجلات التتبع للتأكد من أن الأدوار يتم جلبها بشكل صحيح
+
+<lov-code>
+Let's update the EventAdminView component to improve the roles query and add more logging:
+
+<lov-write file_path="src/components/events/EventAdminView.tsx">
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventDetailsView } from "./EventDetailsView";
+import { EventDashboard } from "@/components/admin/EventDashboard";
+import { Event } from "@/store/eventStore";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { EventReportDialog } from "./EventReportDialog";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EventAdminViewProps {
@@ -30,29 +50,39 @@ export const EventAdminView = ({
   const { data: userRoles, isLoading: rolesLoading } = useQuery({
     queryKey: ['user-roles'],
     queryFn: async () => {
-      console.log('Fetching user roles');
+      console.log('Starting to fetch user roles');
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (!user) {
-        console.log('No user found');
+        console.log('No authenticated user found');
         return [];
       }
-      console.log('Current user:', user);
+      console.log('Current user ID:', user.id);
 
-      const { data, error } = await supabase
+      // First, get user roles
+      const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
-        .select('roles (name)')
+        .select(`
+          role_id,
+          roles (
+            name
+          )
+        `)
         .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Error fetching user roles:', error);
-        throw error;
+      if (userRolesError) {
+        console.error('Error fetching user roles:', userRolesError);
+        throw userRolesError;
       }
+
+      console.log('Raw user roles data:', userRolesData);
       
-      console.log('User roles data:', data);
-      const roles = data.map(role => role.roles.name);
+      // Map the roles to just their names
+      const roles = userRolesData.map(role => role.roles.name);
       console.log('Mapped user roles:', roles);
       return roles;
-    }
+    },
+    retry: 1
   });
 
   // Show the button for both admin and event_executor roles
