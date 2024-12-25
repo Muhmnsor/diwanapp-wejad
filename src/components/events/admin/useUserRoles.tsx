@@ -36,8 +36,9 @@ export const useUserRoles = () => {
 
       console.log('Raw user roles data:', userRolesData);
       
-      // Safely type and transform the response
-      const roleNames = (userRolesData as RoleData[])?.map(ur => ur.roles.name) || [];
+      // Cast to unknown first, then to the correct type
+      const typedData = (userRolesData as unknown) as RoleData[];
+      const roleNames = typedData?.map(ur => ur.roles.name) || [];
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },
