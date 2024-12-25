@@ -25,8 +25,8 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         image_url: formData.imageUrl || formData.image_url,
         registration_start_date: formData.registrationStartDate,
         registration_end_date: formData.registrationEndDate,
-        certificate_type: formData.certificateType,
-        event_hours: formData.eventHours
+        certificate_type: formData.certificateType || 'none',
+        event_hours: formData.eventHours || 0
       };
       
       console.log('Updating event with data:', updateData);
