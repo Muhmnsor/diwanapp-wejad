@@ -58,7 +58,6 @@ export const EventDetailsView = ({
 
       if (error) throw error;
 
-      // Update local state with the new event data
       setCurrentEvent({ 
         ...currentEvent, 
         ...updatedEvent,
@@ -88,22 +87,22 @@ export const EventDetailsView = ({
         maxAttendees={currentEvent?.max_attendees}
       />
       {isAdmin && (
-        <div className="flex gap-2 justify-end mt-4 px-8">
+        <div className="flex justify-end mt-4">
           <button 
             onClick={() => setIsEditDialogOpen(true)} 
-            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            className="btn btn-primary mx-2"
           >
             تعديل
           </button>
           <button 
             onClick={onDelete} 
-            className="bg-destructive text-white px-4 py-2 rounded-md hover:bg-destructive/90 transition-colors"
+            className="btn btn-danger mx-2"
           >
             حذف
           </button>
           <button 
             onClick={onAddToCalendar} 
-            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 transition-colors"
+            className="btn btn-secondary mx-2"
           >
             إضافة إلى التقويم
           </button>
