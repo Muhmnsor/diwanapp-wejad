@@ -76,13 +76,6 @@ export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8" dir="rtl">
-      <PersonalInfoSection
-        name={name}
-        phone={phone}
-        onNameChange={setName}
-        onPhoneChange={setPhone}
-      />
-
       <RatingsSection
         overallRating={overallRating}
         contentRating={contentRating}
@@ -92,6 +85,13 @@ export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
         onContentRatingChange={setContentRating}
         onOrganizationRatingChange={setOrganizationRating}
         onPresenterRatingChange={setPresenterRating}
+      />
+
+      <PersonalInfoSection
+        name={name}
+        phone={phone}
+        onNameChange={setName}
+        onPhoneChange={setPhone}
       />
 
       <CommentsSection
