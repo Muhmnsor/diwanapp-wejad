@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { EventStatus, getStatusConfig } from "@/utils/eventUtils";
+import { EventStatus } from "@/types/eventStatus";
+import { getStatusConfig } from "@/utils/eventStatusConfig";
 import { useEffect } from "react";
 
 interface EventRegisterButtonProps {
