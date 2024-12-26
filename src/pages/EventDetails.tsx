@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
+import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -36,40 +37,11 @@ const EventDetails = () => {
   };
 
   const handleDelete = async () => {
-    try {
-      console.log('Starting event deletion process for ID:', id);
-      
-      // Define tables to clean up in order (order matters due to foreign key constraints)
-      const tables = [
-        'attendance_records',
-        'event_feedback',
-        'notification_logs',
-        'event_notification_settings',
-        'event_reports',
-        'registrations',
-        'events'
-      ];
-
-      // Delete records sequentially to respect foreign key constraints
-      for (const table of tables) {
-        console.log(`Deleting records from ${table}`);
-        const { error } = await supabase
-          .from(table)
-          .delete()
-          .eq(table === 'events' ? 'id' : 'event_id', id);
-
-        if (error) {
-          console.error(`Error deleting from ${table}:`, error);
-          throw error;
-        }
-      }
-
-      toast.success("تم حذف الفعالية بنجاح");
-      navigate("/");
-    } catch (error) {
-      console.error('Error in deletion process:', error);
-      toast.error("حدث خطأ أثناء حذف الفعالية");
-    }
+    if (!id) return;
+    await handleEventDeletion({
+      eventId: id,
+      onSuccess: () => navigate("/")
+    });
   };
 
   const handleAddToCalendar = () => {
