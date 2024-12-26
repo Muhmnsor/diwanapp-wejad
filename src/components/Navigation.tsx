@@ -1,6 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import { Plus } from "lucide-react";
 
 export const Navigation = () => {
   const location = useLocation();
@@ -46,6 +48,12 @@ export const Navigation = () => {
             )}
           >
             إدارة المستخدمين
+          </Link>
+          <Link to="/create-event">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              إنشاء فعالية
+            </Button>
           </Link>
         </>
       )}
