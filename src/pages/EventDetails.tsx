@@ -28,9 +28,10 @@ const EventDetails = () => {
         return null;
       }
 
+      // First get the event details
       const { data: eventData, error: eventError } = await supabase
         .from("events")
-        .select("*, registrations(count)")
+        .select("*")
         .eq("id", id)
         .maybeSingle();
 
@@ -44,9 +45,20 @@ const EventDetails = () => {
         return null;
       }
 
+      // Then get the count of registrations
+      const { count: attendeesCount, error: countError } = await supabase
+        .from("registrations")
+        .select("*", { count: 'exact', head: true })
+        .eq("event_id", id);
+
+      if (countError) {
+        console.error("Error fetching registrations count:", countError);
+        throw countError;
+      }
+
       const eventWithAttendees: EventWithAttendees = {
         ...eventData,
-        attendees: eventData.registrations?.[0]?.count || 0
+        attendees: attendeesCount || 0
       };
 
       console.log("Event data fetched:", eventWithAttendees);
