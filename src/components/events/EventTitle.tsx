@@ -22,7 +22,7 @@ export const EventTitle = ({
   console.log('EventTitle - isAdmin:', isAdmin);
 
   return (
-    <div className="flex justify-between items-start px-8 py-6 border-b border-gray-100">
+    <div className="flex justify-between items-start px-8 py-6 border-b border-gray-100" dir="rtl">
       <div className="flex gap-3">
         {isAdmin && (
           <div className="flex gap-2">
