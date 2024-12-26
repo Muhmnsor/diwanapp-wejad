@@ -7,6 +7,7 @@ import { DashboardOverview } from "./DashboardOverview";
 import { DashboardRegistrations } from "./DashboardRegistrations";
 import { Card, CardContent } from "@/components/ui/card";
 import { EventReportForm } from "../events/EventReportForm";
+import { EventReportsList } from "../events/reports/EventReportsList";
 import { useState } from "react";
 
 export const EventDashboard = ({ eventId }: { eventId: string }) => {
@@ -79,7 +80,7 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         <TabsList>
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
           <TabsTrigger value="registrations">المسجلين</TabsTrigger>
-          <TabsTrigger value="report">إضافة تقرير</TabsTrigger>
+          <TabsTrigger value="report">التقارير</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
@@ -101,13 +102,14 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
 
         <TabsContent value="report">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 space-y-6">
               <EventReportForm 
                 eventId={eventId}
                 onSuccess={() => {
                   toast.success("تم إضافة التقرير بنجاح");
                 }}
               />
+              <EventReportsList eventId={eventId} />
             </CardContent>
           </Card>
         </TabsContent>
