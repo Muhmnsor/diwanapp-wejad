@@ -1,15 +1,18 @@
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { EventFormFields } from "@/components/events/form/EventFormFields";
+import { EventFormFields } from "@/components/events/EventFormFields";
 import { EventFormActions } from "@/components/events/form/EventFormActions";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const [isUploading, setIsUploading] = useState(false);
+  
   const form = useForm({
     defaultValues: {
       title: "",
@@ -40,6 +43,10 @@ const CreateEvent = () => {
     }
   };
 
+  const handleCancel = () => {
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen" dir="rtl">
       <TopHeader />
@@ -48,7 +55,10 @@ const CreateEvent = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <EventFormFields form={form} />
-            <EventFormActions />
+            <EventFormActions 
+              isUploading={isUploading}
+              onCancel={handleCancel}
+            />
           </form>
         </Form>
       </div>
