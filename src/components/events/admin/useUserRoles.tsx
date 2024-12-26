@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface RoleResponse {
   roles: {
     name: string;
-  };
+  }
 }
 
 export const useUserRoles = () => {
@@ -43,7 +43,7 @@ export const useUserRoles = () => {
       }
 
       // Extract role names from the array with proper typing
-      const roleNames = (userRolesData as RoleResponse[]).map(role => role.roles.name);
+      const roleNames = userRolesData.map(role => role.roles.name);
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },
