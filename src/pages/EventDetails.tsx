@@ -16,6 +16,8 @@ const EventDetails = () => {
   const { id } = useParams();
   const { user } = useAuthStore();
 
+  console.log('EventDetails - User:', user); // Add logging to debug user state
+
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -62,6 +64,7 @@ const EventDetails = () => {
   }
 
   const isAdmin = user?.isAdmin;
+  console.log('EventDetails - isAdmin:', isAdmin); // Add logging to debug admin status
 
   const handleEdit = () => {
     console.log("Edit event clicked");

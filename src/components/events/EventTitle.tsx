@@ -19,6 +19,8 @@ export const EventTitle = ({
   onShare,
   onAddToCalendar,
 }: EventTitleProps) => {
+  console.log('EventTitle - isAdmin:', isAdmin); // Add logging to debug admin status
+
   return (
     <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10" dir="rtl">
       <h1 className="text-[32px] leading-tight font-semibold text-[#1A1F2C] order-1">{title}</h1>

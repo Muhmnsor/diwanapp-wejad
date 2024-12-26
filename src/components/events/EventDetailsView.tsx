@@ -7,6 +7,7 @@ import { EventContent } from "./EventContent";
 import { EventImage } from "./EventImage";
 import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
+import { useAuthStore } from "@/store/authStore";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -30,6 +31,10 @@ export const EventDetailsView = ({
   const [currentEvent, setCurrentEvent] = useState<Event | null>(event);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const { user } = useAuthStore();
+
+  console.log('EventDetailsView - User:', user); // Add logging to debug user state
+  console.log('EventDetailsView - isAdmin:', isAdmin); // Add logging to debug admin status
 
   useEffect(() => {
     setCurrentEvent(event);
