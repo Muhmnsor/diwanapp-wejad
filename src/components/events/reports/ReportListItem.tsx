@@ -85,16 +85,10 @@ export const ReportListItem = ({
   return (
     <>
       <TableRow>
-        <TableCell className="text-right font-medium">
-          {report.report_name || eventTitle}
-        </TableCell>
-        <TableCell className="text-right">
-          {report.profiles?.email || 'غير معروف'}
-        </TableCell>
-        <TableCell className="text-right">
-          {new Date(report.created_at).toLocaleDateString('ar')}
-        </TableCell>
-        <TableCell>
+        <TableCell>{report.report_name || eventTitle}</TableCell>
+        <TableCell>{report.profiles?.email || 'غير معروف'}</TableCell>
+        <TableCell>{new Date(report.created_at).toLocaleDateString('ar')}</TableCell>
+        <TableCell className="text-center">
           <div className="flex items-center justify-center gap-2">
             <Button
               variant="ghost"
