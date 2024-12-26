@@ -41,7 +41,7 @@ export const EventTitle = ({
             </Button>
           </div>
         )}
-        <ShareButton onShare={onShare} />
+        <ShareButton onShare={onShare} title={title} />
         <Button
           variant="outline"
           size="icon"

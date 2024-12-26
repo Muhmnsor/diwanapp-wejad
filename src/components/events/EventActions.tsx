@@ -12,7 +12,8 @@ interface EventActionsProps {
 export const EventActions = ({ 
   onAddToCalendar, 
   eventTitle,
-  eventDescription 
+  eventDescription,
+  onShare
 }: EventActionsProps) => {
   return (
     <div className="flex gap-2">
@@ -20,6 +21,7 @@ export const EventActions = ({
         title={eventTitle}
         text={eventDescription}
         url={window.location.href}
+        onShare={onShare}
       />
       <Button variant="outline" size="icon" onClick={onAddToCalendar}>
         <CalendarPlus className="h-4 w-4" />

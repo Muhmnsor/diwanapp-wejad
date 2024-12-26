@@ -10,9 +10,17 @@ import { toast } from "sonner";
 
 interface ShareButtonProps {
   url?: string;
+  title?: string;
+  text?: string;
+  onShare?: () => Promise<void>;
 }
 
-export const ShareButton = ({ url = window.location.href }: ShareButtonProps) => {
+export const ShareButton = ({ 
+  url = window.location.href,
+  title = "",
+  text = "",
+  onShare 
+}: ShareButtonProps) => {
   const handleShare = async (method: 'copy' | 'x' | 'facebook' | 'whatsapp') => {
     switch (method) {
       case 'copy':
@@ -33,16 +41,20 @@ export const ShareButton = ({ url = window.location.href }: ShareButtonProps) =>
         break;
       
       case 'x':
-        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`, '_blank');
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title + "\n" + text)}`, '_blank');
         break;
       
       case 'facebook':
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(title + "\n" + text)}`, '_blank');
         break;
       
       case 'whatsapp':
-        window.open(`https://wa.me/?text=${encodeURIComponent(url)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent(title + "\n" + text + "\n" + url)}`, '_blank');
         break;
+    }
+
+    if (onShare) {
+      await onShare();
     }
   };
 
