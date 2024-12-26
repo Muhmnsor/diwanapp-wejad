@@ -38,7 +38,10 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
 
   return (
     <div className="space-y-4" dir="rtl">
-      <h3 className="text-lg font-semibold">ملخص التقييمات</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">ملخص التقييمات</h3>
+        <span className="text-sm text-gray-600">عدد المقيمين: {feedback.length}</span>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="font-medium">التقييم العام</p>

@@ -6,8 +6,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ReportTextSection } from "./reports/ReportTextSection";
 import { PhotosSection } from "./reports/PhotosSection";
 import { LinksSection } from "./reports/LinksSection";
-import { Input } from "@/components/ui/input";
-import { SatisfactionLevel } from "./reports/SatisfactionLevel";
 import { FeedbackLink } from "./feedback/FeedbackLink";
 import { FeedbackSummary } from "./feedback/FeedbackSummary";
 
@@ -24,9 +22,6 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   const [additionalLinks, setAdditionalLinks] = useState<string[]>([]);
   const [currentVideoLink, setCurrentVideoLink] = useState("");
   const [currentAdditionalLink, setCurrentAdditionalLink] = useState("");
-  const [satisfactionLevel, setSatisfactionLevel] = useState<number | null>(null);
-  const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const queryClient = useQueryClient();
 
@@ -105,8 +100,6 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
           photos,
           video_links: videoLinks,
           additional_links: additionalLinks,
-          satisfaction_level: satisfactionLevel,
-          comments: comments,
           files: uploadedFiles
         });
 
@@ -144,42 +137,16 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
         photos={photos} 
         onPhotoUpload={handlePhotoUpload}
         onPhotoDelete={handlePhotoDelete}
-        maxPhotos={6} 
+        maxPhotos={6}
+        photoPlaceholders={[
+          "صورة توثيقية للحضور",
+          "صورة للمتحدث الرئيسي",
+          "صورة لقاعة الفعالية",
+          "صورة للأنشطة التفاعلية",
+          "صورة للمشاركين",
+          "صورة ختامية للفعالية"
+        ]}
       />
-      
-      <SatisfactionLevel 
-        value={satisfactionLevel}
-        onChange={setSatisfactionLevel}
-      />
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">التعليقات</label>
-        <div className="flex gap-2">
-          <Input
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="أدخل تعليقًا"
-          />
-          <Button 
-            type="button" 
-            onClick={() => {
-              if (comment.trim()) {
-                setComments(prev => [...prev, comment.trim()]);
-                setComment("");
-              }
-            }}
-          >
-            إضافة
-          </Button>
-        </div>
-        {comments.length > 0 && (
-          <ul className="list-disc list-inside space-y-1">
-            {comments.map((comm, index) => (
-              <li key={index}>{comm}</li>
-            ))}
-          </ul>
-        )}
-      </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-medium">تحميل الملفات</label>
