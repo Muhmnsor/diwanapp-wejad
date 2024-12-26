@@ -24,8 +24,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       },
       attendees: event.attendees,
       maxAttendees: event.max_attendees,
-      certificateType: event.certificateType,
-      eventHours: event.eventHours
+      certificateType: event.certificate_type,
+      eventHours: event.event_hours,
+      beneficiaryType: event.beneficiary_type,
+      eventType: event.event_type,
+      price: event.price
     });
 
     const newStatus = getEventStatus(event);
@@ -36,7 +39,12 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     event.registrationStartDate, 
     event.registrationEndDate,
     event.attendees,
-    event.max_attendees
+    event.max_attendees,
+    event.certificate_type,
+    event.event_hours,
+    event.beneficiary_type,
+    event.event_type,
+    event.price
   ]);
 
   const handleRegister = () => {
@@ -57,7 +65,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         <EventBadges
           eventType={event.event_type}
           price={event.price}
-          beneficiaryType={event.beneficiaryType}
+          beneficiaryType={event.beneficiary_type}
           certificateType={event.certificate_type}
           eventHours={event.event_hours}
         />
@@ -72,7 +80,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
           maxAttendees={event.max_attendees}
           eventType={event.event_type}
           price={event.price}
-          beneficiaryType={event.beneficiaryType}
+          beneficiaryType={event.beneficiary_type}
           certificateType={event.certificate_type}
           eventHours={event.event_hours}
           showBadges={false}
