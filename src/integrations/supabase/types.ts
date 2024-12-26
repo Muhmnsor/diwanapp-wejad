@@ -81,6 +81,47 @@ export type Database = {
         }
         Relationships: []
       }
+      event_feedback: {
+        Row: {
+          content_rating: number | null
+          created_at: string
+          event_id: string | null
+          feedback_text: string | null
+          id: string
+          organization_rating: number | null
+          overall_rating: number | null
+          presenter_rating: number | null
+        }
+        Insert: {
+          content_rating?: number | null
+          created_at?: string
+          event_id?: string | null
+          feedback_text?: string | null
+          id?: string
+          organization_rating?: number | null
+          overall_rating?: number | null
+          presenter_rating?: number | null
+        }
+        Update: {
+          content_rating?: number | null
+          created_at?: string
+          event_id?: string | null
+          feedback_text?: string | null
+          id?: string
+          organization_rating?: number | null
+          overall_rating?: number | null
+          presenter_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_feedback_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_notification_settings: {
         Row: {
           created_at: string
