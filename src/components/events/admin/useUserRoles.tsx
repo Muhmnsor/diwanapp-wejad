@@ -8,7 +8,7 @@ interface Role {
 
 // Define the shape of the user role data from Supabase
 interface UserRoleData {
-  roles: Role[];
+  roles: Role | Role[];
 }
 
 export const useUserRoles = () => {
@@ -47,7 +47,7 @@ export const useUserRoles = () => {
       }
 
       // Extract role names from the array
-      const roleNames = userRolesData.flatMap(data => 
+      const roleNames = userRolesData.flatMap((data: UserRoleData) => 
         Array.isArray(data.roles) ? data.roles.map(role => role.name) : [data.roles.name]
       );
       
