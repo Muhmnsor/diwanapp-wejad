@@ -18,7 +18,7 @@ export const EventDetails = ({
   attendees,
   maxAttendees
 }: EventDetailsProps) => {
-  const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees;
+  const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees || 0;
   const remainingSeats = maxAttendees - attendeesCount;
   
   console.log('EventDetails - Current attendees:', attendeesCount);
@@ -57,8 +57,8 @@ export const EventDetails = ({
           <Users className="h-5 w-5 text-primary" />
         </div>
         <span className="text-[#1A1F2C]" dir="rtl">
-          {attendeesCount} من {maxAttendees} مقعد
-          {remainingSeats > 0 && ` (متبقي ${remainingSeats} مقعد)`}
+          {attendeesCount > 0 ? `${attendeesCount} من ${maxAttendees} مقعد` : `${maxAttendees} مقعد متاح`}
+          {remainingSeats > 0 && attendeesCount > 0 && ` (متبقي ${remainingSeats} مقعد)`}
         </span>
       </div>
     </div>
