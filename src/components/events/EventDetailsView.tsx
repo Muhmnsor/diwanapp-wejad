@@ -35,6 +35,7 @@ export const EventDetailsView = ({
   console.log('Registration counts:', registrationCounts);
   console.log('Max attendees from event:', event.max_attendees);
   console.log('Current user:', user);
+  console.log('Is admin?:', user?.isAdmin);
 
   if (!event) {
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;

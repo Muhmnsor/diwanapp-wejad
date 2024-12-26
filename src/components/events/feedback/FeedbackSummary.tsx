@@ -15,6 +15,7 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
         .eq('event_id', eventId);
 
       if (error) throw error;
+      console.log('Fetched feedback data:', data);
       return data;
     },
   });
