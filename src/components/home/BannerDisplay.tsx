@@ -16,15 +16,11 @@ export const BannerDisplay = ({ desktopImage, mobileImage, isMobile }: BannerDis
     <div className="w-full rounded-2xl bg-gray-100 overflow-hidden shadow-lg">
       <Carousel className="w-full">
         <CarouselContent>
-          <CarouselItem>
+          <CarouselItem className="w-full">
             <img
               src={displayImage}
               alt="Banner"
-              className={`w-full object-cover ${
-                isMobile 
-                  ? "h-[180px] md:h-[250px]"
-                  : "h-[180px] md:h-[250px]"
-              }`}
+              className="w-full object-cover h-[180px] md:h-[250px]"
             />
           </CarouselItem>
         </CarouselContent>
