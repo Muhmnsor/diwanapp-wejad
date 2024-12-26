@@ -1,60 +1,59 @@
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { UseFormReturn } from "react-hook-form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Event } from "@/store/eventStore";
 
 interface EventCertificateFieldsProps {
-  form: UseFormReturn<any>;
+  formData: Event;
+  setFormData: (data: Event) => void;
 }
 
-export const EventCertificateFields = ({ form }: EventCertificateFieldsProps) => {
-  const watchCertificateType = form.watch("certificateType");
+export const EventCertificateFields = ({ formData, setFormData }: EventCertificateFieldsProps) => {
+  const handleHoursChange = (value: string) => {
+    const numValue = value ? Number(value) : undefined;
+    if (!isNaN(Number(value)) || value === '') {
+      setFormData({ ...formData, eventHours: numValue });
+    }
+  };
+
+  const handleCertificateTypeChange = (value: string) => {
+    setFormData({ 
+      ...formData, 
+      certificateType: value,
+      eventHours: undefined 
+    });
+  };
 
   return (
     <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="certificateType"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>نوع الشهادة</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر نوع الشهادة" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="attendance">شهادة حضور</SelectItem>
-                <SelectItem value="certified">شهادة معتمدة</SelectItem>
-                <SelectItem value="none">بدون شهادة</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {watchCertificateType !== "none" && (
-        <FormField
-          control={form.control}
-          name="eventHours"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>عدد ساعات الفعالية</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder="أدخل عدد الساعات"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <div>
+        <label className="text-sm font-medium block mb-1.5">نوع الشهادة</label>
+        <Select
+          value={formData.certificateType || 'none'}
+          onValueChange={handleCertificateTypeChange}
+        >
+          <SelectTrigger className="text-right">
+            <SelectValue placeholder="اختر نوع الشهادة" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">بدون شهادة</SelectItem>
+            <SelectItem value="attendance">شهادة حضور</SelectItem>
+            <SelectItem value="certified">شهادة معتمدة</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {formData.certificateType && formData.certificateType !== 'none' && (
+        <div>
+          <label className="text-sm font-medium block mb-1.5">عدد ساعات الفعالية</label>
+          <Input
+            type="number"
+            value={formData.eventHours ?? ''}
+            onChange={(e) => handleHoursChange(e.target.value)}
+            min={0}
+            step={0.5}
+            className="text-right"
+            placeholder="أدخل عدد الساعات"
+          />
+        </div>
       )}
     </div>
   );

@@ -1,104 +1,57 @@
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UseFormReturn } from "react-hook-form";
+import { Event } from "@/store/eventStore";
 
 interface EventBasicFieldsProps {
-  form: UseFormReturn<any>;
+  formData: Event;
+  setFormData: (data: Event) => void;
 }
 
-export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
+export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProps) => {
   return (
     <div className="space-y-4">
-      <FormField
-        control={form.control}
-        name="title"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>عنوان الفعالية</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>وصف الفعالية</FormLabel>
-            <FormControl>
-              <Textarea {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>تاريخ الفعالية</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>وقت الفعالية</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+      <div>
+        <label className="text-sm font-medium block mb-1.5">عنوان الفعالية</label>
+        <Input
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="text-right"
         />
       </div>
-
-      <FormField
-        control={form.control}
-        name="location"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>موقع الفعالية</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="maxAttendees"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>عدد المقاعد</FormLabel>
-            <FormControl>
-              <Input 
-                type="number" 
-                {...field} 
-                onChange={(e) => field.onChange(Number(e.target.value))}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div>
+        <label className="text-sm font-medium block mb-1.5">وصف الفعالية</label>
+        <Textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="text-right"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">التاريخ</label>
+        <Input
+          type="date"
+          value={formData.date}
+          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+          className="text-right"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">الوقت</label>
+        <Input
+          type="time"
+          value={formData.time}
+          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+          className="text-right"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">الموقع</label>
+        <Input
+          value={formData.location}
+          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          className="text-right"
+        />
+      </div>
     </div>
   );
 };
