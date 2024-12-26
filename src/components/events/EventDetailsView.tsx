@@ -32,7 +32,7 @@ export const EventDetailsView = ({
 
   console.log('Event data in EventDetailsView:', event);
   console.log('Registration counts:', registrationCounts);
-  console.log('Max attendees from event:', event.maxAttendees);
+  console.log('Max attendees from event:', event.max_attendees); // تم تحديث هذا السطر
 
   if (!event) {
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
@@ -54,7 +54,7 @@ export const EventDetailsView = ({
     certificateType: event.certificateType || 'none',
     eventHours: event.eventHours || 0,
     attendees: currentAttendees,
-    maxAttendees: event.maxAttendees || 0
+    maxAttendees: event.max_attendees // تم تحديث هذا السطر
   };
 
   return (
