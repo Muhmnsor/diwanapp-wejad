@@ -14,7 +14,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+        <Route path="/" element={<Index />} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
         <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />

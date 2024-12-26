@@ -6,9 +6,11 @@ import { useRegistrations } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useAuthStore } from "@/store/authStore";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("upcoming");
+  const { isAuthenticated } = useAuthStore();
   
   const { 
     data: events = [], 
@@ -53,7 +55,7 @@ const Index = () => {
       toast.error("حدث خطأ في تحميل الفعاليات");
     }
 
-    if (isRegistrationsError) {
+    if (isRegistrationsError && isAuthenticated) {
       console.error("❌ خطأ في جلب التسجيلات:", registrationsError);
       toast.error("حدث خطأ في تحميل التسجيلات");
     }
@@ -64,7 +66,8 @@ const Index = () => {
       upcomingEventsCount: upcomingEvents.length,
       pastEventsCount: pastEvents.length,
       isEventsError,
-      isRegistrationsError
+      isRegistrationsError,
+      isAuthenticated
     });
   }, [
     events, 
@@ -74,7 +77,8 @@ const Index = () => {
     isEventsError,
     isRegistrationsError,
     eventsError,
-    registrationsError
+    registrationsError,
+    isAuthenticated
   ]);
 
   return (
