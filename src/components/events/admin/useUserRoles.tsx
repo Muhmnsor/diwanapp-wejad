@@ -1,10 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define the shape of a single role object
+interface Role {
+  name: string;
+}
+
+// Define the shape of the user role data from Supabase
 interface UserRoleData {
-  roles: {
-    name: string;
-  };
+  roles: Role;
 }
 
 export const useUserRoles = () => {
