@@ -1,12 +1,11 @@
-import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Download, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { downloadReportWithImages } from "./utils/downloadUtils";
 import { ReportDeleteDialog } from "./components/ReportDeleteDialog";
+import { ReportActions } from "./components/ReportActions";
 
 interface ReportListItemProps {
   report: {
@@ -89,25 +88,11 @@ export const ReportListItem = ({
         <TableCell>{report.profiles?.email || 'غير معروف'}</TableCell>
         <TableCell>{new Date(report.created_at).toLocaleDateString('ar')}</TableCell>
         <TableCell className="text-center">
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDownload}
-              title="تحميل التقرير"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowDeleteDialog(true)}
-              disabled={isDeleting}
-              title="حذف التقرير"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <ReportActions
+            onDownload={handleDownload}
+            onDelete={() => setShowDeleteDialog(true)}
+            isDeleting={isDeleting}
+          />
         </TableCell>
       </TableRow>
       
