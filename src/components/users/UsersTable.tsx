@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -39,6 +46,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getRoleDisplayName = (roleName: string | undefined) => {
@@ -54,29 +62,48 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   };
 
   const handlePasswordChange = async () => {
-    if (!selectedUser || !newPassword) {
-      toast.error("الرجاء إدخال كلمة المرور الجديدة");
+    if (!selectedUser) {
+      toast.error("الرجاء تحديد المستخدم");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.functions.invoke('manage-users', {
-        body: {
-          operation: 'update_password',
-          userId: selectedUser.id,
-          newPassword
-        }
-      });
+      // Update password if provided
+      if (newPassword) {
+        const { error: passwordError } = await supabase.functions.invoke('manage-users', {
+          body: {
+            operation: 'update_password',
+            userId: selectedUser.id,
+            newPassword
+          }
+        });
 
-      if (error) throw error;
+        if (passwordError) throw passwordError;
+      }
 
-      toast.success("تم تغيير كلمة المرور بنجاح");
+      // Update role if changed
+      if (selectedRole && selectedRole !== selectedUser.role) {
+        console.log('Updating user role:', { userId: selectedUser.id, newRole: selectedRole });
+        
+        const { error: roleError } = await supabase.functions.invoke('manage-users', {
+          body: {
+            operation: 'update_role',
+            userId: selectedUser.id,
+            newRole: selectedRole
+          }
+        });
+
+        if (roleError) throw roleError;
+      }
+
+      toast.success("تم تحديث بيانات المستخدم بنجاح");
       setSelectedUser(null);
       setNewPassword("");
+      setSelectedRole("");
     } catch (error) {
-      console.error('Error updating password:', error);
-      toast.error("حدث خطأ أثناء تغيير كلمة المرور");
+      console.error('Error updating user:', error);
+      toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
     } finally {
       setIsSubmitting(false);
     }
@@ -105,6 +132,11 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
     }
   };
 
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+    setSelectedRole(user.role || '');
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -131,7 +163,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
                     <Button 
                       variant="outline" 
                       size="icon"
-                      onClick={() => setSelectedUser(user)}
+                      onClick={() => handleUserSelect(user)}
                     >
                       <UserCog className="h-4 w-4" />
                     </Button>
@@ -153,7 +185,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
       <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
         <DialogContent className="sm:max-w-[425px]" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-right">تغيير كلمة المرور</DialogTitle>
+            <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
@@ -161,12 +193,29 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
               <div>{selectedUser?.username}</div>
             </div>
             <div className="space-y-2">
+              <div className="font-medium">الدور</div>
+              <Select
+                value={selectedRole}
+                onValueChange={setSelectedRole}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="اختر الدور" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">مشرف</SelectItem>
+                  <SelectItem value="event_creator">منشئ فعاليات</SelectItem>
+                  <SelectItem value="event_executor">منفذ فعاليات</SelectItem>
+                  <SelectItem value="event_media">إعلامي</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <div className="font-medium">كلمة المرور الجديدة</div>
               <Input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="كلمة المرور الجديدة"
+                placeholder="اترك فارغاً إذا لم ترد التغيير"
               />
             </div>
           </div>
@@ -175,7 +224,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "جاري التحديث..." : "تحديث كلمة المرور"}
+            {isSubmitting ? "جاري التحديث..." : "تحديث البيانات"}
           </Button>
         </DialogContent>
       </Dialog>

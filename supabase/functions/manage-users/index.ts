@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { operation, userId, newPassword } = await req.json()
+    const { operation, userId, newPassword, newRole } = await req.json()
     
     console.log('Managing user:', { operation, userId })
 
@@ -39,6 +39,43 @@ Deno.serve(async (req) => {
       if (updateError) throw updateError
 
       console.log('Password updated successfully for user:', userId)
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (operation === 'update_role') {
+      console.log('Updating role for user:', { userId, newRole })
+
+      // First get the role ID
+      const { data: roleData, error: roleError } = await supabaseClient
+        .from('roles')
+        .select('id')
+        .eq('name', newRole)
+        .single()
+
+      if (roleError) throw roleError
+
+      // Delete existing roles for the user
+      const { error: deleteError } = await supabaseClient
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+
+      if (deleteError) throw deleteError
+
+      // Insert new role
+      const { error: insertError } = await supabaseClient
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role_id: roleData.id
+        })
+
+      if (insertError) throw insertError
+
+      console.log('Role updated successfully for user:', userId)
       return new Response(
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
