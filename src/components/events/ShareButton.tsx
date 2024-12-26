@@ -67,28 +67,28 @@ export const ShareButton = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
         <DropdownMenuItem onClick={() => handleShare('x')}>
-          <div className="flex items-center justify-end text-right w-full">
+          <span className="flex items-center justify-end text-right w-full">
             مشاركة على X
             <X className="h-4 w-4 mr-2" />
-          </div>
+          </span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleShare('facebook')}>
-          <div className="flex items-center justify-end text-right w-full">
+          <span className="flex items-center justify-end text-right w-full">
             مشاركة على فيسبوك
             <Facebook className="h-4 w-4 mr-2" />
-          </div>
+          </span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
-          <div className="flex items-center justify-end text-right w-full">
+          <span className="flex items-center justify-end text-right w-full">
             مشاركة عبر واتساب
             <MessageCircle className="h-4 w-4 mr-2" />
-          </div>
+          </span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleShare('copy')}>
-          <div className="flex items-center justify-end text-right w-full">
+          <span className="flex items-center justify-end text-right w-full">
             نسخ الرابط
             <Share2 className="h-4 w-4 mr-2" />
-          </div>
+          </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
