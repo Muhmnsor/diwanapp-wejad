@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 interface EventReportFormProps {
   eventId: string;
@@ -20,6 +21,10 @@ interface PhotoWithDescription {
 interface ReportFormData {
   report_text: string;
   detailed_description: string;
+  event_duration: string;
+  attendees_count: string;
+  event_objectives: string;
+  impact_on_participants: string;
   photos: PhotoWithDescription[];
 }
 
@@ -83,6 +88,10 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
             executor_id: user?.id,
             report_text: data.report_text,
             detailed_description: data.detailed_description,
+            event_duration: data.event_duration,
+            attendees_count: data.attendees_count,
+            event_objectives: data.event_objectives,
+            impact_on_participants: data.impact_on_participants,
             photos: data.photos.filter(photo => photo.url),
           }
         ]);
@@ -119,6 +128,46 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
           {...register("detailed_description", { required: true })}
           placeholder="اكتب تفاصيل الفعالية بشكل دقيق..."
           className="h-32"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="event_duration">مدة الفعالية</Label>
+          <Input
+            id="event_duration"
+            {...register("event_duration", { required: true })}
+            placeholder="مثال: ساعتين، 3 ساعات..."
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="attendees_count">عدد المشاركين</Label>
+          <Input
+            id="attendees_count"
+            {...register("attendees_count", { required: true })}
+            placeholder="أدخل عدد المشاركين..."
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="event_objectives">أهداف الفعالية</Label>
+        <Textarea
+          id="event_objectives"
+          {...register("event_objectives", { required: true })}
+          placeholder="اذكر الأهداف الرئيسية للفعالية..."
+          className="h-24"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="impact_on_participants">الأثر على المشاركين</Label>
+        <Textarea
+          id="impact_on_participants"
+          {...register("impact_on_participants", { required: true })}
+          placeholder="صف كيف أثرت الفعالية على المشاركين..."
+          className="h-24"
         />
       </div>
 
