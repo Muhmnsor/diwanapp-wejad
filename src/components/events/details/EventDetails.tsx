@@ -21,6 +21,10 @@ export const EventDetails = ({
   const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees;
   const remainingSeats = maxAttendees - attendeesCount;
   
+  console.log('EventDetails - Current attendees:', attendeesCount);
+  console.log('EventDetails - Max attendees:', maxAttendees);
+  console.log('EventDetails - Remaining seats:', remainingSeats);
+  
   const formattedDate = formatDateWithDay(date);
   const formattedTime = formatTime12Hour(time);
 
@@ -52,8 +56,8 @@ export const EventDetails = ({
         <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
           <Users className="h-5 w-5 text-primary" />
         </div>
-        <span className="text-[#1A1F2C]">
-          {attendeesCount} من {maxAttendees} مشارك
+        <span className="text-[#1A1F2C]" dir="rtl">
+          {attendeesCount} من {maxAttendees} مقعد
           {remainingSeats > 0 && ` (متبقي ${remainingSeats} مقعد)`}
         </span>
       </div>
