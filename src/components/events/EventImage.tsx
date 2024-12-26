@@ -7,7 +7,7 @@ export const EventImage = ({ imageUrl, title }: EventImageProps) => {
   if (!imageUrl) return null;
   
   return (
-    <div className="relative w-full h-[400px] overflow-hidden">
+    <div className="relative w-full h-[500px] overflow-hidden">
       <img
         src={imageUrl}
         alt={title}

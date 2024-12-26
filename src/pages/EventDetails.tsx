@@ -83,7 +83,7 @@ const EventDetails = () => {
   }
 
   return (
-    <div className="min-h-screen" dir="rtl">
+    <div className="min-h-screen bg-[#F8F9FB]" dir="rtl">
       <TopHeader />
       <div className="container mx-auto px-4 py-8">
         <EventDetailsView 
