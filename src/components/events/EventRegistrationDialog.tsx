@@ -26,7 +26,7 @@ export const EventRegistrationDialog = ({
 
   // إغلاق النافذة إذا كان التسجيل غير متاح
   if (status !== 'available' && open) {
-    console.log('Closing dialog because registration is not allowed');
+    console.log('Closing dialog because registration is not allowed. Status:', status);
     onOpenChange(false);
     return null;
   }
@@ -39,6 +39,8 @@ export const EventRegistrationDialog = ({
         return "انتهى التسجيل";
       case 'notStarted':
         return "لم يبدأ التسجيل بعد";
+      case 'eventStarted':
+        return "انتهت الفعالية";
       default:
         return "";
     }

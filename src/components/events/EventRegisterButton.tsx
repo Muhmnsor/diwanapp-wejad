@@ -19,7 +19,7 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
       size="lg" 
       className={`w-full rounded-2xl h-14 text-lg ${config.className}`}
       onClick={onRegister}
-      disabled={config.disabled}
+      disabled={status !== 'available'}
     >
       {config.text}
     </Button>

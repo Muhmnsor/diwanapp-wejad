@@ -49,7 +49,10 @@ export type EventStatus = 'available' | 'full' | 'ended' | 'notStarted' | 'event
 const parseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
   try {
-    const date = new Date(dateStr);
+    // تحويل التاريخ إلى منتصف الليل في نفس اليوم
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
     if (isNaN(date.getTime())) {
       console.log('Invalid date string:', dateStr);
       return null;
@@ -145,7 +148,7 @@ export const getStatusConfig = (status: EventStatus) => {
       disabled: true
     },
     eventStarted: {
-      text: "بدأت الفعالية",
+      text: "انتهت الفعالية",
       className: "bg-gray-50 text-gray-400 cursor-not-allowed",
       disabled: true
     }
