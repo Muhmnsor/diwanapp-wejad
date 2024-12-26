@@ -16,7 +16,6 @@ interface EventCardProps {
   image_url: string;
   event_type: "online" | "in-person";
   price: number | null;
-  attendees?: number;
   max_attendees?: number;
   registration_start_date?: string | null;
   registration_end_date?: string | null;
@@ -33,7 +32,6 @@ export const EventCard = ({
   image_url, 
   event_type, 
   price,
-  attendees = 0,
   max_attendees = 0,
   registration_start_date,
   registration_end_date,
@@ -41,8 +39,7 @@ export const EventCard = ({
   certificate_type = 'none',
   event_hours = 0
 }: EventCardProps) => {
-  const remainingSeats = max_attendees - attendees;
-  const isAlmostFull = remainingSeats <= max_attendees * 0.2;
+  const status = getRegistrationStatus();
 
   useEffect(() => {
     console.log('EventCard data:', {
@@ -51,18 +48,15 @@ export const EventCard = ({
         type: certificate_type,
         hours: event_hours
       },
-      attendees,
-      max_attendees,
-      remainingSeats
+      max_attendees
     });
-  }, [title, certificate_type, event_hours, attendees, max_attendees, remainingSeats]);
+  }, [title, certificate_type, event_hours, max_attendees]);
 
   const getRegistrationStatus = () => {
     const status = getEventStatus({
       date,
       time: "00:00",
-      attendees,
-      maxAttendees: max_attendees,
+      max_attendees,
       registrationStartDate: registration_start_date,
       registrationEndDate: registration_end_date,
       beneficiaryType: beneficiary_type
@@ -78,13 +72,9 @@ export const EventCard = ({
       case 'ended':
         return { text: "انتهى التسجيل", variant: "destructive" as const, color: "bg-red-500" };
       default:
-        return isAlmostFull 
-          ? { text: "التسجيل متاح - الأماكن محدودة", variant: "accent" as const, color: "bg-yellow-500" }
-          : { text: "التسجيل متاح", variant: "secondary" as const, color: "bg-green-500" };
+        return { text: "التسجيل متاح", variant: "secondary" as const, color: "bg-green-500" };
     }
   };
-
-  const status = getRegistrationStatus();
 
   return (
     <div className="w-[380px] mx-auto">
@@ -112,7 +102,6 @@ export const EventCard = ({
                 <Users className="w-4 h-4" />
               </div>
               <EventCardStatus
-                remainingSeats={remainingSeats}
                 maxAttendees={max_attendees}
                 status={status}
               />
