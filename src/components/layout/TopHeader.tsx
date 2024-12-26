@@ -18,8 +18,8 @@ export const TopHeader = () => {
   return (
     <div className="w-full bg-white py-4 border-b">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center" dir="rtl">
-          <div className="flex justify-start">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4" dir="rtl">
+          <div className="w-full flex justify-center md:justify-start md:w-auto">
             <img 
               src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
               alt="ديوان" 
@@ -27,7 +27,7 @@ export const TopHeader = () => {
               onClick={() => navigate("/")}
             />
           </div>
-          <div className="flex-1 flex items-center gap-4 justify-end">
+          <div className="flex items-center justify-center gap-4 md:justify-end">
             <Navigation />
             {isAuthenticated ? (
               <Button
