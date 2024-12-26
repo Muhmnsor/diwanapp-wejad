@@ -39,8 +39,8 @@ export const ReportListContainer = ({ isLoading, error, children }: ReportListCo
   }
 
   return (
-    <div className="rounded-md border">
-      <Table dir="rtl">
+    <div className="rounded-md border" dir="rtl">
+      <Table>
         <TableBody>
           {children}
         </TableBody>
