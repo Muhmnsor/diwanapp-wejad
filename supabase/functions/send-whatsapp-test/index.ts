@@ -48,7 +48,7 @@ serve(async (req) => {
       body: JSON.stringify({
         countryCode: "+966",
         phoneNumber: "583370003", // رقم المستلم الثابت
-        type: "text",
+        type: "Text",
         text: {
           content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
         }
