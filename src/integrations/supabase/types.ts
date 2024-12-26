@@ -326,7 +326,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      handle_user_management: {
+        Args: {
+          operation: string
+          target_user_id: string
+          new_password?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

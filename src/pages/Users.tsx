@@ -7,7 +7,6 @@ import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { UsersTable } from "@/components/users/UsersTable";
 import type { Role, User } from "@/components/users/types";
 
-// Define the type for the user roles response
 interface UserRoleResponse {
   user_id: string;
   roles: {
@@ -19,7 +18,7 @@ interface UserRoleResponse {
 const Users = () => {
   const { user } = useAuthStore();
 
-  const { data: roles = [], isLoading: rolesLoading, error: rolesError } = useQuery({
+  const { data: roles = [], isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -40,6 +39,17 @@ const Users = () => {
     queryFn: async () => {
       console.log('Fetching users with roles...');
       
+      // First get user details from the Edge Function
+      const { data: usersResponse, error: usersError } = await supabase.functions.invoke('manage-users', {
+        body: { operation: 'get_users' }
+      });
+
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        throw usersError;
+      }
+
+      // Then get user roles
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -55,12 +65,18 @@ const Users = () => {
         throw userRolesError;
       }
 
-      // Transform the data into the expected format
-      const transformedUsers = (userRolesData as UserRoleResponse[]).map(userRole => ({
-        id: userRole.user_id,
-        username: userRole.user_id, // We'll only show the user ID for now since we can't access emails
-        role: userRole.roles.name || 'No role',
-        lastLogin: '-' // We can't access last login time without admin privileges
+      // Create a map of user roles
+      const userRolesMap = (userRolesData as UserRoleResponse[]).reduce((acc, curr) => {
+        acc[curr.user_id] = curr.roles.name;
+        return acc;
+      }, {} as Record<string, string>);
+
+      // Combine user details with roles
+      const transformedUsers = usersResponse.users.map(authUser => ({
+        id: authUser.id,
+        username: authUser.email,
+        role: userRolesMap[authUser.id] || 'No role',
+        lastLogin: authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at).toLocaleString('ar-SA') : 'لم يسجل دخول بعد'
       }));
 
       console.log('Transformed users:', transformedUsers);
@@ -70,14 +86,6 @@ const Users = () => {
 
   if (!user?.isAdmin) {
     return <Navigate to="/" replace />;
-  }
-
-  if (rolesError) {
-    return (
-      <div className="text-center p-8 text-red-500">
-        خطأ في تحميل الأدوار: {rolesError.message}
-      </div>
-    );
   }
 
   if (usersLoading || rolesLoading) {
