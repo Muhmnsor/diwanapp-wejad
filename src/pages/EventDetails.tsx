@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { EventDetailsView } from "@/components/events/EventDetailsView";
 import { EventDashboard } from "@/components/admin/EventDashboard";
 import { useAuthStore } from "@/store/authStore";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
+import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
 
 const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
@@ -15,6 +16,7 @@ const EventDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const { id } = useParams();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   console.log('EventDetails - User:', user);
 
@@ -87,8 +89,20 @@ const EventDetails = () => {
     console.log("Edit event clicked");
   };
 
-  const handleDelete = () => {
-    console.log("Delete event clicked");
+  const handleDelete = async () => {
+    try {
+      console.log("Delete event clicked");
+      await handleEventDeletion({
+        eventId: id!,
+        onSuccess: () => {
+          toast.success("تم حذف الفعالية بنجاح");
+          navigate('/');
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error("حدث خطأ أثناء حذف الفعالية");
+    }
   };
 
   const handleAddToCalendar = () => {
