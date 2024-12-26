@@ -1,28 +1,58 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import EventDetails from "./pages/EventDetails";
-import CreateEvent from "./pages/CreateEvent";
-import Settings from "./pages/Settings";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import EventFeedback from "./pages/EventFeedback";
 import Login from "./pages/Login";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-const queryClient = new QueryClient();
+import CreateEvent from "./pages/CreateEvent";
+import EventDetails from "./pages/EventDetails";
+import Settings from "./pages/Settings";
+import Users from "./pages/Users";
+import EventFeedback from "./pages/EventFeedback";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Toaster } from "./components/ui/sonner";
+import "./App.css";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/events/:id" element={<EventDetails />} />
-          <Route path="/create-event" element={<CreateEvent />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/feedback/:id" element={<EventFeedback />} />
-        </Routes>
-      </Router>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/event/:id" element={<EventDetails />} />
+        <Route
+          path="/event/create"
+          element={
+            <ProtectedRoute>
+              <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/event/edit/:id"
+          element={
+            <ProtectedRoute>
+              <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/event/:id/feedback" element={<EventFeedback />} />
+      </Routes>
+      <Toaster />
+    </BrowserRouter>
   );
 }
 
