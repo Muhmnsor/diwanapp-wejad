@@ -86,16 +86,18 @@ const EventDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <main className="flex-grow">
-        <EventDetailsView 
-          event={event} 
-          isAdmin={isAdmin}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAddToCalendar={handleAddToCalendar}
-          onRegister={handleRegister}
-          id={id || ''}
-        />
+      <main className="flex-grow py-8">
+        <div className="container mx-auto px-4">
+          <EventDetailsView 
+            event={event} 
+            isAdmin={isAdmin}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddToCalendar={handleAddToCalendar}
+            onRegister={handleRegister}
+            id={id || ''}
+          />
+        </div>
       </main>
       <Footer />
     </div>
