@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const NotificationSettings = () => {
   return (
-    <Card>
+    <Card dir="rtl">
       <CardHeader>
         <CardTitle>إعدادات التنبيهات</CardTitle>
         <CardDescription>

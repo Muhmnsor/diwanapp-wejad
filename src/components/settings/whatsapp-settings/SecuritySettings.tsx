@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const SecuritySettings = () => {
   return (
-    <Card>
+    <Card dir="rtl">
       <CardHeader>
         <CardTitle>إعدادات الأمان</CardTitle>
         <CardDescription>

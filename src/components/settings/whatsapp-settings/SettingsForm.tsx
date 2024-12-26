@@ -35,7 +35,7 @@ export const SettingsForm = ({
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6" dir="rtl">
       <div className="grid gap-6">
         <div className="space-y-2">
           <Label>رقم الواتساب</Label>
@@ -59,7 +59,7 @@ export const SettingsForm = ({
             type="password"
             placeholder="أدخل مفتاح API"
             dir="ltr"
-            className="text-left"
+            className="text-left font-mono"
           />
           <p className="text-sm text-muted-foreground">
             مفتاح API الخاص بحساب الواتساب
@@ -73,7 +73,7 @@ export const SettingsForm = ({
             onChange={handleChange("account_id")}
             placeholder="أدخل معرف الحساب"
             dir="ltr"
-            className="text-left"
+            className="text-left font-mono"
           />
           <p className="text-sm text-muted-foreground">
             معرف حساب الواتساب الخاص بك
@@ -87,7 +87,7 @@ export const SettingsForm = ({
             onChange={handleChange("whatsapp_number_id")}
             placeholder="أدخل معرف رقم الواتساب"
             dir="ltr"
-            className="text-left"
+            className="text-left font-mono"
           />
           <p className="text-sm text-muted-foreground">
             معرف رقم الواتساب المرتبط بحسابك
@@ -109,8 +109,8 @@ export const SettingsForm = ({
         </div>
       </div>
 
-      <div className="flex justify-between space-x-4 space-x-reverse">
-        <div className="space-x-4 space-x-reverse">
+      <div className="flex justify-between space-x-4 rtl:space-x-reverse">
+        <div className="space-x-4 rtl:space-x-reverse">
           <Button type="submit" size="lg">
             حفظ الإعدادات
           </Button>
