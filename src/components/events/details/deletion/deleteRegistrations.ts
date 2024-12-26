@@ -5,7 +5,8 @@ export const deleteRegistrations = async (eventId: string) => {
   const { error } = await supabase
     .from('registrations')
     .delete()
-    .eq('event_id', eventId);
+    .eq('event_id', eventId)
+    .select();
   
   if (error) {
     console.error('Error deleting registrations:', error);
