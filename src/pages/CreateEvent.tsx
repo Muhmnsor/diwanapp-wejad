@@ -23,16 +23,22 @@ const CreateEvent = () => {
     date: "",
     time: "",
     location: "",
+    certificate_type: "none",
     certificateType: "none",
+    event_hours: 0,
     eventHours: 0,
     price: "free",
     max_attendees: 0,
     beneficiaryType: "both",
+    event_type: "in-person",
     eventType: "in-person",
     attendees: 0,
     imageUrl: "",
+    image_url: "",
     registrationStartDate: "",
-    registrationEndDate: ""
+    registrationEndDate: "",
+    registration_start_date: "",
+    registration_end_date: ""
   });
 
   useEffect(() => {
@@ -58,16 +64,22 @@ const CreateEvent = () => {
             date: event.date || "",
             time: event.time || "",
             location: event.location || "",
+            certificate_type: event.certificate_type || "none",
             certificateType: event.certificate_type || "none",
+            event_hours: event.event_hours || 0,
             eventHours: event.event_hours || 0,
             price: event.price || "free",
             max_attendees: event.max_attendees || 0,
             beneficiaryType: event.beneficiary_type || "both",
+            event_type: event.event_type || "in-person",
             eventType: event.event_type || "in-person",
             attendees: 0,
             imageUrl: event.image_url || "",
+            image_url: event.image_url || "",
             registrationStartDate: event.registration_start_date || "",
-            registrationEndDate: event.registration_end_date || ""
+            registrationEndDate: event.registration_end_date || "",
+            registration_start_date: event.registration_start_date || "",
+            registration_end_date: event.registration_end_date || ""
           });
         }
       } catch (error) {
@@ -90,15 +102,15 @@ const CreateEvent = () => {
         date: formData.date,
         time: formData.time,
         location: formData.location,
-        certificate_type: formData.certificateType,
-        event_hours: formData.eventHours,
+        certificate_type: formData.certificate_type,
+        event_hours: formData.event_hours,
         price: formData.price === "free" ? null : formData.price,
         max_attendees: formData.max_attendees,
         beneficiary_type: formData.beneficiaryType,
-        event_type: formData.eventType,
-        image_url: formData.imageUrl,
-        registration_start_date: formData.registrationStartDate,
-        registration_end_date: formData.registrationEndDate
+        event_type: formData.event_type,
+        image_url: formData.image_url || formData.imageUrl,
+        registration_start_date: formData.registration_start_date || formData.registrationStartDate,
+        registration_end_date: formData.registration_end_date || formData.registrationEndDate
       };
 
       let result;
@@ -118,7 +130,6 @@ const CreateEvent = () => {
 
       if (result.error) throw result.error;
 
-      // تحديث الكاش بعد إنشاء/تحديث الفعالية
       await queryClient.invalidateQueries({ queryKey: ["events"] });
 
       toast.success(isEditMode ? "تم تحديث الفعالية بنجاح" : "تم إنشاء الفعالية بنجاح");

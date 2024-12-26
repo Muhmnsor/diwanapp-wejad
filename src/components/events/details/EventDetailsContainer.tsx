@@ -35,8 +35,9 @@ export const EventDetailsContainer = ({
 
   const transformedEvent = {
     ...event,
-    certificateType: event.certificateType || 'none',
-    eventHours: event.eventHours || 0,
+    eventType: event.event_type,
+    certificateType: event.certificate_type,
+    eventHours: event.event_hours,
     maxAttendees: event.max_attendees
   };
 
