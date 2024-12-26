@@ -32,7 +32,6 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
 
     setIsSubmitting(true);
     try {
-      // Update password if provided
       if (newPassword) {
         const { error: passwordError } = await supabase.functions.invoke('manage-users', {
           body: {
@@ -45,7 +44,6 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         if (passwordError) throw passwordError;
       }
 
-      // Update role if changed
       if (selectedRole && selectedRole !== selectedUser.role) {
         console.log('Updating user role:', { userId: selectedUser.id, newRole: selectedRole });
         
@@ -64,7 +62,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
       setSelectedUser(null);
       setNewPassword("");
       setSelectedRole("");
-      onUserDeleted(); // Refresh the users list
+      onUserDeleted();
     } catch (error) {
       console.error('Error updating user:', error);
       toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
