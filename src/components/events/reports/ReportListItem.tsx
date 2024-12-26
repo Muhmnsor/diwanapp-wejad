@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { ReportHeader } from "./components/ReportHeader";
 import { ReportContent } from "./components/ReportContent";
 import { ReportPhotos } from "./components/ReportPhotos";
-import { useQuery } from "@tanstack/react-query";
+import { ReportDeleteDialog } from "./components/ReportDeleteDialog";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface ReportListItemProps {
   report: {
@@ -31,6 +33,8 @@ export interface ReportListItemProps {
 
 export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch event details to get the title
   const { data: event } = useQuery({
@@ -52,6 +56,29 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
     },
   });
 
+  const handleDelete = async () => {
+    try {
+      console.log("Deleting report:", report.id);
+      const { error } = await supabase
+        .from('event_reports')
+        .delete()
+        .eq('id', report.id);
+
+      if (error) {
+        console.error("Error deleting report:", error);
+        throw error;
+      }
+
+      toast.success("تم حذف التقرير بنجاح");
+      // Invalidate the reports query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['event-reports'] });
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error in handleDelete:", error);
+      toast.error("حدث خطأ أثناء حذف التقرير");
+    }
+  };
+
   // Parse photos array if it's a string
   const parsedPhotos = report.photos?.map(photo => {
     if (typeof photo === 'string') {
@@ -67,31 +94,40 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
   console.log("Parsed photos:", parsedPhotos);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="space-y-4 border rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="icon">
-                {isOpen ? <ChevronUp /> : <ChevronDown />}
-              </Button>
-            </CollapsibleTrigger>
-            <ReportHeader 
-              createdAt={report.created_at} 
-              onDownload={() => onDownload(report)}
-              eventTitle={event?.title}
-            />
+    <>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="space-y-4 border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  {isOpen ? <ChevronUp /> : <ChevronDown />}
+                </Button>
+              </CollapsibleTrigger>
+              <ReportHeader 
+                createdAt={report.created_at} 
+                onDownload={() => onDownload(report)}
+                onDelete={() => setIsDeleteDialogOpen(true)}
+                eventTitle={event?.title}
+              />
+            </div>
           </div>
-        </div>
 
-        <CollapsibleContent>
-          <div className="space-y-6 pt-4">
-            <ReportContent report={report} />
-            <Separator />
-            <ReportPhotos photos={parsedPhotos} />
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
+          <CollapsibleContent>
+            <div className="space-y-6 pt-4">
+              <ReportContent report={report} />
+              <Separator />
+              <ReportPhotos photos={parsedPhotos} />
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      <ReportDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+      />
+    </>
   );
 };
