@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RatingInput } from "./RatingInput";
-import { User, Phone } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { PersonalInfoSection } from "./PersonalInfoSection";
+import { RatingsSection } from "./RatingsSection";
+import { CommentsSection } from "./CommentsSection";
 
 interface EventFeedbackFormProps {
   onSuccess?: () => void;
@@ -66,7 +65,6 @@ export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
         onSuccess();
       }
       
-      // Navigate back to event details
       navigate(`/event/${eventId}`);
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -78,73 +76,28 @@ export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8" dir="rtl">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2">
-            <User className="w-4 h-4" />
-            الاسم (اختياري)
-          </label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="أدخل اسمك"
-            className="bg-white"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2">
-            <Phone className="w-4 h-4" />
-            رقم الجوال (اختياري)
-          </label>
-          <Input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="أدخل رقم جوالك"
-            className="bg-white"
-            type="tel"
-          />
-        </div>
-      </div>
+      <PersonalInfoSection
+        name={name}
+        phone={phone}
+        onNameChange={setName}
+        onPhoneChange={setPhone}
+      />
 
-      <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
-        <h3 className="font-semibold text-lg mb-4">تقييم الفعالية</h3>
-        <div className="space-y-6">
-          <RatingInput
-            label="التقييم العام"
-            value={overallRating}
-            onChange={setOverallRating}
-            description="كيف كانت تجربتك الإجمالية مع الفعالية؟"
-          />
-          <RatingInput
-            label="تقييم المحتوى"
-            value={contentRating}
-            onChange={setContentRating}
-            description="هل كان محتوى الفعالية مفيداً وذا قيمة؟"
-          />
-          <RatingInput
-            label="تقييم التنظيم"
-            value={organizationRating}
-            onChange={setOrganizationRating}
-            description="كيف كانت جودة التنظيم والإدارة؟"
-          />
-          <RatingInput
-            label="تقييم المقدم"
-            value={presenterRating}
-            onChange={setPresenterRating}
-            description="كيف كانت مهارات وأداء المتحدث؟"
-          />
-        </div>
-      </div>
+      <RatingsSection
+        overallRating={overallRating}
+        contentRating={contentRating}
+        organizationRating={organizationRating}
+        presenterRating={presenterRating}
+        onOverallRatingChange={setOverallRating}
+        onContentRatingChange={setContentRating}
+        onOrganizationRatingChange={setOrganizationRating}
+        onPresenterRatingChange={setPresenterRating}
+      />
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">ملاحظات إضافية</label>
-        <Textarea
-          value={feedbackText}
-          onChange={(e) => setFeedbackText(e.target.value)}
-          placeholder="اكتب ملاحظاتك هنا"
-          className="h-32 bg-white"
-        />
-      </div>
+      <CommentsSection
+        value={feedbackText}
+        onChange={setFeedbackText}
+      />
 
       <Button 
         type="submit" 
