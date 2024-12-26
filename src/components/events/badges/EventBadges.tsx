@@ -55,7 +55,7 @@ export const EventBadges = ({
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-3 items-center justify-start">
       <Badge 
         variant={eventType === "online" ? "secondary" : "default"}
         className={`${eventType === "online" ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white' : 'bg-[#0EA5E9] border-[#0EA5E9] text-white'} border`}
