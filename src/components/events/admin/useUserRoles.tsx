@@ -27,7 +27,8 @@ export const useUserRoles = () => {
             name
           )
         `)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .single(); // Add single() to get a single record
 
       if (error) {
         console.error('Error fetching user roles:', error);
@@ -36,11 +37,15 @@ export const useUserRoles = () => {
 
       console.log('Raw user roles data:', userRolesData);
       
-      // Cast to unknown first, then to the correct type
-      const typedData = (userRolesData as unknown) as RoleData[];
-      const roleNames = typedData?.map(ur => ur.roles.name) || [];
-      console.log('Processed user roles:', roleNames);
-      return roleNames;
+      // Handle the case where no role is found
+      if (!userRolesData || !userRolesData.roles) {
+        console.log('No roles found for user');
+        return [];
+      }
+
+      const roleName = userRolesData.roles.name;
+      console.log('Processed user role:', roleName);
+      return [roleName];
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 2
