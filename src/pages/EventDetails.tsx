@@ -39,18 +39,30 @@ const EventDetails = () => {
     try {
       console.log('Starting event deletion process for ID:', id);
       
-      // First delete all feedback records
-      const { error: feedbackError } = await supabase
-        .from('event_feedback')
-        .delete()
-        .eq('event_id', id);
+      // Delete all related records in order
+      const tables = [
+        'attendance_records',
+        'event_feedback',
+        'event_notification_settings',
+        'event_reports',
+        'notification_logs',
+        'registrations'
+      ];
 
-      if (feedbackError) {
-        console.error('Error deleting feedback:', feedbackError);
-        throw feedbackError;
+      for (const table of tables) {
+        console.log(`Deleting records from ${table}`);
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq('event_id', id);
+
+        if (error) {
+          console.error(`Error deleting from ${table}:`, error);
+          throw error;
+        }
       }
 
-      // Then delete the event
+      // Finally delete the event
       const { error: eventError } = await supabase
         .from("events")
         .delete()
