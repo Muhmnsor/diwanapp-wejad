@@ -24,15 +24,12 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
     }
   };
 
-  // تحديث شرط التعطيل ليشمل حالة 'notStarted'
-  const isDisabled = status !== 'available' || status === 'notStarted';
-
   return (
     <Button 
       size="lg" 
       className={`w-full rounded-2xl h-14 text-lg ${config.className}`}
       onClick={handleClick}
-      disabled={isDisabled}
+      disabled={config.disabled}
       variant={status === 'available' ? 'default' : 'secondary'}
     >
       {config.text}
