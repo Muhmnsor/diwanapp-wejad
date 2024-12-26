@@ -89,21 +89,25 @@ export const EventFeedbackForm = ({ eventId, onSuccess }: EventFeedbackFormProps
             label="التقييم العام"
             value={overallRating}
             onChange={setOverallRating}
+            description="كيف كانت تجربتك الإجمالية مع الفعالية؟"
           />
           <RatingInput
             label="تقييم المحتوى"
             value={contentRating}
             onChange={setContentRating}
+            description="هل كان محتوى الفعالية مفيداً وذا قيمة؟"
           />
           <RatingInput
             label="تقييم التنظيم"
             value={organizationRating}
             onChange={setOrganizationRating}
+            description="كيف كانت جودة التنظيم والإدارة؟"
           />
           <RatingInput
             label="تقييم المقدم"
             value={presenterRating}
             onChange={setPresenterRating}
+            description="كيف كانت مهارات وأداء المتحدث؟"
           />
         </div>
       </div>

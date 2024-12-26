@@ -5,9 +5,10 @@ interface RatingInputProps {
   label: string;
   value: number | null;
   onChange: (value: number) => void;
+  description?: string;
 }
 
-export const RatingInput = ({ label, value, onChange }: RatingInputProps) => {
+export const RatingInput = ({ label, value, onChange, description }: RatingInputProps) => {
   const [hover, setHover] = useState<number | null>(null);
 
   const getRatingColor = (rating: number) => {
@@ -37,6 +38,9 @@ export const RatingInput = ({ label, value, onChange }: RatingInputProps) => {
           </span>
         )}
       </div>
+      {description && (
+        <p className="text-xs text-gray-500 mb-2">{description}</p>
+      )}
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((rating) => (
           <button

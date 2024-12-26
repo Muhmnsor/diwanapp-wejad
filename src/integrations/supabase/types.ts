@@ -88,8 +88,10 @@ export type Database = {
           event_id: string | null
           feedback_text: string | null
           id: string
+          name: string | null
           organization_rating: number | null
           overall_rating: number | null
+          phone: string | null
           presenter_rating: number | null
         }
         Insert: {
@@ -98,8 +100,10 @@ export type Database = {
           event_id?: string | null
           feedback_text?: string | null
           id?: string
+          name?: string | null
           organization_rating?: number | null
           overall_rating?: number | null
+          phone?: string | null
           presenter_rating?: number | null
         }
         Update: {
@@ -108,8 +112,10 @@ export type Database = {
           event_id?: string | null
           feedback_text?: string | null
           id?: string
+          name?: string | null
           organization_rating?: number | null
           overall_rating?: number | null
+          phone?: string | null
           presenter_rating?: number | null
         }
         Relationships: [
