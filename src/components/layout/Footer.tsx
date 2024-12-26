@@ -1,5 +1,5 @@
 import { Logo } from "@/components/Logo";
-import { Globe, Instagram, Linkedin, X } from "lucide-react";
+import { Instagram, Linkedin, X } from "lucide-react";
 
 export const Footer = () => {
   return (
@@ -16,15 +16,6 @@ export const Footer = () => {
             <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
             <p className="text-[#9F9EA1] mb-1">المملكة العربية السعودية - المدينة المنورة</p>
             <p className="text-[#9F9EA1] mb-2">رقم الترخيص 5531</p>
-            <a 
-              href="https://www.dfy.org.sa" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-primary hover:text-primary/80 flex items-center justify-center gap-2"
-            >
-              <Globe className="w-4 h-4" />
-              www.dfy.org.sa
-            </a>
           </div>
 
           {/* Social Links - Right Side */}
@@ -40,15 +31,6 @@ export const Footer = () => {
                 <Linkedin className="w-6 h-6" />
               </a>
             </div>
-            <a 
-              href="https://www.dfy.org.sa" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-primary hover:text-primary/80 flex items-center gap-2"
-            >
-              <Globe className="w-4 h-4" />
-              www.dfy.org.sa
-            </a>
           </div>
         </div>
       </div>
