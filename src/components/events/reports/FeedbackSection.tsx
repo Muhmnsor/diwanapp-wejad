@@ -6,7 +6,7 @@ interface FeedbackSectionProps {
 }
 
 export const FeedbackSection = ({ eventId }: FeedbackSectionProps) => {
-  console.log('Rendering FeedbackSection for event:', eventId); // Added for debugging
+  console.log('Rendering FeedbackSection for event:', eventId);
 
   return (
     <div className="space-y-8">
