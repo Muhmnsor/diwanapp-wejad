@@ -67,7 +67,6 @@ export const EventDetailsContainer = ({
             isAdmin={isAdmin}
             onEdit={onEdit}
             onDelete={() => setIsDeleteDialogOpen(true)}
-            onShare={async () => {}}
             onAddToCalendar={onAddToCalendar}
           />
 

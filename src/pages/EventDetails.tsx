@@ -58,25 +58,25 @@ const EventDetails = () => {
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
         <Footer />
-      </>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
+      <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-red-500">{error}</div>
         </div>
         <Footer />
-      </>
+      </div>
     );
   }
 
@@ -101,49 +101,53 @@ const EventDetails = () => {
 
   if (!isAdmin) {
     return (
-      <>
+      <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <EventDetailsView
-          event={event}
-          isAdmin={isAdmin}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAddToCalendar={handleAddToCalendar}
-          id={id!}
-        />
+        <main className="flex-1 py-12">
+          <EventDetailsView
+            event={event}
+            isAdmin={isAdmin}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddToCalendar={handleAddToCalendar}
+            id={id!}
+          />
+        </main>
         <Footer />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <div className="min-h-screen bg-gray-50/50">
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
-            <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
-            <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="details" className="mt-0">
-            <EventDetailsView
-              event={event}
-              isAdmin={isAdmin}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onAddToCalendar={handleAddToCalendar}
-              id={id!}
-            />
-          </TabsContent>
+      <main className="flex-1 py-12">
+        <div className="bg-gray-50/50">
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+              <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
+              <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details" className="mt-0">
+              <EventDetailsView
+                event={event}
+                isAdmin={isAdmin}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onAddToCalendar={handleAddToCalendar}
+                id={id!}
+              />
+            </TabsContent>
 
-          <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
-            <EventDashboard eventId={id!} />
-          </TabsContent>
-        </Tabs>
-      </div>
+            <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
+              <EventDashboard eventId={id!} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </main>
       <Footer />
-    </>
+    </div>
   );
 };
 
