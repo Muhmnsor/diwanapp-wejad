@@ -1,13 +1,17 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
 Deno.serve(async (req) => {
+  console.log('Received request:', req.method)
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request')
     return new Response(null, { headers: corsHeaders })
   }
 
@@ -15,11 +19,16 @@ Deno.serve(async (req) => {
     console.log('Creating Supabase client...')
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     )
 
     const { operation, userId, newPassword, newRole } = await req.json()
-    
     console.log('Managing user:', { operation, userId })
 
     if (operation === 'get_users') {
@@ -56,9 +65,9 @@ Deno.serve(async (req) => {
     }
 
     if (operation === 'update_role') {
-      console.log('Updating role for user:', { userId, newRole })
-
-      // First get the role ID
+      console.log('Updating role for user:', userId, 'to:', newRole)
+      
+      // Get role ID
       const { data: roleData, error: roleError } = await supabaseClient
         .from('roles')
         .select('id')
@@ -130,9 +139,9 @@ Deno.serve(async (req) => {
       )
     }
 
-    throw new Error('Invalid operation')
+    throw new Error(`Unsupported operation: ${operation}`)
   } catch (error) {
-    console.error('Error managing users:', error.message)
+    console.error('Error in manage-users function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
