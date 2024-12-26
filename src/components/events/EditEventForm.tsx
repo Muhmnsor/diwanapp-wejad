@@ -12,7 +12,16 @@ interface EditEventFormProps {
 }
 
 export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) => {
-  const [formData, setFormData] = useState<Event>(event);
+  // Initialize form data with normalized field names
+  const [formData, setFormData] = useState<Event>({
+    ...event,
+    eventType: event.event_type || event.eventType,
+    beneficiaryType: event.beneficiary_type || event.beneficiaryType,
+    certificateType: event.certificate_type || event.certificateType,
+    eventHours: event.event_hours || event.eventHours,
+    registrationStartDate: event.registration_start_date || event.registrationStartDate,
+    registrationEndDate: event.registration_end_date || event.registrationEndDate,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -49,11 +58,23 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         imageUrl = publicUrl;
       }
 
-      // Prepare the event data for saving
+      // Prepare the event data for saving with both snake_case and camelCase fields
       const eventToSave: Event = {
         ...formData,
         image_url: imageUrl,
         imageUrl: imageUrl,
+        event_type: formData.eventType || formData.event_type,
+        eventType: formData.eventType || formData.event_type,
+        beneficiary_type: formData.beneficiaryType || formData.beneficiary_type,
+        beneficiaryType: formData.beneficiaryType || formData.beneficiary_type,
+        certificate_type: formData.certificateType || formData.certificate_type,
+        certificateType: formData.certificateType || formData.certificate_type,
+        event_hours: formData.eventHours || formData.event_hours,
+        eventHours: formData.eventHours || formData.event_hours,
+        registration_start_date: formData.registrationStartDate || formData.registration_start_date,
+        registrationStartDate: formData.registrationStartDate || formData.registration_start_date,
+        registration_end_date: formData.registrationEndDate || formData.registration_end_date,
+        registrationEndDate: formData.registrationEndDate || formData.registration_end_date,
       };
 
       // Call the parent's onSave function
