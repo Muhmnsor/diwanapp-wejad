@@ -13,7 +13,7 @@ export const EventCardStatus = ({
   status
 }: EventCardStatusProps) => {
   return (
-    <div className="flex justify-end">
+    <div className="flex">
       <Badge variant={status.variant} className="text-sm">
         {status.text}
       </Badge>

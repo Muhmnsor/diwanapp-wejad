@@ -8,13 +8,13 @@ interface EventCardDetailsProps {
 export const EventCardDetails = ({ date, location }: EventCardDetailsProps) => {
   return (
     <>
-      <div className="flex items-center gap-2 text-gray-600 text-sm justify-end">
-        <span>{date}</span>
+      <div className="flex items-center gap-2 text-gray-600 text-sm">
         <CalendarDays size={16} />
+        <span>{date}</span>
       </div>
-      <div className="flex items-center gap-2 text-gray-600 text-sm justify-end">
-        <span>{location}</span>
+      <div className="flex items-center gap-2 text-gray-600 text-sm">
         <MapPin size={16} />
+        <span>{location}</span>
       </div>
     </>
   );
