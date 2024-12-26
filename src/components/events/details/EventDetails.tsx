@@ -29,11 +29,8 @@ export const EventDetails = ({
   const formattedTime = formatTime12Hour(time);
 
   const getSeatsText = () => {
-    if (!maxAttendees) return "لا توجد مقاعد متاحة";
-    if (attendeesCount === 0) return `${maxAttendees} مقعد متاح`;
-    const text = `${attendeesCount} من ${maxAttendees} مقعد`;
-    if (remainingSeats > 0) return `${text} (متبقي ${remainingSeats} مقعد)`;
-    return text;
+    if (maxAttendees === 0) return "لا يوجد حد أقصى للمشاركين";
+    return `${attendeesCount} من ${maxAttendees} مشارك`;
   };
 
   return (
