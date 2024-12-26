@@ -2,8 +2,13 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { toast } from "sonner";
 import { PhotosGallery } from "./PhotosGallery";
 
+interface Photo {
+  url: string;
+  description: string;
+}
+
 interface PhotosSectionProps {
-  photos: string[];
+  photos: Photo[];
   onPhotoUpload: (file: File) => Promise<void>;
   onPhotoDelete: (index: number) => void;
   maxPhotos?: number;
@@ -35,8 +40,8 @@ export const PhotosSection = ({
             {photos[index] ? (
               <div className="relative">
                 <img 
-                  src={photos[index]} 
-                  alt={`صورة ${index + 1}`} 
+                  src={photos[index].url} 
+                  alt={photos[index].description || `صورة ${index + 1}`} 
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <button

@@ -1,8 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
+interface Photo {
+  url: string;
+  description: string;
+}
+
 interface PhotosGalleryProps {
-  photos: string[];
+  photos: Photo[];
   onDelete: (index: number) => void;
 }
 
@@ -14,8 +19,8 @@ export const PhotosGallery = ({ photos, onDelete }: PhotosGalleryProps) => {
       {photos.map((photo, index) => (
         <div key={index} className="relative group">
           <img
-            src={photo}
-            alt={`صورة ${index + 1}`}
+            src={photo.url}
+            alt={photo.description || `صورة ${index + 1}`}
             className="w-full h-32 object-cover rounded-lg"
           />
           <Button
