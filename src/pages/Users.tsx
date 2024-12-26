@@ -39,6 +39,7 @@ const Users = () => {
         throw usersError;
       }
 
+      // Fetch user roles directly with a single query
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -54,20 +55,27 @@ const Users = () => {
         throw userRolesError;
       }
 
+      console.log('User roles data:', userRolesData);
+
+      // Create a map of user IDs to their roles
       const userRolesMap = (userRolesData as UserRoleResponse[]).reduce((acc, curr) => {
-        const firstRole = curr.roles[0]?.name || 'No role';
-        acc[curr.user_id] = firstRole;
+        if (curr.roles && curr.roles.name) {
+          acc[curr.user_id] = curr.roles.name;
+        }
         return acc;
       }, {} as Record<string, string>);
 
+      console.log('User roles map:', userRolesMap);
+
+      // Transform users data with roles
       const transformedUsers = usersResponse.users.map(authUser => ({
         id: authUser.id,
         username: authUser.email,
-        role: userRolesMap[authUser.id] || 'No role',
+        role: userRolesMap[authUser.id] || 'لم يتم تعيين دور',
         lastLogin: authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at).toLocaleString('ar-SA') : 'لم يسجل دخول بعد'
       }));
 
-      console.log('Transformed users:', transformedUsers);
+      console.log('Transformed users with roles:', transformedUsers);
       return transformedUsers as User[];
     }
   });

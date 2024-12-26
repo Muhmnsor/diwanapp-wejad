@@ -11,7 +11,7 @@ interface UserTableRowProps {
 
 export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
   const getRoleDisplayName = (roleName: string | undefined) => {
-    if (!roleName) return 'لم يتم تعيين دور';
+    if (!roleName || roleName === 'لم يتم تعيين دور') return 'لم يتم تعيين دور';
     
     switch (roleName) {
       case 'admin': return 'مشرف';

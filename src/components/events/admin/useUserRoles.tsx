@@ -6,7 +6,7 @@ interface Role {
 }
 
 interface UserRoleData {
-  roles: Role[];
+  roles: Role;
 }
 
 export const useUserRoles = () => {
@@ -45,7 +45,7 @@ export const useUserRoles = () => {
       }
 
       // Map through the roles and extract names
-      const roleNames = userRolesData.map((data: any) => data.roles.name);
+      const roleNames = userRolesData.map((data: UserRoleData) => data.roles.name);
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },
