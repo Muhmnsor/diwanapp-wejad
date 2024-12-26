@@ -17,7 +17,7 @@ export const Navigation = () => {
   };
 
   const handleCreateEventClick = () => {
-    navigate("/create");
+    navigate("/create-event");
   };
 
   const handleSettingsClick = () => {

@@ -4,6 +4,8 @@ import { EventsTabs } from "@/components/home/EventsTabs";
 import { useEvents } from "@/hooks/useEvents";
 import { useRegistrations } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
+import { TopHeader } from "@/components/layout/TopHeader";
+import { Footer } from "@/components/layout/Footer";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("upcoming");
@@ -77,15 +79,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen" dir="rtl">
+      <TopHeader />
       <Hero />
-      <EventsTabs
-        events={events}
-        upcomingEvents={upcomingEvents}
-        pastEvents={pastEvents}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        registrations={registrations}
-      />
+      <div className="container mx-auto px-4">
+        <EventsTabs
+          events={events}
+          upcomingEvents={upcomingEvents}
+          pastEvents={pastEvents}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          registrations={registrations}
+        />
+      </div>
+      <Footer />
     </div>
   );
 };
