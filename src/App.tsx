@@ -1,26 +1,25 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
-import Index from "@/pages/Index";
-import Login from "@/pages/Login";
-import Settings from "@/pages/Settings";
-import Users from "@/pages/Users";
-import EventDetails from "@/pages/EventDetails";
-import EventFeedback from "@/pages/EventFeedback";
-import CreateEvent from "@/pages/CreateEvent";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import CreateEvent from "./pages/CreateEvent";
+import EventDetails from "./pages/EventDetails";
+import Settings from "./pages/Settings";
+import Users from "./pages/Users";
+import EventFeedback from "./pages/EventFeedback";
+import { Toaster } from "./components/ui/toaster";
+import "./App.css";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Index />} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-        <Route path="/events/:id" element={<EventDetails />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/create-event" element={<CreateEvent />} />
         <Route path="/event/:id" element={<EventDetails />} />
-        <Route path="/events/:id/feedback" element={<EventFeedback />} />
-        <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+        <Route path="/event/:id/feedback" element={<EventFeedback />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/users" element={<Users />} />
       </Routes>
       <Toaster />
     </Router>
