@@ -8,6 +8,7 @@ import { PhotosSection } from "./reports/PhotosSection";
 import { LinksSection } from "./reports/LinksSection";
 import { FeedbackLink } from "./feedback/FeedbackLink";
 import { FeedbackSummary } from "./feedback/FeedbackSummary";
+import { EventReportsList } from "./reports/EventReportsList";
 
 interface EventReportFormProps {
   eventId: string;
@@ -108,6 +109,13 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
       toast.success("تم إضافة التقرير بنجاح");
       await queryClient.invalidateQueries({ queryKey: ['event-reports', eventId] });
       
+      // Reset form
+      setReportText("");
+      setPhotos([]);
+      setVideoLinks([]);
+      setAdditionalLinks([]);
+      setFiles([]);
+      
       if (onSuccess) {
         onSuccess();
       }
@@ -120,85 +128,89 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">رابط التقييم</h3>
-        <FeedbackLink eventId={eventId} />
-      </div>
+    <div className="space-y-6" dir="rtl">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">رابط التقييم</h3>
+          <FeedbackLink eventId={eventId} />
+        </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">نتائج التقييم</h3>
-        <FeedbackSummary eventId={eventId} />
-      </div>
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">نتائج التقييم</h3>
+          <FeedbackSummary eventId={eventId} />
+        </div>
 
-      <ReportTextSection value={reportText} onChange={setReportText} />
-      
-      <PhotosSection 
-        photos={photos} 
-        onPhotoUpload={handlePhotoUpload}
-        onPhotoDelete={handlePhotoDelete}
-        maxPhotos={6}
-        photoPlaceholders={[
-          "صورة توثيقية للحضور",
-          "صورة للمتحدث الرئيسي",
-          "صورة لقاعة الفعالية",
-          "صورة للأنشطة التفاعلية",
-          "صورة للمشاركين",
-          "صورة ختامية للفعالية"
-        ]}
-      />
-
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">تحميل الملفات</label>
-        <input 
-          type="file" 
-          multiple 
-          onChange={(e) => {
-            if (e.target.files) {
-              Array.from(e.target.files).forEach(handleFileUpload);
-            }
-          }} 
+        <ReportTextSection value={reportText} onChange={setReportText} />
+        
+        <PhotosSection 
+          photos={photos} 
+          onPhotoUpload={handlePhotoUpload}
+          onPhotoDelete={handlePhotoDelete}
+          maxPhotos={6}
+          photoPlaceholders={[
+            "صورة توثيقية للحضور",
+            "صورة للمتحدث الرئيسي",
+            "صورة لقاعة الفعالية",
+            "صورة للأنشطة التفاعلية",
+            "صورة للمشاركين",
+            "صورة ختامية للفعالية"
+          ]}
         />
-        {files.length > 0 && (
-          <ul className="list-disc list-inside space-y-1">
-            {files.map((file, index) => (
-              <li key={index}>{file.name}</li>
-            ))}
-          </ul>
-        )}
-      </div>
 
-      <LinksSection
-        title="روابط الفيديو"
-        placeholder="أدخل رابط الفيديو"
-        links={videoLinks}
-        currentLink={currentVideoLink}
-        onLinkChange={setCurrentVideoLink}
-        onAddLink={() => {
-          if (currentVideoLink) {
-            setVideoLinks(prev => [...prev, currentVideoLink]);
-            setCurrentVideoLink("");
-          }
-        }}
-      />
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">تحميل الملفات</label>
+          <input 
+            type="file" 
+            multiple 
+            onChange={(e) => {
+              if (e.target.files) {
+                Array.from(e.target.files).forEach(handleFileUpload);
+              }
+            }} 
+          />
+          {files.length > 0 && (
+            <ul className="list-disc list-inside space-y-1">
+              {files.map((file, index) => (
+                <li key={index}>{file.name}</li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-      <LinksSection
-        title="روابط إضافية"
-        placeholder="أدخل رابط إضافي (استبيانات، مواد تدريبية، إلخ)"
-        links={additionalLinks}
-        currentLink={currentAdditionalLink}
-        onLinkChange={setCurrentAdditionalLink}
-        onAddLink={() => {
-          if (currentAdditionalLink) {
-            setAdditionalLinks(prev => [...prev, currentAdditionalLink]);
-            setCurrentAdditionalLink("");
-          }
-        }}
-      />
+        <LinksSection
+          title="روابط الفيديو"
+          placeholder="أدخل رابط الفيديو"
+          links={videoLinks}
+          currentLink={currentVideoLink}
+          onLinkChange={setCurrentVideoLink}
+          onAddLink={() => {
+            if (currentVideoLink) {
+              setVideoLinks(prev => [...prev, currentVideoLink]);
+              setCurrentVideoLink("");
+            }
+          }}
+        />
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "جاري إرسال التقرير..." : "إرسال التقرير"}
-      </Button>
-    </form>
+        <LinksSection
+          title="روابط إضافية"
+          placeholder="أدخل رابط إضافي (استبيانات، مواد تدريبية، إلخ)"
+          links={additionalLinks}
+          currentLink={currentAdditionalLink}
+          onLinkChange={setCurrentAdditionalLink}
+          onAddLink={() => {
+            if (currentAdditionalLink) {
+              setAdditionalLinks(prev => [...prev, currentAdditionalLink]);
+              setCurrentAdditionalLink("");
+            }
+          }}
+        />
+
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "جاري إرسال التقرير..." : "إرسال التقرير"}
+        </Button>
+      </form>
+
+      <EventReportsList eventId={eventId} />
+    </div>
   );
 };
