@@ -29,6 +29,7 @@ export const EventAdminTabs = ({
   console.log("EventAdminTabs rendering with event:", event);
   console.log("EventAdminTabs id:", id);
   console.log("EventAdminTabs isAdmin:", isAdmin);
+  console.log("EventAdminTabs canAddReport:", canAddReport);
 
   return (
     <Tabs defaultValue="details" className="mb-8" dir="rtl">
@@ -45,8 +46,6 @@ export const EventAdminTabs = ({
           onAddToCalendar={onAddToCalendar}
           onRegister={onRegister}
           id={id}
-          canAddReport={canAddReport}
-          onAddReport={onAddReport}
           isAdmin={isAdmin}
         />
       </TabsContent>
