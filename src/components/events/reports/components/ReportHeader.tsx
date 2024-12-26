@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, FileDown, Images } from "lucide-react";
+import { MoreVertical, FileDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,16 +21,14 @@ import {
 interface ReportHeaderProps {
   createdAt: string;
   onDelete: () => void;
-  onDownloadPDF: () => void;
-  onDownloadImages: () => void;
+  onDownload: () => void;
   isDeleting?: boolean;
   eventTitle?: string;
 }
 
 export const ReportHeader = ({
   onDelete,
-  onDownloadPDF,
-  onDownloadImages,
+  onDownload,
   isDeleting,
 }: ReportHeaderProps) => {
   return (
@@ -41,13 +39,9 @@ export const ReportHeader = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onDownloadPDF}>
+        <DropdownMenuItem onClick={onDownload}>
           <FileDown className="h-4 w-4 ml-2" />
-          تحميل التقرير (PDF)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onDownloadImages}>
-          <Images className="h-4 w-4 ml-2" />
-          تحميل الصور (ZIP)
+          تحميل التقرير مع الصور
         </DropdownMenuItem>
         <AlertDialog>
           <AlertDialogTrigger asChild>
