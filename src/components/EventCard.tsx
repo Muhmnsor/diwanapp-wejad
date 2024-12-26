@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect } from "react";
-import { EventCardBadges } from "./events/cards/EventCardBadges";
-import { EventCardDetails } from "./events/cards/EventCardDetails";
-import { EventCardStatus } from "./events/cards/EventCardStatus";
-import { Users } from "lucide-react";
+import { EventCardContent } from "./events/cards/EventCardContent";
+import { getRegistrationStatusConfig } from "@/utils/eventStatusUtils";
 
 interface EventCardProps {
   id: string;
@@ -40,56 +38,16 @@ export const EventCard = ({
   event_hours = 0
 }: EventCardProps) => {
   
-  const getRegistrationStatus = () => {
-    const status = getEventStatus({
-      date,
-      time: "00:00",
-      max_attendees,
-      registrationStartDate: registration_start_date,
-      registrationEndDate: registration_end_date,
-      beneficiaryType: beneficiary_type
-    } as any);
+  const status = getEventStatus({
+    date,
+    time: "00:00",
+    max_attendees,
+    registrationStartDate: registration_start_date,
+    registrationEndDate: registration_end_date,
+    beneficiaryType: beneficiary_type
+  } as any);
 
-    switch (status) {
-      case 'eventStarted':
-        return { 
-          text: "انتهت الفعالية", 
-          variant: "destructive" as const, 
-          color: "bg-gray-500",
-          textColor: "text-white" 
-        };
-      case 'full':
-        return { 
-          text: "اكتمل التسجيل", 
-          variant: "destructive" as const, 
-          color: "bg-purple-500",
-          textColor: "text-white" 
-        };
-      case 'notStarted':
-        return { 
-          text: "لم يبدأ التسجيل", 
-          variant: "destructive" as const, 
-          color: "bg-yellow-500",
-          textColor: "text-black" 
-        };
-      case 'ended':
-        return { 
-          text: "انتهى التسجيل", 
-          variant: "destructive" as const, 
-          color: "bg-red-500",
-          textColor: "text-white" 
-        };
-      default:
-        return { 
-          text: "التسجيل متاح", 
-          variant: "secondary" as const, 
-          color: "bg-green-500",
-          textColor: "text-white" 
-        };
-    }
-  };
-
-  const status = getRegistrationStatus();
+  const statusConfig = getRegistrationStatusConfig(status);
 
   useEffect(() => {
     console.log('EventCard data:', {
@@ -114,30 +72,18 @@ export const EventCard = ({
         <CardHeader className="p-4">
           <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 p-4 pt-0">
-          <EventCardBadges
+        <CardContent>
+          <EventCardContent
+            date={date}
+            location={location}
             eventType={event_type}
             price={price}
             beneficiaryType={beneficiary_type}
             certificateType={certificate_type}
             eventHours={event_hours}
+            maxAttendees={max_attendees}
+            status={statusConfig}
           />
-          <EventCardDetails
-            date={date}
-            location={location}
-          />
-          {max_attendees > 0 && (
-            <>
-              <div className="flex items-center gap-2 text-gray-600 text-sm">
-                <Users className="w-4 h-4" />
-                <span>{max_attendees} مقعد</span>
-              </div>
-              <EventCardStatus
-                maxAttendees={max_attendees}
-                status={status}
-              />
-            </>
-          )}
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button asChild className="w-full" size="sm">
