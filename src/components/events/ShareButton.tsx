@@ -29,9 +29,7 @@ export const ShareButton = ({
           toast("تم نسخ رابط الفعالية إلى الحافظة");
         } catch (error) {
           console.error('Error copying link:', error);
-          toast("لم نتمكن من نسخ الرابط", {
-            variant: "destructive",
-          });
+          toast.error("لم نتمكن من نسخ الرابط");
         }
         break;
       
