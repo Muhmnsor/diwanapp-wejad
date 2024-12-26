@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import * as XLSX from 'xlsx';
-import { Skeleton } from "@/components/ui/skeleton";
+import { ReportListItem } from "./ReportListItem";
+import { ReportListHeader } from "./ReportListHeader";
+import { ReportListContainer } from "./ReportListContainer";
 
 interface EventReportsListProps {
   eventId: string;
@@ -64,65 +64,18 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
     XLSX.writeFile(workbook, `تقرير-الفعالية-${new Date(report.created_at).toLocaleDateString('ar')}.xlsx`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4 mt-6">
-        <h3 className="text-lg font-semibold">التقارير السابقة</h3>
-        <div className="space-y-4">
-          {[1, 2].map((i) => (
-            <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-8 w-24" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    console.error('Error in EventReportsList:', error);
-    return (
-      <div className="text-red-500 p-4 text-center">
-        حدث خطأ أثناء تحميل التقارير
-      </div>
-    );
-  }
-
-  if (!reports?.length) {
-    return (
-      <div className="text-gray-500 p-4 text-center">
-        لا توجد تقارير سابقة
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 mt-6">
-      <h3 className="text-lg font-semibold">التقارير السابقة</h3>
-      <div className="space-y-4">
-        {reports.map((report) => (
-          <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="space-y-1">
-              <p className="text-sm text-gray-600">
-                {new Date(report.created_at).toLocaleDateString('ar')}
-              </p>
-              <p className="text-xs text-gray-500">
-                {report.executor?.email || 'غير محدد'}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDownload(report)}
-              className="gap-2"
-            >
-              <Download className="w-4 h-4" />
-              تحميل التقرير
-            </Button>
-          </div>
+      <ReportListHeader title="التقارير السابقة" />
+      <ReportListContainer isLoading={isLoading} error={error}>
+        {reports?.map((report) => (
+          <ReportListItem
+            key={report.id}
+            report={report}
+            onDownload={handleDownload}
+          />
         ))}
-      </div>
+      </ReportListContainer>
     </div>
   );
 };
