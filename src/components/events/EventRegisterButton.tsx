@@ -10,7 +10,7 @@ interface EventRegisterButtonProps {
 
 export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonProps) => {
   useEffect(() => {
-    console.log('EventRegisterButton status updated:', status);
+    console.log('EventRegisterButton status:', status);
   }, [status]);
   
   const config = getStatusConfig(status);

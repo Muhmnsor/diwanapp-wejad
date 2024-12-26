@@ -24,7 +24,6 @@ export const EventRegistrationDialog = ({
   const status = getEventStatus(event);
   console.log('Registration status in dialog:', status);
 
-  // إغلاق النافذة إذا كان التسجيل غير متاح
   if (status !== 'available' && open) {
     console.log('Closing dialog because registration is not allowed. Status:', status);
     onOpenChange(false);

@@ -17,31 +17,29 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
   }));
 
   useEffect(() => {
-    console.log('Event data in details content updated:', {
+    console.log('Event data in details content:', {
       title: event.title,
       date: event.date,
       registrationDates: {
         start: event.registrationStartDate,
         end: event.registrationEndDate
       },
-      certificate: {
-        type: event.certificateType,
-        hours: event.eventHours
-      }
+      attendees: event.attendees,
+      maxAttendees: event.max_attendees
     });
 
     const newStatus = getEventStatus({
       ...event,
       max_attendees: event.max_attendees
     });
-    console.log('New event status:', newStatus);
+    console.log('Event status updated to:', newStatus);
     setEventStatus(newStatus);
   }, [
     event.date, 
     event.registrationStartDate, 
     event.registrationEndDate,
-    event.certificateType,
-    event.eventHours
+    event.attendees,
+    event.max_attendees
   ]);
 
   const handleRegister = () => {
