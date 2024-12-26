@@ -5,7 +5,6 @@ import { deleteReports } from "./deletion/deleteReports";
 import { deleteRegistrations } from "./deletion/deleteRegistrations";
 import { deleteEvent } from "./deletion/deleteEvent";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface EventDeletionHandlerProps {
   eventId: string;
@@ -18,15 +17,24 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     
     // Delete related records in order
     await deleteFeedback(eventId);
+    console.log('Feedback deleted');
+    
     await deleteAttendance(eventId);
+    console.log('Attendance deleted');
+    
     await deleteNotifications(eventId);
+    console.log('Notifications deleted');
+    
     await deleteReports(eventId);
+    console.log('Reports deleted');
+    
     await deleteRegistrations(eventId);
+    console.log('Registrations deleted');
     
     // Finally delete the event itself
     await deleteEvent(eventId);
+    console.log('Event deleted');
 
-    console.log('Event and related records deleted successfully');
     toast.success("تم حذف الفعالية بنجاح");
     onSuccess();
   } catch (error) {

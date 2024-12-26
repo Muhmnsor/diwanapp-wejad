@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const deleteRegistrations = async (eventId: string) => {
-  console.log('Deleting registrations...');
+  console.log('Deleting event registrations...');
   const { error } = await supabase
     .from('registrations')
     .delete()
