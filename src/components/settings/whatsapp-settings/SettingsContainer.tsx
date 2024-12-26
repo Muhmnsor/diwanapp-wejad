@@ -73,25 +73,24 @@ export const SettingsContainer = () => {
   });
 
   const testConnection = async () => {
+    const toastId = toast.loading("جاري اختبار الاتصال...");
     try {
-      toast.loading("جاري اختبار الاتصال...");
-      const response = await fetch("/api/test-whatsapp-connection", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(settings),
+      const response = await supabase.functions.invoke('test-whatsapp-connection', {
+        body: settings
       });
-      
-      if (response.ok) {
-        toast.success("تم الاتصال بنجاح");
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.success) {
+        toast.success("تم الاتصال بنجاح", { id: toastId });
       } else {
-        const error = await response.text();
-        toast.error(`فشل الاتصال: ${error}`);
+        toast.error(response.data?.error || "فشل الاتصال", { id: toastId });
       }
     } catch (error) {
       console.error("Error testing connection:", error);
-      toast.error("حدث خطأ أثناء اختبار الاتصال");
+      toast.error("حدث خطأ أثناء اختبار الاتصال", { id: toastId });
     }
   };
 
