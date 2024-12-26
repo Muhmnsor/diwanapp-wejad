@@ -2,6 +2,7 @@ import { Event } from "@/store/eventStore";
 import { EventInfo } from "./EventInfo";
 import { EventDescription } from "./EventDescription";
 import { EventRegisterButton } from "./EventRegisterButton";
+import { EventBadges } from "./badges/EventBadges";
 import { useEffect, useState } from "react";
 import { getEventStatus } from "@/utils/eventUtils";
 
@@ -50,6 +51,16 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
 
   return (
     <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
+      <div className="py-8">
+        <EventBadges
+          eventType={event.eventType}
+          price={event.price}
+          beneficiaryType={event.beneficiaryType}
+          certificateType={event.certificateType}
+          eventHours={event.eventHours}
+        />
+      </div>
+
       <div className="py-8 px-8">
         <EventInfo
           date={event.date}
