@@ -11,11 +11,26 @@ interface EventReportFormProps {
   onSuccess?: () => void;
 }
 
+interface PhotoWithDescription {
+  url: string;
+  description: string;
+}
+
+interface ReportFormData {
+  report_text: string;
+  detailed_description: string;
+  photos: PhotoWithDescription[];
+}
+
 export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) => {
   const { user } = useAuthStore();
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<ReportFormData>({
+    defaultValues: {
+      photos: Array(6).fill({ url: '', description: '' })
+    }
+  });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ReportFormData) => {
     try {
       console.log('Submitting report with data:', { ...data, eventId, executorId: user?.id });
       
@@ -26,10 +41,8 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
             event_id: eventId,
             executor_id: user?.id,
             report_text: data.report_text,
-            satisfaction_level: parseInt(data.satisfaction_level),
-            photos: data.photos ? [data.photos] : [],
-            video_links: data.video_links ? [data.video_links] : [],
-            additional_links: data.additional_links ? [data.additional_links] : [],
+            detailed_description: data.detailed_description,
+            photos: data.photos.filter(photo => photo.url && photo.description),
           }
         ]);
 
@@ -48,7 +61,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="report_text">نص التقرير</Label>
         <Textarea
@@ -59,51 +72,39 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="satisfaction_level">مستوى الرضا (1-5)</Label>
-        <Input
-          type="number"
-          id="satisfaction_level"
-          {...register("satisfaction_level", {
-            required: true,
-            min: 1,
-            max: 5
-          })}
-          min="1"
-          max="5"
+        <Label htmlFor="detailed_description">تفاصيل الفعالية الدقيقة</Label>
+        <Textarea
+          id="detailed_description"
+          {...register("detailed_description", { required: true })}
+          placeholder="اكتب تفاصيل الفعالية بشكل دقيق..."
+          className="h-32"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="photos">روابط الصور</Label>
-        <Input
-          type="text"
-          id="photos"
-          {...register("photos")}
-          placeholder="رابط الصورة"
-        />
+      <div className="space-y-4">
+        <Label>صور الفعالية</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="space-y-2 p-4 border rounded-lg">
+              <Label htmlFor={`photos.${index}.url`}>رابط الصورة {index + 1}</Label>
+              <Input
+                id={`photos.${index}.url`}
+                {...register(`photos.${index}.url`)}
+                placeholder="رابط الصورة"
+              />
+              <Label htmlFor={`photos.${index}.description`}>وصف الصورة {index + 1}</Label>
+              <Textarea
+                id={`photos.${index}.description`}
+                {...register(`photos.${index}.description`)}
+                placeholder="اكتب وصفاً للصورة..."
+                className="h-20"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="video_links">روابط الفيديو</Label>
-        <Input
-          type="text"
-          id="video_links"
-          {...register("video_links")}
-          placeholder="رابط الفيديو"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="additional_links">روابط إضافية</Label>
-        <Input
-          type="text"
-          id="additional_links"
-          {...register("additional_links")}
-          placeholder="رابط إضافي"
-        />
-      </div>
-
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "جاري الإرسال..." : "إرسال التقرير"}
       </Button>
     </form>
