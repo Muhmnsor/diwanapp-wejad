@@ -16,7 +16,7 @@ export const EventDetails = ({
   location,
   eventType,
   attendees,
-  maxAttendees
+  maxAttendees = 0
 }: EventDetailsProps) => {
   const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees || 0;
   const remainingSeats = maxAttendees - attendeesCount;
@@ -27,6 +27,14 @@ export const EventDetails = ({
   
   const formattedDate = formatDateWithDay(date);
   const formattedTime = formatTime12Hour(time);
+
+  const getSeatsText = () => {
+    if (!maxAttendees) return "لا توجد مقاعد متاحة";
+    if (attendeesCount === 0) return `${maxAttendees} مقعد متاح`;
+    const text = `${attendeesCount} من ${maxAttendees} مقعد`;
+    if (remainingSeats > 0) return `${text} (متبقي ${remainingSeats} مقعد)`;
+    return text;
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -57,8 +65,7 @@ export const EventDetails = ({
           <Users className="h-5 w-5 text-primary" />
         </div>
         <span className="text-[#1A1F2C]" dir="rtl">
-          {attendeesCount > 0 ? `${attendeesCount} من ${maxAttendees} مقعد` : `${maxAttendees} مقعد متاح`}
-          {remainingSeats > 0 && attendeesCount > 0 && ` (متبقي ${remainingSeats} مقعد)`}
+          {getSeatsText()}
         </span>
       </div>
     </div>
