@@ -7,6 +7,15 @@ import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { UsersTable } from "@/components/users/UsersTable";
 import type { Role, User } from "@/components/users/types";
 
+// Define the type for the user roles response
+interface UserRoleResponse {
+  user_id: string;
+  roles: {
+    name: string;
+    description: string;
+  };
+}
+
 const Users = () => {
   const { user } = useAuthStore();
 
@@ -47,10 +56,10 @@ const Users = () => {
       }
 
       // Transform the data into the expected format
-      const transformedUsers = userRolesData.map(userRole => ({
+      const transformedUsers = (userRolesData as UserRoleResponse[]).map(userRole => ({
         id: userRole.user_id,
         username: userRole.user_id, // We'll only show the user ID for now since we can't access emails
-        role: userRole.roles?.name || 'No role',
+        role: userRole.roles.name || 'No role',
         lastLogin: '-' // We can't access last login time without admin privileges
       }));
 
