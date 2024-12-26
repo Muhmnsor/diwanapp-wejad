@@ -30,42 +30,29 @@ const EventDetails = () => {
 
       const { data: eventData, error: eventError } = await supabase
         .from("events")
-        .select(`
-          *,
-          (SELECT count(*)::integer FROM registrations WHERE event_id = events.id) as attendees
-        `)
+        .select("*, registrations(count)")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (eventError) {
         console.error("Error fetching event:", eventError);
         throw eventError;
       }
 
-      console.log("Event data fetched:", eventData);
-      return eventData as EventWithAttendees;
+      if (!eventData) {
+        console.log("No event found with id:", id);
+        return null;
+      }
+
+      const eventWithAttendees: EventWithAttendees = {
+        ...eventData,
+        attendees: eventData.registrations?.[0]?.count || 0
+      };
+
+      console.log("Event data fetched:", eventWithAttendees);
+      return eventWithAttendees;
     },
   });
-
-  const handleEdit = () => {
-    navigate(`/event/edit/${id}`);
-  };
-
-  const handleDelete = async () => {
-    if (!id) return;
-    await handleEventDeletion({
-      eventId: id,
-      onSuccess: () => navigate("/")
-    });
-  };
-
-  const handleAddToCalendar = () => {
-    toast.success("تمت إضافة الفعالية إلى التقويم");
-  };
-
-  const handleRegister = () => {
-    toast.success("تم التسجيل في الفعالية");
-  };
 
   if (isLoading) {
     console.log("Loading event details...");
@@ -89,10 +76,19 @@ const EventDetails = () => {
       <div className="container mx-auto px-4 py-8">
         <EventDetailsView 
           event={event}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAddToCalendar={handleAddToCalendar}
-          onRegister={handleRegister}
+          onEdit={() => navigate(`/event/edit/${id}`)}
+          onDelete={async () => {
+            await handleEventDeletion({
+              eventId: id,
+              onSuccess: () => navigate("/")
+            });
+          }}
+          onAddToCalendar={() => {
+            toast.success("تمت إضافة الفعالية إلى التقويم");
+          }}
+          onRegister={() => {
+            toast.success("تم التسجيل في الفعالية");
+          }}
           id={id}
         />
       </div>
