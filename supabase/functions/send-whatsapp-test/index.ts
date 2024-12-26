@@ -17,14 +17,12 @@ const VALID_MESSAGE_TYPES = [
 type MessageType = typeof VALID_MESSAGE_TYPES[number];
 
 interface WhatsAppMessage {
-  data: {
-    countryCode: string;
-    phoneNumber: string;
-    type: MessageType;
-    text?: {
-      content: string;
-    };
-  }
+  countryCode: string;
+  phoneNumber: string;
+  type: MessageType;
+  text?: {
+    content: string;
+  };
 }
 
 console.log("Send WhatsApp Test Message function started")
@@ -63,36 +61,19 @@ serve(async (req) => {
       )
     }
 
-    // Prepare WhatsApp message with proper validation
-    const message: WhatsAppMessage = {
-      data: {
-        countryCode: "+966",
-        phoneNumber: "583370003",
-        type: "Text",
-        text: {
-          content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
-        }
+    // Prepare WhatsApp message
+    const message = {
+      countryCode: "+966",
+      phoneNumber: business_phone.replace("+966", ""),
+      type: "Text" as MessageType,
+      text: {
+        content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
       }
-    }
-
-    // Validate message type
-    if (!VALID_MESSAGE_TYPES.includes(message.data.type)) {
-      console.error('Invalid message type:', message.data.type)
-      return new Response(
-        JSON.stringify({
-          error: 'نوع الرسالة غير صالح',
-          valid_types: VALID_MESSAGE_TYPES
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      )
     }
 
     // Send test message using Interakt API
     console.log("Sending test message via Interakt API with payload:", {
-      ...message,
+      message,
       api_key: "***"
     })
 
@@ -102,7 +83,7 @@ serve(async (req) => {
         'Authorization': `Basic ${api_key}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(message)
+      body: JSON.stringify({ data: message })
     })
 
     const responseText = await response.text()
