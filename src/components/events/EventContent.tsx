@@ -23,7 +23,9 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         end: event.registrationEndDate
       },
       attendees: event.attendees,
-      maxAttendees: event.max_attendees
+      maxAttendees: event.max_attendees,
+      certificateType: event.certificateType,
+      eventHours: event.eventHours
     });
 
     const newStatus = getEventStatus(event);
@@ -53,11 +55,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
       <div className="py-8">
         <EventBadges
-          eventType={event.eventType}
+          eventType={event.event_type}
           price={event.price}
           beneficiaryType={event.beneficiaryType}
-          certificateType={event.certificateType}
-          eventHours={event.eventHours}
+          certificateType={event.certificate_type}
+          eventHours={event.event_hours}
         />
       </div>
 
@@ -68,11 +70,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
           location={event.location}
           attendees={event.attendees}
           maxAttendees={event.max_attendees}
-          eventType={event.eventType}
+          eventType={event.event_type}
           price={event.price}
           beneficiaryType={event.beneficiaryType}
-          certificateType={event.certificateType}
-          eventHours={event.eventHours}
+          certificateType={event.certificate_type}
+          eventHours={event.event_hours}
           showBadges={false}
         />
       </div>
