@@ -14,6 +14,12 @@ import { ReportDeleteDialog } from "./components/ReportDeleteDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+} from "@/components/ui/table";
 
 export interface ReportListItemProps {
   report: {
@@ -36,7 +42,6 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch event details to get the title
   const { data: event } = useQuery({
     queryKey: ["event", report.event_id],
     queryFn: async () => {
@@ -70,7 +75,6 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
       }
 
       toast.success("تم حذف التقرير بنجاح");
-      // Invalidate the reports query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['event-reports'] });
       setIsDeleteDialogOpen(false);
     } catch (error) {
@@ -79,7 +83,6 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
     }
   };
 
-  // Parse photos array if it's a string
   const parsedPhotos = report.photos?.map(photo => {
     if (typeof photo === 'string') {
       try {
@@ -95,33 +98,41 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
 
   return (
     <>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="space-y-4 border rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  {isOpen ? <ChevronUp /> : <ChevronDown />}
-                </Button>
-              </CollapsibleTrigger>
-              <ReportHeader 
-                createdAt={report.created_at} 
-                onDownload={() => onDownload(report)}
-                onDelete={() => setIsDeleteDialogOpen(true)}
-                eventTitle={event?.title}
-              />
-            </div>
-          </div>
+      <div className="border rounded-lg overflow-hidden bg-white">
+        <Table>
+          <TableBody>
+            <TableRow className="hover:bg-muted/0">
+              <TableCell className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        {isOpen ? <ChevronUp /> : <ChevronDown />}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <ReportHeader 
+                      createdAt={report.created_at} 
+                      onDownload={() => onDownload(report)}
+                      onDelete={() => setIsDeleteDialogOpen(true)}
+                      eventTitle={event?.title}
+                    />
+                  </div>
+                </div>
 
-          <CollapsibleContent>
-            <div className="space-y-6 pt-4">
-              <ReportContent report={report} />
-              <Separator />
-              <ReportPhotos photos={parsedPhotos} />
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
+                <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                  <CollapsibleContent>
+                    <div className="space-y-6 pt-4">
+                      <ReportContent report={report} />
+                      <Separator />
+                      <ReportPhotos photos={parsedPhotos} />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
 
       <ReportDeleteDialog
         open={isDeleteDialogOpen}
