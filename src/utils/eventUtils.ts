@@ -27,8 +27,8 @@ export const getEventStatus = (event: Event): EventStatus => {
     title: event.title,
     date: event.date,
     time: event.time,
-    registrationStartDate: event.registration_start_date || event.registrationStartDate,
-    registrationEndDate: event.registration_end_date || event.registrationEndDate,
+    registrationStartDate: event.registrationStartDate || event.registration_start_date,
+    registrationEndDate: event.registrationEndDate || event.registration_end_date,
     attendees: event.attendees,
     max_attendees: event.max_attendees
   });
@@ -38,10 +38,10 @@ export const getEventStatus = (event: Event): EventStatus => {
   const eventDateTime = getEventDateTime(event.date, event.time);
   
   // تحويل تواريخ التسجيل إلى كائنات Date
-  const registrationStartDate = (event.registration_start_date || event.registrationStartDate) ? 
-    new Date(event.registration_start_date || event.registrationStartDate) : null;
-  const registrationEndDate = (event.registration_end_date || event.registrationEndDate) ? 
-    new Date(event.registration_end_date || event.registrationEndDate) : null;
+  const registrationStartDate = (event.registrationStartDate || event.registration_start_date) ? 
+    new Date(event.registrationStartDate || event.registration_start_date) : null;
+  const registrationEndDate = (event.registrationEndDate || event.registration_end_date) ? 
+    new Date(event.registrationEndDate || event.registration_end_date) : null;
 
   // تسجيل التواريخ للتحقق
   console.log('Registration dates:', {

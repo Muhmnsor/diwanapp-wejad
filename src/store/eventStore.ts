@@ -16,6 +16,8 @@ export interface Event {
   price: number | "free";
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
+  registration_start_date?: string | null;  // Added for database compatibility
+  registration_end_date?: string | null;    // Added for database compatibility
   beneficiaryType: BeneficiaryType;
   certificateType: string;
   eventHours: number;
