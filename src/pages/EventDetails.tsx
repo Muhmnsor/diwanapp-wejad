@@ -8,6 +8,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
+import { Event } from "@/store/eventStore";
+
+interface EventWithAttendees extends Event {
+  attendees: number;
+}
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -27,7 +32,7 @@ const EventDetails = () => {
         .from("events")
         .select(`
           *,
-          (SELECT count(*) FROM registrations WHERE event_id = events.id) as attendees
+          (SELECT count(*)::integer FROM registrations WHERE event_id = events.id) as attendees
         `)
         .eq("id", id)
         .single();
@@ -38,7 +43,7 @@ const EventDetails = () => {
       }
 
       console.log("Event data fetched:", eventData);
-      return eventData;
+      return eventData as EventWithAttendees;
     },
   });
 
