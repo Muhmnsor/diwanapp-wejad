@@ -48,6 +48,7 @@ export const EventCardBadges = ({
   };
 
   const shouldShowCertificate = certificateType && certificateType !== 'none';
+  // Only show hours if certificate exists AND hours are greater than 0
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
   return (
@@ -79,7 +80,7 @@ export const EventCardBadges = ({
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
-      {shouldShowHours && eventHours > 0 && (
+      {shouldShowHours && (
         <Badge 
           variant="outline" 
           className="flex items-center gap-1 border-[#8E9196] bg-[#F1F1F1] text-[#403E43]"
