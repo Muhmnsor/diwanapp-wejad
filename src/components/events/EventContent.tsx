@@ -73,6 +73,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
           beneficiaryType={event.beneficiaryType}
           certificateType={event.certificateType}
           eventHours={event.eventHours}
+          showBadges={false}
         />
       </div>
 

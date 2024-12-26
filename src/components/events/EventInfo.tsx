@@ -13,6 +13,7 @@ interface EventInfoProps {
   beneficiaryType: BeneficiaryType;
   certificateType?: string;
   eventHours?: number;
+  showBadges?: boolean;
 }
 
 export const EventInfo = ({ 
@@ -25,7 +26,8 @@ export const EventInfo = ({
   price,
   beneficiaryType,
   certificateType,
-  eventHours
+  eventHours,
+  showBadges = true
 }: EventInfoProps) => {
   console.log('EventInfo received props:', {
     certificateType,
@@ -34,13 +36,15 @@ export const EventInfo = ({
 
   return (
     <div className="space-y-8">
-      <EventBadges
-        eventType={eventType}
-        price={price}
-        beneficiaryType={beneficiaryType}
-        certificateType={certificateType}
-        eventHours={eventHours}
-      />
+      {showBadges && (
+        <EventBadges
+          eventType={eventType}
+          price={price}
+          beneficiaryType={beneficiaryType}
+          certificateType={certificateType}
+          eventHours={eventHours}
+        />
+      )}
       
       <EventDetails
         date={date}
