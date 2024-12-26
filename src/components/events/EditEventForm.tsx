@@ -82,11 +82,11 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         time: formData.time,
         location: formData.location,
         image_url: formData.imageUrl || formData.image_url,
-        registration_start_date: formData.registrationStartDate,
-        registration_end_date: formData.registrationEndDate,
-        certificate_type: formData.certificateType,
-        event_hours: formData.eventHours || null,
-        event_type: formData.eventType,
+        registration_start_date: formData.registrationStartDate || formData.registration_start_date,
+        registration_end_date: formData.registrationEndDate || formData.registration_end_date,
+        certificate_type: formData.certificateType || formData.certificate_type,
+        event_hours: formData.eventHours || formData.event_hours || null,
+        event_type: formData.eventType || formData.event_type,
         price: formData.price === 'free' ? null : formData.price,
         max_attendees: formData.max_attendees,
         beneficiary_type: formData.beneficiaryType
@@ -107,7 +107,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
       console.log('Event updated successfully in database');
       onSave(formData);
       toast.success("تم تحديث الفعالية بنجاح");
-      onCancel(); // Close the dialog instead of reloading
+      onCancel();
     } catch (error) {
       console.error('Error updating event:', error);
       toast.error("حدث خطأ أثناء تحديث الفعالية");
