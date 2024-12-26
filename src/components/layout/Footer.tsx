@@ -3,7 +3,7 @@ import { Instagram, Linkedin, X } from "lucide-react";
 
 export const Footer = () => {
   return (
-    <footer className="mt-16 py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
+    <footer className="mt-auto py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           {/* Logo - Left Side */}

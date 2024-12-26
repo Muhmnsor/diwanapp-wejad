@@ -36,9 +36,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen" dir="rtl">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold mb-8">تسجيل الدخول</h1>
           <form onSubmit={handleLogin} className="space-y-6">
