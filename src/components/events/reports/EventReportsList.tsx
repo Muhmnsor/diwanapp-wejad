@@ -35,15 +35,22 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
     },
   });
 
+  const reportRows = reports?.map((report) => (
+    <ReportListItem 
+      key={report.id} 
+      report={report}
+    />
+  ));
+
   return (
-    <ReportListContainer isLoading={isLoading} error={error}>
-      <ReportListHeader title="تقارير الفعالية" />
-      {reports?.map((report) => (
-        <ReportListItem 
-          key={report.id} 
-          report={report}
-        />
-      ))}
+    <ReportListContainer 
+      isLoading={isLoading} 
+      error={error}
+    >
+      {{
+        header: <ReportListHeader title="تقارير الفعالية" />,
+        rows: reportRows
+      }}
     </ReportListContainer>
   );
 };

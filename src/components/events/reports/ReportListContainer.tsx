@@ -1,10 +1,13 @@
-import { Table, TableBody } from "@/components/ui/table";
+import { Table, TableBody, TableHeader } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ReportListContainerProps {
   isLoading?: boolean;
   error?: Error | null;
-  children: React.ReactNode;
+  children: {
+    header: React.ReactNode;
+    rows: React.ReactNode;
+  };
 }
 
 export const ReportListContainer = ({ isLoading, error, children }: ReportListContainerProps) => {
@@ -30,19 +33,12 @@ export const ReportListContainer = ({ isLoading, error, children }: ReportListCo
     );
   }
 
-  if (!children) {
-    return (
-      <div className="text-gray-500 p-4 text-center">
-        لا توجد تقارير سابقة
-      </div>
-    );
-  }
-
   return (
     <div className="rounded-md border" dir="rtl">
       <Table>
+        {children.header}
         <TableBody>
-          {children}
+          {children.rows}
         </TableBody>
       </Table>
     </div>
