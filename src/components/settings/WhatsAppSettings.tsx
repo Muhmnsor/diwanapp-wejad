@@ -25,7 +25,6 @@ export const WhatsAppSettings = () => {
     },
   });
 
-  // Initialize form with existing settings
   useEffect(() => {
     if (settings) {
       setBusinessPhone(settings.business_phone);
@@ -71,7 +70,7 @@ export const WhatsAppSettings = () => {
   }
 
   return (
-    <Card>
+    <Card dir="rtl">
       <CardHeader>
         <CardTitle>إعدادات الواتساب</CardTitle>
       </CardHeader>
@@ -84,6 +83,7 @@ export const WhatsAppSettings = () => {
               onChange={(e) => setBusinessPhone(e.target.value)}
               placeholder="966500000000"
               dir="ltr"
+              className="text-left"
             />
           </div>
           <div className="space-y-2">
@@ -94,6 +94,7 @@ export const WhatsAppSettings = () => {
               type="password"
               placeholder="أدخل مفتاح API"
               dir="ltr"
+              className="text-left"
             />
           </div>
           <Button type="submit">حفظ الإعدادات</Button>

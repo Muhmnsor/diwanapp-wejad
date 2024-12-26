@@ -111,7 +111,7 @@ export const WhatsAppTemplates = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" dir="rtl">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">قوالب الرسائل</h2>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -134,6 +134,7 @@ export const WhatsAppTemplates = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="أدخل اسم القالب"
+                  className="text-right"
                 />
               </div>
               <div className="space-y-2">
@@ -143,6 +144,7 @@ export const WhatsAppTemplates = () => {
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="أدخل محتوى الرسالة"
                   rows={5}
+                  className="text-right"
                 />
               </div>
               <Button type="submit" className="w-full">
@@ -156,18 +158,18 @@ export const WhatsAppTemplates = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>اسم القالب</TableHead>
-            <TableHead>محتوى الرسالة</TableHead>
-            <TableHead>الإجراءات</TableHead>
+            <TableHead className="text-right">اسم القالب</TableHead>
+            <TableHead className="text-right">محتوى الرسالة</TableHead>
+            <TableHead className="text-right">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {templates?.map((template) => (
             <TableRow key={template.id}>
-              <TableCell>{template.name}</TableCell>
-              <TableCell className="max-w-md truncate">{template.content}</TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
+              <TableCell className="text-right">{template.name}</TableCell>
+              <TableCell className="text-right max-w-md truncate">{template.content}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex space-x-2 justify-end">
                   <Button
                     variant="outline"
                     size="icon"
