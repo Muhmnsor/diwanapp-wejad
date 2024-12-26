@@ -36,12 +36,13 @@ export const EventAdminTabs = ({
         <EventDetailsView
           event={{
             ...event,
-            max_attendees: event.max_attendees // Ensure we're using max_attendees consistently
+            max_attendees: event.max_attendees
           }}
           onEdit={onEdit}
           onDelete={onDelete}
           onAddToCalendar={onAddToCalendar}
           onRegister={onRegister}
+          id={id}
         />
       </TabsContent>
       
