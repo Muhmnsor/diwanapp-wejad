@@ -4,29 +4,36 @@ import { Footer } from "@/components/layout/Footer";
 import { EventLoadingState } from "@/components/events/EventLoadingState";
 import { EventNotFound } from "@/components/events/EventNotFound";
 import { EventDetailsView } from "@/components/events/EventDetailsView";
-import { EventAdminTabs } from "@/components/events/admin/EventAdminTabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/authStore";
 import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
 
-  const { data: event, isLoading } = useQuery({
+  const { data: event, isLoading, error } = useQuery({
     queryKey: ["event", id],
     queryFn: async () => {
       console.log("Fetching event details for id:", id);
+      
+      if (!id) {
+        console.error("No event ID provided");
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("events")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching event:", error);
+        throw error;
+      }
+
       console.log("Event data fetched:", data);
       return data;
     },
@@ -52,34 +59,34 @@ const EventDetails = () => {
     toast.success("تم التسجيل في الفعالية");
   };
 
-  if (isLoading) return <EventLoadingState />;
-  if (!event) return <EventNotFound />;
+  if (isLoading) {
+    console.log("Loading event details...");
+    return <EventLoadingState />;
+  }
+
+  if (error) {
+    console.error("Error loading event:", error);
+    toast.error("حدث خطأ في تحميل تفاصيل الفعالية");
+    return <EventNotFound />;
+  }
+
+  if (!event) {
+    console.log("Event not found");
+    return <EventNotFound />;
+  }
 
   return (
     <div className="min-h-screen" dir="rtl">
       <TopHeader />
       <div className="container mx-auto px-4 py-8">
-        {user?.isAdmin ? (
-          <EventAdminTabs 
-            event={event}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddToCalendar={handleAddToCalendar}
-            onRegister={handleRegister}
-            id={id || ''}
-            canAddReport={true}
-            onAddReport={() => {}}
-          />
-        ) : (
-          <EventDetailsView 
-            event={event}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddToCalendar={handleAddToCalendar}
-            onRegister={handleRegister}
-            id={id || ''}
-          />
-        )}
+        <EventDetailsView 
+          event={event}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddToCalendar={handleAddToCalendar}
+          onRegister={handleRegister}
+          id={id || ''}
+        />
       </div>
       <Footer />
     </div>
