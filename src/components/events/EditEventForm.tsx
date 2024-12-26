@@ -28,7 +28,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     eventHours: event.eventHours || 0,
     price: event.price || 'free',
     max_attendees: event.max_attendees || 0,
-    beneficiaryType: event.beneficiary_type || 'both',
+    beneficiaryType: event.beneficiaryType || 'both',
     event_type: event.event_type || 'in-person',
     eventType: event.eventType || 'in-person',
     attendees: event.attendees || 0,
@@ -57,7 +57,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
       eventHours: event.eventHours || 0,
       price: event.price || 'free',
       max_attendees: event.max_attendees || 0,
-      beneficiaryType: event.beneficiary_type || 'both',
+      beneficiaryType: event.beneficiaryType || 'both',
       event_type: event.event_type || 'in-person',
       eventType: event.eventType || 'in-person',
       attendees: event.attendees || 0,
@@ -89,7 +89,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         event_type: formData.eventType || formData.event_type,
         price: formData.price === 'free' ? null : formData.price,
         max_attendees: formData.max_attendees,
-        beneficiary_type: formData.beneficiaryType
+        beneficiaryType: formData.beneficiaryType
       };
       
       console.log('Updating event with data:', updateData);
