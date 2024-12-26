@@ -34,7 +34,7 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
       console.log('Fetching reports for event:', eventId);
       const { data, error } = await supabase
         .from('event_reports')
-        .select('*, executor:users!executor_id(id, email)')
+        .select('*, executor:auth.users(id, email)')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
