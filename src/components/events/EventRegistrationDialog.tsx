@@ -24,6 +24,7 @@ export const EventRegistrationDialog = ({
   const status = getEventStatus(event);
   console.log('Registration status in dialog:', status);
 
+  // Close dialog if registration is not available
   if (status !== 'available' && open) {
     console.log('Closing dialog because registration is not allowed. Status:', status);
     onOpenChange(false);
