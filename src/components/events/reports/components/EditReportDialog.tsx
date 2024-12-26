@@ -17,7 +17,7 @@ interface EditReportDialogProps {
   report: {
     id: string;
     event_id: string;
-    program_name: string;
+    program_name?: string;
     report_name: string;
     report_text: string;
     detailed_description: string;
