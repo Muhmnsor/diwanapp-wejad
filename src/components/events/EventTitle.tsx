@@ -23,7 +23,7 @@ export const EventTitle = ({
 
   return (
     <div className="flex justify-between items-start px-8 py-6 border-b border-gray-100" dir="rtl">
-      <div className="flex gap-3">
+      <div className="flex gap-3 order-2">
         {isAdmin && (
           <div className="flex gap-2">
             <Button 
@@ -51,7 +51,7 @@ export const EventTitle = ({
           onAddToCalendar={onAddToCalendar}
         />
       </div>
-      <h1 className="text-[32px] leading-tight font-semibold text-[#1A1F2C]">{title}</h1>
+      <h1 className="text-[32px] leading-tight font-semibold text-[#1A1F2C] order-1">{title}</h1>
     </div>
   );
 };
