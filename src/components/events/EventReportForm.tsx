@@ -1,13 +1,10 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { ReportTextSection } from "./reports/ReportTextSection";
-import { PhotosSection } from "./reports/PhotosSection";
-import { LinksSection } from "./reports/LinksSection";
-import { FeedbackSection } from "./reports/FeedbackSection";
-import { FilesSection } from "./reports/FilesSection";
+import { useAuthStore } from "@/store/authStore";
 
 interface EventReportFormProps {
   eventId: string;
@@ -15,170 +12,99 @@ interface EventReportFormProps {
 }
 
 export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reportText, setReportText] = useState("");
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [videoLinks, setVideoLinks] = useState<string[]>([]);
-  const [additionalLinks, setAdditionalLinks] = useState<string[]>([]);
-  const [currentVideoLink, setCurrentVideoLink] = useState("");
-  const [currentAdditionalLink, setCurrentAdditionalLink] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm();
 
-  const handlePhotoUpload = async (file: File) => {
+  const onSubmit = async (data: any) => {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `event-reports/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('event-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(filePath);
-
-      setPhotos(prev => [...prev, publicUrl]);
-      toast.success("تم رفع الصورة بنجاح");
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast.error("حدث خطأ أثناء رفع الصورة");
-    }
-  };
-
-  const handlePhotoDelete = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
-    toast.success("تم حذف الصورة بنجاح");
-  };
-
-  const handleFileUpload = (file: File) => {
-    setFiles(prev => [...prev, file]);
-    toast.success("تم إضافة الملف بنجاح");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Submitting report with data:', { ...data, eventId, executorId: user?.id });
       
-      if (!user) {
-        toast.error("يجب تسجيل الدخول لإضافة تقرير");
-        return;
-      }
-
-      // Upload files
-      const uploadedFiles: string[] = [];
-      for (const file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `event-report-files/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('event-images')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('event-images')
-          .getPublicUrl(filePath);
-
-        uploadedFiles.push(publicUrl);
-      }
-
       const { error } = await supabase
         .from('event_reports')
-        .insert({
-          event_id: eventId,
-          executor_id: user.id,
-          report_text: reportText,
-          photos,
-          video_links: videoLinks,
-          additional_links: additionalLinks,
-          files: uploadedFiles
-        });
+        .insert([
+          {
+            event_id: eventId,
+            executor_id: user?.id,
+            report_text: data.report_text,
+            satisfaction_level: parseInt(data.satisfaction_level),
+            photos: data.photos ? [data.photos] : [],
+            video_links: data.video_links ? [data.video_links] : [],
+            additional_links: data.additional_links ? [data.additional_links] : [],
+          }
+        ]);
 
-      if (error) throw error;
-
-      toast.success("تم إضافة التقرير بنجاح");
-      await queryClient.invalidateQueries({ queryKey: ['event-reports', eventId] });
-      
-      // Reset form
-      setReportText("");
-      setPhotos([]);
-      setVideoLinks([]);
-      setAdditionalLinks([]);
-      setFiles([]);
-      
-      if (onSuccess) {
-        onSuccess();
+      if (error) {
+        console.error('Error submitting report:', error);
+        throw error;
       }
+
+      console.log('Report submitted successfully');
+      reset();
+      onSuccess?.();
     } catch (error) {
-      console.error('Error submitting report:', error);
-      toast.error("حدث خطأ أثناء إضافة التقرير");
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error in form submission:', error);
+      throw error;
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <FeedbackSection eventId={eventId} />
-      
-      <ReportTextSection value={reportText} onChange={setReportText} />
-      
-      <PhotosSection 
-        photos={photos} 
-        onPhotoUpload={handlePhotoUpload}
-        onPhotoDelete={handlePhotoDelete}
-        maxPhotos={6}
-        photoPlaceholders={[
-          "صورة توثيقية للحضور",
-          "صورة للمتحدث الرئيسي",
-          "صورة لقاعة الفعالية",
-          "صورة للأنشطة التفاعلية",
-          "صورة للمشاركين",
-          "صورة ختامية للفعالية"
-        ]}
-      />
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="report_text">نص التقرير</Label>
+        <Textarea
+          id="report_text"
+          {...register("report_text", { required: true })}
+          placeholder="اكتب تقريرك هنا..."
+        />
+      </div>
 
-      <FilesSection files={files} onFileUpload={handleFileUpload} />
+      <div className="space-y-2">
+        <Label htmlFor="satisfaction_level">مستوى الرضا (1-5)</Label>
+        <Input
+          type="number"
+          id="satisfaction_level"
+          {...register("satisfaction_level", {
+            required: true,
+            min: 1,
+            max: 5
+          })}
+          min="1"
+          max="5"
+        />
+      </div>
 
-      <LinksSection
-        title="روابط الفيديو"
-        placeholder="أدخل رابط الفيديو"
-        links={videoLinks}
-        currentLink={currentVideoLink}
-        onLinkChange={setCurrentVideoLink}
-        onAddLink={() => {
-          if (currentVideoLink) {
-            setVideoLinks(prev => [...prev, currentVideoLink]);
-            setCurrentVideoLink("");
-          }
-        }}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="photos">روابط الصور</Label>
+        <Input
+          type="text"
+          id="photos"
+          {...register("photos")}
+          placeholder="رابط الصورة"
+        />
+      </div>
 
-      <LinksSection
-        title="روابط إضافية"
-        placeholder="أدخل رابط إضافي (استبيانات، مواد تدريبية، إلخ)"
-        links={additionalLinks}
-        currentLink={currentAdditionalLink}
-        onLinkChange={setCurrentAdditionalLink}
-        onAddLink={() => {
-          if (currentAdditionalLink) {
-            setAdditionalLinks(prev => [...prev, currentAdditionalLink]);
-            setCurrentAdditionalLink("");
-          }
-        }}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="video_links">روابط الفيديو</Label>
+        <Input
+          type="text"
+          id="video_links"
+          {...register("video_links")}
+          placeholder="رابط الفيديو"
+        />
+      </div>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "جاري إرسال التقرير..." : "إرسال التقرير"}
+      <div className="space-y-2">
+        <Label htmlFor="additional_links">روابط إضافية</Label>
+        <Input
+          type="text"
+          id="additional_links"
+          {...register("additional_links")}
+          placeholder="رابط إضافي"
+        />
+      </div>
+
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "جاري الإرسال..." : "إرسال التقرير"}
       </Button>
     </form>
   );

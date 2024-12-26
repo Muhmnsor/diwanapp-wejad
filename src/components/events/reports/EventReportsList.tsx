@@ -1,34 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import * as XLSX from 'xlsx';
-import { ReportListItem } from "./ReportListItem";
-import { ReportListHeader } from "./ReportListHeader";
 import { ReportListContainer } from "./ReportListContainer";
+import { ReportListHeader } from "./ReportListHeader";
+import { ReportListItem } from "./ReportListItem";
 
 interface EventReportsListProps {
   eventId: string;
 }
 
-interface EventReport {
-  id: string;
-  event_id: string;
-  executor_id: string;
-  report_text: string;
-  photos: string[] | null;
-  video_links: string[] | null;
-  additional_links: string[] | null;
-  created_at: string;
-  satisfaction_level: number | null;
-  files: string[] | null;
-  comments: string[] | null;
-  executor?: {
-    id: string;
-    email: string;
-  } | null;
-}
-
 export const EventReportsList = ({ eventId }: EventReportsListProps) => {
-  const { data: reports, isLoading, error } = useQuery({
+  const { data: reports, isLoading } = useQuery({
     queryKey: ['event-reports', eventId],
     queryFn: async () => {
       console.log('Fetching reports for event:', eventId);
@@ -36,7 +17,7 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
         .from('event_reports')
         .select(`
           *,
-          executor:profiles(
+          profiles:executor_id (
             id,
             email
           )
@@ -50,50 +31,20 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
       }
 
       console.log('Reports fetched:', data);
-      return data as EventReport[];
+      return data;
     },
   });
 
-  const handleDownload = (report: EventReport) => {
-    // Create workbook with multiple sheets
-    const workbook = XLSX.utils.book_new();
-    
-    // Sheet 1: Report Details
-    const reportDetails = {
-      "تاريخ التقرير": new Date(report.created_at).toLocaleDateString('ar'),
-      "منفذ التقرير": report.executor?.email || 'غير محدد',
-      "نص التقرير": report.report_text,
-      "مستوى الرضا": report.satisfaction_level ? `${report.satisfaction_level}/5` : 'غير محدد',
-    };
-    const detailsSheet = XLSX.utils.json_to_sheet([reportDetails], { header: Object.keys(reportDetails) });
-    XLSX.utils.book_append_sheet(workbook, detailsSheet, "تفاصيل التقرير");
-
-    // Sheet 2: Media Links
-    const mediaLinks = {
-      "روابط الفيديو": report.video_links?.join("\n") || "لا يوجد",
-      "روابط إضافية": report.additional_links?.join("\n") || "لا يوجد",
-      "روابط الصور": report.photos?.join("\n") || "لا يوجد",
-      "الملفات المرفقة": report.files?.join("\n") || "لا يوجد"
-    };
-    const mediaSheet = XLSX.utils.json_to_sheet([mediaLinks], { header: Object.keys(mediaLinks) });
-    XLSX.utils.book_append_sheet(workbook, mediaSheet, "الوسائط والروابط");
-
-    // Download the file
-    XLSX.writeFile(workbook, `تقرير-الفعالية-${new Date(report.created_at).toLocaleDateString('ar')}.xlsx`);
-  };
+  if (isLoading) {
+    return <div>جاري التحميل...</div>;
+  }
 
   return (
-    <div className="space-y-4 mt-6">
-      <ReportListHeader title="التقارير السابقة" />
-      <ReportListContainer isLoading={isLoading} error={error}>
-        {reports?.map((report) => (
-          <ReportListItem
-            key={report.id}
-            report={report}
-            onDownload={handleDownload}
-          />
-        ))}
-      </ReportListContainer>
-    </div>
+    <ReportListContainer>
+      <ReportListHeader />
+      {reports?.map((report) => (
+        <ReportListItem key={report.id} report={report} />
+      ))}
+    </ReportListContainer>
   );
 };
