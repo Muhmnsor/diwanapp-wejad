@@ -26,13 +26,10 @@ export const ShareButton = ({
       case 'copy':
         try {
           await navigator.clipboard.writeText(url);
-          toast({
-            description: "تم نسخ رابط الفعالية إلى الحافظة",
-          });
+          toast("تم نسخ رابط الفعالية إلى الحافظة");
         } catch (error) {
           console.error('Error copying link:', error);
-          toast({
-            description: "لم نتمكن من نسخ الرابط",
+          toast("لم نتمكن من نسخ الرابط", {
             variant: "destructive",
           });
         }
