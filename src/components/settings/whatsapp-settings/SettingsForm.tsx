@@ -15,6 +15,7 @@ interface SettingsFormProps {
   onSettingsChange: (settings: WhatsAppSettings) => void;
   onSubmit: (e: React.FormEvent) => void;
   onTestConnection: () => void;
+  onSendTestMessage: () => void;
 }
 
 export const SettingsForm = ({
@@ -22,6 +23,7 @@ export const SettingsForm = ({
   onSettingsChange,
   onSubmit,
   onTestConnection,
+  onSendTestMessage,
 }: SettingsFormProps) => {
   const handleChange = (field: keyof WhatsAppSettings) => (e: React.ChangeEvent<HTMLInputElement>) => {
     onSettingsChange({ ...settings, [field]: e.target.value });
@@ -86,6 +88,14 @@ export const SettingsForm = ({
             onClick={onTestConnection}
           >
             اختبار الاتصال
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="lg"
+            onClick={onSendTestMessage}
+          >
+            إرسال رسالة تجريبية
           </Button>
         </div>
       </div>

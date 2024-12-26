@@ -125,6 +125,49 @@ export const SettingsContainer = () => {
     }
   };
 
+  const sendTestMessage = async () => {
+    const toastId = toast.loading("جاري إرسال رسالة تجريبية...");
+    try {
+      console.log("Current settings state:", {
+        business_phone: settings.business_phone,
+        api_key: settings.api_key ? "***" : "not set",
+      });
+
+      // Validate required fields before making the request
+      const missingFields = [];
+      if (!settings.business_phone) missingFields.push("رقم الواتساب");
+      if (!settings.api_key) missingFields.push("مفتاح API");
+
+      if (missingFields.length > 0) {
+        const errorMessage = `الرجاء تعبئة الحقول التالية: ${missingFields.join("، ")}`;
+        toast.error(errorMessage, { id: toastId });
+        return;
+      }
+
+      console.log("Sending test WhatsApp message...");
+      const response = await supabase.functions.invoke('send-whatsapp-test', {
+        body: {
+          business_phone: settings.business_phone,
+          api_key: settings.api_key,
+        }
+      });
+
+      if (response.error) {
+        console.error("Supabase function error:", response.error);
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.success) {
+        toast.success("تم إرسال الرسالة التجريبية بنجاح", { id: toastId });
+      } else {
+        toast.error(response.data?.error || "فشل إرسال الرسالة", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Error sending test message:", error);
+      toast.error("حدث خطأ أثناء إرسال الرسالة التجريبية", { id: toastId });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate(settings);
@@ -140,6 +183,7 @@ export const SettingsContainer = () => {
       onSettingsChange={setSettings}
       onSubmit={handleSubmit}
       onTestConnection={testConnection}
+      onSendTestMessage={sendTestMessage}
     />
   );
 };
