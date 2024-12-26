@@ -1,5 +1,5 @@
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { Star, StarOff } from "lucide-react";
 
 interface RatingInputProps {
   label: string;
@@ -8,21 +8,57 @@ interface RatingInputProps {
 }
 
 export const RatingInput = ({ label, value, onChange }: RatingInputProps) => {
+  const [hover, setHover] = useState<number | null>(null);
+
+  const getRatingColor = (rating: number) => {
+    if (rating <= 2) return "text-red-500";
+    if (rating <= 3) return "text-yellow-500";
+    return "text-green-500";
+  };
+
+  const getRatingText = (rating: number) => {
+    switch (rating) {
+      case 1: return "ضعيف جداً";
+      case 2: return "ضعيف";
+      case 3: return "متوسط";
+      case 4: return "جيد";
+      case 5: return "ممتاز";
+      default: return "";
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
-      <RadioGroup
-        value={value?.toString()}
-        onValueChange={(val) => onChange(parseInt(val))}
-        className="flex gap-4"
-      >
+      <div className="flex justify-between items-center">
+        <label className="text-sm font-medium">{label}</label>
+        {value && (
+          <span className={`text-sm ${getRatingColor(value)}`}>
+            {getRatingText(value)}
+          </span>
+        )}
+      </div>
+      <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((rating) => (
-          <div key={rating} className="flex items-center space-x-2">
-            <RadioGroupItem value={rating.toString()} id={`${label}-${rating}`} />
-            <Label htmlFor={`${label}-${rating}`}>{rating}</Label>
-          </div>
+          <button
+            key={rating}
+            type="button"
+            className={`transition-all ${
+              (hover || value) && rating <= (hover || value)
+                ? getRatingColor(rating)
+                : "text-gray-300"
+            }`}
+            onMouseEnter={() => setHover(rating)}
+            onMouseLeave={() => setHover(null)}
+            onClick={() => onChange(rating)}
+          >
+            {(hover || value) && rating <= (hover || value) ? (
+              <Star className="w-6 h-6 fill-current" />
+            ) : (
+              <StarOff className="w-6 h-6" />
+            )}
+          </button>
         ))}
-      </RadioGroup>
+      </div>
     </div>
   );
 };
