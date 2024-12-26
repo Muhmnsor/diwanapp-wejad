@@ -14,6 +14,14 @@ interface EventFormFieldsProps {
 export const EventFormFields = ({ formData, setFormData, onImageChange }: EventFormFieldsProps) => {
   console.log('Form data in EventFormFields:', formData);
   
+  const handleHoursChange = (value: string) => {
+    const numValue = value ? Number(value) : undefined;
+    // Only set the value if it's a valid number or undefined
+    if (!isNaN(Number(value)) || value === '') {
+      setFormData({ ...formData, eventHours: numValue });
+    }
+  };
+  
   return (
     <div className="space-y-4 text-right" dir="rtl">
       <div>
@@ -116,9 +124,10 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
           <label className="text-sm font-medium block mb-1.5">عدد ساعات الفعالية</label>
           <Input
             type="number"
-            value={formData.eventHours || ''}
-            onChange={(e) => setFormData({ ...formData, eventHours: e.target.value ? Number(e.target.value) : undefined })}
+            value={formData.eventHours ?? ''}
+            onChange={(e) => handleHoursChange(e.target.value)}
             min={0}
+            step={0.5}
             className="text-right"
             placeholder="أدخل عدد الساعات"
           />
