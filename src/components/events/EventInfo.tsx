@@ -33,7 +33,7 @@ export const EventInfo = ({
   });
 
   return (
-    <div className="space-y-8 mb-12 pt-8">
+    <div className="space-y-8">
       <EventBadges
         eventType={eventType}
         price={price}

@@ -49,23 +49,27 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg">
-      <EventInfo
-        date={event.date}
-        time={event.time}
-        location={event.location}
-        attendees={event.attendees}
-        maxAttendees={event.max_attendees}
-        eventType={event.eventType}
-        price={event.price}
-        beneficiaryType={event.beneficiaryType}
-        certificateType={event.certificateType}
-        eventHours={event.eventHours}
-      />
+    <div className="bg-white rounded-lg divide-y divide-gray-100">
+      <div className="py-8">
+        <EventInfo
+          date={event.date}
+          time={event.time}
+          location={event.location}
+          attendees={event.attendees}
+          maxAttendees={event.max_attendees}
+          eventType={event.eventType}
+          price={event.price}
+          beneficiaryType={event.beneficiaryType}
+          certificateType={event.certificateType}
+          eventHours={event.eventHours}
+        />
+      </div>
 
-      <EventDescription description={event.description} />
+      <div className="py-8">
+        <EventDescription description={event.description} />
+      </div>
 
-      <div className="px-8 pb-8">
+      <div className="px-8 py-6">
         <EventRegisterButton 
           status={eventStatus}
           onRegister={handleRegister}
