@@ -45,6 +45,28 @@ Deno.serve(async (req) => {
       )
     }
 
+    if (operation === 'delete_user') {
+      // First delete user roles
+      const { error: deleteRolesError } = await supabaseClient
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+
+      if (deleteRolesError) throw deleteRolesError
+
+      // Then delete the user from auth.users
+      const { error: deleteUserError } = await supabaseClient.auth.admin.deleteUser(
+        userId
+      )
+      if (deleteUserError) throw deleteUserError
+
+      console.log('User deleted successfully:', userId)
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     throw new Error('Invalid operation')
   } catch (error) {
     console.error('Error managing users:', error.message)

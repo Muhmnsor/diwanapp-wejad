@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
-import { Navigation } from "@/components/Navigation";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
@@ -31,7 +30,6 @@ const Users = () => {
     queryFn: async () => {
       console.log('Fetching users with roles...');
       
-      // First get user details from the Edge Function
       const { data: usersResponse, error: usersError } = await supabase.functions.invoke('manage-users', {
         body: { operation: 'get_users' }
       });
@@ -41,7 +39,6 @@ const Users = () => {
         throw usersError;
       }
 
-      // Then get user roles
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -57,15 +54,12 @@ const Users = () => {
         throw userRolesError;
       }
 
-      // Create a map of user roles - take the first role if user has multiple
       const userRolesMap = (userRolesData as UserRoleResponse[]).reduce((acc, curr) => {
-        // If user has multiple roles, take the first one
         const firstRole = curr.roles[0]?.name || 'No role';
         acc[curr.user_id] = firstRole;
         return acc;
       }, {} as Record<string, string>);
 
-      // Combine user details with roles
       const transformedUsers = usersResponse.users.map(authUser => ({
         id: authUser.id,
         username: authUser.email,
@@ -88,13 +82,12 @@ const Users = () => {
 
   return (
     <div dir="rtl">
-      <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">إدارة المستخدمين</h1>
           <CreateUserDialog roles={roles} onUserCreated={refetchUsers} />
         </div>
-        <UsersTable users={users} />
+        <UsersTable users={users} onUserDeleted={refetchUsers} />
       </div>
     </div>
   );

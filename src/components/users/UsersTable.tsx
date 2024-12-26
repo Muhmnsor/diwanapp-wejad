@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserCog } from "lucide-react";
+import { UserCog, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -18,14 +18,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { User } from "./types";
 
 interface UsersTableProps {
   users: User[];
+  onUserDeleted: () => void;
 }
 
-export const UsersTable = ({ users }: UsersTableProps) => {
+export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,6 +82,29 @@ export const UsersTable = ({ users }: UsersTableProps) => {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const { error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          operation: 'delete_user',
+          userId: userToDelete.id
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("تم حذف المستخدم بنجاح");
+      onUserDeleted();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error("حدث خطأ أثناء حذف المستخدم");
+    } finally {
+      setUserToDelete(null);
+    }
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -92,13 +127,22 @@ export const UsersTable = ({ users }: UsersTableProps) => {
                 </TableCell>
                 <TableCell className="text-right">{user.lastLogin}</TableCell>
                 <TableCell className="text-right">
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => setSelectedUser(user)}
-                  >
-                    <UserCog className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => setSelectedUser(user)}
+                    >
+                      <UserCog className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="icon"
+                      onClick={() => setUserToDelete(user)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -135,6 +179,21 @@ export const UsersTable = ({ users }: UsersTableProps) => {
           </Button>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذا المستخدم؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف المستخدم {userToDelete?.username} نهائياً. هذا الإجراء لا يمكن التراجع عنه.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogAction onClick={handleDeleteUser}>حذف</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>إلغاء</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
