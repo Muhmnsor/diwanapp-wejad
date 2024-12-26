@@ -8,5 +8,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     storage: typeof window !== 'undefined' ? window.localStorage : undefined
+  },
+  headers: {
+    'apikey': supabaseAnonKey
   }
 });

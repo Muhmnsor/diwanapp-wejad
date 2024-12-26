@@ -11,6 +11,7 @@ export const Banner = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export const Banner = () => {
   useEffect(() => {
     const fetchActiveBanner = async () => {
       try {
+        console.log('Fetching active banner...');
         const { data, error } = await supabase
           .from('banners')
           .select('*')
@@ -34,19 +36,24 @@ export const Banner = () => {
           .single();
 
         if (error) {
-          console.error("خطأ في جلب البانر:", error);
+          console.error("Error fetching banner:", error);
+          setError(error.message);
+          toast.error("حدث خطأ في جلب البانر");
           return;
         }
 
         if (data) {
-          console.log("تم جلب البانر بنجاح:", data);
+          console.log("Banner fetched successfully:", data);
           setDesktopImage(data.desktop_image);
           setMobileImage(data.mobile_image);
+          setError(null);
         } else {
-          console.log("لا يوجد بانر نشط حالياً");
+          console.log("No active banner found");
         }
       } catch (error) {
-        console.error("خطأ غير متوقع:", error);
+        console.error("Unexpected error:", error);
+        setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+        toast.error("حدث خطأ غير متوقع");
       }
     };
 
@@ -77,14 +84,17 @@ export const Banner = () => {
 
     setIsSubmitting(true);
     try {
+      console.log('Saving banner...');
       // First, deactivate all existing banners
-      await supabase
+      const { error: deactivateError } = await supabase
         .from('banners')
         .update({ active: false })
         .eq('active', true);
 
+      if (deactivateError) throw deactivateError;
+
       // Then, insert the new banner
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('banners')
         .insert({
           desktop_image: desktopImage,
@@ -92,13 +102,15 @@ export const Banner = () => {
           active: true,
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast.success("تم حفظ البانر بنجاح");
       setIsEditing(false);
+      setError(null);
     } catch (error) {
       console.error("Error saving banner:", error);
       toast.error("حدث خطأ أثناء حفظ البانر");
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -108,6 +120,12 @@ export const Banner = () => {
 
   return (
     <div className="w-full">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+      
       {showControls && (
         <div className="mb-6">
           <BannerControls
