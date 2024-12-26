@@ -75,11 +75,30 @@ export const SettingsContainer = () => {
   const testConnection = async () => {
     const toastId = toast.loading("جاري اختبار الاتصال...");
     try {
+      console.log("Testing connection with settings:", {
+        business_phone: settings.business_phone,
+        api_key: "***", // Hide API key in logs
+        account_id: settings.account_id,
+        whatsapp_number_id: settings.whatsapp_number_id,
+      });
+
+      // Validate required fields before making the request
+      if (!settings.business_phone || !settings.api_key || !settings.account_id || !settings.whatsapp_number_id) {
+        toast.error("الرجاء تعبئة جميع الحقول المطلوبة", { id: toastId });
+        return;
+      }
+
       const response = await supabase.functions.invoke('test-whatsapp-connection', {
-        body: settings
+        body: {
+          business_phone: settings.business_phone,
+          api_key: settings.api_key,
+          account_id: settings.account_id,
+          whatsapp_number_id: settings.whatsapp_number_id,
+        }
       });
 
       if (response.error) {
+        console.error("Supabase function error:", response.error);
         throw new Error(response.error.message);
       }
 

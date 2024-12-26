@@ -10,12 +10,28 @@ serve(async (req) => {
   }
 
   try {
-    const { business_phone, api_key, account_id, whatsapp_number_id } = await req.json()
+    const body = await req.json()
+    console.log("Received request body:", {
+      ...body,
+      api_key: body.api_key ? "***" : undefined // Hide API key in logs
+    })
+
+    const { business_phone, api_key, account_id, whatsapp_number_id } = body
 
     // Validate required fields
-    if (!business_phone || !api_key || !account_id || !whatsapp_number_id) {
+    const missingFields = []
+    if (!business_phone) missingFields.push('business_phone')
+    if (!api_key) missingFields.push('api_key')
+    if (!account_id) missingFields.push('account_id')
+    if (!whatsapp_number_id) missingFields.push('whatsapp_number_id')
+
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields)
       return new Response(
-        JSON.stringify({ error: 'جميع الحقول مطلوبة' }),
+        JSON.stringify({ 
+          error: 'جميع الحقول مطلوبة',
+          missing_fields: missingFields 
+        }),
         { 
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -24,6 +40,7 @@ serve(async (req) => {
     }
 
     // Test connection to WhatsApp API
+    console.log("Testing WhatsApp API connection for number ID:", whatsapp_number_id)
     const response = await fetch(`https://graph.facebook.com/v17.0/${whatsapp_number_id}`, {
       headers: {
         'Authorization': `Bearer ${api_key}`,
@@ -42,7 +59,7 @@ serve(async (req) => {
       )
     }
 
-    // Connection successful
+    console.log("WhatsApp API connection successful")
     return new Response(
       JSON.stringify({ success: true, message: 'تم الاتصال بنجاح' }),
       { 
