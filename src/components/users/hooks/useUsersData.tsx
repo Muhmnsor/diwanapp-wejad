@@ -51,9 +51,9 @@ export const useUsersData = () => {
 
       console.log('User roles data:', userRolesData);
 
-      const userRolesMap = (userRolesData as UserRoleData[]).reduce((acc, curr) => {
+      const userRolesMap = (userRolesData as any[]).reduce((acc, curr) => {
         // تأكد من أن roles موجود وأن له خاصية name
-        if (curr.roles && 'name' in curr.roles) {
+        if (curr.roles && typeof curr.roles.name === 'string') {
           acc[curr.user_id] = curr.roles.name;
         }
         return acc;
