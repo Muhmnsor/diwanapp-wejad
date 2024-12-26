@@ -31,6 +31,14 @@ export const Footer = () => {
                 <Linkedin className="w-6 h-6" />
               </a>
             </div>
+            <a 
+              href="https://www.dfy.org.sa" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary/80 transition-colors"
+            >
+              www.dfy.org.sa
+            </a>
           </div>
         </div>
       </div>
