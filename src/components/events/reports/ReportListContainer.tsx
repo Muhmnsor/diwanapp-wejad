@@ -40,7 +40,7 @@ export const ReportListContainer = ({ isLoading, error, children }: ReportListCo
 
   return (
     <div className="rounded-md border">
-      <Table>
+      <Table dir="rtl">
         <TableBody>
           {children}
         </TableBody>
