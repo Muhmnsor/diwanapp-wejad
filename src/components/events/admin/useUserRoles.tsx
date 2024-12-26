@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define the shape of a single role object
 interface Role {
   name: string;
 }
 
-// Define the shape of the user role data from Supabase
 interface UserRoleData {
-  roles: Role | Role[];
+  roles: {
+    name: string;
+  };
 }
 
 export const useUserRoles = () => {
@@ -23,7 +23,7 @@ export const useUserRoles = () => {
         return [];
       }
 
-      // Get user roles with a single query
+      // Get user roles with a single query that joins the roles table
       const { data: userRolesData, error } = await supabase
         .from('user_roles')
         .select(`
@@ -31,7 +31,8 @@ export const useUserRoles = () => {
             name
           )
         `)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .single();
 
       if (error) {
         console.error('Error fetching user roles:', error);
@@ -41,18 +42,14 @@ export const useUserRoles = () => {
       console.log('Raw user roles data:', userRolesData);
       
       // Handle the case where no role is found
-      if (!userRolesData || userRolesData.length === 0) {
+      if (!userRolesData || !userRolesData.roles) {
         console.log('No roles found for user');
         return [];
       }
 
-      // Extract role names from the array
-      const roleNames = userRolesData.flatMap((data: UserRoleData) => 
-        Array.isArray(data.roles) ? data.roles.map(role => role.name) : [data.roles.name]
-      );
-      
-      console.log('Processed user roles:', roleNames);
-      return roleNames;
+      const roleName = userRolesData.roles.name;
+      console.log('Processed user role:', roleName);
+      return [roleName];
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 2
