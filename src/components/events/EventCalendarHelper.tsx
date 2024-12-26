@@ -1,4 +1,4 @@
-import { arabicToEnglishNum, convertArabicDate } from "@/utils/eventUtils";
+import { arabicToEnglishNum } from "@/utils/eventUtils";
 import { createCalendarUrl } from "@/utils/calendarUtils";
 import { Event } from "@/store/eventStore";
 import { toast } from "sonner";
