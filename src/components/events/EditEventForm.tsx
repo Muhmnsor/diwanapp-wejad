@@ -23,9 +23,9 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     beneficiaryType: event.beneficiaryType || 'both',
     eventType: event.eventType || 'in-person',
     attendees: event.attendees || 0,
-    imageUrl: event.image_url || '',
-    registrationStartDate: event.registration_start_date || '',
-    registrationEndDate: event.registration_end_date || ''
+    imageUrl: event.imageUrl || event.image_url || '',
+    registrationStartDate: event.registrationStartDate || '',
+    registrationEndDate: event.registrationEndDate || ''
   });
   
   const [isUploading, setIsUploading] = useState(false);
@@ -41,9 +41,9 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
       beneficiaryType: event.beneficiaryType || 'both',
       eventType: event.eventType || 'in-person',
       attendees: event.attendees || 0,
-      imageUrl: event.image_url || '',
-      registrationStartDate: event.registration_start_date || '',
-      registrationEndDate: event.registration_end_date || ''
+      imageUrl: event.imageUrl || event.image_url || '',
+      registrationStartDate: event.registrationStartDate || '',
+      registrationEndDate: event.registrationEndDate || ''
     });
   }, [event]);
 
