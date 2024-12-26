@@ -6,6 +6,7 @@ interface EventCardStatusProps {
     text: string;
     variant: "default" | "secondary" | "destructive" | "accent";
     color: string;
+    textColor: string;
   };
 }
 
@@ -14,9 +15,9 @@ export const EventCardStatus = ({
 }: EventCardStatusProps) => {
   return (
     <div className="flex">
-      <Badge variant={status.variant} className="text-sm">
+      <div className={`px-3 py-1 rounded-full text-sm ${status.color} ${status.textColor}`}>
         {status.text}
-      </Badge>
+      </div>
     </div>
   );
 };
