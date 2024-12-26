@@ -1,6 +1,8 @@
 import { Event } from "@/store/eventStore";
-import { EventBadges } from "./badges/EventBadges";
-import { Button } from "../ui/button";
+import { EventInfo } from "./EventInfo";
+import { EventDescription } from "./EventDescription";
+import { EventRegisterButton } from "./EventRegisterButton";
+import { useEffect, useState } from "react";
 import { getEventStatus } from "@/utils/eventUtils";
 
 interface EventContentProps {
@@ -9,30 +11,69 @@ interface EventContentProps {
 }
 
 export const EventContent = ({ event, onRegister }: EventContentProps) => {
-  const status = getEventStatus(event);
-  const isRegistrationOpen = status === 'open';
+  const [eventStatus, setEventStatus] = useState(() => getEventStatus(event));
+
+  useEffect(() => {
+    console.log('Event data in content updated:', {
+      title: event.title,
+      date: event.date,
+      registrationDates: {
+        start: event.registrationStartDate,
+        end: event.registrationEndDate
+      },
+      attendees: event.attendees,
+      maxAttendees: event.max_attendees
+    });
+
+    const newStatus = getEventStatus(event);
+    console.log('Event status updated to:', newStatus);
+    setEventStatus(newStatus);
+  }, [
+    event.date, 
+    event.registrationStartDate, 
+    event.registrationEndDate,
+    event.attendees,
+    event.max_attendees
+  ]);
+
+  const handleRegister = () => {
+    const status = getEventStatus(event);
+    console.log('Attempting registration with status:', status);
+    
+    if (status === 'available') {
+      console.log('Registration allowed, proceeding...');
+      onRegister();
+    } else {
+      console.log('Registration not allowed for status:', status);
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      <EventBadges
-        eventType={event.event_type}
-        price={event.price}
-        beneficiaryType={event.beneficiary_type}
-        certificateType={event.certificate_type}
-        eventHours={event.event_hours}
-      />
-      
-      <div className="space-y-4">
-        <p className="text-gray-700 whitespace-pre-wrap">{event.description}</p>
-        
-        {isRegistrationOpen && (
-          <Button 
-            onClick={onRegister}
-            className="w-full"
-          >
-            التسجيل في الفعالية
-          </Button>
-        )}
+    <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
+      <div className="py-8 px-8">
+        <EventInfo
+          date={event.date}
+          time={event.time}
+          location={event.location}
+          attendees={event.attendees}
+          maxAttendees={event.max_attendees}
+          eventType={event.eventType}
+          price={event.price}
+          beneficiaryType={event.beneficiaryType}
+          certificateType={event.certificateType}
+          eventHours={event.eventHours}
+        />
+      </div>
+
+      <div className="py-8">
+        <EventDescription description={event.description} />
+      </div>
+
+      <div className="px-8 py-6">
+        <EventRegisterButton 
+          status={eventStatus}
+          onRegister={handleRegister}
+        />
       </div>
     </div>
   );
