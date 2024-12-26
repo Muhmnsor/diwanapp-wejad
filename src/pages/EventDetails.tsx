@@ -39,18 +39,19 @@ const EventDetails = () => {
     try {
       console.log('Starting event deletion process for ID:', id);
       
-      // Define tables to clean up
+      // Define tables to clean up in order (order matters due to foreign key constraints)
       const tables = [
-        'attendance_records',
         'event_feedback',
+        'notification_logs',
+        'attendance_records',
         'event_notification_settings',
         'event_reports',
-        'notification_logs',
-        'registrations'
+        'registrations',
+        'events'
       ];
 
-      // Delete all related records in parallel
-      await Promise.all(tables.map(async (table) => {
+      // Delete records sequentially to respect foreign key constraints
+      for (const table of tables) {
         console.log(`Deleting records from ${table}`);
         const { error } = await supabase
           .from(table)
@@ -61,17 +62,6 @@ const EventDetails = () => {
           console.error(`Error deleting from ${table}:`, error);
           throw error;
         }
-      }));
-
-      // Finally delete the event
-      const { error: eventError } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", id);
-      
-      if (eventError) {
-        console.error('Error deleting event:', eventError);
-        throw eventError;
       }
 
       toast.success("تم حذف الفعالية بنجاح");
