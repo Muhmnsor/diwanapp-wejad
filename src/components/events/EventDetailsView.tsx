@@ -88,10 +88,25 @@ export const EventDetailsView = ({
         maxAttendees={currentEvent?.max_attendees}
       />
       {isAdmin && (
-        <div className="flex justify-end">
-          <button onClick={() => setIsEditDialogOpen(true)} className="btn btn-primary">تعديل</button>
-          <button onClick={onDelete} className="btn btn-danger">حذف</button>
-          <button onClick={onAddToCalendar} className="btn btn-secondary">إضافة إلى التقويم</button>
+        <div className="flex gap-2 justify-end mt-4 px-8">
+          <button 
+            onClick={() => setIsEditDialogOpen(true)} 
+            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+          >
+            تعديل
+          </button>
+          <button 
+            onClick={onDelete} 
+            className="bg-destructive text-white px-4 py-2 rounded-md hover:bg-destructive/90 transition-colors"
+          >
+            حذف
+          </button>
+          <button 
+            onClick={onAddToCalendar} 
+            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 transition-colors"
+          >
+            إضافة إلى التقويم
+          </button>
         </div>
       )}
       <EditEventDialog 
