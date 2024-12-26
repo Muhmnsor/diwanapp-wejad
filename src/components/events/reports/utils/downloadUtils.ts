@@ -57,7 +57,7 @@ export const downloadReportWithImages = async (
     event_objectives: string;
     impact_on_participants: string;
     created_at: string;
-    photos: Array<{ url: string; description: string }>;
+    photos: Array<string>;
     event_id: string;
   },
   eventTitle?: string
@@ -68,6 +68,18 @@ export const downloadReportWithImages = async (
     // Fetch feedback summary
     const feedbackSummary = await fetchFeedbackSummary(report.event_id);
     console.log('Feedback summary:', feedbackSummary);
+
+    // Parse photos from JSON strings
+    const parsedPhotos = report.photos.map(photoStr => {
+      try {
+        return JSON.parse(photoStr) as { url: string; description: string };
+      } catch (error) {
+        console.error('Error parsing photo JSON:', error);
+        return null;
+      }
+    }).filter((photo): photo is { url: string; description: string } => photo !== null);
+
+    console.log('Parsed photos:', parsedPhotos);
 
     // Create report text content with feedback summary
     const reportContent = `تقرير الفعالية
@@ -98,7 +110,7 @@ ${report.impact_on_participants}
 - متوسط تقييم المقدم: ${feedbackSummary.averagePresenterRating.toFixed(1)} / 5
 
 الصور المرفقة:
-${report.photos.map((photo, index) => `${index + 1}. ${photo.description || `صورة ${index + 1}`}`).join('\n')}`;
+${parsedPhotos.map((photo, index) => `${index + 1}. ${photo.description || `صورة ${index + 1}`}`).join('\n')}`;
 
     // Add report text file
     zip.file('تقرير-الفعالية.txt', reportContent);
@@ -108,7 +120,7 @@ ${report.photos.map((photo, index) => `${index + 1}. ${photo.description || `ص�
     if (!imagesFolder) throw new Error('Failed to create images folder');
 
     // Download and add images
-    const downloadPromises = report.photos.map(async (photo, index) => {
+    const downloadPromises = parsedPhotos.map(async (photo, index) => {
       if (!photo.url) {
         console.log(`Skipping empty photo at index ${index}`);
         return;
