@@ -37,44 +37,56 @@ export const EventBadges = ({
     }
   };
 
-  const getCertificateLabel = (type: string | undefined) => {
-    if (!type || type === 'none') return null;
+  const getCertificateLabel = (type: string) => {
     switch (type) {
       case 'attendance':
         return 'شهادة حضور';
       case 'certified':
         return 'شهادة معتمدة';
       default:
-        return type;
+        return '';
     }
   };
 
   const shouldShowCertificate = certificateType && certificateType !== 'none';
-  // Only show hours if certificate exists AND hours are greater than 0
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 px-8 py-6">
-      <Badge variant={eventType === "online" ? "secondary" : "default"} className="rounded-full px-4 py-1">
+    <div className="flex flex-wrap gap-2">
+      <Badge 
+        variant={eventType === "online" ? "secondary" : "default"}
+        className={`${eventType === "online" ? 'bg-secondary border-[#6E59A5] text-[#1A1F2C]' : 'bg-primary/10 border-primary text-primary'} border`}
+      >
         {eventType === "online" ? "عن بعد" : "حضوري"}
       </Badge>
-      <Badge variant="outline" className="rounded-full px-4 py-1">
-        {price === "free" ? "مجاني" : `${price} ريال`}
+      <Badge 
+        variant={typeof price === "string" && price === "free" ? "secondary" : "default"}
+        className={`${typeof price === "string" && price === "free" ? 'bg-[#E5DEFF] border-[#6E59A5] text-[#1A1F2C]' : 'bg-accent/10 border-accent text-accent'} border`}
+      >
+        {typeof price === "string" && price === "free" ? "مجاني" : `${price} ريال`}
       </Badge>
-      <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
-        <Users className="w-4 h-4" />
+      <Badge 
+        variant="outline" 
+        className="border-[#403E43] bg-[#F5F5F7] text-[#403E43]"
+      >
         {getBeneficiaryLabel(beneficiaryType)}
       </Badge>
       {shouldShowCertificate && (
-        <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
-          <Award className="w-4 h-4" />
+        <Badge 
+          variant="outline" 
+          className="flex items-center gap-1 border-[#8E9196] bg-[#F1F1F1] text-[#403E43]"
+        >
+          <Award className="w-3 h-3" />
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
       {shouldShowHours && eventHours > 0 && (
-        <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
-          <Clock className="w-4 h-4" />
-          {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'} تدريبية
+        <Badge 
+          variant="outline" 
+          className="flex items-center gap-1 border-[#8E9196] bg-[#F1F1F1] text-[#403E43]"
+        >
+          <Clock className="w-3 h-3" />
+          {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'}
         </Badge>
       )}
     </div>
