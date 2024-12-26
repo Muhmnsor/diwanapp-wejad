@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -6,6 +6,7 @@ import { downloadReportWithImages } from "./utils/downloadUtils";
 import { ReportDeleteDialog } from "./components/ReportDeleteDialog";
 import { ReportListItemContent } from "./components/ReportListItemContent";
 import { ReportListItemActions } from "./components/ReportListItemActions";
+import { TableRow } from "@/components/ui/table";
 import { Report } from "@/types/report";
 
 interface ReportListItemProps {
