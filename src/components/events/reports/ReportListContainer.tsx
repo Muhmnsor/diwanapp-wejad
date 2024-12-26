@@ -1,3 +1,4 @@
+import { Table, TableBody } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ReportListContainerProps {
@@ -37,5 +38,13 @@ export const ReportListContainer = ({ isLoading, error, children }: ReportListCo
     );
   }
 
-  return <div className="space-y-4">{children}</div>;
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableBody>
+          {children}
+        </TableBody>
+      </Table>
+    </div>
+  );
 };
