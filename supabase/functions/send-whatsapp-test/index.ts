@@ -2,16 +2,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 
 const VALID_MESSAGE_TYPES = [
-  'Template',
-  'Text',
-  'Image',
-  'Document',
-  'Audio',
-  'Video',
-  'OrderDetails',
-  'InteractiveButton',
-  'InteractiveList',
-  'InteractiveProductList'
+  'TEMPLATE',
+  'TEXT',
+  'IMAGE',
+  'DOCUMENT',
+  'AUDIO',
+  'VIDEO',
+  'ORDER_DETAILS',
+  'INTERACTIVE_BUTTON',
+  'INTERACTIVE_LIST',
+  'INTERACTIVE_PRODUCT_LIST'
 ] as const;
 
 type MessageType = typeof VALID_MESSAGE_TYPES[number];
@@ -62,10 +62,10 @@ serve(async (req) => {
     }
 
     // Prepare WhatsApp message
-    const message = {
+    const message: WhatsAppMessage = {
       countryCode: "+966",
       phoneNumber: business_phone.replace("+966", ""),
-      type: "Text" as MessageType,
+      type: "TEXT",
       text: {
         content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
       }
@@ -73,7 +73,7 @@ serve(async (req) => {
 
     // Send test message using Interakt API
     console.log("Sending test message via Interakt API with payload:", {
-      message,
+      data: message,
       api_key: "***"
     })
 
