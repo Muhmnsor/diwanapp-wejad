@@ -27,7 +27,8 @@ const CreateEvent = () => {
     beneficiaryType: "both",
     certificateType: "none",
     eventHours: 0,
-    price: "free"
+    price: "free",
+    attendees: 0  // Added the missing required property
   });
   
   const form = useForm({
