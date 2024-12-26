@@ -19,12 +19,14 @@ export const EventTitle = ({
   onShare,
   onAddToCalendar 
 }: EventTitleProps) => {
+  console.log('EventTitle - isAdmin:', isAdmin); // Added for debugging
+
   return (
     <div className="flex justify-between items-start px-8 py-6">
       <h1 className="text-[32px] leading-tight font-semibold text-[#1A1F2C]">{title}</h1>
       <div className="flex gap-3">
         {isAdmin && (
-          <div className="flex gap-2 ml-4">
+          <>
             <Button 
               variant="outline" 
               size="icon"
@@ -41,7 +43,7 @@ export const EventTitle = ({
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         )}
         <EventActions
           eventTitle={title}
