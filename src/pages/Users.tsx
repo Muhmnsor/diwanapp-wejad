@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { UsersTable } from "@/components/users/UsersTable";
-import type { Role, User, UserRoleResponse } from "@/components/users/types";
+import type { Role, User, UserRoleData } from "@/components/users/types";
 
 const Users = () => {
   const { user } = useAuthStore();
@@ -58,8 +58,8 @@ const Users = () => {
       console.log('User roles data:', userRolesData);
 
       // Create a map of user IDs to their roles
-      const userRolesMap = (userRolesData as UserRoleResponse[]).reduce((acc, curr) => {
-        if (curr.roles && curr.roles.name) {
+      const userRolesMap = (userRolesData as UserRoleData[]).reduce((acc, curr) => {
+        if (curr.roles?.name) {
           acc[curr.user_id] = curr.roles.name;
         }
         return acc;

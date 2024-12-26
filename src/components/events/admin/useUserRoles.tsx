@@ -1,13 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Role {
-  name: string;
-}
-
-interface UserRoleData {
-  roles: Role;
-}
+import type { UserRoleData } from "@/components/users/types";
 
 export const useUserRoles = () => {
   return useQuery({
@@ -25,8 +18,10 @@ export const useUserRoles = () => {
       const { data: userRolesData, error } = await supabase
         .from('user_roles')
         .select(`
+          user_id,
           roles (
-            name
+            name,
+            description
           )
         `)
         .eq('user_id', user.id);
@@ -45,7 +40,7 @@ export const useUserRoles = () => {
       }
 
       // Map through the roles and extract names
-      const roleNames = userRolesData.map((data: UserRoleData) => data.roles.name);
+      const roleNames = (userRolesData as UserRoleData[]).map(data => data.roles.name);
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },
