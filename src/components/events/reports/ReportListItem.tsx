@@ -1,15 +1,24 @@
+import { Button } from "@/components/ui/button";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  CollapsibleTrigger,
+  CollapsibleContent,
+  Collapsible,
+} from "@/components/ui/collapsible";
+import { ReportHeader } from "./components/ReportHeader";
+import { ReportContent } from "./components/ReportContent";
+import { ReportPhotos } from "./components/ReportPhotos";
+import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Table, TableBody } from "@/components/ui/table";
-import { ReportTableRow } from "./components/ReportTableRow";
-import { ReportDeleteDialog } from "./components/ReportDeleteDialog";
 
-export interface ReportListItemProps {
+interface ReportListItemProps {
   report: {
     id: string;
-    event_id: string;
+    created_at: string;
     report_text: string;
     detailed_description: string;
     event_duration: string;
@@ -17,93 +26,127 @@ export interface ReportListItemProps {
     event_objectives: string;
     impact_on_participants: string;
     photos: Array<{ url: string; description: string }>;
-    created_at: string;
+    event_id: string;
   };
-  onDownload: (report: any) => void;
+  eventTitle?: string;
 }
 
-export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
+export const ReportListItem = ({
+  report,
+  eventTitle,
+}: ReportListItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
-
-  const { data: event } = useQuery({
-    queryKey: ["event", report.event_id],
-    queryFn: async () => {
-      console.log("Fetching event details for report:", report.event_id);
-      const { data, error } = await supabase
-        .from("events")
-        .select("title")
-        .eq("id", report.event_id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching event:", error);
-        throw error;
-      }
-      console.log("Event data fetched:", data);
-      return data;
-    },
-  });
 
   const handleDelete = async () => {
     try {
-      console.log("Deleting report:", report.id);
+      setIsDeleting(true);
+      console.log('Attempting to delete report:', report.id);
+      
       const { error } = await supabase
         .from('event_reports')
         .delete()
         .eq('id', report.id);
 
       if (error) {
-        console.error("Error deleting report:", error);
-        toast.error("حدث خطأ أثناء حذف التقرير");
+        console.error('Error deleting report:', error);
+        toast.error('حدث خطأ أثناء حذف التقرير');
         return;
       }
 
-      toast.success("تم حذف التقرير بنجاح");
-      await queryClient.invalidateQueries({ queryKey: ['event-reports', report.event_id] });
-      setIsDeleteDialogOpen(false);
+      console.log('Report deleted successfully');
+      await queryClient.invalidateQueries({
+        queryKey: ['event-reports', report.event_id]
+      });
+      toast.success('تم حذف التقرير بنجاح');
     } catch (error) {
-      console.error("Error in handleDelete:", error);
-      toast.error("حدث خطأ أثناء حذف التقرير");
+      console.error('Error in delete handler:', error);
+      toast.error('حدث خطأ أثناء حذف التقرير');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const parsedPhotos = report.photos?.map(photo => {
-    if (typeof photo === 'string') {
-      try {
-        return JSON.parse(photo);
-      } catch {
-        return { url: photo, description: '' };
-      }
-    }
-    return photo;
-  }) || [];
+  const handleDownload = () => {
+    // Create report content
+    const reportContent = `
+تقرير الفعالية
 
-  console.log("Parsed photos:", parsedPhotos);
+التاريخ: ${new Date(report.created_at).toLocaleDateString('ar')}
+
+نص التقرير:
+${report.report_text}
+
+التفاصيل:
+${report.detailed_description}
+
+معلومات الفعالية:
+- مدة الفعالية: ${report.event_duration}
+- عدد المشاركين: ${report.attendees_count}
+
+الأهداف:
+${report.event_objectives}
+
+الأثر على المشاركين:
+${report.impact_on_participants}
+
+الصور المرفقة:
+${report.photos?.map((photo: any) => `- ${photo.description}: ${photo.url}`).join('\n') || 'لا توجد صور مرفقة'}
+    `;
+
+    // Create blob and download
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `تقرير-الفعالية-${new Date(report.created_at).toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
-    <>
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <Table>
-          <TableBody>
-            <ReportTableRow
-              isOpen={isOpen}
-              setIsOpen={setIsOpen}
-              report={{ ...report, photos: parsedPhotos }}
-              eventTitle={event?.title}
-              onDownload={() => onDownload(report)}
-              onDelete={() => setIsDeleteDialogOpen(true)}
-            />
-          </TableBody>
-        </Table>
-      </div>
+    <TableRow className="hover:bg-muted/0">
+      <TableCell className="p-4">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    {isOpen ? <ChevronUp /> : <ChevronDown />}
+                  </Button>
+                </CollapsibleTrigger>
+                {eventTitle && (
+                  <div className="text-sm font-medium">{eventTitle}</div>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {new Date(report.created_at).toLocaleDateString('ar')}
+                </div>
+                <ReportHeader
+                  createdAt={report.created_at}
+                  onDownload={handleDownload}
+                  onDelete={handleDelete}
+                  isDeleting={isDeleting}
+                  eventTitle={eventTitle}
+                />
+              </div>
+            </div>
 
-      <ReportDeleteDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-      />
-    </>
+            <CollapsibleContent>
+              <div className="space-y-6 pt-4">
+                <ReportContent report={report} />
+                <Separator />
+                <ReportPhotos photos={report.photos} />
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+      </TableCell>
+    </TableRow>
   );
 };
