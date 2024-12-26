@@ -1,29 +1,29 @@
-import { EventStatus, EventStatusConfig } from "@/types/eventStatus";
+import { EventStatus } from "@/types/eventStatus";
 
-export const getStatusConfig = (status: EventStatus): EventStatusConfig => {
-  const configs: Record<EventStatus, EventStatusConfig> = {
+export const getStatusConfig = (status: EventStatus) => {
+  const configs = {
     available: {
-      text: "تسجيل الحضور",
-      className: "bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all",
+      text: "سجل الآن",
+      className: "bg-primary text-white hover:bg-primary/90",
       disabled: false
     },
     full: {
-      text: "عذراً، اكتمل العدد المسموح للتسجيل",
+      text: "عذراً، اكتمل العدد",
       className: "bg-purple-100 text-purple-700 cursor-not-allowed",
       disabled: true
     },
     ended: {
-      text: "عذراً، انتهت فترة التسجيل المتاحة",
+      text: "عذراً، انتهى وقت التسجيل",
       className: "bg-red-100 text-red-700 cursor-not-allowed",
       disabled: true
     },
     notStarted: {
-      text: "التسجيل سيبدأ قريباً",
+      text: "سيفتح التسجيل قريباً",
       className: "bg-yellow-100 text-yellow-700 cursor-not-allowed",
       disabled: true
     },
     eventStarted: {
-      text: "عذراً، انتهت الفعالية",
+      text: "عذراً، بدأت الفعالية",
       className: "bg-gray-100 text-gray-700 cursor-not-allowed",
       disabled: true
     }
