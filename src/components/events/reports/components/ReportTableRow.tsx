@@ -25,7 +25,8 @@ interface ReportTableRowProps {
     photos: Array<{ url: string; description: string }>;
   };
   eventTitle?: string;
-  onDownload: () => void;
+  onDownloadPDF: () => void;
+  onDownloadImages: () => void;
   onDelete: () => void;
 }
 
@@ -34,7 +35,8 @@ export const ReportTableRow = ({
   setIsOpen,
   report,
   eventTitle,
-  onDownload,
+  onDownloadPDF,
+  onDownloadImages,
   onDelete,
 }: ReportTableRowProps) => {
   return (
@@ -59,7 +61,8 @@ export const ReportTableRow = ({
                 </div>
                 <ReportHeader
                   createdAt={report.created_at}
-                  onDownload={onDownload}
+                  onDownloadPDF={onDownloadPDF}
+                  onDownloadImages={onDownloadImages}
                   onDelete={onDelete}
                   eventTitle={eventTitle}
                 />
