@@ -10,7 +10,9 @@ interface FeedbackLinkProps {
 
 export const FeedbackLink = ({ eventId }: FeedbackLinkProps) => {
   const [copied, setCopied] = useState(false);
-  const feedbackUrl = `${window.location.origin}/feedback/${eventId}`;
+  const feedbackUrl = `${window.location.origin}/event/${eventId}/feedback`;
+
+  console.log('Generated feedback URL:', feedbackUrl);
 
   const handleCopy = async () => {
     try {
@@ -19,6 +21,7 @@ export const FeedbackLink = ({ eventId }: FeedbackLinkProps) => {
       toast.success("تم نسخ الرابط");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
+      console.error('Error copying feedback URL:', err);
       toast.error("حدث خطأ أثناء نسخ الرابط");
     }
   };
