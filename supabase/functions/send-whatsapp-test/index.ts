@@ -51,7 +51,8 @@ serve(async (req) => {
         "type": "Text",
         "text": {
           "content": "رسالة تجريبية من نظام إدارة الفعاليات 👋"
-        }
+        },
+        "whatsappBusinessId": "504548239401305"  // Added WhatsApp Business ID
       })
     })
 
