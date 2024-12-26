@@ -17,7 +17,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
   const [formData, setFormData] = useState<CustomEvent>({
     ...event,
     certificateType: event.certificateType || 'none',
-    eventHours: event.eventHours || 0
+    eventHours: event.eventHours
   });
   const [isUploading, setIsUploading] = useState(false);
 
@@ -32,7 +32,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         registration_start_date: formData.registrationStartDate,
         registration_end_date: formData.registrationEndDate,
         certificate_type: formData.certificateType,
-        event_hours: formData.eventHours
+        event_hours: formData.eventHours || null
       };
       
       console.log('Updating event with data:', updateData);

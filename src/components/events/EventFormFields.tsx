@@ -116,10 +116,11 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
           <label className="text-sm font-medium block mb-1.5">عدد ساعات الفعالية</label>
           <Input
             type="number"
-            value={formData.eventHours || 0}
-            onChange={(e) => setFormData({ ...formData, eventHours: Number(e.target.value) })}
+            value={formData.eventHours || ''}
+            onChange={(e) => setFormData({ ...formData, eventHours: e.target.value ? Number(e.target.value) : undefined })}
             min={0}
             className="text-right"
+            placeholder="أدخل عدد الساعات"
           />
         </div>
       )}
