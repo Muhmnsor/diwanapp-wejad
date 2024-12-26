@@ -7,6 +7,7 @@ import { EventContent } from "./EventContent";
 import { EventHeader } from "./EventHeader";
 import { EventTitle } from "./EventTitle";
 import { EventImage } from "./EventImage";
+import { EventRegistrationDialog } from "./EventRegistrationDialog";
 
 interface EventDetailsViewProps {
   event: Event & { attendees: number };
@@ -16,8 +17,6 @@ interface EventDetailsViewProps {
   onRegister: () => void;
   id: string;
   isAdmin: boolean;
-  canAddReport?: boolean;
-  onAddReport?: () => void;
 }
 
 export const EventDetailsView = ({
@@ -28,15 +27,24 @@ export const EventDetailsView = ({
   onRegister,
   id,
   isAdmin,
-  canAddReport,
-  onAddReport
 }: EventDetailsViewProps) => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
   
   console.log('Event data in EventDetailsView:', event);
-  console.log('Can add report:', canAddReport);
+  console.log('isAdmin:', isAdmin);
   console.log('User roles:', userRoles);
+
+  const handleRegister = () => {
+    console.log('Opening registration dialog');
+    setIsRegistrationOpen(true);
+  };
+
+  const canAddReport = !rolesLoading && (
+    userRoles.includes('admin') || 
+    userRoles.includes('event_executor')
+  );
 
   return (
     <div className="bg-white rounded-lg shadow-sm">
@@ -53,7 +61,7 @@ export const EventDetailsView = ({
 
       <EventContent 
         event={event}
-        onRegister={onRegister}
+        onRegister={handleRegister}
       />
 
       {(isAdmin || canAddReport) && (
@@ -63,9 +71,9 @@ export const EventDetailsView = ({
             onEdit={onEdit}
             onDelete={onDelete}
             onAddToCalendar={onAddToCalendar}
-            onRegister={onRegister}
+            onRegister={handleRegister}
             id={id}
-            canAddReport={canAddReport || false}
+            canAddReport={canAddReport}
             onAddReport={() => setIsReportDialogOpen(true)}
             isAdmin={isAdmin}
           />
@@ -77,6 +85,12 @@ export const EventDetailsView = ({
           />
         </>
       )}
+
+      <EventRegistrationDialog
+        open={isRegistrationOpen}
+        onOpenChange={setIsRegistrationOpen}
+        event={event}
+      />
     </div>
   );
 };

@@ -19,7 +19,7 @@ export const EventTitle = ({
   onShare,
   onAddToCalendar 
 }: EventTitleProps) => {
-  console.log('EventTitle - isAdmin:', isAdmin); // Added for debugging
+  console.log('EventTitle - isAdmin:', isAdmin);
 
   return (
     <div className="flex justify-between items-start px-8 py-6">
