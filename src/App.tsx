@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import CreateEvent from "./pages/CreateEvent";
@@ -24,6 +24,10 @@ function App() {
               <CreateEvent />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/create-event"
+          element={<Navigate to="/event/create" replace />}
         />
         <Route
           path="/event/edit/:id"
