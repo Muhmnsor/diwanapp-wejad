@@ -34,10 +34,11 @@ export const EventDetailsView = ({
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState(event);
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
   const navigate = useNavigate();
   
-  console.log('EventDetailsView - Event data:', event);
+  console.log('EventDetailsView - Event data:', currentEvent);
   console.log('EventDetailsView - isAdmin:', isAdmin);
   console.log('EventDetailsView - User roles:', userRoles);
 
@@ -73,8 +74,7 @@ export const EventDetailsView = ({
 
   const handleUpdateEvent = (updatedEvent: Event) => {
     console.log('Updating event with:', updatedEvent);
-    // Refresh the page to show updated data
-    window.location.reload();
+    setCurrentEvent({ ...currentEvent, ...updatedEvent });
   };
 
   const canAddReport = !rolesLoading && (
@@ -85,9 +85,9 @@ export const EventDetailsView = ({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
+        <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl || ''} title={currentEvent.title} />
         <EventTitle 
-          title={event.title}
+          title={currentEvent.title}
           isAdmin={isAdmin}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -95,16 +95,15 @@ export const EventDetailsView = ({
           onAddToCalendar={onAddToCalendar}
         />
         <EventContent 
-          event={event}
+          event={currentEvent}
           onRegister={handleRegister}
         />
 
-        {/* Show admin controls if user has permissions */}
         {(isAdmin || canAddReport) && (
           <>
             <div className="mt-8 border-t border-gray-100">
               <EventAdminTabs
-                event={event}
+                event={currentEvent}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onAddToCalendar={onAddToCalendar}
@@ -127,11 +126,11 @@ export const EventDetailsView = ({
         <EventRegistrationDialog
           open={isRegistrationOpen}
           onOpenChange={setIsRegistrationOpen}
-          event={event}
+          event={currentEvent}
         />
 
         <EditEventDialog 
-          event={event}
+          event={currentEvent}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           onSave={handleUpdateEvent}

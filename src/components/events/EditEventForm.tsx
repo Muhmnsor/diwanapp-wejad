@@ -28,16 +28,16 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     eventHours: event.eventHours || 0,
     price: event.price || 'free',
     max_attendees: event.max_attendees || 0,
-    beneficiaryType: event.beneficiaryType || 'both',
+    beneficiaryType: event.beneficiary_type || 'both',
     event_type: event.event_type || 'in-person',
     eventType: event.eventType || 'in-person',
     attendees: event.attendees || 0,
     imageUrl: event.imageUrl || event.image_url || '',
     image_url: event.image_url || event.imageUrl || '',
-    registrationStartDate: event.registrationStartDate || '',
-    registrationEndDate: event.registrationEndDate || '',
-    registration_start_date: event.registration_start_date || '',
-    registration_end_date: event.registration_end_date || ''
+    registrationStartDate: event.registrationStartDate || event.registration_start_date || '',
+    registrationEndDate: event.registrationEndDate || event.registration_end_date || '',
+    registration_start_date: event.registration_start_date || event.registrationStartDate || '',
+    registration_end_date: event.registration_end_date || event.registrationEndDate || ''
   });
   
   const [isUploading, setIsUploading] = useState(false);
@@ -57,16 +57,16 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
       eventHours: event.eventHours || 0,
       price: event.price || 'free',
       max_attendees: event.max_attendees || 0,
-      beneficiaryType: event.beneficiaryType || 'both',
+      beneficiaryType: event.beneficiary_type || 'both',
       event_type: event.event_type || 'in-person',
       eventType: event.eventType || 'in-person',
       attendees: event.attendees || 0,
       imageUrl: event.imageUrl || event.image_url || '',
       image_url: event.image_url || event.imageUrl || '',
-      registrationStartDate: event.registrationStartDate || '',
-      registrationEndDate: event.registrationEndDate || '',
-      registration_start_date: event.registration_start_date || '',
-      registration_end_date: event.registration_end_date || ''
+      registrationStartDate: event.registrationStartDate || event.registration_start_date || '',
+      registrationEndDate: event.registrationEndDate || event.registration_end_date || '',
+      registration_start_date: event.registration_start_date || event.registrationStartDate || '',
+      registration_end_date: event.registration_end_date || event.registrationEndDate || ''
     });
   }, [event]);
 
@@ -94,18 +94,21 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
       
       console.log('Updating event with data:', updateData);
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('events')
         .update(updateData)
-        .eq('id', formData.id);
+        .eq('id', formData.id)
+        .select()
+        .single();
 
       if (error) {
         console.error('Error updating event in database:', error);
-        throw error;
+        toast.error("حدث خطأ أثناء تحديث الفعالية");
+        return;
       }
 
-      console.log('Event updated successfully in database');
-      onSave(formData);
+      console.log('Event updated successfully in database:', data);
+      onSave(data);
       toast.success("تم تحديث الفعالية بنجاح");
       onCancel();
     } catch (error) {
