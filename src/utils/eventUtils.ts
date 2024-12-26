@@ -56,7 +56,7 @@ export const getEventStatus = (event: Event): EventStatus => {
     registrationStartDate: event.registrationStartDate,
     registrationEndDate: event.registrationEndDate,
     attendees: event.attendees,
-    maxAttendees: event.maxAttendees
+    max_attendees: event.max_attendees
   });
   
   const now = new Date();
@@ -87,7 +87,7 @@ export const getEventStatus = (event: Event): EventStatus => {
   }
   
   // Check if event is full
-  if (event.attendees >= event.maxAttendees) {
+  if (event.attendees >= event.max_attendees) {
     console.log('Event is full - no more seats available');
     return 'full';
   }

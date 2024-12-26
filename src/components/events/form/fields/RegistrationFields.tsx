@@ -29,8 +29,8 @@ export const RegistrationFields = ({ formData, setFormData }: RegistrationFields
         <label className="text-sm font-medium block mb-1.5">عدد المقاعد</label>
         <Input
           type="number"
-          value={formData.maxAttendees}
-          onChange={(e) => setFormData({ ...formData, maxAttendees: Number(e.target.value) })}
+          value={formData.max_attendees}
+          onChange={(e) => setFormData({ ...formData, max_attendees: Number(e.target.value) })}
           className="text-right"
         />
       </div>

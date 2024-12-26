@@ -22,10 +22,9 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         end: event.registrationEndDate
       },
       attendees: event.attendees,
-      maxAttendees: event.maxAttendees
+      max_attendees: event.max_attendees
     });
 
-    // تحديث حالة الزر عندما تتغير بيانات الفعالية
     const newStatus = getEventStatus(event);
     console.log('New event status:', newStatus);
     setEventStatus(newStatus);
@@ -34,7 +33,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     event.registrationStartDate, 
     event.registrationEndDate,
     event.attendees,
-    event.maxAttendees
+    event.max_attendees
   ]);
 
   const handleRegister = () => {
@@ -56,7 +55,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         time={event.time}
         location={event.location}
         attendees={event.attendees}
-        maxAttendees={event.maxAttendees}
+        maxAttendees={event.max_attendees}
         eventType={event.eventType}
         price={event.price}
         beneficiaryType={event.beneficiaryType}
