@@ -56,7 +56,7 @@ export const EventCard = ({
       case 'full':
         return { text: "اكتمل التسجيل", variant: "destructive" as const, color: "bg-purple-500" };
       case 'notStarted':
-        return { text: "لم يبدأ التسجيل", variant: "secondary" as const, color: "bg-gray-500" };
+        return { text: "لم يبدأ التسجيل", variant: "destructive" as const, color: "bg-yellow-500" };
       case 'ended':
         return { text: "انتهى التسجيل", variant: "destructive" as const, color: "bg-red-500" };
       default:
@@ -73,9 +73,13 @@ export const EventCard = ({
         type: certificate_type,
         hours: event_hours
       },
-      max_attendees
+      max_attendees,
+      registrationDates: {
+        start: registration_start_date,
+        end: registration_end_date
+      }
     });
-  }, [title, certificate_type, event_hours, max_attendees]);
+  }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date]);
 
   return (
     <div className="w-[380px] mx-auto" dir="rtl">
