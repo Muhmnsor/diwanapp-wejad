@@ -22,6 +22,11 @@ export const EditEventDialog = ({
 }: EditEventDialogProps) => {
   console.log('Event data in EditEventDialog:', event);
 
+  const handleSave = (updatedEvent: CustomEvent) => {
+    onSave(updatedEvent);
+    onOpenChange(false); // Close dialog after successful save
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] [&_[data-radix-scroll-area-viewport]]:!pl-4 [&_[data-radix-scroll-area-viewport]]:!pr-0" dir="rtl">
@@ -29,7 +34,7 @@ export const EditEventDialog = ({
         <ScrollArea className="h-[calc(90vh-120px)]">
           <EditEventForm 
             event={event}
-            onSave={onSave}
+            onSave={handleSave}
             onCancel={() => onOpenChange(false)}
           />
         </ScrollArea>
