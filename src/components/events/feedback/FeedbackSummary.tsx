@@ -64,7 +64,7 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
   console.log('FeedbackSummary - Calculated averages:', averages);
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6">
       <FeedbackStats feedback={feedback} averages={averages} />
       <FeedbackComments feedback={feedback} />
     </div>
