@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
+import { Report } from '@/types/report';
 
 interface FeedbackSummary {
   averageOverallRating: number;
@@ -49,39 +50,18 @@ const fetchFeedbackSummary = async (eventId: string): Promise<FeedbackSummary> =
 };
 
 export const downloadReportWithImages = async (
-  report: {
-    report_text: string;
-    detailed_description: string;
-    event_duration: string;
-    attendees_count: string;
-    event_objectives: string;
-    impact_on_participants: string;
-    created_at: string;
-    photos: Array<string>;
-    event_id: string;
-  },
+  report: Report,
   eventTitle?: string
 ) => {
   try {
     const zip = new JSZip();
     
-    // Fetch feedback summary
     const feedbackSummary = await fetchFeedbackSummary(report.event_id);
     console.log('Feedback summary:', feedbackSummary);
 
-    // Parse photos from JSON strings
-    const parsedPhotos = report.photos.map(photoStr => {
-      try {
-        return JSON.parse(photoStr) as { url: string; description: string };
-      } catch (error) {
-        console.error('Error parsing photo JSON:', error);
-        return null;
-      }
-    }).filter((photo): photo is { url: string; description: string } => photo !== null);
-
+    const parsedPhotos = report.photos;
     console.log('Parsed photos:', parsedPhotos);
 
-    // Create report text content with feedback summary
     const reportContent = `تقرير الفعالية
 ${eventTitle ? `اسم الفعالية: ${eventTitle}` : ''}
 التاريخ: ${new Date(report.created_at).toLocaleDateString('ar')}
@@ -112,14 +92,11 @@ ${report.impact_on_participants}
 الصور المرفقة:
 ${parsedPhotos.map((photo, index) => `${index + 1}. ${photo.description || `صورة ${index + 1}`}`).join('\n')}`;
 
-    // Add report text file
     zip.file('تقرير-الفعالية.txt', reportContent);
 
-    // Create images folder
     const imagesFolder = zip.folder("الصور");
     if (!imagesFolder) throw new Error('Failed to create images folder');
 
-    // Download and add images
     const downloadPromises = parsedPhotos.map(async (photo, index) => {
       if (!photo.url) {
         console.log(`Skipping empty photo at index ${index}`);
@@ -144,7 +121,6 @@ ${parsedPhotos.map((photo, index) => `${index + 1}. ${photo.description || `صو
 
     await Promise.all(downloadPromises);
 
-    // Generate and download zip file
     console.log('Generating zip file...');
     const content = await zip.generateAsync({ type: "blob" });
     const url = window.URL.createObjectURL(content);

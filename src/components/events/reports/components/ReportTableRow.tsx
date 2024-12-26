@@ -10,20 +10,12 @@ import { ReportHeader } from "./ReportHeader";
 import { ReportContent } from "./ReportContent";
 import { ReportPhotos } from "./ReportPhotos";
 import { Separator } from "@/components/ui/separator";
+import { Report } from "@/types/report";
 
 interface ReportTableRowProps {
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
-  report: {
-    created_at: string;
-    report_text: string;
-    detailed_description: string;
-    event_duration: string;
-    attendees_count: string;
-    event_objectives: string;
-    impact_on_participants: string;
-    photos: { url: string; description: string; }[];
-  };
+  report: Report;
   eventTitle?: string;
   onDownload: () => void;
   onDelete: () => void;
@@ -77,7 +69,7 @@ export const ReportTableRow = ({
                   impact_on_participants={report.impact_on_participants}
                   created_at={report.created_at}
                   photos={report.photos}
-                  event_id=""
+                  event_id={report.event_id}
                 />
                 <Separator />
                 <ReportPhotos photos={report.photos} />

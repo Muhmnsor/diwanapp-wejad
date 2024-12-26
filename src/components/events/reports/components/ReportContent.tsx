@@ -1,16 +1,18 @@
 import { TableCell } from "@/components/ui/table";
+import { Report } from "@/types/report";
 
-interface ReportContentProps {
-  report_text: string;
-  detailed_description: string;
-  event_duration: string;
-  attendees_count: string;
-  event_objectives: string;
-  impact_on_participants: string;
-  created_at: string;
-  photos: { url: string; description: string; }[];
-  event_id: string;
-}
+type ReportContentProps = Pick<
+  Report,
+  | "report_text"
+  | "detailed_description"
+  | "event_duration"
+  | "attendees_count"
+  | "event_objectives"
+  | "impact_on_participants"
+  | "created_at"
+  | "photos"
+  | "event_id"
+>;
 
 export const ReportContent = ({
   report_text,
