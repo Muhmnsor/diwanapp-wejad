@@ -5,6 +5,10 @@ import { EventMetadataFields } from "./EventMetadataFields";
 import { EventObjectivesField } from "./EventObjectivesField";
 import { ImpactField } from "./ImpactField";
 import { PhotosField } from "./PhotosField";
+import { PhotosGallery } from "../PhotosGallery";
+import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EditReportFormFieldsProps {
   formValues: {
@@ -22,8 +26,57 @@ interface EditReportFormFieldsProps {
 }
 
 export const EditReportFormFields = ({ formValues, setValue }: EditReportFormFieldsProps) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handlePhotoUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `event-reports/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(fileName);
+
+      const newPhotos = [...formValues.photos];
+      const nextIndex = newPhotos.length;
+      const photoDescriptions = [
+        "صورة للمشاركين في الفعالية",
+        "صورة لتفاعل المقدم مع الحضور",
+        "صورة للمواد التدريبية والأدوات المستخدمة",
+        "صورة لأنشطة المجموعات",
+        "صورة للعرض التقديمي",
+        "صورة للحظات المميزة في الفعالية"
+      ];
+
+      newPhotos.push({
+        url: publicUrl,
+        description: photoDescriptions[nextIndex] || `صورة ${nextIndex + 1}`
+      });
+
+      setValue('photos', newPhotos);
+      toast.success("تم رفع الصورة بنجاح");
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error("حدث خطأ أثناء رفع الصورة");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePhotoDelete = (index: number) => {
+    const newPhotos = formValues.photos.filter((_, i) => i !== index);
+    setValue('photos', newPhotos);
+  };
+
   return (
-    <>
+    <div className="space-y-6" dir="rtl">
       <ReportNameField
         value={formValues.report_name}
         programName={formValues.program_name}
@@ -58,10 +111,19 @@ export const EditReportFormFields = ({ formValues, setValue }: EditReportFormFie
         onChange={(value) => setValue('impact_on_participants', value)}
       />
 
-      <PhotosField
-        photos={formValues.photos}
-        onPhotosChange={(photos) => setValue('photos', photos)}
-      />
-    </>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">صور التقرير</h3>
+        <PhotosField
+          photos={formValues.photos}
+          onPhotosChange={(photos) => setValue('photos', photos)}
+        />
+        {formValues.photos && formValues.photos.length > 0 && (
+          <PhotosGallery
+            photos={formValues.photos}
+            onDelete={handlePhotoDelete}
+          />
+        )}
+      </div>
+    </div>
   );
 };

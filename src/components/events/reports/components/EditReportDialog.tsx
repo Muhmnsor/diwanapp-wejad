@@ -35,7 +35,16 @@ export const EditReportDialog = ({
     attendees_count: report.attendees_count || '',
     event_objectives: report.event_objectives || '',
     impact_on_participants: report.impact_on_participants || '',
-    photos: report.photos || [],
+    photos: report.photos ? report.photos.map(photo => {
+      if (typeof photo === 'string') {
+        try {
+          return JSON.parse(photo);
+        } catch {
+          return { url: photo, description: '' };
+        }
+      }
+      return photo;
+    }) : [],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
