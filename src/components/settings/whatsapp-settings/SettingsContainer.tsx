@@ -25,18 +25,27 @@ export const SettingsContainer = () => {
   const { data: settingsData, isLoading } = useQuery({
     queryKey: ["whatsapp-settings"],
     queryFn: async () => {
+      console.log("Fetching WhatsApp settings...");
       const { data, error } = await supabase
         .from("whatsapp_settings")
         .select("*")
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching WhatsApp settings:", error);
+        throw error;
+      }
+      console.log("Fetched WhatsApp settings:", {
+        ...data,
+        api_key: data?.api_key ? "***" : undefined,
+      });
       return data;
     },
   });
 
   useEffect(() => {
     if (settingsData) {
+      console.log("Updating settings state with fetched data");
       setSettings({
         business_phone: settingsData.business_phone || "",
         api_key: settingsData.api_key || "",
@@ -49,6 +58,7 @@ export const SettingsContainer = () => {
 
   const mutation = useMutation({
     mutationFn: async (newSettings: WhatsAppSettings) => {
+      console.log("Saving WhatsApp settings...");
       if (settingsData?.id) {
         const { error } = await supabase
           .from("whatsapp_settings")
@@ -75,19 +85,27 @@ export const SettingsContainer = () => {
   const testConnection = async () => {
     const toastId = toast.loading("جاري اختبار الاتصال...");
     try {
-      console.log("Testing connection with settings:", {
+      console.log("Current settings state:", {
         business_phone: settings.business_phone,
-        api_key: "***", // Hide API key in logs
+        api_key: settings.api_key ? "***" : "not set",
         account_id: settings.account_id,
         whatsapp_number_id: settings.whatsapp_number_id,
       });
 
       // Validate required fields before making the request
-      if (!settings.business_phone || !settings.api_key || !settings.account_id || !settings.whatsapp_number_id) {
-        toast.error("الرجاء تعبئة جميع الحقول المطلوبة", { id: toastId });
+      const missingFields = [];
+      if (!settings.business_phone) missingFields.push("رقم الواتساب");
+      if (!settings.api_key) missingFields.push("مفتاح API");
+      if (!settings.account_id) missingFields.push("معرف الحساب");
+      if (!settings.whatsapp_number_id) missingFields.push("معرف رقم الواتساب");
+
+      if (missingFields.length > 0) {
+        const errorMessage = `الرجاء تعبئة الحقول التالية: ${missingFields.join("، ")}`;
+        toast.error(errorMessage, { id: toastId });
         return;
       }
 
+      console.log("Testing WhatsApp connection...");
       const response = await supabase.functions.invoke('test-whatsapp-connection', {
         body: {
           business_phone: settings.business_phone,
