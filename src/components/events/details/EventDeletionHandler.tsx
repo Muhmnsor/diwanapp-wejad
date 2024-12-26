@@ -16,7 +16,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
   try {
     console.log('Starting deletion process for event:', eventId);
 
-    // First check if there's any feedback for this event
+    // 1. Check for feedback records and delete them first
     const { data: feedbackData } = await supabase
       .from('event_feedback')
       .select('id')
@@ -27,7 +27,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Feedback deleted successfully');
     }
 
-    // Check and delete attendance records
+    // 2. Check and delete attendance records
     const { data: attendanceData } = await supabase
       .from('attendance_records')
       .select('id')
@@ -38,7 +38,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Attendance records deleted successfully');
     }
 
-    // Check and delete notifications
+    // 3. Check and delete notifications
     const { data: notificationsData } = await supabase
       .from('notification_logs')
       .select('id')
@@ -49,7 +49,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Notifications deleted successfully');
     }
 
-    // Check and delete reports
+    // 4. Check and delete reports
     const { data: reportsData } = await supabase
       .from('event_reports')
       .select('id')
@@ -60,7 +60,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Reports deleted successfully');
     }
 
-    // Check and delete registrations
+    // 5. Check and delete registrations
     const { data: registrationsData } = await supabase
       .from('registrations')
       .select('id')
@@ -71,7 +71,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Registrations deleted successfully');
     }
 
-    // Finally delete the event itself
+    // 6. Finally delete the event itself
     await deleteEvent(eventId);
     console.log('Event deleted successfully');
 
