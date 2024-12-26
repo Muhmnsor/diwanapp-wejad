@@ -18,7 +18,7 @@ export const TopHeader = () => {
   return (
     <div className="w-full bg-white py-4 border-b">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center" dir="rtl">
           <div className="flex justify-start">
             <img 
               src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 

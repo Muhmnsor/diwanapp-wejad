@@ -5,8 +5,8 @@ export const Footer = () => {
   return (
     <footer className="mt-auto py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-          {/* Logo - Left Side */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center" dir="rtl">
+          {/* Logo - Right Side */}
           <div className="flex items-center justify-center md:justify-start order-first">
             <Logo className="w-24 h-24" />
           </div>
@@ -18,7 +18,7 @@ export const Footer = () => {
             <p className="text-[#9F9EA1] mb-2">رقم الترخيص 5531</p>
           </div>
 
-          {/* Social Links - Right Side */}
+          {/* Social Links - Left Side */}
           <div className="flex flex-col items-center md:items-end order-last">
             <div className="flex justify-center space-x-4 rtl:space-x-reverse mb-4">
               <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
