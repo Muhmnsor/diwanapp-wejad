@@ -9,13 +9,12 @@ import { User, Phone } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
 interface EventFeedbackFormProps {
-  eventId?: string;
   onSuccess?: () => void;
 }
 
 export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id: eventId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [name, setName] = useState("");
@@ -28,7 +27,7 @@ export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!id) {
+    if (!eventId) {
       toast.error("لم يتم العثور على معرف الفعالية");
       return;
     }
@@ -41,12 +40,12 @@ export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
     setIsSubmitting(true);
 
     try {
-      console.log('Submitting feedback for event:', id);
+      console.log('Submitting feedback for event:', eventId);
       
       const { error } = await supabase
         .from('event_feedback')
         .insert({
-          event_id: id,
+          event_id: eventId,
           feedback_text: feedbackText.trim(),
           overall_rating: overallRating,
           content_rating: contentRating,
@@ -68,7 +67,7 @@ export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
       }
       
       // Navigate back to event details
-      navigate(`/event/${id}`);
+      navigate(`/event/${eventId}`);
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error("حدث خطأ أثناء إرسال التقييم");
