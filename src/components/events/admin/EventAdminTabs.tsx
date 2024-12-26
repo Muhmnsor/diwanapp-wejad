@@ -22,12 +22,16 @@ export const EventAdminTabs = ({
   onRegister,
   id,
 }: EventAdminTabsProps) => {
+  console.log("EventAdminTabs rendering with event:", event);
+  console.log("EventAdminTabs id:", id);
+
   return (
-    <Tabs defaultValue="details" className="mb-8">
-      <TabsList className="mb-4">
+    <Tabs defaultValue="details" className="mb-8" dir="rtl">
+      <TabsList className="mb-4 w-full justify-start">
         <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
         <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
       </TabsList>
+      
       <TabsContent value="details">
         <EventDetailsView
           event={event}
@@ -37,6 +41,7 @@ export const EventAdminTabs = ({
           onRegister={onRegister}
         />
       </TabsContent>
+      
       <TabsContent value="dashboard">
         <EventDashboard eventId={id} />
       </TabsContent>
