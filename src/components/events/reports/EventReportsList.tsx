@@ -3,22 +3,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import * as XLSX from 'xlsx';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EventReportsListProps {
   eventId: string;
 }
 
 export const EventReportsList = ({ eventId }: EventReportsListProps) => {
-  const { data: reports } = useQuery({
+  const { data: reports, isLoading, error } = useQuery({
     queryKey: ['event-reports', eventId],
     queryFn: async () => {
+      console.log('Fetching reports for event:', eventId);
       const { data, error } = await supabase
         .from('event_reports')
         .select('*')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching reports:', error);
+        throw error;
+      }
+
+      console.log('Reports fetched:', data);
       return data;
     },
   });
@@ -41,7 +48,38 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
     XLSX.writeFile(workbook, `تقرير-الفعالية-${new Date(report.created_at).toLocaleDateString('ar')}.xlsx`);
   };
 
-  if (!reports?.length) return null;
+  if (isLoading) {
+    return (
+      <div className="space-y-4 mt-6">
+        <h3 className="text-lg font-semibold">التقارير السابقة</h3>
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('Error in EventReportsList:', error);
+    return (
+      <div className="text-red-500 p-4 text-center">
+        حدث خطأ أثناء تحميل التقارير
+      </div>
+    );
+  }
+
+  if (!reports?.length) {
+    return (
+      <div className="text-gray-500 p-4 text-center">
+        لا توجد تقارير سابقة
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 mt-6">
