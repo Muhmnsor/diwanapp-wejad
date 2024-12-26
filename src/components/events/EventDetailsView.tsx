@@ -8,6 +8,8 @@ import { EventImage } from "./EventImage";
 import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { useAuthStore } from "@/store/authStore";
+import { EventDeleteDialog } from "./details/EventDeleteDialog";
+import { handleEventDeletion } from "./details/EventDeletionHandler";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -31,6 +33,7 @@ export const EventDetailsView = ({
   const [currentEvent, setCurrentEvent] = useState<Event | null>(event);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
 
   console.log('EventDetailsView - User:', user);
@@ -89,6 +92,21 @@ export const EventDetailsView = ({
     setIsRegistrationOpen(true);
   };
 
+  const handleDelete = async () => {
+    try {
+      await handleEventDeletion({
+        eventId: id,
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          onDelete();
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('حدث خطأ أثناء حذف الفعالية');
+    }
+  };
+
   if (!currentEvent) return null;
 
   return (
@@ -101,7 +119,7 @@ export const EventDetailsView = ({
             title={currentEvent.title}
             isAdmin={isAdmin}
             onEdit={() => setIsEditDialogOpen(true)}
-            onDelete={onDelete}
+            onDelete={() => setIsDeleteDialogOpen(true)}
             onAddToCalendar={onAddToCalendar}
           />
 
@@ -123,6 +141,12 @@ export const EventDetailsView = ({
         open={isRegistrationOpen}
         onOpenChange={setIsRegistrationOpen}
         event={currentEvent}
+      />
+
+      <EventDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
       />
     </div>
   );
