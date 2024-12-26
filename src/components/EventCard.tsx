@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { EventCardBadges } from "./events/cards/EventCardBadges";
 import { EventCardDetails } from "./events/cards/EventCardDetails";
 import { EventCardStatus } from "./events/cards/EventCardStatus";
+import { Users } from "lucide-react";
 
 interface EventCardProps {
   id: string;
@@ -49,9 +50,12 @@ export const EventCard = ({
       certificate: {
         type: certificate_type,
         hours: event_hours
-      }
+      },
+      attendees,
+      max_attendees,
+      remainingSeats
     });
-  }, [title, certificate_type, event_hours]);
+  }, [title, certificate_type, event_hours, attendees, max_attendees, remainingSeats]);
 
   const getRegistrationStatus = () => {
     const status = getEventStatus({
@@ -87,7 +91,7 @@ export const EventCard = ({
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
         <CardHeader className="p-4">
-          <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
+          <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 p-4 pt-0">
           <EventCardBadges
@@ -102,11 +106,17 @@ export const EventCard = ({
             location={location}
           />
           {max_attendees > 0 && (
-            <EventCardStatus
-              remainingSeats={remainingSeats}
-              maxAttendees={max_attendees}
-              status={status}
-            />
+            <>
+              <div className="flex items-center gap-2 text-gray-600 text-sm justify-end">
+                <span>{max_attendees} مقعد</span>
+                <Users className="w-4 h-4" />
+              </div>
+              <EventCardStatus
+                remainingSeats={remainingSeats}
+                maxAttendees={max_attendees}
+                status={status}
+              />
+            </>
           )}
         </CardContent>
         <CardFooter className="p-4 pt-0">
