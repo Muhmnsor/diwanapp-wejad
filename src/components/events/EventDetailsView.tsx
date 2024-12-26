@@ -48,18 +48,7 @@ export const EventDetailsView = ({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
-        
-        <EventTitle 
-          title={event.title}
-          isAdmin={isAdmin}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onShare={async () => {}}
-          onAddToCalendar={onAddToCalendar}
-        />
-
-        {(isAdmin || canAddReport) && (
+        {(isAdmin || canAddReport) ? (
           <>
             <EventAdminTabs
               event={event}
@@ -79,13 +68,22 @@ export const EventDetailsView = ({
               eventId={id}
             />
           </>
-        )}
-
-        {!isAdmin && (
-          <EventContent 
-            event={event}
-            onRegister={handleRegister}
-          />
+        ) : (
+          <>
+            <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
+            <EventTitle 
+              title={event.title}
+              isAdmin={isAdmin}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onShare={async () => {}}
+              onAddToCalendar={onAddToCalendar}
+            />
+            <EventContent 
+              event={event}
+              onRegister={handleRegister}
+            />
+          </>
         )}
 
         <EventRegistrationDialog
