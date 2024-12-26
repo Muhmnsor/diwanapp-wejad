@@ -26,15 +26,35 @@ export const DashboardTabs = ({
   eventId,
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="overview" dir="rtl">
-      <TabsList>
-        <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
-        <TabsTrigger value="registrations">المسجلين</TabsTrigger>
-        <TabsTrigger value="report">التقارير</TabsTrigger>
-        <TabsTrigger value="feedback">التقييمات</TabsTrigger>
+    <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
+      <TabsList className="w-full justify-start bg-secondary/20 p-1 rounded-xl">
+        <TabsTrigger 
+          value="overview" 
+          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+        >
+          نظرة عامة
+        </TabsTrigger>
+        <TabsTrigger 
+          value="registrations"
+          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+        >
+          المسجلين
+        </TabsTrigger>
+        <TabsTrigger 
+          value="report"
+          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+        >
+          التقارير
+        </TabsTrigger>
+        <TabsTrigger 
+          value="feedback"
+          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+        >
+          التقييمات
+        </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="overview">
+      <TabsContent value="overview" className="mt-6">
         <DashboardOverview
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
@@ -44,18 +64,18 @@ export const DashboardTabs = ({
         />
       </TabsContent>
 
-      <TabsContent value="registrations">
+      <TabsContent value="registrations" className="mt-6">
         <DashboardRegistrations
           registrations={registrations}
           eventTitle={eventTitle}
         />
       </TabsContent>
 
-      <TabsContent value="report">
+      <TabsContent value="report" className="mt-6">
         <ReportsTab eventId={eventId} />
       </TabsContent>
 
-      <TabsContent value="feedback">
+      <TabsContent value="feedback" className="mt-6">
         <FeedbackTab eventId={eventId} />
       </TabsContent>
     </Tabs>
