@@ -1,3 +1,4 @@
+import { create } from 'zustand';
 import { BeneficiaryType } from '@/types/event';
 
 export interface Event {
@@ -14,11 +15,11 @@ export interface Event {
   event_type: "online" | "in-person";
   eventType?: "online" | "in-person"; // For backward compatibility
   price: number | "free";
+  beneficiaryType: BeneficiaryType;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
   registration_start_date?: string | null;
   registration_end_date?: string | null;
-  beneficiaryType: BeneficiaryType;
   certificate_type: string;
   certificateType?: string; // For backward compatibility
   event_hours: number;
