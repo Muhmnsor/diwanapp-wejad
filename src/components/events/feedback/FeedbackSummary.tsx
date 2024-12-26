@@ -64,16 +64,22 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
         </div>
       </div>
 
-      {feedback.some(item => item.feedback_text) && (
+      {feedback.some(item => item.feedback_text || item.name || item.phone) && (
         <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h4 className="font-medium mb-4 text-lg">التعليقات ({feedback.filter(item => item.feedback_text).length})</h4>
-          <div className="space-y-3">
+          <h4 className="font-medium mb-4 text-lg">التعليقات والمعلومات الإضافية</h4>
+          <div className="space-y-4">
             {feedback.map((item) => (
-              item.feedback_text && (
-                <div key={item.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  {item.feedback_text}
-                </div>
-              )
+              <div key={item.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-2">
+                {item.feedback_text && (
+                  <p className="text-gray-700">{item.feedback_text}</p>
+                )}
+                {(item.name || item.phone) && (
+                  <div className="text-sm text-gray-500 flex gap-4">
+                    {item.name && <span>الاسم: {item.name}</span>}
+                    {item.phone && <span>الجوال: {item.phone}</span>}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>

@@ -6,13 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RatingInput } from "./RatingInput";
 import { User, Phone } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface EventFeedbackFormProps {
-  eventId: string;
+  eventId?: string;
   onSuccess?: () => void;
 }
 
-export const EventFeedbackForm = ({ eventId, onSuccess }: EventFeedbackFormProps) => {
+export const EventFeedbackForm = ({ onSuccess }: EventFeedbackFormProps) => {
+  const navigate = useNavigate();
+  const { id } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [name, setName] = useState("");
@@ -24,26 +27,48 @@ export const EventFeedbackForm = ({ eventId, onSuccess }: EventFeedbackFormProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!id) {
+      toast.error("لم يتم العثور على معرف الفعالية");
+      return;
+    }
+
+    if (!overallRating || !contentRating || !organizationRating || !presenterRating) {
+      toast.error("الرجاء تقييم جميع العناصر");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      console.log('Submitting feedback for event:', id);
+      
       const { error } = await supabase
         .from('event_feedback')
         .insert({
-          event_id: eventId,
-          feedback_text: feedbackText,
+          event_id: id,
+          feedback_text: feedbackText.trim(),
           overall_rating: overallRating,
           content_rating: contentRating,
           organization_rating: organizationRating,
           presenter_rating: presenterRating,
-          name: name || null,
-          phone: phone || null,
+          name: name.trim() || null,
+          phone: phone.trim() || null,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        throw error;
+      }
 
       toast.success("تم إرسال التقييم بنجاح");
-      if (onSuccess) onSuccess();
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Navigate back to event details
+      navigate(`/event/${id}`);
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error("حدث خطأ أثناء إرسال التقييم");
