@@ -26,7 +26,6 @@ const Index = () => {
 
   const now = new Date();
   
-  // Sort upcoming events by date (closest first)
   const upcomingEvents = events
     .filter((event: any) => {
       const eventDate = new Date(event.date);
@@ -46,7 +45,7 @@ const Index = () => {
     .sort((a: any, b: any) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
-      return dateB.getTime() - dateA.getTime(); // Sort past events in reverse chronological order
+      return dateB.getTime() - dateA.getTime();
     });
 
   useEffect(() => {

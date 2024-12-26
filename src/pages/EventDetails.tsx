@@ -1,118 +1,74 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { EventDetailsView } from "@/components/events/EventDetailsView";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useAuthStore } from "@/store/authStore";
 import { EventLoadingState } from "@/components/events/EventLoadingState";
 import { EventNotFound } from "@/components/events/EventNotFound";
-import { EventDetailsView } from "@/components/events/EventDetailsView";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
-import { Event } from "@/store/eventStore";
-import { useUserRoles } from "@/components/events/admin/useUserRoles";
-import { useAuthStore } from "@/store/authStore";
-
-interface EventWithAttendees extends Event {
-  attendees: number;
-}
 
 const EventDetails = () => {
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { data: userRoles = [] } = useUserRoles();
   const { user } = useAuthStore();
-  const isAdmin = user?.isAdmin || false;
 
-  console.log("EventDetails - User roles:", userRoles);
-  console.log("EventDetails - Is admin:", isAdmin);
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        console.log("Fetching event details for ID:", id);
+        const { data, error } = await supabase
+          .from("events")
+          .select("*")
+          .eq("id", id)
+          .single();
 
-  const { data: event, isLoading, error } = useQuery({
-    queryKey: ["event", id],
-    queryFn: async () => {
-      console.log("Fetching event details for id:", id);
-      
-      if (!id) {
-        console.error("No event ID provided");
-        return null;
+        if (error) {
+          console.error("Error fetching event:", error);
+          setError(error.message);
+          toast.error("حدث خطأ في جلب تفاصيل الفعالية");
+          return;
+        }
+
+        if (!data) {
+          console.log("No event found with ID:", id);
+          setError("Event not found");
+          return;
+        }
+
+        console.log("Event details fetched successfully:", data);
+        setEvent(data);
+      } catch (error) {
+        console.error("Unexpected error:", error);
+        setError(error instanceof Error ? error.message : "An unexpected error occurred");
+        toast.error("حدث خطأ غير متوقع");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // First get the event details
-      const { data: eventData, error: eventError } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+    fetchEvent();
+  }, [id]);
 
-      if (eventError) {
-        console.error("Error fetching event:", eventError);
-        throw eventError;
-      }
-
-      if (!eventData) {
-        console.log("No event found with id:", id);
-        return null;
-      }
-
-      // Then get the count of registrations
-      const { count: attendeesCount, error: countError } = await supabase
-        .from("registrations")
-        .select("*", { count: 'exact', head: true })
-        .eq("event_id", id);
-
-      if (countError) {
-        console.error("Error fetching registrations count:", countError);
-        throw countError;
-      }
-
-      const eventWithAttendees: EventWithAttendees = {
-        ...eventData,
-        attendees: attendeesCount || 0
-      };
-
-      console.log("Event data fetched:", eventWithAttendees);
-      return eventWithAttendees;
-    },
-  });
-
-  if (isLoading) {
-    console.log("Loading event details...");
+  if (loading) {
     return <EventLoadingState />;
   }
 
-  if (error) {
-    console.error("Error loading event:", error);
-    toast.error("حدث خطأ في تحميل تفاصيل الفعالية");
+  if (error || !event) {
     return <EventNotFound />;
   }
 
-  if (!event) {
-    console.log("Event not found");
-    return <EventNotFound />;
-  }
+  const isAdmin = user?.isAdmin;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB]" dir="rtl">
+    <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <div className="container mx-auto px-4 py-8">
-        <EventDetailsView 
-          event={event}
-          onEdit={() => navigate(`/event/edit/${id}`)}
-          onDelete={async () => {
-            await handleEventDeletion({
-              eventId: id!,
-              onSuccess: () => navigate("/")
-            });
-          }}
-          onAddToCalendar={() => {
-            toast.success("تمت إضافة الفعالية إلى التقويم");
-          }}
-          onRegister={() => {
-            toast.success("تم التسجيل في الفعالية");
-          }}
-          id={id!}
-          isAdmin={isAdmin}
-        />
-      </div>
+      <main className="flex-grow">
+        <EventDetailsView event={event} isAdmin={isAdmin} />
+      </main>
       <Footer />
     </div>
   );
