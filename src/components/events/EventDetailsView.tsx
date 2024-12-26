@@ -5,6 +5,9 @@ import { EventDetailsContainer } from "./details/EventDetailsContainer";
 import { EditEventDialog } from "./EditEventDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { EventContent } from "./EventContent";
+import { EventImage } from "./EventImage";
+import { EventTitle } from "./EventTitle";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -76,38 +79,30 @@ export const EventDetailsView = ({
     }
   };
 
+  if (!currentEvent) return null;
+
   return (
-    <div>
-      <EventDetails 
-        date={currentEvent?.date}
-        time={currentEvent?.time}
-        location={currentEvent?.location}
-        eventType={currentEvent?.event_type}
-        attendees={currentEvent?.attendees}
-        maxAttendees={currentEvent?.max_attendees}
-      />
-      {isAdmin && (
-        <div className="flex justify-end mt-4">
-          <button 
-            onClick={() => setIsEditDialogOpen(true)} 
-            className="btn btn-primary mx-2"
-          >
-            تعديل
-          </button>
-          <button 
-            onClick={onDelete} 
-            className="btn btn-danger mx-2"
-          >
-            حذف
-          </button>
-          <button 
-            onClick={onAddToCalendar} 
-            className="btn btn-secondary mx-2"
-          >
-            إضافة إلى التقويم
-          </button>
+    <div className="min-h-screen">
+      <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
+      
+      <div className="container mx-auto px-4 -mt-8 relative z-10">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <EventTitle
+            title={currentEvent.title}
+            isAdmin={isAdmin}
+            onEdit={() => setIsEditDialogOpen(true)}
+            onDelete={onDelete}
+            onShare={async () => {}}
+            onAddToCalendar={onAddToCalendar}
+          />
+
+          <EventContent 
+            event={currentEvent}
+            onRegister={onRegister}
+          />
         </div>
-      )}
+      </div>
+
       <EditEventDialog 
         open={isEditDialogOpen} 
         onOpenChange={setIsEditDialogOpen} 
