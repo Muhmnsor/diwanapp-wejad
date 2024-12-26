@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
-import { EventDetails } from "./details/EventDetails";
-import { EventDetailsContainer } from "./details/EventDetailsContainer";
 import { EditEventDialog } from "./EditEventDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { EventContent } from "./EventContent";
 import { EventImage } from "./EventImage";
 import { EventTitle } from "./EventTitle";
+import { EventRegistrationDialog } from "./EventRegistrationDialog";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -30,6 +29,7 @@ export const EventDetailsView = ({
 }: EventDetailsViewProps) => {
   const [currentEvent, setCurrentEvent] = useState<Event | null>(event);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
   useEffect(() => {
     setCurrentEvent(event);
@@ -79,6 +79,11 @@ export const EventDetailsView = ({
     }
   };
 
+  const handleRegister = () => {
+    console.log('Opening registration dialog');
+    setIsRegistrationOpen(true);
+  };
+
   if (!currentEvent) return null;
 
   return (
@@ -98,7 +103,7 @@ export const EventDetailsView = ({
 
           <EventContent 
             event={currentEvent}
-            onRegister={onRegister}
+            onRegister={handleRegister}
           />
         </div>
       </div>
@@ -108,6 +113,12 @@ export const EventDetailsView = ({
         onOpenChange={setIsEditDialogOpen} 
         event={currentEvent} 
         onSave={handleUpdateEvent} 
+      />
+
+      <EventRegistrationDialog
+        open={isRegistrationOpen}
+        onOpenChange={setIsRegistrationOpen}
+        event={currentEvent}
       />
     </div>
   );

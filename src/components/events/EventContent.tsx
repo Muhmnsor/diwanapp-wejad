@@ -47,18 +47,6 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     event.price
   ]);
 
-  const handleRegister = () => {
-    const status = getEventStatus(event);
-    console.log('Attempting registration with status:', status);
-    
-    if (status === 'available') {
-      console.log('Registration allowed, proceeding...');
-      onRegister();
-    } else {
-      console.log('Registration not allowed for status:', status);
-    }
-  };
-
   return (
     <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
       <div className="py-8">
@@ -94,7 +82,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       <div className="px-8 py-6">
         <EventRegisterButton 
           status={eventStatus}
-          onRegister={handleRegister}
+          onRegister={onRegister}
         />
       </div>
     </div>

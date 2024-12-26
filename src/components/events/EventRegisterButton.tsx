@@ -15,20 +15,11 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
   
   const config = getStatusConfig(status);
 
-  const handleClick = () => {
-    if (status === 'available') {
-      console.log('Registration button clicked, status:', status);
-      onRegister();
-    } else {
-      console.log('Registration button clicked but disabled, status:', status);
-    }
-  };
-
   return (
     <Button 
       size="lg" 
       className={`w-full rounded-2xl h-14 text-lg ${config.className}`}
-      onClick={handleClick}
+      onClick={onRegister}
       disabled={config.disabled}
       variant={status === 'available' ? 'default' : 'secondary'}
     >
