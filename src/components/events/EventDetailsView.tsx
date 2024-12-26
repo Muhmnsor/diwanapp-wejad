@@ -8,6 +8,7 @@ import { EventFooter } from "./EventFooter";
 import { EventDetailsHeader } from "./details/EventDetailsHeader";
 import { EventDetailsContent } from "./details/EventDetailsContent";
 import { EventDeleteDialog } from "./details/EventDeleteDialog";
+import { useRegistrations } from "@/hooks/useRegistrations";
 
 interface EventDetailsViewProps {
   event: EventType;
@@ -27,8 +28,10 @@ export const EventDetailsView = ({
   const { user } = useAuthStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const { data: registrationCounts } = useRegistrations();
 
   console.log('Event data in EventDetailsView:', event);
+  console.log('Registration counts:', registrationCounts);
 
   if (!event) {
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
@@ -43,10 +46,13 @@ export const EventDetailsView = ({
     setIsRegistrationOpen(true);
   };
 
+  const currentAttendees = registrationCounts?.[event.id] || 0;
+
   const transformedEvent = {
     ...event,
     certificateType: event.certificateType || 'none',
-    eventHours: event.eventHours || 0
+    eventHours: event.eventHours || 0,
+    attendees: currentAttendees
   };
 
   return (
