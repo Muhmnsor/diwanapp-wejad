@@ -41,16 +41,19 @@ export const EventsTabs = ({
 
   return (
     <div className="container mx-auto px-4" dir="rtl">
-      <div className="flex justify-center gap-2 md:gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-center gap-2 md:gap-4 mb-8 space-y-2 md:space-y-0">
         <Button
           variant={activeTab === "upcoming" ? "default" : "outline"}
           onClick={() => setActiveTab("upcoming")}
-          className="flex items-center gap-2"
-          size={isMobile ? "icon" : "default"}
+          className={`flex items-center gap-2 w-full md:w-auto ${isMobile ? 'justify-center' : ''}`}
+          size={isMobile ? "default" : "default"}
           title={isMobile ? "الفعاليات القادمة" : undefined}
         >
           {isMobile ? (
-            <Calendar className="h-4 w-4" />
+            <>
+              <Calendar className="h-4 w-4 mr-2" />
+              الفعاليات القادمة
+            </>
           ) : (
             "الفعاليات القادمة"
           )}
@@ -58,12 +61,15 @@ export const EventsTabs = ({
         <Button
           variant={activeTab === "all" ? "default" : "outline"}
           onClick={() => setActiveTab("all")}
-          className="flex items-center gap-2"
-          size={isMobile ? "icon" : "default"}
+          className={`flex items-center gap-2 w-full md:w-auto ${isMobile ? 'justify-center' : ''}`}
+          size={isMobile ? "default" : "default"}
           title={isMobile ? "جميع الفعاليات" : undefined}
         >
           {isMobile ? (
-            <CalendarRange className="h-4 w-4" />
+            <>
+              <CalendarRange className="h-4 w-4 mr-2" />
+              جميع الفعاليات
+            </>
           ) : (
             "جميع الفعاليات"
           )}
@@ -71,12 +77,15 @@ export const EventsTabs = ({
         <Button
           variant={activeTab === "past" ? "default" : "outline"}
           onClick={() => setActiveTab("past")}
-          className="flex items-center gap-2"
-          size={isMobile ? "icon" : "default"}
+          className={`flex items-center gap-2 w-full md:w-auto ${isMobile ? 'justify-center' : ''}`}
+          size={isMobile ? "default" : "default"}
           title={isMobile ? "الفعاليات السابقة" : undefined}
         >
           {isMobile ? (
-            <History className="h-4 w-4" />
+            <>
+              <History className="h-4 w-4 mr-2" />
+              الفعاليات السابقة
+            </>
           ) : (
             "الفعاليات السابقة"
           )}
