@@ -1,15 +1,12 @@
-import { Logo } from "@/components/Logo";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut, LogIn } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { LogOut, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 
 export const TopHeader = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const isHomePage = location.pathname === "/";
   const { logout, isAuthenticated } = useAuthStore();
 
   const handleLogout = async () => {
@@ -26,20 +23,11 @@ export const TopHeader = () => {
             <img 
               src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
               alt="ديوان" 
-              className="h-24 object-contain"
+              className="h-24 object-contain cursor-pointer"
+              onClick={() => navigate("/")}
             />
           </div>
           <div className="flex-1 flex items-center gap-4 justify-end">
-            {!isHomePage && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/")}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span>العودة للرئيسية</span>
-              </Button>
-            )}
             <Navigation />
             {isAuthenticated ? (
               <Button
