@@ -11,7 +11,7 @@ export interface Event {
   imageUrl?: string;
   image_url?: string;
   attendees: number;
-  max_attendees: number;  // Changed from maxAttendees to max_attendees
+  max_attendees: number;
   eventType: "online" | "in-person";
   price: number | "free";
   registrationStartDate?: string | null;
@@ -25,7 +25,7 @@ interface EventStore {
   events: Event[];
   addEvent: (event: Event) => void;
   updateEvent: (index: number, event: Event) => void;
-  deleteDelete: (index: number) => void;
+  deleteEvent: (index: number) => void;
 }
 
 export const useEventStore = create<EventStore>((set) => ({

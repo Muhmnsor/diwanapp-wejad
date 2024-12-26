@@ -39,19 +39,7 @@ export const EventCard = ({
   certificate_type = 'none',
   event_hours = 0
 }: EventCardProps) => {
-  const status = getRegistrationStatus();
-
-  useEffect(() => {
-    console.log('EventCard data:', {
-      title,
-      certificate: {
-        type: certificate_type,
-        hours: event_hours
-      },
-      max_attendees
-    });
-  }, [title, certificate_type, event_hours, max_attendees]);
-
+  
   const getRegistrationStatus = () => {
     const status = getEventStatus({
       date,
@@ -75,6 +63,19 @@ export const EventCard = ({
         return { text: "التسجيل متاح", variant: "secondary" as const, color: "bg-green-500" };
     }
   };
+
+  const status = getRegistrationStatus();
+
+  useEffect(() => {
+    console.log('EventCard data:', {
+      title,
+      certificate: {
+        type: certificate_type,
+        hours: event_hours
+      },
+      max_attendees
+    });
+  }, [title, certificate_type, event_hours, max_attendees]);
 
   return (
     <div className="w-[380px] mx-auto">
