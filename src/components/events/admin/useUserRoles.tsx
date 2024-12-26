@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RoleResponse {
+interface UserRoleData {
   roles: {
     name: string;
-  }
+  };
 }
 
 export const useUserRoles = () => {
@@ -43,7 +43,7 @@ export const useUserRoles = () => {
       }
 
       // Extract role names from the array with proper typing
-      const roleNames = userRolesData.map(role => role.roles.name);
+      const roleNames = (userRolesData as UserRoleData[]).map(role => role.roles.name);
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },
