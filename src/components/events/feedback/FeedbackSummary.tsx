@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { FeedbackStats } from "./components/FeedbackStats";
+import { FeedbackComments } from "./components/FeedbackComments";
+import { FeedbackAverages } from "./types";
 
 interface FeedbackSummaryProps {
   eventId: string;
@@ -51,7 +54,7 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
     return validRatings.reduce((a, b) => a + b, 0) / validRatings.length;
   };
 
-  const averages = {
+  const averages: FeedbackAverages = {
     overall: calculateAverage(feedback.map(f => f.overall_rating)),
     content: calculateAverage(feedback.map(f => f.content_rating)),
     organization: calculateAverage(feedback.map(f => f.organization_rating)),
@@ -62,55 +65,8 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold">ملخص التقييمات</h3>
-        <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
-          عدد المقيمين: {feedback.length}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <p className="text-gray-600 mb-2">التقييم العام</p>
-          <p className="text-2xl font-bold">{averages.overall.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <p className="text-gray-600 mb-2">تقييم المحتوى</p>
-          <p className="text-2xl font-bold">{averages.content.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <p className="text-gray-600 mb-2">تقييم التنظيم</p>
-          <p className="text-2xl font-bold">{averages.organization.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <p className="text-gray-600 mb-2">تقييم المقدم</p>
-          <p className="text-2xl font-bold">{averages.presenter.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
-        </div>
-      </div>
-
-      {feedback.some(item => item.feedback_text) && (
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h4 className="font-medium mb-4 text-lg">التعليقات</h4>
-          <div className="space-y-4">
-            {feedback
-              .filter(item => item.feedback_text)
-              .map((item, index) => (
-                <div key={item.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  <div className="flex flex-col gap-2">
-                    <p className="text-gray-700">{item.feedback_text}</p>
-                    {(item.name || item.phone) && (
-                      <div className="text-sm text-gray-500 flex gap-2 mt-2 border-t pt-2">
-                        {item.name && <span>الاسم: {item.name}</span>}
-                        {item.name && item.phone && <span>•</span>}
-                        {item.phone && <span>الجوال: {item.phone}</span>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
+      <FeedbackStats feedback={feedback} averages={averages} />
+      <FeedbackComments feedback={feedback} />
     </div>
   );
 };
