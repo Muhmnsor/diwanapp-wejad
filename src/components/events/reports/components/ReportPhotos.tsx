@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Image from "next/image";
 
 interface ReportPhotosProps {
   photos: string[];  // Updated type to match database storage format
