@@ -7,6 +7,8 @@ interface FeedbackTabProps {
 }
 
 export const FeedbackTab = ({ eventId }: FeedbackTabProps) => {
+  console.log('Rendering FeedbackTab for event:', eventId);
+  
   return (
     <Card>
       <CardContent className="pt-6 space-y-6">

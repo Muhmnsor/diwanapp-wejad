@@ -12,6 +12,7 @@ export const FeedbackLink = ({ eventId }: FeedbackLinkProps) => {
   const [copied, setCopied] = useState(false);
   const feedbackUrl = `${window.location.origin}/event/${eventId}/feedback`;
 
+  console.log('Generating feedback URL for event:', eventId);
   console.log('Generated feedback URL:', feedbackUrl);
 
   const handleCopy = async () => {
@@ -28,7 +29,12 @@ export const FeedbackLink = ({ eventId }: FeedbackLinkProps) => {
 
   return (
     <div className="flex gap-2 items-center" dir="rtl">
-      <Input value={feedbackUrl} readOnly className="flex-1" />
+      <Input 
+        value={feedbackUrl} 
+        readOnly 
+        className="flex-1 bg-white"
+        onClick={(e) => (e.target as HTMLInputElement).select()}
+      />
       <Button
         variant="outline"
         size="icon"
