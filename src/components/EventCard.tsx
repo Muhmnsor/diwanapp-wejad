@@ -78,13 +78,13 @@ export const EventCard = ({
   }, [title, certificate_type, event_hours, max_attendees]);
 
   return (
-    <div className="w-[380px] mx-auto">
+    <div className="w-[380px] mx-auto" dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
-        <CardHeader className="p-4 text-right">
+        <CardHeader className="p-4">
           <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 p-4 pt-0 text-right">
+        <CardContent className="space-y-4 p-4 pt-0">
           <EventCardBadges
             eventType={event_type}
             price={price}
@@ -98,9 +98,9 @@ export const EventCard = ({
           />
           {max_attendees > 0 && (
             <>
-              <div className="flex items-center gap-2 text-gray-600 text-sm justify-end">
-                <span>{max_attendees} مقعد</span>
+              <div className="flex items-center gap-2 text-gray-600 text-sm">
                 <Users className="w-4 h-4" />
+                <span>{max_attendees} مقعد</span>
               </div>
               <EventCardStatus
                 maxAttendees={max_attendees}
