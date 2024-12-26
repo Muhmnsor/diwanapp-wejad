@@ -48,7 +48,6 @@ export const EventDetailsView = ({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {/* Always show event details */}
         <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
         <EventTitle 
           title={event.title}
