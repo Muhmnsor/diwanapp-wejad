@@ -2,18 +2,20 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Settings, Users } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Navigation = () => {
   const location = useLocation();
   const { user } = useAuthStore();
+  const isMobile = useIsMobile();
 
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   return (
-    <nav className="flex gap-4 items-center" dir="rtl">
+    <nav className="flex gap-2 md:gap-4 items-center flex-wrap" dir="rtl">
       <Link
         to="/"
         className={cn(
@@ -36,7 +38,11 @@ export const Navigation = () => {
                 : "text-muted-foreground"
             )}
           >
-            الإعدادات
+            {isMobile ? (
+              <Settings className="h-4 w-4" />
+            ) : (
+              "الإعدادات"
+            )}
           </Link>
           <Link
             to="/users"
@@ -47,12 +53,23 @@ export const Navigation = () => {
                 : "text-muted-foreground"
             )}
           >
-            إدارة المستخدمين
+            {isMobile ? (
+              <Users className="h-4 w-4" />
+            ) : (
+              "إدارة المستخدمين"
+            )}
           </Link>
           <Link to="/create-event">
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button 
+              variant="outline" 
+              size={isMobile ? "icon" : "sm"} 
+              className={cn(
+                "gap-2",
+                isMobile ? "w-8 h-8 p-0" : ""
+              )}
+            >
               <Plus className="h-4 w-4" />
-              إنشاء فعالية
+              {!isMobile && "إنشاء فعالية"}
             </Button>
           </Link>
         </>
