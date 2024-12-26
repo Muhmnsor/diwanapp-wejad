@@ -12,6 +12,7 @@ interface EventAdminTabsProps {
   id: string;
   canAddReport: boolean;
   onAddReport: () => void;
+  isAdmin: boolean;
 }
 
 export const EventAdminTabs = ({
@@ -21,6 +22,7 @@ export const EventAdminTabs = ({
   onAddToCalendar,
   onRegister,
   id,
+  isAdmin,
 }: EventAdminTabsProps) => {
   console.log("EventAdminTabs rendering with event:", event);
   console.log("EventAdminTabs id:", id);
@@ -43,6 +45,7 @@ export const EventAdminTabs = ({
           onAddToCalendar={onAddToCalendar}
           onRegister={onRegister}
           id={id}
+          isAdmin={isAdmin}
         />
       </TabsContent>
       
