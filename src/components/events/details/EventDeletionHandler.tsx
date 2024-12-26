@@ -16,30 +16,32 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
   try {
     console.log('Starting deletion process for event:', eventId);
 
-    // 1. Check and delete feedback first
-    const { data: feedbackData } = await supabase
+    // 1. Delete feedback first
+    const { data: feedbackData, error: feedbackCheckError } = await supabase
       .from('event_feedback')
       .select('id')
       .eq('event_id', eventId);
 
+    if (feedbackCheckError) {
+      console.error('Error checking feedback:', feedbackCheckError);
+      throw feedbackCheckError;
+    }
+
     if (feedbackData && feedbackData.length > 0) {
       console.log(`Found ${feedbackData.length} feedback records to delete`);
-      await deleteFeedback(eventId);
-      
-      // Verify feedback deletion
-      const { data: verifyFeedback } = await supabase
+      const { error: deleteError } = await supabase
         .from('event_feedback')
-        .select('id')
+        .delete()
         .eq('event_id', eventId);
-        
-      if (verifyFeedback && verifyFeedback.length > 0) {
-        throw new Error('Failed to delete all feedback records');
+
+      if (deleteError) {
+        console.error('Error deleting feedback:', deleteError);
+        throw deleteError;
       }
-      
       console.log('Feedback deleted successfully');
     }
 
-    // 2. Check and delete attendance records
+    // 2. Delete attendance records
     const { data: attendanceData } = await supabase
       .from('attendance_records')
       .select('id')
@@ -50,7 +52,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Attendance records deleted successfully');
     }
 
-    // 3. Check and delete notifications
+    // 3. Delete notifications
     const { data: notificationsData } = await supabase
       .from('notification_logs')
       .select('id')
@@ -61,7 +63,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Notifications deleted successfully');
     }
 
-    // 4. Check and delete reports
+    // 4. Delete reports
     const { data: reportsData } = await supabase
       .from('event_reports')
       .select('id')
@@ -72,7 +74,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
       console.log('Reports deleted successfully');
     }
 
-    // 5. Check and delete registrations
+    // 5. Delete registrations
     const { data: registrationsData } = await supabase
       .from('registrations')
       .select('id')
@@ -84,9 +86,17 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     }
 
     // 6. Finally delete the event itself
-    await deleteEvent(eventId);
-    console.log('Event deleted successfully');
+    const { error: eventDeleteError } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId);
 
+    if (eventDeleteError) {
+      console.error('Error deleting event:', eventDeleteError);
+      throw eventDeleteError;
+    }
+
+    console.log('Event deleted successfully');
     toast.success("تم حذف الفعالية بنجاح");
     onSuccess();
   } catch (error) {
