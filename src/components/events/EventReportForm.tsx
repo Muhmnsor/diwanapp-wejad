@@ -1,10 +1,11 @@
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { toast } from "sonner";
 
 interface EventReportFormProps {
   eventId: string;
@@ -22,13 +23,53 @@ interface ReportFormData {
   photos: PhotoWithDescription[];
 }
 
+const PHOTO_DESCRIPTIONS = [
+  "صورة للمشاركين في الفعالية",
+  "صورة لتفاعل المقدم مع الحضور",
+  "صورة للمواد التدريبية والأدوات المستخدمة",
+  "صورة لأنشطة المجموعات",
+  "صورة للعرض التقديمي",
+  "صورة للحظات المميزة في الفعالية"
+];
+
 export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) => {
   const { user } = useAuthStore();
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<ReportFormData>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<ReportFormData>({
     defaultValues: {
       photos: Array(6).fill({ url: '', description: '' })
     }
   });
+
+  const photos = watch('photos');
+
+  const handleImageUpload = async (file: File, index: number) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `event-reports/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(filePath);
+
+      const newPhotos = [...photos];
+      newPhotos[index] = {
+        url: publicUrl,
+        description: PHOTO_DESCRIPTIONS[index]
+      };
+      setValue('photos', newPhotos);
+      toast.success("تم رفع الصورة بنجاح");
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error("حدث خطأ أثناء رفع الصورة");
+    }
+  };
 
   const onSubmit = async (data: ReportFormData) => {
     try {
@@ -42,7 +83,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
             executor_id: user?.id,
             report_text: data.report_text,
             detailed_description: data.detailed_description,
-            photos: data.photos.filter(photo => photo.url && photo.description),
+            photos: data.photos.filter(photo => photo.url),
           }
         ]);
 
@@ -84,20 +125,12 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
       <div className="space-y-4">
         <Label>صور الفعالية</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.from({ length: 6 }).map((_, index) => (
+          {PHOTO_DESCRIPTIONS.map((description, index) => (
             <div key={index} className="space-y-2 p-4 border rounded-lg">
-              <Label htmlFor={`photos.${index}.url`}>رابط الصورة {index + 1}</Label>
-              <Input
-                id={`photos.${index}.url`}
-                {...register(`photos.${index}.url`)}
-                placeholder="رابط الصورة"
-              />
-              <Label htmlFor={`photos.${index}.description`}>وصف الصورة {index + 1}</Label>
-              <Textarea
-                id={`photos.${index}.description`}
-                {...register(`photos.${index}.description`)}
-                placeholder="اكتب وصفاً للصورة..."
-                className="h-20"
+              <p className="text-sm text-gray-600 mb-2">{description}</p>
+              <ImageUpload
+                onChange={(file) => handleImageUpload(file, index)}
+                value={photos[index]?.url}
               />
             </div>
           ))}
