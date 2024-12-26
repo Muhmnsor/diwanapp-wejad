@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { EventDetailsView } from "@/components/events/EventDetailsView";
-import { TopHeader } from "@/components/layout/TopHeader";
-import { Footer } from "@/components/layout/Footer";
+import { EventDashboard } from "@/components/admin/EventDashboard";
 import { useAuthStore } from "@/store/authStore";
-import { EventLoadingState } from "@/components/events/EventLoadingState";
-import { EventNotFound } from "@/components/events/EventNotFound";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
@@ -16,37 +14,38 @@ const EventDetails = () => {
   const { id } = useParams();
   const { user } = useAuthStore();
 
-  console.log('EventDetails - User:', user); // Add logging to debug user state
+  console.log('EventDetails - User:', user);
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        console.log("Fetching event details for ID:", id);
-        const { data, error } = await supabase
+        if (!id) {
+          setError("معرف الفعالية غير موجود");
+          return;
+        }
+
+        const { data, error: fetchError } = await supabase
           .from("events")
           .select("*")
           .eq("id", id)
           .single();
 
-        if (error) {
-          console.error("Error fetching event:", error);
-          setError(error.message);
-          toast.error("حدث خطأ في جلب تفاصيل الفعالية");
+        if (fetchError) {
+          console.error("Error fetching event:", fetchError);
+          setError("حدث خطأ في جلب بيانات الفعالية");
           return;
         }
 
         if (!data) {
-          console.log("No event found with ID:", id);
-          setError("Event not found");
+          setError("الفعالية غير موجودة");
           return;
         }
 
-        console.log("Event details fetched successfully:", data);
+        console.log("Fetched event:", data);
         setEvent(data);
-      } catch (error) {
-        console.error("Unexpected error:", error);
-        setError(error instanceof Error ? error.message : "An unexpected error occurred");
-        toast.error("حدث خطأ غير متوقع");
+      } catch (err) {
+        console.error("Error in fetchEvent:", err);
+        setError("حدث خطأ غير متوقع");
       } finally {
         setLoading(false);
       }
@@ -56,53 +55,80 @@ const EventDetails = () => {
   }, [id]);
 
   if (loading) {
-    return <EventLoadingState />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  if (error || !event) {
-    return <EventNotFound />;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
   }
 
   const isAdmin = user?.isAdmin;
-  console.log('EventDetails - isAdmin:', isAdmin); // Add logging to debug admin status
+  console.log('EventDetails - isAdmin:', isAdmin);
 
   const handleEdit = () => {
     console.log("Edit event clicked");
-    // Add edit functionality here
   };
 
   const handleDelete = () => {
     console.log("Delete event clicked");
-    // Add delete functionality here
+  };
+
+  const handleShare = () => {
+    console.log("Share event clicked");
   };
 
   const handleAddToCalendar = () => {
     console.log("Add to calendar clicked");
-    // Add calendar functionality here
   };
 
-  const handleRegister = () => {
-    console.log("Register clicked");
-    // Add registration functionality here
-  };
+  if (!event) {
+    return null;
+  }
+
+  if (!isAdmin) {
+    return (
+      <EventDetailsView
+        event={event}
+        isAdmin={isAdmin}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onShare={handleShare}
+        onAddToCalendar={handleAddToCalendar}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <TopHeader />
-      <main className="flex-grow py-8">
-        <div className="container mx-auto px-4">
-          <EventDetailsView 
-            event={event} 
+    <div className="min-h-screen bg-gray-50/50">
+      <Tabs defaultValue="details" className="w-full">
+        <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+          <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
+          <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="details" className="mt-0">
+          <EventDetailsView
+            event={event}
             isAdmin={isAdmin}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onShare={handleShare}
             onAddToCalendar={handleAddToCalendar}
-            onRegister={handleRegister}
-            id={id || ''}
           />
-        </div>
-      </main>
-      <Footer />
+        </TabsContent>
+
+        <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
+          <EventDashboard eventId={id!} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
