@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EventReportForm } from "./EventReportForm";
+import { ReportFormContainer } from "./reports/ReportFormContainer";
 
 interface EventReportDialogProps {
   open: boolean;
@@ -23,7 +23,7 @@ export const EventReportDialog = ({
         <DialogHeader>
           <DialogTitle className="text-right">إضافة تقرير الفعالية</DialogTitle>
         </DialogHeader>
-        <EventReportForm 
+        <ReportFormContainer 
           eventId={eventId} 
           onSuccess={() => onOpenChange(false)} 
         />
