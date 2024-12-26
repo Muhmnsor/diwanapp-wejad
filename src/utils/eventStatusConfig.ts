@@ -8,23 +8,23 @@ export const getStatusConfig = (status: EventStatus): EventStatusConfig => {
       disabled: false
     },
     full: {
-      text: "اكتمل التسجيل",
-      className: "bg-gray-100 text-gray-500 cursor-not-allowed",
+      text: "عذراً، اكتمل العدد المسموح للتسجيل",
+      className: "bg-purple-100 text-purple-700 cursor-not-allowed",
       disabled: true
     },
     ended: {
-      text: "انتهى التسجيل",
-      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
+      text: "عذراً، انتهت فترة التسجيل المتاحة",
+      className: "bg-red-100 text-red-700 cursor-not-allowed",
       disabled: true
     },
     notStarted: {
-      text: "لم يبدأ التسجيل بعد",
-      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
+      text: "التسجيل سيبدأ قريباً",
+      className: "bg-yellow-100 text-yellow-700 cursor-not-allowed",
       disabled: true
     },
     eventStarted: {
-      text: "انتهت الفعالية",
-      className: "bg-gray-50 text-gray-400 cursor-not-allowed",
+      text: "عذراً، انتهت الفعالية",
+      className: "bg-gray-100 text-gray-700 cursor-not-allowed",
       disabled: true
     }
   };
