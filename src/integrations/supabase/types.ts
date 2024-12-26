@@ -181,6 +181,7 @@ export type Database = {
           id: string
           impact_on_participants: string | null
           photos: string[] | null
+          program_name: string | null
           report_name: string
           report_text: string
           satisfaction_level: number | null
@@ -200,6 +201,7 @@ export type Database = {
           id?: string
           impact_on_participants?: string | null
           photos?: string[] | null
+          program_name?: string | null
           report_name: string
           report_text: string
           satisfaction_level?: number | null
@@ -219,6 +221,7 @@ export type Database = {
           id?: string
           impact_on_participants?: string | null
           photos?: string[] | null
+          program_name?: string | null
           report_name?: string
           report_text?: string
           satisfaction_level?: number | null
