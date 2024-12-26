@@ -4,20 +4,22 @@ import { Download, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EditReportDialog } from "./EditReportDialog";
 
+interface Report {
+  id: string;
+  event_id: string;
+  program_name?: string;
+  report_name: string;
+  report_text: string;
+  detailed_description: string;
+  event_duration: string;
+  attendees_count: string;
+  event_objectives: string;
+  impact_on_participants: string;
+  photos: { url: string; description: string; }[];
+}
+
 interface ReportListItemActionsProps {
-  report: {
-    id: string;
-    event_id: string;
-    program_name: string;
-    report_name: string;
-    report_text: string;
-    detailed_description: string;
-    event_duration: string;
-    attendees_count: string;
-    event_objectives: string;
-    impact_on_participants: string;
-    photos: { url: string; description: string; }[];
-  };
+  report: Report;
   onDownload: () => void;
   onDelete: () => void;
   isDeleting?: boolean;
@@ -27,7 +29,7 @@ export const ReportListItemActions = ({
   report,
   onDownload,
   onDelete,
-  isDeleting,
+  isDeleting
 }: ReportListItemActionsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 

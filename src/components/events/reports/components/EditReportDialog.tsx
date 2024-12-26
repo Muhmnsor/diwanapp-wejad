@@ -11,22 +11,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
+interface Report {
+  id: string;
+  event_id: string;
+  program_name?: string;
+  report_name: string;
+  report_text: string;
+  detailed_description: string;
+  event_duration: string;
+  attendees_count: string;
+  event_objectives: string;
+  impact_on_participants: string;
+  photos: { url: string; description: string; }[];
+}
+
 interface EditReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  report: {
-    id: string;
-    event_id: string;
-    program_name?: string;
-    report_name: string;
-    report_text: string;
-    detailed_description: string;
-    event_duration: string;
-    attendees_count: string;
-    event_objectives: string;
-    impact_on_participants: string;
-    photos: { url: string; description: string; }[];
-  };
+  report: Report;
 }
 
 export const EditReportDialog = ({
