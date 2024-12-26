@@ -10,18 +10,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
   try {
     console.log('Starting deletion process for event:', eventId);
     
-    // Delete attendance records first
-    const { error: attendanceError } = await supabase
-      .from('attendance_records')
-      .delete()
-      .eq('event_id', eventId);
-    
-    if (attendanceError) {
-      console.error('Error deleting attendance records:', attendanceError);
-      throw attendanceError;
-    }
-
-    // Delete event feedback
+    // Delete event feedback first
     const { error: feedbackError } = await supabase
       .from('event_feedback')
       .delete()
@@ -30,6 +19,17 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     if (feedbackError) {
       console.error('Error deleting feedback:', feedbackError);
       throw feedbackError;
+    }
+
+    // Delete attendance records
+    const { error: attendanceError } = await supabase
+      .from('attendance_records')
+      .delete()
+      .eq('event_id', eventId);
+    
+    if (attendanceError) {
+      console.error('Error deleting attendance records:', attendanceError);
+      throw attendanceError;
     }
 
     // Delete notification logs
@@ -93,5 +93,6 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
   } catch (error) {
     console.error('Error in deletion process:', error);
     toast.error("حدث خطأ أثناء حذف الفعالية");
+    throw error;
   }
 };
