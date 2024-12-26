@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Award, Clock, Users } from "lucide-react";
+import { Award, Clock } from "lucide-react";
 import { BeneficiaryType } from "@/types/event";
 
 interface EventBadgesProps {
@@ -52,49 +52,39 @@ export const EventBadges = ({
   const shouldShowCertificate = certificateType && certificateType !== 'none';
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
-  // Handle price display consistently
-  const getPriceDisplay = () => {
-    if (price === null || price === "free" || price === 0) {
-      return "مجاني";
-    }
-    return `${price} ريال`;
-  };
-
-  const isPriceFree = price === null || price === "free" || price === 0;
-
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2 px-8">
       <Badge 
         variant={eventType === "online" ? "secondary" : "default"}
-        className={`${eventType === "online" ? 'bg-secondary border-[#6E59A5] text-[#1A1F2C]' : 'bg-primary/10 border-primary text-primary'} border`}
+        className={`${eventType === "online" ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white' : 'bg-[#0EA5E9] border-[#0EA5E9] text-white'} border`}
       >
         {eventType === "online" ? "عن بعد" : "حضوري"}
       </Badge>
       <Badge 
-        variant={isPriceFree ? "secondary" : "default"}
-        className={`${isPriceFree ? 'bg-[#E5DEFF] border-[#6E59A5] text-[#1A1F2C]' : 'bg-accent/10 border-accent text-accent'} border`}
+        variant={!price ? "secondary" : "default"}
+        className={`${!price ? 'bg-[#10B981] border-[#10B981] text-white' : 'bg-[#F97316] border-[#F97316] text-white'} border`}
       >
-        {getPriceDisplay()}
+        {!price ? "مجاني" : `${price} ريال`}
       </Badge>
       <Badge 
         variant="outline" 
-        className="border-[#403E43] bg-[#F5F5F7] text-[#403E43]"
+        className="border-[#D946EF] bg-[#FDF4FF] text-[#D946EF]"
       >
         {getBeneficiaryLabel(beneficiaryType)}
       </Badge>
       {shouldShowCertificate && (
         <Badge 
           variant="outline" 
-          className="flex items-center gap-1 border-[#8E9196] bg-[#F1F1F1] text-[#403E43]"
+          className="flex items-center gap-1 border-[#6366F1] bg-[#EEF2FF] text-[#6366F1]"
         >
           <Award className="w-3 h-3" />
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
-      {shouldShowHours && eventHours > 0 && (
+      {shouldShowHours && (
         <Badge 
           variant="outline" 
-          className="flex items-center gap-1 border-[#8E9196] bg-[#F1F1F1] text-[#403E43]"
+          className="flex items-center gap-1 border-[#EC4899] bg-[#FDF2F8] text-[#EC4899]"
         >
           <Clock className="w-3 h-3" />
           {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'}

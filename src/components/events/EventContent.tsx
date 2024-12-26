@@ -22,11 +22,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         end: event.registrationEndDate
       },
       attendees: event.attendees,
-      max_attendees: event.max_attendees
+      maxAttendees: event.max_attendees
     });
 
     const newStatus = getEventStatus(event);
-    console.log('New event status:', newStatus);
+    console.log('Event status updated to:', newStatus);
     setEventStatus(newStatus);
   }, [
     event.date, 
@@ -49,7 +49,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
   };
 
   return (
-    <div className="bg-white">
+    <div className="bg-white rounded-lg">
       <EventInfo
         date={event.date}
         time={event.time}
@@ -59,6 +59,8 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         eventType={event.eventType}
         price={event.price}
         beneficiaryType={event.beneficiaryType}
+        certificateType={event.certificateType}
+        eventHours={event.eventHours}
       />
 
       <EventDescription description={event.description} />
