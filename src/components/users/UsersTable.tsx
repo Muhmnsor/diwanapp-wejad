@@ -29,7 +29,9 @@ export const UsersTable = ({ users }: UsersTableProps) => {
   const [newPassword, setNewPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getRoleDisplayName = (roleName: string) => {
+  const getRoleDisplayName = (roleName: string | undefined) => {
+    if (!roleName) return 'لم يتم تعيين دور';
+    
     switch (roleName) {
       case 'admin': return 'مشرف';
       case 'event_creator': return 'منشئ فعاليات';
