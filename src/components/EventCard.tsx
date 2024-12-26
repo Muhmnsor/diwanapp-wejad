@@ -102,9 +102,10 @@ export const EventCard = ({
       registrationDates: {
         start: registration_start_date,
         end: registration_end_date
-      }
+      },
+      beneficiaryType: beneficiary_type
     });
-  }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date]);
+  }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type]);
 
   return (
     <div className="w-[380px] mx-auto" dir="rtl">
