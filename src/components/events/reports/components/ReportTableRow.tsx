@@ -40,23 +40,23 @@ export const ReportTableRow = ({
   return (
     <TableRow className="hover:bg-muted/0">
       <TableCell className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="icon">
-                {isOpen ? <ChevronUp /> : <ChevronDown />}
-              </Button>
-            </CollapsibleTrigger>
-            <ReportHeader
-              createdAt={report.created_at}
-              onDownload={onDownload}
-              onDelete={onDelete}
-              eventTitle={eventTitle}
-            />
-          </div>
-        </div>
-
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  {isOpen ? <ChevronUp /> : <ChevronDown />}
+                </Button>
+              </CollapsibleTrigger>
+              <ReportHeader
+                createdAt={report.created_at}
+                onDownload={onDownload}
+                onDelete={onDelete}
+                eventTitle={eventTitle}
+              />
+            </div>
+          </div>
+
           <CollapsibleContent>
             <div className="space-y-6 pt-4">
               <ReportContent report={report} />
