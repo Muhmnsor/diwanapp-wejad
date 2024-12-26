@@ -169,12 +169,16 @@ export type Database = {
       event_reports: {
         Row: {
           additional_links: string[] | null
+          attendees_count: string | null
           comments: string[] | null
           created_at: string
+          event_duration: string | null
           event_id: string | null
+          event_objectives: string | null
           executor_id: string | null
           files: string[] | null
           id: string
+          impact_on_participants: string | null
           photos: string[] | null
           report_text: string
           satisfaction_level: number | null
@@ -182,12 +186,16 @@ export type Database = {
         }
         Insert: {
           additional_links?: string[] | null
+          attendees_count?: string | null
           comments?: string[] | null
           created_at?: string
+          event_duration?: string | null
           event_id?: string | null
+          event_objectives?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
+          impact_on_participants?: string | null
           photos?: string[] | null
           report_text: string
           satisfaction_level?: number | null
@@ -195,12 +203,16 @@ export type Database = {
         }
         Update: {
           additional_links?: string[] | null
+          attendees_count?: string | null
           comments?: string[] | null
           created_at?: string
+          event_duration?: string | null
           event_id?: string | null
+          event_objectives?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
+          impact_on_participants?: string | null
           photos?: string[] | null
           report_text?: string
           satisfaction_level?: number | null
