@@ -7,17 +7,6 @@ import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { UsersTable } from "@/components/users/UsersTable";
 import type { Role, User } from "@/components/users/types";
 
-interface SupabaseUserRoleResponse {
-  auth_user: {
-    email: string;
-    last_sign_in_at: string;
-  };
-  roles: {
-    name: string;
-    description: string;
-  }[];
-}
-
 const Users = () => {
   const { user } = useAuthStore();
 
@@ -41,32 +30,44 @@ const Users = () => {
     queryKey: ['users-with-roles'],
     queryFn: async () => {
       console.log('Fetching users with roles...');
-      const { data: userRoles, error } = await supabase
+      
+      // First, get all user roles
+      const { data: userRoles, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
           user_id,
-          auth_user:user_id (
-            email,
-            last_sign_in_at
-          ),
+          role_id,
           roles (
             name,
             description
           )
         `);
 
-      if (error) {
-        console.error('Error fetching user roles:', error);
-        throw error;
+      if (userRolesError) {
+        console.error('Error fetching user roles:', userRolesError);
+        throw userRolesError;
       }
 
-      console.log('Fetched user roles:', userRoles);
-      return (userRoles as unknown as SupabaseUserRoleResponse[]).map(ur => ({
-        id: ur.auth_user?.email || 'Unknown',
-        username: ur.auth_user?.email || 'Unknown',
-        role: ur.roles[0]?.name || 'No role',
-        lastLogin: ur.auth_user?.last_sign_in_at ? new Date(ur.auth_user.last_sign_in_at).toLocaleString('ar-SA') : '-'
-      })) as User[];
+      // Then, get user details from auth.users
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        throw authError;
+      }
+
+      // Map and combine the data
+      return userRoles.map(ur => {
+        const authUser = authUsers.users.find(au => au.id === ur.user_id);
+        return {
+          id: ur.user_id,
+          username: authUser?.email || 'Unknown',
+          role: ur.roles?.name || 'No role',
+          lastLogin: authUser?.last_sign_in_at 
+            ? new Date(authUser.last_sign_in_at).toLocaleString('ar-SA') 
+            : '-'
+        };
+      }) as User[];
     }
   });
 
@@ -75,7 +76,6 @@ const Users = () => {
   }
 
   if (rolesError) {
-    console.error('Roles error details:', rolesError);
     return (
       <div className="text-center p-8 text-red-500">
         خطأ في تحميل الأدوار: {rolesError.message}
