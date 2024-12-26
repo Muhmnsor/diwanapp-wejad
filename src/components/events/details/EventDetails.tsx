@@ -53,7 +53,7 @@ export const EventDetails = ({
           <Users className="h-5 w-5 text-primary" />
         </div>
         <span className="text-[#1A1F2C]">
-          {attendeesCount} مشارك 
+          {attendeesCount} من {maxAttendees} مشارك
           {remainingSeats > 0 && ` (متبقي ${remainingSeats} مقعد)`}
         </span>
       </div>
