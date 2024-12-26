@@ -17,6 +17,9 @@ export const EventCardBadges = ({
   eventHours
 }: EventCardBadgesProps) => {
   console.log('EventCardBadges received:', {
+    eventType,
+    price,
+    beneficiaryType,
     certificateType,
     eventHours
   });
@@ -32,7 +35,7 @@ export const EventCardBadges = ({
       case 'all':
         return 'الجميع';
       default:
-        return 'رجال ونساء';
+        return 'الجميع';
     }
   };
 
@@ -58,18 +61,21 @@ export const EventCardBadges = ({
       >
         {eventType === "online" ? "عن بعد" : "حضوري"}
       </Badge>
+      
       <Badge 
         variant={!price ? "secondary" : "default"}
         className={`${!price ? 'bg-[#10B981] border-[#10B981] text-white' : 'bg-[#F97316] border-[#F97316] text-white'} border`}
       >
         {!price ? "مجاني" : `${price} ريال`}
       </Badge>
+      
       <Badge 
         variant="outline" 
         className="border-[#D946EF] bg-[#FDF4FF] text-[#D946EF]"
       >
         {getBeneficiaryLabel(beneficiaryType)}
       </Badge>
+      
       {shouldShowCertificate && (
         <Badge 
           variant="outline" 
@@ -79,6 +85,7 @@ export const EventCardBadges = ({
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
+      
       {shouldShowHours && (
         <Badge 
           variant="outline" 
