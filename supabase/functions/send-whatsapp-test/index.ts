@@ -1,6 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 
+const VALID_MESSAGE_TYPES = [
+  'Template',
+  'Text',
+  'Image',
+  'Document',
+  'Audio',
+  'Video',
+  'OrderDetails',
+  'InteractiveButton',
+  'InteractiveList',
+  'InteractiveProductList'
+] as const;
+
+type MessageType = typeof VALID_MESSAGE_TYPES[number];
+
+interface WhatsAppMessage {
+  data: {
+    countryCode: string;
+    phoneNumber: string;
+    type: MessageType;
+    text?: {
+      content: string;
+    };
+  }
+}
+
 console.log("Send WhatsApp Test Message function started")
 
 serve(async (req) => {
@@ -37,24 +63,46 @@ serve(async (req) => {
       )
     }
 
+    // Prepare WhatsApp message with proper validation
+    const message: WhatsAppMessage = {
+      data: {
+        countryCode: "+966",
+        phoneNumber: "583370003",
+        type: "Text",
+        text: {
+          content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
+        }
+      }
+    }
+
+    // Validate message type
+    if (!VALID_MESSAGE_TYPES.includes(message.data.type)) {
+      console.error('Invalid message type:', message.data.type)
+      return new Response(
+        JSON.stringify({
+          error: 'نوع الرسالة غير صالح',
+          valid_types: VALID_MESSAGE_TYPES
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      )
+    }
+
     // Send test message using Interakt API
-    console.log("Sending test message via Interakt API")
+    console.log("Sending test message via Interakt API with payload:", {
+      ...message,
+      api_key: "***"
+    })
+
     const response = await fetch('https://api.interakt.ai/v1/public/message/', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${api_key}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        data: {
-          countryCode: "+966",
-          phoneNumber: "583370003", // رقم المستلم الثابت
-          type: "Text",
-          text: {
-            content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
-          }
-        }
-      })
+      body: JSON.stringify(message)
     })
 
     const responseText = await response.text()
