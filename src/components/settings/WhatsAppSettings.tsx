@@ -3,10 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsForm } from "./whatsapp-settings/SettingsForm";
-import { SecuritySettings } from "./whatsapp-settings/SecuritySettings";
-import { NotificationSettings } from "./whatsapp-settings/NotificationSettings";
 
 export const WhatsAppSettings = () => {
   const queryClient = useQueryClient();
@@ -106,30 +103,12 @@ export const WhatsAppSettings = () => {
         <CardTitle>إعدادات الواتساب</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="mb-8">
-            <TabsTrigger value="general">الإعدادات العامة</TabsTrigger>
-            <TabsTrigger value="security">إعدادات الأمان</TabsTrigger>
-            <TabsTrigger value="notifications">إعدادات التنبيهات</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general">
-            <SettingsForm
-              settings={settings}
-              onSettingsChange={setSettings}
-              onSubmit={handleSubmit}
-              onTestConnection={testConnection}
-            />
-          </TabsContent>
-
-          <TabsContent value="security">
-            <SecuritySettings />
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <NotificationSettings />
-          </TabsContent>
-        </Tabs>
+        <SettingsForm
+          settings={settings}
+          onSettingsChange={setSettings}
+          onSubmit={handleSubmit}
+          onTestConnection={testConnection}
+        />
       </CardContent>
     </Card>
   );
