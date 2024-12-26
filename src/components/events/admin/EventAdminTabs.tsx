@@ -22,6 +22,8 @@ export const EventAdminTabs = ({
   onAddToCalendar,
   onRegister,
   id,
+  canAddReport,
+  onAddReport,
   isAdmin,
 }: EventAdminTabsProps) => {
   console.log("EventAdminTabs rendering with event:", event);
@@ -31,15 +33,12 @@ export const EventAdminTabs = ({
     <Tabs defaultValue="details" className="mb-8" dir="rtl">
       <TabsList className="mb-4 w-full justify-start">
         <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
-        <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+        {isAdmin && <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>}
       </TabsList>
       
       <TabsContent value="details">
         <EventDetailsView
-          event={{
-            ...event,
-            max_attendees: event.max_attendees
-          }}
+          event={event}
           onEdit={onEdit}
           onDelete={onDelete}
           onAddToCalendar={onAddToCalendar}
@@ -49,9 +48,11 @@ export const EventAdminTabs = ({
         />
       </TabsContent>
       
-      <TabsContent value="dashboard">
-        <EventDashboard eventId={id} />
-      </TabsContent>
+      {isAdmin && (
+        <TabsContent value="dashboard">
+          <EventDashboard eventId={id} />
+        </TabsContent>
+      )}
     </Tabs>
   );
 };

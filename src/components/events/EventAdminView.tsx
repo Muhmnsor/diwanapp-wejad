@@ -35,6 +35,10 @@ export const EventAdminView = ({
   console.log('User roles:', userRoles);
   console.log('Roles loading:', rolesLoading);
 
+  if (!isAdmin && !canAddReport) {
+    return null;
+  }
+
   return (
     <>
       <EventAdminTabs

@@ -40,7 +40,7 @@ export const EventDetailsView = ({
   console.log('User roles:', userRoles);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div className="bg-white rounded-lg shadow-sm">
       <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
       
       <EventTitle 
@@ -57,7 +57,7 @@ export const EventDetailsView = ({
         onRegister={onRegister}
       />
 
-      {canAddReport && (
+      {(isAdmin || canAddReport) && (
         <>
           <EventAdminTabs
             event={event}
