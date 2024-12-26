@@ -48,8 +48,8 @@ serve(async (req) => {
       body: JSON.stringify({
         "countryCode": "+966",
         "phoneNumber": business_phone,
-        "type": "Text",  // Changed to valid type "Text"
-        "text": {        // Changed to use "text" instead of "message"
+        "type": "Text",
+        "text": {
           "content": "رسالة تجريبية من نظام إدارة الفعاليات 👋"
         }
       })
