@@ -81,6 +81,44 @@ export type Database = {
         }
         Relationships: []
       }
+      event_notification_settings: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          feedback_enabled: boolean | null
+          id: string
+          registration_enabled: boolean | null
+          reminder_enabled: boolean | null
+          reminder_hours: number[] | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          feedback_enabled?: boolean | null
+          id?: string
+          registration_enabled?: boolean | null
+          reminder_enabled?: boolean | null
+          reminder_hours?: number[] | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          feedback_enabled?: boolean | null
+          id?: string
+          registration_enabled?: boolean | null
+          reminder_enabled?: boolean | null
+          reminder_hours?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_notification_settings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_reports: {
         Row: {
           additional_links: string[] | null
@@ -187,6 +225,58 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      notification_logs: {
+        Row: {
+          event_id: string | null
+          id: string
+          notification_type: string
+          registration_id: string | null
+          sent_at: string
+          status: string | null
+          template_id: string | null
+        }
+        Insert: {
+          event_id?: string | null
+          id?: string
+          notification_type: string
+          registration_id?: string | null
+          sent_at?: string
+          status?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          event_id?: string | null
+          id?: string
+          notification_type?: string
+          registration_id?: string | null
+          sent_at?: string
+          status?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registrations: {
         Row: {
@@ -305,27 +395,33 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_default: boolean | null
           language: string | null
           name: string
           status: string | null
+          template_type: string | null
           updated_at: string
         }
         Insert: {
           content: string
           created_at?: string
           id?: string
+          is_default?: boolean | null
           language?: string | null
           name: string
           status?: string | null
+          template_type?: string | null
           updated_at?: string
         }
         Update: {
           content?: string
           created_at?: string
           id?: string
+          is_default?: boolean | null
           language?: string | null
           name?: string
           status?: string | null
+          template_type?: string | null
           updated_at?: string
         }
         Relationships: []

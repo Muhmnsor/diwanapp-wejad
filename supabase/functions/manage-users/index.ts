@@ -6,11 +6,13 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    console.log('Creating Supabase client...')
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -21,8 +23,12 @@ Deno.serve(async (req) => {
     console.log('Managing user:', { operation, userId })
 
     if (operation === 'get_users') {
+      console.log('Fetching users...')
       const { data: users, error: usersError } = await supabaseClient.auth.admin.listUsers()
-      if (usersError) throw usersError
+      if (usersError) {
+        console.error('Error fetching users:', usersError)
+        throw usersError
+      }
 
       console.log('Retrieved users count:', users.users.length)
       return new Response(
@@ -32,11 +38,15 @@ Deno.serve(async (req) => {
     }
 
     if (operation === 'update_password') {
+      console.log('Updating password for user:', userId)
       const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
         userId,
         { password: newPassword }
       )
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Error updating password:', updateError)
+        throw updateError
+      }
 
       console.log('Password updated successfully for user:', userId)
       return new Response(
@@ -55,7 +65,10 @@ Deno.serve(async (req) => {
         .eq('name', newRole)
         .single()
 
-      if (roleError) throw roleError
+      if (roleError) {
+        console.error('Error fetching role:', roleError)
+        throw roleError
+      }
 
       // Delete existing roles for the user
       const { error: deleteError } = await supabaseClient
@@ -63,7 +76,10 @@ Deno.serve(async (req) => {
         .delete()
         .eq('user_id', userId)
 
-      if (deleteError) throw deleteError
+      if (deleteError) {
+        console.error('Error deleting existing roles:', deleteError)
+        throw deleteError
+      }
 
       // Insert new role
       const { error: insertError } = await supabaseClient
@@ -73,7 +89,10 @@ Deno.serve(async (req) => {
           role_id: roleData.id
         })
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('Error inserting new role:', insertError)
+        throw insertError
+      }
 
       console.log('Role updated successfully for user:', userId)
       return new Response(
@@ -83,19 +102,26 @@ Deno.serve(async (req) => {
     }
 
     if (operation === 'delete_user') {
+      console.log('Deleting user:', userId)
       // First delete user roles
       const { error: deleteRolesError } = await supabaseClient
         .from('user_roles')
         .delete()
         .eq('user_id', userId)
 
-      if (deleteRolesError) throw deleteRolesError
+      if (deleteRolesError) {
+        console.error('Error deleting user roles:', deleteRolesError)
+        throw deleteRolesError
+      }
 
       // Then delete the user from auth.users
       const { error: deleteUserError } = await supabaseClient.auth.admin.deleteUser(
         userId
       )
-      if (deleteUserError) throw deleteUserError
+      if (deleteUserError) {
+        console.error('Error deleting user:', deleteUserError)
+        throw deleteUserError
+      }
 
       console.log('User deleted successfully:', userId)
       return new Response(
