@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,20 @@ export const WhatsAppSettings = () => {
       const { data, error } = await supabase
         .from("whatsapp_settings")
         .select("*")
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     },
   });
+
+  // Initialize form with existing settings
+  useEffect(() => {
+    if (settings) {
+      setBusinessPhone(settings.business_phone);
+      setApiKey(settings.api_key);
+    }
+  }, [settings]);
 
   const mutation = useMutation({
     mutationFn: async (newSettings: { business_phone: string; api_key: string }) => {
