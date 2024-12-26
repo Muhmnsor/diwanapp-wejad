@@ -74,17 +74,20 @@ export const UsersTable = ({ users }: UsersTableProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>البريد الإلكتروني</TableHead>
-              <TableHead>الدور</TableHead>
+              <TableHead className="w-[300px]">معلومات المستخدم</TableHead>
               <TableHead>آخر تسجيل دخول</TableHead>
-              <TableHead>الإجراءات</TableHead>
+              <TableHead className="w-[100px]">الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{getRoleDisplayName(user.role)}</TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="font-medium">{user.username}</div>
+                    <div className="text-sm text-muted-foreground">{getRoleDisplayName(user.role)}</div>
+                  </div>
+                </TableCell>
                 <TableCell>{user.lastLogin}</TableCell>
                 <TableCell>
                   <Button 
