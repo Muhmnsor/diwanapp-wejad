@@ -16,6 +16,8 @@ interface EventDetailsViewProps {
   onRegister: () => void;
   id: string;
   isAdmin: boolean;
+  canAddReport?: boolean;
+  onAddReport?: () => void;
 }
 
 export const EventDetailsView = ({
@@ -25,15 +27,12 @@ export const EventDetailsView = ({
   onAddToCalendar,
   onRegister,
   id,
-  isAdmin
+  isAdmin,
+  canAddReport,
+  onAddReport
 }: EventDetailsViewProps) => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
-
-  const canAddReport = !rolesLoading && (
-    userRoles.includes('admin') || 
-    userRoles.includes('event_executor')
-  );
   
   console.log('Event data in EventDetailsView:', event);
   console.log('Can add report:', canAddReport);
@@ -66,7 +65,7 @@ export const EventDetailsView = ({
             onAddToCalendar={onAddToCalendar}
             onRegister={onRegister}
             id={id}
-            canAddReport={canAddReport}
+            canAddReport={canAddReport || false}
             onAddReport={() => setIsReportDialogOpen(true)}
             isAdmin={isAdmin}
           />
