@@ -34,6 +34,7 @@ export const EventDetailsView = ({
   console.log('Event data in EventDetailsView:', event);
   console.log('Registration counts:', registrationCounts);
   console.log('Max attendees from event:', event.max_attendees);
+  console.log('Current user:', user); // Added to debug user role
 
   if (!event) {
     return <div className="text-center p-8">لا توجد بيانات للفعالية</div>;
