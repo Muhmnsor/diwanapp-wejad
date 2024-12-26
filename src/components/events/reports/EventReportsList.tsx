@@ -34,10 +34,7 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
       console.log('Fetching reports for event:', eventId);
       const { data, error } = await supabase
         .from('event_reports')
-        .select(`
-          *,
-          executor:auth.users(id, email)
-        `)
+        .select('*, executor:users!executor_id(id, email)')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
@@ -47,7 +44,7 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
       }
 
       console.log('Reports fetched:', data);
-      return data as EventReport[];
+      return data as unknown as EventReport[];
     },
   });
 
