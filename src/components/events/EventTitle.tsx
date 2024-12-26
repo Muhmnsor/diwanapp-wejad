@@ -7,7 +7,6 @@ interface EventTitleProps {
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onShare: () => Promise<void>;
   onAddToCalendar: () => void;
 }
 
@@ -16,10 +15,9 @@ export const EventTitle = ({
   isAdmin,
   onEdit,
   onDelete,
-  onShare,
   onAddToCalendar,
 }: EventTitleProps) => {
-  console.log('EventTitle - isAdmin:', isAdmin); // Add logging to debug admin status
+  console.log('EventTitle - isAdmin:', isAdmin);
 
   return (
     <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10" dir="rtl">
@@ -43,7 +41,7 @@ export const EventTitle = ({
             </Button>
           </div>
         )}
-        <ShareButton onShare={onShare} title={title} />
+        <ShareButton url={window.location.href} title={title} />
         <Button
           variant="outline"
           size="icon"

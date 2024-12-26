@@ -6,6 +6,8 @@ import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TopHeader } from "@/components/layout/TopHeader";
+import { Footer } from "@/components/layout/Footer";
 
 const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
@@ -56,17 +58,25 @@ const EventDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <>
+        <TopHeader />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">{error}</div>
-      </div>
+      <>
+        <TopHeader />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-red-500">{error}</div>
+        </div>
+        <Footer />
+      </>
     );
   }
 
@@ -81,10 +91,6 @@ const EventDetails = () => {
     console.log("Delete event clicked");
   };
 
-  const handleShare = () => {
-    console.log("Share event clicked");
-  };
-
   const handleAddToCalendar = () => {
     console.log("Add to calendar clicked");
   };
@@ -95,41 +101,49 @@ const EventDetails = () => {
 
   if (!isAdmin) {
     return (
-      <EventDetailsView
-        event={event}
-        isAdmin={isAdmin}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onShare={handleShare}
-        onAddToCalendar={handleAddToCalendar}
-      />
+      <>
+        <TopHeader />
+        <EventDetailsView
+          event={event}
+          isAdmin={isAdmin}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddToCalendar={handleAddToCalendar}
+          id={id!}
+        />
+        <Footer />
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <Tabs defaultValue="details" className="w-full">
-        <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
-          <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
-          <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="details" className="mt-0">
-          <EventDetailsView
-            event={event}
-            isAdmin={isAdmin}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onShare={handleShare}
-            onAddToCalendar={handleAddToCalendar}
-          />
-        </TabsContent>
+    <>
+      <TopHeader />
+      <div className="min-h-screen bg-gray-50/50">
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+            <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
+            <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="details" className="mt-0">
+            <EventDetailsView
+              event={event}
+              isAdmin={isAdmin}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onAddToCalendar={handleAddToCalendar}
+              id={id!}
+            />
+          </TabsContent>
 
-        <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
-          <EventDashboard eventId={id!} />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
+            <EventDashboard eventId={id!} />
+          </TabsContent>
+        </Tabs>
+      </div>
+      <Footer />
+    </>
   );
 };
 

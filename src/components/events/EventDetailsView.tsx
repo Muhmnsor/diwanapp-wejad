@@ -15,7 +15,7 @@ interface EventDetailsViewProps {
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
-  onRegister: () => void;
+  onRegister?: () => void;
   id: string;
 }
 
@@ -33,8 +33,8 @@ export const EventDetailsView = ({
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const { user } = useAuthStore();
 
-  console.log('EventDetailsView - User:', user); // Add logging to debug user state
-  console.log('EventDetailsView - isAdmin:', isAdmin); // Add logging to debug admin status
+  console.log('EventDetailsView - User:', user);
+  console.log('EventDetailsView - isAdmin:', isAdmin);
 
   useEffect(() => {
     setCurrentEvent(event);
@@ -102,7 +102,6 @@ export const EventDetailsView = ({
             isAdmin={isAdmin}
             onEdit={() => setIsEditDialogOpen(true)}
             onDelete={onDelete}
-            onShare={async () => {}}
             onAddToCalendar={onAddToCalendar}
           />
 
