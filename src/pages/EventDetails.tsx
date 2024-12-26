@@ -37,16 +37,34 @@ const EventDetails = () => {
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
+      console.log('Starting event deletion process for ID:', id);
+      
+      // First delete all feedback records
+      const { error: feedbackError } = await supabase
+        .from('event_feedback')
+        .delete()
+        .eq('event_id', id);
+
+      if (feedbackError) {
+        console.error('Error deleting feedback:', feedbackError);
+        throw feedbackError;
+      }
+
+      // Then delete the event
+      const { error: eventError } = await supabase
         .from("events")
         .delete()
         .eq("id", id);
       
-      if (error) throw error;
+      if (eventError) {
+        console.error('Error deleting event:', eventError);
+        throw eventError;
+      }
+
       toast.success("تم حذف الفعالية بنجاح");
       navigate("/");
     } catch (error) {
-      console.error("Error deleting event:", error);
+      console.error('Error in deletion process:', error);
       toast.error("حدث خطأ أثناء حذف الفعالية");
     }
   };
