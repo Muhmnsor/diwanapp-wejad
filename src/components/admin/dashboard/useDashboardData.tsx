@@ -42,6 +42,7 @@ export const useDashboardData = (eventId: string) => {
       console.log('Registrations data fetched:', data);
       return data as Registration[];
     },
+    enabled: !!eventId,
   });
 
   const calculateDashboardData = () => {
@@ -56,7 +57,8 @@ export const useDashboardData = (eventId: string) => {
       remainingSeats,
       occupancyRate,
       eventDate: event.date,
-      eventTime: event.time
+      eventTime: event.time,
+      registrations: registrations
     });
 
     return {

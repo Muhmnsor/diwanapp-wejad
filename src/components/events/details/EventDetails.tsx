@@ -1,5 +1,7 @@
 import { CalendarDays, Clock, MapPin, Monitor, Users } from "lucide-react";
 import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventDetailsProps {
   date: string;
@@ -18,7 +20,25 @@ export const EventDetails = ({
   attendees,
   maxAttendees = 0
 }: EventDetailsProps) => {
-  const attendeesCount = Array.isArray(attendees) ? attendees.length : attendees || 0;
+  const { data: registrations } = useQuery({
+    queryKey: ['registrations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('event_id', window.location.pathname.split('/').pop());
+
+      if (error) {
+        console.error('Error fetching registrations:', error);
+        return [];
+      }
+
+      console.log('Fetched registrations:', data);
+      return data;
+    }
+  });
+
+  const attendeesCount = registrations?.length || 0;
   
   console.log('EventDetails - Current attendees:', attendeesCount);
   console.log('EventDetails - Max attendees:', maxAttendees);
