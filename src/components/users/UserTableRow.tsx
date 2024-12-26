@@ -24,7 +24,7 @@ export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
 
   return (
     <TableRow>
-      <TableCell className="text-right pr-6">
+      <TableCell className="text-right">
         <div className="space-y-1">
           <div className="font-medium">{user.username}</div>
           <div className="text-sm text-muted-foreground">
@@ -32,9 +32,9 @@ export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
           </div>
         </div>
       </TableCell>
-      <TableCell className="text-right pr-6">{user.lastLogin}</TableCell>
-      <TableCell className="text-right pr-6">
-        <div className="flex gap-2 justify-end">
+      <TableCell className="text-right">{user.lastLogin}</TableCell>
+      <TableCell className="text-center">
+        <div className="flex gap-2 justify-center">
           <Button 
             variant="outline" 
             size="icon"
