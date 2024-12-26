@@ -20,6 +20,7 @@ export const useUserRoles = () => {
         .select(`
           user_id,
           roles (
+            id,
             name,
             description
           )
@@ -40,7 +41,11 @@ export const useUserRoles = () => {
       }
 
       // Map through the roles and extract names
-      const roleNames = (userRolesData as UserRoleData[]).map(data => data.roles.name);
+      const roleNames = (userRolesData as UserRoleData[]).map(data => {
+        // Since roles is now an array, we take the first role if it exists
+        return data.roles[0]?.name || 'لم يتم تعيين دور';
+      });
+      
       console.log('Processed user roles:', roleNames);
       return roleNames;
     },

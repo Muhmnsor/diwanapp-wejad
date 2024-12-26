@@ -45,6 +45,7 @@ const Users = () => {
         .select(`
           user_id,
           roles (
+            id,
             name,
             description
           )
@@ -59,8 +60,9 @@ const Users = () => {
 
       // Create a map of user IDs to their roles
       const userRolesMap = (userRolesData as UserRoleData[]).reduce((acc, curr) => {
-        if (curr.roles?.name) {
-          acc[curr.user_id] = curr.roles.name;
+        // Since roles is now an array, we take the first role if it exists
+        if (curr.roles[0]?.name) {
+          acc[curr.user_id] = curr.roles[0].name;
         }
         return acc;
       }, {} as Record<string, string>);

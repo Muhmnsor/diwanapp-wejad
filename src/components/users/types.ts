@@ -13,5 +13,5 @@ export interface Role {
 
 export interface UserRoleData {
   user_id: string;
-  roles: Role;
+  roles: Role[];
 }
