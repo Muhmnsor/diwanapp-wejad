@@ -6,7 +6,9 @@ interface FeedbackSummaryProps {
 }
 
 export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
-  const { data: feedback = [], isLoading } = useQuery({
+  console.log('FeedbackSummary - Fetching feedback for event:', eventId);
+  
+  const { data: feedback = [], isLoading, error } = useQuery({
     queryKey: ['event-feedback', eventId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -14,14 +16,27 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
         .select('*')
         .eq('event_id', eventId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching feedback:', error);
+        throw error;
+      }
+      
       console.log('Fetched feedback data:', data);
-      return data;
+      return data || [];
     },
   });
 
   if (isLoading) {
-    return <div>جاري تحميل التقييمات...</div>;
+    return <div className="text-center p-4">جاري تحميل التقييمات...</div>;
+  }
+
+  if (error) {
+    console.error('Error in FeedbackSummary:', error);
+    return <div className="text-red-500 p-4">حدث خطأ في تحميل التقييمات</div>;
+  }
+
+  if (!feedback || feedback.length === 0) {
+    return <div className="text-gray-500 p-4">لا توجد تقييمات حتى الآن</div>;
   }
 
   const calculateAverage = (ratings: (number | null)[]) => {
@@ -71,8 +86,8 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
           <div className="space-y-4">
             {feedback
               .filter(item => item.feedback_text)
-              .map((item) => (
-                <div key={item.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              .map((item, index) => (
+                <div key={item.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                   <div className="flex flex-col gap-2">
                     <p className="text-gray-700">{item.feedback_text}</p>
                     {(item.name || item.phone) && (
