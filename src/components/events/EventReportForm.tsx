@@ -23,6 +23,7 @@ interface PhotoWithDescription {
 }
 
 interface ReportFormData {
+  program_name: string;
   report_name: string;
   report_text: string;
   detailed_description: string;
@@ -37,6 +38,8 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   const { user } = useAuthStore();
   const { register, handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<ReportFormData>({
     defaultValues: {
+      program_name: '',
+      report_name: '',
       photos: Array(6).fill({ url: '', description: '' })
     }
   });
@@ -53,6 +56,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
           {
             event_id: eventId,
             executor_id: user?.id,
+            program_name: data.program_name,
             report_name: data.report_name,
             report_text: data.report_text,
             detailed_description: data.detailed_description,
@@ -67,6 +71,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
       if (error) throw error;
 
       console.log('Report submitted successfully');
+      toast.success("تم إضافة التقرير بنجاح");
       onSuccess?.();
     } catch (error) {
       console.error('Error in form submission:', error);
@@ -79,7 +84,9 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <ReportNameField
         value={formValues.report_name}
+        programName={formValues.program_name}
         onChange={(value) => setValue('report_name', value)}
+        onProgramNameChange={(value) => setValue('program_name', value)}
       />
 
       <ReportTextField
