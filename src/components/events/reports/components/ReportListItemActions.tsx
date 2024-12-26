@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { TableCell } from "@/components/ui/table";
 import { Download, Trash2 } from "lucide-react";
 
 interface ReportListItemActionsProps {
