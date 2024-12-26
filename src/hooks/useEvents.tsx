@@ -29,8 +29,7 @@ export const useEvents = () => {
       }
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 1,
-    refetchOnWindowFocus: false
+    staleTime: 0, // تم تغيير هذه القيمة لتحديث البيانات فوراً
+    refetchOnWindowFocus: true, // تفعيل التحديث عند العودة للصفحة
   });
 };

@@ -8,11 +8,13 @@ import { toast } from "sonner";
 import { Event } from "@/store/eventStore";
 import { EventFormActions } from "@/components/events/form/EventFormActions";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
+import { useQueryClient } from "@tanstack/react-query";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = !!id;
+  const queryClient = useQueryClient();
   
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<Event>({
@@ -115,6 +117,9 @@ const CreateEvent = () => {
       }
 
       if (result.error) throw result.error;
+
+      // تحديث الكاش بعد إنشاء/تحديث الفعالية
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
 
       toast.success(isEditMode ? "تم تحديث الفعالية بنجاح" : "تم إنشاء الفعالية بنجاح");
       navigate("/");
