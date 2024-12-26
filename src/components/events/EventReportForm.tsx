@@ -1,13 +1,16 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
-import { ImageUpload } from "@/components/ui/image-upload";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
+import { ReportNameField } from "./reports/form/ReportNameField";
+import { ReportTextField } from "./reports/form/ReportTextField";
+import { DetailedDescriptionField } from "./reports/form/DetailedDescriptionField";
+import { EventMetadataFields } from "./reports/form/EventMetadataFields";
+import { EventObjectivesField } from "./reports/form/EventObjectivesField";
+import { ImpactField } from "./reports/form/ImpactField";
+import { PhotosField } from "./reports/form/PhotosField";
 
 interface EventReportFormProps {
   eventId: string;
@@ -30,53 +33,15 @@ interface ReportFormData {
   photos: PhotoWithDescription[];
 }
 
-const PHOTO_DESCRIPTIONS = [
-  "صورة للمشاركين في الفعالية",
-  "صورة لتفاعل المقدم مع الحضور",
-  "صورة للمواد التدريبية والأدوات المستخدمة",
-  "صورة لأنشطة المجموعات",
-  "صورة للعرض التقديمي",
-  "صورة للحظات المميزة في الفعالية"
-];
-
 export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) => {
   const { user } = useAuthStore();
-  const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<ReportFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<ReportFormData>({
     defaultValues: {
       photos: Array(6).fill({ url: '', description: '' })
     }
   });
 
-  const photos = watch('photos');
-
-  const handleImageUpload = async (file: File, index: number) => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `event-reports/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('event-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(filePath);
-
-      const newPhotos = [...photos];
-      newPhotos[index] = {
-        url: publicUrl,
-        description: PHOTO_DESCRIPTIONS[index]
-      };
-      setValue('photos', newPhotos);
-      toast.success("تم رفع الصورة بنجاح");
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error("حدث خطأ أثناء رفع الصورة");
-    }
-  };
+  const formValues = watch();
 
   const onSubmit = async (data: ReportFormData) => {
     try {
@@ -99,105 +64,55 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
           }
         ]);
 
-      if (error) {
-        console.error('Error submitting report:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       console.log('Report submitted successfully');
-      reset();
       onSuccess?.();
     } catch (error) {
       console.error('Error in form submission:', error);
+      toast.error("حدث خطأ أثناء إرسال التقرير");
       throw error;
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="report_name">اسم الفعالية</Label>
-        <Input
-          id="report_name"
-          {...register("report_name", { required: true })}
-          placeholder="أدخل اسم الفعالية..."
-          className="text-right"
-        />
-      </div>
+      <ReportNameField
+        value={formValues.report_name}
+        onChange={(value) => setValue('report_name', value)}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="report_text">نص التقرير</Label>
-        <Textarea
-          id="report_text"
-          {...register("report_text", { required: true })}
-          placeholder="اكتب تقريرك هنا..."
-        />
-      </div>
+      <ReportTextField
+        value={formValues.report_text}
+        onChange={(value) => setValue('report_text', value)}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="detailed_description">تفاصيل الفعالية الدقيقة</Label>
-        <Textarea
-          id="detailed_description"
-          {...register("detailed_description", { required: true })}
-          placeholder="اكتب تفاصيل الفعالية بشكل دقيق..."
-          className="h-32"
-        />
-      </div>
+      <DetailedDescriptionField
+        value={formValues.detailed_description}
+        onChange={(value) => setValue('detailed_description', value)}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="event_duration">مدة الفعالية</Label>
-          <Input
-            id="event_duration"
-            {...register("event_duration", { required: true })}
-            placeholder="مثال: ساعتين، 3 ساعات..."
-          />
-        </div>
+      <EventMetadataFields
+        duration={formValues.event_duration}
+        attendeesCount={formValues.attendees_count}
+        onDurationChange={(value) => setValue('event_duration', value)}
+        onAttendeesCountChange={(value) => setValue('attendees_count', value)}
+      />
 
-        <div className="space-y-2">
-          <Label htmlFor="attendees_count">عدد المشاركين</Label>
-          <Input
-            id="attendees_count"
-            {...register("attendees_count", { required: true })}
-            placeholder="أدخل عدد المشاركين..."
-          />
-        </div>
-      </div>
+      <EventObjectivesField
+        value={formValues.event_objectives}
+        onChange={(value) => setValue('event_objectives', value)}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="event_objectives">أهداف الفعالية</Label>
-        <Textarea
-          id="event_objectives"
-          {...register("event_objectives", { required: true })}
-          placeholder="اذكر الأهداف الرئيسية للفعالية..."
-          className="h-24"
-        />
-      </div>
+      <ImpactField
+        value={formValues.impact_on_participants}
+        onChange={(value) => setValue('impact_on_participants', value)}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="impact_on_participants">الأثر على المشاركين</Label>
-        <Textarea
-          id="impact_on_participants"
-          {...register("impact_on_participants", { required: true })}
-          placeholder="صف كيف أثرت الفعالية على المشاركين..."
-          className="h-24"
-        />
-      </div>
-
-      <div className="space-y-4">
-        <Label>صور الفعالية</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {PHOTO_DESCRIPTIONS.map((description, index) => (
-            <div key={index} className="space-y-2 p-4 border rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">{description}</p>
-              <ImageUpload
-                onChange={(file) => handleImageUpload(file, index)}
-                value={photos[index]?.url}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+      <PhotosField
+        photos={formValues.photos}
+        onPhotosChange={(photos) => setValue('photos', photos)}
+      />
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "جاري الإرسال..." : "إرسال التقرير"}
