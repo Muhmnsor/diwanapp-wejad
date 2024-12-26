@@ -3,10 +3,8 @@ import { EventReportDialog } from "./EventReportDialog";
 import { EventAdminTabs } from "./admin/EventAdminTabs";
 import { useUserRoles } from "./admin/useUserRoles";
 import { useState } from "react";
-import { EventContent } from "./EventContent";
-import { EventHeader } from "./EventHeader";
-import { EventTitle } from "./EventTitle";
 import { EventImage } from "./EventImage";
+import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 
 interface EventDetailsViewProps {
@@ -60,26 +58,19 @@ export const EventDetailsView = ({
           onAddToCalendar={onAddToCalendar}
         />
 
-        <EventContent 
-          event={event}
-          onRegister={handleRegister}
-        />
-
         {(isAdmin || canAddReport) && (
           <>
-            <div className="border-t border-gray-100 mt-8">
-              <EventAdminTabs
-                event={event}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onAddToCalendar={onAddToCalendar}
-                onRegister={handleRegister}
-                id={id}
-                canAddReport={canAddReport}
-                onAddReport={() => setIsReportDialogOpen(true)}
-                isAdmin={isAdmin}
-              />
-            </div>
+            <EventAdminTabs
+              event={event}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onAddToCalendar={onAddToCalendar}
+              onRegister={handleRegister}
+              id={id}
+              canAddReport={canAddReport}
+              onAddReport={() => setIsReportDialogOpen(true)}
+              isAdmin={isAdmin}
+            />
 
             <EventReportDialog
               open={isReportDialogOpen}
@@ -87,6 +78,13 @@ export const EventDetailsView = ({
               eventId={id}
             />
           </>
+        )}
+
+        {!isAdmin && (
+          <EventContent 
+            event={event}
+            onRegister={handleRegister}
+          />
         )}
 
         <EventRegistrationDialog
