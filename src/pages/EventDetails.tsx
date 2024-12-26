@@ -41,9 +41,9 @@ const EventDetails = () => {
       
       // Define tables to clean up in order (order matters due to foreign key constraints)
       const tables = [
+        'attendance_records',
         'event_feedback',
         'notification_logs',
-        'attendance_records',
         'event_notification_settings',
         'event_reports',
         'registrations',
@@ -105,6 +105,7 @@ const EventDetails = () => {
             onDelete={handleDelete}
             onAddToCalendar={handleAddToCalendar}
             onRegister={handleRegister}
+            id={id || ''}
           />
         )}
       </div>

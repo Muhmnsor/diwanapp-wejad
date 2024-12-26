@@ -13,6 +13,7 @@ import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { useRegistrations } from "@/hooks/useRegistrations";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/authStore";
 
 interface EventDetailsViewProps {
   event: Event & { attendees: number };
@@ -29,6 +30,7 @@ export const EventDetailsView = ({
   onDelete, 
   onAddToCalendar,
   onRegister,
+  id
 }: EventDetailsViewProps) => {
   const { user } = useAuthStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
