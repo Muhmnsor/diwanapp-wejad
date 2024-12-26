@@ -13,7 +13,7 @@ export interface Event {
   attendees: number;
   max_attendees: number;
   event_type: "online" | "in-person";
-  eventType?: "online" | "in-person"; // For backward compatibility
+  eventType?: "online" | "in-person";
   price: number | "free";
   beneficiaryType: BeneficiaryType;
   registrationStartDate?: string | null;
@@ -21,9 +21,9 @@ export interface Event {
   registration_start_date?: string | null;
   registration_end_date?: string | null;
   certificate_type: string;
-  certificateType?: string; // For backward compatibility
+  certificateType?: string;
   event_hours: number;
-  eventHours?: number; // For backward compatibility
+  eventHours?: number;
 }
 
 interface EventStore {

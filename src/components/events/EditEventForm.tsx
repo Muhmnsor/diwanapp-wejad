@@ -21,16 +21,22 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     date: event.date || '',
     time: event.time || '',
     location: event.location || '',
+    certificate_type: event.certificate_type || 'none',
     certificateType: event.certificateType || 'none',
+    event_hours: event.event_hours || 0,
     eventHours: event.eventHours || 0,
     price: event.price || 'free',
     max_attendees: event.max_attendees || 0,
     beneficiaryType: event.beneficiaryType || 'both',
+    event_type: event.event_type || 'in-person',
     eventType: event.eventType || 'in-person',
     attendees: event.attendees || 0,
     imageUrl: event.imageUrl || event.image_url || '',
+    image_url: event.image_url || event.imageUrl || '',
     registrationStartDate: event.registrationStartDate || '',
-    registrationEndDate: event.registrationEndDate || ''
+    registrationEndDate: event.registrationEndDate || '',
+    registration_start_date: event.registration_start_date || '',
+    registration_end_date: event.registration_end_date || ''
   });
   
   const [isUploading, setIsUploading] = useState(false);
@@ -44,16 +50,22 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
       date: event.date || '',
       time: event.time || '',
       location: event.location || '',
+      certificate_type: event.certificate_type || 'none',
       certificateType: event.certificateType || 'none',
+      event_hours: event.event_hours || 0,
       eventHours: event.eventHours || 0,
       price: event.price || 'free',
       max_attendees: event.max_attendees || 0,
       beneficiaryType: event.beneficiaryType || 'both',
+      event_type: event.event_type || 'in-person',
       eventType: event.eventType || 'in-person',
       attendees: event.attendees || 0,
       imageUrl: event.imageUrl || event.image_url || '',
+      image_url: event.image_url || event.imageUrl || '',
       registrationStartDate: event.registrationStartDate || '',
-      registrationEndDate: event.registrationEndDate || ''
+      registrationEndDate: event.registrationEndDate || '',
+      registration_start_date: event.registration_start_date || '',
+      registration_end_date: event.registration_end_date || ''
     });
   }, [event]);
 
@@ -68,7 +80,8 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         registration_start_date: formData.registrationStartDate,
         registration_end_date: formData.registrationEndDate,
         certificate_type: formData.certificateType,
-        event_hours: formData.eventHours || null
+        event_hours: formData.eventHours || null,
+        event_type: formData.eventType
       };
       
       console.log('Updating event with data:', updateData);
