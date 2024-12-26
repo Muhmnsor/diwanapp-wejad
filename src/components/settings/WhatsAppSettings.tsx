@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsForm } from "./whatsapp-settings/SettingsForm";
 
 export const WhatsAppSettings = () => {
   const queryClient = useQueryClient();
@@ -33,7 +31,10 @@ export const WhatsAppSettings = () => {
   }, [settings]);
 
   const mutation = useMutation({
-    mutationFn: async (newSettings: { business_phone: string; api_key: string }) => {
+    mutationFn: async (newSettings: {
+      business_phone: string;
+      api_key: string;
+    }) => {
       if (settings?.id) {
         const { error } = await supabase
           .from("whatsapp_settings")
@@ -75,30 +76,13 @@ export const WhatsAppSettings = () => {
         <CardTitle>إعدادات الواتساب</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>رقم الواتساب</Label>
-            <Input
-              value={businessPhone}
-              onChange={(e) => setBusinessPhone(e.target.value)}
-              placeholder="966500000000"
-              dir="ltr"
-              className="text-left"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>مفتاح API</Label>
-            <Input
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              type="password"
-              placeholder="أدخل مفتاح API"
-              dir="ltr"
-              className="text-left"
-            />
-          </div>
-          <Button type="submit">حفظ الإعدادات</Button>
-        </form>
+        <SettingsForm
+          businessPhone={businessPhone}
+          apiKey={apiKey}
+          onBusinessPhoneChange={setBusinessPhone}
+          onApiKeyChange={setApiKey}
+          onSubmit={handleSubmit}
+        />
       </CardContent>
     </Card>
   );
