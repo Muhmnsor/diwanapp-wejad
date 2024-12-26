@@ -51,13 +51,23 @@ export const BannerControls = ({
           />
         </div>
       </div>
-      <Button 
-        onClick={onSave}
-        disabled={isSubmitting || !desktopImage || !mobileImage}
-        className="w-full md:w-auto"
-      >
-        {isSubmitting ? "جاري الحفظ..." : "حفظ البانر"}
-      </Button>
+      <div className="flex gap-2">
+        <Button 
+          onClick={onSave}
+          disabled={isSubmitting || !desktopImage || !mobileImage}
+          className="w-full md:w-auto"
+        >
+          {isSubmitting ? "جاري الحفظ..." : "حفظ البانر"}
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => setIsEditing(false)}
+          disabled={isSubmitting}
+          className="w-full md:w-auto"
+        >
+          إلغاء
+        </Button>
+      </div>
     </div>
   );
 };
