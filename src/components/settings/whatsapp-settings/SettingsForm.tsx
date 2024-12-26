@@ -1,25 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+
+interface WhatsAppSettings {
+  business_phone: string;
+  api_key: string;
+  account_id: string;
+  whatsapp_number_id: string;
+  callback_url: string;
+}
 
 interface SettingsFormProps {
-  settings: {
-    business_phone: string;
-    api_key: string;
-    account_id: string;
-    whatsapp_number_id: string;
-    callback_url: string;
-  };
-  onSettingsChange: (settings: any) => void;
+  settings: WhatsAppSettings;
+  onSettingsChange: (settings: WhatsAppSettings) => void;
   onSubmit: (e: React.FormEvent) => void;
   onTestConnection: () => void;
 }
@@ -30,7 +23,7 @@ export const SettingsForm = ({
   onSubmit,
   onTestConnection,
 }: SettingsFormProps) => {
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (field: keyof WhatsAppSettings) => (e: React.ChangeEvent<HTMLInputElement>) => {
     onSettingsChange({ ...settings, [field]: e.target.value });
   };
 
