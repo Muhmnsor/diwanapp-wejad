@@ -16,6 +16,7 @@ export interface Event {
   eventType?: "online" | "in-person";
   price: number | "free";
   beneficiaryType: BeneficiaryType;
+  beneficiary_type?: BeneficiaryType;  // Added this line for backward compatibility
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
   registration_start_date?: string | null;
