@@ -37,42 +37,47 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
   };
 
   return (
-    <div className="space-y-4" dir="rtl">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6" dir="rtl">
+      <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
         <h3 className="text-lg font-semibold">ملخص التقييمات</h3>
-        <span className="text-sm text-gray-600">عدد المقيمين: {feedback.length}</span>
+        <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
+          عدد المقيمين: {feedback.length}
+        </span>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="font-medium">التقييم العام</p>
-          <p>{averages.overall.toFixed(1)} / 5</p>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <p className="text-gray-600 mb-2">التقييم العام</p>
+          <p className="text-2xl font-bold">{averages.overall.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
         </div>
-        <div>
-          <p className="font-medium">تقييم المحتوى</p>
-          <p>{averages.content.toFixed(1)} / 5</p>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <p className="text-gray-600 mb-2">تقييم المحتوى</p>
+          <p className="text-2xl font-bold">{averages.content.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
         </div>
-        <div>
-          <p className="font-medium">تقييم التنظيم</p>
-          <p>{averages.organization.toFixed(1)} / 5</p>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <p className="text-gray-600 mb-2">تقييم التنظيم</p>
+          <p className="text-2xl font-bold">{averages.organization.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
         </div>
-        <div>
-          <p className="font-medium">تقييم المقدم</p>
-          <p>{averages.presenter.toFixed(1)} / 5</p>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <p className="text-gray-600 mb-2">تقييم المقدم</p>
+          <p className="text-2xl font-bold">{averages.presenter.toFixed(1)}<span className="text-sm text-gray-500"> / 5</span></p>
         </div>
       </div>
 
-      <div className="mt-6">
-        <h4 className="font-medium mb-2">التعليقات ({feedback.length})</h4>
-        <div className="space-y-2">
-          {feedback.map((item) => (
-            item.feedback_text && (
-              <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
-                {item.feedback_text}
-              </div>
-            )
-          ))}
+      {feedback.some(item => item.feedback_text) && (
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h4 className="font-medium mb-4 text-lg">التعليقات ({feedback.filter(item => item.feedback_text).length})</h4>
+          <div className="space-y-3">
+            {feedback.map((item) => (
+              item.feedback_text && (
+                <div key={item.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  {item.feedback_text}
+                </div>
+              )
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
