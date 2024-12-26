@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventDetails } from "./details/EventDetails";
 import { EventDetailsContainer } from "./details/EventDetailsContainer";
-import { EventEditDialog } from "./EventEditDialog";
+import { EditEventDialog } from "./EditEventDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -94,11 +94,11 @@ export const EventDetailsView = ({
           <button onClick={onAddToCalendar} className="btn btn-secondary">إضافة إلى التقويم</button>
         </div>
       )}
-      <EventEditDialog 
+      <EditEventDialog 
         open={isEditDialogOpen} 
         onOpenChange={setIsEditDialogOpen} 
         event={currentEvent} 
-        onUpdateEvent={handleUpdateEvent} 
+        onSave={handleUpdateEvent} 
       />
     </div>
   );
