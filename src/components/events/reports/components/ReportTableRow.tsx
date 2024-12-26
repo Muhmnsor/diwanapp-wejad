@@ -22,7 +22,7 @@ interface ReportTableRowProps {
     attendees_count: string;
     event_objectives: string;
     impact_on_participants: string;
-    photos: string[];  // Updated type to match database storage format
+    photos: { url: string; description: string; }[];
   };
   eventTitle?: string;
   onDownload: () => void;
@@ -68,7 +68,17 @@ export const ReportTableRow = ({
 
             <CollapsibleContent>
               <div className="space-y-6 pt-4">
-                <ReportContent report={report} />
+                <ReportContent
+                  report_text={report.report_text}
+                  detailed_description={report.detailed_description}
+                  event_duration={report.event_duration}
+                  attendees_count={report.attendees_count}
+                  event_objectives={report.event_objectives}
+                  impact_on_participants={report.impact_on_participants}
+                  created_at={report.created_at}
+                  photos={report.photos}
+                  event_id=""
+                />
                 <Separator />
                 <ReportPhotos photos={report.photos} />
               </div>

@@ -1,5 +1,4 @@
 import { TableCell } from "@/components/ui/table";
-import { Report } from "@/types/report";
 
 interface ReportContentProps {
   report_text: string;
