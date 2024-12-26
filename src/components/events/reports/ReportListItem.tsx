@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ReportHeader } from "./components/ReportHeader";
 import { ReportContent } from "./components/ReportContent";
 import { ReportPhotos } from "./components/ReportPhotos";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ReportListItemProps {
   report: {
@@ -30,6 +32,40 @@ export interface ReportListItemProps {
 export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Fetch event details to get the title
+  const { data: event } = useQuery({
+    queryKey: ["event", report.event_id],
+    queryFn: async () => {
+      console.log("Fetching event details for report:", report.event_id);
+      const { data, error } = await supabase
+        .from("events")
+        .select("title")
+        .eq("id", report.event_id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching event:", error);
+        throw error;
+      }
+      console.log("Event data fetched:", data);
+      return data;
+    },
+  });
+
+  // Parse photos array if it's a string
+  const parsedPhotos = report.photos?.map(photo => {
+    if (typeof photo === 'string') {
+      try {
+        return JSON.parse(photo);
+      } catch {
+        return { url: photo, description: '' };
+      }
+    }
+    return photo;
+  }) || [];
+
+  console.log("Parsed photos:", parsedPhotos);
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="space-y-4 border rounded-lg p-4">
@@ -42,7 +78,8 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
             </CollapsibleTrigger>
             <ReportHeader 
               createdAt={report.created_at} 
-              onDownload={() => onDownload(report)} 
+              onDownload={() => onDownload(report)}
+              eventTitle={event?.title}
             />
           </div>
         </div>
@@ -51,7 +88,7 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
           <div className="space-y-6 pt-4">
             <ReportContent report={report} />
             <Separator />
-            <ReportPhotos photos={report.photos} />
+            <ReportPhotos photos={parsedPhotos} />
           </div>
         </CollapsibleContent>
       </div>
