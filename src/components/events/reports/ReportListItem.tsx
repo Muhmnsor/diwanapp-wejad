@@ -1,31 +1,15 @@
-import { TableRow } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { downloadReportWithImages } from "./utils/downloadUtils";
 import { ReportDeleteDialog } from "./components/ReportDeleteDialog";
 import { ReportListItemContent } from "./components/ReportListItemContent";
 import { ReportListItemActions } from "./components/ReportListItemActions";
+import { Report } from "@/types/report";
 
 interface ReportListItemProps {
-  report: {
-    id: string;
-    created_at: string;
-    report_text: string;
-    detailed_description: string;
-    event_duration: string;
-    attendees_count: string;
-    event_objectives: string;
-    impact_on_participants: string;
-    photos: string[];
-    event_id: string;
-    report_name: string;
-    profiles?: {
-      id: string;
-      email: string;
-    } | null;
-  };
+  report: Report;
   eventTitle?: string;
 }
 
@@ -91,6 +75,7 @@ export const ReportListItem = ({
           createdAt={report.created_at}
         />
         <ReportListItemActions
+          report={report}
           onDownload={handleDownload}
           onDelete={() => setShowDeleteDialog(true)}
           isDeleting={isDeleting}

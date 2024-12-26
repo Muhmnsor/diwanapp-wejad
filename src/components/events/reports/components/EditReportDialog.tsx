@@ -4,26 +4,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ReportFormFields } from "../form/ReportFormFields";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-
-interface Report {
-  id: string;
-  event_id: string;
-  program_name?: string;
-  report_name: string;
-  report_text: string;
-  detailed_description: string;
-  event_duration: string;
-  attendees_count: string;
-  event_objectives: string;
-  impact_on_participants: string;
-  photos: { url: string; description: string; }[];
-}
+import { Report } from "@/types/report";
 
 interface EditReportDialogProps {
   open: boolean;
@@ -38,17 +25,15 @@ export const EditReportDialog = ({
 }: EditReportDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [formValues, setFormValues] = useState({
+  const [formData, setFormData] = useState({
     program_name: report.program_name || '',
-    report_name: report.report_name || '',
-    report_text: report.report_text || '',
-    detailed_description: report.detailed_description || '',
-    event_duration: report.event_duration || '',
-    attendees_count: report.attendees_count || '',
-    event_objectives: report.event_objectives || '',
-    impact_on_participants: report.impact_on_participants || '',
-    photos: report.photos || []
+    report_name: report.report_name,
+    report_text: report.report_text,
+    detailed_description: report.detailed_description,
+    event_duration: report.event_duration,
+    attendees_count: report.attendees_count,
+    event_objectives: report.event_objectives,
+    impact_on_participants: report.impact_on_participants,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,22 +43,15 @@ export const EditReportDialog = ({
     try {
       const { error } = await supabase
         .from('event_reports')
-        .update({
-          program_name: formValues.program_name,
-          report_name: formValues.report_name,
-          report_text: formValues.report_text,
-          detailed_description: formValues.detailed_description,
-          event_duration: formValues.event_duration,
-          attendees_count: formValues.attendees_count,
-          event_objectives: formValues.event_objectives,
-          impact_on_participants: formValues.impact_on_participants,
-          photos: formValues.photos
-        })
+        .update(formData)
         .eq('id', report.id);
 
       if (error) throw error;
 
-      await queryClient.invalidateQueries({ queryKey: ['event-reports', report.event_id] });
+      await queryClient.invalidateQueries({
+        queryKey: ['event-reports', report.event_id]
+      });
+      
       toast.success('تم تحديث التقرير بنجاح');
       onOpenChange(false);
     } catch (error) {
@@ -86,27 +64,65 @@ export const EditReportDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-right">تعديل التقرير</DialogTitle>
+          <DialogTitle>تعديل التقرير</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
-          <ReportFormFields
-            formValues={formValues}
-            setValue={(field, value) => 
-              setFormValues(prev => ({ ...prev, [field]: value }))
-            }
-          />
-          <div className="flex justify-start gap-2">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "جاري الحفظ..." : "حفظ التغييرات"}
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
+            <Input
+              placeholder="اسم البرنامج"
+              value={formData.program_name}
+              onChange={(e) => setFormData(prev => ({ ...prev, program_name: e.target.value }))}
+            />
+            <Input
+              placeholder="اسم التقرير"
+              value={formData.report_name}
+              onChange={(e) => setFormData(prev => ({ ...prev, report_name: e.target.value }))}
+              required
+            />
+            <Input
+              placeholder="نص التقرير"
+              value={formData.report_text}
+              onChange={(e) => setFormData(prev => ({ ...prev, report_text: e.target.value }))}
+              required
+            />
+            <Input
+              placeholder="الوصف التفصيلي"
+              value={formData.detailed_description}
+              onChange={(e) => setFormData(prev => ({ ...prev, detailed_description: e.target.value }))}
+            />
+            <Input
+              placeholder="مدة الفعالية"
+              value={formData.event_duration}
+              onChange={(e) => setFormData(prev => ({ ...prev, event_duration: e.target.value }))}
+            />
+            <Input
+              placeholder="عدد الحضور"
+              value={formData.attendees_count}
+              onChange={(e) => setFormData(prev => ({ ...prev, attendees_count: e.target.value }))}
+            />
+            <Input
+              placeholder="أهداف الفعالية"
+              value={formData.event_objectives}
+              onChange={(e) => setFormData(prev => ({ ...prev, event_objectives: e.target.value }))}
+            />
+            <Input
+              placeholder="أثر الفعالية على المشاركين"
+              value={formData.impact_on_participants}
+              onChange={(e) => setFormData(prev => ({ ...prev, impact_on_participants: e.target.value }))}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
             >
               إلغاء
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'جاري الحفظ...' : 'حفظ التغييرات'}
             </Button>
           </div>
         </form>
