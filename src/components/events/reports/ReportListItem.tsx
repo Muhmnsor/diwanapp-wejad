@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Download, Pencil, Trash2 } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,10 @@ interface ReportListItemProps {
     photos: string[];
     event_id: string;
     report_name: string;
+    profiles?: {
+      id: string;
+      email: string;
+    } | null;
   };
   eventTitle?: string;
 }
@@ -81,10 +85,17 @@ export const ReportListItem = ({
   return (
     <>
       <TableRow>
-        <TableCell>{report.report_name || eventTitle}</TableCell>
-        <TableCell>{new Date(report.created_at).toLocaleDateString('ar')}</TableCell>
+        <TableCell className="text-right font-medium">
+          {report.report_name || eventTitle}
+        </TableCell>
+        <TableCell className="text-right">
+          {report.profiles?.email || 'غير معروف'}
+        </TableCell>
+        <TableCell className="text-right">
+          {new Date(report.created_at).toLocaleDateString('ar')}
+        </TableCell>
         <TableCell>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <Button
               variant="ghost"
               size="icon"

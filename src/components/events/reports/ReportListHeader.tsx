@@ -8,9 +8,10 @@ export const ReportListHeader = ({ title }: ReportListHeaderProps) => {
   return (
     <TableHeader>
       <TableRow>
-        <TableHead>اسم الفعالية</TableHead>
-        <TableHead>تاريخ الإعداد</TableHead>
-        <TableHead className="text-left">الإجراءات</TableHead>
+        <TableHead className="text-right">اسم الفعالية</TableHead>
+        <TableHead className="text-right">معد التقرير</TableHead>
+        <TableHead className="text-right">تاريخ الإعداد</TableHead>
+        <TableHead className="text-center">الإجراءات</TableHead>
       </TableRow>
     </TableHeader>
   );
