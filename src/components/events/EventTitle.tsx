@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Share2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { EventActions } from "./EventActions";
 
 interface EventTitleProps {
@@ -23,7 +23,6 @@ export const EventTitle = ({
 
   return (
     <div className="flex justify-between items-start px-8 py-6 border-b border-gray-100">
-      <h1 className="text-[32px] leading-tight font-semibold text-[#1A1F2C]">{title}</h1>
       <div className="flex gap-3">
         {isAdmin && (
           <div className="flex gap-2">
@@ -52,6 +51,7 @@ export const EventTitle = ({
           onAddToCalendar={onAddToCalendar}
         />
       </div>
+      <h1 className="text-[32px] leading-tight font-semibold text-[#1A1F2C]">{title}</h1>
     </div>
   );
 };

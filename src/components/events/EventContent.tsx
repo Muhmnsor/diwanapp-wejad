@@ -49,8 +49,8 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg divide-y divide-gray-100">
-      <div className="py-8">
+    <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
+      <div className="py-8 px-8">
         <EventInfo
           date={event.date}
           time={event.time}

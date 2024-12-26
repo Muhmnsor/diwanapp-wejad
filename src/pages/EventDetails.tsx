@@ -63,11 +63,39 @@ const EventDetails = () => {
 
   const isAdmin = user?.isAdmin;
 
+  const handleEdit = () => {
+    console.log("Edit event clicked");
+    // Add edit functionality here
+  };
+
+  const handleDelete = () => {
+    console.log("Delete event clicked");
+    // Add delete functionality here
+  };
+
+  const handleAddToCalendar = () => {
+    console.log("Add to calendar clicked");
+    // Add calendar functionality here
+  };
+
+  const handleRegister = () => {
+    console.log("Register clicked");
+    // Add registration functionality here
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
       <main className="flex-grow">
-        <EventDetailsView event={event} isAdmin={isAdmin} />
+        <EventDetailsView 
+          event={event} 
+          isAdmin={isAdmin}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddToCalendar={handleAddToCalendar}
+          onRegister={handleRegister}
+          id={id || ''}
+        />
       </main>
       <Footer />
     </div>
