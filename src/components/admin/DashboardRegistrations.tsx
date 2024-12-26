@@ -1,71 +1,67 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExportButton } from "./ExportButton";
+import { useEffect, useState } from "react";
 import { RegistrationsTable } from "./RegistrationsTable";
-import { Registration } from "./types";
-import * as XLSX from 'xlsx';
-import { toast } from "sonner";
-import { useState } from "react";
+import { ExportButton } from "./ExportButton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-interface DashboardRegistrationsProps {
-  registrations: Registration[];
-  eventTitle: string;
-}
+export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
+  const [registrations, setRegistrations] = useState<any[]>([]);
 
-export const DashboardRegistrations = ({ registrations, eventTitle }: DashboardRegistrationsProps) => {
-  const [isExporting, setIsExporting] = useState(false);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['registrations', eventId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('event_id', eventId);
 
-  const formatRegistrationNumber = (number: string) => {
-    return number.split('-').pop() || number;
-  };
+      if (error) {
+        console.error('Error fetching registrations:', error);
+        throw error;
+      }
 
-  const exportToExcel = async () => {
-    if (!registrations?.length) {
-      toast.error("لا يوجد بيانات للتصدير");
-      return;
+      return data || [];
     }
-    
-    setIsExporting(true);
-    try {
-      const exportData = registrations.map(reg => ({
-        'رقم التسجيل': formatRegistrationNumber(reg.registration_number),
-        'الاسم': reg.name,
-        'البريد الإلكتروني': reg.email,
-        'رقم الجوال': reg.phone,
-        'تاريخ التسجيل': new Date(reg.created_at).toLocaleString('ar-SA')
-      }));
+  });
 
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "المسجلين");
-      
-      const fileName = `المسجلين-${eventTitle}-${new Date().toLocaleDateString('ar-SA')}.xlsx`;
-      
-      XLSX.writeFile(wb, fileName);
-      toast.success("تم تصدير البيانات بنجاح");
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      toast.error("حدث خطأ أثناء تصدير البيانات");
-    } finally {
-      setIsExporting(false);
+  useEffect(() => {
+    if (data) {
+      setRegistrations(data);
+      console.log('Registrations data:', data);
     }
-  };
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        حدث خطأ في تحميل التسجيلات
+      </div>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>قائمة المسجلين</CardTitle>
-        <ExportButton
-          onClick={exportToExcel}
-          isExporting={isExporting}
-          disabled={!registrations?.length}
-        />
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6 bg-white rounded-lg shadow-sm p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-[#1A1F2C]">التسجيلات</h2>
+        <ExportButton data={registrations} filename="registrations" />
+      </div>
+      
+      <div className="overflow-hidden rounded-lg border border-gray-200">
         <RegistrationsTable 
           registrations={registrations} 
-          eventTitle={eventTitle}
+          onDeleteRegistration={(id) => {
+            setRegistrations(registrations.filter(reg => reg.id !== id));
+          }} 
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
