@@ -88,16 +88,12 @@ export const SettingsContainer = () => {
       console.log("Current settings state:", {
         business_phone: settings.business_phone,
         api_key: settings.api_key ? "***" : "not set",
-        account_id: settings.account_id,
-        whatsapp_number_id: settings.whatsapp_number_id,
       });
 
       // Validate required fields before making the request
       const missingFields = [];
       if (!settings.business_phone) missingFields.push("رقم الواتساب");
       if (!settings.api_key) missingFields.push("مفتاح API");
-      if (!settings.account_id) missingFields.push("معرف الحساب");
-      if (!settings.whatsapp_number_id) missingFields.push("معرف رقم الواتساب");
 
       if (missingFields.length > 0) {
         const errorMessage = `الرجاء تعبئة الحقول التالية: ${missingFields.join("، ")}`;
@@ -110,8 +106,6 @@ export const SettingsContainer = () => {
         body: {
           business_phone: settings.business_phone,
           api_key: settings.api_key,
-          account_id: settings.account_id,
-          whatsapp_number_id: settings.whatsapp_number_id,
         }
       });
 

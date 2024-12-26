@@ -40,7 +40,7 @@ export const SettingsForm = ({
             className="text-left"
           />
           <p className="text-sm text-muted-foreground">
-            رقم الواتساب الخاص بحسابك التجاري
+            رقم الواتساب الخاص بحسابك التجاري على Interakt
           </p>
         </div>
         
@@ -50,40 +50,12 @@ export const SettingsForm = ({
             value={settings.api_key}
             onChange={handleChange("api_key")}
             type="password"
-            placeholder="أدخل مفتاح API"
+            placeholder="أدخل مفتاح API الخاص بـ Interakt"
             dir="ltr"
             className="text-left font-mono"
           />
           <p className="text-sm text-muted-foreground">
-            مفتاح API الخاص بحساب الواتساب
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label>معرف الحساب</Label>
-          <Input
-            value={settings.account_id}
-            onChange={handleChange("account_id")}
-            placeholder="أدخل معرف الحساب"
-            dir="ltr"
-            className="text-left font-mono"
-          />
-          <p className="text-sm text-muted-foreground">
-            معرف حساب الواتساب الخاص بك
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label>معرف رقم الواتساب</Label>
-          <Input
-            value={settings.whatsapp_number_id}
-            onChange={handleChange("whatsapp_number_id")}
-            placeholder="أدخل معرف رقم الواتساب"
-            dir="ltr"
-            className="text-left font-mono"
-          />
-          <p className="text-sm text-muted-foreground">
-            معرف رقم الواتساب المرتبط بحسابك
+            مفتاح API الخاص بحساب Interakt
           </p>
         </div>
 

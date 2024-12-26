@@ -13,17 +13,15 @@ serve(async (req) => {
     const body = await req.json()
     console.log("Received request body:", {
       ...body,
-      api_key: body.api_key ? "***" : undefined // Hide API key in logs
+      api_key: body.api_key ? "***" : undefined
     })
 
-    const { business_phone, api_key, account_id, whatsapp_number_id } = body
+    const { business_phone, api_key } = body
 
     // Validate required fields
     const missingFields = []
     if (!business_phone) missingFields.push('business_phone')
     if (!api_key) missingFields.push('api_key')
-    if (!account_id) missingFields.push('account_id')
-    if (!whatsapp_number_id) missingFields.push('whatsapp_number_id')
 
     if (missingFields.length > 0) {
       console.error('Missing required fields:', missingFields)
@@ -39,19 +37,28 @@ serve(async (req) => {
       )
     }
 
-    // Test connection to WhatsApp API
-    console.log("Testing WhatsApp API connection for number ID:", whatsapp_number_id)
-    const response = await fetch(`https://graph.facebook.com/v17.0/${whatsapp_number_id}`, {
+    // Test connection to Interakt API
+    console.log("Testing Interakt API connection")
+    const response = await fetch('https://api.interakt.ai/v1/public/track/users/', {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${api_key}`,
-      }
+        'Authorization': `Basic ${api_key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "phoneNumber": business_phone,
+        "countryCode": "+966",
+        "traits": {
+          "name": "Test Connection"
+        }
+      })
     })
 
     if (!response.ok) {
       const error = await response.text()
-      console.error('WhatsApp API error:', error)
+      console.error('Interakt API error:', error)
       return new Response(
-        JSON.stringify({ error: 'فشل الاتصال بواجهة برمجة تطبيقات واتساب' }),
+        JSON.stringify({ error: 'فشل الاتصال بواجهة برمجة تطبيقات Interakt' }),
         { 
           status: response.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -59,7 +66,7 @@ serve(async (req) => {
       )
     }
 
-    console.log("WhatsApp API connection successful")
+    console.log("Interakt API connection successful")
     return new Response(
       JSON.stringify({ success: true, message: 'تم الاتصال بنجاح' }),
       { 
