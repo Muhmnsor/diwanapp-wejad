@@ -10,28 +10,88 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
   try {
     console.log('Starting deletion process for event:', eventId);
     
-    // Delete all related records in the correct order to respect foreign key constraints
-    const tables = [
-      'event_feedback',
-      'attendance_records',
-      'notification_logs',
-      'event_notification_settings',
-      'event_reports',
-      'registrations',
-      'events'
-    ];
+    // Delete event_feedback records first
+    console.log('Deleting event feedback records...');
+    const { error: feedbackError } = await supabase
+      .from('event_feedback')
+      .delete()
+      .eq('event_id', eventId);
+    
+    if (feedbackError) {
+      console.error('Error deleting feedback:', feedbackError);
+      throw feedbackError;
+    }
 
-    for (const table of tables) {
-      console.log(`Deleting records from ${table}...`);
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq(table === 'events' ? 'id' : 'event_id', eventId);
+    // Delete attendance records
+    console.log('Deleting attendance records...');
+    const { error: attendanceError } = await supabase
+      .from('attendance_records')
+      .delete()
+      .eq('event_id', eventId);
+    
+    if (attendanceError) {
+      console.error('Error deleting attendance:', attendanceError);
+      throw attendanceError;
+    }
 
-      if (error) {
-        console.error(`Error deleting from ${table}:`, error);
-        throw error;
-      }
+    // Delete notification logs
+    console.log('Deleting notification logs...');
+    const { error: notificationError } = await supabase
+      .from('notification_logs')
+      .delete()
+      .eq('event_id', eventId);
+    
+    if (notificationError) {
+      console.error('Error deleting notifications:', notificationError);
+      throw notificationError;
+    }
+
+    // Delete notification settings
+    console.log('Deleting notification settings...');
+    const { error: settingsError } = await supabase
+      .from('event_notification_settings')
+      .delete()
+      .eq('event_id', eventId);
+    
+    if (settingsError) {
+      console.error('Error deleting notification settings:', settingsError);
+      throw settingsError;
+    }
+
+    // Delete event reports
+    console.log('Deleting event reports...');
+    const { error: reportsError } = await supabase
+      .from('event_reports')
+      .delete()
+      .eq('event_id', eventId);
+    
+    if (reportsError) {
+      console.error('Error deleting reports:', reportsError);
+      throw reportsError;
+    }
+
+    // Delete registrations
+    console.log('Deleting registrations...');
+    const { error: registrationsError } = await supabase
+      .from('registrations')
+      .delete()
+      .eq('event_id', eventId);
+    
+    if (registrationsError) {
+      console.error('Error deleting registrations:', registrationsError);
+      throw registrationsError;
+    }
+
+    // Finally delete the event itself
+    console.log('Deleting event...');
+    const { error: eventError } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId);
+    
+    if (eventError) {
+      console.error('Error deleting event:', eventError);
+      throw eventError;
     }
 
     console.log('Event and related records deleted successfully');
