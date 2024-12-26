@@ -11,6 +11,7 @@ interface EventAdminViewProps {
   onAddToCalendar: () => void;
   onRegister: () => void;
   id: string;
+  isAdmin: boolean;
 }
 
 export const EventAdminView = ({
@@ -19,7 +20,8 @@ export const EventAdminView = ({
   onDelete,
   onAddToCalendar,
   onRegister,
-  id
+  id,
+  isAdmin
 }: EventAdminViewProps) => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
@@ -44,6 +46,7 @@ export const EventAdminView = ({
         id={id}
         canAddReport={canAddReport}
         onAddReport={() => setIsReportDialogOpen(true)}
+        isAdmin={isAdmin}
       />
 
       <EventReportDialog

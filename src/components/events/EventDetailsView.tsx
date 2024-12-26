@@ -68,6 +68,7 @@ export const EventDetailsView = ({
             id={id}
             canAddReport={canAddReport}
             onAddReport={() => setIsReportDialogOpen(true)}
+            isAdmin={isAdmin}
           />
 
           <EventReportDialog
