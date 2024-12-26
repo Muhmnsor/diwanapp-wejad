@@ -107,6 +107,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
       console.log('Event updated successfully in database');
       onSave(formData);
       toast.success("تم تحديث الفعالية بنجاح");
+      onCancel(); // Close the dialog instead of reloading
     } catch (error) {
       console.error('Error updating event:', error);
       toast.error("حدث خطأ أثناء تحديث الفعالية");
