@@ -13,7 +13,7 @@ export const BannerDisplay = ({ desktopImage, mobileImage, isMobile }: BannerDis
     : (desktopImage || mobileImage || defaultImage);
 
   return (
-    <div className="relative bg-gray-100 rounded-lg overflow-hidden w-full shadow-md">
+    <div className="rounded-2xl bg-gray-100 overflow-hidden w-full shadow-sm">
       <Carousel className="w-full">
         <CarouselContent>
           <CarouselItem>
