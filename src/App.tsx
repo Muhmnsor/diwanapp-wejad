@@ -18,6 +18,7 @@ function App() {
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
         <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+        <Route path="/event/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
         <Route path="/events/:id/feedback" element={<EventFeedback />} />
         <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
       </Routes>
