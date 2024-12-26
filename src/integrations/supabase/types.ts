@@ -172,6 +172,7 @@ export type Database = {
           attendees_count: string | null
           comments: string[] | null
           created_at: string
+          detailed_description: string | null
           event_duration: string | null
           event_id: string | null
           event_objectives: string | null
@@ -189,6 +190,7 @@ export type Database = {
           attendees_count?: string | null
           comments?: string[] | null
           created_at?: string
+          detailed_description?: string | null
           event_duration?: string | null
           event_id?: string | null
           event_objectives?: string | null
@@ -206,6 +208,7 @@ export type Database = {
           attendees_count?: string | null
           comments?: string[] | null
           created_at?: string
+          detailed_description?: string | null
           event_duration?: string | null
           event_id?: string | null
           event_objectives?: string | null

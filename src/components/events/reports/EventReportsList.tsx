@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportListContainer } from "./ReportListContainer";
 import { ReportListHeader } from "./ReportListHeader";
 import { ReportListItem } from "./ReportListItem";
-import * as XLSX from 'xlsx';
 
 interface EventReportsListProps {
   eventId: string;
@@ -37,10 +36,42 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
   });
 
   const handleDownload = (report: any) => {
-    const ws = XLSX.utils.json_to_sheet([report]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, `report-${report.id}.xlsx`);
+    // Create report content
+    const reportContent = `
+تقرير الفعالية
+
+التاريخ: ${new Date(report.created_at).toLocaleDateString('ar')}
+
+نص التقرير:
+${report.report_text}
+
+التفاصيل:
+${report.detailed_description}
+
+معلومات الفعالية:
+- مدة الفعالية: ${report.event_duration}
+- عدد المشاركين: ${report.attendees_count}
+
+الأهداف:
+${report.event_objectives}
+
+الأثر على المشاركين:
+${report.impact_on_participants}
+
+الصور المرفقة:
+${report.photos?.map((photo: any) => `- ${photo.description}: ${photo.url}`).join('\n') || 'لا توجد صور مرفقة'}
+    `;
+
+    // Create blob and download
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `تقرير-الفعالية-${new Date(report.created_at).toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   return (
