@@ -1,13 +1,15 @@
 import React, { useRef } from 'react';
 import { Button } from './button';
 import { Input } from './input';
+import { cn } from '@/lib/utils';
 
 interface ImageUploadProps {
   onChange: (file: File) => void;
   value?: string;
+  className?: string;
 }
 
-export function ImageUpload({ onChange, value }: ImageUploadProps) {
+export function ImageUpload({ onChange, value, className }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
@@ -22,7 +24,7 @@ export function ImageUpload({ onChange, value }: ImageUploadProps) {
   };
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", className)}>
       <Input
         ref={inputRef}
         type="file"
