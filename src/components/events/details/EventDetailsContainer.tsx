@@ -6,6 +6,8 @@ import { EventFooter } from "../EventFooter";
 import { EventRegistrationDialog } from "../EventRegistrationDialog";
 import { EventDeleteDialog } from "./EventDeleteDialog";
 import { useState } from "react";
+import { handleEventDeletion } from "./EventDeletionHandler";
+import { useNavigate } from "react-router-dom";
 
 interface EventDetailsContainerProps {
   event: Event & { attendees: number };
@@ -28,6 +30,21 @@ export const EventDetailsContainer = ({
 }: EventDetailsContainerProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleDelete = async () => {
+    try {
+      await handleEventDeletion({
+        eventId: id,
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          navigate('/');
+        }
+      });
+    } catch (error) {
+      console.error('Error handling event deletion:', error);
+    }
+  };
 
   const handleRegister = () => {
     setIsRegistrationOpen(true);
@@ -71,7 +88,7 @@ export const EventDetailsContainer = ({
         <EventDeleteDialog
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
-          onConfirm={onDelete}
+          onConfirm={handleDelete}
         />
       </EventContainer>
     </div>
