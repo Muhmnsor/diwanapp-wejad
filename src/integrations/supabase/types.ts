@@ -269,25 +269,34 @@ export type Database = {
       }
       whatsapp_settings: {
         Row: {
+          account_id: string | null
           api_key: string
           business_phone: string
+          callback_url: string | null
           created_at: string
           id: string
           updated_at: string
+          whatsapp_number_id: string | null
         }
         Insert: {
+          account_id?: string | null
           api_key: string
           business_phone: string
+          callback_url?: string | null
           created_at?: string
           id?: string
           updated_at?: string
+          whatsapp_number_id?: string | null
         }
         Update: {
+          account_id?: string | null
           api_key?: string
           business_phone?: string
+          callback_url?: string | null
           created_at?: string
           id?: string
           updated_at?: string
+          whatsapp_number_id?: string | null
         }
         Relationships: []
       }
