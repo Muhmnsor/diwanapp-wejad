@@ -1,28 +1,19 @@
 import { useState } from "react";
 
 interface ReportPhotosProps {
-  photos: string[];  // Updated type to match database storage format
+  photos: { url: string; description: string; }[];
 }
 
 export const ReportPhotos = ({ photos }: ReportPhotosProps) => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
-  const parsedPhotos = photos.map(photoStr => {
-    try {
-      return JSON.parse(photoStr) as { url: string; description: string };
-    } catch (error) {
-      console.error('Error parsing photo JSON:', error);
-      return null;
-    }
-  }).filter((photo): photo is { url: string; description: string } => photo !== null);
-
-  if (!parsedPhotos.length) return null;
+  if (!photos.length) return null;
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">الصور المرفقة</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {parsedPhotos.map((photo, index) => (
+        {photos.map((photo, index) => (
           <div key={index} className="relative group">
             <img
               src={photo.url}
