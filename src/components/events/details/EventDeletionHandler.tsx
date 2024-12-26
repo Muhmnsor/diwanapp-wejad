@@ -16,24 +16,24 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     console.log('Starting deletion process for event:', eventId);
     
     // Delete related records in order
-    await deleteFeedback(eventId);
-    console.log('Feedback deleted');
+    const feedbackResult = await deleteFeedback(eventId);
+    console.log('Feedback deleted:', feedbackResult);
     
-    await deleteAttendance(eventId);
-    console.log('Attendance deleted');
+    const attendanceResult = await deleteAttendance(eventId);
+    console.log('Attendance deleted:', attendanceResult);
     
-    await deleteNotifications(eventId);
-    console.log('Notifications deleted');
+    const notificationsResult = await deleteNotifications(eventId);
+    console.log('Notifications deleted:', notificationsResult);
     
-    await deleteReports(eventId);
-    console.log('Reports deleted');
+    const reportsResult = await deleteReports(eventId);
+    console.log('Reports deleted:', reportsResult);
     
-    await deleteRegistrations(eventId);
-    console.log('Registrations deleted');
+    const registrationsResult = await deleteRegistrations(eventId);
+    console.log('Registrations deleted:', registrationsResult);
     
     // Finally delete the event itself
-    await deleteEvent(eventId);
-    console.log('Event deleted');
+    const eventResult = await deleteEvent(eventId);
+    console.log('Event deleted:', eventResult);
 
     toast.success("تم حذف الفعالية بنجاح");
     onSuccess();
