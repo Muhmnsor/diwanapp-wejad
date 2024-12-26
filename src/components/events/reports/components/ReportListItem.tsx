@@ -1,4 +1,3 @@
-import { TableRow } from "@/components/ui/table";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,6 +6,7 @@ import { downloadReportWithImages } from "../utils/downloadUtils";
 import { ReportDeleteDialog } from "./ReportDeleteDialog";
 import { ReportListItemContent } from "./ReportListItemContent";
 import { ReportListItemActions } from "./ReportListItemActions";
+import { TableRow } from "@/components/ui/table";
 import { Report } from "@/types/report";
 
 interface ReportListItemProps {
