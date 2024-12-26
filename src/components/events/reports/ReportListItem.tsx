@@ -26,7 +26,7 @@ interface ReportListItemProps {
     attendees_count: string;
     event_objectives: string;
     impact_on_participants: string;
-    photos: Array<{ url: string; description: string }>;
+    photos: string[];  // Updated type to match database storage format
     event_id: string;
   };
   eventTitle?: string;
