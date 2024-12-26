@@ -3,6 +3,10 @@ import { EventReportDialog } from "./EventReportDialog";
 import { EventAdminTabs } from "./admin/EventAdminTabs";
 import { useUserRoles } from "./admin/useUserRoles";
 import { useState } from "react";
+import { EventContent } from "./EventContent";
+import { EventHeader } from "./EventHeader";
+import { EventTitle } from "./EventTitle";
+import { EventImage } from "./EventImage";
 
 interface EventDetailsViewProps {
   event: Event & { attendees: number };
@@ -29,28 +33,50 @@ export const EventDetailsView = ({
     userRoles.includes('event_executor')
   );
   
+  console.log('Event data in EventDetailsView:', event);
   console.log('Can add report:', canAddReport);
   console.log('User roles:', userRoles);
-  console.log('Roles loading:', rolesLoading);
+
+  const isAdmin = userRoles.includes('admin');
 
   return (
-    <>
-      <EventAdminTabs
-        event={event}
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
+      
+      <EventTitle 
+        title={event.title}
+        isAdmin={isAdmin}
         onEdit={onEdit}
         onDelete={onDelete}
+        onShare={async () => {}}
         onAddToCalendar={onAddToCalendar}
-        onRegister={onRegister}
-        id={id}
-        canAddReport={canAddReport}
-        onAddReport={() => setIsReportDialogOpen(true)}
       />
 
-      <EventReportDialog
-        open={isReportDialogOpen}
-        onOpenChange={setIsReportDialogOpen}
-        eventId={id}
+      <EventContent 
+        event={event}
+        onRegister={onRegister}
       />
-    </>
+
+      {canAddReport && (
+        <>
+          <EventAdminTabs
+            event={event}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onAddToCalendar={onAddToCalendar}
+            onRegister={onRegister}
+            id={id}
+            canAddReport={canAddReport}
+            onAddReport={() => setIsReportDialogOpen(true)}
+          />
+
+          <EventReportDialog
+            open={isReportDialogOpen}
+            onOpenChange={setIsReportDialogOpen}
+            eventId={id}
+          />
+        </>
+      )}
+    </div>
   );
 };

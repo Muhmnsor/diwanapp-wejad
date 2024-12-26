@@ -23,19 +23,22 @@ const EventDetails = () => {
         return null;
       }
 
-      const { data, error } = await supabase
+      const { data: eventData, error: eventError } = await supabase
         .from("events")
-        .select("*")
+        .select(`
+          *,
+          (SELECT count(*) FROM registrations WHERE event_id = events.id) as attendees
+        `)
         .eq("id", id)
         .single();
 
-      if (error) {
-        console.error("Error fetching event:", error);
-        throw error;
+      if (eventError) {
+        console.error("Error fetching event:", eventError);
+        throw eventError;
       }
 
-      console.log("Event data fetched:", data);
-      return data;
+      console.log("Event data fetched:", eventData);
+      return eventData;
     },
   });
 
@@ -85,7 +88,7 @@ const EventDetails = () => {
           onDelete={handleDelete}
           onAddToCalendar={handleAddToCalendar}
           onRegister={handleRegister}
-          id={id || ''}
+          id={id}
         />
       </div>
       <Footer />
