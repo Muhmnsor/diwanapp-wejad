@@ -41,29 +41,39 @@ export const ReportTableRow = ({
     <TableRow className="hover:bg-muted/0">
       <TableCell className="p-4">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  {isOpen ? <ChevronUp /> : <ChevronDown />}
-                </Button>
-              </CollapsibleTrigger>
-              <ReportHeader
-                createdAt={report.created_at}
-                onDownload={onDownload}
-                onDelete={onDelete}
-                eventTitle={eventTitle}
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    {isOpen ? <ChevronUp /> : <ChevronDown />}
+                  </Button>
+                </CollapsibleTrigger>
+                {eventTitle && (
+                  <div className="text-sm font-medium">{eventTitle}</div>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {new Date(report.created_at).toLocaleDateString('ar')}
+                </div>
+                <ReportHeader
+                  createdAt={report.created_at}
+                  onDownload={onDownload}
+                  onDelete={onDelete}
+                  eventTitle={eventTitle}
+                />
+              </div>
             </div>
-          </div>
 
-          <CollapsibleContent>
-            <div className="space-y-6 pt-4">
-              <ReportContent report={report} />
-              <Separator />
-              <ReportPhotos photos={report.photos} />
-            </div>
-          </CollapsibleContent>
+            <CollapsibleContent>
+              <div className="space-y-6 pt-4">
+                <ReportContent report={report} />
+                <Separator />
+                <ReportPhotos photos={report.photos} />
+              </div>
+            </CollapsibleContent>
+          </div>
         </Collapsible>
       </TableCell>
     </TableRow>
