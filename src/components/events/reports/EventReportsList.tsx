@@ -36,7 +36,7 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
         .from('event_reports')
         .select(`
           *,
-          executor:executor_id (
+          executor:profiles!executor_id (
             id,
             email
           )
