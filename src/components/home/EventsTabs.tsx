@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { EventsSection } from "@/components/events/EventsSection";
 import { useEffect } from "react";
+import { Calendar, CalendarRange, History } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface EventsTabsProps {
   events: any[];
@@ -19,6 +21,8 @@ export const EventsTabs = ({
   setActiveTab,
   registrations 
 }: EventsTabsProps) => {
+  const isMobile = useIsMobile();
+
   // Set upcoming events as default tab on component mount
   useEffect(() => {
     setActiveTab("upcoming");
@@ -37,24 +41,45 @@ export const EventsTabs = ({
 
   return (
     <div className="container mx-auto px-4" dir="rtl">
-      <div className="flex justify-center gap-4 mb-8">
+      <div className="flex justify-center gap-2 md:gap-4 mb-8">
         <Button
           variant={activeTab === "upcoming" ? "default" : "outline"}
           onClick={() => setActiveTab("upcoming")}
+          className="flex items-center gap-2"
+          size={isMobile ? "icon" : "default"}
+          title={isMobile ? "الفعاليات القادمة" : undefined}
         >
-          الفعاليات القادمة
+          {isMobile ? (
+            <Calendar className="h-4 w-4" />
+          ) : (
+            "الفعاليات القادمة"
+          )}
         </Button>
         <Button
           variant={activeTab === "all" ? "default" : "outline"}
           onClick={() => setActiveTab("all")}
+          className="flex items-center gap-2"
+          size={isMobile ? "icon" : "default"}
+          title={isMobile ? "جميع الفعاليات" : undefined}
         >
-          جميع الفعاليات
+          {isMobile ? (
+            <CalendarRange className="h-4 w-4" />
+          ) : (
+            "جميع الفعاليات"
+          )}
         </Button>
         <Button
           variant={activeTab === "past" ? "default" : "outline"}
           onClick={() => setActiveTab("past")}
+          className="flex items-center gap-2"
+          size={isMobile ? "icon" : "default"}
+          title={isMobile ? "الفعاليات السابقة" : undefined}
         >
-          الفعاليات السابقة
+          {isMobile ? (
+            <History className="h-4 w-4" />
+          ) : (
+            "الفعاليات السابقة"
+          )}
         </Button>
       </div>
 
