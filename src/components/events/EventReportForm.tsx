@@ -20,6 +20,7 @@ interface PhotoWithDescription {
 }
 
 interface ReportFormData {
+  report_name: string;
   report_text: string;
   detailed_description: string;
   event_duration: string;
@@ -87,6 +88,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
           {
             event_id: eventId,
             executor_id: user?.id,
+            report_name: data.report_name,
             report_text: data.report_text,
             detailed_description: data.detailed_description,
             event_duration: data.event_duration,
@@ -113,6 +115,16 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="report_name">اسم الفعالية</Label>
+        <Input
+          id="report_name"
+          {...register("report_name", { required: true })}
+          placeholder="أدخل اسم الفعالية..."
+          className="text-right"
+        />
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="report_text">نص التقرير</Label>
         <Textarea
