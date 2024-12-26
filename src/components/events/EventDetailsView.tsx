@@ -1,6 +1,8 @@
-import { EventType } from "@/types/event";
-import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
+import { Event } from "@/store/eventStore";
+import { EventReportDialog } from "./EventReportDialog";
+import { EventAdminTabs } from "./admin/EventAdminTabs";
+import { useUserRoles } from "./admin/useUserRoles";
 import { EventHeader } from "./EventHeader";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { EventContainer } from "./EventContainer";
@@ -13,11 +15,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface EventDetailsViewProps {
-  event: EventType;
+  event: Event & { attendees: number };
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
   onRegister: () => void;
+  id: string;
 }
 
 export const EventDetailsView = ({ 
@@ -46,7 +49,18 @@ export const EventDetailsView = ({
     try {
       console.log('Starting deletion process for event:', event.id);
       
-      // Delete event_feedback records first
+      // Delete attendance records first
+      const { error: attendanceError } = await supabase
+        .from('attendance_records')
+        .delete()
+        .eq('event_id', event.id);
+      
+      if (attendanceError) {
+        console.error('Error deleting attendance records:', attendanceError);
+        throw attendanceError;
+      }
+
+      // Delete event feedback
       const { error: feedbackError } = await supabase
         .from('event_feedback')
         .delete()
@@ -55,17 +69,6 @@ export const EventDetailsView = ({
       if (feedbackError) {
         console.error('Error deleting feedback:', feedbackError);
         throw feedbackError;
-      }
-
-      // Delete registrations
-      const { error: registrationsError } = await supabase
-        .from('registrations')
-        .delete()
-        .eq('event_id', event.id);
-      
-      if (registrationsError) {
-        console.error('Error deleting registrations:', registrationsError);
-        throw registrationsError;
       }
 
       // Delete notification logs
@@ -99,6 +102,17 @@ export const EventDetailsView = ({
       if (reportsError) {
         console.error('Error deleting reports:', reportsError);
         throw reportsError;
+      }
+
+      // Delete registrations
+      const { error: registrationsError } = await supabase
+        .from('registrations')
+        .delete()
+        .eq('event_id', event.id);
+      
+      if (registrationsError) {
+        console.error('Error deleting registrations:', registrationsError);
+        throw registrationsError;
       }
 
       // Finally delete the event
