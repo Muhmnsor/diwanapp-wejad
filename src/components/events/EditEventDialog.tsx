@@ -22,9 +22,9 @@ export const EditEventDialog = ({
 }: EditEventDialogProps) => {
   console.log('Event data in EditEventDialog:', event);
 
-  const handleSave = (updatedEvent: CustomEvent) => {
-    onSave(updatedEvent);
-    onOpenChange(false); // Close dialog after successful save
+  const handleSave = async (updatedEvent: CustomEvent) => {
+    await onSave(updatedEvent);
+    onOpenChange(false);
   };
 
   return (

@@ -3,10 +3,11 @@ import { Event } from "@/store/eventStore";
 import { EventFormFields } from "./EventFormFields";
 import { EditEventFormActions } from "./form/EditEventFormActions";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EditEventFormProps {
   event: Event;
-  onSave: (event: Event) => void;
+  onSave: (event: Event) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -27,12 +28,35 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         return;
       }
 
-      // Create the event object to save
+      // If there's a new image file, upload it first
+      let imageUrl = formData.imageUrl || formData.image_url;
+      if (imageFile) {
+        const fileName = `event-images/${Date.now()}.${imageFile.name.split('.').pop()}`;
+        const { error: uploadError, data } = await supabase.storage
+          .from('event-images')
+          .upload(fileName, imageFile);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast.error("حدث خطأ أثناء رفع الصورة");
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-images')
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrl;
+      }
+
+      // Prepare the event data for saving
       const eventToSave: Event = {
         ...formData,
-        imageUrl: formData.imageUrl || event.imageUrl,
+        image_url: imageUrl,
+        imageUrl: imageUrl,
       };
 
+      // Call the parent's onSave function
       await onSave(eventToSave);
       toast.success("تم حفظ التغييرات بنجاح");
     } catch (error) {

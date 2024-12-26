@@ -8,7 +8,7 @@ import { RegistrationFields } from "./form/fields/RegistrationFields";
 interface EventFormFieldsProps {
   formData: Event;
   setFormData: (data: Event) => void;
-  onImageChange?: (file: File) => void;
+  onImageChange?: (file: File | null) => void;
 }
 
 export const EventFormFields = ({ formData, setFormData, onImageChange }: EventFormFieldsProps) => {
