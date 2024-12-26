@@ -1,62 +1,54 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { Plus, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Navigation = () => {
-  const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuthStore();
 
-  console.log("Current user in Navigation:", user);
-  console.log("Current location:", location.pathname);
-
-  const handleLoginClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    navigate("/login");
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
-
-  const handleCreateEventClick = () => {
-    navigate("/create-event");
-  };
-
-  const handleSettingsClick = () => {
-    navigate("/settings");
-  };
-
-  const isLoginPage = location.pathname === "/login";
 
   return (
-    <div className="flex justify-start items-center gap-2">
-      {user ? (
+    <nav className="flex gap-4 items-center" dir="rtl">
+      <Link
+        to="/"
+        className={cn(
+          "text-sm font-medium transition-colors hover:text-primary",
+          isActive("/")
+            ? "text-foreground"
+            : "text-muted-foreground"
+        )}
+      >
+        الرئيسية
+      </Link>
+      {user?.isAdmin && (
         <>
-          <Button 
-            variant="default" 
-            onClick={handleCreateEventClick}
-            className="flex items-center gap-2"
+          <Link
+            to="/settings"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary",
+              isActive("/settings")
+                ? "text-foreground"
+                : "text-muted-foreground"
+            )}
           >
-            <Plus className="w-4 h-4" />
-            إنشاء فعالية
-          </Button>
-          {user.isAdmin && (
-            <Button
-              variant="outline"
-              onClick={handleSettingsClick}
-              className="flex items-center gap-2"
-            >
-              <Settings className="w-4 h-4" />
-              الإعدادات
-            </Button>
-          )}
-          <Button variant="outline" onClick={logout}>تسجيل خروج</Button>
+            الإعدادات
+          </Link>
+          <Link
+            to="/users"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary",
+              isActive("/users")
+                ? "text-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            إدارة المستخدمين
+          </Link>
         </>
-      ) : (
-        !isLoginPage && (
-          <Button variant="outline" onClick={handleLoginClick}>
-            تسجيل دخول
-          </Button>
-        )
       )}
-    </div>
+    </nav>
   );
 };

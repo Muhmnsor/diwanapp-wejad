@@ -1,42 +1,28 @@
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { toast } from "sonner";
 
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate();
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const { user, isAuthenticated } = useAuthStore();
   const location = useLocation();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  useEffect(() => {
-    console.log("ProtectedRoute - Current path:", location.pathname);
-    console.log("ProtectedRoute - Auth state:", isAuthenticated);
+  console.log('Protected route check:', { isAuthenticated, user, pathname: location.pathname });
 
-    if (location.pathname === '/login') {
-      return;
-    }
-
-    if (!isAuthenticated) {
-      console.log("ProtectedRoute - User not authenticated, showing toast");
-      toast.error("يجب تسجيل الدخول للوصول إلى هذه الصفحة", {
-        duration: 2000,
-        onDismiss: () => {
-          console.log("ProtectedRoute - Toast dismissed, redirecting to login");
-          navigate("/login", { 
-            replace: true,
-            state: { from: location.pathname }
-          });
-        }
-      });
-    }
-  }, [isAuthenticated, location.pathname, navigate]);
-
-  // Allow rendering login page even when not authenticated
-  if (!isAuthenticated && location.pathname !== '/login') {
-    console.log("ProtectedRoute - Returning null for protected route");
-    return null;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
-  console.log("ProtectedRoute - Rendering children");
+  // Check for admin-only routes
+  const adminOnlyRoutes = ['/settings', '/users'];
+  if (adminOnlyRoutes.includes(location.pathname) && !user?.isAdmin) {
+    console.log('User is not admin, redirecting from:', location.pathname);
+    return <Navigate to="/" replace />;
+  }
+
   return <>{children}</>;
 };
+
+export default ProtectedRoute;
