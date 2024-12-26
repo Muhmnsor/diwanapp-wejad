@@ -4,28 +4,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const login = useAuthStore((state) => state.login);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Login: Starting login process with email:", email);
+    
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      await login(email, password);
+      console.log("Login: Login successful");
       toast.success("تم تسجيل الدخول بنجاح");
-      navigate("/");
+      
+      // Get the redirect path from location state, or default to "/"
+      const from = (location.state as any)?.from || "/";
+      console.log("Login: Redirecting to:", from);
+      navigate(from, { replace: true });
     } catch (error) {
-      console.error("Error logging in:", error);
-      toast.error("حدث خطأ أثناء تسجيل الدخول");
+      console.error("Login: Error during login:", error);
+      toast.error("خطأ في تسجيل الدخول، يرجى التحقق من البريد الإلكتروني وكلمة المرور");
     }
   };
 
