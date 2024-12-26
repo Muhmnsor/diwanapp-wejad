@@ -45,17 +45,17 @@ export const UserEditDialog = ({
           <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="space-y-2">
+          <div className="space-y-2 text-right">
             <div className="font-medium">البريد الإلكتروني</div>
             <div>{user?.username}</div>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 text-right">
             <div className="font-medium">الدور</div>
             <Select
               value={selectedRole}
               onValueChange={setSelectedRole}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full text-right">
                 <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
               <SelectContent>
@@ -66,13 +66,15 @@ export const UserEditDialog = ({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 text-right">
             <div className="font-medium">كلمة المرور الجديدة</div>
             <Input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="اترك فارغاً إذا لم ترد التغيير"
+              dir="ltr"
+              className="text-right"
             />
           </div>
         </div>

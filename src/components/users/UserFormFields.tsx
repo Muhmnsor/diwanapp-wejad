@@ -36,7 +36,7 @@ export const UserFormFields = ({
   };
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-4 py-4 text-right">
       <div className="space-y-2">
         <Label>البريد الإلكتروني</Label>
         <Input
@@ -68,11 +68,11 @@ export const UserFormFields = ({
             className="flex flex-col space-y-2"
           >
             {roles.map((role) => (
-              <div key={role.id} className="flex items-center space-x-2 space-x-reverse">
-                <RadioGroupItem value={role.id} id={role.id} />
+              <div key={role.id} className="flex items-center justify-end space-x-2 space-x-reverse">
                 <Label htmlFor={role.id} className="mr-2">
                   {getRoleDisplayName(role.name)}
                 </Label>
+                <RadioGroupItem value={role.id} id={role.id} />
               </div>
             ))}
           </RadioGroup>

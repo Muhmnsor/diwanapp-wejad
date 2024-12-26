@@ -27,8 +27,8 @@ export const UserDeleteDialog = ({
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent dir="rtl">
         <AlertDialogHeader>
-          <AlertDialogTitle>هل أنت متأكد من حذف هذا المستخدم؟</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogTitle className="text-right">هل أنت متأكد من حذف هذا المستخدم؟</AlertDialogTitle>
+          <AlertDialogDescription className="text-right">
             سيتم حذف المستخدم {user?.username} نهائياً. هذا الإجراء لا يمكن التراجع عنه.
           </AlertDialogDescription>
         </AlertDialogHeader>
