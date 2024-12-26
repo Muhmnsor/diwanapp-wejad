@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardOverview } from "../DashboardOverview";
 import { DashboardRegistrations } from "../DashboardRegistrations";
 import { ReportsTab } from "./ReportsTab";
+import { FeedbackTab } from "./FeedbackTab";
 
 interface DashboardTabsProps {
   registrationCount: number;
@@ -30,6 +31,7 @@ export const DashboardTabs = ({
         <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
         <TabsTrigger value="registrations">المسجلين</TabsTrigger>
         <TabsTrigger value="report">التقارير</TabsTrigger>
+        <TabsTrigger value="feedback">التقييمات</TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview">
@@ -51,6 +53,10 @@ export const DashboardTabs = ({
 
       <TabsContent value="report">
         <ReportsTab eventId={eventId} />
+      </TabsContent>
+
+      <TabsContent value="feedback">
+        <FeedbackTab eventId={eventId} />
       </TabsContent>
     </Tabs>
   );
