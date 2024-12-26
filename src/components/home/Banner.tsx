@@ -29,7 +29,9 @@ export const Banner = () => {
           .from('banners')
           .select('*')
           .eq('active', true)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
 
         if (error) {
           console.error("خطأ في جلب البانر:", error);
@@ -75,9 +77,16 @@ export const Banner = () => {
 
     setIsSubmitting(true);
     try {
+      // First, deactivate all existing banners
+      await supabase
+        .from('banners')
+        .update({ active: false })
+        .eq('active', true);
+
+      // Then, insert the new banner
       const { error } = await supabase
         .from('banners')
-        .upsert({
+        .insert({
           desktop_image: desktopImage,
           mobile_image: mobileImage,
           active: true,

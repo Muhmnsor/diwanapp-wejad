@@ -22,8 +22,8 @@ export const BannerDisplay = ({ desktopImage, mobileImage, isMobile }: BannerDis
               alt="Banner"
               className={`w-full object-cover ${
                 isMobile 
-                  ? "h-[250px]"
-                  : "h-[250px]"
+                  ? "h-[300px] md:h-[400px]"
+                  : "h-[300px] md:h-[400px]"
               }`}
             />
           </CarouselItem>
