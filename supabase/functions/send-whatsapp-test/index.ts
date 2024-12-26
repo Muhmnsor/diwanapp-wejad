@@ -2,16 +2,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 
 const VALID_MESSAGE_TYPES = [
-  'TEMPLATE',
-  'TEXT',
-  'IMAGE',
-  'DOCUMENT',
-  'AUDIO',
-  'VIDEO',
-  'ORDER_DETAILS',
-  'INTERACTIVE_BUTTON',
-  'INTERACTIVE_LIST',
-  'INTERACTIVE_PRODUCT_LIST'
+  'Template',
+  'Text',
+  'Image',
+  'Document', 
+  'Audio',
+  'Video',
+  'OrderDetails',
+  'InteractiveButton',
+  'InteractiveList',
+  'InteractiveProductList'
 ] as const;
 
 type MessageType = typeof VALID_MESSAGE_TYPES[number];
@@ -65,7 +65,7 @@ serve(async (req) => {
     const message: WhatsAppMessage = {
       countryCode: "+966",
       phoneNumber: business_phone.replace("+966", ""),
-      type: "TEXT",
+      type: "Text",
       text: {
         content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
       }
