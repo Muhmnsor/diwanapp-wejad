@@ -7,6 +7,11 @@ import { EventImage } from "./EventImage";
 import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { EventContent } from "./EventContent";
+import { EditEventDialog } from "./EditEventDialog";
+import { EventDeleteDialog } from "./details/EventDeleteDialog";
+import { handleEventDeletion } from "./details/EventDeletionHandler";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface EventDetailsViewProps {
   event: Event & { attendees: number };
@@ -20,8 +25,6 @@ interface EventDetailsViewProps {
 
 export const EventDetailsView = ({
   event,
-  onEdit,
-  onDelete,
   onAddToCalendar,
   onRegister,
   id,
@@ -29,7 +32,10 @@ export const EventDetailsView = ({
 }: EventDetailsViewProps) => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
+  const navigate = useNavigate();
   
   console.log('EventDetailsView - Event data:', event);
   console.log('EventDetailsView - isAdmin:', isAdmin);
@@ -38,6 +44,37 @@ export const EventDetailsView = ({
   const handleRegister = () => {
     console.log('Opening registration dialog');
     setIsRegistrationOpen(true);
+  };
+
+  const handleEdit = () => {
+    console.log('Opening edit dialog');
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    console.log('Opening delete dialog');
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await handleEventDeletion({ 
+        eventId: id, 
+        onSuccess: () => {
+          navigate('/');
+          toast.success('تم حذف الفعالية بنجاح');
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('حدث خطأ أثناء حذف الفعالية');
+    }
+  };
+
+  const handleUpdateEvent = (updatedEvent: Event) => {
+    console.log('Updating event with:', updatedEvent);
+    // Refresh the page to show updated data
+    window.location.reload();
   };
 
   const canAddReport = !rolesLoading && (
@@ -52,8 +89,8 @@ export const EventDetailsView = ({
         <EventTitle 
           title={event.title}
           isAdmin={isAdmin}
-          onEdit={onEdit}
-          onDelete={onDelete}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
           onShare={async () => {}}
           onAddToCalendar={onAddToCalendar}
         />
@@ -68,8 +105,8 @@ export const EventDetailsView = ({
             <div className="mt-8 border-t border-gray-100">
               <EventAdminTabs
                 event={event}
-                onEdit={onEdit}
-                onDelete={onDelete}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
                 onAddToCalendar={onAddToCalendar}
                 onRegister={handleRegister}
                 id={id}
@@ -91,6 +128,19 @@ export const EventDetailsView = ({
           open={isRegistrationOpen}
           onOpenChange={setIsRegistrationOpen}
           event={event}
+        />
+
+        <EditEventDialog 
+          event={event}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSave={handleUpdateEvent}
+        />
+
+        <EventDeleteDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={handleConfirmDelete}
         />
       </div>
     </div>
