@@ -56,11 +56,12 @@ export const ReportListItem = ({ report, onDownload }: ReportListItemProps) => {
 
       if (error) {
         console.error("Error deleting report:", error);
-        throw error;
+        toast.error("حدث خطأ أثناء حذف التقرير");
+        return;
       }
 
       toast.success("تم حذف التقرير بنجاح");
-      queryClient.invalidateQueries({ queryKey: ['event-reports'] });
+      await queryClient.invalidateQueries({ queryKey: ['event-reports', report.event_id] });
       setIsDeleteDialogOpen(false);
     } catch (error) {
       console.error("Error in handleDelete:", error);
