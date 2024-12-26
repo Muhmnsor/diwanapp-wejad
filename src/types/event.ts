@@ -10,12 +10,15 @@ export interface EventType {
   imageUrl?: string;
   image_url?: string;
   attendees: number;
-  max_attendees: number;  // Updated from maxAttendees to match database schema
+  max_attendees: number;
+  event_type: "online" | "in-person";
   eventType: "online" | "in-person";
   price: number | "free";
   beneficiaryType: BeneficiaryType;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
+  certificate_type: string;
   certificateType: string;
+  event_hours: number;
   eventHours: number;
 }

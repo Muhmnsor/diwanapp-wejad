@@ -1,4 +1,3 @@
-import { create } from 'zustand';
 import { BeneficiaryType } from '@/types/event';
 
 export interface Event {
