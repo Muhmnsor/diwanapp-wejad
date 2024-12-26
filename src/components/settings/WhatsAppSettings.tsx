@@ -3,14 +3,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsForm } from "./whatsapp-settings/SettingsForm";
+import { SecuritySettings } from "./whatsapp-settings/SecuritySettings";
+import { NotificationSettings } from "./whatsapp-settings/NotificationSettings";
 
 export const WhatsAppSettings = () => {
   const queryClient = useQueryClient();
-  const [businessPhone, setBusinessPhone] = useState("");
-  const [apiKey, setApiKey] = useState("");
+  const [settings, setSettings] = useState({
+    business_phone: "",
+    api_key: "",
+    account_id: "",
+    whatsapp_number_id: "",
+    callback_url: "",
+  });
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settingsData, isLoading } = useQuery({
     queryKey: ["whatsapp-settings"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -24,22 +32,24 @@ export const WhatsAppSettings = () => {
   });
 
   useEffect(() => {
-    if (settings) {
-      setBusinessPhone(settings.business_phone);
-      setApiKey(settings.api_key);
+    if (settingsData) {
+      setSettings({
+        business_phone: settingsData.business_phone || "",
+        api_key: settingsData.api_key || "",
+        account_id: settingsData.account_id || "",
+        whatsapp_number_id: settingsData.whatsapp_number_id || "",
+        callback_url: settingsData.callback_url || "",
+      });
     }
-  }, [settings]);
+  }, [settingsData]);
 
   const mutation = useMutation({
-    mutationFn: async (newSettings: {
-      business_phone: string;
-      api_key: string;
-    }) => {
-      if (settings?.id) {
+    mutationFn: async (newSettings: typeof settings) => {
+      if (settingsData?.id) {
         const { error } = await supabase
           .from("whatsapp_settings")
           .update(newSettings)
-          .eq("id", settings.id);
+          .eq("id", settingsData.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
@@ -58,12 +68,32 @@ export const WhatsAppSettings = () => {
     },
   });
 
+  const testConnection = async () => {
+    try {
+      toast.loading("جاري اختبار الاتصال...");
+      const response = await fetch("/api/test-whatsapp-connection", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(settings),
+      });
+      
+      if (response.ok) {
+        toast.success("تم الاتصال بنجاح");
+      } else {
+        const error = await response.text();
+        toast.error(`فشل الاتصال: ${error}`);
+      }
+    } catch (error) {
+      console.error("Error testing connection:", error);
+      toast.error("حدث خطأ أثناء اختبار الاتصال");
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate({
-      business_phone: businessPhone,
-      api_key: apiKey,
-    });
+    mutation.mutate(settings);
   };
 
   if (isLoading) {
@@ -76,13 +106,30 @@ export const WhatsAppSettings = () => {
         <CardTitle>إعدادات الواتساب</CardTitle>
       </CardHeader>
       <CardContent>
-        <SettingsForm
-          businessPhone={businessPhone}
-          apiKey={apiKey}
-          onBusinessPhoneChange={setBusinessPhone}
-          onApiKeyChange={setApiKey}
-          onSubmit={handleSubmit}
-        />
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="mb-8">
+            <TabsTrigger value="general">الإعدادات العامة</TabsTrigger>
+            <TabsTrigger value="security">إعدادات الأمان</TabsTrigger>
+            <TabsTrigger value="notifications">إعدادات التنبيهات</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general">
+            <SettingsForm
+              settings={settings}
+              onSettingsChange={setSettings}
+              onSubmit={handleSubmit}
+              onTestConnection={testConnection}
+            />
+          </TabsContent>
+
+          <TabsContent value="security">
+            <SecuritySettings />
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <NotificationSettings />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
