@@ -46,14 +46,11 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        "data": {
-          "countryCode": "+966",
-          "phoneNumber": business_phone,
-          "type": "Text",
-          "text": {
-            "content": "رسالة تجريبية من نظام إدارة الفعاليات 👋"
-          },
-          "whatsappBusinessId": "504548239401305"
+        countryCode: "+966",
+        phoneNumber: business_phone,
+        type: "Text",
+        text: {
+          content: "رسالة تجريبية من نظام إدارة الفعاليات 👋"
         }
       })
     })
