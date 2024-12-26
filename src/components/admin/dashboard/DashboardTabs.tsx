@@ -21,8 +21,6 @@ export const DashboardTabs = ({
   occupancyRate,
   eventDate,
   eventTime,
-  registrations,
-  eventTitle,
   eventId,
 }: DashboardTabsProps) => {
   return (
@@ -65,10 +63,7 @@ export const DashboardTabs = ({
       </TabsContent>
 
       <TabsContent value="registrations" className="mt-6">
-        <DashboardRegistrations
-          registrations={registrations}
-          eventTitle={eventTitle}
-        />
+        <DashboardRegistrations eventId={eventId} />
       </TabsContent>
 
       <TabsContent value="report" className="mt-6">

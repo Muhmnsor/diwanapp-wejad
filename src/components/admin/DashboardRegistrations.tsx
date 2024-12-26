@@ -10,6 +10,12 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
+      if (!eventId) {
+        console.error('No event ID provided');
+        return [];
+      }
+
+      console.log('Fetching registrations for event:', eventId);
       const { data, error } = await supabase
         .from('registrations')
         .select('*')
@@ -20,14 +26,15 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
         throw error;
       }
 
+      console.log('Registrations data:', data);
       return data || [];
-    }
+    },
+    enabled: !!eventId
   });
 
   useEffect(() => {
     if (data) {
       setRegistrations(data);
-      console.log('Registrations data:', data);
     }
   }, [data]);
 

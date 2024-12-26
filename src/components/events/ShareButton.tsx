@@ -6,20 +6,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface ShareButtonProps {
-  title?: string;
-  text?: string;
-  url: string;
+  url?: string;
 }
 
-export const ShareButton = ({ title, text, url }: ShareButtonProps) => {
-  const { toast } = useToast();
-  
+export const ShareButton = ({ url = window.location.href }: ShareButtonProps) => {
   const handleShare = async (method: 'copy' | 'x' | 'facebook' | 'whatsapp') => {
-    const shareText = `${title}\n${text}\n`;
-    
     switch (method) {
       case 'copy':
         try {
@@ -39,18 +33,15 @@ export const ShareButton = ({ title, text, url }: ShareButtonProps) => {
         break;
       
       case 'x':
-        const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
-        window.open(xShareUrl, '_blank');
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}`, '_blank');
         break;
       
       case 'facebook':
-        const fbShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(shareText)}`;
-        window.open(fbShareUrl, '_blank');
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
         break;
       
       case 'whatsapp':
-        const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText + url)}`;
-        window.open(whatsappShareUrl, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent(url)}`, '_blank');
         break;
     }
   };
