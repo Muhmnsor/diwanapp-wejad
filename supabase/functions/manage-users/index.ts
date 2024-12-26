@@ -7,6 +7,7 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  // Log the incoming request
   console.log('Received request:', req.method)
 
   // Handle CORS preflight requests
@@ -28,7 +29,17 @@ Deno.serve(async (req) => {
       }
     )
 
-    const { operation, userId, newPassword, newRole } = await req.json()
+    // Parse request body
+    let requestData;
+    try {
+      requestData = await req.json()
+      console.log('Request data:', requestData)
+    } catch (error) {
+      console.error('Error parsing request body:', error)
+      throw new Error('Invalid request body')
+    }
+
+    const { operation, userId, newPassword, newRole } = requestData
     console.log('Managing user:', { operation, userId })
 
     if (operation === 'get_users') {
