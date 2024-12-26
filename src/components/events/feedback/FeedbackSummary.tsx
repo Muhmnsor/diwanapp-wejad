@@ -6,11 +6,13 @@ interface FeedbackSummaryProps {
 }
 
 export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
-  console.log('FeedbackSummary - Fetching feedback for event:', eventId);
+  console.log('FeedbackSummary - Initializing with eventId:', eventId);
   
   const { data: feedback = [], isLoading, error } = useQuery({
     queryKey: ['event-feedback', eventId],
     queryFn: async () => {
+      console.log('FeedbackSummary - Starting feedback fetch for event:', eventId);
+      
       const { data, error } = await supabase
         .from('event_feedback')
         .select('*')
@@ -27,6 +29,7 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
   });
 
   if (isLoading) {
+    console.log('FeedbackSummary - Loading state');
     return <div className="text-center p-4">جاري تحميل التقييمات...</div>;
   }
 
@@ -36,8 +39,11 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
   }
 
   if (!feedback || feedback.length === 0) {
+    console.log('FeedbackSummary - No feedback found');
     return <div className="text-gray-500 p-4">لا توجد تقييمات حتى الآن</div>;
   }
+
+  console.log('FeedbackSummary - Rendering feedback count:', feedback.length);
 
   const calculateAverage = (ratings: (number | null)[]) => {
     const validRatings = ratings.filter((r): r is number => r !== null);
@@ -51,6 +57,8 @@ export const FeedbackSummary = ({ eventId }: FeedbackSummaryProps) => {
     organization: calculateAverage(feedback.map(f => f.organization_rating)),
     presenter: calculateAverage(feedback.map(f => f.presenter_rating)),
   };
+
+  console.log('FeedbackSummary - Calculated averages:', averages);
 
   return (
     <div className="space-y-6" dir="rtl">
