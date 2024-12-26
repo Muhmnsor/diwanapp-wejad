@@ -82,7 +82,7 @@ export const EventCard = ({
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
         <CardHeader className="p-4">
-          <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
+          <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 p-4 pt-0">
           <EventCardBadges
