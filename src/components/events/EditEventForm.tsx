@@ -1,7 +1,7 @@
 import { Event as CustomEvent } from "@/store/eventStore";
 import { EventFormFields } from "./EventFormFields";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EventFormActions } from "./form/EventFormActions";
 import { handleImageUpload } from "./form/EventImageUpload";
 
@@ -17,9 +17,35 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
   const [formData, setFormData] = useState<CustomEvent>({
     ...event,
     certificateType: event.certificateType || 'none',
-    eventHours: event.eventHours
+    eventHours: event.eventHours || 0,
+    price: event.price || 'free',
+    maxAttendees: event.maxAttendees || 0,
+    beneficiaryType: event.beneficiaryType || 'both',
+    eventType: event.eventType || 'in-person',
+    attendees: event.attendees || 0,
+    imageUrl: event.image_url || '',
+    registrationStartDate: event.registration_start_date || '',
+    registrationEndDate: event.registration_end_date || ''
   });
+  
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    console.log('Updating form data with event:', event);
+    setFormData({
+      ...event,
+      certificateType: event.certificateType || 'none',
+      eventHours: event.eventHours || 0,
+      price: event.price || 'free',
+      maxAttendees: event.maxAttendees || 0,
+      beneficiaryType: event.beneficiaryType || 'both',
+      eventType: event.eventType || 'in-person',
+      attendees: event.attendees || 0,
+      imageUrl: event.image_url || '',
+      registrationStartDate: event.registration_start_date || '',
+      registrationEndDate: event.registration_end_date || ''
+    });
+  }, [event]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
