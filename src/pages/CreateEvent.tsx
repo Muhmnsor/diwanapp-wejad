@@ -8,10 +8,27 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Event } from "@/store/eventStore";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
+  const [formData, setFormData] = useState<Event>({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    location: "",
+    image_url: "",
+    eventType: "in-person",
+    maxAttendees: 0,
+    registrationStartDate: "",
+    registrationEndDate: "",
+    beneficiaryType: "both",
+    certificateType: "none",
+    eventHours: 0,
+    price: "free"
+  });
   
   const form = useForm({
     defaultValues: {
@@ -47,6 +64,12 @@ const CreateEvent = () => {
     navigate("/");
   };
 
+  const handleImageChange = (file: File) => {
+    setIsUploading(true);
+    // Handle image upload logic here
+    setIsUploading(false);
+  };
+
   return (
     <div className="min-h-screen" dir="rtl">
       <TopHeader />
@@ -54,7 +77,11 @@ const CreateEvent = () => {
         <h1 className="text-3xl font-bold mb-8">إنشاء فعالية جديدة</h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <EventFormFields form={form} />
+            <EventFormFields 
+              formData={formData}
+              setFormData={setFormData}
+              onImageChange={handleImageChange}
+            />
             <EventFormActions 
               isUploading={isUploading}
               onCancel={handleCancel}
