@@ -6,6 +6,7 @@ import { useState } from "react";
 import { EventImage } from "./EventImage";
 import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
+import { EventContent } from "./EventContent";
 
 interface EventDetailsViewProps {
   event: Event & { attendees: number };
