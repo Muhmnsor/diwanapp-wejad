@@ -15,6 +15,7 @@ interface EventDetailsViewProps {
   onAddToCalendar: () => void;
   onRegister: () => void;
   id: string;
+  isAdmin: boolean;
 }
 
 export const EventDetailsView = ({
@@ -23,7 +24,8 @@ export const EventDetailsView = ({
   onDelete,
   onAddToCalendar,
   onRegister,
-  id
+  id,
+  isAdmin
 }: EventDetailsViewProps) => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
@@ -36,8 +38,6 @@ export const EventDetailsView = ({
   console.log('Event data in EventDetailsView:', event);
   console.log('Can add report:', canAddReport);
   console.log('User roles:', userRoles);
-
-  const isAdmin = userRoles.includes('admin');
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">

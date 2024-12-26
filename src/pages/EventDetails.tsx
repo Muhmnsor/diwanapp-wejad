@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
 import { Event } from "@/store/eventStore";
+import { useUserRoles } from "@/components/events/admin/useUserRoles";
 
 interface EventWithAttendees extends Event {
   attendees: number;
@@ -17,6 +18,8 @@ interface EventWithAttendees extends Event {
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { data: userRoles = [] } = useUserRoles();
+  const isAdmin = userRoles.includes('admin');
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ["event", id],
@@ -91,7 +94,7 @@ const EventDetails = () => {
           onEdit={() => navigate(`/event/edit/${id}`)}
           onDelete={async () => {
             await handleEventDeletion({
-              eventId: id,
+              eventId: id!,
               onSuccess: () => navigate("/")
             });
           }}
@@ -101,7 +104,8 @@ const EventDetails = () => {
           onRegister={() => {
             toast.success("تم التسجيل في الفعالية");
           }}
-          id={id}
+          id={id!}
+          isAdmin={isAdmin}
         />
       </div>
       <Footer />
