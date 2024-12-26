@@ -10,3 +10,11 @@ export interface Role {
   name: string;
   description: string;
 }
+
+export interface UserRoleResponse {
+  user_id: string;
+  roles: {
+    name: string;
+    description: string;
+  };
+}

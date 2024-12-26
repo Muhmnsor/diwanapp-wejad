@@ -5,15 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { UsersTable } from "@/components/users/UsersTable";
-import type { Role, User } from "@/components/users/types";
-
-interface UserRoleResponse {
-  user_id: string;
-  roles: {
-    name: string;
-    description: string;
-  };
-}
+import type { Role, User, UserRoleResponse } from "@/components/users/types";
 
 const Users = () => {
   const { user } = useAuthStore();
