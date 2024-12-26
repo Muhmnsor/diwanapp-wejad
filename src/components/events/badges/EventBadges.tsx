@@ -4,7 +4,7 @@ import { BeneficiaryType } from "@/types/event";
 
 interface EventBadgesProps {
   eventType: "online" | "in-person";
-  price: number | "free";
+  price: number | "free" | null;
   beneficiaryType: BeneficiaryType;
   certificateType?: string;
   eventHours?: number;
@@ -19,7 +19,8 @@ export const EventBadges = ({
 }: EventBadgesProps) => {
   console.log('EventBadges received:', {
     certificateType,
-    eventHours
+    eventHours,
+    price
   });
 
   const getBeneficiaryLabel = (type: string) => {
@@ -51,6 +52,16 @@ export const EventBadges = ({
   const shouldShowCertificate = certificateType && certificateType !== 'none';
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
+  // Handle price display consistently
+  const getPriceDisplay = () => {
+    if (price === null || price === "free" || price === 0) {
+      return "مجاني";
+    }
+    return `${price} ريال`;
+  };
+
+  const isPriceFree = price === null || price === "free" || price === 0;
+
   return (
     <div className="flex flex-wrap gap-2">
       <Badge 
@@ -60,10 +71,10 @@ export const EventBadges = ({
         {eventType === "online" ? "عن بعد" : "حضوري"}
       </Badge>
       <Badge 
-        variant={typeof price === "string" && price === "free" ? "secondary" : "default"}
-        className={`${typeof price === "string" && price === "free" ? 'bg-[#E5DEFF] border-[#6E59A5] text-[#1A1F2C]' : 'bg-accent/10 border-accent text-accent'} border`}
+        variant={isPriceFree ? "secondary" : "default"}
+        className={`${isPriceFree ? 'bg-[#E5DEFF] border-[#6E59A5] text-[#1A1F2C]' : 'bg-accent/10 border-accent text-accent'} border`}
       >
-        {typeof price === "string" && price === "free" ? "مجاني" : `${price} ريال`}
+        {getPriceDisplay()}
       </Badge>
       <Badge 
         variant="outline" 
