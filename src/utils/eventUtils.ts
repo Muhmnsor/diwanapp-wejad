@@ -1,6 +1,6 @@
 import { Event } from "@/store/eventStore";
 import { EventStatus } from "@/types/eventStatus";
-import { parseDate, getEventDateTime } from "./dateUtils";
+import { getEventDateTime } from "./dateUtils";
 import { getStatusConfig } from "./eventStatusConfig";
 
 export const arabicToEnglishNum = (str: string) => {
@@ -27,37 +27,39 @@ export const getEventStatus = (event: Event): EventStatus => {
     title: event.title,
     date: event.date,
     time: event.time,
-    registrationStartDate: event.registrationStartDate,
-    registrationEndDate: event.registrationEndDate,
+    registrationStartDate: event.registration_start_date,
+    registrationEndDate: event.registration_end_date,
     attendees: event.attendees,
     max_attendees: event.max_attendees
   });
 
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const eventDateTime = getEventDateTime(event.date, event.time);
   
   // تحويل تواريخ التسجيل إلى كائنات Date
-  const registrationStartDate = event.registrationStartDate ? new Date(event.registrationStartDate) : null;
-  const registrationEndDate = event.registrationEndDate ? new Date(event.registrationEndDate) : null;
+  const registrationStartDate = event.registration_start_date ? 
+    new Date(event.registration_start_date) : null;
+  const registrationEndDate = event.registration_end_date ? 
+    new Date(event.registration_end_date) : null;
 
   // تسجيل التواريخ للتحقق
   console.log('Registration dates:', {
     start: registrationStartDate?.toISOString(),
     end: registrationEndDate?.toISOString(),
-    now: now.toISOString()
+    now: now.toISOString(),
+    today: today.toISOString()
   });
 
   // التحقق من بدء موعد التسجيل
   if (registrationStartDate) {
-    // تعيين وقت بداية اليوم للمقارنة
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfRegistration = new Date(
-      registrationStartDate.getFullYear(), 
-      registrationStartDate.getMonth(), 
+    const startDate = new Date(
+      registrationStartDate.getFullYear(),
+      registrationStartDate.getMonth(),
       registrationStartDate.getDate()
     );
-
-    if (startOfToday < startOfRegistration) {
+    
+    if (today < startDate) {
       console.log('Registration has not started yet');
       return 'notStarted';
     }
@@ -65,15 +67,14 @@ export const getEventStatus = (event: Event): EventStatus => {
 
   // التحقق من انتهاء موعد التسجيل
   if (registrationEndDate) {
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    const endOfRegistration = new Date(
+    const endDate = new Date(
       registrationEndDate.getFullYear(),
       registrationEndDate.getMonth(),
       registrationEndDate.getDate(),
       23, 59, 59
     );
 
-    if (endOfToday > endOfRegistration) {
+    if (now > endDate) {
       console.log('Registration period has ended');
       return 'ended';
     }
