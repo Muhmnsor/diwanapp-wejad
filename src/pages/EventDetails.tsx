@@ -56,7 +56,7 @@ const EventDetails = () => {
         const { error } = await supabase
           .from(table)
           .delete()
-          .eq('event_id', id);
+          .eq(table === 'events' ? 'id' : 'event_id', id);
 
         if (error) {
           console.error(`Error deleting from ${table}:`, error);
