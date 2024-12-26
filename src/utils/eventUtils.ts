@@ -35,35 +35,57 @@ export const getEventStatus = (event: Event): EventStatus => {
 
   const now = new Date();
   const eventDateTime = getEventDateTime(event.date, event.time);
-  const registrationStartDate = parseDate(event.registrationStartDate);
-  const registrationEndDate = parseDate(event.registrationEndDate);
+  
+  // تحويل تواريخ التسجيل إلى كائنات Date
+  const registrationStartDate = event.registrationStartDate ? new Date(event.registrationStartDate) : null;
+  const registrationEndDate = event.registrationEndDate ? new Date(event.registrationEndDate) : null;
 
-  // Log parsed dates for debugging
-  console.log('Registration period:', {
+  // تسجيل التواريخ للتحقق
+  console.log('Registration dates:', {
     start: registrationStartDate?.toISOString(),
     end: registrationEndDate?.toISOString(),
     now: now.toISOString()
   });
 
-  // Check if event has already started or ended
+  // التحقق من بدء موعد التسجيل
+  if (registrationStartDate) {
+    // تعيين وقت بداية اليوم للمقارنة
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfRegistration = new Date(
+      registrationStartDate.getFullYear(), 
+      registrationStartDate.getMonth(), 
+      registrationStartDate.getDate()
+    );
+
+    if (startOfToday < startOfRegistration) {
+      console.log('Registration has not started yet');
+      return 'notStarted';
+    }
+  }
+
+  // التحقق من انتهاء موعد التسجيل
+  if (registrationEndDate) {
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const endOfRegistration = new Date(
+      registrationEndDate.getFullYear(),
+      registrationEndDate.getMonth(),
+      registrationEndDate.getDate(),
+      23, 59, 59
+    );
+
+    if (endOfToday > endOfRegistration) {
+      console.log('Registration period has ended');
+      return 'ended';
+    }
+  }
+
+  // التحقق من بدء الفعالية
   if (now >= eventDateTime) {
     console.log('Event has already started or ended');
     return 'eventStarted';
   }
 
-  // Check if registration period hasn't started yet
-  if (registrationStartDate && now < registrationStartDate) {
-    console.log('Registration has not started yet');
-    return 'notStarted';
-  }
-
-  // Check if registration period has ended
-  if (registrationEndDate && now > registrationEndDate) {
-    console.log('Registration period has ended');
-    return 'ended';
-  }
-
-  // Check if event is full
+  // التحقق من اكتمال العدد
   const currentAttendees = typeof event.attendees === 'number' ? event.attendees : 0;
   if (event.max_attendees && currentAttendees >= event.max_attendees) {
     console.log('Event is full - no more seats available');
