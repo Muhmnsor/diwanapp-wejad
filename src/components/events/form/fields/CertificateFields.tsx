@@ -15,15 +15,22 @@ export const CertificateFields = ({ formData, setFormData }: CertificateFieldsPr
     }
   };
 
+  const handleCertificateTypeChange = (value: string) => {
+    // Reset eventHours to undefined when changing certificate type
+    setFormData({ 
+      ...formData, 
+      certificateType: value,
+      eventHours: undefined 
+    });
+  };
+
   return (
     <>
       <div>
         <label className="text-sm font-medium block mb-1.5">نوع الشهادة</label>
         <Select
           value={formData.certificateType || 'none'}
-          onValueChange={(value: string) => 
-            setFormData({ ...formData, certificateType: value })
-          }
+          onValueChange={handleCertificateTypeChange}
         >
           <SelectTrigger className="text-right">
             <SelectValue placeholder="اختر نوع الشهادة" />
