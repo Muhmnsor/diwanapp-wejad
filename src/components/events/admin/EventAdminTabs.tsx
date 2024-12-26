@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EventDetailsView } from "../EventDetailsView";
-import { EventDashboard } from "@/components/admin/EventDashboard";
 import { Event } from "@/store/eventStore";
+import { EventDashboard } from "@/components/admin/EventDashboard";
+import { EventDetailsContainer } from "../details/EventDetailsContainer";
 
 interface EventAdminTabsProps {
   event: Event & { attendees: number };
@@ -26,20 +26,19 @@ export const EventAdminTabs = ({
   onAddReport,
   isAdmin,
 }: EventAdminTabsProps) => {
-  console.log("EventAdminTabs rendering with event:", event);
-  console.log("EventAdminTabs id:", id);
-  console.log("EventAdminTabs isAdmin:", isAdmin);
-  console.log("EventAdminTabs canAddReport:", canAddReport);
+  console.log('EventAdminTabs - Event:', event);
+  console.log('EventAdminTabs - isAdmin:', isAdmin);
+  console.log('EventAdminTabs - canAddReport:', canAddReport);
 
   return (
-    <Tabs defaultValue="details" className="mb-8" dir="rtl">
-      <TabsList className="mb-4 w-full justify-start">
+    <Tabs defaultValue="details" className="w-full" dir="rtl">
+      <TabsList className="w-full justify-start border-b rounded-none">
         <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
         {isAdmin && <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>}
       </TabsList>
       
-      <TabsContent value="details">
-        <EventDetailsView
+      <TabsContent value="details" className="mt-0">
+        <EventDetailsContainer
           event={event}
           onEdit={onEdit}
           onDelete={onDelete}
@@ -49,9 +48,9 @@ export const EventAdminTabs = ({
           isAdmin={isAdmin}
         />
       </TabsContent>
-      
+
       {isAdmin && (
-        <TabsContent value="dashboard">
+        <TabsContent value="dashboard" className="mt-0">
           <EventDashboard eventId={id} />
         </TabsContent>
       )}

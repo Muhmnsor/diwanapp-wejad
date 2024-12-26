@@ -32,9 +32,9 @@ export const EventDetailsView = ({
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
   
-  console.log('Event data in EventDetailsView:', event);
-  console.log('isAdmin:', isAdmin);
-  console.log('User roles:', userRoles);
+  console.log('EventDetailsView - Event data:', event);
+  console.log('EventDetailsView - isAdmin:', isAdmin);
+  console.log('EventDetailsView - User roles:', userRoles);
 
   const handleRegister = () => {
     console.log('Opening registration dialog');
@@ -47,50 +47,54 @@ export const EventDetailsView = ({
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
-      <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
-      
-      <EventTitle 
-        title={event.title}
-        isAdmin={isAdmin}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onShare={async () => {}}
-        onAddToCalendar={onAddToCalendar}
-      />
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
+        
+        <EventTitle 
+          title={event.title}
+          isAdmin={isAdmin}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onShare={async () => {}}
+          onAddToCalendar={onAddToCalendar}
+        />
 
-      <EventContent 
-        event={event}
-        onRegister={handleRegister}
-      />
+        <EventContent 
+          event={event}
+          onRegister={handleRegister}
+        />
 
-      {(isAdmin || canAddReport) && (
-        <>
-          <EventAdminTabs
-            event={event}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onAddToCalendar={onAddToCalendar}
-            onRegister={handleRegister}
-            id={id}
-            canAddReport={canAddReport}
-            onAddReport={() => setIsReportDialogOpen(true)}
-            isAdmin={isAdmin}
-          />
+        {(isAdmin || canAddReport) && (
+          <>
+            <div className="border-t border-gray-100 mt-8">
+              <EventAdminTabs
+                event={event}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onAddToCalendar={onAddToCalendar}
+                onRegister={handleRegister}
+                id={id}
+                canAddReport={canAddReport}
+                onAddReport={() => setIsReportDialogOpen(true)}
+                isAdmin={isAdmin}
+              />
+            </div>
 
-          <EventReportDialog
-            open={isReportDialogOpen}
-            onOpenChange={setIsReportDialogOpen}
-            eventId={id}
-          />
-        </>
-      )}
+            <EventReportDialog
+              open={isReportDialogOpen}
+              onOpenChange={setIsReportDialogOpen}
+              eventId={id}
+            />
+          </>
+        )}
 
-      <EventRegistrationDialog
-        open={isRegistrationOpen}
-        onOpenChange={setIsRegistrationOpen}
-        event={event}
-      />
+        <EventRegistrationDialog
+          open={isRegistrationOpen}
+          onOpenChange={setIsRegistrationOpen}
+          event={event}
+        />
+      </div>
     </div>
   );
 };
