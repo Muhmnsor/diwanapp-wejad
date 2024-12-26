@@ -9,6 +9,7 @@ import { EventDetailsHeader } from "./details/EventDetailsHeader";
 import { EventDetailsContent } from "./details/EventDetailsContent";
 import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { useRegistrations } from "@/hooks/useRegistrations";
+import { FeedbackSection } from "./reports/FeedbackSection";
 
 interface EventDetailsViewProps {
   event: EventType;
@@ -72,6 +73,12 @@ export const EventDetailsView = ({
         event={transformedEvent}
         onRegister={handleRegister}
       />
+
+      {user?.isAdmin && (
+        <div className="mt-8 space-y-8 bg-white rounded-lg p-6">
+          <FeedbackSection eventId={event.id} />
+        </div>
+      )}
 
       <EventFooter />
 
