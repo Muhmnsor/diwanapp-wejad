@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportListContainer } from "./ReportListContainer";
 import { ReportListHeader } from "./ReportListHeader";
 import { ReportListItem } from "./ReportListItem";
+import * as XLSX from 'xlsx';
 
 interface EventReportsListProps {
   eventId: string;
 }
 
 export const EventReportsList = ({ eventId }: EventReportsListProps) => {
-  const { data: reports, isLoading } = useQuery({
+  const { data: reports, isLoading, error } = useQuery({
     queryKey: ['event-reports', eventId],
     queryFn: async () => {
       console.log('Fetching reports for event:', eventId);
@@ -35,15 +36,22 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
     },
   });
 
-  if (isLoading) {
-    return <div>جاري التحميل...</div>;
-  }
+  const handleDownload = (report: any) => {
+    const ws = XLSX.utils.json_to_sheet([report]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.writeFile(wb, `report-${report.id}.xlsx`);
+  };
 
   return (
-    <ReportListContainer>
-      <ReportListHeader />
+    <ReportListContainer isLoading={isLoading} error={error}>
+      <ReportListHeader title="تقارير الفعالية" />
       {reports?.map((report) => (
-        <ReportListItem key={report.id} report={report} />
+        <ReportListItem 
+          key={report.id} 
+          report={report} 
+          onDownload={handleDownload}
+        />
       ))}
     </ReportListContainer>
   );

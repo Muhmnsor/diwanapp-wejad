@@ -1,8 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ReportListContainerProps {
-  isLoading: boolean;
-  error: Error | null;
+  isLoading?: boolean;
+  error?: Error | null;
   children: React.ReactNode;
 }
 
