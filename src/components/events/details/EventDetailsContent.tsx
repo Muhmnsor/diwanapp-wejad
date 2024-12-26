@@ -13,7 +13,7 @@ interface EventDetailsContentProps {
 export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentProps) => {
   const [eventStatus, setEventStatus] = useState(() => getEventStatus({
     ...event,
-    maxAttendees: event.max_attendees // Map max_attendees to maxAttendees for getEventStatus
+    max_attendees: event.max_attendees
   }));
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
 
     const newStatus = getEventStatus({
       ...event,
-      maxAttendees: event.max_attendees // Map max_attendees to maxAttendees for getEventStatus
+      max_attendees: event.max_attendees
     });
     console.log('New event status:', newStatus);
     setEventStatus(newStatus);
@@ -47,7 +47,7 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
   const handleRegister = () => {
     const status = getEventStatus({
       ...event,
-      maxAttendees: event.max_attendees // Map max_attendees to maxAttendees for getEventStatus
+      max_attendees: event.max_attendees
     });
     console.log('Attempting registration with status:', status);
     
