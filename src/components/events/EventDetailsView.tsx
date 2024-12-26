@@ -60,34 +60,38 @@ export const EventDetailsView = ({
   };
 
   return (
-    <EventContainer>
-      <EventDetailsHeader
-        event={transformedEvent}
-        isAdmin={user?.isAdmin}
-        onEdit={onEdit}
-        onDelete={() => setIsDeleteDialogOpen(true)}
-        onShare={async () => {}}
-        onAddToCalendar={onAddToCalendar}
-      />
+    <div className="min-h-screen flex flex-col">
+      <EventContainer>
+        <div className="flex-grow">
+          <EventDetailsHeader
+            event={transformedEvent}
+            isAdmin={user?.isAdmin}
+            onEdit={onEdit}
+            onDelete={() => setIsDeleteDialogOpen(true)}
+            onShare={async () => {}}
+            onAddToCalendar={onAddToCalendar}
+          />
 
-      <EventDetailsContent 
-        event={transformedEvent}
-        onRegister={handleRegister}
-      />
+          <EventDetailsContent 
+            event={transformedEvent}
+            onRegister={handleRegister}
+          />
+        </div>
 
-      <EventFooter />
+        <EventFooter />
 
-      <EventRegistrationDialog
-        open={isRegistrationOpen}
-        onOpenChange={setIsRegistrationOpen}
-        event={event}
-      />
+        <EventRegistrationDialog
+          open={isRegistrationOpen}
+          onOpenChange={setIsRegistrationOpen}
+          event={event}
+        />
 
-      <EventDeleteDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-      />
-    </EventContainer>
+        <EventDeleteDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={handleDelete}
+        />
+      </EventContainer>
+    </div>
   );
 };
