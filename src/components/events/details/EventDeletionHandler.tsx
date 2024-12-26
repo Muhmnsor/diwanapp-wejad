@@ -16,14 +16,26 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
   try {
     console.log('Starting deletion process for event:', eventId);
 
-    // 1. Check for feedback records and delete them first
+    // 1. Check and delete feedback first
     const { data: feedbackData } = await supabase
       .from('event_feedback')
       .select('id')
       .eq('event_id', eventId);
 
     if (feedbackData && feedbackData.length > 0) {
+      console.log(`Found ${feedbackData.length} feedback records to delete`);
       await deleteFeedback(eventId);
+      
+      // Verify feedback deletion
+      const { data: verifyFeedback } = await supabase
+        .from('event_feedback')
+        .select('id')
+        .eq('event_id', eventId);
+        
+      if (verifyFeedback && verifyFeedback.length > 0) {
+        throw new Error('Failed to delete all feedback records');
+      }
+      
       console.log('Feedback deleted successfully');
     }
 
