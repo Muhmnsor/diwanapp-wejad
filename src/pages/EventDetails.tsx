@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
 import { Event } from "@/store/eventStore";
 import { useUserRoles } from "@/components/events/admin/useUserRoles";
+import { useAuthStore } from "@/store/authStore";
 
 interface EventWithAttendees extends Event {
   attendees: number;
@@ -19,7 +20,11 @@ const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: userRoles = [] } = useUserRoles();
-  const isAdmin = userRoles.includes('admin');
+  const { user } = useAuthStore();
+  const isAdmin = user?.isAdmin || false;
+
+  console.log("EventDetails - User roles:", userRoles);
+  console.log("EventDetails - Is admin:", isAdmin);
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ["event", id],

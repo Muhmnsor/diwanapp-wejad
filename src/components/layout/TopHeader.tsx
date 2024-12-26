@@ -1,13 +1,22 @@
 import { Logo } from "@/components/Logo";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
+import { toast } from "sonner";
 
 export const TopHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const { logout, isAuthenticated } = useAuthStore();
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("تم تسجيل الخروج بنجاح");
+    navigate("/login");
+  };
 
   return (
     <div className="w-full bg-white py-4 border-b">
@@ -32,6 +41,16 @@ export const TopHeader = () => {
               </Button>
             )}
             <Navigation />
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>تسجيل الخروج</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
