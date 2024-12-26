@@ -66,7 +66,7 @@ export const EventCard = ({
   }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type]);
 
   return (
-    <div className="w-[360px] sm:w-[440px] lg:w-[460px] mx-auto" dir="rtl">
+    <div className="w-[380px] sm:w-[460px] lg:w-[480px] mx-auto" dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
         <CardHeader className="p-4">
