@@ -81,10 +81,10 @@ export const EventCard = ({
     <div className="w-[380px] mx-auto">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
-        <CardHeader className="p-4">
-          <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
+        <CardHeader className="p-4 text-right">
+          <CardTitle className="text-lg line-clamp-2">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 p-4 pt-0">
+        <CardContent className="space-y-4 p-4 pt-0 text-right">
           <EventCardBadges
             eventType={event_type}
             price={price}
