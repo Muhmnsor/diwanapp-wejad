@@ -84,9 +84,9 @@ export const ReportListItem = ({
   return (
     <>
       <TableRow>
-        <TableCell>{report.report_name || eventTitle}</TableCell>
-        <TableCell>{report.profiles?.email || 'غير معروف'}</TableCell>
-        <TableCell>{new Date(report.created_at).toLocaleDateString('ar')}</TableCell>
+        <TableCell className="text-right">{report.report_name || eventTitle}</TableCell>
+        <TableCell className="text-right">{report.profiles?.email || 'غير معروف'}</TableCell>
+        <TableCell className="text-right">{new Date(report.created_at).toLocaleDateString('ar')}</TableCell>
         <TableCell className="text-center">
           <ReportActions
             onDownload={handleDownload}
