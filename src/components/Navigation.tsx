@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 
 export const Navigation = () => {
   const { user, logout } = useAuthStore();
@@ -20,6 +20,10 @@ export const Navigation = () => {
     navigate("/create");
   };
 
+  const handleSettingsClick = () => {
+    navigate("/settings");
+  };
+
   const isLoginPage = location.pathname === "/login";
 
   return (
@@ -34,6 +38,16 @@ export const Navigation = () => {
             <Plus className="w-4 h-4" />
             إنشاء فعالية
           </Button>
+          {user.isAdmin && (
+            <Button
+              variant="outline"
+              onClick={handleSettingsClick}
+              className="flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              الإعدادات
+            </Button>
+          )}
           <Button variant="outline" onClick={logout}>تسجيل خروج</Button>
         </>
       ) : (

@@ -10,6 +10,7 @@ import CreateEvent from "./pages/CreateEvent";
 import EventDetails from "./pages/EventDetails";
 import Login from "./pages/Login";
 import Users from "./pages/Users";
+import Settings from "./pages/Settings";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Users />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
                   </ProtectedRoute>
                 }
               />
