@@ -9,6 +9,24 @@ interface EventReportsListProps {
   eventId: string;
 }
 
+interface EventReport {
+  id: string;
+  event_id: string;
+  executor_id: string;
+  report_text: string;
+  photos: string[] | null;
+  video_links: string[] | null;
+  additional_links: string[] | null;
+  created_at: string;
+  satisfaction_level: number | null;
+  files: string[] | null;
+  comments: string[] | null;
+  executor?: {
+    id: string;
+    email: string;
+  } | null;
+}
+
 export const EventReportsList = ({ eventId }: EventReportsListProps) => {
   const { data: reports, isLoading, error } = useQuery({
     queryKey: ['event-reports', eventId],
@@ -18,10 +36,7 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
         .from('event_reports')
         .select(`
           *,
-          executor:auth.users!executor_id (
-            id,
-            email
-          )
+          executor:auth.users(id, email)
         `)
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
@@ -32,11 +47,11 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
       }
 
       console.log('Reports fetched:', data);
-      return data;
+      return data as EventReport[];
     },
   });
 
-  const handleDownload = (report: any) => {
+  const handleDownload = (report: EventReport) => {
     // Create workbook with multiple sheets
     const workbook = XLSX.utils.book_new();
     
