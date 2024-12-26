@@ -20,13 +20,15 @@ export const EventDetails = ({
   attendees,
   maxAttendees = 0
 }: EventDetailsProps) => {
+  const eventId = window.location.pathname.split('/').pop();
+  
   const { data: registrations } = useQuery({
-    queryKey: ['registrations'],
+    queryKey: ['registrations', eventId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('registrations')
         .select('*')
-        .eq('event_id', window.location.pathname.split('/').pop());
+        .eq('event_id', eventId);
 
       if (error) {
         console.error('Error fetching registrations:', error);
@@ -35,7 +37,8 @@ export const EventDetails = ({
 
       console.log('Fetched registrations:', data);
       return data;
-    }
+    },
+    enabled: !!eventId
   });
 
   const attendeesCount = registrations?.length || 0;
