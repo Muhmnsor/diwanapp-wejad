@@ -20,6 +20,7 @@ const Login = () => {
     console.log("Login: Starting login process with email:", email);
     
     try {
+      console.log("Login: Attempting to login...");
       await login(email, password);
       console.log("Login: Login successful");
       toast.success("تم تسجيل الدخول بنجاح");
