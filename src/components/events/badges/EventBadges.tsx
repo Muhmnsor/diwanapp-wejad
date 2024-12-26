@@ -50,7 +50,8 @@ export const EventBadges = ({
   };
 
   const shouldShowCertificate = certificateType && certificateType !== 'none';
-  const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 1;
+  // Only show hours if certificate exists AND hours are greater than 0
+  const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-8 py-6">
