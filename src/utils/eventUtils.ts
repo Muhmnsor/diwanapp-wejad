@@ -1,9 +1,11 @@
 import { Event } from "@/store/eventStore";
 
+// تحويل الأرقام العربية إلى إنجليزية
 export const arabicToEnglishNum = (str: string) => {
   return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
 };
 
+// تحويل التاريخ العربي إلى صيغة قابلة للمعالجة
 export const convertArabicDate = (dateStr: string, timeStr: string) => {
   console.log("Converting date and time:", { dateStr, timeStr });
   
@@ -16,7 +18,6 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
   };
   
   const englishMonth = arabicMonths[month] || month;
-  
   let cleanTimeStr = timeStr
     .replace('مساءً', 'PM')
     .replace('صباحاً', 'AM')
@@ -24,13 +25,13 @@ export const convertArabicDate = (dateStr: string, timeStr: string) => {
     .replace('م', 'PM');
   
   console.log("Cleaned time string:", cleanTimeStr);
-  
   const dateString = `${englishMonth} ${day} ${year} ${cleanTimeStr}`;
   console.log("Final date string:", dateString);
   
   return dateString;
 };
 
+// التحقق من انتهاء الفعالية
 export const isEventPassed = (event: Event): boolean => {
   if (!event) {
     console.log('Event is undefined in isEventPassed');
@@ -41,13 +42,26 @@ export const isEventPassed = (event: Event): boolean => {
   return eventDateTime < now;
 };
 
+// أنواع حالات الفعالية
 export type EventStatus = 'available' | 'full' | 'ended' | 'notStarted' | 'eventStarted';
 
+// معالجة التواريخ
 const parseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
-  return new Date(dateStr);
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.log('Invalid date string:', dateStr);
+      return null;
+    }
+    return date;
+  } catch (error) {
+    console.error('Error parsing date:', error);
+    return null;
+  }
 };
 
+// التحقق من حالة الفعالية
 export const getEventStatus = (event: Event): EventStatus => {
   if (!event) {
     console.log('Event is undefined in getEventStatus');
@@ -63,41 +77,51 @@ export const getEventStatus = (event: Event): EventStatus => {
     attendees: event.attendees,
     max_attendees: event.max_attendees
   });
-  
+
   const now = new Date();
   const eventDate = new Date(`${event.date} ${event.time || '00:00'}`);
   const registrationStartDate = parseDate(event.registrationStartDate);
   const registrationEndDate = parseDate(event.registrationEndDate);
-  
-  // تحقق ما إذا كانت الفعالية قد انتهت
+
+  // التحقق من صحة التواريخ
+  if (registrationStartDate && registrationEndDate) {
+    console.log('Registration period:', {
+      start: registrationStartDate.toISOString(),
+      end: registrationEndDate.toISOString(),
+      now: now.toISOString()
+    });
+  }
+
+  // التحقق من انتهاء الفعالية
   if (now >= eventDate) {
     console.log('Event has already started or ended');
     return 'eventStarted';
   }
-  
-  // تحقق من تاريخ بدء التسجيل
+
+  // التحقق من تاريخ بدء التسجيل
   if (registrationStartDate && now < registrationStartDate) {
     console.log('Registration has not started yet');
     return 'notStarted';
   }
-  
-  // تحقق من تاريخ انتهاء التسجيل
+
+  // التحقق من تاريخ انتهاء التسجيل
   if (registrationEndDate && now > registrationEndDate) {
     console.log('Registration period has ended');
     return 'ended';
   }
-  
-  // تحقق من اكتمال العدد
+
+  // التحقق من اكتمال العدد
   const currentAttendees = typeof event.attendees === 'number' ? event.attendees : 0;
   if (event.max_attendees && currentAttendees >= event.max_attendees) {
     console.log('Event is full - no more seats available');
     return 'full';
   }
-  
+
   console.log('Registration is available');
   return 'available';
 };
 
+// تكوين حالة الزر بناءً على حالة الفعالية
 export const getStatusConfig = (status: EventStatus) => {
   const configs = {
     available: {
