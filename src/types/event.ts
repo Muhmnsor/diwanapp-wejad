@@ -10,7 +10,7 @@ export interface EventType {
   imageUrl?: string;
   image_url?: string;
   attendees: number;
-  maxAttendees: number;
+  max_attendees: number;  // Updated from maxAttendees to match database schema
   eventType: "online" | "in-person";
   price: number | "free";
   beneficiaryType: BeneficiaryType;
