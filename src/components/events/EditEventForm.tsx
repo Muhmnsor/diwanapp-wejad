@@ -15,7 +15,12 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
   console.log('Initial event data in EditEventForm:', event);
   
   const [formData, setFormData] = useState<CustomEvent>({
-    ...event,
+    id: event.id,
+    title: event.title || '',
+    description: event.description || '',
+    date: event.date || '',
+    time: event.time || '',
+    location: event.location || '',
     certificateType: event.certificateType || 'none',
     eventHours: event.eventHours || 0,
     price: event.price || 'free',
@@ -33,7 +38,12 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
   useEffect(() => {
     console.log('Updating form data with event:', event);
     setFormData({
-      ...event,
+      id: event.id,
+      title: event.title || '',
+      description: event.description || '',
+      date: event.date || '',
+      time: event.time || '',
+      location: event.location || '',
       certificateType: event.certificateType || 'none',
       eventHours: event.eventHours || 0,
       price: event.price || 'free',
