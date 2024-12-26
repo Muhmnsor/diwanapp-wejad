@@ -55,13 +55,18 @@ serve(async (req) => {
       })
     })
 
+    const responseText = await response.text()
+    console.log('Interakt API response:', responseText)
+
     if (!response.ok) {
-      const error = await response.text()
-      console.error('Interakt API error:', error)
+      console.error('Interakt API error:', responseText)
       return new Response(
-        JSON.stringify({ error: 'فشل إرسال الرسالة التجريبية' }),
+        JSON.stringify({ 
+          error: 'فشل إرسال الرسالة التجريبية',
+          details: responseText 
+        }),
         { 
-          status: response.status,
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       )
@@ -69,7 +74,11 @@ serve(async (req) => {
 
     console.log("Test message sent successfully")
     return new Response(
-      JSON.stringify({ success: true, message: 'تم إرسال الرسالة التجريبية بنجاح' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'تم إرسال الرسالة التجريبية بنجاح',
+        response: responseText 
+      }),
       { 
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -79,9 +88,12 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: 'حدث خطأ أثناء إرسال الرسالة التجريبية' }),
+      JSON.stringify({ 
+        error: 'حدث خطأ أثناء إرسال الرسالة التجريبية',
+        details: error.message 
+      }),
       { 
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     )
