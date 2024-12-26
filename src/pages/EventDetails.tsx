@@ -39,7 +39,7 @@ const EventDetails = () => {
     try {
       console.log('Starting event deletion process for ID:', id);
       
-      // Delete all related records in order
+      // Define tables to clean up
       const tables = [
         'attendance_records',
         'event_feedback',
@@ -49,7 +49,8 @@ const EventDetails = () => {
         'registrations'
       ];
 
-      for (const table of tables) {
+      // Delete all related records in parallel
+      await Promise.all(tables.map(async (table) => {
         console.log(`Deleting records from ${table}`);
         const { error } = await supabase
           .from(table)
@@ -60,7 +61,7 @@ const EventDetails = () => {
           console.error(`Error deleting from ${table}:`, error);
           throw error;
         }
-      }
+      }));
 
       // Finally delete the event
       const { error: eventError } = await supabase
