@@ -59,28 +59,41 @@ export const downloadReportWithImages = async (
     const feedbackSummary = await fetchFeedbackSummary(report.event_id);
     console.log('Feedback summary:', feedbackSummary);
 
-    const parsedPhotos = report.photos;
+    // Parse photos array and ensure it's an array of objects
+    const parsedPhotos = report.photos.map(photo => {
+      if (typeof photo === 'string') {
+        try {
+          return JSON.parse(photo);
+        } catch {
+          return { url: photo, description: '' };
+        }
+      }
+      return photo;
+    });
+
     console.log('Parsed photos:', parsedPhotos);
 
     const reportContent = `تقرير الفعالية
-${eventTitle ? `اسم الفعالية: ${eventTitle}` : ''}
+
+اسم البرنامج: ${report.program_name || 'غير محدد'}
+اسم الفعالية: ${report.report_name || eventTitle || 'غير محدد'}
 التاريخ: ${new Date(report.created_at).toLocaleDateString('ar')}
 
 نص التقرير:
 ${report.report_text}
 
 التفاصيل:
-${report.detailed_description}
+${report.detailed_description || ''}
 
 معلومات الفعالية:
-- المدة: ${report.event_duration}
-- عدد المشاركين: ${report.attendees_count}
+- المدة: ${report.event_duration || 'غير محدد'}
+- عدد المشاركين: ${report.attendees_count || 'غير محدد'}
 
 الأهداف:
-${report.event_objectives}
+${report.event_objectives || 'غير محدد'}
 
 الأثر على المشاركين:
-${report.impact_on_participants}
+${report.impact_on_participants || 'غير محدد'}
 
 ملخص التقييمات:
 - عدد التقييمات: ${feedbackSummary.totalFeedbacks}
@@ -126,7 +139,7 @@ ${parsedPhotos.map((photo, index) => `${index + 1}. ${photo.description || `صو
     const url = window.URL.createObjectURL(content);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `تقرير-الفعالية-${new Date(report.created_at).toISOString().split('T')[0]}.zip`;
+    link.download = `تقرير-${report.report_name || eventTitle || 'الفعالية'}-${new Date(report.created_at).toISOString().split('T')[0]}.zip`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
