@@ -7,7 +7,6 @@ interface EventDetailsHeaderProps {
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onShare: () => Promise<void>;
   onAddToCalendar: () => void;
 }
 
@@ -16,7 +15,6 @@ export const EventDetailsHeader = ({
   isAdmin,
   onEdit,
   onDelete,
-  onShare,
   onAddToCalendar
 }: EventDetailsHeaderProps) => {
   const imageUrl = event.imageUrl || event.image_url;
@@ -29,7 +27,6 @@ export const EventDetailsHeader = ({
         isAdmin={isAdmin}
         onEdit={onEdit}
         onDelete={onDelete}
-        onShare={onShare}
         onAddToCalendar={onAddToCalendar}
       />
     </div>
