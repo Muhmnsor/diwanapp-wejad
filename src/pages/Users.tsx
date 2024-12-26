@@ -8,7 +8,10 @@ import { UsersTable } from "@/components/users/UsersTable";
 import type { Role, User } from "@/components/users/types";
 
 interface SupabaseUserRoleResponse {
-  user_id: string;
+  auth_user: {
+    email: string;
+    last_sign_in_at: string;
+  };
   roles: {
     name: string;
     description: string;
@@ -21,21 +24,15 @@ const Users = () => {
   const { data: roles = [], isLoading: rolesLoading, error: rolesError } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      console.log('Fetching roles... Current user:', user);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Current Supabase session:', session);
-
       const { data, error } = await supabase
         .from('roles')
         .select('*');
       
       if (error) {
-        console.error('Detailed Supabase roles fetch error:', error);
+        console.error('Error fetching roles:', error);
         throw error;
       }
       
-      console.log('Fetched roles (detailed):', data);
       return data as Role[];
     }
   });
@@ -48,6 +45,10 @@ const Users = () => {
         .from('user_roles')
         .select(`
           user_id,
+          auth_user:user_id (
+            email,
+            last_sign_in_at
+          ),
           roles (
             name,
             description
@@ -60,11 +61,11 @@ const Users = () => {
       }
 
       console.log('Fetched user roles:', userRoles);
-      return (userRoles as SupabaseUserRoleResponse[]).map(ur => ({
-        id: ur.user_id,
+      return (userRoles as unknown as SupabaseUserRoleResponse[]).map(ur => ({
+        id: ur.auth_user?.email || 'Unknown',
+        username: ur.auth_user?.email || 'Unknown',
         role: ur.roles[0]?.name || 'No role',
-        username: ur.user_id,
-        lastLogin: '-'
+        lastLogin: ur.auth_user?.last_sign_in_at ? new Date(ur.auth_user.last_sign_in_at).toLocaleString('ar-SA') : '-'
       })) as User[];
     }
   });
