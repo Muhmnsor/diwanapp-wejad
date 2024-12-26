@@ -48,40 +48,42 @@ export const EventDetailsView = ({
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {(isAdmin || canAddReport) ? (
+        {/* Always show event details */}
+        <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
+        <EventTitle 
+          title={event.title}
+          isAdmin={isAdmin}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onShare={async () => {}}
+          onAddToCalendar={onAddToCalendar}
+        />
+        <EventContent 
+          event={event}
+          onRegister={handleRegister}
+        />
+
+        {/* Show admin controls if user has permissions */}
+        {(isAdmin || canAddReport) && (
           <>
-            <EventAdminTabs
-              event={event}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onAddToCalendar={onAddToCalendar}
-              onRegister={handleRegister}
-              id={id}
-              canAddReport={canAddReport}
-              onAddReport={() => setIsReportDialogOpen(true)}
-              isAdmin={isAdmin}
-            />
+            <div className="mt-8 border-t border-gray-100">
+              <EventAdminTabs
+                event={event}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onAddToCalendar={onAddToCalendar}
+                onRegister={handleRegister}
+                id={id}
+                canAddReport={canAddReport}
+                onAddReport={() => setIsReportDialogOpen(true)}
+                isAdmin={isAdmin}
+              />
+            </div>
 
             <EventReportDialog
               open={isReportDialogOpen}
               onOpenChange={setIsReportDialogOpen}
               eventId={id}
-            />
-          </>
-        ) : (
-          <>
-            <EventImage imageUrl={event.image_url || event.imageUrl || ''} title={event.title} />
-            <EventTitle 
-              title={event.title}
-              isAdmin={isAdmin}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onShare={async () => {}}
-              onAddToCalendar={onAddToCalendar}
-            />
-            <EventContent 
-              event={event}
-              onRegister={handleRegister}
             />
           </>
         )}

@@ -12,15 +12,18 @@ export interface Event {
   image_url?: string;
   attendees: number;
   max_attendees: number;
-  eventType: "online" | "in-person";
+  event_type: "online" | "in-person";
+  eventType?: "online" | "in-person"; // For backward compatibility
   price: number | "free";
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
-  registration_start_date?: string | null;  // Added for database compatibility
-  registration_end_date?: string | null;    // Added for database compatibility
+  registration_start_date?: string | null;
+  registration_end_date?: string | null;
   beneficiaryType: BeneficiaryType;
-  certificateType: string;
-  eventHours: number;
+  certificate_type: string;
+  certificateType?: string; // For backward compatibility
+  event_hours: number;
+  eventHours?: number; // For backward compatibility
 }
 
 interface EventStore {
