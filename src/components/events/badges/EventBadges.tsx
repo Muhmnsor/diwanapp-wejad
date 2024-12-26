@@ -71,7 +71,7 @@ export const EventBadges = ({
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
-      {shouldShowHours && (
+      {shouldShowHours && eventHours > 0 && (
         <Badge variant="outline" className="rounded-full px-4 py-1 flex items-center gap-1">
           <Clock className="w-4 h-4" />
           {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'} تدريبية

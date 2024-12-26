@@ -68,7 +68,7 @@ export const EventCardBadges = ({
           {getCertificateLabel(certificateType)}
         </Badge>
       )}
-      {shouldShowHours && (
+      {shouldShowHours && eventHours > 0 && (
         <Badge variant="outline" className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {eventHours} {eventHours === 1 ? 'ساعة' : 'ساعات'}
