@@ -27,46 +27,52 @@ export const TemplatesTable = ({
   onDelete,
 }: TemplatesTableProps) => {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="text-right">اسم القالب</TableHead>
-          <TableHead className="text-right">محتوى الرسالة</TableHead>
-          <TableHead className="text-right">الإجراءات</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {templates?.map((template) => (
-          <TableRow key={template.id}>
-            <TableCell className="text-right">{template.name}</TableCell>
-            <TableCell className="text-right max-w-md truncate">
-              {template.content}
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex space-x-2 justify-end">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onEdit(template)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => {
-                    if (window.confirm("هل أنت متأكد من حذف هذا القالب؟")) {
-                      onDelete(template.id);
-                    }
-                  }}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
-            </TableCell>
+    <div className="border rounded-lg overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-secondary/50">
+            <TableHead className="text-right font-bold">اسم القالب</TableHead>
+            <TableHead className="text-right font-bold">محتوى الرسالة</TableHead>
+            <TableHead className="text-center font-bold w-[120px]">الإجراءات</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {templates?.map((template) => (
+            <TableRow key={template.id} className="hover:bg-muted/50 transition-colors">
+              <TableCell className="text-right font-medium">{template.name}</TableCell>
+              <TableCell className="text-right max-w-md">
+                <div className="line-clamp-2 text-muted-foreground">
+                  {template.content}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => onEdit(template)}
+                    className="hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => {
+                      if (window.confirm("هل أنت متأكد من حذف هذا القالب؟")) {
+                        onDelete(template.id);
+                      }
+                    }}
+                    className="hover:bg-destructive/90 transition-colors"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
