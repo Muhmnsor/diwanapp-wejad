@@ -17,83 +17,75 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     console.log('Starting deletion process for event:', eventId);
 
     // 1. Delete feedback first
-    const { data: feedbackData, error: feedbackCheckError } = await supabase
+    const { data: feedbackData, error: feedbackError } = await supabase
       .from('event_feedback')
-      .select('id')
-      .eq('event_id', eventId);
+      .delete()
+      .eq('event_id', eventId)
+      .select();
 
-    if (feedbackCheckError) {
-      console.error('Error checking feedback:', feedbackCheckError);
-      throw feedbackCheckError;
+    if (feedbackError) {
+      console.error('Error deleting feedback:', feedbackError);
+      throw feedbackError;
     }
-
-    if (feedbackData && feedbackData.length > 0) {
-      console.log(`Found ${feedbackData.length} feedback records to delete`);
-      const { error: deleteError } = await supabase
-        .from('event_feedback')
-        .delete()
-        .eq('event_id', eventId);
-
-      if (deleteError) {
-        console.error('Error deleting feedback:', deleteError);
-        throw deleteError;
-      }
-      console.log('Feedback deleted successfully');
-    }
+    console.log('Feedback deleted:', feedbackData);
 
     // 2. Delete attendance records
-    const { data: attendanceData } = await supabase
+    const { error: attendanceError } = await supabase
       .from('attendance_records')
-      .select('id')
+      .delete()
       .eq('event_id', eventId);
 
-    if (attendanceData && attendanceData.length > 0) {
-      await deleteAttendance(eventId);
-      console.log('Attendance records deleted successfully');
+    if (attendanceError) {
+      console.error('Error deleting attendance records:', attendanceError);
+      throw attendanceError;
     }
+    console.log('Attendance records deleted successfully');
 
     // 3. Delete notifications
-    const { data: notificationsData } = await supabase
+    const { error: notificationsError } = await supabase
       .from('notification_logs')
-      .select('id')
+      .delete()
       .eq('event_id', eventId);
 
-    if (notificationsData && notificationsData.length > 0) {
-      await deleteNotifications(eventId);
-      console.log('Notifications deleted successfully');
+    if (notificationsError) {
+      console.error('Error deleting notifications:', notificationsError);
+      throw notificationsError;
     }
+    console.log('Notifications deleted successfully');
 
     // 4. Delete reports
-    const { data: reportsData } = await supabase
+    const { error: reportsError } = await supabase
       .from('event_reports')
-      .select('id')
+      .delete()
       .eq('event_id', eventId);
 
-    if (reportsData && reportsData.length > 0) {
-      await deleteReports(eventId);
-      console.log('Reports deleted successfully');
+    if (reportsError) {
+      console.error('Error deleting reports:', reportsError);
+      throw reportsError;
     }
+    console.log('Reports deleted successfully');
 
     // 5. Delete registrations
-    const { data: registrationsData } = await supabase
+    const { error: registrationsError } = await supabase
       .from('registrations')
-      .select('id')
+      .delete()
       .eq('event_id', eventId);
 
-    if (registrationsData && registrationsData.length > 0) {
-      await deleteRegistrations(eventId);
-      console.log('Registrations deleted successfully');
+    if (registrationsError) {
+      console.error('Error deleting registrations:', registrationsError);
+      throw registrationsError;
     }
+    console.log('Registrations deleted successfully');
 
     // 6. Finally delete the event itself
-    const { error: eventDeleteError } = await supabase
+    const { error: eventError } = await supabase
       .from('events')
       .delete()
       .eq('id', eventId);
 
-    if (eventDeleteError) {
-      console.error('Error deleting event:', eventDeleteError);
-      throw eventDeleteError;
+    if (eventError) {
+      console.error('Error deleting event:', eventError);
+      throw eventError;
     }
 
     console.log('Event deleted successfully');
