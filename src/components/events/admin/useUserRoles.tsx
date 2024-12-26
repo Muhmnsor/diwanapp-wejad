@@ -27,8 +27,7 @@ export const useUserRoles = () => {
             name
           )
         `)
-        .eq('user_id', user.id)
-        .single(); // Add single() to get a single record
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching user roles:', error);
@@ -38,14 +37,15 @@ export const useUserRoles = () => {
       console.log('Raw user roles data:', userRolesData);
       
       // Handle the case where no role is found
-      if (!userRolesData || !userRolesData.roles) {
+      if (!userRolesData || userRolesData.length === 0) {
         console.log('No roles found for user');
         return [];
       }
 
-      const roleName = userRolesData.roles.name;
-      console.log('Processed user role:', roleName);
-      return [roleName];
+      // Extract role names from the array
+      const roleNames = userRolesData.map(role => role.roles.name);
+      console.log('Processed user roles:', roleNames);
+      return roleNames;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     retry: 2

@@ -1,42 +1,12 @@
 import { useState } from "react";
-import { UserCog, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
-  TableCell,
-  TableHead,
   TableHeader,
-  TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { User } from "./types";
-import { UserTableActions } from "./UserTableActions";
 import { UserTableHeader } from "./UserTableHeader";
 import { UserTableRow } from "./UserTableRow";
 import { UserEditDialog } from "./UserEditDialog";
@@ -94,6 +64,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
       setSelectedUser(null);
       setNewPassword("");
       setSelectedRole("");
+      onUserDeleted(); // Refresh the users list
     } catch (error) {
       console.error('Error updating user:', error);
       toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
@@ -129,7 +100,9 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
     <>
       <div className="rounded-md border">
         <Table>
-          <UserTableHeader />
+          <TableHeader>
+            <UserTableHeader />
+          </TableHeader>
           <TableBody>
             {users.map((user) => (
               <UserTableRow
