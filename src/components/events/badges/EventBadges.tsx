@@ -52,6 +52,7 @@ export const EventBadges = ({
   };
 
   const shouldShowCertificate = certificateType && certificateType !== 'none';
+  // تم تعديل الشرط هنا ليتأكد من أن عدد الساعات أكبر من صفر
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
   return (
