@@ -54,8 +54,8 @@ export const ShareButton = ({
   return (
     <DropdownMenu dir="rtl">
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Share2 className="h-4 w-4" />
+        <Button variant="outline" size="icon" className="w-10 h-10">
+          <Share2 className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">

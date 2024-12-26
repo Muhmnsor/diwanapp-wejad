@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Plus, Settings, Users } from "lucide-react";
+import { Plus, Settings, Users, Home } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Navigation = () => {
@@ -25,7 +25,11 @@ export const Navigation = () => {
             : "text-muted-foreground"
         )}
       >
-        الرئيسية
+        {isMobile ? (
+          <Home className="h-4 w-4" />
+        ) : (
+          "الرئيسية"
+        )}
       </Link>
       {user?.isAdmin && (
         <>
