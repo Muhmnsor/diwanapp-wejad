@@ -1,6 +1,5 @@
 import { ReportNameField } from "./ReportNameField";
 import { ReportTextField } from "./ReportTextField";
-import { DetailedDescriptionField } from "./DetailedDescriptionField";
 import { EventMetadataFields } from "./EventMetadataFields";
 import { EventObjectivesField } from "./EventObjectivesField";
 import { ImpactField } from "./ImpactField";
@@ -39,11 +38,6 @@ export const ReportFormFields = ({ formValues, setValue }: ReportFormFieldsProps
       <ReportTextField
         value={formValues.report_text}
         onChange={(value) => setValue('report_text', value)}
-      />
-
-      <DetailedDescriptionField
-        value={formValues.detailed_description}
-        onChange={(value) => setValue('detailed_description', value)}
       />
 
       <EventMetadataFields
