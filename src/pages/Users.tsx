@@ -31,12 +31,10 @@ const Users = () => {
     queryFn: async () => {
       console.log('Fetching users with roles...');
       
-      // First, get all user roles
-      const { data: userRoles, error: userRolesError } = await supabase
+      const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
           user_id,
-          role_id,
           roles (
             name,
             description
@@ -48,26 +46,16 @@ const Users = () => {
         throw userRolesError;
       }
 
-      // Then, get user details from auth.users
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        throw authError;
-      }
+      // Transform the data into the expected format
+      const transformedUsers = userRolesData.map(userRole => ({
+        id: userRole.user_id,
+        username: userRole.user_id, // We'll only show the user ID for now since we can't access emails
+        role: userRole.roles?.name || 'No role',
+        lastLogin: '-' // We can't access last login time without admin privileges
+      }));
 
-      // Map and combine the data
-      return userRoles.map(ur => {
-        const authUser = authUsers.users.find(au => au.id === ur.user_id);
-        return {
-          id: ur.user_id,
-          username: authUser?.email || 'Unknown',
-          role: ur.roles?.name || 'No role',
-          lastLogin: authUser?.last_sign_in_at 
-            ? new Date(authUser.last_sign_in_at).toLocaleString('ar-SA') 
-            : '-'
-        };
-      }) as User[];
+      console.log('Transformed users:', transformedUsers);
+      return transformedUsers as User[];
     }
   });
 
