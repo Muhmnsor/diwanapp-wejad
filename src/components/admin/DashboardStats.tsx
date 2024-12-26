@@ -16,6 +16,14 @@ export const DashboardStats = ({
   eventDate,
   eventTime,
 }: DashboardStatsProps) => {
+  console.log("DashboardStats props:", {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    eventDate,
+    eventTime,
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>

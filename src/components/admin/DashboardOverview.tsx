@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { DashboardStats } from "./DashboardStats";
 
 interface DashboardOverviewProps {
@@ -16,6 +15,14 @@ export const DashboardOverview = ({
   eventDate,
   eventTime
 }: DashboardOverviewProps) => {
+  console.log("DashboardOverview props:", {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    eventDate,
+    eventTime
+  });
+
   return (
     <DashboardStats
       registrationCount={registrationCount}

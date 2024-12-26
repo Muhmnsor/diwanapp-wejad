@@ -5,9 +5,8 @@ import { toast } from "sonner";
 import { Registration } from "./types";
 import { DashboardOverview } from "./DashboardOverview";
 import { DashboardRegistrations } from "./DashboardRegistrations";
-import { Button } from "@/components/ui/button";
-import { EventReportForm } from "../events/EventReportForm";
 import { Card, CardContent } from "@/components/ui/card";
+import { EventReportForm } from "../events/EventReportForm";
 import { useState } from "react";
 
 export const EventDashboard = ({ eventId }: { eventId: string }) => {
@@ -22,36 +21,20 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         .from('events')
         .select('*')
         .eq('id', eventId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Error fetching event:', error);
         throw error;
       }
 
-      if (!data) {
-        console.error('Event not found:', eventId);
-        throw new Error('لم يتم العثور على الفعالية');
-      }
-
+      console.log('Event data fetched:', data);
       return data;
     },
-    retry: 3,
-    retryDelay: 1000,
-    meta: {
-      onError: (error: Error) => {
-        console.error('Error in event query:', error);
-        toast.error(error.message || "حدث خطأ في تحميل بيانات الفعالية");
-      }
-    }
   });
 
   // Fetch registrations
-  const { 
-    data: registrations = [], 
-    isLoading: registrationsLoading,
-    error: registrationsError 
-  } = useQuery({
+  const { data: registrations = [], isLoading: registrationsLoading } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
       console.log('Fetching registrations for event:', eventId);
@@ -64,17 +47,10 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         console.error('Error fetching registrations:', error);
         throw error;
       }
-      
-      return (data || []) as Registration[];
+
+      console.log('Registrations data fetched:', data);
+      return data as Registration[];
     },
-    retry: 3,
-    retryDelay: 1000,
-    meta: {
-      onError: (error: Error) => {
-        console.error('Error in registrations query:', error);
-        toast.error("حدث خطأ في تحميل بيانات المسجلين");
-      }
-    }
   });
 
   if (eventLoading || registrationsLoading) {
@@ -88,6 +64,14 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
   const registrationCount = registrations?.length || 0;
   const remainingSeats = event.max_attendees - registrationCount;
   const occupancyRate = (registrationCount / event.max_attendees) * 100;
+
+  console.log('Dashboard data calculated:', {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    eventDate: event.date,
+    eventTime: event.time
+  });
 
   return (
     <div className="space-y-6">
