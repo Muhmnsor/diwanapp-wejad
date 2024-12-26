@@ -16,5 +16,5 @@ export interface UserRoleResponse {
   roles: {
     name: string;
     description: string;
-  };
+  }[];
 }

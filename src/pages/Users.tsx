@@ -57,9 +57,11 @@ const Users = () => {
         throw userRolesError;
       }
 
-      // Create a map of user roles
+      // Create a map of user roles - take the first role if user has multiple
       const userRolesMap = (userRolesData as UserRoleResponse[]).reduce((acc, curr) => {
-        acc[curr.user_id] = curr.roles.name;
+        // If user has multiple roles, take the first one
+        const firstRole = curr.roles[0]?.name || 'No role';
+        acc[curr.user_id] = firstRole;
         return acc;
       }, {} as Record<string, string>);
 
