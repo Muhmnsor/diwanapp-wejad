@@ -41,6 +41,19 @@ export const EventDetailsView = ({
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await navigator.share({
+        title: event.title,
+        text: event.description,
+        url: window.location.href,
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast.error("حدث خطأ أثناء المشاركة");
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 space-y-6 max-w-4xl">
       <EventHeader 
@@ -53,6 +66,9 @@ export const EventDetailsView = ({
         onEdit={onEdit}
         onDelete={onDelete}
         onAddToCalendar={onAddToCalendar}
+        eventTitle={event.title}
+        eventDescription={event.description}
+        onShare={handleShare}
       />
       
       <EventContent 

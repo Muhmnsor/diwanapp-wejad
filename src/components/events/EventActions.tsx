@@ -7,13 +7,19 @@ interface EventActionsProps {
   onAddToCalendar: () => void;
   eventTitle?: string;
   eventDescription?: string;
+  isAdmin?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export const EventActions = ({ 
   onAddToCalendar, 
   eventTitle,
   eventDescription,
-  onShare
+  onShare,
+  isAdmin,
+  onEdit,
+  onDelete
 }: EventActionsProps) => {
   return (
     <div className="flex gap-2">
@@ -26,6 +32,20 @@ export const EventActions = ({
       <Button variant="outline" size="icon" onClick={onAddToCalendar}>
         <CalendarPlus className="h-4 w-4" />
       </Button>
+      {isAdmin && (
+        <>
+          {onEdit && (
+            <Button variant="outline" size="icon" onClick={onEdit}>
+              تعديل
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="destructive" size="icon" onClick={onDelete}>
+              حذف
+            </Button>
+          )}
+        </>
+      )}
     </div>
   );
 };

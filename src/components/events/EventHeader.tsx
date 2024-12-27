@@ -2,9 +2,15 @@ interface EventHeaderProps {
   title: string;
   showLogo?: boolean;
   logoUrl?: string;
+  imageUrl?: string;
 }
 
-export const EventHeader = ({ title, showLogo = true, logoUrl }: EventHeaderProps) => {
+export const EventHeader = ({ 
+  title, 
+  showLogo = true, 
+  logoUrl,
+  imageUrl 
+}: EventHeaderProps) => {
   return (
     <div className="bg-white shadow-sm mb-8">
       <div className="container mx-auto px-4 py-4">
@@ -14,6 +20,11 @@ export const EventHeader = ({ title, showLogo = true, logoUrl }: EventHeaderProp
             <img src={logoUrl} alt={title} className="h-16 w-auto" />
           )}
         </div>
+        {imageUrl && (
+          <div className="mt-4">
+            <img src={imageUrl} alt={title} className="w-full h-64 object-cover rounded-lg" />
+          </div>
+        )}
       </div>
     </div>
   );
