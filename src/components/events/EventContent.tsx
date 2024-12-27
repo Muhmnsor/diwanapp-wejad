@@ -6,6 +6,7 @@ import { EventBadges } from "./badges/EventBadges";
 import { useEffect, useState } from "react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useRegistrations } from "@/hooks/useRegistrations";
+import { toast } from "sonner";
 
 interface EventContentProps {
   event: Event;
@@ -13,18 +14,20 @@ interface EventContentProps {
 }
 
 export const EventContent = ({ event, onRegister }: EventContentProps) => {
-  const { data: registrationCounts } = useRegistrations();
+  const { data: registrationCounts, isError: isRegistrationsError } = useRegistrations();
   const [eventStatus, setEventStatus] = useState(() => getEventStatus(event));
 
   useEffect(() => {
     if (!event) {
-      console.log('No event data provided to EventContent');
+      console.error('EventContent - Critical: No event data provided');
+      toast.error("حدث خطأ في تحميل بيانات الفعالية");
       return;
     }
 
     const currentAttendees = registrationCounts?.[event.id] || 0;
     
-    console.log('Event data in content:', {
+    console.log('EventContent - Event data loaded:', {
+      id: event.id,
       title: event.title,
       date: event.date,
       registrationDates: {
@@ -41,14 +44,26 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       location_url: event.location_url
     });
 
+    if (isRegistrationsError) {
+      console.error('EventContent - Error fetching registrations data');
+      toast.error("حدث خطأ في تحميل بيانات التسجيلات");
+    }
+
     const newStatus = getEventStatus({
       ...event,
       attendees: currentAttendees
     });
     
-    console.log('Event status updated to:', newStatus);
+    console.log('EventContent - Status updated:', {
+      previousStatus: eventStatus,
+      newStatus: newStatus,
+      attendees: currentAttendees,
+      maxAttendees: event.max_attendees
+    });
+
     setEventStatus(newStatus);
   }, [
+    event?.id,
     event?.date, 
     event?.registrationStartDate, 
     event?.registrationEndDate,
@@ -64,12 +79,13 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     event?.event_type,
     event?.eventType,
     event?.price,
-    event?.id,
-    registrationCounts
+    registrationCounts,
+    isRegistrationsError,
+    eventStatus
   ]);
 
   if (!event) {
-    console.log('EventContent - No event data available');
+    console.error('EventContent - Rendering failed: No event data available');
     return null;
   }
 

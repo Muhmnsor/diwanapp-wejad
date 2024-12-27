@@ -31,29 +31,46 @@ const EventDetailsView = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Add a small delay to ensure proper loading state
+    console.log('EventDetailsView - Initial mount with event:', {
+      eventId: id,
+      eventData: event,
+      isAdmin
+    });
+
     const timer = setTimeout(() => {
       setIsLoading(false);
+      console.log('EventDetailsView - Loading state completed');
     }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (!event && !isLoading) {
-      setError("لم يتم العثور على الفعالية");
-      console.error("Event data is missing:", { id, event });
+    if (!isLoading) {
+      if (!event) {
+        console.error('EventDetailsView - Event data missing:', { id });
+        setError("لم يتم العثور على الفعالية");
+      } else {
+        console.log('EventDetailsView - Event data loaded successfully:', {
+          id: event.id,
+          title: event.title,
+          isAdmin
+        });
+      }
     }
   }, [event, isLoading, id]);
 
   const handleRegister = async () => {
     try {
       setIsRegistering(true);
-      console.log('Starting registration process for event:', event?.title);
+      console.log('EventDetailsView - Starting registration:', {
+        eventId: id,
+        eventTitle: event?.title
+      });
       
       navigate(`/events/${id}/register`);
     } catch (error) {
-      console.error('Error in registration:', error);
+      console.error('EventDetailsView - Registration error:', error);
       toast.error("حدث خطأ أثناء التسجيل");
     } finally {
       setIsRegistering(false);
@@ -62,7 +79,7 @@ const EventDetailsView = ({
 
   const handleShare = async () => {
     if (!event) {
-      console.error("Cannot share event: No event data");
+      console.error("EventDetailsView - Share failed: No event data");
       toast.error("حدث خطأ أثناء المشاركة");
       return;
     }
@@ -74,7 +91,7 @@ const EventDetailsView = ({
         url: window.location.href,
       });
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error('EventDetailsView - Share error:', error);
       toast.error("حدث خطأ أثناء المشاركة");
     }
   };
@@ -84,15 +101,9 @@ const EventDetailsView = ({
   }
 
   if (error || !event) {
+    console.log('EventDetailsView - Showing error state:', { error });
     return <EventNotFound message={error || "لم يتم العثور على الفعالية"} />;
   }
-
-  console.log('Rendering EventDetailsView with data:', {
-    title: event.title,
-    imageUrl: event.image_url || event.imageUrl,
-    isAdmin,
-    eventData: event
-  });
 
   return (
     <div className="container mx-auto px-4 space-y-6 max-w-4xl">
