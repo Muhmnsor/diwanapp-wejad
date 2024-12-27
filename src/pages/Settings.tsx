@@ -12,10 +12,10 @@ const Settings = () => {
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-3xl font-bold mb-8">الإعدادات</h1>
         <Tabs defaultValue="whatsapp" className="space-y-4">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="whatsapp">إعدادات الواتساب</TabsTrigger>
-            <TabsTrigger value="templates">قوالب الرسائل</TabsTrigger>
-            <TabsTrigger value="users">إدارة المستخدمين</TabsTrigger>
+          <TabsList className="w-full justify-stretch bg-secondary/50">
+            <TabsTrigger value="whatsapp" className="flex-1">إعدادات الواتساب</TabsTrigger>
+            <TabsTrigger value="templates" className="flex-1">قوالب الرسائل</TabsTrigger>
+            <TabsTrigger value="users" className="flex-1">إدارة المستخدمين</TabsTrigger>
           </TabsList>
           <TabsContent value="whatsapp">
             <WhatsAppSettings />
