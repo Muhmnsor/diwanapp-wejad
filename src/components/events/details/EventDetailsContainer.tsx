@@ -32,6 +32,12 @@ export const EventDetailsContainer = ({
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const navigate = useNavigate();
 
+  console.log('EventDetailsContainer received props:', {
+    event,
+    isAdmin,
+    id
+  });
+
   const handleDelete = async () => {
     try {
       await handleEventDeletion({
@@ -47,23 +53,21 @@ export const EventDetailsContainer = ({
   };
 
   const handleRegister = () => {
+    console.log('Opening registration dialog');
     setIsRegistrationOpen(true);
   };
 
-  const transformedEvent = {
-    ...event,
-    eventType: event.event_type,
-    certificateType: event.certificate_type,
-    eventHours: event.event_hours,
-    maxAttendees: event.max_attendees
-  };
+  if (!event) {
+    console.log('No event data provided to EventDetailsContainer');
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <EventContainer>
         <div className="flex-grow">
           <EventDetailsHeader
-            event={transformedEvent}
+            event={event}
             isAdmin={isAdmin}
             onEdit={onEdit}
             onDelete={() => setIsDeleteDialogOpen(true)}
@@ -71,7 +75,7 @@ export const EventDetailsContainer = ({
           />
 
           <EventDetailsContent 
-            event={transformedEvent}
+            event={event}
             onRegister={handleRegister}
           />
         </div>

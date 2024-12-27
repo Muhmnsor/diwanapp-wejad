@@ -21,8 +21,8 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
       title: event.title,
       date: event.date,
       registrationDates: {
-        start: event.registrationStartDate,
-        end: event.registrationEndDate
+        start: event.registrationStartDate || event.registration_start_date,
+        end: event.registrationEndDate || event.registration_end_date
       },
       attendees: event.attendees,
       maxAttendees: event.max_attendees,
@@ -40,6 +40,8 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
     event.date, 
     event.registrationStartDate, 
     event.registrationEndDate,
+    event.registration_start_date,
+    event.registration_end_date,
     event.attendees,
     event.max_attendees
   ]);
@@ -66,18 +68,21 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
           date={event.date}
           time={event.time}
           location={event.location}
+          location_url={event.location_url}
           attendees={event.attendees}
           maxAttendees={event.max_attendees}
-          eventType={event.eventType}
+          eventType={event.event_type || event.eventType}
           price={event.price}
-          beneficiaryType={event.beneficiaryType}
-          certificateType={event.certificateType}
-          eventHours={event.eventHours}
+          beneficiaryType={event.beneficiary_type || event.beneficiaryType}
+          certificateType={event.certificate_type || event.certificateType}
+          eventHours={event.event_hours || event.eventHours}
           eventPath={event.event_path}
           eventCategory={event.event_category}
         />
 
-        <EventDescription description={event.description} />
+        <div className="mt-8">
+          <EventDescription description={event.description} />
+        </div>
 
         <div className="mt-8">
           <EventRegisterButton 

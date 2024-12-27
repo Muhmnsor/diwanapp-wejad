@@ -18,20 +18,34 @@ const EventDetails = () => {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('No user logged in');
+        return;
+      }
 
-      const { data: userRoles } = await supabase
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('role_id')
         .eq('user_id', user.id);
 
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+        return;
+      }
+
       if (userRoles && userRoles.length > 0) {
-        const { data: roles } = await supabase
+        const { data: roles, error: roleError } = await supabase
           .from('roles')
           .select('name')
           .eq('id', userRoles[0].role_id)
           .single();
 
+        if (roleError) {
+          console.error('Error fetching role:', roleError);
+          return;
+        }
+
+        console.log('User role:', roles?.name);
         setIsAdmin(roles?.name === 'admin');
       }
     };
@@ -43,6 +57,7 @@ const EventDetails = () => {
     const fetchEvent = async () => {
       if (!id) {
         console.error('No event ID provided');
+        setLoading(false);
         return;
       }
 
@@ -50,24 +65,40 @@ const EventDetails = () => {
         console.log('Fetching event with ID:', id);
         const { data: eventData, error: eventError } = await supabase
           .from("events")
-          .select("*")
+          .select(`
+            *,
+            registrations (
+              id
+            )
+          `)
           .eq("id", id)
           .maybeSingle();
 
         if (eventError) {
           console.error("Error fetching event:", eventError);
           toast.error("حدث خطأ في جلب بيانات الفعالية");
+          setLoading(false);
           return;
         }
 
         if (!eventData) {
           console.log('No event found with ID:', id);
           toast.error("لم يتم العثور على الفعالية");
+          setLoading(false);
           return;
         }
 
         console.log('Event data fetched successfully:', eventData);
-        setEvent(eventData);
+        
+        // Calculate attendees count from registrations
+        const attendeesCount = eventData.registrations ? eventData.registrations.length : 0;
+        const eventWithAttendees = {
+          ...eventData,
+          attendees: attendeesCount
+        };
+        
+        console.log('Event with attendees count:', eventWithAttendees);
+        setEvent(eventWithAttendees);
       } catch (error) {
         console.error("Unexpected error:", error);
         toast.error("حدث خطأ غير متوقع");
@@ -105,6 +136,10 @@ const EventDetails = () => {
   const handleAddToCalendar = () => {
     toast.success("تمت إضافة الفعالية إلى التقويم");
   };
+
+  console.log('Current event state:', event);
+  console.log('Loading state:', loading);
+  console.log('Is admin:', isAdmin);
 
   return (
     <div className="min-h-screen flex flex-col">

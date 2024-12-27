@@ -17,7 +17,12 @@ export const EventDetailsHeader = ({
   onDelete,
   onAddToCalendar
 }: EventDetailsHeaderProps) => {
-  const imageUrl = event.imageUrl || event.image_url;
+  console.log('EventDetailsHeader received props:', {
+    event,
+    isAdmin
+  });
+
+  const imageUrl = event.image_url || event.imageUrl;
 
   return (
     <div className="bg-white rounded-t-2xl overflow-hidden">
