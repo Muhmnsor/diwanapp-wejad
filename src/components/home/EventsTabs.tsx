@@ -40,12 +40,12 @@ export const EventsTabs = ({
   };
 
   return (
-    <div className="container mx-auto px-4" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-center gap-2 md:gap-4 mb-8 space-y-2 md:space-y-0">
+    <div className="container mx-auto px-4 mt-12" dir="rtl">
+      <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-6 mb-12 space-y-3 md:space-y-0">
         <Button
           variant={activeTab === "upcoming" ? "default" : "outline"}
           onClick={() => setActiveTab("upcoming")}
-          className={`flex items-center gap-2 w-full md:w-auto ${isMobile ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
           size={isMobile ? "default" : "default"}
           title={isMobile ? "الفعاليات القادمة" : undefined}
         >
@@ -61,7 +61,7 @@ export const EventsTabs = ({
         <Button
           variant={activeTab === "all" ? "default" : "outline"}
           onClick={() => setActiveTab("all")}
-          className={`flex items-center gap-2 w-full md:w-auto ${isMobile ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
           size={isMobile ? "default" : "default"}
           title={isMobile ? "جميع الفعاليات" : undefined}
         >
@@ -77,7 +77,7 @@ export const EventsTabs = ({
         <Button
           variant={activeTab === "past" ? "default" : "outline"}
           onClick={() => setActiveTab("past")}
-          className={`flex items-center gap-2 w-full md:w-auto ${isMobile ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
           size={isMobile ? "default" : "default"}
           title={isMobile ? "الفعاليات السابقة" : undefined}
         >
