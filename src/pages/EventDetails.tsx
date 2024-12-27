@@ -34,12 +34,7 @@ const EventDetails = () => {
         
         const { data: eventData, error: fetchError } = await supabase
           .from("events")
-          .select(`
-            *,
-            registrations (
-              id
-            )
-          `)
+          .select("*")
           .eq("id", id)
           .maybeSingle();
 
@@ -58,8 +53,21 @@ const EventDetails = () => {
           return;
         }
 
-        console.log("Successfully fetched event data:", eventData);
-        setEvent(eventData);
+        // Get registrations count
+        const { count: registrationsCount } = await supabase
+          .from("registrations")
+          .select("*", { count: true, head: true })
+          .eq("event_id", id);
+
+        console.log("Successfully fetched event data:", { 
+          ...eventData, 
+          registrationsCount 
+        });
+
+        setEvent({
+          ...eventData,
+          attendees: registrationsCount || 0
+        });
         setError(null);
       } catch (err) {
         console.error("Unexpected error in fetchEvent:", err);
