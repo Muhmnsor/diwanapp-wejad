@@ -12,7 +12,7 @@ export const UsersManagement = () => {
 
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent className="pt-6" dir="rtl">
         <UsersHeader roles={roles} onUserCreated={refetchUsers} />
         <UsersTable users={users} onUserDeleted={refetchUsers} />
       </CardContent>
