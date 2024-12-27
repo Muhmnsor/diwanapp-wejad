@@ -4,7 +4,6 @@ import { EventContent } from "./EventContent";
 import { EventHeader } from "./EventHeader";
 import { EventActions } from "./EventActions";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface EventDetailsViewProps {
@@ -53,6 +52,17 @@ export const EventDetailsView = ({
       toast.error("حدث خطأ أثناء المشاركة");
     }
   };
+
+  if (!event) {
+    console.log('No event data provided to EventDetailsView');
+    return null;
+  }
+
+  console.log('Rendering EventDetailsView with data:', {
+    title: event.title,
+    imageUrl: event.image_url || event.imageUrl,
+    isAdmin
+  });
 
   return (
     <div className="container mx-auto px-4 space-y-6 max-w-4xl">
