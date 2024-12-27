@@ -38,7 +38,9 @@ const CreateEvent = () => {
     registrationStartDate: "",
     registrationEndDate: "",
     registration_start_date: "",
-    registration_end_date: ""
+    registration_end_date: "",
+    event_path: "environment",
+    event_category: "social"
   });
 
   useEffect(() => {
@@ -79,7 +81,9 @@ const CreateEvent = () => {
             registrationStartDate: event.registration_start_date || "",
             registrationEndDate: event.registration_end_date || "",
             registration_start_date: event.registration_start_date || "",
-            registration_end_date: event.registration_end_date || ""
+            registration_end_date: event.registration_end_date || "",
+            event_path: event.event_path || "environment",
+            event_category: event.event_category || "social"
           });
         }
       } catch (error) {
@@ -110,7 +114,9 @@ const CreateEvent = () => {
         event_type: formData.event_type,
         image_url: formData.image_url || formData.imageUrl,
         registration_start_date: formData.registration_start_date || formData.registrationStartDate,
-        registration_end_date: formData.registration_end_date || formData.registrationEndDate
+        registration_end_date: formData.registration_end_date || formData.registrationEndDate,
+        event_path: formData.event_path,
+        event_category: formData.event_category
       };
 
       let result;

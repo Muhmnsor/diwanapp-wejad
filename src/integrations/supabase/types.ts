@@ -251,7 +251,9 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          event_category: string
           event_hours: number | null
+          event_path: string
           event_type: string
           id: string
           image_url: string
@@ -270,7 +272,9 @@ export type Database = {
           created_at?: string
           date: string
           description?: string | null
+          event_category?: string
           event_hours?: number | null
+          event_path?: string
           event_type: string
           id?: string
           image_url: string
@@ -289,7 +293,9 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          event_category?: string
           event_hours?: number | null
+          event_path?: string
           event_type?: string
           id?: string
           image_url?: string

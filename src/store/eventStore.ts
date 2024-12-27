@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { BeneficiaryType } from '@/types/event';
+import { BeneficiaryType, EventPathType, EventCategoryType } from '@/types/event';
 
 export interface Event {
   id?: string;
@@ -26,6 +26,8 @@ export interface Event {
   certificateType?: string;
   event_hours: number;
   eventHours?: number;
+  event_path: EventPathType;
+  event_category: EventCategoryType;
 }
 
 interface EventStore {

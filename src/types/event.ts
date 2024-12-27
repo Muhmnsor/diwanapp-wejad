@@ -1,5 +1,11 @@
 export type BeneficiaryType = 'men' | 'women' | 'both';
 
+export type EventPathType = 'environment' | 'community' | 'content';
+export type EventCategoryType = 
+  | 'social' | 'entertainment' | 'service' | 'educational' | 'consulting' // for environment
+  | 'interest' | 'specialization' // for community
+  | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
+
 export interface EventType {
   id?: string;
   title: string;
@@ -24,4 +30,6 @@ export interface EventType {
   certificateType: string;
   event_hours: number | null;
   eventHours: number | null;
+  event_path: EventPathType;
+  event_category: EventCategoryType;
 }
