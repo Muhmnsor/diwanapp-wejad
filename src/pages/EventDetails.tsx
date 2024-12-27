@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import EventDetailsView from "@/components/events/EventDetailsView";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { EventLoadingState } from "@/components/events/EventLoadingState";
+import { EventDetailsContainer } from "@/components/events/details/EventDetailsContainer";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -117,13 +117,14 @@ const EventDetails = () => {
             لم يتم العثور على الفعالية
           </div>
         ) : (
-          <EventDetailsView
+          <EventDetailsContainer
             event={event}
             isAdmin={isAdmin}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onAddToCalendar={handleAddToCalendar}
             id={id!}
+            onRegister={() => navigate(`/events/${id}/register`)}
           />
         )}
       </main>
