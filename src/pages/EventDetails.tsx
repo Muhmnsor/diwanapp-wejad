@@ -18,39 +18,44 @@ const EventDetails = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  console.log('EventDetails - User:', user);
-
   useEffect(() => {
     const fetchEvent = async () => {
       try {
         if (!id) {
+          console.error('No event ID provided');
           setError("معرف الفعالية غير موجود");
+          setLoading(false);
           return;
         }
 
-        const { data, error: fetchError } = await supabase
+        console.log('Fetching event with ID:', id);
+        
+        const { data: eventData, error: fetchError } = await supabase
           .from("events")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
           console.error("Error fetching event:", fetchError);
           setError("حدث خطأ في جلب بيانات الفعالية");
+          setLoading(false);
           return;
         }
 
-        if (!data) {
+        if (!eventData) {
+          console.log('No event found with ID:', id);
           setError("الفعالية غير موجودة");
+          setLoading(false);
           return;
         }
 
-        console.log("Fetched event:", data);
-        setEvent(data);
+        console.log("Fetched event data:", eventData);
+        setEvent(eventData);
+        setLoading(false);
       } catch (err) {
         console.error("Error in fetchEvent:", err);
         setError("حدث خطأ غير متوقع");
-      } finally {
         setLoading(false);
       }
     };
@@ -83,7 +88,6 @@ const EventDetails = () => {
   }
 
   const isAdmin = user?.isAdmin;
-  console.log('EventDetails - isAdmin:', isAdmin);
 
   const handleEdit = () => {
     console.log("Edit event clicked");
@@ -110,7 +114,15 @@ const EventDetails = () => {
   };
 
   if (!event) {
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col">
+        <TopHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">لا توجد بيانات متاحة</div>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   if (!isAdmin) {
