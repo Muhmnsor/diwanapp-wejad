@@ -23,6 +23,8 @@ const EventDetails = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
+        console.log('Starting to fetch event with ID:', id);
+        
         if (!id) {
           console.error('No event ID provided');
           setError("معرف الفعالية غير موجود");
@@ -30,17 +32,18 @@ const EventDetails = () => {
           return;
         }
 
-        console.log('Fetching event with ID:', id);
-        
         const { data: eventData, error: fetchError } = await supabase
           .from("events")
           .select("*")
           .eq("id", id)
           .maybeSingle();
 
+        console.log('Fetch response:', { eventData, fetchError });
+
         if (fetchError) {
           console.error("Error fetching event:", fetchError);
-          setError("حدث خطأ في جلب بيانات الفعالية");
+          setError(fetchError.message);
+          toast.error("حدث خطأ في جلب بيانات الفعالية");
           setLoading(false);
           return;
         }
@@ -52,32 +55,34 @@ const EventDetails = () => {
           return;
         }
 
-        console.log("Fetched event data:", eventData);
+        console.log("Successfully fetched event data:", eventData);
         setEvent(eventData);
         setLoading(false);
+        setError(null);
       } catch (err) {
-        console.error("Error in fetchEvent:", err);
+        console.error("Unexpected error in fetchEvent:", err);
         setError("حدث خطأ غير متوقع");
+        toast.error("حدث خطأ غير متوقع");
         setLoading(false);
       }
     };
 
+    setLoading(true);
     fetchEvent();
   }, [id]);
 
   if (loading) {
+    console.log('Rendering loading state');
     return <EventLoadingState />;
   }
 
-  if (error) {
-    return <EventNotFound />;
-  }
-
-  if (!event) {
+  if (error || !event) {
+    console.log('Rendering error state:', error);
     return <EventNotFound />;
   }
 
   const isAdmin = user?.isAdmin;
+  console.log('Rendering event details with admin status:', isAdmin);
 
   const handleEdit = () => {
     console.log("Edit event clicked");
