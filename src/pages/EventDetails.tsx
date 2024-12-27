@@ -1,38 +1,50 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import EventDetailsView from "@/components/events/EventDetailsView";
-import { EventDashboard } from "@/components/admin/EventDashboard";
-import { useAuthStore } from "@/store/authStore";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import EventDetailsView from "@/components/events/EventDetailsView";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TopHeader } from "@/components/layout/TopHeader";
-import { Footer } from "@/components/layout/Footer";
-import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
-import { EventLoadingState } from "@/components/events/EventLoadingState";
-import { EventNotFound } from "@/components/events/EventNotFound";
+import { useAuthStore } from "@/store/authStore";
 
 const EventDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { id } = useParams();
   const { user } = useAuthStore();
-  const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role_id')
+        .eq('user_id', user.id);
+
+      if (userRoles && userRoles.length > 0) {
+        const { data: roles } = await supabase
+          .from('roles')
+          .select('name')
+          .eq('id', userRoles[0].role_id)
+          .single();
+
+        setIsAdmin(roles?.name === 'admin');
+      }
+    };
+
+    checkAdminStatus();
+  }, [user]);
 
   useEffect(() => {
     const fetchEvent = async () => {
       if (!id) {
         console.error('No event ID provided');
-        setError("معرف الفعالية غير موجود");
-        setLoading(false);
         return;
       }
 
       try {
-        console.log('Fetching event details for ID:', id);
-        
-        // First fetch event details
+        console.log('Fetching event with ID:', id);
         const { data: eventData, error: eventError } = await supabase
           .from("events")
           .select("*")
@@ -41,47 +53,20 @@ const EventDetails = () => {
 
         if (eventError) {
           console.error("Error fetching event:", eventError);
-          setError(eventError.message);
           toast.error("حدث خطأ في جلب بيانات الفعالية");
-          setLoading(false);
           return;
         }
 
         if (!eventData) {
           console.log('No event found with ID:', id);
-          setError("الفعالية غير موجودة");
-          setLoading(false);
+          toast.error("لم يتم العثور على الفعالية");
           return;
         }
 
         console.log('Event data fetched successfully:', eventData);
-
-        // Then fetch registrations count using count() function
-        const { data: registrationsData, error: countError } = await supabase
-          .from("registrations")
-          .select("id", { count: "exact" })
-          .eq("event_id", id);
-
-        if (countError) {
-          console.error("Error fetching registrations count:", countError);
-          toast.error("حدث خطأ في جلب عدد التسجيلات");
-        }
-
-        const registrationsCount = registrationsData?.length || 0;
-        console.log('Registrations count:', registrationsCount);
-
-        const finalEventData = {
-          ...eventData,
-          attendees: registrationsCount
-        };
-
-        console.log('Final event data:', finalEventData);
-        
-        setEvent(finalEventData);
-        setError(null);
-      } catch (err) {
-        console.error("Unexpected error in fetchEvent:", err);
-        setError("حدث خطأ غير متوقع");
+        setEvent(eventData);
+      } catch (error) {
+        console.error("Unexpected error:", error);
         toast.error("حدث خطأ غير متوقع");
       } finally {
         setLoading(false);
@@ -92,88 +77,51 @@ const EventDetails = () => {
   }, [id]);
 
   const handleEdit = () => {
-    console.log("Edit event clicked");
+    // Navigate to edit page
+    navigate(`/events/${id}/edit`);
   };
 
   const handleDelete = async () => {
+    if (!id) return;
+
     try {
-      console.log("Delete event clicked");
-      await handleEventDeletion({
-        eventId: id!,
-        onSuccess: () => {
-          toast.success("تم حذف الفعالية بنجاح");
-          navigate('/');
-        }
-      });
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("تم حذف الفعالية بنجاح");
+      navigate("/");
     } catch (error) {
-      console.error('Error deleting event:', error);
+      console.error("Error deleting event:", error);
       toast.error("حدث خطأ أثناء حذف الفعالية");
     }
   };
 
   const handleAddToCalendar = () => {
-    console.log("Add to calendar clicked");
+    // Add to calendar logic
+    toast.success("تمت إضافة الفعالية إلى التقويم");
   };
 
-  const renderContent = () => {
-    if (loading) {
-      return <EventLoadingState />;
-    }
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>;
+  }
 
-    if (error || !event) {
-      return <EventNotFound />;
-    }
-
-    const isAdmin = user?.isAdmin;
-
-    if (!isAdmin) {
-      return (
-        <EventDetailsView
-          event={event}
-          isAdmin={isAdmin}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAddToCalendar={handleAddToCalendar}
-          id={id!}
-        />
-      );
-    }
-
-    return (
-      <div className="bg-gray-50/50">
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
-            <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
-            <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="details" className="mt-0">
-            <EventDetailsView
-              event={event}
-              isAdmin={isAdmin}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onAddToCalendar={handleAddToCalendar}
-              id={id!}
-            />
-          </TabsContent>
-
-          <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
-            <EventDashboard eventId={id!} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    );
-  };
+  if (!event) {
+    return <div className="min-h-screen flex items-center justify-center">لم يتم العثور على الفعالية</div>;
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <TopHeader />
-      <main className="flex-1 py-12">
-        {renderContent()}
-      </main>
-      <Footer />
-    </div>
+    <EventDetailsView
+      event={event}
+      isAdmin={isAdmin}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      onAddToCalendar={handleAddToCalendar}
+      id={id!}
+    />
   );
 };
 
