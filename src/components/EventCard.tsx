@@ -5,6 +5,7 @@ import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect } from "react";
 import { EventCardContent } from "./events/cards/EventCardContent";
 import { getRegistrationStatusConfig } from "@/utils/eventStatusUtils";
+import { useRegistrations } from "@/hooks/useRegistrations";
 
 interface EventCardProps {
   id: string;
@@ -37,6 +38,8 @@ export const EventCard = ({
   certificate_type = 'none',
   event_hours = 0
 }: EventCardProps) => {
+  const { data: registrationCounts } = useRegistrations();
+  const currentAttendees = registrationCounts?.[id] || 0;
   
   const status = getEventStatus({
     date,
@@ -44,7 +47,8 @@ export const EventCard = ({
     max_attendees,
     registrationStartDate: registration_start_date,
     registrationEndDate: registration_end_date,
-    beneficiaryType: beneficiary_type
+    beneficiaryType: beneficiary_type,
+    attendees: currentAttendees
   } as any);
 
   const statusConfig = getRegistrationStatusConfig(status);
@@ -57,13 +61,15 @@ export const EventCard = ({
         hours: event_hours
       },
       max_attendees,
+      currentAttendees,
       registrationDates: {
         start: registration_start_date,
         end: registration_end_date
       },
-      beneficiaryType: beneficiary_type
+      beneficiaryType: beneficiary_type,
+      status
     });
-  }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type]);
+  }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type, currentAttendees, status]);
 
   return (
     <div className="w-[380px] sm:w-[460px] lg:w-[480px] mx-auto" dir="rtl">
