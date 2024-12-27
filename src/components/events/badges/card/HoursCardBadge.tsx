@@ -2,10 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
 
 interface HoursCardBadgeProps {
-  hours: number;
+  hours?: number;
 }
 
 export const HoursCardBadge = ({ hours }: HoursCardBadgeProps) => {
+  // تأكد من أن الساعات موجودة وأكبر من صفر
+  if (!hours || hours <= 0) return null;
+
   return (
     <Badge 
       variant="outline" 
