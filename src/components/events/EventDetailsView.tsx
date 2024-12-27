@@ -38,10 +38,27 @@ const EventDetailsView = ({
       try {
         console.log('Fetching event details for ID:', id);
         
-        // Fetch event details
+        // Fetch event details with explicit column selection
         const { data: eventData, error: eventError } = await supabase
           .from('events')
-          .select('*')
+          .select(`
+            id,
+            title,
+            description,
+            date,
+            time,
+            location,
+            location_url,
+            image_url,
+            event_type,
+            price,
+            max_attendees,
+            beneficiary_type,
+            certificate_type,
+            event_hours,
+            event_path,
+            event_category
+          `)
           .eq('id', id)
           .maybeSingle();
 
@@ -59,6 +76,8 @@ const EventDetailsView = ({
           return;
         }
 
+        console.log('Event data fetched:', eventData);
+
         // Fetch registration count
         const { count: registrationsCount, error: registrationsError } = await supabase
           .from('registrations')
@@ -72,13 +91,15 @@ const EventDetailsView = ({
           setRegistrationCount(registrationsCount || 0);
         }
 
-        // Update event with registration count
+        // Update event with registration count and ensure all fields are present
         const eventWithAttendees = {
           ...eventData,
-          attendees: registrationsCount || 0
+          attendees: registrationsCount || 0,
+          event_path: eventData.event_path || 'environment',
+          event_category: eventData.event_category || 'social'
         };
 
-        console.log('Setting event data:', eventWithAttendees);
+        console.log('Setting complete event data:', eventWithAttendees);
         setEvent(eventWithAttendees);
         setIsLoading(false);
         setError(null);
