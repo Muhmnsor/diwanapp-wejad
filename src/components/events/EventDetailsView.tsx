@@ -36,6 +36,7 @@ export const EventDetailsView = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
 
+  console.log('EventDetailsView - Current Event:', currentEvent);
   console.log('EventDetailsView - User:', user);
   console.log('EventDetailsView - isAdmin:', isAdmin);
 
@@ -70,18 +71,8 @@ export const EventDetailsView = ({
 
       if (error) throw error;
 
-      setCurrentEvent({ 
-        ...currentEvent, 
-        ...updatedEvent,
-        event_type: updatedEvent.event_type || updatedEvent.eventType,
-        beneficiary_type: updatedEvent.beneficiary_type || updatedEvent.beneficiaryType,
-        certificate_type: updatedEvent.certificate_type || updatedEvent.certificateType,
-        event_hours: updatedEvent.event_hours || updatedEvent.eventHours,
-        registration_start_date: updatedEvent.registration_start_date || updatedEvent.registrationStartDate,
-        registration_end_date: updatedEvent.registration_end_date || updatedEvent.registrationEndDate,
-        location_url: updatedEvent.location_url
-      });
-      
+      setCurrentEvent(updatedEvent);
+      onEdit();
       toast.success('تم تحديث الفعالية بنجاح');
     } catch (error) {
       console.error('Error updating event:', error);
@@ -109,7 +100,10 @@ export const EventDetailsView = ({
     }
   };
 
-  if (!currentEvent) return null;
+  if (!currentEvent) {
+    console.log('No current event available');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

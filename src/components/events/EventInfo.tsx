@@ -38,12 +38,17 @@ export const EventInfo = ({
   eventCategory
 }: EventInfoProps) => {
   console.log('EventInfo received props:', {
-    certificateType,
-    eventHours,
+    date,
+    time,
+    location,
+    location_url,
+    attendees,
+    maxAttendees,
     eventType,
     price,
     beneficiaryType,
-    location_url,
+    certificateType,
+    eventHours,
     eventPath,
     eventCategory
   });

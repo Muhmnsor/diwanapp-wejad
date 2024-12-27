@@ -19,23 +19,21 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
   useEffect(() => {
     const currentAttendees = registrationCounts?.[event.id] || 0;
     
-    console.log('Event data in content updated:', {
+    console.log('Event data in content:', {
       title: event.title,
       date: event.date,
       registrationDates: {
-        start: event.registrationStartDate,
-        end: event.registrationEndDate
+        start: event.registrationStartDate || event.registration_start_date,
+        end: event.registrationEndDate || event.registration_end_date
       },
       attendees: currentAttendees,
       maxAttendees: event.max_attendees,
-      certificateType: event.certificate_type,
-      eventHours: event.event_hours,
-      beneficiaryType: event.beneficiary_type,
-      eventType: event.event_type,
+      certificateType: event.certificate_type || event.certificateType,
+      eventHours: event.event_hours || event.eventHours,
+      beneficiaryType: event.beneficiary_type || event.beneficiaryType,
+      eventType: event.event_type || event.eventType,
       price: event.price,
-      location_url: event.location_url,
-      eventPath: event.event_path,
-      eventCategory: event.event_category
+      location_url: event.location_url
     });
 
     const newStatus = getEventStatus({
@@ -49,11 +47,17 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     event.date, 
     event.registrationStartDate, 
     event.registrationEndDate,
+    event.registration_start_date,
+    event.registration_end_date,
     event.max_attendees,
     event.certificate_type,
+    event.certificateType,
     event.event_hours,
+    event.eventHours,
     event.beneficiary_type,
+    event.beneficiaryType,
     event.event_type,
+    event.eventType,
     event.price,
     event.id,
     registrationCounts
@@ -63,11 +67,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
       <div className="py-8">
         <EventBadges
-          eventType={event.event_type}
+          eventType={event.event_type || event.eventType}
           price={event.price}
-          beneficiaryType={event.beneficiary_type}
-          certificateType={event.certificate_type}
-          eventHours={event.event_hours}
+          beneficiaryType={event.beneficiary_type || event.beneficiaryType}
+          certificateType={event.certificate_type || event.certificateType}
+          eventHours={event.event_hours || event.eventHours}
         />
       </div>
 
@@ -79,11 +83,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
           location_url={event.location_url}
           attendees={registrationCounts?.[event.id] || 0}
           maxAttendees={event.max_attendees}
-          eventType={event.event_type}
+          eventType={event.event_type || event.eventType}
           price={event.price}
-          beneficiaryType={event.beneficiary_type}
-          certificateType={event.certificate_type}
-          eventHours={event.event_hours}
+          beneficiaryType={event.beneficiary_type || event.beneficiaryType}
+          certificateType={event.certificate_type || event.certificateType}
+          eventHours={event.event_hours || event.eventHours}
           showBadges={false}
           eventPath={event.event_path}
           eventCategory={event.event_category}
