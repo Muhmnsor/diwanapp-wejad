@@ -56,10 +56,10 @@ const EventDetails = () => {
 
         console.log('Event data fetched successfully:', eventData);
 
-        // Then fetch registrations count
-        const { count: registrationsCount, error: countError } = await supabase
+        // Then fetch registrations count using count() function
+        const { data: registrationsData, error: countError } = await supabase
           .from("registrations")
-          .select("*", { count: true, head: true })
+          .select("id", { count: "exact" })
           .eq("event_id", id);
 
         if (countError) {
@@ -67,11 +67,12 @@ const EventDetails = () => {
           toast.error("حدث خطأ في جلب عدد التسجيلات");
         }
 
+        const registrationsCount = registrationsData?.length || 0;
         console.log('Registrations count:', registrationsCount);
 
         const finalEventData = {
           ...eventData,
-          attendees: registrationsCount || 0
+          attendees: registrationsCount
         };
 
         console.log('Final event data:', finalEventData);
