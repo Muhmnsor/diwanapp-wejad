@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Event } from "@/store/eventStore";
 import { EventFormActions } from "@/components/events/form/EventFormActions";
-import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { useQueryClient } from "@tanstack/react-query";
 
 const CreateEvent = () => {
@@ -146,8 +145,31 @@ const CreateEvent = () => {
     }
   };
 
-  const handleImageChange = async (file: File) => {
-    await handleImageUpload(file, setIsUploading, setFormData);
+  const handleImageChange = async (file: File | null) => {
+    if (file) {
+      setIsUploading(true);
+      try {
+        const fileName = `event-images/${Date.now()}.${file.name.split('.').pop()}`;
+        const { error: uploadError, data } = await supabase.storage
+          .from('event-images')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const imageUrl = `${supabase.storageUrl}/object/public/event-images/${fileName}`;
+        setFormData(prev => ({
+          ...prev,
+          imageUrl: imageUrl,
+          image_url: imageUrl
+        }));
+
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error("حدث خطأ أثناء رفع الصورة");
+      } finally {
+        setIsUploading(false);
+      }
+    }
   };
 
   return (
