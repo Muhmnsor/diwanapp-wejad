@@ -34,7 +34,12 @@ const EventDetails = () => {
         
         const { data: eventData, error: fetchError } = await supabase
           .from("events")
-          .select("*")
+          .select(`
+            *,
+            registrations (
+              id
+            )
+          `)
           .eq("id", id)
           .maybeSingle();
 
@@ -65,7 +70,9 @@ const EventDetails = () => {
       }
     };
 
-    fetchEvent();
+    if (id) {
+      fetchEvent();
+    }
   }, [id]);
 
   const handleEdit = () => {
