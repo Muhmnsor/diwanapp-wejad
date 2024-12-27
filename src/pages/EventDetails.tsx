@@ -32,10 +32,13 @@ const EventDetails = () => {
       try {
         console.log('Starting to fetch event with ID:', id);
         
-        // First, fetch the event details
+        // Fetch event details with a single query
         const { data: eventData, error: fetchError } = await supabase
           .from("events")
-          .select("*")
+          .select(`
+            *,
+            registrations:registrations(count)
+          `)
           .eq("id", id)
           .maybeSingle();
 
@@ -54,26 +57,11 @@ const EventDetails = () => {
           return;
         }
 
-        // Then, get the registrations count separately
-        const { data: registrationsData, error: countError } = await supabase
-          .from("registrations")
-          .select("id")
-          .eq("event_id", id);
-
-        if (countError) {
-          console.error("Error fetching registrations count:", countError);
-        }
-
-        const registrationsCount = registrationsData?.length || 0;
-
-        console.log("Successfully fetched event data:", { 
-          ...eventData, 
-          registrationsCount 
-        });
+        console.log("Successfully fetched event data:", eventData);
 
         setEvent({
           ...eventData,
-          attendees: registrationsCount
+          attendees: eventData.registrations?.[0]?.count || 0
         });
         setError(null);
       } catch (err) {

@@ -93,7 +93,7 @@ export const EventCard = ({
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button asChild className="w-full" size="sm">
-            <Link to={`/event/${id}`}>عرض التفاصيل</Link>
+            <Link to={`/events/${id}`}>عرض التفاصيل</Link>
           </Button>
         </CardFooter>
       </Card>
