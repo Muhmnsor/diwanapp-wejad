@@ -52,7 +52,7 @@ const EventDetails = () => {
           .from("events")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (eventError) {
           console.error("Error fetching event:", eventError);

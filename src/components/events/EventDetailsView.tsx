@@ -61,7 +61,8 @@ const EventDetailsView = ({
   console.log('Rendering EventDetailsView with data:', {
     title: event.title,
     imageUrl: event.image_url || event.imageUrl,
-    isAdmin
+    isAdmin,
+    eventData: event
   });
 
   return (
