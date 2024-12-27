@@ -99,6 +99,15 @@ export const EventInfo = ({
         eventPath={eventPath ? formatEventPath(eventPath) : undefined}
         eventCategory={eventCategory ? formatEventCategory(eventCategory) : undefined}
       />
+      
+      {eventPath && eventCategory && (
+        <div className="flex items-center gap-2 text-gray-600 text-sm">
+          <span>التصنيف:</span>
+          <span className="font-semibold">{formatEventPath(eventPath)}</span>
+          <span className="mx-1">\</span>
+          <span className="font-semibold">{formatEventCategory(eventCategory)}</span>
+        </div>
+      )}
     </div>
   );
 };
