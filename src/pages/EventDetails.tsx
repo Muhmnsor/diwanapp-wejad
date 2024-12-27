@@ -71,7 +71,24 @@ const EventDetails = () => {
         console.log('Fetching event with ID:', id);
         const { data: eventData, error: eventError } = await supabase
           .from("events")
-          .select("*")
+          .select(`
+            id,
+            title,
+            description,
+            date,
+            time,
+            location,
+            location_url,
+            image_url,
+            event_type,
+            price,
+            max_attendees,
+            beneficiary_type,
+            certificate_type,
+            event_hours,
+            event_path,
+            event_category
+          `)
           .eq("id", id)
           .maybeSingle();
 
@@ -103,7 +120,9 @@ const EventDetails = () => {
 
         const eventWithAttendees = {
           ...eventData,
-          attendees: registrationsCount || 0
+          attendees: registrationsCount || 0,
+          event_path: eventData.event_path || 'environment',
+          event_category: eventData.event_category || 'social'
         };
 
         console.log('Event with attendees:', eventWithAttendees);
