@@ -51,20 +51,20 @@ export const useDashboardData = () => {
 
       // Group events by type and beneficiary with explicit number type
       const eventsByType: ChartData[] = Object.entries(
-        events.reduce((acc: {[key: string]: number}, event) => {
+        events.reduce((acc: Record<string, number>, event) => {
           const count = (acc[event.event_type] || 0) + 1;
           acc[event.event_type] = count;
           return acc;
-        }, {} as Record<string, number>)
-      ).map(([name, value]): ChartData => ({ name, value }));
+        }, {})
+      ).map(([name, value]) => ({ name, value: value as number }));
 
       const eventsByBeneficiary: ChartData[] = Object.entries(
-        events.reduce((acc: {[key: string]: number}, event) => {
+        events.reduce((acc: Record<string, number>, event) => {
           const count = (acc[event.beneficiary_type] || 0) + 1;
           acc[event.beneficiary_type] = count;
           return acc;
-        }, {} as Record<string, number>)
-      ).map(([name, value]): ChartData => ({ name, value }));
+        }, {})
+      ).map(([name, value]) => ({ name, value: value as number }));
 
       console.log("✅ تم تحميل إحصائيات لوحة المعلومات بنجاح");
 
