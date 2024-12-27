@@ -58,7 +58,10 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         imageUrl = publicUrl;
       }
 
-      // Prepare the event data for saving with both snake_case and camelCase fields
+      // Convert price to proper format for database
+      const price = formData.price === "free" ? null : formData.price;
+
+      // Prepare the event data for saving
       const eventToSave: Event = {
         ...formData,
         image_url: imageUrl,
@@ -75,6 +78,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         registrationStartDate: formData.registrationStartDate || formData.registration_start_date,
         registration_end_date: formData.registrationEndDate || formData.registration_end_date,
         registrationEndDate: formData.registrationEndDate || formData.registration_end_date,
+        price: price // Use the converted price
       };
 
       // Call the parent's onSave function
