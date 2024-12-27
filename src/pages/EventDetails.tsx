@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import EventDetailsView from "@/components/events/EventDetailsView";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
+import { TopHeader } from "@/components/layout/TopHeader";
+import { Footer } from "@/components/layout/Footer";
+import { EventLoadingState } from "@/components/events/EventLoadingState";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -77,7 +80,6 @@ const EventDetails = () => {
   }, [id]);
 
   const handleEdit = () => {
-    // Navigate to edit page
     navigate(`/events/${id}/edit`);
   };
 
@@ -101,27 +103,32 @@ const EventDetails = () => {
   };
 
   const handleAddToCalendar = () => {
-    // Add to calendar logic
     toast.success("تمت إضافة الفعالية إلى التقويم");
   };
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">جاري التحميل...</div>;
-  }
-
-  if (!event) {
-    return <div className="min-h-screen flex items-center justify-center">لم يتم العثور على الفعالية</div>;
-  }
-
   return (
-    <EventDetailsView
-      event={event}
-      isAdmin={isAdmin}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      onAddToCalendar={handleAddToCalendar}
-      id={id!}
-    />
+    <div className="min-h-screen flex flex-col">
+      <TopHeader />
+      <main className="flex-grow">
+        {loading ? (
+          <EventLoadingState />
+        ) : !event ? (
+          <div className="container mx-auto px-4 py-8 text-center">
+            لم يتم العثور على الفعالية
+          </div>
+        ) : (
+          <EventDetailsView
+            event={event}
+            isAdmin={isAdmin}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onAddToCalendar={handleAddToCalendar}
+            id={id!}
+          />
+        )}
+      </main>
+      <Footer />
+    </div>
   );
 };
 
