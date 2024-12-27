@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, MapPin, Monitor, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Monitor, Users, Tag } from "lucide-react";
 import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,8 @@ interface EventDetailsProps {
   eventType: "online" | "in-person";
   attendees: number | Array<any>;
   maxAttendees: number;
+  eventPath?: string;
+  eventCategory?: string;
 }
 
 export const EventDetails = ({
@@ -22,7 +24,9 @@ export const EventDetails = ({
   location_url,
   eventType,
   attendees,
-  maxAttendees = 0
+  maxAttendees = 0,
+  eventPath,
+  eventCategory
 }: EventDetailsProps) => {
   const eventId = window.location.pathname.split('/').pop();
   
@@ -121,6 +125,16 @@ export const EventDetails = ({
           {`${attendeesCount} من ${maxAttendees} مشارك`}
         </span>
       </div>
+      {eventPath && eventCategory && (
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            <Tag className="h-5 w-5 text-primary" />
+          </div>
+          <span className="text-[#1A1F2C]" dir="rtl">
+            {eventPath} - {eventCategory}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

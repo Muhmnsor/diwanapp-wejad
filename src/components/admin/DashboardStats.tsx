@@ -7,6 +7,8 @@ interface DashboardStatsProps {
   occupancyRate: number;
   eventDate: string;
   eventTime: string;
+  eventPath?: string;
+  eventCategory?: string;
 }
 
 export const DashboardStats = ({
@@ -15,6 +17,8 @@ export const DashboardStats = ({
   occupancyRate,
   eventDate,
   eventTime,
+  eventPath,
+  eventCategory,
 }: DashboardStatsProps) => {
   console.log("DashboardStats props:", {
     registrationCount,
@@ -22,7 +26,39 @@ export const DashboardStats = ({
     occupancyRate,
     eventDate,
     eventTime,
+    eventPath,
+    eventCategory,
   });
+
+  const formatEventPath = (path?: string) => {
+    if (!path) return '';
+    const pathMap: Record<string, string> = {
+      'environment': 'البيئة',
+      'community': 'المجتمع',
+      'content': 'المحتوى'
+    };
+    return pathMap[path] || path;
+  };
+
+  const formatEventCategory = (category?: string) => {
+    if (!category) return '';
+    const categoryMap: Record<string, string> = {
+      'social': 'اجتماعي',
+      'entertainment': 'ترفيهي',
+      'service': 'خدمي',
+      'educational': 'تعليمي',
+      'consulting': 'استشاري',
+      'interest': 'اهتمام',
+      'specialization': 'تخصص',
+      'spiritual': 'روحي',
+      'cultural': 'ثقافي',
+      'behavioral': 'سلوكي',
+      'skill': 'مهاري',
+      'health': 'صحي',
+      'diverse': 'متنوع'
+    };
+    return categoryMap[category] || category;
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -46,6 +82,11 @@ export const DashboardStats = ({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{occupancyRate.toFixed(1)}%</div>
+          {eventPath && eventCategory && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {formatEventPath(eventPath)} - {formatEventCategory(eventCategory)}
+            </p>
+          )}
         </CardContent>
       </Card>
 

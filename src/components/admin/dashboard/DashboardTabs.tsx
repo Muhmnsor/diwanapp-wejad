@@ -13,6 +13,8 @@ interface DashboardTabsProps {
   registrations: any[];
   eventTitle: string;
   eventId: string;
+  eventPath?: string;
+  eventCategory?: string;
 }
 
 export const DashboardTabs = ({
@@ -22,6 +24,8 @@ export const DashboardTabs = ({
   eventDate,
   eventTime,
   eventId,
+  eventPath,
+  eventCategory,
 }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
@@ -59,6 +63,8 @@ export const DashboardTabs = ({
           occupancyRate={occupancyRate}
           eventDate={eventDate}
           eventTime={eventTime}
+          eventPath={eventPath}
+          eventCategory={eventCategory}
         />
       </TabsContent>
 

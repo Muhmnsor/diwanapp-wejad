@@ -15,6 +15,8 @@ interface EventInfoProps {
   certificateType?: string;
   eventHours?: number;
   showBadges?: boolean;
+  eventPath?: string;
+  eventCategory?: string;
 }
 
 export const EventInfo = ({ 
@@ -29,7 +31,9 @@ export const EventInfo = ({
   beneficiaryType,
   certificateType,
   eventHours,
-  showBadges = true
+  showBadges = true,
+  eventPath,
+  eventCategory
 }: EventInfoProps) => {
   console.log('EventInfo received props:', {
     certificateType,
@@ -37,8 +41,40 @@ export const EventInfo = ({
     eventType,
     price,
     beneficiaryType,
-    location_url
+    location_url,
+    eventPath,
+    eventCategory
   });
+
+  const formatEventPath = (path?: string) => {
+    if (!path) return '';
+    const pathMap: Record<string, string> = {
+      'environment': 'البيئة',
+      'community': 'المجتمع',
+      'content': 'المحتوى'
+    };
+    return pathMap[path] || path;
+  };
+
+  const formatEventCategory = (category?: string) => {
+    if (!category) return '';
+    const categoryMap: Record<string, string> = {
+      'social': 'اجتماعي',
+      'entertainment': 'ترفيهي',
+      'service': 'خدمي',
+      'educational': 'تعليمي',
+      'consulting': 'استشاري',
+      'interest': 'اهتمام',
+      'specialization': 'تخصص',
+      'spiritual': 'روحي',
+      'cultural': 'ثقافي',
+      'behavioral': 'سلوكي',
+      'skill': 'مهاري',
+      'health': 'صحي',
+      'diverse': 'متنوع'
+    };
+    return categoryMap[category] || category;
+  };
 
   return (
     <div className="space-y-8">
@@ -60,6 +96,8 @@ export const EventInfo = ({
         eventType={eventType}
         attendees={attendees}
         maxAttendees={maxAttendees}
+        eventPath={eventPath ? formatEventPath(eventPath) : undefined}
+        eventCategory={eventCategory ? formatEventCategory(eventCategory) : undefined}
       />
     </div>
   );
