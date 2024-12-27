@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Plus, Settings, Home } from "lucide-react";
+import { Plus, Settings, Home, LayoutDashboard } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Navigation = () => {
@@ -33,6 +33,21 @@ export const Navigation = () => {
       </Link>
       {user?.isAdmin && (
         <>
+          <Link
+            to="/dashboard"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary",
+              isActive("/dashboard")
+                ? "text-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            {isMobile ? (
+              <LayoutDashboard className="h-4 w-4" />
+            ) : (
+              "لوحة المعلومات"
+            )}
+          </Link>
           <Link
             to="/settings"
             className={cn(

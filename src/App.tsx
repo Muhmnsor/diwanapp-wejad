@@ -4,9 +4,10 @@ import Login from "./pages/Login";
 import CreateEvent from "./pages/CreateEvent";
 import EventDetails from "./pages/EventDetails";
 import Settings from "./pages/Settings";
-import Users from "./pages/Users";
+import Dashboard from "./pages/Dashboard";
 import EventFeedback from "./pages/EventFeedback";
 import { Toaster } from "./components/ui/toaster";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
 function App() {
@@ -15,11 +16,32 @@ function App() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/create-event" element={<CreateEvent />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-event"
+          element={
+            <ProtectedRoute>
+              <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/event/:id" element={<EventDetails />} />
         <Route path="/event/:id/feedback" element={<EventFeedback />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/users" element={<Users />} />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
       <Toaster />
     </Router>
