@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Event } from "@/store/eventStore";
 import { EventContent } from "./EventContent";
 import { EventHeader } from "./EventHeader";
 import { EventActions } from "./EventActions";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { EventLoadingState } from "./EventLoadingState";
+import { EventNotFound } from "./EventNotFound";
 
 interface EventDetailsViewProps {
-  event: Event;
+  event: Event | null;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -25,11 +27,29 @@ const EventDetailsView = ({
 }: EventDetailsViewProps) => {
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Add a small delay to ensure proper loading state
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!event && !isLoading) {
+      setError("لم يتم العثور على الفعالية");
+      console.error("Event data is missing:", { id, event });
+    }
+  }, [event, isLoading, id]);
 
   const handleRegister = async () => {
     try {
       setIsRegistering(true);
-      console.log('Starting registration process for event:', event.title);
+      console.log('Starting registration process for event:', event?.title);
       
       navigate(`/events/${id}/register`);
     } catch (error) {
@@ -41,6 +61,12 @@ const EventDetailsView = ({
   };
 
   const handleShare = async () => {
+    if (!event) {
+      console.error("Cannot share event: No event data");
+      toast.error("حدث خطأ أثناء المشاركة");
+      return;
+    }
+
     try {
       await navigator.share({
         title: event.title,
@@ -53,9 +79,12 @@ const EventDetailsView = ({
     }
   };
 
-  if (!event) {
-    console.log('No event data provided to EventDetailsView');
-    return null;
+  if (isLoading) {
+    return <EventLoadingState />;
+  }
+
+  if (error || !event) {
+    return <EventNotFound message={error || "لم يتم العثور على الفعالية"} />;
   }
 
   console.log('Rendering EventDetailsView with data:', {
