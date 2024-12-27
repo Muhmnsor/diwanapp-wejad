@@ -56,6 +56,11 @@ export const EventInfo = ({
   const formattedPath = eventPath ? formatEventPath(eventPath) : undefined;
   const formattedCategory = eventCategory ? formatEventCategory(eventCategory) : undefined;
 
+  if (!date || !time || !location) {
+    console.error('EventInfo - Missing required props:', { date, time, location });
+    return null;
+  }
+
   return (
     <div className="space-y-8">
       {showBadges && (
