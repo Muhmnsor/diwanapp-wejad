@@ -21,6 +21,6 @@ export interface EventType {
   registration_end_date?: string | null;
   certificate_type: string;
   certificateType: string;
-  event_hours: number;
-  eventHours: number;
+  event_hours: number | null;
+  eventHours: number | null;
 }

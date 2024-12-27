@@ -7,7 +7,7 @@ interface EventBadgesProps {
   price: number | "free" | null;
   beneficiaryType: BeneficiaryType;
   certificateType?: string;
-  eventHours?: number;
+  eventHours?: number | null;
 }
 
 export const EventBadges = ({
@@ -52,7 +52,6 @@ export const EventBadges = ({
   };
 
   const shouldShowCertificate = certificateType && certificateType !== 'none';
-  // تم تعديل الشرط هنا ليتأكد من أن عدد الساعات أكبر من صفر وأن نوع الشهادة موجود
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
   return (
