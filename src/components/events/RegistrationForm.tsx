@@ -32,6 +32,9 @@ export const RegistrationForm = ({
     name: "",
     email: "",
     phone: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
   });
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registrationId, setRegistrationId] = useState("");
@@ -52,6 +55,27 @@ export const RegistrationForm = ({
     }
 
     return data && data.length > 0;
+  };
+
+  const processPayment = async (registrationData: any) => {
+    // Here we would integrate with a real payment gateway
+    // For now, we'll simulate a successful payment
+    const { error: paymentError } = await supabase
+      .from('payment_transactions')
+      .insert({
+        registration_id: registrationData.id,
+        amount: eventPrice,
+        status: 'completed', // In real implementation, this would be 'pending' until confirmed
+        payment_method: 'card',
+        payment_gateway: 'local_gateway'
+      });
+
+    if (paymentError) {
+      console.error('Error processing payment:', paymentError);
+      throw paymentError;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,20 +115,11 @@ export const RegistrationForm = ({
         throw registrationError;
       }
 
-      // If this is a paid event, create a payment transaction
+      // If this is a paid event, process the payment
       if (eventPrice !== "free" && eventPrice !== null) {
-        const { error: paymentError } = await supabase
-          .from('payment_transactions')
-          .insert({
-            registration_id: registrationData.id,
-            amount: eventPrice,
-            status: 'pending',
-            payment_gateway: 'local_gateway'
-          });
-
-        if (paymentError) {
-          console.error('Error creating payment transaction:', paymentError);
-          throw paymentError;
+        const paymentSuccess = await processPayment(registrationData);
+        if (!paymentSuccess) {
+          throw new Error('Payment processing failed');
         }
       }
 
@@ -149,7 +164,7 @@ export const RegistrationForm = ({
             formData={formData}
             setFormData={setFormData}
             eventPrice={eventPrice}
-            showPaymentNote={isPaidEvent}
+            showPaymentFields={isPaidEvent}
           />
           <Button 
             type="submit" 
