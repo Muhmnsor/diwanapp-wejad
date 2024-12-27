@@ -10,12 +10,14 @@ interface RegistrationFormInputsProps {
   };
   setFormData: (data: any) => void;
   eventPrice: number | "free";
+  showPaymentNote?: boolean;
 }
 
 export const RegistrationFormInputs = ({
   formData,
   setFormData,
   eventPrice,
+  showPaymentNote = false
 }: RegistrationFormInputsProps) => {
   const [errors, setErrors] = useState({
     name: "",
@@ -42,7 +44,6 @@ export const RegistrationFormInputs = ({
   };
 
   const validatePhone = (value: string) => {
-    // Allow typing but show error if format is incorrect
     if (value && !/^05\d{8}$/.test(value)) {
       setErrors(prev => ({ ...prev, phone: "الرجاء إدخال رقم جوال صحيح يبدأ ب 05" }));
       return false;
@@ -65,7 +66,6 @@ export const RegistrationFormInputs = ({
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow only numbers and limit to 10 digits
     if (value === '' || /^\d{0,10}$/.test(value)) {
       setFormData({ ...formData, phone: value });
       validatePhone(value);
@@ -116,11 +116,11 @@ export const RegistrationFormInputs = ({
         {errors.phone && <p className="text-sm text-red-500 text-right">{errors.phone}</p>}
       </div>
       
-      {eventPrice !== "free" && (
+      {eventPrice !== "free" && showPaymentNote && (
         <div className="bg-muted p-4 rounded-lg">
           <p className="text-center mb-2">رسوم التسجيل: {eventPrice} ريال</p>
           <p className="text-sm text-muted-foreground text-center">
-            سيتم تحويلك إلى صفحة الدفع بعد تأكيد التسجيل
+            سيتم إكمال عملية الدفع في الخطوة التالية
           </p>
         </div>
       )}

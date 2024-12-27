@@ -73,7 +73,8 @@ export const RegistrationForm = ({
 
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      const { error } = await supabase
+      // Create registration
+      const { data: registrationData, error: registrationError } = await supabase
         .from('registrations')
         .insert({
           event_id: eventId,
@@ -81,16 +82,30 @@ export const RegistrationForm = ({
           email: formData.email,
           phone: formData.phone,
           registration_number: uniqueId
-        });
+        })
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Error submitting registration:', error);
-        toast({
-          variant: "destructive",
-          title: "حدث خطأ",
-          description: "لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى",
-        });
-        return;
+      if (registrationError) {
+        console.error('Error submitting registration:', registrationError);
+        throw registrationError;
+      }
+
+      // If this is a paid event, create a payment transaction
+      if (eventPrice !== "free") {
+        const { error: paymentError } = await supabase
+          .from('payment_transactions')
+          .insert({
+            registration_id: registrationData.id,
+            amount: eventPrice,
+            status: 'pending',
+            payment_gateway: 'local_gateway'
+          });
+
+        if (paymentError) {
+          console.error('Error creating payment transaction:', paymentError);
+          throw paymentError;
+        }
       }
 
       await queryClient.invalidateQueries({ queryKey: ['registrations', eventId] });
@@ -112,13 +127,6 @@ export const RegistrationForm = ({
     }
   };
 
-  const handlePayment = () => {
-    toast({
-      title: "جاري تحويلك لبوابة الدفع",
-      description: "يرجى الانتظار...",
-    });
-  };
-
   return (
     <>
       {!isRegistered && (
@@ -127,6 +135,7 @@ export const RegistrationForm = ({
             formData={formData}
             setFormData={setFormData}
             eventPrice={eventPrice}
+            showPaymentNote={eventPrice !== "free"}
           />
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "جاري التسجيل..." : "تأكيد التسجيل"}
@@ -144,7 +153,7 @@ export const RegistrationForm = ({
         eventTime={eventTime}
         eventLocation={eventLocation}
         formData={formData}
-        onPayment={handlePayment}
+        onPayment={() => {}}
       />
     </>
   );
