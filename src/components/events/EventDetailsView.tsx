@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventContent } from "./EventContent";
 import { EventHeader } from "./EventHeader";
