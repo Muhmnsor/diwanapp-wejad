@@ -1,6 +1,8 @@
 import { EventBadges } from "./badges/EventBadges";
 import { EventDetails } from "./details/EventDetails";
 import { BeneficiaryType } from "@/types/event";
+import { formatEventPath, formatEventCategory } from "./formatters/eventFormatters";
+import { EventClassification } from "./details/EventClassification";
 
 interface EventInfoProps {
   date: string;
@@ -46,35 +48,8 @@ export const EventInfo = ({
     eventCategory
   });
 
-  const formatEventPath = (path?: string) => {
-    if (!path) return '';
-    const pathMap: Record<string, string> = {
-      'environment': 'البيئة',
-      'community': 'المجتمع',
-      'content': 'المحتوى'
-    };
-    return pathMap[path] || path;
-  };
-
-  const formatEventCategory = (category?: string) => {
-    if (!category) return '';
-    const categoryMap: Record<string, string> = {
-      'social': 'اجتماعي',
-      'entertainment': 'ترفيهي',
-      'service': 'خدمي',
-      'educational': 'تعليمي',
-      'consulting': 'استشاري',
-      'interest': 'اهتمام',
-      'specialization': 'تخصص',
-      'spiritual': 'روحي',
-      'cultural': 'ثقافي',
-      'behavioral': 'سلوكي',
-      'skill': 'مهاري',
-      'health': 'صحي',
-      'diverse': 'متنوع'
-    };
-    return categoryMap[category] || category;
-  };
+  const formattedPath = eventPath ? formatEventPath(eventPath) : undefined;
+  const formattedCategory = eventCategory ? formatEventCategory(eventCategory) : undefined;
 
   return (
     <div className="space-y-8">
@@ -100,17 +75,13 @@ export const EventInfo = ({
         beneficiaryType={beneficiaryType}
         certificateType={certificateType}
         eventHours={eventHours}
-        eventPath={eventPath ? formatEventPath(eventPath) : undefined}
-        eventCategory={eventCategory ? formatEventCategory(eventCategory) : undefined}
       />
       
       {eventPath && eventCategory && (
-        <div className="flex items-center gap-2 text-gray-600 text-sm">
-          <span>التصنيف:</span>
-          <span className="font-semibold">{formatEventPath(eventPath)}</span>
-          <span className="mx-1">\</span>
-          <span className="font-semibold">{formatEventCategory(eventCategory)}</span>
-        </div>
+        <EventClassification 
+          eventPath={formattedPath}
+          eventCategory={formattedCategory}
+        />
       )}
     </div>
   );
