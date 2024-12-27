@@ -32,8 +32,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/events/:id" element={<EventDetails />} />
-        <Route path="/events/:id/feedback" element={<EventFeedback />} />
+        <Route path="/event/:id" element={<EventDetails />} />
+        <Route path="/event/:id/feedback" element={<EventFeedback />} />
         <Route
           path="/settings"
           element={

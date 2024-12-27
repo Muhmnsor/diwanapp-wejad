@@ -1,15 +1,13 @@
 import { EventBadges } from "./badges/EventBadges";
 import { EventDetails } from "./details/EventDetails";
 import { BeneficiaryType } from "@/types/event";
-import { formatEventPath, formatEventCategory } from "./formatters/eventFormatters";
-import { EventClassification } from "./details/EventClassification";
 
 interface EventInfoProps {
   date: string;
   time: string;
   location: string;
   location_url?: string;
-  attendees: number;
+  attendees: number | Array<any>;
   maxAttendees: number;
   eventType: "online" | "in-person";
   price: number | "free";
@@ -38,28 +36,45 @@ export const EventInfo = ({
   eventCategory
 }: EventInfoProps) => {
   console.log('EventInfo received props:', {
-    date,
-    time,
-    location,
-    location_url,
-    attendees,
-    maxAttendees,
+    certificateType,
+    eventHours,
     eventType,
     price,
     beneficiaryType,
-    certificateType,
-    eventHours,
+    location_url,
     eventPath,
     eventCategory
   });
 
-  const formattedPath = eventPath ? formatEventPath(eventPath) : undefined;
-  const formattedCategory = eventCategory ? formatEventCategory(eventCategory) : undefined;
+  const formatEventPath = (path?: string) => {
+    if (!path) return '';
+    const pathMap: Record<string, string> = {
+      'environment': 'البيئة',
+      'community': 'المجتمع',
+      'content': 'المحتوى'
+    };
+    return pathMap[path] || path;
+  };
 
-  if (!date || !time || !location) {
-    console.error('EventInfo - Missing required props:', { date, time, location });
-    return null;
-  }
+  const formatEventCategory = (category?: string) => {
+    if (!category) return '';
+    const categoryMap: Record<string, string> = {
+      'social': 'اجتماعي',
+      'entertainment': 'ترفيهي',
+      'service': 'خدمي',
+      'educational': 'تعليمي',
+      'consulting': 'استشاري',
+      'interest': 'اهتمام',
+      'specialization': 'تخصص',
+      'spiritual': 'روحي',
+      'cultural': 'ثقافي',
+      'behavioral': 'سلوكي',
+      'skill': 'مهاري',
+      'health': 'صحي',
+      'diverse': 'متنوع'
+    };
+    return categoryMap[category] || category;
+  };
 
   return (
     <div className="space-y-8">
@@ -81,18 +96,9 @@ export const EventInfo = ({
         eventType={eventType}
         attendees={attendees}
         maxAttendees={maxAttendees}
-        price={price}
-        beneficiaryType={beneficiaryType}
-        certificateType={certificateType}
-        eventHours={eventHours}
+        eventPath={eventPath ? formatEventPath(eventPath) : undefined}
+        eventCategory={eventCategory ? formatEventCategory(eventCategory) : undefined}
       />
-      
-      {eventPath && eventCategory && (
-        <EventClassification 
-          eventPath={formattedPath}
-          eventCategory={formattedCategory}
-        />
-      )}
     </div>
   );
 };

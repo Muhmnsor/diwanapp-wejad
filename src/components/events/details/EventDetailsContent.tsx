@@ -1,9 +1,9 @@
+import { EventType } from "@/types/event";
 import { EventInfo } from "../EventInfo";
 import { EventDescription } from "../EventDescription";
 import { EventRegisterButton } from "../EventRegisterButton";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect, useState } from "react";
-import { EventType } from "@/types/event";
 
 interface EventDetailsContentProps {
   event: EventType;
@@ -13,12 +13,6 @@ interface EventDetailsContentProps {
 export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentProps) => {
   const [eventStatus, setEventStatus] = useState(() => getEventStatus({
     ...event,
-    event_type: event.event_type || event.eventType || "in-person",
-    beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
-    certificate_type: event.certificate_type || event.certificateType || "none",
-    event_hours: event.event_hours || event.eventHours || 0,
-    event_path: event.event_path || "environment",
-    event_category: event.event_category || "social",
     max_attendees: event.max_attendees
   }));
 
@@ -27,23 +21,15 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
       title: event.title,
       date: event.date,
       registrationDates: {
-        start: event.registrationStartDate || event.registration_start_date,
-        end: event.registrationEndDate || event.registration_end_date
+        start: event.registrationStartDate,
+        end: event.registrationEndDate
       },
       attendees: event.attendees,
-      maxAttendees: event.max_attendees,
-      eventPath: event.event_path,
-      eventCategory: event.event_category
+      maxAttendees: event.max_attendees
     });
 
     const newStatus = getEventStatus({
       ...event,
-      event_type: event.event_type || event.eventType || "in-person",
-      beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
-      certificate_type: event.certificate_type || event.certificateType || "none",
-      event_hours: event.event_hours || event.eventHours || 0,
-      event_path: event.event_path || "environment",
-      event_category: event.event_category || "social",
       max_attendees: event.max_attendees
     });
     console.log('Event status updated to:', newStatus);
@@ -52,8 +38,6 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
     event.date, 
     event.registrationStartDate, 
     event.registrationEndDate,
-    event.registration_start_date,
-    event.registration_end_date,
     event.attendees,
     event.max_attendees
   ]);
@@ -61,12 +45,6 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
   const handleRegister = () => {
     const status = getEventStatus({
       ...event,
-      event_type: event.event_type || event.eventType || "in-person",
-      beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
-      certificate_type: event.certificate_type || event.certificateType || "none",
-      event_hours: event.event_hours || event.eventHours || 0,
-      event_path: event.event_path || "environment",
-      event_category: event.event_category || "social",
       max_attendees: event.max_attendees
     });
     console.log('Attempting registration with status:', status);
@@ -86,21 +64,16 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
           date={event.date}
           time={event.time}
           location={event.location}
-          location_url={event.location_url}
           attendees={event.attendees}
           maxAttendees={event.max_attendees}
-          eventType={event.event_type || event.eventType || "in-person"}
+          eventType={event.eventType}
           price={event.price}
-          beneficiaryType={event.beneficiary_type || event.beneficiaryType || "both"}
-          certificateType={event.certificate_type || event.certificateType}
-          eventHours={event.event_hours || event.eventHours}
-          eventPath={event.event_path}
-          eventCategory={event.event_category}
+          beneficiaryType={event.beneficiaryType}
+          certificateType={event.certificateType}
+          eventHours={event.eventHours}
         />
 
-        <div className="mt-8">
-          <EventDescription description={event.description} />
-        </div>
+        <EventDescription description={event.description} />
 
         <div className="mt-8">
           <EventRegisterButton 

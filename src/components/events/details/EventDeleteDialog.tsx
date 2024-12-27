@@ -22,14 +22,14 @@ export const EventDeleteDialog = ({
 }: EventDeleteDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent dir="rtl">
         <AlertDialogHeader>
           <AlertDialogTitle>هل أنت متأكد من حذف هذه الفعالية؟</AlertDialogTitle>
           <AlertDialogDescription>
-            هذا الإجراء لا يمكن التراجع عنه. سيتم حذف جميع البيانات المتعلقة بهذه الفعالية.
+            سيتم حذف الفعالية بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="flex gap-2">
           <AlertDialogCancel>إلغاء</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
             حذف

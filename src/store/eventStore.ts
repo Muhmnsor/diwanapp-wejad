@@ -16,8 +16,8 @@ export interface Event {
   event_type: "online" | "in-person";
   eventType?: "online" | "in-person";
   price: number | "free";
-  beneficiaryType?: BeneficiaryType;
-  beneficiary_type: BeneficiaryType;
+  beneficiaryType: BeneficiaryType;
+  beneficiary_type?: BeneficiaryType;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
   registration_start_date?: string | null;

@@ -1,188 +1,155 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
-import { EventContent } from "./EventContent";
-import { EventHeader } from "./EventHeader";
-import { EventActions } from "./EventActions";
-import { useNavigate } from "react-router-dom";
+import { EditEventDialog } from "./EditEventDialog";
 import { toast } from "sonner";
-import { EventLoadingState } from "./EventLoadingState";
-import { EventNotFound } from "./EventNotFound";
 import { supabase } from "@/integrations/supabase/client";
+import { EventContent } from "./EventContent";
+import { EventImage } from "./EventImage";
+import { EventTitle } from "./EventTitle";
+import { EventRegistrationDialog } from "./EventRegistrationDialog";
+import { useAuthStore } from "@/store/authStore";
+import { EventDeleteDialog } from "./details/EventDeleteDialog";
+import { handleEventDeletion } from "./details/EventDeletionHandler";
 
 interface EventDetailsViewProps {
-  event: Event | null;
+  event: Event;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
+  onRegister?: () => void;
   id: string;
 }
 
-const EventDetailsView = ({ 
-  event: initialEvent, 
-  isAdmin, 
-  onEdit, 
-  onDelete, 
+export const EventDetailsView = ({
+  event,
+  isAdmin,
+  onEdit,
+  onDelete,
   onAddToCalendar,
-  id 
+  onRegister,
+  id
 }: EventDetailsViewProps) => {
-  const navigate = useNavigate();
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [event, setEvent] = useState<Event | null>(initialEvent);
-  const [registrationCount, setRegistrationCount] = useState(0);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(event);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { user } = useAuthStore();
+
+  console.log('EventDetailsView - User:', user);
+  console.log('EventDetailsView - isAdmin:', isAdmin);
 
   useEffect(() => {
-    const fetchEventDetails = async () => {
-      try {
-        console.log('Fetching event details for ID:', id);
-        
-        // Fetch event details with explicit column selection
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select(`
-            id,
-            title,
-            description,
-            date,
-            time,
-            location,
-            location_url,
-            image_url,
-            event_type,
-            price,
-            max_attendees,
-            beneficiary_type,
-            certificate_type,
-            event_hours,
-            event_path,
-            event_category
-          `)
-          .eq('id', id)
-          .maybeSingle();
+    setCurrentEvent(event);
+  }, [event]);
 
-        if (eventError) {
-          console.error('Error fetching event:', eventError);
-          setError("حدث خطأ في جلب بيانات الفعالية");
-          setIsLoading(false);
-          return;
-        }
-
-        if (!eventData) {
-          console.log('No event found with ID:', id);
-          setError("لم يتم العثور على الفعالية");
-          setIsLoading(false);
-          return;
-        }
-
-        console.log('Event data fetched:', eventData);
-
-        // Fetch registration count
-        const { count: registrationsCount, error: registrationsError } = await supabase
-          .from('registrations')
-          .select('*', { count: 'exact', head: true })
-          .eq('event_id', id);
-
-        if (registrationsError) {
-          console.error('Error fetching registrations count:', registrationsError);
-        } else {
-          console.log('Registrations count:', registrationsCount);
-          setRegistrationCount(registrationsCount || 0);
-        }
-
-        // Update event with registration count and ensure all fields are present
-        const eventWithAttendees = {
-          ...eventData,
-          attendees: registrationsCount || 0,
-          event_path: eventData.event_path || 'environment',
-          event_category: eventData.event_category || 'social'
-        };
-
-        console.log('Setting complete event data:', eventWithAttendees);
-        setEvent(eventWithAttendees);
-        setIsLoading(false);
-        setError(null);
-
-      } catch (error) {
-        console.error('Unexpected error:', error);
-        setError("حدث خطأ غير متوقع");
-        setIsLoading(false);
-      }
-    };
-
-    setIsLoading(true);
-    fetchEventDetails();
-  }, [id]);
-
-  const handleRegister = async () => {
+  const handleUpdateEvent = async (updatedEvent: Event) => {
     try {
-      setIsRegistering(true);
-      console.log('Starting registration for event:', {
-        eventId: id,
-        eventTitle: event?.title
+      console.log('Updating event with:', updatedEvent);
+      
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: updatedEvent.title,
+          description: updatedEvent.description,
+          date: updatedEvent.date,
+          time: updatedEvent.time,
+          location: updatedEvent.location,
+          location_url: updatedEvent.location_url,
+          image_url: updatedEvent.image_url || updatedEvent.imageUrl,
+          event_type: updatedEvent.event_type || updatedEvent.eventType,
+          price: updatedEvent.price,
+          max_attendees: updatedEvent.max_attendees,
+          registration_start_date: updatedEvent.registration_start_date || updatedEvent.registrationStartDate,
+          registration_end_date: updatedEvent.registration_end_date || updatedEvent.registrationEndDate,
+          beneficiary_type: updatedEvent.beneficiary_type || updatedEvent.beneficiaryType,
+          certificate_type: updatedEvent.certificate_type || updatedEvent.certificateType,
+          event_hours: updatedEvent.event_hours || updatedEvent.eventHours
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setCurrentEvent({ 
+        ...currentEvent, 
+        ...updatedEvent,
+        event_type: updatedEvent.event_type || updatedEvent.eventType,
+        beneficiary_type: updatedEvent.beneficiary_type || updatedEvent.beneficiaryType,
+        certificate_type: updatedEvent.certificate_type || updatedEvent.certificateType,
+        event_hours: updatedEvent.event_hours || updatedEvent.eventHours,
+        registration_start_date: updatedEvent.registration_start_date || updatedEvent.registrationStartDate,
+        registration_end_date: updatedEvent.registration_end_date || updatedEvent.registrationEndDate,
+        location_url: updatedEvent.location_url
       });
       
-      navigate(`/events/${id}/register`);
+      toast.success('تم تحديث الفعالية بنجاح');
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error("حدث خطأ أثناء التسجيل");
-    } finally {
-      setIsRegistering(false);
+      console.error('Error updating event:', error);
+      toast.error('حدث خطأ أثناء تحديث الفعالية');
     }
   };
 
-  const handleShare = async () => {
-    if (!event) {
-      console.error("Share failed: No event data");
-      toast.error("حدث خطأ أثناء المشاركة");
-      return;
-    }
+  const handleRegister = () => {
+    console.log('Opening registration dialog');
+    setIsRegistrationOpen(true);
+  };
 
+  const handleDelete = async () => {
     try {
-      await navigator.share({
-        title: event.title,
-        text: event.description,
-        url: window.location.href,
+      await handleEventDeletion({
+        eventId: id,
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          onDelete();
+        }
       });
     } catch (error) {
-      console.error('Share error:', error);
-      toast.error("حدث خطأ أثناء المشاركة");
+      console.error('Error deleting event:', error);
+      toast.error('حدث خطأ أثناء حذف الفعالية');
     }
   };
 
-  if (isLoading) {
-    return <EventLoadingState />;
-  }
-
-  if (error || !event) {
-    console.log('Showing error state:', { error });
-    return <EventNotFound message={error || "لم يتم العثور على الفعالية"} />;
-  }
+  if (!currentEvent) return null;
 
   return (
-    <div className="container mx-auto px-4 space-y-6 max-w-4xl">
-      <EventHeader 
-        title={event.title}
-        imageUrl={event.image_url || event.imageUrl}
-      />
+    <div className="min-h-screen bg-gray-50">
+      <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
       
-      <EventActions 
-        isAdmin={isAdmin}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onAddToCalendar={onAddToCalendar}
-        eventTitle={event.title}
-        eventDescription={event.description}
-        onShare={handleShare}
+      <div className="container mx-auto px-4 -mt-10 relative z-10">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <EventTitle
+            title={currentEvent.title}
+            isAdmin={isAdmin}
+            onEdit={() => setIsEditDialogOpen(true)}
+            onDelete={() => setIsDeleteDialogOpen(true)}
+            onAddToCalendar={onAddToCalendar}
+          />
+
+          <EventContent 
+            event={currentEvent}
+            onRegister={handleRegister}
+          />
+        </div>
+      </div>
+
+      <EditEventDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+        event={currentEvent} 
+        onSave={handleUpdateEvent} 
       />
-      
-      <EventContent 
-        event={event}
-        onRegister={handleRegister}
+
+      <EventRegistrationDialog
+        open={isRegistrationOpen}
+        onOpenChange={setIsRegistrationOpen}
+        event={currentEvent}
+      />
+
+      <EventDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
       />
     </div>
   );
 };
-
-export default EventDetailsView;

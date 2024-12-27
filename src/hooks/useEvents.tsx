@@ -20,13 +20,8 @@ export const useEvents = () => {
           throw eventsError;
         }
 
-        if (!eventsData) {
-          console.log("⚠️ لم يتم العثور على فعاليات");
-          return [];
-        }
-
-        console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData.length);
-        return eventsData;
+        console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData?.length);
+        return eventsData || [];
       } catch (error) {
         console.error("❌ خطأ غير متوقع في جلب الفعاليات:", error);
         toast.error("حدث خطأ في تحميل الفعاليات");
@@ -34,8 +29,7 @@ export const useEvents = () => {
       }
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
-    staleTime: 0,
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 0, // تم تغيير هذه القيمة لتحديث البيانات فوراً
+    refetchOnWindowFocus: true, // تفعيل التحديث عند العودة للصفحة
   });
 };

@@ -8,7 +8,6 @@ import { EventDeleteDialog } from "./EventDeleteDialog";
 import { useState } from "react";
 import { handleEventDeletion } from "./EventDeletionHandler";
 import { useNavigate } from "react-router-dom";
-import { EventType } from "@/types/event";
 
 interface EventDetailsContainerProps {
   event: Event & { attendees: number };
@@ -33,12 +32,6 @@ export const EventDetailsContainer = ({
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const navigate = useNavigate();
 
-  console.log('EventDetailsContainer received props:', {
-    event,
-    isAdmin,
-    id
-  });
-
   const handleDelete = async () => {
     try {
       await handleEventDeletion({
@@ -54,22 +47,15 @@ export const EventDetailsContainer = ({
   };
 
   const handleRegister = () => {
-    console.log('Opening registration dialog');
     setIsRegistrationOpen(true);
   };
 
-  if (!event) {
-    console.log('No event data provided to EventDetailsContainer');
-    return null;
-  }
-
-  // Convert Event to EventType
-  const eventData: EventType = {
+  const transformedEvent = {
     ...event,
     eventType: event.event_type,
-    beneficiaryType: event.beneficiary_type,
     certificateType: event.certificate_type,
-    eventHours: event.event_hours
+    eventHours: event.event_hours,
+    maxAttendees: event.max_attendees
   };
 
   return (
@@ -77,7 +63,7 @@ export const EventDetailsContainer = ({
       <EventContainer>
         <div className="flex-grow">
           <EventDetailsHeader
-            event={eventData}
+            event={transformedEvent}
             isAdmin={isAdmin}
             onEdit={onEdit}
             onDelete={() => setIsDeleteDialogOpen(true)}
@@ -85,7 +71,7 @@ export const EventDetailsContainer = ({
           />
 
           <EventDetailsContent 
-            event={eventData}
+            event={transformedEvent}
             onRegister={handleRegister}
           />
         </div>
