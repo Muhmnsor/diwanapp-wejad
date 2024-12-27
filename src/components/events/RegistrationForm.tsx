@@ -135,7 +135,7 @@ export const RegistrationForm = ({
             formData={formData}
             setFormData={setFormData}
             eventPrice={eventPrice}
-            showPaymentNote={eventPrice !== "free"}
+            showPaymentNote={true}
           />
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "جاري التسجيل..." : "تأكيد التسجيل"}
