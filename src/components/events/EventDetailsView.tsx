@@ -55,6 +55,7 @@ export const EventDetailsView = ({
           date: updatedEvent.date,
           time: updatedEvent.time,
           location: updatedEvent.location,
+          location_url: updatedEvent.location_url,
           image_url: updatedEvent.image_url || updatedEvent.imageUrl,
           event_type: updatedEvent.event_type || updatedEvent.eventType,
           price: updatedEvent.price,
@@ -78,6 +79,7 @@ export const EventDetailsView = ({
         event_hours: updatedEvent.event_hours || updatedEvent.eventHours,
         registration_start_date: updatedEvent.registration_start_date || updatedEvent.registrationStartDate,
         registration_end_date: updatedEvent.registration_end_date || updatedEvent.registrationEndDate,
+        location_url: updatedEvent.location_url
       });
       
       toast.success('تم تحديث الفعالية بنجاح');

@@ -6,6 +6,7 @@ interface EventInfoProps {
   date: string;
   time: string;
   location: string;
+  location_url?: string;
   attendees: number | Array<any>;
   maxAttendees: number;
   eventType: "online" | "in-person";
@@ -20,6 +21,7 @@ export const EventInfo = ({
   date, 
   time, 
   location, 
+  location_url,
   attendees, 
   maxAttendees,
   eventType,
@@ -34,7 +36,8 @@ export const EventInfo = ({
     eventHours,
     eventType,
     price,
-    beneficiaryType
+    beneficiaryType,
+    location_url
   });
 
   return (
@@ -53,6 +56,7 @@ export const EventInfo = ({
         date={date}
         time={time}
         location={location}
+        location_url={location_url}
         eventType={eventType}
         attendees={attendees}
         maxAttendees={maxAttendees}

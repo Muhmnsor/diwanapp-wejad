@@ -12,7 +12,6 @@ interface EditEventFormProps {
 }
 
 export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) => {
-  // Initialize form data with normalized field names
   const [formData, setFormData] = useState<Event>({
     ...event,
     eventType: event.event_type || event.eventType,
@@ -21,6 +20,7 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     eventHours: event.event_hours || event.eventHours,
     registrationStartDate: event.registration_start_date || event.registrationStartDate,
     registrationEndDate: event.registration_end_date || event.registrationEndDate,
+    location_url: event.location_url
   });
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -31,13 +31,11 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
     try {
       setIsLoading(true);
       
-      // Validate required fields
       if (!formData.title || !formData.date || !formData.time || !formData.location) {
         toast.error("يرجى تعبئة جميع الحقول المطلوبة");
         return;
       }
 
-      // If there's a new image file, upload it first
       let imageUrl = formData.imageUrl || formData.image_url;
       if (imageFile) {
         const fileName = `event-images/${Date.now()}.${imageFile.name.split('.').pop()}`;
@@ -58,10 +56,8 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         imageUrl = publicUrl;
       }
 
-      // Convert price to proper format for database
       const price = formData.price === "free" ? null : formData.price;
 
-      // Prepare the event data for saving
       const eventToSave: Event = {
         ...formData,
         image_url: imageUrl,
@@ -78,10 +74,10 @@ export const EditEventForm = ({ event, onSave, onCancel }: EditEventFormProps) =
         registrationStartDate: formData.registrationStartDate || formData.registration_start_date,
         registration_end_date: formData.registrationEndDate || formData.registration_end_date,
         registrationEndDate: formData.registrationEndDate || formData.registration_end_date,
-        price: price // Use the converted price
+        location_url: formData.location_url,
+        price: price
       };
 
-      // Call the parent's onSave function
       await onSave(eventToSave);
       toast.success("تم حفظ التغييرات بنجاح");
     } catch (error) {
