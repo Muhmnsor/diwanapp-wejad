@@ -61,7 +61,7 @@ export const ShareButton = ({
       <DropdownMenuContent align="end" className="min-w-[200px]">
         <DropdownMenuItem onClick={() => handleShare('x')} className="flex items-center gap-2 justify-end">
           <span>مشاركة على X</span>
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4 ml-2" />
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleShare('facebook')} className="flex items-center gap-2 justify-end">
           <span>مشاركة على فيسبوك</span>
