@@ -127,8 +127,19 @@ export const RegistrationForm = ({
     }
   };
 
-  // Only show payment note if event has a price (not free and not null)
-  const shouldShowPaymentNote = eventPrice !== "free" && eventPrice !== null;
+  // Determine if this is a paid event
+  const isPaidEvent = eventPrice !== "free" && eventPrice !== null;
+
+  // Get the appropriate button text based on event price
+  const getButtonText = () => {
+    if (isSubmitting) {
+      return "جاري المعالجة...";
+    }
+    if (isPaidEvent) {
+      return `الدفع وتأكيد التسجيل (${eventPrice} ريال)`;
+    }
+    return "تأكيد التسجيل";
+  };
 
   return (
     <>
@@ -138,10 +149,14 @@ export const RegistrationForm = ({
             formData={formData}
             setFormData={setFormData}
             eventPrice={eventPrice}
-            showPaymentNote={shouldShowPaymentNote}
+            showPaymentNote={isPaidEvent}
           />
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "جاري التسجيل..." : "تأكيد التسجيل"}
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isSubmitting}
+          >
+            {getButtonText()}
           </Button>
         </form>
       )}

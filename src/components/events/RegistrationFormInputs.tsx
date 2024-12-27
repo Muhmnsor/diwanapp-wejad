@@ -118,9 +118,10 @@ export const RegistrationFormInputs = ({
       
       {showPaymentNote && eventPrice !== null && eventPrice !== "free" && (
         <div className="bg-muted p-4 rounded-lg">
+          <p className="text-center mb-2 font-semibold">تفاصيل الدفع</p>
           <p className="text-center mb-2">رسوم التسجيل: {eventPrice} ريال</p>
           <p className="text-sm text-muted-foreground text-center">
-            سيتم إكمال عملية الدفع في الخطوة التالية
+            سيتم تحويلك إلى صفحة الدفع بعد تأكيد التسجيل
           </p>
         </div>
       )}
