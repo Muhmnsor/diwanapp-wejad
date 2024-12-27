@@ -1,4 +1,4 @@
-import { CalendarDays, Clock, MapPin, Monitor, Users, Globe } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Monitor, Users } from "lucide-react";
 import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,7 +91,7 @@ export const EventDetails = ({
       {location_url && (
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
-            <Globe className="h-5 w-5 text-primary" />
+            <MapPin className="h-5 w-5 text-primary" />
           </div>
           <div className="flex items-center gap-2">
             <a 
@@ -100,7 +100,7 @@ export const EventDetails = ({
               rel="noopener noreferrer" 
               className="text-primary hover:underline"
             >
-              رابط الموقع
+              رابط تطبيقات الخرائط
             </a>
             <Button 
               variant="ghost" 
