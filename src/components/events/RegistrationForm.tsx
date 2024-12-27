@@ -58,6 +58,7 @@ export const RegistrationForm = ({
   };
 
   const processPayment = async (registrationData: any) => {
+    console.log("Processing payment...");
     // Here we would integrate with a real payment gateway
     // For now, we'll simulate a successful payment
     const { error: paymentError } = await supabase
@@ -65,7 +66,7 @@ export const RegistrationForm = ({
       .insert({
         registration_id: registrationData.id,
         amount: eventPrice,
-        status: 'completed', // In real implementation, this would be 'pending' until confirmed
+        status: 'completed',
         payment_method: 'card',
         payment_gateway: 'local_gateway'
       });
