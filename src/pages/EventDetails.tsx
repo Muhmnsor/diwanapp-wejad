@@ -7,12 +7,14 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { EventLoadingState } from "@/components/events/EventLoadingState";
 import { EventDetailsContainer } from "@/components/events/details/EventDetailsContainer";
+import { EventNotFound } from "@/components/events/EventNotFound";
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -23,30 +25,34 @@ const EventDetails = () => {
         return;
       }
 
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('role_id')
-        .eq('user_id', user.id);
+      try {
+        const { data: userRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role_id')
+          .eq('user_id', user.id);
 
-      if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
-        return;
-      }
-
-      if (userRoles && userRoles.length > 0) {
-        const { data: roles, error: roleError } = await supabase
-          .from('roles')
-          .select('name')
-          .eq('id', userRoles[0].role_id)
-          .single();
-
-        if (roleError) {
-          console.error('Error fetching role:', roleError);
+        if (rolesError) {
+          console.error('Error fetching user roles:', rolesError);
           return;
         }
 
-        console.log('User role:', roles?.name);
-        setIsAdmin(roles?.name === 'admin');
+        if (userRoles && userRoles.length > 0) {
+          const { data: roles, error: roleError } = await supabase
+            .from('roles')
+            .select('name')
+            .eq('id', userRoles[0].role_id)
+            .maybeSingle();
+
+          if (roleError) {
+            console.error('Error fetching role:', roleError);
+            return;
+          }
+
+          console.log('User role:', roles?.name);
+          setIsAdmin(roles?.name === 'admin');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
       }
     };
 
@@ -57,6 +63,7 @@ const EventDetails = () => {
     const fetchEvent = async () => {
       if (!id) {
         console.error('No event ID provided');
+        setError('Event ID is missing');
         setLoading(false);
         return;
       }
@@ -76,6 +83,7 @@ const EventDetails = () => {
 
         if (eventError) {
           console.error("Error fetching event:", eventError);
+          setError(eventError.message);
           toast.error("حدث خطأ في جلب بيانات الفعالية");
           setLoading(false);
           return;
@@ -83,6 +91,7 @@ const EventDetails = () => {
 
         if (!eventData) {
           console.log('No event found with ID:', id);
+          setError('Event not found');
           toast.error("لم يتم العثور على الفعالية");
           setLoading(false);
           return;
@@ -94,13 +103,22 @@ const EventDetails = () => {
         const attendeesCount = eventData.registrations ? eventData.registrations.length : 0;
         const eventWithAttendees = {
           ...eventData,
-          attendees: attendeesCount
+          attendees: attendeesCount,
+          // Ensure all required fields are present with default values
+          event_type: eventData.event_type || 'in-person',
+          beneficiary_type: eventData.beneficiary_type || 'both',
+          certificate_type: eventData.certificate_type || 'none',
+          event_hours: eventData.event_hours || 0,
+          event_path: eventData.event_path || 'environment',
+          event_category: eventData.event_category || 'social'
         };
         
         console.log('Event with attendees count:', eventWithAttendees);
         setEvent(eventWithAttendees);
+        setError(null);
       } catch (error) {
         console.error("Unexpected error:", error);
+        setError('An unexpected error occurred');
         toast.error("حدث خطأ غير متوقع");
       } finally {
         setLoading(false);
@@ -139,6 +157,7 @@ const EventDetails = () => {
 
   console.log('Current event state:', event);
   console.log('Loading state:', loading);
+  console.log('Error state:', error);
   console.log('Is admin:', isAdmin);
 
   return (
@@ -147,10 +166,10 @@ const EventDetails = () => {
       <main className="flex-grow">
         {loading ? (
           <EventLoadingState />
+        ) : error ? (
+          <EventNotFound message={error} />
         ) : !event ? (
-          <div className="container mx-auto px-4 py-8 text-center">
-            لم يتم العثور على الفعالية
-          </div>
+          <EventNotFound message="لم يتم العثور على الفعالية" />
         ) : (
           <EventDetailsContainer
             event={event}

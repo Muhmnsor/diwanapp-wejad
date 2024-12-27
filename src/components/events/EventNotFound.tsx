@@ -1,13 +1,13 @@
-import { Navigation } from "@/components/Navigation";
+interface EventNotFoundProps {
+  message?: string;
+}
 
-export const EventNotFound = () => {
+export const EventNotFound = ({ message = "لم يتم العثور على الفعالية" }: EventNotFoundProps) => {
   return (
-    <div dir="rtl">
-      <Navigation />
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">لم يتم العثور على الفعالية</h1>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">{message}</h2>
+        <p className="text-gray-600">يرجى التحقق من الرابط والمحاولة مرة أخرى</p>
       </div>
     </div>
   );
