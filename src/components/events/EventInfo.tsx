@@ -96,6 +96,10 @@ export const EventInfo = ({
         eventType={eventType}
         attendees={attendees}
         maxAttendees={maxAttendees}
+        price={price}
+        beneficiaryType={beneficiaryType}
+        certificateType={certificateType}
+        eventHours={eventHours}
         eventPath={eventPath ? formatEventPath(eventPath) : undefined}
         eventCategory={eventCategory ? formatEventCategory(eventCategory) : undefined}
       />
