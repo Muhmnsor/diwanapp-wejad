@@ -57,8 +57,11 @@ export const EventDetailsContainer = ({
     eventHours: event.event_hours,
     maxAttendees: event.max_attendees,
     beneficiaryType: event.beneficiary_type,
+    beneficiary_type: event.beneficiary_type,
     eventPath: event.event_path,
-    eventCategory: event.event_category
+    event_path: event.event_path,
+    eventCategory: event.event_category,
+    event_category: event.event_category
   };
 
   console.log('Transformed event:', transformedEvent);
