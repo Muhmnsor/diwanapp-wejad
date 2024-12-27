@@ -25,9 +25,7 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
         end: event.registrationEndDate
       },
       attendees: event.attendees,
-      maxAttendees: event.max_attendees,
-      eventPath: event.event_path,
-      eventCategory: event.event_category
+      maxAttendees: event.max_attendees
     });
 
     const newStatus = getEventStatus({
@@ -73,8 +71,6 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
           beneficiaryType={event.beneficiaryType}
           certificateType={event.certificateType}
           eventHours={event.eventHours}
-          eventPath={event.event_path}
-          eventCategory={event.event_category}
         />
 
         <EventDescription description={event.description} />

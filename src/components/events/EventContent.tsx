@@ -33,9 +33,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       beneficiaryType: event.beneficiary_type,
       eventType: event.event_type,
       price: event.price,
-      location_url: event.location_url,
-      eventPath: event.event_path,
-      eventCategory: event.event_category
+      location_url: event.location_url
     });
 
     const newStatus = getEventStatus({
@@ -85,8 +83,6 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
           certificateType={event.certificate_type}
           eventHours={event.event_hours}
           showBadges={false}
-          eventPath={event.event_path}
-          eventCategory={event.event_category}
         />
       </div>
 
