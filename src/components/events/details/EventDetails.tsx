@@ -1,5 +1,6 @@
 import { EventInfo } from "../EventInfo";
 import { EventBadges } from "../badges/EventBadges";
+import { BeneficiaryType } from "@/types/event";
 
 interface EventDetailsProps {
   date: string;
@@ -10,7 +11,7 @@ interface EventDetailsProps {
   maxAttendees: number;
   eventType: "online" | "in-person";
   price: number | "free";
-  beneficiaryType: string;
+  beneficiaryType: BeneficiaryType;
   certificateType?: string;
   eventHours?: number;
   eventPath?: string;

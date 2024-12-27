@@ -7,7 +7,7 @@ interface EventInfoProps {
   time: string;
   location: string;
   location_url?: string;
-  attendees: number | Array<any>;
+  attendees: number;
   maxAttendees: number;
   eventType: "online" | "in-person";
   price: number | "free";
