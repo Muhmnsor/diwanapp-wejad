@@ -49,20 +49,22 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
-      // Group events by type and beneficiary
+      // Group events by type and beneficiary with explicit number type
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: {[key: string]: number}, event) => {
-          acc[event.event_type] = (acc[event.event_type] || 0) + 1;
+          const count = (acc[event.event_type] || 0) + 1;
+          acc[event.event_type] = count;
           return acc;
-        }, {})
-      ).map(([name, value]) => ({ name, value }));
+        }, {} as Record<string, number>)
+      ).map(([name, value]): ChartData => ({ name, value }));
 
       const eventsByBeneficiary: ChartData[] = Object.entries(
         events.reduce((acc: {[key: string]: number}, event) => {
-          acc[event.beneficiary_type] = (acc[event.beneficiary_type] || 0) + 1;
+          const count = (acc[event.beneficiary_type] || 0) + 1;
+          acc[event.beneficiary_type] = count;
           return acc;
-        }, {})
-      ).map(([name, value]) => ({ name, value }));
+        }, {} as Record<string, number>)
+      ).map(([name, value]): ChartData => ({ name, value }));
 
       console.log("✅ تم تحميل إحصائيات لوحة المعلومات بنجاح");
 
@@ -75,16 +77,16 @@ export const useDashboardData = () => {
         mostRegisteredEvent: {
           title: sortedByRegistrations[0]?.title || 'لا يوجد',
           registrations: sortedByRegistrations[0]?.registrations[0].count || 0,
-          rating: 0 // Added to match EventStats interface
+          rating: 0
         },
         leastRegisteredEvent: {
           title: sortedByRegistrations[sortedByRegistrations.length - 1]?.title || 'لا يوجد',
           registrations: sortedByRegistrations[sortedByRegistrations.length - 1]?.registrations[0].count || 0,
-          rating: 0 // Added to match EventStats interface
+          rating: 0
         },
         highestRatedEvent: {
           title: sortedByRating[0]?.title || 'لا يوجد',
-          registrations: 0, // Added to match EventStats interface
+          registrations: 0,
           rating: sortedByRating[0]?.avgRating || 0
         },
         eventsByType,
