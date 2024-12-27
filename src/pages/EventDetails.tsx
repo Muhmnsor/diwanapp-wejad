@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
+import { EventLoadingState } from "@/components/events/EventLoadingState";
+import { EventNotFound } from "@/components/events/EventNotFound";
 
 const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
@@ -64,27 +66,15 @@ const EventDetails = () => {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <EventLoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-red-500">{error}</div>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <EventNotFound />;
+  }
+
+  if (!event) {
+    return <EventNotFound />;
   }
 
   const isAdmin = user?.isAdmin;
@@ -112,18 +102,6 @@ const EventDetails = () => {
   const handleAddToCalendar = () => {
     console.log("Add to calendar clicked");
   };
-
-  if (!event) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-gray-500">لا توجد بيانات متاحة</div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   if (!isAdmin) {
     return (
