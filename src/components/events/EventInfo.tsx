@@ -1,6 +1,7 @@
 import { EventBadges } from "./badges/EventBadges";
 import { EventDetails } from "./details/EventDetails";
 import { BeneficiaryType } from "@/types/event";
+import { Tag, Folder } from "lucide-react";
 
 interface EventInfoProps {
   date: string;
@@ -88,6 +89,24 @@ export const EventInfo = ({
         />
       )}
       
+      {/* Event Categories Section */}
+      {(eventPath || eventCategory) && (
+        <div className="px-8 space-y-4">
+          {eventPath && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Folder className="w-5 h-5" />
+              <span>المسار: {formatEventPath(eventPath)}</span>
+            </div>
+          )}
+          {eventCategory && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Tag className="w-5 h-5" />
+              <span>التصنيف: {formatEventCategory(eventCategory)}</span>
+            </div>
+          )}
+        </div>
+      )}
+      
       <EventDetails
         date={date}
         time={time}
@@ -96,8 +115,6 @@ export const EventInfo = ({
         eventType={eventType}
         attendees={attendees}
         maxAttendees={maxAttendees}
-        eventPath={eventPath ? formatEventPath(eventPath) : undefined}
-        eventCategory={eventCategory ? formatEventCategory(eventCategory) : undefined}
       />
     </div>
   );
