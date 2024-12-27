@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { EventDetailsView } from "@/components/events/EventDetailsView";
+import EventDetailsView from "@/components/events/EventDetailsView";
 import { EventDashboard } from "@/components/admin/EventDashboard";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";

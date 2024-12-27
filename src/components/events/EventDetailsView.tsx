@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventContent } from "./EventContent";
 import { EventHeader } from "./EventHeader";
@@ -15,7 +14,7 @@ interface EventDetailsViewProps {
   id: string;
 }
 
-export const EventDetailsView = ({ 
+const EventDetailsView = ({ 
   event, 
   isAdmin, 
   onEdit, 
@@ -88,3 +87,5 @@ export const EventDetailsView = ({
     </div>
   );
 };
+
+export default EventDetailsView;
