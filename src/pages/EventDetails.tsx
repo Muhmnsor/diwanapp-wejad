@@ -30,21 +30,18 @@ const EventDetails = () => {
       }
 
       try {
-        console.log('Starting to fetch event with ID:', id);
+        console.log('Fetching event details for ID:', id);
         
-        // Fetch event details with a single query
-        const { data: eventData, error: fetchError } = await supabase
+        // First fetch event details
+        const { data: eventData, error: eventError } = await supabase
           .from("events")
-          .select(`
-            *,
-            registrations:registrations(count)
-          `)
+          .select("*")
           .eq("id", id)
-          .maybeSingle();
+          .single();
 
-        if (fetchError) {
-          console.error("Error fetching event:", fetchError);
-          setError(fetchError.message);
+        if (eventError) {
+          console.error("Error fetching event:", eventError);
+          setError(eventError.message);
           toast.error("حدث خطأ في جلب بيانات الفعالية");
           setLoading(false);
           return;
@@ -57,12 +54,29 @@ const EventDetails = () => {
           return;
         }
 
-        console.log("Successfully fetched event data:", eventData);
+        console.log('Event data fetched successfully:', eventData);
 
-        setEvent({
+        // Then fetch registrations count
+        const { count: registrationsCount, error: countError } = await supabase
+          .from("registrations")
+          .select("*", { count: true, head: true })
+          .eq("event_id", id);
+
+        if (countError) {
+          console.error("Error fetching registrations count:", countError);
+          toast.error("حدث خطأ في جلب عدد التسجيلات");
+        }
+
+        console.log('Registrations count:', registrationsCount);
+
+        const finalEventData = {
           ...eventData,
-          attendees: eventData.registrations?.[0]?.count || 0
-        });
+          attendees: registrationsCount || 0
+        };
+
+        console.log('Final event data:', finalEventData);
+        
+        setEvent(finalEventData);
         setError(null);
       } catch (err) {
         console.error("Unexpected error in fetchEvent:", err);
