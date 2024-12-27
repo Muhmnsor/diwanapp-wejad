@@ -30,18 +30,17 @@ export const EventDetailsView = ({
   onRegister,
   id
 }: EventDetailsViewProps) => {
-  const [currentEvent, setCurrentEvent] = useState<Event | null>(event);
+  const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
 
-  console.log('EventDetailsView - Current Event:', currentEvent);
-  console.log('EventDetailsView - User:', user);
-  console.log('EventDetailsView - isAdmin:', isAdmin);
-
   useEffect(() => {
-    setCurrentEvent(event);
+    console.log('EventDetailsView - Initial event:', event);
+    if (event) {
+      setCurrentEvent(event);
+    }
   }, [event]);
 
   const handleUpdateEvent = async (updatedEvent: Event) => {
@@ -65,11 +64,16 @@ export const EventDetailsView = ({
           registration_end_date: updatedEvent.registration_end_date || updatedEvent.registrationEndDate,
           beneficiary_type: updatedEvent.beneficiary_type || updatedEvent.beneficiaryType,
           certificate_type: updatedEvent.certificate_type || updatedEvent.certificateType,
-          event_hours: updatedEvent.event_hours || updatedEvent.eventHours
+          event_hours: updatedEvent.event_hours || updatedEvent.eventHours,
+          event_path: updatedEvent.event_path,
+          event_category: updatedEvent.event_category
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating event:', error);
+        throw error;
+      }
 
       setCurrentEvent(updatedEvent);
       onEdit();
@@ -102,7 +106,11 @@ export const EventDetailsView = ({
 
   if (!currentEvent) {
     console.log('No current event available');
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (

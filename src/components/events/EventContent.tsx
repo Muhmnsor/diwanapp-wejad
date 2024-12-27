@@ -17,6 +17,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
   const [eventStatus, setEventStatus] = useState(() => getEventStatus(event));
 
   useEffect(() => {
+    if (!event) {
+      console.log('No event data provided to EventContent');
+      return;
+    }
+
     const currentAttendees = registrationCounts?.[event.id] || 0;
     
     console.log('Event data in content:', {
@@ -44,24 +49,29 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     console.log('Event status updated to:', newStatus);
     setEventStatus(newStatus);
   }, [
-    event.date, 
-    event.registrationStartDate, 
-    event.registrationEndDate,
-    event.registration_start_date,
-    event.registration_end_date,
-    event.max_attendees,
-    event.certificate_type,
-    event.certificateType,
-    event.event_hours,
-    event.eventHours,
-    event.beneficiary_type,
-    event.beneficiaryType,
-    event.event_type,
-    event.eventType,
-    event.price,
-    event.id,
+    event?.date, 
+    event?.registrationStartDate, 
+    event?.registrationEndDate,
+    event?.registration_start_date,
+    event?.registration_end_date,
+    event?.max_attendees,
+    event?.certificate_type,
+    event?.certificateType,
+    event?.event_hours,
+    event?.eventHours,
+    event?.beneficiary_type,
+    event?.beneficiaryType,
+    event?.event_type,
+    event?.eventType,
+    event?.price,
+    event?.id,
     registrationCounts
   ]);
+
+  if (!event) {
+    console.log('EventContent - No event data available');
+    return null;
+  }
 
   return (
     <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
