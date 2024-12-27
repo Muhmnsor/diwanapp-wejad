@@ -71,19 +71,6 @@ const EventDetails = () => {
     fetchEvent();
   }, [id]);
 
-  if (loading) {
-    console.log('Rendering loading state');
-    return <EventLoadingState />;
-  }
-
-  if (error || !event) {
-    console.log('Rendering error state:', error);
-    return <EventNotFound />;
-  }
-
-  const isAdmin = user?.isAdmin;
-  console.log('Rendering event details with admin status:', isAdmin);
-
   const handleEdit = () => {
     console.log("Edit event clicked");
   };
@@ -107,6 +94,32 @@ const EventDetails = () => {
   const handleAddToCalendar = () => {
     console.log("Add to calendar clicked");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <TopHeader />
+        <main className="flex-1 py-12">
+          <EventLoadingState />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <TopHeader />
+        <main className="flex-1 py-12">
+          <EventNotFound />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const isAdmin = user?.isAdmin;
 
   if (!isAdmin) {
     return (
