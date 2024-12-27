@@ -14,19 +14,15 @@ interface EventContentProps {
 }
 
 export const EventContent = ({ event, onRegister }: EventContentProps) => {
-  const { data: registrationCounts, isError: isRegistrationsError } = useRegistrations();
   const [eventStatus, setEventStatus] = useState(() => getEventStatus(event));
 
   useEffect(() => {
     if (!event) {
       console.error('EventContent - Critical: No event data provided');
-      toast.error("حدث خطأ في تحميل بيانات الفعالية");
       return;
     }
 
-    const currentAttendees = registrationCounts?.[event.id] || 0;
-    
-    console.log('EventContent - Event data loaded:', {
+    console.log('EventContent - Event data:', {
       id: event.id,
       title: event.title,
       date: event.date,
@@ -34,7 +30,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         start: event.registrationStartDate || event.registration_start_date,
         end: event.registrationEndDate || event.registration_end_date
       },
-      attendees: currentAttendees,
+      attendees: event.attendees,
       maxAttendees: event.max_attendees,
       certificateType: event.certificate_type || event.certificateType,
       eventHours: event.event_hours || event.eventHours,
@@ -44,45 +40,17 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       location_url: event.location_url
     });
 
-    if (isRegistrationsError) {
-      console.error('EventContent - Error fetching registrations data');
-      toast.error("حدث خطأ في تحميل بيانات التسجيلات");
-    }
-
-    const newStatus = getEventStatus({
-      ...event,
-      attendees: currentAttendees
-    });
+    const newStatus = getEventStatus(event);
     
-    console.log('EventContent - Status updated:', {
+    console.log('EventContent - Status:', {
       previousStatus: eventStatus,
       newStatus: newStatus,
-      attendees: currentAttendees,
+      attendees: event.attendees,
       maxAttendees: event.max_attendees
     });
 
     setEventStatus(newStatus);
-  }, [
-    event?.id,
-    event?.date, 
-    event?.registrationStartDate, 
-    event?.registrationEndDate,
-    event?.registration_start_date,
-    event?.registration_end_date,
-    event?.max_attendees,
-    event?.certificate_type,
-    event?.certificateType,
-    event?.event_hours,
-    event?.eventHours,
-    event?.beneficiary_type,
-    event?.beneficiaryType,
-    event?.event_type,
-    event?.eventType,
-    event?.price,
-    registrationCounts,
-    isRegistrationsError,
-    eventStatus
-  ]);
+  }, [event, eventStatus]);
 
   if (!event) {
     console.error('EventContent - Rendering failed: No event data available');
@@ -107,7 +75,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
           time={event.time}
           location={event.location}
           location_url={event.location_url}
-          attendees={registrationCounts?.[event.id] || 0}
+          attendees={event.attendees}
           maxAttendees={event.max_attendees}
           eventType={event.event_type || event.eventType}
           price={event.price}
