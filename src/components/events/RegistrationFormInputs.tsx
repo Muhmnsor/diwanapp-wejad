@@ -9,7 +9,7 @@ interface RegistrationFormInputsProps {
     phone: string;
   };
   setFormData: (data: any) => void;
-  eventPrice: number | "free";
+  eventPrice: number | "free" | null;
   showPaymentNote?: boolean;
 }
 
@@ -116,7 +116,7 @@ export const RegistrationFormInputs = ({
         {errors.phone && <p className="text-sm text-red-500 text-right">{errors.phone}</p>}
       </div>
       
-      {eventPrice !== "free" && showPaymentNote && (
+      {showPaymentNote && eventPrice !== null && eventPrice !== "free" && (
         <div className="bg-muted p-4 rounded-lg">
           <p className="text-center mb-2">رسوم التسجيل: {eventPrice} ريال</p>
           <p className="text-sm text-muted-foreground text-center">

@@ -9,7 +9,7 @@ import { useParams } from "react-router-dom";
 
 interface RegistrationFormProps {
   eventTitle: string;
-  eventPrice: number | "free";
+  eventPrice: number | "free" | null;
   eventDate: string;
   eventTime: string;
   eventLocation: string;
@@ -92,7 +92,7 @@ export const RegistrationForm = ({
       }
 
       // If this is a paid event, create a payment transaction
-      if (eventPrice !== "free") {
+      if (eventPrice !== "free" && eventPrice !== null) {
         const { error: paymentError } = await supabase
           .from('payment_transactions')
           .insert({
@@ -127,6 +127,9 @@ export const RegistrationForm = ({
     }
   };
 
+  // Only show payment note if event has a price (not free and not null)
+  const shouldShowPaymentNote = eventPrice !== "free" && eventPrice !== null;
+
   return (
     <>
       {!isRegistered && (
@@ -135,7 +138,7 @@ export const RegistrationForm = ({
             formData={formData}
             setFormData={setFormData}
             eventPrice={eventPrice}
-            showPaymentNote={true}
+            showPaymentNote={shouldShowPaymentNote}
           />
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "جاري التسجيل..." : "تأكيد التسجيل"}
