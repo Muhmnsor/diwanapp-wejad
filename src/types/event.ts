@@ -22,6 +22,7 @@ export interface EventType {
   eventType: "online" | "in-person";
   price: number | "free";
   beneficiaryType: BeneficiaryType;
+  beneficiary_type: BeneficiaryType;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
   registration_start_date?: string | null;
@@ -30,6 +31,8 @@ export interface EventType {
   certificateType: string;
   event_hours: number | null;
   eventHours: number | null;
+  eventPath: EventPathType;
   event_path: EventPathType;
+  eventCategory: EventCategoryType;
   event_category: EventCategoryType;
 }
