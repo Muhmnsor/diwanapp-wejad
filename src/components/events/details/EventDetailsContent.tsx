@@ -74,8 +74,8 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
           beneficiaryType={event.beneficiaryType}
           certificateType={event.certificateType}
           eventHours={event.eventHours}
-          eventPath={event.eventPath}
-          eventCategory={event.eventCategory}
+          eventPath={event.event_path}
+          eventCategory={event.event_category}
         />
 
         <EventDescription description={event.description} />
