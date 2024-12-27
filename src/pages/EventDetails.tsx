@@ -48,7 +48,6 @@ const EventDetails = () => {
             return;
           }
 
-          console.log('User role:', roles?.name);
           setIsAdmin(roles?.name === 'admin');
         }
       } catch (error) {
@@ -63,7 +62,7 @@ const EventDetails = () => {
     const fetchEvent = async () => {
       if (!id) {
         console.error('No event ID provided');
-        setError('Event ID is missing');
+        setError('لم يتم العثور على معرف الفعالية');
         setLoading(false);
         return;
       }
@@ -72,59 +71,54 @@ const EventDetails = () => {
         console.log('Fetching event with ID:', id);
         const { data: eventData, error: eventError } = await supabase
           .from("events")
-          .select(`
-            *,
-            registrations (
-              id
-            )
-          `)
+          .select("*")
           .eq("id", id)
           .maybeSingle();
 
         if (eventError) {
           console.error("Error fetching event:", eventError);
-          setError(eventError.message);
+          setError("حدث خطأ في جلب بيانات الفعالية");
           toast.error("حدث خطأ في جلب بيانات الفعالية");
-          setLoading(false);
           return;
         }
 
         if (!eventData) {
           console.log('No event found with ID:', id);
-          setError('Event not found');
+          setError("لم يتم العثور على الفعالية");
           toast.error("لم يتم العثور على الفعالية");
-          setLoading(false);
           return;
         }
 
         console.log('Event data fetched successfully:', eventData);
-        
-        // Calculate attendees count from registrations
-        const attendeesCount = eventData.registrations ? eventData.registrations.length : 0;
+
+        // Get registrations count
+        const { count: registrationsCount, error: registrationsError } = await supabase
+          .from("registrations")
+          .select("*", { count: 'exact', head: true })
+          .eq("event_id", id);
+
+        if (registrationsError) {
+          console.error("Error fetching registrations count:", registrationsError);
+        }
+
         const eventWithAttendees = {
           ...eventData,
-          attendees: attendeesCount,
-          // Ensure all required fields are present with default values
-          event_type: eventData.event_type || 'in-person',
-          beneficiary_type: eventData.beneficiary_type || 'both',
-          certificate_type: eventData.certificate_type || 'none',
-          event_hours: eventData.event_hours || 0,
-          event_path: eventData.event_path || 'environment',
-          event_category: eventData.event_category || 'social'
+          attendees: registrationsCount || 0
         };
-        
-        console.log('Event with attendees count:', eventWithAttendees);
+
+        console.log('Event with attendees:', eventWithAttendees);
         setEvent(eventWithAttendees);
         setError(null);
       } catch (error) {
         console.error("Unexpected error:", error);
-        setError('An unexpected error occurred');
+        setError("حدث خطأ غير متوقع");
         toast.error("حدث خطأ غير متوقع");
       } finally {
         setLoading(false);
       }
     };
 
+    setLoading(true);
     fetchEvent();
   }, [id]);
 
@@ -155,32 +149,43 @@ const EventDetails = () => {
     toast.success("تمت إضافة الفعالية إلى التقويم");
   };
 
-  console.log('Current event state:', event);
-  console.log('Loading state:', loading);
-  console.log('Error state:', error);
-  console.log('Is admin:', isAdmin);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <TopHeader />
+        <main className="flex-grow">
+          <EventLoadingState />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <TopHeader />
+        <main className="flex-grow">
+          <EventNotFound message={error || "لم يتم العثور على الفعالية"} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
       <main className="flex-grow">
-        {loading ? (
-          <EventLoadingState />
-        ) : error ? (
-          <EventNotFound message={error} />
-        ) : !event ? (
-          <EventNotFound message="لم يتم العثور على الفعالية" />
-        ) : (
-          <EventDetailsContainer
-            event={event}
-            isAdmin={isAdmin}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddToCalendar={handleAddToCalendar}
-            id={id!}
-            onRegister={() => navigate(`/events/${id}/register`)}
-          />
-        )}
+        <EventDetailsContainer
+          event={event}
+          isAdmin={isAdmin}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddToCalendar={handleAddToCalendar}
+          id={id}
+          onRegister={() => navigate(`/events/${id}/register`)}
+        />
       </main>
       <Footer />
     </div>
