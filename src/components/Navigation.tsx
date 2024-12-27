@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Plus, Settings, Users, Home } from "lucide-react";
+import { Plus, Settings, Home } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Navigation = () => {
@@ -46,21 +46,6 @@ export const Navigation = () => {
               <Settings className="h-4 w-4" />
             ) : (
               "الإعدادات"
-            )}
-          </Link>
-          <Link
-            to="/users"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              isActive("/users")
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {isMobile ? (
-              <Users className="h-4 w-4" />
-            ) : (
-              "إدارة المستخدمين"
             )}
           </Link>
           <Link to="/create-event">

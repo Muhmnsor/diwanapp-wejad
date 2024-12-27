@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   // Check for admin-only routes
-  const adminOnlyRoutes = ['/settings', '/users'];
+  const adminOnlyRoutes = ['/settings'];
   if (adminOnlyRoutes.includes(location.pathname) && !user?.isAdmin) {
     console.log('User is not admin, redirecting from:', location.pathname);
     return <Navigate to="/" replace />;
