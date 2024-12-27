@@ -55,8 +55,13 @@ export const EventDetailsContainer = ({
     eventType: event.event_type,
     certificateType: event.certificate_type,
     eventHours: event.event_hours,
-    maxAttendees: event.max_attendees
+    maxAttendees: event.max_attendees,
+    beneficiaryType: event.beneficiary_type,
+    eventPath: event.event_path,
+    eventCategory: event.event_category
   };
+
+  console.log('Transformed event:', transformedEvent);
 
   return (
     <div className="min-h-screen flex flex-col">
