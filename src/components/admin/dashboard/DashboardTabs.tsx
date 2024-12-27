@@ -27,6 +27,11 @@ export const DashboardTabs = ({
   eventPath,
   eventCategory,
 }: DashboardTabsProps) => {
+  console.log("DashboardTabs props:", {
+    eventPath,
+    eventCategory
+  });
+
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
       <TabsList className="w-full justify-start bg-secondary/20 p-1 rounded-xl">

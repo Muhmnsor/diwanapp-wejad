@@ -23,6 +23,8 @@ export const EventDashboard = ({ eventId }: { eventId: string }) => {
         registrations={data.registrations}
         eventTitle={data.event.title}
         eventId={eventId}
+        eventPath={data.event.event_path}
+        eventCategory={data.event.event_category}
       />
     </div>
   );
