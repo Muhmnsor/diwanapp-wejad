@@ -22,16 +22,16 @@ const EventDetails = () => {
 
   useEffect(() => {
     const fetchEvent = async () => {
+      if (!id) {
+        console.error('No event ID provided');
+        setError("معرف الفعالية غير موجود");
+        setLoading(false);
+        return;
+      }
+
       try {
         console.log('Starting to fetch event with ID:', id);
-        setLoading(true);
         
-        if (!id) {
-          console.error('No event ID provided');
-          setError("معرف الفعالية غير موجود");
-          return;
-        }
-
         const { data: eventData, error: fetchError } = await supabase
           .from("events")
           .select("*")
