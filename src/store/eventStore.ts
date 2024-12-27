@@ -8,6 +8,7 @@ export interface Event {
   date: string;
   time: string;
   location: string;
+  location_url?: string;
   imageUrl?: string;
   image_url?: string;
   attendees: number;
@@ -16,7 +17,7 @@ export interface Event {
   eventType?: "online" | "in-person";
   price: number | "free";
   beneficiaryType: BeneficiaryType;
-  beneficiary_type?: BeneficiaryType;  // Added this line for backward compatibility
+  beneficiary_type?: BeneficiaryType;
   registrationStartDate?: string | null;
   registrationEndDate?: string | null;
   registration_start_date?: string | null;

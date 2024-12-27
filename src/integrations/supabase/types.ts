@@ -256,6 +256,7 @@ export type Database = {
           id: string
           image_url: string
           location: string
+          location_url: string | null
           max_attendees: number
           price: number | null
           registration_end_date: string | null
@@ -274,6 +275,7 @@ export type Database = {
           id?: string
           image_url: string
           location: string
+          location_url?: string | null
           max_attendees?: number
           price?: number | null
           registration_end_date?: string | null
@@ -292,6 +294,7 @@ export type Database = {
           id?: string
           image_url?: string
           location?: string
+          location_url?: string | null
           max_attendees?: number
           price?: number | null
           registration_end_date?: string | null

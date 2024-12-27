@@ -7,6 +7,7 @@ export interface EventType {
   date: string;
   time: string;
   location: string;
+  location_url?: string;
   imageUrl?: string;
   image_url?: string;
   attendees: number;

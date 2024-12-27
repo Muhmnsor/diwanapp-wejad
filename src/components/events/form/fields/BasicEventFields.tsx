@@ -52,6 +52,17 @@ export const BasicEventFields = ({ formData, setFormData }: BasicEventFieldsProp
           className="text-right"
         />
       </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">رابط الموقع (اختياري)</label>
+        <Input
+          type="url"
+          placeholder="https://maps.google.com/..."
+          value={formData.location_url || ""}
+          onChange={(e) => setFormData({ ...formData, location_url: e.target.value })}
+          className="text-right"
+          dir="ltr"
+        />
+      </div>
     </>
   );
 };
