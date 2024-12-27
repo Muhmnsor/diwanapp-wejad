@@ -32,32 +32,39 @@ const EventDetails = () => {
       try {
         console.log('Starting to fetch event with ID:', id);
         
+        // First, fetch the event details
         const { data: eventData, error: fetchError } = await supabase
           .from("events")
           .select("*")
           .eq("id", id)
           .maybeSingle();
 
-        console.log('Fetch response:', { eventData, fetchError });
-
         if (fetchError) {
           console.error("Error fetching event:", fetchError);
           setError(fetchError.message);
           toast.error("حدث خطأ في جلب بيانات الفعالية");
+          setLoading(false);
           return;
         }
 
         if (!eventData) {
           console.log('No event found with ID:', id);
           setError("الفعالية غير موجودة");
+          setLoading(false);
           return;
         }
 
-        // Get registrations count
-        const { count: registrationsCount } = await supabase
+        // Then, get the registrations count separately
+        const { data: registrationsData, error: countError } = await supabase
           .from("registrations")
-          .select("*", { count: true, head: true })
+          .select("id")
           .eq("event_id", id);
+
+        if (countError) {
+          console.error("Error fetching registrations count:", countError);
+        }
+
+        const registrationsCount = registrationsData?.length || 0;
 
         console.log("Successfully fetched event data:", { 
           ...eventData, 
@@ -66,7 +73,7 @@ const EventDetails = () => {
 
         setEvent({
           ...eventData,
-          attendees: registrationsCount || 0
+          attendees: registrationsCount
         });
         setError(null);
       } catch (err) {
@@ -78,9 +85,7 @@ const EventDetails = () => {
       }
     };
 
-    if (id) {
-      fetchEvent();
-    }
+    fetchEvent();
   }, [id]);
 
   const handleEdit = () => {
