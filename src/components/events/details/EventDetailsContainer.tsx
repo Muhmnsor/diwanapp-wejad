@@ -61,7 +61,8 @@ export const EventDetailsContainer = ({
     eventPath: event.event_path,
     event_path: event.event_path,
     eventCategory: event.event_category,
-    event_category: event.event_category
+    event_category: event.event_category,
+    location_url: event.location_url
   };
 
   console.log('Transformed event:', transformedEvent);
