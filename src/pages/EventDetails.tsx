@@ -24,11 +24,11 @@ const EventDetails = () => {
     const fetchEvent = async () => {
       try {
         console.log('Starting to fetch event with ID:', id);
+        setLoading(true);
         
         if (!id) {
           console.error('No event ID provided');
           setError("معرف الفعالية غير موجود");
-          setLoading(false);
           return;
         }
 
@@ -44,30 +44,27 @@ const EventDetails = () => {
           console.error("Error fetching event:", fetchError);
           setError(fetchError.message);
           toast.error("حدث خطأ في جلب بيانات الفعالية");
-          setLoading(false);
           return;
         }
 
         if (!eventData) {
           console.log('No event found with ID:', id);
           setError("الفعالية غير موجودة");
-          setLoading(false);
           return;
         }
 
         console.log("Successfully fetched event data:", eventData);
         setEvent(eventData);
-        setLoading(false);
         setError(null);
       } catch (err) {
         console.error("Unexpected error in fetchEvent:", err);
         setError("حدث خطأ غير متوقع");
         toast.error("حدث خطأ غير متوقع");
+      } finally {
         setLoading(false);
       }
     };
 
-    setLoading(true);
     fetchEvent();
   }, [id]);
 
