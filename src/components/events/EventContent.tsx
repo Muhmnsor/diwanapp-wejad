@@ -32,7 +32,8 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       eventHours: event.event_hours,
       beneficiaryType: event.beneficiary_type,
       eventType: event.event_type,
-      price: event.price
+      price: event.price,
+      location_url: event.location_url
     });
 
     const newStatus = getEventStatus({
@@ -73,6 +74,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
           date={event.date}
           time={event.time}
           location={event.location}
+          location_url={event.location_url}
           attendees={registrationCounts?.[event.id] || 0}
           maxAttendees={event.max_attendees}
           eventType={event.event_type}
