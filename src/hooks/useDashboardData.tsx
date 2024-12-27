@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardData } from "@/types/dashboard";
+import { DashboardData, EventStats, ChartData } from "@/types/dashboard";
 
 export const useDashboardData = () => {
   return useQuery({
@@ -8,7 +8,7 @@ export const useDashboardData = () => {
     queryFn: async (): Promise<DashboardData> => {
       console.log("🔄 جاري تحميل إحصائيات لوحة المعلومات...");
 
-      // Get all events
+      // Get all events with their registrations and feedback
       const { data: events, error: eventsError } = await supabase
         .from("events")
         .select(`
@@ -50,14 +50,14 @@ export const useDashboardData = () => {
         .sort((a, b) => b.avgRating - a.avgRating);
 
       // Group events by type and beneficiary
-      const eventsByType = Object.entries(
+      const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: {[key: string]: number}, event) => {
           acc[event.event_type] = (acc[event.event_type] || 0) + 1;
           return acc;
         }, {})
       ).map(([name, value]) => ({ name, value }));
 
-      const eventsByBeneficiary = Object.entries(
+      const eventsByBeneficiary: ChartData[] = Object.entries(
         events.reduce((acc: {[key: string]: number}, event) => {
           acc[event.beneficiary_type] = (acc[event.beneficiary_type] || 0) + 1;
           return acc;
@@ -74,14 +74,17 @@ export const useDashboardData = () => {
         totalRevenue,
         mostRegisteredEvent: {
           title: sortedByRegistrations[0]?.title || 'لا يوجد',
-          registrations: sortedByRegistrations[0]?.registrations[0].count || 0
+          registrations: sortedByRegistrations[0]?.registrations[0].count || 0,
+          rating: 0 // Added to match EventStats interface
         },
         leastRegisteredEvent: {
           title: sortedByRegistrations[sortedByRegistrations.length - 1]?.title || 'لا يوجد',
-          registrations: sortedByRegistrations[sortedByRegistrations.length - 1]?.registrations[0].count || 0
+          registrations: sortedByRegistrations[sortedByRegistrations.length - 1]?.registrations[0].count || 0,
+          rating: 0 // Added to match EventStats interface
         },
         highestRatedEvent: {
           title: sortedByRating[0]?.title || 'لا يوجد',
+          registrations: 0, // Added to match EventStats interface
           rating: sortedByRating[0]?.avgRating || 0
         },
         eventsByType,
