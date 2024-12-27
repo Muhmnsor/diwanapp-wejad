@@ -29,6 +29,7 @@ const CreateEvent = () => {
     price: "free",
     max_attendees: 0,
     beneficiaryType: "both",
+    beneficiary_type: "both",
     event_type: "in-person",
     eventType: "in-person",
     attendees: 0,

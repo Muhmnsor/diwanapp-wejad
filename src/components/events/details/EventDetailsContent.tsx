@@ -1,9 +1,9 @@
-import { EventType } from "@/types/event";
 import { EventInfo } from "../EventInfo";
 import { EventDescription } from "../EventDescription";
 import { EventRegisterButton } from "../EventRegisterButton";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect, useState } from "react";
+import { EventType } from "@/types/event";
 
 interface EventDetailsContentProps {
   event: EventType;
@@ -17,6 +17,7 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
     beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
     certificate_type: event.certificate_type || event.certificateType || "none",
     event_hours: event.event_hours || event.eventHours || 0,
+    event_path: event.event_path || "environment",
     max_attendees: event.max_attendees
   }));
 
@@ -40,6 +41,7 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
       beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
       certificate_type: event.certificate_type || event.certificateType || "none",
       event_hours: event.event_hours || event.eventHours || 0,
+      event_path: event.event_path || "environment",
       max_attendees: event.max_attendees
     });
     console.log('Event status updated to:', newStatus);
@@ -61,6 +63,7 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
       beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
       certificate_type: event.certificate_type || event.certificateType || "none",
       event_hours: event.event_hours || event.eventHours || 0,
+      event_path: event.event_path || "environment",
       max_attendees: event.max_attendees
     });
     console.log('Attempting registration with status:', status);
