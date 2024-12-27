@@ -13,6 +13,10 @@ interface EventDetailsContentProps {
 export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentProps) => {
   const [eventStatus, setEventStatus] = useState(() => getEventStatus({
     ...event,
+    event_type: event.event_type || event.eventType || "in-person",
+    beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
+    certificate_type: event.certificate_type || event.certificateType || "none",
+    event_hours: event.event_hours || event.eventHours || 0,
     max_attendees: event.max_attendees
   }));
 
@@ -32,6 +36,10 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
 
     const newStatus = getEventStatus({
       ...event,
+      event_type: event.event_type || event.eventType || "in-person",
+      beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
+      certificate_type: event.certificate_type || event.certificateType || "none",
+      event_hours: event.event_hours || event.eventHours || 0,
       max_attendees: event.max_attendees
     });
     console.log('Event status updated to:', newStatus);
@@ -49,6 +57,10 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
   const handleRegister = () => {
     const status = getEventStatus({
       ...event,
+      event_type: event.event_type || event.eventType || "in-person",
+      beneficiary_type: event.beneficiary_type || event.beneficiaryType || "both",
+      certificate_type: event.certificate_type || event.certificateType || "none",
+      event_hours: event.event_hours || event.eventHours || 0,
       max_attendees: event.max_attendees
     });
     console.log('Attempting registration with status:', status);
