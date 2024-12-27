@@ -5,7 +5,7 @@ import {
 import { Event as CustomEvent } from "@/store/eventStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditEventHeader } from "./EditEventHeader";
-import { EditEventForm } from "./EditEventForm";
+import { EditEventFormContainer } from "./form/EditEventFormContainer";
 
 interface EditEventDialogProps {
   event: CustomEvent;
@@ -32,7 +32,7 @@ export const EditEventDialog = ({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] [&_[data-radix-scroll-area-viewport]]:!pl-4 [&_[data-radix-scroll-area-viewport]]:!pr-0" dir="rtl">
         <EditEventHeader />
         <ScrollArea className="h-[calc(90vh-120px)]">
-          <EditEventForm 
+          <EditEventFormContainer
             event={event}
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
