@@ -32,7 +32,7 @@ export const EventCardContent = ({
   status
 }: EventCardContentProps) => {
   return (
-    <div className="space-y-4 p-4 pt-0">
+    <div className="space-y-3 p-4 pt-0">
       <EventCardBadges
         eventType={eventType}
         price={price}
