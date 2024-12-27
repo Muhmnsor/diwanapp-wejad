@@ -150,19 +150,23 @@ const CreateEvent = () => {
       setIsUploading(true);
       try {
         const fileName = `event-images/${Date.now()}.${file.name.split('.').pop()}`;
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('event-images')
           .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
-        const imageUrl = `${supabase.storageUrl}/object/public/event-images/${fileName}`;
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-images')
+          .getPublicUrl(fileName);
+
         setFormData(prev => ({
           ...prev,
-          imageUrl: imageUrl,
-          image_url: imageUrl
+          imageUrl: publicUrl,
+          image_url: publicUrl
         }));
 
+        toast.success("تم رفع الصورة بنجاح");
       } catch (error) {
         console.error('Error uploading image:', error);
         toast.error("حدث خطأ أثناء رفع الصورة");
