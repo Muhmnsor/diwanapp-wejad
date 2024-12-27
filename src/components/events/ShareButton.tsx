@@ -58,30 +58,22 @@ export const ShareButton = ({
           <Share2 className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48">
-        <DropdownMenuItem onClick={() => handleShare('x')}>
-          <span className="flex items-center justify-end text-right w-full">
-            مشاركة على X
-            <X className="h-4 w-4 mr-2" />
-          </span>
+      <DropdownMenuContent align="end" className="min-w-[200px]">
+        <DropdownMenuItem onClick={() => handleShare('x')} className="flex items-center gap-2 justify-end">
+          <span>مشاركة على X</span>
+          <X className="h-4 w-4" />
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('facebook')}>
-          <span className="flex items-center justify-end text-right w-full">
-            مشاركة على فيسبوك
-            <Facebook className="h-4 w-4 mr-2" />
-          </span>
+        <DropdownMenuItem onClick={() => handleShare('facebook')} className="flex items-center gap-2 justify-end">
+          <span>مشاركة على فيسبوك</span>
+          <Facebook className="h-4 w-4" />
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
-          <span className="flex items-center justify-end text-right w-full">
-            مشاركة عبر واتساب
-            <MessageCircle className="h-4 w-4 mr-2" />
-          </span>
+        <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="flex items-center gap-2 justify-end">
+          <span>مشاركة عبر واتساب</span>
+          <MessageCircle className="h-4 w-4" />
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleShare('copy')}>
-          <span className="flex items-center justify-end text-right w-full">
-            نسخ الرابط
-            <Share2 className="h-4 w-4 mr-2" />
-          </span>
+        <DropdownMenuItem onClick={() => handleShare('copy')} className="flex items-center gap-2 justify-end">
+          <span>نسخ الرابط</span>
+          <Share2 className="h-4 w-4" />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
