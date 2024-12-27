@@ -8,6 +8,7 @@ import { EventDeleteDialog } from "./EventDeleteDialog";
 import { useState } from "react";
 import { handleEventDeletion } from "./EventDeletionHandler";
 import { useNavigate } from "react-router-dom";
+import { EventType } from "@/types/event";
 
 interface EventDetailsContainerProps {
   event: Event & { attendees: number };
@@ -62,12 +63,21 @@ export const EventDetailsContainer = ({
     return null;
   }
 
+  // Convert Event to EventType
+  const eventData: EventType = {
+    ...event,
+    eventType: event.event_type,
+    beneficiaryType: event.beneficiary_type,
+    certificateType: event.certificate_type,
+    eventHours: event.event_hours
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <EventContainer>
         <div className="flex-grow">
           <EventDetailsHeader
-            event={event}
+            event={eventData}
             isAdmin={isAdmin}
             onEdit={onEdit}
             onDelete={() => setIsDeleteDialogOpen(true)}
@@ -75,7 +85,7 @@ export const EventDetailsContainer = ({
           />
 
           <EventDetailsContent 
-            event={event}
+            event={eventData}
             onRegister={handleRegister}
           />
         </div>
