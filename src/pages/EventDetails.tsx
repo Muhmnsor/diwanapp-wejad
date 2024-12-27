@@ -95,78 +95,62 @@ const EventDetails = () => {
     console.log("Add to calendar clicked");
   };
 
-  if (loading) {
+  const renderContent = () => {
+    if (loading) {
+      return <EventLoadingState />;
+    }
+
+    if (error || !event) {
+      return <EventNotFound />;
+    }
+
+    const isAdmin = user?.isAdmin;
+
+    if (!isAdmin) {
+      return (
+        <EventDetailsView
+          event={event}
+          isAdmin={isAdmin}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddToCalendar={handleAddToCalendar}
+          id={id!}
+        />
+      );
+    }
+
     return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <main className="flex-1 py-12">
-          <EventLoadingState />
-        </main>
-        <Footer />
+      <div className="bg-gray-50/50">
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+            <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
+            <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="details" className="mt-0">
+            <EventDetailsView
+              event={event}
+              isAdmin={isAdmin}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onAddToCalendar={handleAddToCalendar}
+              id={id!}
+            />
+          </TabsContent>
+
+          <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
+            <EventDashboard eventId={id!} />
+          </TabsContent>
+        </Tabs>
       </div>
     );
-  }
-
-  if (error || !event) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <main className="flex-1 py-12">
-          <EventNotFound />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  const isAdmin = user?.isAdmin;
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <main className="flex-1 py-12">
-          <EventDetailsView
-            event={event}
-            isAdmin={isAdmin}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onAddToCalendar={handleAddToCalendar}
-            id={id!}
-          />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
       <main className="flex-1 py-12">
-        <div className="bg-gray-50/50">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
-              <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
-              <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details" className="mt-0">
-              <EventDetailsView
-                event={event}
-                isAdmin={isAdmin}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onAddToCalendar={handleAddToCalendar}
-                id={id!}
-              />
-            </TabsContent>
-
-            <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
-              <EventDashboard eventId={id!} />
-            </TabsContent>
-          </Tabs>
-        </div>
+        {renderContent()}
       </main>
       <Footer />
     </div>
