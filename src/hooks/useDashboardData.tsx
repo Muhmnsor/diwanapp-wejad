@@ -58,12 +58,12 @@ export const useDashboardData = () => {
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: value as number }));
 
       console.log("Events by type:", eventsByType);
 
       // Count events by path
-      const eventsByBeneficiary = [
+      const eventsByBeneficiary: ChartData[] = [
         { name: 'البيئة', value: events.filter(event => event.event_path === 'environment').length },
         { name: 'المجتمع', value: events.filter(event => event.event_path === 'community').length },
         { name: 'المحتوى', value: events.filter(event => event.event_path === 'content').length }
