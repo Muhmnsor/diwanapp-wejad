@@ -15,11 +15,8 @@ export const handleAddToCalendar = (event: Event) => {
     console.log("Cleaned time string:", cleanedTimeStr);
     
     // تحويل التاريخ والوقت إلى تنسيق قياسي
-    const dateString = `${dateStr} ${cleanedTimeStr}`;
-    console.log("Final date string:", dateString);
-    
-    const [year, month, day] = dateStr.split('-');
-    const [hours, minutes] = cleanedTimeStr.split(':');
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes] = cleanedTimeStr.split(':').map(Number);
     
     // إنشاء كائن التاريخ
     const eventDate = new Date(
@@ -35,18 +32,26 @@ export const handleAddToCalendar = (event: Event) => {
       throw new Error('Invalid date conversion');
     }
     
+    console.log("Event date object:", eventDate);
+    
     // إضافة ساعتين للوقت النهائي
     const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000));
-
+    
     // تنسيق التواريخ بشكل صحيح لجميع الأجهزة
     const formatDate = (date: Date) => {
-      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+      return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
     };
 
     const calendarEvent = {
       title: event.title,
       description: event.description || '',
-      location: event.location,
+      location: event.location || '',
       startDate: formatDate(eventDate),
       endDate: formatDate(endDate),
     };
@@ -54,6 +59,7 @@ export const handleAddToCalendar = (event: Event) => {
     console.log("Calendar event data:", calendarEvent);
 
     const calendarUrl = createCalendarUrl(calendarEvent);
+    console.log("Generated calendar URL:", calendarUrl);
     
     if (calendarUrl.startsWith('blob:')) {
       // للأجهزة التي تدعم تنزيل ملف ICS

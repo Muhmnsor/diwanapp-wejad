@@ -13,17 +13,16 @@ export const createCalendarUrl = (event: CalendarEvent) => {
   
   console.log("Device detection:", { isIOS, isAndroid, userAgent });
 
-  // Format for Google Calendar
-  const googleParams = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: event.title,
-    details: event.description,
-    location: event.location,
-    dates: `${event.startDate}/${event.endDate}`,
-  });
+  // تنظيف البيانات
+  const sanitizedEvent = {
+    ...event,
+    title: encodeURIComponent(event.title),
+    description: encodeURIComponent(event.description),
+    location: encodeURIComponent(event.location),
+  };
 
   if (isIOS) {
-    // iOS Calendar format
+    // تنسيق ICS لأجهزة iOS
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -35,15 +34,15 @@ export const createCalendarUrl = (event: CalendarEvent) => {
       `DTEND:${event.endDate}`,
       'END:VEVENT',
       'END:VCALENDAR'
-    ].join('\n');
+    ].join('\r\n');
 
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     return URL.createObjectURL(blob);
   } else if (isAndroid) {
-    // Android Intent format
-    return `content://com.android.calendar/events?${googleParams.toString()}`;
+    // تنسيق Intent لأجهزة Android
+    return `content://com.android.calendar/events?action=TEMPLATE&text=${sanitizedEvent.title}&details=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${event.startDate}/${event.endDate}`;
   } else {
-    // Default to Google Calendar for web browsers
-    return `https://calendar.google.com/calendar/render?${googleParams.toString()}`;
+    // تنسيق Google Calendar للمتصفحات
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${sanitizedEvent.title}&details=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${event.startDate}/${event.endDate}`;
   }
 };
