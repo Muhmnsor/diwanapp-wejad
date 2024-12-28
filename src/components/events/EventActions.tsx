@@ -22,7 +22,7 @@ export const EventActions = ({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 pointer-events-auto">
       <ShareButton 
         title={eventTitle}
         text={eventDescription}
@@ -33,7 +33,7 @@ export const EventActions = ({
         variant="outline" 
         size="icon"
         onClick={handleCalendarClick}
-        className="w-8 h-8"
+        className="w-8 h-8 relative z-10"
       >
         <CalendarPlus className="h-4 w-4" />
       </Button>
