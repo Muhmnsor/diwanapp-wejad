@@ -79,7 +79,7 @@ export const DashboardStats = ({
   };
 
   return (
-    <div className="space-y-8">
+    <>
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-xl font-semibold mb-6">الإحصائيات الكلية</h2>
         <DashboardStatsCards
@@ -90,7 +90,7 @@ export const DashboardStats = ({
         />
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
+      <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-xl font-semibold mb-6">الإحصائيات المصفاة</h2>
         <DashboardFilters
           onFilterChange={handleFilterChange}
@@ -112,6 +112,6 @@ export const DashboardStats = ({
           </div>
         ) : null}
       </div>
-    </div>
+    </>
   );
 };

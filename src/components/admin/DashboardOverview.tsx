@@ -17,18 +17,8 @@ export const DashboardOverview = ({
   eventDate,
   eventTime,
   eventPath,
-  eventCategory
+  eventCategory,
 }: DashboardOverviewProps) => {
-  console.log("DashboardOverview props:", {
-    registrationCount,
-    remainingSeats,
-    occupancyRate,
-    eventDate,
-    eventTime,
-    eventPath,
-    eventCategory
-  });
-
   return (
     <div className="space-y-8">
       <DashboardStats
