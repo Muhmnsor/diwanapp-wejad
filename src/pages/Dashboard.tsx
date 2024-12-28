@@ -1,7 +1,9 @@
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { DashboardOverview } from "@/components/admin/DashboardOverview";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { DashboardTabs } from "@/components/admin/dashboard/DashboardTabs";
 
 const Dashboard = () => {
   const { data, isLoading, error } = useDashboardData();
@@ -40,13 +42,17 @@ const Dashboard = () => {
       <TopHeader />
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-3xl font-bold mb-8">لوحة المعلومات</h1>
-        <DashboardOverview
-          registrationCount={data?.totalRegistrations || 0}
-          remainingSeats={data?.totalEvents || 0}
-          occupancyRate={data?.totalEvents ? (data.totalRegistrations / data.totalEvents) * 100 : 0}
-          eventDate=""
-          eventTime=""
-        />
+        <div className="space-y-8">
+          <section className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="text-2xl font-semibold mb-6">نظرة عامة</h2>
+            <DashboardStats data={data} />
+          </section>
+          
+          <section className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="text-2xl font-semibold mb-6">الرسوم البيانية</h2>
+            <DashboardCharts data={data} />
+          </section>
+        </div>
       </div>
       <Footer />
     </div>

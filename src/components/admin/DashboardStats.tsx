@@ -84,10 +84,10 @@ export const DashboardStats = ({
   return (
     <div>
       <DashboardStatsCards
-        registrationCount={showFilters ? (filteredStats?.registrationCount || 0) : registrationCount}
-        remainingSeats={showFilters ? (filteredStats?.remainingSeats || 0) : remainingSeats}
-        occupancyRate={showFilters ? (filteredStats?.occupancyRate || 0) : occupancyRate}
-        eventCount={showFilters ? (filteredStats?.eventCount || 0) : 0}
+        registrationCount={registrationCount}
+        remainingSeats={remainingSeats}
+        occupancyRate={occupancyRate}
+        eventCount={0}
       />
 
       {showFilters && (
@@ -101,6 +101,15 @@ export const DashboardStats = ({
 
           {isLoading ? (
             <div className="text-center py-4">جاري تحميل البيانات...</div>
+          ) : filteredStats ? (
+            <div className="mt-6">
+              <DashboardStatsCards
+                registrationCount={filteredStats.registrationCount}
+                remainingSeats={filteredStats.remainingSeats}
+                occupancyRate={filteredStats.occupancyRate}
+                eventCount={filteredStats.eventCount}
+              />
+            </div>
           ) : null}
         </div>
       )}
