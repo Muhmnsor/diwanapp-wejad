@@ -64,7 +64,9 @@ export const EventDetailsView = ({
           registration_end_date: updatedEvent.registration_end_date || updatedEvent.registrationEndDate,
           beneficiary_type: updatedEvent.beneficiary_type || updatedEvent.beneficiaryType,
           certificate_type: updatedEvent.certificate_type || updatedEvent.certificateType,
-          event_hours: updatedEvent.event_hours || updatedEvent.eventHours
+          event_hours: updatedEvent.event_hours || updatedEvent.eventHours,
+          event_path: updatedEvent.event_path,
+          event_category: updatedEvent.event_category
         })
         .eq('id', id);
 
@@ -79,7 +81,9 @@ export const EventDetailsView = ({
         event_hours: updatedEvent.event_hours || updatedEvent.eventHours,
         registration_start_date: updatedEvent.registration_start_date || updatedEvent.registrationStartDate,
         registration_end_date: updatedEvent.registration_end_date || updatedEvent.registrationEndDate,
-        location_url: updatedEvent.location_url
+        location_url: updatedEvent.location_url,
+        event_path: updatedEvent.event_path,
+        event_category: updatedEvent.event_category
       });
       
       toast.success('تم تحديث الفعالية بنجاح');
