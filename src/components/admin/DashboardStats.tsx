@@ -9,6 +9,7 @@ interface DashboardStatsProps {
   remainingSeats: number;
   occupancyRate: number;
   showFilters?: boolean;
+  eventCount: number;
 }
 
 export const DashboardStats = ({
@@ -16,6 +17,7 @@ export const DashboardStats = ({
   remainingSeats,
   occupancyRate,
   showFilters = false,
+  eventCount,
 }: DashboardStatsProps) => {
   const [filters, setFilters] = useState({
     path: 'all',
@@ -84,10 +86,10 @@ export const DashboardStats = ({
   return (
     <div>
       <DashboardStatsCards
-        registrationCount={registrationCount}
-        remainingSeats={remainingSeats}
-        occupancyRate={occupancyRate}
-        eventCount={0}
+        registrationCount={showFilters ? (filteredStats?.registrationCount || 0) : registrationCount}
+        remainingSeats={showFilters ? (filteredStats?.remainingSeats || 0) : remainingSeats}
+        occupancyRate={showFilters ? (filteredStats?.occupancyRate || 0) : occupancyRate}
+        eventCount={showFilters ? (filteredStats?.eventCount || 0) : eventCount}
       />
 
       {showFilters && (
@@ -99,18 +101,9 @@ export const DashboardStats = ({
             selectedPrice={filters.price}
           />
 
-          {isLoading ? (
+          {isLoading && (
             <div className="text-center py-4">جاري تحميل البيانات...</div>
-          ) : filteredStats ? (
-            <div className="mt-6">
-              <DashboardStatsCards
-                registrationCount={filteredStats.registrationCount}
-                remainingSeats={filteredStats.remainingSeats}
-                occupancyRate={filteredStats.occupancyRate}
-                eventCount={filteredStats.eventCount}
-              />
-            </div>
-          ) : null}
+          )}
         </div>
       )}
     </div>
