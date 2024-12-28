@@ -19,6 +19,11 @@ export const useDashboardData = () => {
 
       if (eventsError) throw eventsError;
 
+      console.log("Events data for beneficiary chart:", events.map(e => ({ 
+        title: e.title, 
+        beneficiary_type: e.beneficiary_type 
+      })));
+
       const now = new Date();
       const upcomingEvents = events.filter(event => new Date(event.date) >= now);
       const pastEvents = events.filter(event => new Date(event.date) < now);
@@ -49,7 +54,7 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
-      // Group events by type and beneficiary with explicit number type
+      // Group events by type
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
           const count = (acc[event.event_type] || 0) + 1;
@@ -58,15 +63,22 @@ export const useDashboardData = () => {
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
 
-      const eventsByBeneficiary: ChartData[] = Object.entries(
-        events.reduce((acc: Record<string, number>, event) => {
-          const count = (acc[event.beneficiary_type] || 0) + 1;
-          acc[event.beneficiary_type] = count;
-          return acc;
-        }, {})
-      ).map(([name, value]) => ({ name, value: value as number }));
+      // Group events by beneficiary type
+      const beneficiaryCounts = events.reduce((acc: Record<string, number>, event) => {
+        const type = event.beneficiary_type;
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
 
-      console.log("✅ تم تحميل إحصائيات لوحة المعلومات بنجاح");
+      console.log("Beneficiary counts before transformation:", beneficiaryCounts);
+
+      const eventsByBeneficiary: ChartData[] = [
+        { name: 'men', value: beneficiaryCounts['men'] || 0 },
+        { name: 'women', value: beneficiaryCounts['women'] || 0 },
+        { name: 'both', value: beneficiaryCounts['both'] || 0 }
+      ];
+
+      console.log("Final beneficiary data:", eventsByBeneficiary);
 
       return {
         totalEvents: events.length,
