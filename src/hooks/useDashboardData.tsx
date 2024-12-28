@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Registration } from "../components/admin/types";
 import { DashboardData, EventStats, ChartData } from "@/types/dashboard";
 
 export const useDashboardData = () => {
@@ -47,37 +46,39 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
+      // تحديث تجميع الفعاليات حسب النوع
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
           const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ 
-        name, 
+      ).map(([name, value]) => ({
+        name,
         value: Number(value)
       }));
 
       console.log("Events by type:", eventsByType);
 
+      // تحديث تجميع الفعاليات حسب المسار
       const eventsByBeneficiary: ChartData[] = [
-        { 
-          name: 'البيئة', 
+        {
+          name: 'البيئة',
           value: Number(events.filter(event => event.event_path === 'environment').length)
         },
-        { 
-          name: 'المجتمع', 
+        {
+          name: 'المجتمع',
           value: Number(events.filter(event => event.event_path === 'community').length)
         },
-        { 
-          name: 'المحتوى', 
+        {
+          name: 'المحتوى',
           value: Number(events.filter(event => event.event_path === 'content').length)
         }
       ];
 
-      console.log("Events by path:", eventsByBeneficiary);
+      console.log("Events by beneficiary:", eventsByBeneficiary);
 
-      return {
+      const dashboardData: DashboardData = {
         totalEvents: events.length,
         upcomingEvents: upcomingEvents.length,
         pastEvents: pastEvents.length,
@@ -101,6 +102,9 @@ export const useDashboardData = () => {
         eventsByType,
         eventsByBeneficiary
       };
+
+      console.log("Final dashboard data:", dashboardData);
+      return dashboardData;
     }
   });
 };
