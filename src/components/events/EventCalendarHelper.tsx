@@ -39,12 +39,7 @@ export const handleAddToCalendar = (event: Event) => {
     
     // تنسيق التواريخ بشكل صحيح لجميع الأجهزة
     const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}${month}${day}T${hours}${minutes}00`;
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
 
     const calendarEvent = {
@@ -60,21 +55,8 @@ export const handleAddToCalendar = (event: Event) => {
     const calendarUrl = createCalendarUrl(calendarEvent);
     console.log("Generated calendar URL:", calendarUrl);
     
-    if (calendarUrl.startsWith('blob:')) {
-      // للأجهزة التي تدعم تنزيل ملف ICS
-      const link = document.createElement('a');
-      link.href = calendarUrl;
-      link.download = `${event.title}.ics`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(calendarUrl);
-      toast.success("تم تحميل ملف التقويم");
-    } else {
-      // للمتصفحات وأجهزة Android
-      window.open(calendarUrl, '_blank');
-      toast.success("تم فتح التقويم");
-    }
+    window.open(calendarUrl, '_blank');
+    toast.success("تم فتح التقويم");
   } catch (error) {
     console.error('Error creating calendar event:', error);
     toast.error("لم نتمكن من إضافة الفعالية إلى التقويم");
