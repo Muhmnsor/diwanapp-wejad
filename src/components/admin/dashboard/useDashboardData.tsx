@@ -17,7 +17,7 @@ export const useDashboardData = (eventId: string) => {
           )
         `)
         .eq('id', eventId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching event:', error);
@@ -92,7 +92,11 @@ export const useDashboardData = (eventId: string) => {
       occupancyRate,
       event,
       registrations,
-      eventsByCategory
+      eventsByCategory,
+      eventDate: event.date,
+      eventTime: event.time,
+      eventPath: event.event_path,
+      eventCategory: event.event_category
     };
   };
 

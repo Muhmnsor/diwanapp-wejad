@@ -30,7 +30,7 @@ export const DashboardStats = ({
   });
 
   useEffect(() => {
-    console.log("DashboardStats - Filters changed:", { selectedPath, selectedCategory });
+    console.log("DashboardStats - Current filters:", { selectedPath, selectedCategory });
     console.log("DashboardStats - Current event:", { eventPath, eventCategory });
 
     if (selectedPath === "all" && selectedCategory === "all") {
@@ -39,25 +39,26 @@ export const DashboardStats = ({
         remainingSeats,
         occupancyRate
       });
+      return;
+    }
+
+    const matchesPath = selectedPath === "all" || selectedPath === eventPath;
+    const matchesCategory = selectedCategory === "all" || selectedCategory === eventCategory;
+
+    console.log("DashboardStats - Filter matches:", { matchesPath, matchesCategory });
+
+    if (matchesPath && matchesCategory) {
+      setFilteredStats({
+        registrationCount,
+        remainingSeats,
+        occupancyRate
+      });
     } else {
-      const matchesPath = selectedPath === "all" || selectedPath === eventPath;
-      const matchesCategory = selectedCategory === "all" || selectedCategory === eventCategory;
-
-      console.log("DashboardStats - Matches:", { matchesPath, matchesCategory });
-
-      if (matchesPath && matchesCategory) {
-        setFilteredStats({
-          registrationCount,
-          remainingSeats,
-          occupancyRate
-        });
-      } else {
-        setFilteredStats({
-          registrationCount: 0,
-          remainingSeats: 0,
-          occupancyRate: 0
-        });
-      }
+      setFilteredStats({
+        registrationCount: 0,
+        remainingSeats: 0,
+        occupancyRate: 0
+      });
     }
   }, [
     selectedPath,
