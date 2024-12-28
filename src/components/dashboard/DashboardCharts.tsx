@@ -9,28 +9,23 @@ interface DashboardChartsProps {
 export const DashboardCharts = ({ data }: DashboardChartsProps) => {
   console.log('Original beneficiary data:', data.eventsByBeneficiary);
   
-  // Transform beneficiary data to Arabic labels
-  const transformedBeneficiaryData = data.eventsByBeneficiary.map(item => {
-    console.log('Processing item:', item);
-    let arabicName = item.name;
-    
-    // Transform English names to Arabic
-    if (item.name === 'men') {
-      arabicName = 'رجال';
-    } else if (item.name === 'women') {
-      arabicName = 'نساء';
-    } else if (item.name === 'both') {
-      arabicName = 'رجال ونساء';
+  // Transform beneficiary data to Arabic labels and ensure all three types exist
+  const transformedBeneficiaryData = [
+    {
+      name: 'رجال',
+      value: data.eventsByBeneficiary.find(item => item.name === 'men')?.value || 0
+    },
+    {
+      name: 'نساء',
+      value: data.eventsByBeneficiary.find(item => item.name === 'women')?.value || 0
+    },
+    {
+      name: 'رجال ونساء',
+      value: data.eventsByBeneficiary.find(item => item.name === 'both')?.value || 0
     }
-    
-    console.log('Transformed to:', { name: arabicName, value: item.value });
-    return {
-      name: arabicName,
-      value: item.value
-    };
-  });
+  ];
 
-  console.log('Final transformed data:', transformedBeneficiaryData);
+  console.log('Final transformed beneficiary data:', transformedBeneficiaryData);
 
   // Transform event types to Arabic
   const transformedEventTypes = data.eventsByType.map(item => ({
