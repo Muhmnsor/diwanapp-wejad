@@ -15,6 +15,12 @@ export const EventActions = ({
   eventDescription,
   onShare
 }: EventActionsProps) => {
+  const handleCalendarClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onAddToCalendar();
+  };
+
   return (
     <div className="flex gap-2">
       <ShareButton 
@@ -25,12 +31,8 @@ export const EventActions = ({
       />
       <Button 
         variant="outline" 
-        size="icon" 
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onAddToCalendar();
-        }}
+        size="icon"
+        onClick={handleCalendarClick}
         className="w-8 h-8"
       >
         <CalendarPlus className="h-4 w-4" />

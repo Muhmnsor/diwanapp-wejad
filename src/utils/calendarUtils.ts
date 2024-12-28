@@ -13,7 +13,6 @@ export const createCalendarUrl = (event: CalendarEvent) => {
   
   console.log("Device detection:", { isIOS, isAndroid, userAgent });
 
-  // تنظيف البيانات
   const sanitizedEvent = {
     title: encodeURIComponent(event.title),
     description: encodeURIComponent(event.description),
@@ -23,7 +22,6 @@ export const createCalendarUrl = (event: CalendarEvent) => {
   };
 
   if (isIOS) {
-    // تنسيق ICS لأجهزة iOS
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -39,11 +37,7 @@ export const createCalendarUrl = (event: CalendarEvent) => {
 
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     return URL.createObjectURL(blob);
-  } else if (isAndroid) {
-    // تنسيق Google Calendar لأجهزة Android (تم تغيير المسار لاستخدام Google Calendar بدلاً من تطبيق التقويم الافتراضي)
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${sanitizedEvent.title}&details=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${sanitizedEvent.startDate}/${sanitizedEvent.endDate}`;
-  } else {
-    // تنسيق Google Calendar للمتصفحات
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${sanitizedEvent.title}&details=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${sanitizedEvent.startDate}/${sanitizedEvent.endDate}`;
   }
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${sanitizedEvent.title}&details=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${sanitizedEvent.startDate}/${sanitizedEvent.endDate}`;
 };

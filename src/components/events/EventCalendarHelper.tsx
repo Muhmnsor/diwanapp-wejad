@@ -10,15 +10,12 @@ export const handleAddToCalendar = (event: Event) => {
     
     console.log("Converting date and time:", { dateStr, timeStr });
     
-    // تنظيف سلسلة الوقت
     const cleanedTimeStr = timeStr.trim();
     console.log("Cleaned time string:", cleanedTimeStr);
     
-    // تحويل التاريخ والوقت إلى تنسيق قياسي
     const [year, month, day] = dateStr.split('-');
     const [hours, minutes] = cleanedTimeStr.split(':');
     
-    // إنشاء كائن التاريخ
     const eventDate = new Date(
       parseInt(year),
       parseInt(month) - 1,
@@ -27,14 +24,12 @@ export const handleAddToCalendar = (event: Event) => {
       parseInt(minutes)
     );
     
-    // التحقق من صحة التاريخ
     if (isNaN(eventDate.getTime())) {
       throw new Error('Invalid date conversion');
     }
     
     console.log("Event date object:", eventDate);
     
-    // إضافة ساعتين للوقت النهائي
     const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000));
 
     const calendarEvent = {
@@ -50,13 +45,14 @@ export const handleAddToCalendar = (event: Event) => {
     const calendarUrl = createCalendarUrl(calendarEvent);
     console.log("Generated calendar URL:", calendarUrl);
 
-    // فتح رابط التقويم في نافذة جديدة
-    const win = window.open(calendarUrl, '_blank');
-    if (win) {
-      win.focus();
-    } else {
-      toast.error("يرجى السماح بفتح النوافذ المنبثقة لإضافة الفعالية إلى التقويم");
-    }
+    setTimeout(() => {
+      const win = window.open(calendarUrl, '_blank');
+      if (win) {
+        win.focus();
+      } else {
+        toast.error("يرجى السماح بفتح النوافذ المنبثقة لإضافة الفعالية إلى التقويم");
+      }
+    }, 100);
     
     toast.success("تم فتح التقويم");
   } catch (error) {
