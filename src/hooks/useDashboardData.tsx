@@ -59,22 +59,21 @@ export const useDashboardData = () => {
       ).map(([name, value]) => ({ name, value: value as number }));
 
       // Group events by path
-      const eventsByPath = [
-        {
-          name: 'environment',
-          value: events.filter(event => event.event_path === 'environment').length
-        },
-        {
-          name: 'community',
-          value: events.filter(event => event.event_path === 'community').length
-        },
-        {
-          name: 'content',
-          value: events.filter(event => event.event_path === 'content').length
-        }
+      const eventsByPath = events.reduce((acc: Record<string, number>, event) => {
+        const path = event.event_path || 'environment';
+        acc[path] = (acc[path] || 0) + 1;
+        return acc;
+      }, {});
+
+      console.log("Raw events by path data:", eventsByPath);
+
+      const eventsByBeneficiary = [
+        { name: 'environment', value: eventsByPath['environment'] || 0 },
+        { name: 'community', value: eventsByPath['community'] || 0 },
+        { name: 'content', value: eventsByPath['content'] || 0 }
       ];
 
-      console.log("Events by path data:", eventsByPath);
+      console.log("Final events by path data:", eventsByBeneficiary);
 
       return {
         totalEvents: events.length,
@@ -98,7 +97,7 @@ export const useDashboardData = () => {
           rating: sortedByRating[0]?.avgRating || 0
         },
         eventsByType,
-        eventsByBeneficiary: eventsByPath
+        eventsByBeneficiary
       };
     }
   });
