@@ -40,8 +40,8 @@ export const createCalendarUrl = (event: CalendarEvent) => {
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     return URL.createObjectURL(blob);
   } else if (isAndroid) {
-    // تنسيق Intent لأجهزة Android
-    return `content://com.android.calendar/events?action=TEMPLATE&title=${sanitizedEvent.title}&description=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${sanitizedEvent.startDate}/${sanitizedEvent.endDate}`;
+    // تنسيق Google Calendar لأجهزة Android (تم تغيير المسار لاستخدام Google Calendar بدلاً من تطبيق التقويم الافتراضي)
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${sanitizedEvent.title}&details=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${sanitizedEvent.startDate}/${sanitizedEvent.endDate}`;
   } else {
     // تنسيق Google Calendar للمتصفحات
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${sanitizedEvent.title}&details=${sanitizedEvent.description}&location=${sanitizedEvent.location}&dates=${sanitizedEvent.startDate}/${sanitizedEvent.endDate}`;

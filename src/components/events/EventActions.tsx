@@ -23,7 +23,16 @@ export const EventActions = ({
         url={window.location.href}
         onShare={onShare}
       />
-      <Button variant="outline" size="icon" onClick={onAddToCalendar}>
+      <Button 
+        variant="outline" 
+        size="icon" 
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onAddToCalendar();
+        }}
+        className="w-8 h-8"
+      >
         <CalendarPlus className="h-4 w-4" />
       </Button>
     </div>

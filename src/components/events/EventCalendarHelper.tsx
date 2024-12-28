@@ -36,26 +36,28 @@ export const handleAddToCalendar = (event: Event) => {
     
     // إضافة ساعتين للوقت النهائي
     const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000));
-    
-    // تنسيق التواريخ بشكل صحيح لجميع الأجهزة
-    const formatDate = (date: Date) => {
-      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    };
 
     const calendarEvent = {
       title: event.title,
       description: event.description || '',
       location: event.location || '',
-      startDate: formatDate(eventDate),
-      endDate: formatDate(endDate),
+      startDate: eventDate.toISOString().replace(/[-:.]/g, '').slice(0, -4) + 'Z',
+      endDate: endDate.toISOString().replace(/[-:.]/g, '').slice(0, -4) + 'Z',
     };
 
     console.log("Calendar event data:", calendarEvent);
 
     const calendarUrl = createCalendarUrl(calendarEvent);
     console.log("Generated calendar URL:", calendarUrl);
+
+    // فتح رابط التقويم في نافذة جديدة
+    const win = window.open(calendarUrl, '_blank');
+    if (win) {
+      win.focus();
+    } else {
+      toast.error("يرجى السماح بفتح النوافذ المنبثقة لإضافة الفعالية إلى التقويم");
+    }
     
-    window.open(calendarUrl, '_blank');
     toast.success("تم فتح التقويم");
   } catch (error) {
     console.error('Error creating calendar event:', error);
