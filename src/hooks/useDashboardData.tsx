@@ -52,11 +52,11 @@ export const useDashboardData = () => {
       // Group events by type
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
-          const count = (acc[event.event_type] || 0) + 1;
-          acc[event.event_type] = count;
+          const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
+          acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value: value as number }));
+      ).map(([name, value]) => ({ name, value }));
 
       // Group events by path
       const eventsByPath = events.reduce((acc: Record<string, number>, event) => {

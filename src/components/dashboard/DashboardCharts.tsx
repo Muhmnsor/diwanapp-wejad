@@ -27,12 +27,6 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
 
   console.log('Final transformed path data:', transformedPathData);
 
-  // Transform event types to Arabic
-  const transformedEventTypes = data.eventsByType.map(item => ({
-    name: item.name === 'online' ? 'عن بعد' : 'حضوري',
-    value: item.value
-  }));
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
@@ -42,7 +36,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={transformedEventTypes}>
+              <BarChart data={data.eventsByType}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
