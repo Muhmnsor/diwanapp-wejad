@@ -30,14 +30,12 @@ export const DashboardOverview = ({
   });
 
   return (
-    <DashboardStats
-      registrationCount={registrationCount}
-      remainingSeats={remainingSeats}
-      occupancyRate={occupancyRate}
-      eventDate={eventDate}
-      eventTime={eventTime}
-      eventPath={eventPath}
-      eventCategory={eventCategory}
-    />
+    <div className="space-y-8">
+      <DashboardStats
+        registrationCount={registrationCount}
+        remainingSeats={remainingSeats}
+        occupancyRate={occupancyRate}
+      />
+    </div>
   );
 };
