@@ -49,16 +49,16 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
-      // Group events by type
+      // Group events by type with Arabic labels
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
           const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: value as number }));
 
-      // Group events by path
+      // Group events by path with Arabic labels
       const eventsByPath = events.reduce((acc: Record<string, number>, event) => {
         const path = event.event_path || 'environment';
         acc[path] = (acc[path] || 0) + 1;
@@ -68,9 +68,9 @@ export const useDashboardData = () => {
       console.log("Raw events by path data:", eventsByPath);
 
       const eventsByBeneficiary = [
-        { name: 'environment', value: eventsByPath['environment'] || 0 },
-        { name: 'community', value: eventsByPath['community'] || 0 },
-        { name: 'content', value: eventsByPath['content'] || 0 }
+        { name: 'البيئة', value: eventsByPath['environment'] || 0 },
+        { name: 'المجتمع', value: eventsByPath['community'] || 0 },
+        { name: 'المحتوى', value: eventsByPath['content'] || 0 }
       ];
 
       console.log("Final events by path data:", eventsByBeneficiary);

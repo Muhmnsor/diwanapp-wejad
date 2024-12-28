@@ -7,26 +7,11 @@ interface DashboardChartsProps {
 }
 
 export const DashboardCharts = ({ data }: DashboardChartsProps) => {
-  console.log('Original path data:', data.eventsByBeneficiary);
+  console.log('Chart data:', {
+    eventsByType: data.eventsByType,
+    eventsByBeneficiary: data.eventsByBeneficiary
+  });
   
-  // Transform path data to Arabic labels
-  const transformedPathData = [
-    {
-      name: 'بيئات',
-      value: data.eventsByBeneficiary.find(item => item.name === 'environment')?.value || 0
-    },
-    {
-      name: 'مجتمعات',
-      value: data.eventsByBeneficiary.find(item => item.name === 'community')?.value || 0
-    },
-    {
-      name: 'محتويات',
-      value: data.eventsByBeneficiary.find(item => item.name === 'content')?.value || 0
-    }
-  ];
-
-  console.log('Final transformed path data:', transformedPathData);
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
@@ -55,7 +40,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={transformedPathData}>
+              <BarChart data={data.eventsByBeneficiary}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
