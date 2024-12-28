@@ -52,17 +52,19 @@ export const useDashboardData = (eventId: string) => {
 
   // Fetch events by category and path
   const { data: eventsByCategory = [], isLoading: categoryLoading } = useQuery({
-    queryKey: ['events-by-category'],
+    queryKey: ['events-by-category', eventId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*');
+        .select('*')
+        .eq('id', eventId);
 
       if (error) {
         console.error('Error fetching events by category:', error);
         throw error;
       }
 
+      console.log('Events by category fetched:', data);
       return data;
     },
   });
@@ -74,33 +76,15 @@ export const useDashboardData = (eventId: string) => {
     const remainingSeats = event.max_attendees - registrationCount;
     const occupancyRate = (registrationCount / event.max_attendees) * 100;
 
-    // Calculate statistics by category
-    const statsByCategory = eventsByCategory.reduce((acc: any, evt) => {
-      const category = evt.event_category || 'uncategorized';
-      const path = evt.event_path || 'uncategorized';
-      
-      if (!acc[category]) {
-        acc[category] = { count: 0, paths: {} };
-      }
-      
-      acc[category].count++;
-      
-      if (!acc[category].paths[path]) {
-        acc[category].paths[path] = 0;
-      }
-      acc[category].paths[path]++;
-      
-      return acc;
-    }, {});
-
     console.log('Dashboard data calculated:', {
       registrationCount,
       remainingSeats,
       occupancyRate,
       eventDate: event.date,
       eventTime: event.time,
-      registrations,
-      statsByCategory
+      eventPath: event.event_path,
+      eventCategory: event.event_category,
+      registrations
     });
 
     return {
@@ -109,7 +93,7 @@ export const useDashboardData = (eventId: string) => {
       occupancyRate,
       event,
       registrations,
-      statsByCategory
+      eventsByCategory
     };
   };
 

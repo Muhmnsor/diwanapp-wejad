@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface DashboardStatsProps {
   registrationCount: number;
@@ -24,12 +24,47 @@ export const DashboardStats = ({
 }: DashboardStatsProps) => {
   const [selectedPath, setSelectedPath] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [filteredStats, setFilteredStats] = useState({
+    registrationCount,
+    remainingSeats,
+    occupancyRate
+  });
 
-  console.log("DashboardStats props:", {
-    eventPath,
-    eventCategory,
+  useEffect(() => {
+    // تحديث الإحصائيات عند تغيير التصفية
+    if (selectedPath === "all" && selectedCategory === "all") {
+      setFilteredStats({
+        registrationCount,
+        remainingSeats,
+        occupancyRate
+      });
+    } else {
+      // هنا نقوم بتحديث الإحصائيات بناءً على التصفية المحددة
+      const matchesPath = selectedPath === "all" || selectedPath === eventPath;
+      const matchesCategory = selectedCategory === "all" || selectedCategory === eventCategory;
+
+      if (matchesPath && matchesCategory) {
+        setFilteredStats({
+          registrationCount,
+          remainingSeats,
+          occupancyRate
+        });
+      } else {
+        setFilteredStats({
+          registrationCount: 0,
+          remainingSeats: 0,
+          occupancyRate: 0
+        });
+      }
+    }
+  }, [selectedPath, selectedCategory, registrationCount, remainingSeats, occupancyRate, eventPath, eventCategory]);
+
+  console.log("DashboardStats - Current filters:", {
     selectedPath,
-    selectedCategory
+    selectedCategory,
+    filteredStats,
+    eventPath,
+    eventCategory
   });
 
   return (
@@ -75,9 +110,9 @@ export const DashboardStats = ({
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{registrationCount}</div>
+            <div className="text-2xl font-bold">{filteredStats.registrationCount}</div>
             <div className="text-xs text-muted-foreground mt-1">
-              معدل الإشغال {occupancyRate.toFixed(1)}%
+              معدل الإشغال {filteredStats.occupancyRate.toFixed(1)}%
             </div>
           </CardContent>
         </Card>
@@ -88,7 +123,7 @@ export const DashboardStats = ({
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{remainingSeats}</div>
+            <div className="text-2xl font-bold">{filteredStats.remainingSeats}</div>
             <div className="text-xs text-muted-foreground mt-1">
               {eventDate} - {eventTime}
             </div>
