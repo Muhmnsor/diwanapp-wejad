@@ -63,15 +63,16 @@ export const useDashboardData = () => {
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
 
-      // Group events by beneficiary type
+      // Group events by beneficiary type with explicit initialization
       const beneficiaryCounts = events.reduce((acc: Record<string, number>, event) => {
         const type = event.beneficiary_type;
         acc[type] = (acc[type] || 0) + 1;
         return acc;
       }, {});
 
-      console.log("Beneficiary counts before transformation:", beneficiaryCounts);
+      console.log("Raw beneficiary counts:", beneficiaryCounts);
 
+      // Ensure all three categories are represented
       const eventsByBeneficiary: ChartData[] = [
         { name: 'men', value: beneficiaryCounts['men'] || 0 },
         { name: 'women', value: beneficiaryCounts['women'] || 0 },

@@ -11,16 +11,32 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
   
   // Transform beneficiary data to Arabic labels
   const transformedBeneficiaryData = data.eventsByBeneficiary.map(item => {
-    console.log('Transforming item:', item);
+    console.log('Processing item:', item);
+    let arabicName = item.name;
+    
+    // Transform English names to Arabic
+    if (item.name === 'men') {
+      arabicName = 'رجال';
+    } else if (item.name === 'women') {
+      arabicName = 'نساء';
+    } else if (item.name === 'both') {
+      arabicName = 'رجال ونساء';
+    }
+    
+    console.log('Transformed to:', { name: arabicName, value: item.value });
     return {
-      ...item,
-      name: item.name === 'men' ? 'رجال' : 
-            item.name === 'women' ? 'نساء' : 
-            item.name === 'both' ? 'الجميع' : item.name
+      name: arabicName,
+      value: item.value
     };
   });
 
-  console.log('Transformed beneficiary data:', transformedBeneficiaryData);
+  console.log('Final transformed data:', transformedBeneficiaryData);
+
+  // Transform event types to Arabic
+  const transformedEventTypes = data.eventsByType.map(item => ({
+    name: item.name === 'online' ? 'عن بعد' : 'حضوري',
+    value: item.value
+  }));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -31,7 +47,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.eventsByType}>
+              <BarChart data={transformedEventTypes}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
