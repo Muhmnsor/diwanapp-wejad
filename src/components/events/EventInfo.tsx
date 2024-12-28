@@ -91,7 +91,7 @@ export const EventInfo = ({
       
       {/* Event Categories Section */}
       {(eventPath || eventCategory) && (
-        <div className="px-8 space-y-4">
+        <div className="px-8 flex items-center gap-6">
           {eventPath && (
             <div className="flex items-center gap-2 text-gray-600">
               <Folder className="w-5 h-5" />
