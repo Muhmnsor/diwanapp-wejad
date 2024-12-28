@@ -1,5 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, Clock } from "lucide-react";
+import { useState } from "react";
+import { DashboardFilters } from "./dashboard/DashboardFilters";
+import { DashboardStatsCards } from "./dashboard/DashboardStatsCards";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardStatsProps {
   registrationCount: number;
@@ -15,94 +18,98 @@ export const DashboardStats = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  eventDate,
-  eventTime,
-  eventPath,
-  eventCategory,
 }: DashboardStatsProps) => {
-  console.log("DashboardStats props:", {
-    registrationCount,
-    remainingSeats,
-    occupancyRate,
-    eventDate,
-    eventTime,
-    eventPath,
-    eventCategory,
+  const [filters, setFilters] = useState({
+    path: 'all',
+    category: 'all',
+    price: 'all'
   });
 
-  const formatEventPath = (path?: string) => {
-    if (!path) return '';
-    const pathMap: Record<string, string> = {
-      'environment': 'البيئة',
-      'community': 'المجتمع',
-      'content': 'المحتوى'
-    };
-    return pathMap[path] || path;
-  };
+  const { data: filteredStats } = useQuery({
+    queryKey: ['filtered-stats', filters],
+    queryFn: async () => {
+      console.log("Fetching filtered stats with filters:", filters);
+      
+      let query = supabase
+        .from('events')
+        .select(`
+          *,
+          registrations (count)
+        `);
 
-  const formatEventCategory = (category?: string) => {
-    if (!category) return '';
-    const categoryMap: Record<string, string> = {
-      'social': 'اجتماعي',
-      'entertainment': 'ترفيهي',
-      'service': 'خدمي',
-      'educational': 'تعليمي',
-      'consulting': 'استشاري',
-      'interest': 'اهتمام',
-      'specialization': 'تخصص',
-      'spiritual': 'روحي',
-      'cultural': 'ثقافي',
-      'behavioral': 'سلوكي',
-      'skill': 'مهاري',
-      'health': 'صحي',
-      'diverse': 'متنوع'
-    };
-    return categoryMap[category] || category;
+      if (filters.path !== 'all') {
+        query = query.eq('event_path', filters.path);
+      }
+      
+      if (filters.category !== 'all') {
+        query = query.eq('event_category', filters.category);
+      }
+      
+      if (filters.price !== 'all') {
+        if (filters.price === 'free') {
+          query = query.eq('price', 0);
+        } else {
+          query = query.gt('price', 0);
+        }
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching filtered stats:", error);
+        throw error;
+      }
+
+      console.log("Filtered events data:", data);
+
+      const totalEvents = data?.length || 0;
+      const totalRegistrations = data?.reduce((sum, event) => sum + event.registrations[0].count, 0) || 0;
+      const totalSeats = data?.reduce((sum, event) => sum + event.max_attendees, 0) || 0;
+      const remainingSeats = totalSeats - totalRegistrations;
+      const occupancyRate = totalSeats > 0 ? (totalRegistrations / totalSeats) * 100 : 0;
+
+      return {
+        eventCount: totalEvents,
+        registrationCount: totalRegistrations,
+        remainingSeats,
+        occupancyRate
+      };
+    }
+  });
+
+  const handleFilterChange = (type: string, value: string) => {
+    console.log("Filter changed:", type, value);
+    setFilters(prev => ({ ...prev, [type]: value }));
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">إجمالي المسجلين</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{registrationCount}</div>
-          <p className="text-xs text-muted-foreground">
-            متبقي {remainingSeats} مقعد
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">نسبة الإشغال</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{occupancyRate.toFixed(1)}%</div>
-          {eventPath && eventCategory && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {formatEventPath(eventPath)} - {formatEventCategory(eventCategory)}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-8">
+      <DashboardStatsCards
+        title="الإحصائيات الكلية"
+        registrationCount={registrationCount}
+        remainingSeats={remainingSeats}
+        occupancyRate={occupancyRate}
+        eventCount={0}
+      />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">موعد الفعالية</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{eventDate}</div>
-          <div className="flex items-center text-xs text-muted-foreground">
-            <Clock className="mr-1 h-3 w-3" />
-            {eventTime}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="border-t pt-8">
+        <DashboardFilters
+          onFilterChange={handleFilterChange}
+          selectedPath={filters.path}
+          selectedCategory={filters.category}
+          selectedPrice={filters.price}
+        />
+
+        {filteredStats && (
+          <DashboardStatsCards
+            title="الإحصائيات المصفاة"
+            registrationCount={filteredStats.registrationCount}
+            remainingSeats={filteredStats.remainingSeats}
+            occupancyRate={filteredStats.occupancyRate}
+            eventCount={filteredStats.eventCount}
+          />
+        )}
+      </div>
     </div>
   );
 };
