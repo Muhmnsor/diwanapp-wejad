@@ -54,7 +54,7 @@ export const useDashboardData = () => {
       // Group events by type with Arabic labels
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
-          const type = event.eventType === 'online' ? 'عن بعد' : 'حضوري';
+          const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
@@ -62,7 +62,7 @@ export const useDashboardData = () => {
 
       console.log("Events by type:", eventsByType);
 
-      // Count events by path
+      // Count events by path with Arabic labels
       const eventsByBeneficiary: ChartData[] = [
         { name: 'البيئة', value: events.filter(event => event.event_path === 'environment').length },
         { name: 'المجتمع', value: events.filter(event => event.event_path === 'community').length },

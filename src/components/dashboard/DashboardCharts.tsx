@@ -40,12 +40,12 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.eventsByBeneficiary}>
+              <BarChart data={data.eventsByBeneficiary} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis />
+                <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#82ca9d" />
+                <Bar dataKey="value" fill="#82ca9d" barSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>
