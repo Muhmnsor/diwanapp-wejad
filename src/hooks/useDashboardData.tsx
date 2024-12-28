@@ -19,6 +19,8 @@ export const useDashboardData = () => {
 
       if (eventsError) throw eventsError;
 
+      console.log("Raw events data:", events);
+
       const now = new Date();
       const upcomingEvents = events.filter(event => new Date(event.date) >= now);
       const pastEvents = events.filter(event => new Date(event.date) < now);
@@ -52,28 +54,29 @@ export const useDashboardData = () => {
       // Group events by type with Arabic labels
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
-          const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
+          const type = event.eventType === 'online' ? 'عن بعد' : 'حضوري';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
 
+      console.log("Events by type:", eventsByType);
+
       // Group events by path with Arabic labels
-      const eventsByPath = events.reduce((acc: Record<string, number>, event) => {
-        const path = event.event_path || 'environment';
-        acc[path] = (acc[path] || 0) + 1;
+      const pathCounts = events.reduce((acc: Record<string, number>, event) => {
+        acc[event.event_path] = (acc[event.event_path] || 0) + 1;
         return acc;
       }, {});
 
-      console.log("Raw events by path data:", eventsByPath);
+      console.log("Raw path counts:", pathCounts);
 
       const eventsByBeneficiary = [
-        { name: 'البيئة', value: eventsByPath['environment'] || 0 },
-        { name: 'المجتمع', value: eventsByPath['community'] || 0 },
-        { name: 'المحتوى', value: eventsByPath['content'] || 0 }
+        { name: 'البيئة', value: pathCounts['environment'] || 0 },
+        { name: 'المجتمع', value: pathCounts['community'] || 0 },
+        { name: 'المحتوى', value: pathCounts['content'] || 0 }
       ];
 
-      console.log("Final events by path data:", eventsByBeneficiary);
+      console.log("Final events by beneficiary:", eventsByBeneficiary);
 
       return {
         totalEvents: events.length,
