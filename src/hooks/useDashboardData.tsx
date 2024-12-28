@@ -51,16 +51,21 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
-      // Group events by type with Arabic labels
-      const eventsByType: ChartData[] = Object.entries(
-        events.reduce((acc: Record<string, number>, event) => {
-          const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
-          acc[type] = (acc[type] || 0) + 1;
-          return acc;
-        }, {})
-      ).map(([name, value]) => ({ name, value: value as number }));
+      // Group events by type with Arabic labels - FIXED counting logic
+      const eventTypeCount = events.reduce((acc: Record<string, number>, event) => {
+        const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
 
-      console.log("Events by type:", eventsByType);
+      console.log("Event type counts:", eventTypeCount);
+
+      const eventsByType: ChartData[] = Object.entries(eventTypeCount).map(([name, value]) => ({
+        name,
+        value: value as number
+      }));
+
+      console.log("Events by type after processing:", eventsByType);
 
       // Count events by path with Arabic labels
       const eventsByBeneficiary: ChartData[] = [
@@ -68,8 +73,6 @@ export const useDashboardData = () => {
         { name: 'المجتمع', value: events.filter(event => event.event_path === 'community').length },
         { name: 'المحتوى', value: events.filter(event => event.event_path === 'content').length }
       ];
-
-      console.log("Events by path:", eventsByBeneficiary);
 
       // Group events by beneficiary type with Arabic labels
       const eventsByBeneficiaryType: ChartData[] = Object.entries(
@@ -81,8 +84,6 @@ export const useDashboardData = () => {
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
 
-      console.log("Events by beneficiary type:", eventsByBeneficiaryType);
-
       // Group events by price type with Arabic labels
       const eventsByPrice: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
@@ -91,8 +92,6 @@ export const useDashboardData = () => {
           return acc;
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
-
-      console.log("Events by price:", eventsByPrice);
 
       return {
         totalEvents: events.length,
