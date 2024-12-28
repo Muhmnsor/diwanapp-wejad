@@ -7,36 +7,43 @@ interface CalendarEvent {
 }
 
 export const createCalendarUrl = (event: CalendarEvent) => {
-  // تحديد نوع الجهاز
   const userAgent = navigator.userAgent.toLowerCase();
   const isIOS = /iphone|ipad|ipod/.test(userAgent);
   const isAndroid = /android/.test(userAgent);
   
   console.log("Device detection:", { isIOS, isAndroid, userAgent });
 
-  // تنسيق البيانات للتقويم
-  const icsContent = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'BEGIN:VEVENT',
-    `SUMMARY:${event.title}`,
-    `DESCRIPTION:${event.description}`,
-    `LOCATION:${event.location}`,
-    `DTSTART:${event.startDate}`,
-    `DTEND:${event.endDate}`,
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\n');
+  // Format for Google Calendar
+  const googleParams = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    details: event.description,
+    location: event.location,
+    dates: `${event.startDate}/${event.endDate}`,
+  });
 
   if (isIOS) {
-    // إنشاء رابط مباشر لتقويم iOS
-    const base64Content = btoa(unescape(encodeURIComponent(icsContent)));
-    return `webcal://calendar/download?content=${base64Content}`;
+    // iOS Calendar format
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `SUMMARY:${event.title}`,
+      `DESCRIPTION:${event.description}`,
+      `LOCATION:${event.location}`,
+      `DTSTART:${event.startDate}`,
+      `DTEND:${event.endDate}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    return URL.createObjectURL(blob);
   } else if (isAndroid) {
-    // إنشاء رابط لتقويم Android
-    return `content://com.android.calendar/events?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${event.startDate}/${event.endDate}`;
+    // Android Intent format
+    return `content://com.android.calendar/events?${googleParams.toString()}`;
   } else {
-    // إنشاء رابط لتقويم Google (للمتصفح)
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&details=${encodeURIComponent(event.description)}&location=${encodeURIComponent(event.location)}&dates=${event.startDate}/${event.endDate}`;
+    // Default to Google Calendar for web browsers
+    return `https://calendar.google.com/calendar/render?${googleParams.toString()}`;
   }
 };
