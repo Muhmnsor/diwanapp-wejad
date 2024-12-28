@@ -30,9 +30,9 @@ export const DashboardOverview = ({
   });
 
   return (
-    <div className="space-y-8">
+    <div className="grid grid-cols-1 gap-8">
       <section className="bg-white p-6 rounded-lg shadow-sm border">
-        <h2 className="text-xl font-semibold mb-6">الإحصائيات الكلية</h2>
+        <h2 className="text-xl font-semibold mb-6 text-right">الإحصائيات الكلية</h2>
         <DashboardStats
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
@@ -42,7 +42,7 @@ export const DashboardOverview = ({
       </section>
 
       <section className="bg-white p-6 rounded-lg shadow-sm border">
-        <h2 className="text-xl font-semibold mb-6">الإحصائيات المصفاة</h2>
+        <h2 className="text-xl font-semibold mb-6 text-right">الإحصائيات المصفاة</h2>
         <DashboardStats
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
