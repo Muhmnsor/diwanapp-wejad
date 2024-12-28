@@ -24,28 +24,6 @@ export const useDashboardData = () => {
       const upcomingEvents = events.filter(event => new Date(event.date) >= now);
       const pastEvents = events.filter(event => new Date(event.date) < now);
 
-      const totalRegistrations = events.reduce((sum, event) => sum + event.registrations[0].count, 0);
-
-      const totalRevenue = events.reduce((sum, event) => {
-        return sum + (event.price || 0) * event.registrations[0].count;
-      }, 0);
-
-      const sortedByRegistrations = [...events].sort(
-        (a, b) => b.registrations[0].count - a.registrations[0].count
-      );
-
-      const eventsWithRatings = events.map(event => ({
-        ...event,
-        avgRating: event.event_feedback.length > 0
-          ? event.event_feedback.reduce((sum: number, feedback: any) => 
-              sum + (feedback.overall_rating || 0), 0) / event.event_feedback.length
-          : 0
-      }));
-
-      const sortedByRating = [...eventsWithRatings]
-        .filter(event => event.avgRating > 0)
-        .sort((a, b) => b.avgRating - a.avgRating);
-
       // تحديث تجميع الفعاليات حسب النوع
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
@@ -77,6 +55,28 @@ export const useDashboardData = () => {
       ];
 
       console.log("Events by beneficiary:", eventsByBeneficiary);
+
+      const totalRegistrations = events.reduce((sum, event) => sum + event.registrations[0].count, 0);
+
+      const totalRevenue = events.reduce((sum, event) => {
+        return sum + (event.price || 0) * event.registrations[0].count;
+      }, 0);
+
+      const sortedByRegistrations = [...events].sort(
+        (a, b) => b.registrations[0].count - a.registrations[0].count
+      );
+
+      const eventsWithRatings = events.map(event => ({
+        ...event,
+        avgRating: event.event_feedback.length > 0
+          ? event.event_feedback.reduce((sum: number, feedback: any) => 
+              sum + (feedback.overall_rating || 0), 0) / event.event_feedback.length
+          : 0
+      }));
+
+      const sortedByRating = [...eventsWithRatings]
+        .filter(event => event.avgRating > 0)
+        .sort((a, b) => b.avgRating - a.avgRating);
 
       const dashboardData: DashboardData = {
         totalEvents: events.length,

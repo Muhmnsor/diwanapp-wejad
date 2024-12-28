@@ -9,9 +9,23 @@ interface DashboardChartsProps {
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
 export const DashboardCharts = ({ data }: DashboardChartsProps) => {
-  console.log('Chart data:', {
-    eventsByType: data.eventsByType,
-    eventsByBeneficiary: data.eventsByBeneficiary
+  console.log('Raw Chart data:', data);
+  
+  // Transform and validate eventsByType data
+  const eventsByType = data.eventsByType.map(item => ({
+    name: item.name,
+    value: Number(item.value) || 0  // Ensure value is a number
+  }));
+
+  // Transform and validate eventsByBeneficiary data
+  const eventsByBeneficiary = data.eventsByBeneficiary.map(item => ({
+    name: item.name,
+    value: Number(item.value) || 0  // Ensure value is a number
+  }));
+
+  console.log('Processed Chart data:', {
+    eventsByType,
+    eventsByBeneficiary
   });
   
   return (
@@ -25,7 +39,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data.eventsByType}
+                  data={eventsByType}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -34,11 +48,11 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {data.eventsByType.map((entry, index) => (
+                  {eventsByType.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value) => [Number(value).toFixed(0), 'عدد الفعاليات']} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -55,7 +69,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data.eventsByBeneficiary}
+                  data={eventsByBeneficiary}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -64,11 +78,11 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
                   fill="#82ca9d"
                   dataKey="value"
                 >
-                  {data.eventsByBeneficiary.map((entry, index) => (
+                  {eventsByBeneficiary.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value) => [Number(value).toFixed(0), 'عدد الفعاليات']} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
