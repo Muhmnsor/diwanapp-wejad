@@ -10,14 +10,9 @@ export const useDashboardData = (eventId: string) => {
       console.log('Fetching event details for dashboard:', eventId);
       const { data, error } = await supabase
         .from('events')
-        .select(`
-          *,
-          registrations (
-            count
-          )
-        `)
+        .select('*')
         .eq('id', eventId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Error fetching event:', error);
@@ -29,7 +24,7 @@ export const useDashboardData = (eventId: string) => {
     },
   });
 
-  // Fetch registrations with filters
+  // Fetch registrations
   const { data: registrations = [], isLoading: registrationsLoading } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
@@ -50,24 +45,6 @@ export const useDashboardData = (eventId: string) => {
     enabled: !!eventId,
   });
 
-  // Fetch events by category and path
-  const { data: eventsByCategory = [], isLoading: categoryLoading } = useQuery({
-    queryKey: ['events-by-category'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*');
-
-      if (error) {
-        console.error('Error fetching events by category:', error);
-        throw error;
-      }
-
-      console.log('Events by category fetched:', data);
-      return data;
-    },
-  });
-
   const calculateDashboardData = () => {
     if (!event) return null;
 
@@ -81,9 +58,7 @@ export const useDashboardData = (eventId: string) => {
       occupancyRate,
       eventDate: event.date,
       eventTime: event.time,
-      eventPath: event.event_path,
-      eventCategory: event.event_category,
-      registrations
+      registrations: registrations
     });
 
     return {
@@ -91,17 +66,12 @@ export const useDashboardData = (eventId: string) => {
       remainingSeats,
       occupancyRate,
       event,
-      registrations,
-      eventsByCategory,
-      eventDate: event.date,
-      eventTime: event.time,
-      eventPath: event.event_path,
-      eventCategory: event.event_category
+      registrations
     };
   };
 
   return {
-    isLoading: eventLoading || registrationsLoading || categoryLoading,
+    isLoading: eventLoading || registrationsLoading,
     error: eventError,
     data: calculateDashboardData()
   };
