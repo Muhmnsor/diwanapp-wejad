@@ -7,25 +7,25 @@ interface DashboardChartsProps {
 }
 
 export const DashboardCharts = ({ data }: DashboardChartsProps) => {
-  console.log('Original beneficiary data:', data.eventsByBeneficiary);
+  console.log('Original path data:', data.eventsByBeneficiary);
   
-  // Transform beneficiary data to Arabic labels and ensure all three types exist
-  const transformedBeneficiaryData = [
+  // Transform path data to Arabic labels
+  const transformedPathData = [
     {
-      name: 'رجال',
-      value: data.eventsByBeneficiary.find(item => item.name === 'men')?.value || 0
+      name: 'بيئات',
+      value: data.eventsByBeneficiary.find(item => item.name === 'environment')?.value || 0
     },
     {
-      name: 'نساء',
-      value: data.eventsByBeneficiary.find(item => item.name === 'women')?.value || 0
+      name: 'مجتمعات',
+      value: data.eventsByBeneficiary.find(item => item.name === 'community')?.value || 0
     },
     {
-      name: 'رجال ونساء',
-      value: data.eventsByBeneficiary.find(item => item.name === 'both')?.value || 0
+      name: 'محتويات',
+      value: data.eventsByBeneficiary.find(item => item.name === 'content')?.value || 0
     }
   ];
 
-  console.log('Final transformed beneficiary data:', transformedBeneficiaryData);
+  console.log('Final transformed path data:', transformedPathData);
 
   // Transform event types to Arabic
   const transformedEventTypes = data.eventsByType.map(item => ({
@@ -56,12 +56,12 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>توزيع الفعاليات حسب المستفيدين</CardTitle>
+          <CardTitle>توزيع الفعاليات حسب المسار</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={transformedBeneficiaryData}>
+              <BarChart data={transformedPathData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />

@@ -19,11 +19,6 @@ export const useDashboardData = () => {
 
       if (eventsError) throw eventsError;
 
-      console.log("Events data for beneficiary chart:", events.map(e => ({ 
-        title: e.title, 
-        beneficiary_type: e.beneficiary_type 
-      })));
-
       const now = new Date();
       const upcomingEvents = events.filter(event => new Date(event.date) >= now);
       const pastEvents = events.filter(event => new Date(event.date) < now);
@@ -63,24 +58,23 @@ export const useDashboardData = () => {
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
 
-      // First, let's count actual beneficiary types from events
-      const beneficiaryCounts = events.reduce((acc: Record<string, number>, event) => {
-        // Make sure we're using the correct beneficiary_type value from the database
-        const type = event.beneficiary_type;
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {});
-
-      console.log("Raw beneficiary counts from database:", beneficiaryCounts);
-
-      // Create the beneficiary data array with all three types
-      const eventsByBeneficiary: ChartData[] = [
-        { name: 'men', value: beneficiaryCounts['men'] || 0 },
-        { name: 'women', value: beneficiaryCounts['women'] || 0 },
-        { name: 'both', value: beneficiaryCounts['both'] || 0 }
+      // Group events by path
+      const eventsByPath = [
+        {
+          name: 'environment',
+          value: events.filter(event => event.event_path === 'environment').length
+        },
+        {
+          name: 'community',
+          value: events.filter(event => event.event_path === 'community').length
+        },
+        {
+          name: 'content',
+          value: events.filter(event => event.event_path === 'content').length
+        }
       ];
 
-      console.log("Final beneficiary data for chart:", eventsByBeneficiary);
+      console.log("Events by path data:", eventsByPath);
 
       return {
         totalEvents: events.length,
@@ -104,7 +98,7 @@ export const useDashboardData = () => {
           rating: sortedByRating[0]?.avgRating || 0
         },
         eventsByType,
-        eventsByBeneficiary
+        eventsByBeneficiary: eventsByPath
       };
     }
   });
