@@ -19,7 +19,7 @@ export const DashboardOverview = ({
   eventPath,
   eventCategory
 }: DashboardOverviewProps) => {
-  console.log("DashboardOverview props:", {
+  console.log("DashboardOverview - Received props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
