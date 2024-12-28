@@ -8,12 +8,14 @@ interface DashboardStatsProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
+  showFilters?: boolean;
 }
 
 export const DashboardStats = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
+  showFilters = false,
 }: DashboardStatsProps) => {
   const [filters, setFilters] = useState({
     path: 'all',
@@ -70,7 +72,8 @@ export const DashboardStats = ({
         remainingSeats,
         occupancyRate
       };
-    }
+    },
+    enabled: showFilters
   });
 
   const handleFilterChange = (type: string, value: string) => {
@@ -87,27 +90,29 @@ export const DashboardStats = ({
         eventCount={0}
       />
 
-      <div className="mt-6">
-        <DashboardFilters
-          onFilterChange={handleFilterChange}
-          selectedPath={filters.path}
-          selectedCategory={filters.category}
-          selectedPrice={filters.price}
-        />
+      {showFilters && (
+        <div className="mt-6">
+          <DashboardFilters
+            onFilterChange={handleFilterChange}
+            selectedPath={filters.path}
+            selectedCategory={filters.category}
+            selectedPrice={filters.price}
+          />
 
-        {isLoading ? (
-          <div className="text-center py-4">جاري تحميل البيانات...</div>
-        ) : filteredStats ? (
-          <div className="mt-6">
-            <DashboardStatsCards
-              registrationCount={filteredStats.registrationCount}
-              remainingSeats={filteredStats.remainingSeats}
-              occupancyRate={filteredStats.occupancyRate}
-              eventCount={filteredStats.eventCount}
-            />
-          </div>
-        ) : null}
-      </div>
+          {isLoading ? (
+            <div className="text-center py-4">جاري تحميل البيانات...</div>
+          ) : filteredStats ? (
+            <div className="mt-6">
+              <DashboardStatsCards
+                registrationCount={filteredStats.registrationCount}
+                remainingSeats={filteredStats.remainingSeats}
+                occupancyRate={filteredStats.occupancyRate}
+                eventCount={filteredStats.eventCount}
+              />
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 };

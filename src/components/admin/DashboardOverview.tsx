@@ -37,6 +37,7 @@ export const DashboardOverview = ({
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
           occupancyRate={occupancyRate}
+          showFilters={false}
         />
       </section>
 
@@ -46,6 +47,7 @@ export const DashboardOverview = ({
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
           occupancyRate={occupancyRate}
+          showFilters={true}
         />
       </section>
     </div>
