@@ -52,12 +52,11 @@ export const useDashboardData = (eventId: string) => {
 
   // Fetch events by category and path
   const { data: eventsByCategory = [], isLoading: categoryLoading } = useQuery({
-    queryKey: ['events-by-category', eventId],
+    queryKey: ['events-by-category'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*')
-        .eq('id', eventId);
+        .select('*');
 
       if (error) {
         console.error('Error fetching events by category:', error);
