@@ -1,31 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DashboardData } from "@/types/dashboard";
 
 interface DashboardChartsProps {
   data: DashboardData;
 }
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
-
 export const DashboardCharts = ({ data }: DashboardChartsProps) => {
-  console.log('Raw Chart data:', data);
-  
-  // Transform and validate eventsByType data
-  const eventsByType = data.eventsByType.map(item => ({
-    name: item.name,
-    value: Number(item.value) || 0  // Ensure value is a number
-  }));
-
-  // Transform and validate eventsByBeneficiary data
-  const eventsByBeneficiary = data.eventsByBeneficiary.map(item => ({
-    name: item.name,
-    value: Number(item.value) || 0  // Ensure value is a number
-  }));
-
-  console.log('Processed Chart data:', {
-    eventsByType,
-    eventsByBeneficiary
+  console.log('Chart data:', {
+    eventsByType: data.eventsByType,
+    eventsByBeneficiary: data.eventsByBeneficiary
   });
   
   return (
@@ -37,24 +21,13 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={eventsByType}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {eventsByType.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [Number(value).toFixed(0), 'عدد الفعاليات']} />
-                <Legend />
-              </PieChart>
+              <BarChart data={data.eventsByType}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8884d8" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
@@ -67,24 +40,13 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={eventsByBeneficiary}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={80}
-                  fill="#82ca9d"
-                  dataKey="value"
-                >
-                  {eventsByBeneficiary.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [Number(value).toFixed(0), 'عدد الفعاليات']} />
-                <Legend />
-              </PieChart>
+              <BarChart data={data.eventsByBeneficiary} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#82ca9d" barSize={60} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

@@ -8,6 +8,7 @@ export const useDashboardData = () => {
     queryFn: async (): Promise<DashboardData> => {
       console.log("🔄 جاري تحميل إحصائيات لوحة المعلومات...");
 
+      // Get all events with their registrations and feedback
       const { data: events, error: eventsError } = await supabase
         .from("events")
         .select(`
@@ -24,48 +25,20 @@ export const useDashboardData = () => {
       const upcomingEvents = events.filter(event => new Date(event.date) >= now);
       const pastEvents = events.filter(event => new Date(event.date) < now);
 
-      // تحديث تجميع الفعاليات حسب النوع
-      const eventsByType: ChartData[] = Object.entries(
-        events.reduce((acc: Record<string, number>, event) => {
-          const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
-          acc[type] = (acc[type] || 0) + 1;
-          return acc;
-        }, {})
-      ).map(([name, value]) => ({
-        name,
-        value: Number(value)
-      }));
-
-      console.log("Events by type:", eventsByType);
-
-      // تحديث تجميع الفعاليات حسب المسار
-      const eventsByBeneficiary: ChartData[] = [
-        {
-          name: 'البيئة',
-          value: Number(events.filter(event => event.event_path === 'environment').length)
-        },
-        {
-          name: 'المجتمع',
-          value: Number(events.filter(event => event.event_path === 'community').length)
-        },
-        {
-          name: 'المحتوى',
-          value: Number(events.filter(event => event.event_path === 'content').length)
-        }
-      ];
-
-      console.log("Events by beneficiary:", eventsByBeneficiary);
-
+      // Calculate total registrations
       const totalRegistrations = events.reduce((sum, event) => sum + event.registrations[0].count, 0);
 
+      // Calculate total revenue
       const totalRevenue = events.reduce((sum, event) => {
         return sum + (event.price || 0) * event.registrations[0].count;
       }, 0);
 
+      // Find events with most and least registrations
       const sortedByRegistrations = [...events].sort(
         (a, b) => b.registrations[0].count - a.registrations[0].count
       );
 
+      // Calculate average ratings and find highest rated event
       const eventsWithRatings = events.map(event => ({
         ...event,
         avgRating: event.event_feedback.length > 0
@@ -78,7 +51,27 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
-      const dashboardData: DashboardData = {
+      // Group events by type with Arabic labels
+      const eventsByType: ChartData[] = Object.entries(
+        events.reduce((acc: Record<string, number>, event) => {
+          const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value: value as number }));
+
+      console.log("Events by type:", eventsByType);
+
+      // Count events by path with Arabic labels
+      const eventsByBeneficiary: ChartData[] = [
+        { name: 'البيئة', value: events.filter(event => event.event_path === 'environment').length },
+        { name: 'المجتمع', value: events.filter(event => event.event_path === 'community').length },
+        { name: 'المحتوى', value: events.filter(event => event.event_path === 'content').length }
+      ];
+
+      console.log("Events by path:", eventsByBeneficiary);
+
+      return {
         totalEvents: events.length,
         upcomingEvents: upcomingEvents.length,
         pastEvents: pastEvents.length,
@@ -102,9 +95,6 @@ export const useDashboardData = () => {
         eventsByType,
         eventsByBeneficiary
       };
-
-      console.log("Final dashboard data:", dashboardData);
-      return dashboardData;
     }
   });
 };
