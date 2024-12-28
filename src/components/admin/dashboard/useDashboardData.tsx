@@ -10,7 +10,12 @@ export const useDashboardData = (eventId: string) => {
       console.log('Fetching event details for dashboard:', eventId);
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          registrations (
+            count
+          )
+        `)
         .eq('id', eventId)
         .single();
 
@@ -24,7 +29,7 @@ export const useDashboardData = (eventId: string) => {
     },
   });
 
-  // Fetch registrations
+  // Fetch registrations with filters
   const { data: registrations = [], isLoading: registrationsLoading } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
@@ -45,6 +50,23 @@ export const useDashboardData = (eventId: string) => {
     enabled: !!eventId,
   });
 
+  // Fetch events by category and path
+  const { data: eventsByCategory = [], isLoading: categoryLoading } = useQuery({
+    queryKey: ['events-by-category'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching events by category:', error);
+        throw error;
+      }
+
+      return data;
+    },
+  });
+
   const calculateDashboardData = () => {
     if (!event) return null;
 
@@ -52,13 +74,33 @@ export const useDashboardData = (eventId: string) => {
     const remainingSeats = event.max_attendees - registrationCount;
     const occupancyRate = (registrationCount / event.max_attendees) * 100;
 
+    // Calculate statistics by category
+    const statsByCategory = eventsByCategory.reduce((acc: any, evt) => {
+      const category = evt.event_category || 'uncategorized';
+      const path = evt.event_path || 'uncategorized';
+      
+      if (!acc[category]) {
+        acc[category] = { count: 0, paths: {} };
+      }
+      
+      acc[category].count++;
+      
+      if (!acc[category].paths[path]) {
+        acc[category].paths[path] = 0;
+      }
+      acc[category].paths[path]++;
+      
+      return acc;
+    }, {});
+
     console.log('Dashboard data calculated:', {
       registrationCount,
       remainingSeats,
       occupancyRate,
       eventDate: event.date,
       eventTime: event.time,
-      registrations: registrations
+      registrations,
+      statsByCategory
     });
 
     return {
@@ -66,12 +108,13 @@ export const useDashboardData = (eventId: string) => {
       remainingSeats,
       occupancyRate,
       event,
-      registrations
+      registrations,
+      statsByCategory
     };
   };
 
   return {
-    isLoading: eventLoading || registrationsLoading,
+    isLoading: eventLoading || registrationsLoading || categoryLoading,
     error: eventError,
     data: calculateDashboardData()
   };

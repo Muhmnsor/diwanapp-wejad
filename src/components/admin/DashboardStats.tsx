@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, Clock } from "lucide-react";
+import { Users, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 interface DashboardStatsProps {
   registrationCount: number;
@@ -18,91 +20,96 @@ export const DashboardStats = ({
   eventDate,
   eventTime,
   eventPath,
-  eventCategory,
+  eventCategory
 }: DashboardStatsProps) => {
+  const [selectedPath, setSelectedPath] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
   console.log("DashboardStats props:", {
-    registrationCount,
-    remainingSeats,
-    occupancyRate,
-    eventDate,
-    eventTime,
     eventPath,
     eventCategory,
+    selectedPath,
+    selectedCategory
   });
 
-  const formatEventPath = (path?: string) => {
-    if (!path) return '';
-    const pathMap: Record<string, string> = {
-      'environment': 'البيئة',
-      'community': 'المجتمع',
-      'content': 'المحتوى'
-    };
-    return pathMap[path] || path;
-  };
-
-  const formatEventCategory = (category?: string) => {
-    if (!category) return '';
-    const categoryMap: Record<string, string> = {
-      'social': 'اجتماعي',
-      'entertainment': 'ترفيهي',
-      'service': 'خدمي',
-      'educational': 'تعليمي',
-      'consulting': 'استشاري',
-      'interest': 'اهتمام',
-      'specialization': 'تخصص',
-      'spiritual': 'روحي',
-      'cultural': 'ثقافي',
-      'behavioral': 'سلوكي',
-      'skill': 'مهاري',
-      'health': 'صحي',
-      'diverse': 'متنوع'
-    };
-    return categoryMap[category] || category;
-  };
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">إجمالي المسجلين</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{registrationCount}</div>
-          <p className="text-xs text-muted-foreground">
-            متبقي {remainingSeats} مقعد
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">نسبة الإشغال</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{occupancyRate.toFixed(1)}%</div>
-          {eventPath && eventCategory && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {formatEventPath(eventPath)} - {formatEventCategory(eventCategory)}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <div className="flex gap-4 items-center justify-end">
+        <Select
+          value={selectedPath}
+          onValueChange={setSelectedPath}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="اختر المسار" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">جميع المسارات</SelectItem>
+            <SelectItem value="environment">البيئة</SelectItem>
+            <SelectItem value="health">الصحة</SelectItem>
+            <SelectItem value="education">التعليم</SelectItem>
+            <SelectItem value="social">الاجتماعي</SelectItem>
+          </SelectContent>
+        </Select>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">موعد الفعالية</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{eventDate}</div>
-          <div className="flex items-center text-xs text-muted-foreground">
-            <Clock className="mr-1 h-3 w-3" />
-            {eventTime}
-          </div>
-        </CardContent>
-      </Card>
+        <Select
+          value={selectedCategory}
+          onValueChange={setSelectedCategory}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="اختر التصنيف" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">جميع التصنيفات</SelectItem>
+            <SelectItem value="free">مجاني</SelectItem>
+            <SelectItem value="paid">مدفوع</SelectItem>
+            <SelectItem value="spiritual">روحي</SelectItem>
+            <SelectItem value="professional">مهني</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">عدد التسجيلات</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{registrationCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              معدل الإشغال {occupancyRate.toFixed(1)}%
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">المقاعد المتبقية</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{remainingSeats}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {eventDate} - {eventTime}
+            </div>
+          </CardContent>
+        </Card>
+
+        {eventPath && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">المسار</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{eventPath}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {eventCategory}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
