@@ -45,15 +45,7 @@ export const handleAddToCalendar = (event: Event) => {
     const calendarUrl = createCalendarUrl(calendarEvent);
     console.log("Generated calendar URL:", calendarUrl);
 
-    setTimeout(() => {
-      const win = window.open(calendarUrl, '_blank');
-      if (win) {
-        win.focus();
-      } else {
-        toast.error("يرجى السماح بفتح النوافذ المنبثقة لإضافة الفعالية إلى التقويم");
-      }
-    }, 100);
-    
+    window.location.href = calendarUrl;
     toast.success("تم فتح التقويم");
   } catch (error) {
     console.error('Error creating calendar event:', error);

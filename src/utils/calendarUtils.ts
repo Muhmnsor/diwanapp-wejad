@@ -9,9 +9,8 @@ interface CalendarEvent {
 export const createCalendarUrl = (event: CalendarEvent) => {
   const userAgent = navigator.userAgent.toLowerCase();
   const isIOS = /iphone|ipad|ipod/.test(userAgent);
-  const isAndroid = /android/.test(userAgent);
   
-  console.log("Device detection:", { isIOS, isAndroid, userAgent });
+  console.log("Device detection:", { isIOS, userAgent });
 
   const sanitizedEvent = {
     title: encodeURIComponent(event.title),
