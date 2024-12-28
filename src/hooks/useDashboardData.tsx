@@ -58,7 +58,7 @@ export const useDashboardData = () => {
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]): ChartData => ({ name, value }));
 
       console.log("Events by type:", eventsByType);
 
