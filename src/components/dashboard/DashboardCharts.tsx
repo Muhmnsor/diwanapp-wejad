@@ -24,9 +24,9 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
               <BarChart data={data.eventsByType}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis />
+                <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#8884d8" />
+                <Bar dataKey="value" fill="#8884d8" barSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>
