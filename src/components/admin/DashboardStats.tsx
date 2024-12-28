@@ -25,7 +25,7 @@ export const DashboardStats = ({
     price: 'all'
   });
 
-  const { data: filteredStats } = useQuery({
+  const { data: filteredStats, isLoading } = useQuery({
     queryKey: ['filtered-stats', filters],
     queryFn: async () => {
       console.log("Fetching filtered stats with filters:", filters);
@@ -84,15 +84,18 @@ export const DashboardStats = ({
 
   return (
     <div className="space-y-8">
-      <DashboardStatsCards
-        title="الإحصائيات الكلية"
-        registrationCount={registrationCount}
-        remainingSeats={remainingSeats}
-        occupancyRate={occupancyRate}
-        eventCount={0}
-      />
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <h2 className="text-xl font-semibold mb-6">الإحصائيات الكلية</h2>
+        <DashboardStatsCards
+          registrationCount={registrationCount}
+          remainingSeats={remainingSeats}
+          occupancyRate={occupancyRate}
+          eventCount={0}
+        />
+      </div>
 
-      <div className="border-t pt-8">
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <h2 className="text-xl font-semibold mb-6">الإحصائيات المصفاة</h2>
         <DashboardFilters
           onFilterChange={handleFilterChange}
           selectedPath={filters.path}
@@ -100,15 +103,18 @@ export const DashboardStats = ({
           selectedPrice={filters.price}
         />
 
-        {filteredStats && (
-          <DashboardStatsCards
-            title="الإحصائيات المصفاة"
-            registrationCount={filteredStats.registrationCount}
-            remainingSeats={filteredStats.remainingSeats}
-            occupancyRate={filteredStats.occupancyRate}
-            eventCount={filteredStats.eventCount}
-          />
-        )}
+        {isLoading ? (
+          <div className="text-center py-4">جاري تحميل البيانات...</div>
+        ) : filteredStats ? (
+          <div className="mt-6">
+            <DashboardStatsCards
+              registrationCount={filteredStats.registrationCount}
+              remainingSeats={filteredStats.remainingSeats}
+              occupancyRate={filteredStats.occupancyRate}
+              eventCount={filteredStats.eventCount}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
