@@ -58,25 +58,18 @@ export const useDashboardData = () => {
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value: value as number }));
+      ).map(([name, value]) => ({ name, value }));
 
       console.log("Events by type:", eventsByType);
 
-      // Group events by path with Arabic labels
-      const pathCounts = events.reduce((acc: Record<string, number>, event) => {
-        acc[event.event_path] = (acc[event.event_path] || 0) + 1;
-        return acc;
-      }, {});
-
-      console.log("Raw path counts:", pathCounts);
-
+      // Count events by path
       const eventsByBeneficiary = [
-        { name: 'البيئة', value: pathCounts['environment'] || 0 },
-        { name: 'المجتمع', value: pathCounts['community'] || 0 },
-        { name: 'المحتوى', value: pathCounts['content'] || 0 }
+        { name: 'البيئة', value: events.filter(event => event.event_path === 'environment').length },
+        { name: 'المجتمع', value: events.filter(event => event.event_path === 'community').length },
+        { name: 'المحتوى', value: events.filter(event => event.event_path === 'content').length }
       ];
 
-      console.log("Final events by beneficiary:", eventsByBeneficiary);
+      console.log("Events by path:", eventsByBeneficiary);
 
       return {
         totalEvents: events.length,
