@@ -63,23 +63,24 @@ export const useDashboardData = () => {
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
 
-      // Group events by beneficiary type with explicit initialization
+      // First, let's count actual beneficiary types from events
       const beneficiaryCounts = events.reduce((acc: Record<string, number>, event) => {
+        // Make sure we're using the correct beneficiary_type value from the database
         const type = event.beneficiary_type;
         acc[type] = (acc[type] || 0) + 1;
         return acc;
       }, {});
 
-      console.log("Raw beneficiary counts:", beneficiaryCounts);
+      console.log("Raw beneficiary counts from database:", beneficiaryCounts);
 
-      // Ensure all three categories are represented
+      // Create the beneficiary data array with all three types
       const eventsByBeneficiary: ChartData[] = [
         { name: 'men', value: beneficiaryCounts['men'] || 0 },
         { name: 'women', value: beneficiaryCounts['women'] || 0 },
         { name: 'both', value: beneficiaryCounts['both'] || 0 }
       ];
 
-      console.log("Final beneficiary data:", eventsByBeneficiary);
+      console.log("Final beneficiary data for chart:", eventsByBeneficiary);
 
       return {
         totalEvents: events.length,
