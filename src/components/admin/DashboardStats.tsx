@@ -79,19 +79,15 @@ export const DashboardStats = ({
   };
 
   return (
-    <>
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h2 className="text-xl font-semibold mb-6">الإحصائيات الكلية</h2>
-        <DashboardStatsCards
-          registrationCount={registrationCount}
-          remainingSeats={remainingSeats}
-          occupancyRate={occupancyRate}
-          eventCount={0}
-        />
-      </div>
+    <div>
+      <DashboardStatsCards
+        registrationCount={registrationCount}
+        remainingSeats={remainingSeats}
+        occupancyRate={occupancyRate}
+        eventCount={0}
+      />
 
-      <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border">
-        <h2 className="text-xl font-semibold mb-6">الإحصائيات المصفاة</h2>
+      <div className="mt-6">
         <DashboardFilters
           onFilterChange={handleFilterChange}
           selectedPath={filters.path}
@@ -112,6 +108,6 @@ export const DashboardStats = ({
           </div>
         ) : null}
       </div>
-    </>
+    </div>
   );
 };
