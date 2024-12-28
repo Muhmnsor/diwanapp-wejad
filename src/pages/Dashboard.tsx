@@ -35,19 +35,15 @@ const Dashboard = () => {
     );
   }
 
-  const totalRegistrations = data?.totalRegistrations || 0;
-  const remainingSeats = data?.upcomingEvents || 0;
-  const occupancyRate = data?.totalEvents ? (totalRegistrations / data.totalEvents) * 100 : 0;
-
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-3xl font-bold mb-8">لوحة المعلومات</h1>
         <DashboardOverview
-          registrationCount={totalRegistrations}
-          remainingSeats={remainingSeats}
-          occupancyRate={occupancyRate}
+          registrationCount={data?.totalRegistrations || 0}
+          remainingSeats={data?.totalEvents || 0}
+          occupancyRate={data?.totalEvents ? (data.totalRegistrations / data.totalEvents) * 100 : 0}
           eventDate=""
           eventTime=""
         />
