@@ -7,6 +7,14 @@ interface DashboardChartsProps {
 }
 
 export const DashboardCharts = ({ data }: DashboardChartsProps) => {
+  // Transform beneficiary data to Arabic labels
+  const transformedBeneficiaryData = data.eventsByBeneficiary.map(item => ({
+    ...item,
+    name: item.name === 'men' ? 'رجال' : 
+          item.name === 'women' ? 'نساء' : 
+          item.name === 'both' ? 'الجميع' : item.name
+  }));
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
@@ -35,7 +43,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.eventsByBeneficiary}>
+              <BarChart data={transformedBeneficiaryData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
