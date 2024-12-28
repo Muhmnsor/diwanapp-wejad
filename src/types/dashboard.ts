@@ -20,4 +20,6 @@ export interface DashboardData {
   highestRatedEvent: EventStats;
   eventsByType: ChartData[];
   eventsByBeneficiary: ChartData[];
+  eventsByBeneficiaryType: ChartData[];
+  eventsByPrice: ChartData[];
 }

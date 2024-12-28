@@ -71,6 +71,29 @@ export const useDashboardData = () => {
 
       console.log("Events by path:", eventsByBeneficiary);
 
+      // Group events by beneficiary type with Arabic labels
+      const eventsByBeneficiaryType: ChartData[] = Object.entries(
+        events.reduce((acc: Record<string, number>, event) => {
+          const type = event.beneficiary_type === 'men' ? 'رجال' : 
+                      event.beneficiary_type === 'women' ? 'نساء' : 'رجال ونساء';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value: value as number }));
+
+      console.log("Events by beneficiary type:", eventsByBeneficiaryType);
+
+      // Group events by price type with Arabic labels
+      const eventsByPrice: ChartData[] = Object.entries(
+        events.reduce((acc: Record<string, number>, event) => {
+          const type = event.price === 0 || event.price === null ? 'مجاني' : 'مدفوع';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value: value as number }));
+
+      console.log("Events by price:", eventsByPrice);
+
       return {
         totalEvents: events.length,
         upcomingEvents: upcomingEvents.length,
@@ -93,7 +116,9 @@ export const useDashboardData = () => {
           rating: sortedByRating[0]?.avgRating || 0
         },
         eventsByType,
-        eventsByBeneficiary
+        eventsByBeneficiary,
+        eventsByBeneficiaryType,
+        eventsByPrice
       };
     }
   });
