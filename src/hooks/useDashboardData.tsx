@@ -9,7 +9,6 @@ export const useDashboardData = () => {
     queryFn: async (): Promise<DashboardData> => {
       console.log("🔄 جاري تحميل إحصائيات لوحة المعلومات...");
 
-      // Get all events with their registrations and feedback
       const { data: events, error: eventsError } = await supabase
         .from("events")
         .select(`
@@ -26,20 +25,16 @@ export const useDashboardData = () => {
       const upcomingEvents = events.filter(event => new Date(event.date) >= now);
       const pastEvents = events.filter(event => new Date(event.date) < now);
 
-      // Calculate total registrations
       const totalRegistrations = events.reduce((sum, event) => sum + event.registrations[0].count, 0);
 
-      // Calculate total revenue
       const totalRevenue = events.reduce((sum, event) => {
         return sum + (event.price || 0) * event.registrations[0].count;
       }, 0);
 
-      // Find events with most and least registrations
       const sortedByRegistrations = [...events].sort(
         (a, b) => b.registrations[0].count - a.registrations[0].count
       );
 
-      // Calculate average ratings and find highest rated event
       const eventsWithRatings = events.map(event => ({
         ...event,
         avgRating: event.event_feedback.length > 0
@@ -52,18 +47,19 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
-      // Group events by type with Arabic labels
       const eventsByType: ChartData[] = Object.entries(
         events.reduce((acc: Record<string, number>, event) => {
           const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]): ChartData => ({ name, value: Number(value) }));
+      ).map(([name, value]) => ({ 
+        name, 
+        value: Number(value)
+      }));
 
       console.log("Events by type:", eventsByType);
 
-      // Count events by path with Arabic labels
       const eventsByBeneficiary: ChartData[] = [
         { 
           name: 'البيئة', 
