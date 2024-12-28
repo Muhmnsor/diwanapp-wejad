@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Registration } from "../components/admin/types";
 import { DashboardData, EventStats, ChartData } from "@/types/dashboard";
 
 export const useDashboardData = () => {
@@ -64,9 +65,18 @@ export const useDashboardData = () => {
 
       // Count events by path with Arabic labels
       const eventsByBeneficiary: ChartData[] = [
-        { name: 'البيئة', value: events.filter(event => event.event_path === 'environment').length },
-        { name: 'المجتمع', value: events.filter(event => event.event_path === 'community').length },
-        { name: 'المحتوى', value: events.filter(event => event.event_path === 'content').length }
+        { 
+          name: 'البيئة', 
+          value: events.filter(event => event.event_path === 'environment').length as number 
+        },
+        { 
+          name: 'المجتمع', 
+          value: events.filter(event => event.event_path === 'community').length as number 
+        },
+        { 
+          name: 'المحتوى', 
+          value: events.filter(event => event.event_path === 'content').length as number 
+        }
       ];
 
       console.log("Events by path:", eventsByBeneficiary);
