@@ -9,6 +9,7 @@ import CreateEvent from "./pages/CreateEvent";
 import EventFeedback from "./pages/EventFeedback";
 import ProjectDetails from "./pages/ProjectDetails";
 import CreateProject from "./pages/CreateProject";
+import EditProject from "./pages/EditProject";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const AppRoutes = () => {
@@ -56,6 +57,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreateProject />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditProject />
           </ProtectedRoute>
         }
       />
