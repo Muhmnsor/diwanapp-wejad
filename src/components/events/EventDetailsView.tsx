@@ -86,11 +86,11 @@ export const EventDetailsView = ({
   if (!currentEvent) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-12">
       <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
       
       <div className="container mx-auto px-4 -mt-10 relative z-10">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <EventTitle
             title={currentEvent.title}
             isAdmin={isAdmin}
