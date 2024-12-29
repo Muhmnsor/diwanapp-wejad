@@ -5,11 +5,22 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Edit2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { AddProjectEventDialog } from "@/components/projects/events/AddProjectEventDialog";
 import { ReportsTab } from "./ReportsTab";
+import { EditEventDialog } from "@/components/events/EditEventDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -25,6 +36,9 @@ interface ProjectDashboardTabsProps {
 export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => {
   console.log("ProjectDashboardTabs - project:", project);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isEditEventOpen, setIsEditEventOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   // Fetch registrations count
   const { data: registrations = [] } = useQuery({
@@ -58,7 +72,16 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
             location_url,
             special_requirements,
             event_type,
-            max_attendees
+            max_attendees,
+            image_url,
+            beneficiary_type,
+            certificate_type,
+            event_hours,
+            price,
+            registration_start_date,
+            registration_end_date,
+            event_path,
+            event_category
           )
         `)
         .eq('project_id', project.id)
@@ -76,6 +99,63 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
 
   const handleAddEvent = () => {
     setIsAddEventOpen(true);
+  };
+
+  const handleEditEvent = (event: any) => {
+    setSelectedEvent(event);
+    setIsEditEventOpen(true);
+  };
+
+  const handleDeleteEvent = (event: any) => {
+    setSelectedEvent(event);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      // First delete the project_events relationship
+      const { error: projectEventError } = await supabase
+        .from('project_events')
+        .delete()
+        .eq('event_id', selectedEvent.event.id)
+        .eq('project_id', project.id);
+
+      if (projectEventError) throw projectEventError;
+
+      // Then delete the event itself
+      const { error: eventError } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', selectedEvent.event.id);
+
+      if (eventError) throw eventError;
+
+      toast.success('تم حذف الفعالية بنجاح');
+      refetchEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('حدث خطأ أثناء حذف الفعالية');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedEvent(null);
+    }
+  };
+
+  const handleEventUpdate = async (updatedEvent: any) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update(updatedEvent)
+        .eq('id', selectedEvent.event.id);
+
+      if (error) throw error;
+
+      toast.success('تم تحديث الفعالية بنجاح');
+      refetchEvents();
+    } catch (error) {
+      console.error('Error updating event:', error);
+      toast.error('حدث خطأ أثناء تحديث الفعالية');
+    }
   };
 
   return (
@@ -150,9 +230,27 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
                             {projectEvent.event?.date} - {projectEvent.event?.time}
                           </p>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {projectEvent.event?.location}
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleEditEvent(projectEvent)}
+                            className="h-8 w-8"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDeleteEvent(projectEvent)}
+                            className="h-8 w-8"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {projectEvent.event?.location}
                       </div>
                       {projectEvent.event?.description && (
                         <p className="text-sm text-gray-600">
@@ -194,6 +292,32 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
         projectId={project.id}
         onSuccess={refetchEvents}
       />
+
+      {selectedEvent && (
+        <EditEventDialog
+          event={selectedEvent.event}
+          open={isEditEventOpen}
+          onOpenChange={setIsEditEventOpen}
+          onSave={handleEventUpdate}
+        />
+      )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذه الفعالية؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف الفعالية بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogAction onClick={confirmDelete}>
+              نعم، احذف الفعالية
+            </AlertDialogAction>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Tabs>
   );
 };
