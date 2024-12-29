@@ -86,9 +86,9 @@ const CreateProject = () => {
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <h1 className="text-3xl font-bold mb-8 text-center">إنشاء مشروع جديد</h1>
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
-          <div className="space-y-4 text-right">
+        <h1 className="text-3xl font-bold mb-8">إنشاء مشروع جديد</h1>
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1.5">عنوان المشروع</label>
               <Input
