@@ -5,7 +5,6 @@ import { ProjectBadges } from "./badges/ProjectBadges";
 import { EventRegisterButton } from "../events/EventRegisterButton";
 import { EventRegistrationDialog } from "../events/EventRegistrationDialog";
 import { useState } from "react";
-import { EventStatus } from "@/types/eventStatus";
 import { getEventStatus } from "@/utils/eventUtils";
 
 interface ProjectContentProps {
@@ -17,29 +16,38 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
 
   // Convert project dates to event format for status check
   const eventFormatData = {
+    title: project.title,
+    description: project.description,
     date: project.start_date,
     time: "00:00",
+    location: "",
+    event_type: project.event_type,
+    image_url: project.image_url,
+    price: project.price,
+    max_attendees: project.max_attendees,
     registrationStartDate: project.registration_start_date,
     registrationEndDate: project.registration_end_date,
-    max_attendees: project.max_attendees,
+    beneficiaryType: project.beneficiary_type,
+    certificateType: project.certificate_type,
+    event_hours: 0,
     attendees: 0, // You might want to fetch this from the database
+    event_path: project.event_path,
+    event_category: project.event_category
   };
 
   const status = getEventStatus(eventFormatData);
   console.log('Project registration status:', status);
 
   return (
-    <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
-      <div className="py-8">
+    <div className="bg-white rounded-b-2xl shadow-sm">
+      <div className="px-8 py-6">
         <ProjectBadges
           eventType={project.event_type}
           price={project.price}
           beneficiaryType={project.beneficiary_type}
           certificateType={project.certificate_type}
         />
-      </div>
 
-      <div className="py-8 px-8">
         <ProjectInfo
           startDate={project.start_date}
           endDate={project.end_date}
@@ -53,29 +61,24 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
           eventCategory={project.event_category}
           showBadges={false}
         />
-      </div>
 
-      <div className="py-8">
         <ProjectDescription description={project.description} />
-      </div>
 
-      <div className="p-8">
-        <EventRegisterButton
-          status={status}
-          onRegister={() => setShowRegistrationDialog(true)}
-        />
+        <div className="mt-8">
+          <EventRegisterButton 
+            status={status}
+            onRegister={() => setShowRegistrationDialog(true)}
+          />
+        </div>
       </div>
 
       <EventRegistrationDialog
         open={showRegistrationDialog}
         onOpenChange={setShowRegistrationDialog}
         event={{
-          ...project,
-          title: project.title,
-          date: project.start_date,
-          time: "00:00",
-          location: "",
-          price: project.price || "free"
+          ...eventFormatData,
+          id: project.id,
+          location_url: null
         }}
       />
     </div>
