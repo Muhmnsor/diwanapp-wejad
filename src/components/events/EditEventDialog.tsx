@@ -33,7 +33,9 @@ export const EditEventDialog = ({
     registrationEndDate: event.registration_end_date,
     imageUrl: event.image_url,
     location_url: event.location_url,
-    special_requirements: event.special_requirements
+    special_requirements: event.special_requirements,
+    event_path: event.event_path,
+    event_category: event.event_category
   };
 
   const handleSave = async (updatedEvent: CustomEvent) => {
@@ -48,7 +50,9 @@ export const EditEventDialog = ({
       registration_end_date: updatedEvent.registrationEndDate || updatedEvent.registration_end_date,
       image_url: updatedEvent.imageUrl || updatedEvent.image_url,
       location_url: updatedEvent.location_url,
-      special_requirements: updatedEvent.special_requirements
+      special_requirements: updatedEvent.special_requirements,
+      event_path: updatedEvent.event_path,
+      event_category: updatedEvent.event_category
     };
 
     await onSave(apiFormattedEvent);
