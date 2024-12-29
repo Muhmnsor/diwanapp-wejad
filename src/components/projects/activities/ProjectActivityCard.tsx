@@ -49,30 +49,30 @@ export const ProjectActivityCard = ({
 
   return (
     <>
-      <div className="border rounded-lg overflow-hidden mb-4">
+      <div className="border rounded-lg overflow-hidden mb-6 bg-white shadow-sm">
         <Table dir="rtl">
-          <TableHeader className="bg-muted/50">
-            <TableRow>
-              <TableHead className="text-right font-bold w-[200px]">عنوان النشاط</TableHead>
-              <TableHead className="text-right font-bold w-[180px]">التاريخ والوقت</TableHead>
-              <TableHead className="text-right font-bold w-[200px]">الموقع</TableHead>
-              <TableHead className="text-right font-bold">الوصف</TableHead>
-              <TableHead className="text-right font-bold">متطلبات خاصة</TableHead>
-              <TableHead className="text-center font-bold w-[120px]">إجراءات</TableHead>
+          <TableHeader className="bg-secondary/30">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="text-right font-bold w-[200px] py-4">عنوان النشاط</TableHead>
+              <TableHead className="text-right font-bold w-[180px] py-4">التاريخ والوقت</TableHead>
+              <TableHead className="text-right font-bold w-[200px] py-4">الموقع</TableHead>
+              <TableHead className="text-right font-bold py-4">الوصف</TableHead>
+              <TableHead className="text-right font-bold py-4">متطلبات خاصة</TableHead>
+              <TableHead className="text-center font-bold w-[120px] py-4">إجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell className="font-medium align-top">
+            <TableRow className="hover:bg-muted/5">
+              <TableCell className="font-medium align-top border-t py-4">
                 {projectActivity.event?.title}
               </TableCell>
-              <TableCell className="align-top">
+              <TableCell className="align-top border-t py-4">
                 <div>{formatDateWithDay(projectActivity.event?.date)}</div>
-                <div className="text-muted-foreground">
+                <div className="text-muted-foreground mt-1">
                   {formatTime12Hour(projectActivity.event?.time)}
                 </div>
               </TableCell>
-              <TableCell className="align-top">
+              <TableCell className="align-top border-t py-4">
                 <div>{projectActivity.event?.location}</div>
                 {projectActivity.event?.location_url && (
                   <a
@@ -85,17 +85,17 @@ export const ProjectActivityCard = ({
                   </a>
                 )}
               </TableCell>
-              <TableCell className="max-w-[300px] align-top">
+              <TableCell className="max-w-[300px] align-top border-t py-4">
                 <div className="line-clamp-3">
                   {projectActivity.event?.description}
                 </div>
               </TableCell>
-              <TableCell className="max-w-[200px] align-top">
+              <TableCell className="max-w-[200px] align-top border-t py-4">
                 <div className="line-clamp-2">
                   {projectActivity.event?.special_requirements}
                 </div>
               </TableCell>
-              <TableCell className="align-top">
+              <TableCell className="align-top border-t py-4">
                 <div className="flex items-center justify-center gap-2">
                   <TooltipProvider>
                     <Tooltip>
