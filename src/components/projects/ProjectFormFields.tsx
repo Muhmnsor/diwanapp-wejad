@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BeneficiaryType } from "@/types/event";
 import { Card } from "@/components/ui/card";
+import { EventPathFields } from "@/components/events/form/fields/EventPathFields";
 
 interface ProjectFormFieldsProps {
   formData: Project;
@@ -147,6 +148,25 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
           </div>
 
           <div>
+            <label className="text-sm font-medium block mb-1.5">نوع الشهادة</label>
+            <Select
+              value={formData.certificate_type}
+              onValueChange={(value: string) => 
+                setFormData({ ...formData, certificate_type: value })
+              }
+            >
+              <SelectTrigger className="text-right">
+                <SelectValue placeholder="اختر نوع الشهادة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">بدون شهادة</SelectItem>
+                <SelectItem value="attendance">شهادة حضور</SelectItem>
+                <SelectItem value="certified">شهادة معتمدة</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <label className="text-sm font-medium block mb-1.5">السعر (اتركه فارغاً للمشاريع المجانية)</label>
             <Input
               type="number"
@@ -155,6 +175,11 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
               className="text-right"
             />
           </div>
+
+          <EventPathFields
+            formData={formData}
+            setFormData={setFormData}
+          />
         </div>
       </Card>
     </div>
