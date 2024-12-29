@@ -20,6 +20,7 @@ interface EventDetailsViewProps {
   onAddToCalendar: () => void;
   onRegister?: () => void;
   id: string;
+  children?: React.ReactNode;
 }
 
 export const EventDetailsView = ({
@@ -29,7 +30,8 @@ export const EventDetailsView = ({
   onDelete,
   onAddToCalendar,
   onRegister,
-  id
+  id,
+  children
 }: EventDetailsViewProps) => {
   const [currentEvent, setCurrentEvent] = useState<Event | null>(event);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -98,6 +100,8 @@ export const EventDetailsView = ({
             isVisible={currentEvent.is_visible}
             onVisibilityChange={handleVisibilityChange}
           />
+
+          {children}
 
           <EventContent 
             event={currentEvent}

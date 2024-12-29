@@ -120,8 +120,15 @@ const EventDetails = () => {
       <main className="flex-1">
         {isAdmin ? (
           <div className="bg-gray-50/50">
-            <Tabs defaultValue="details" className="w-full">
-              <div className="bg-white border-b">
+            <EventDetailsView
+              event={event}
+              isAdmin={isAdmin}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onAddToCalendar={handleAddToCalendar}
+              id={id!}
+            >
+              <div className="bg-white border-b mt-4">
                 <div className="container mx-auto">
                   <TabsList className="w-full justify-start rounded-none bg-transparent h-auto py-2" dir="rtl">
                     <TabsTrigger 
@@ -140,21 +147,18 @@ const EventDetails = () => {
                 </div>
               </div>
               
-              <TabsContent value="details" className="mt-0">
-                <EventDetailsView
-                  event={event}
-                  isAdmin={isAdmin}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onAddToCalendar={handleAddToCalendar}
-                  id={id!}
-                />
-              </TabsContent>
+              <Tabs defaultValue="details" className="w-full">
+                <TabsContent value="details" className="mt-0">
+                  <div className="container mx-auto px-4">
+                    {/* Event content will be rendered here by EventDetailsView */}
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="dashboard" className="mt-6 container mx-auto px-4">
-                <EventDashboard eventId={id!} />
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="dashboard" className="mt-6 container mx-auto px-4">
+                  <EventDashboard eventId={id!} />
+                </TabsContent>
+              </Tabs>
+            </EventDetailsView>
           </div>
         ) : (
           <EventDetailsView
