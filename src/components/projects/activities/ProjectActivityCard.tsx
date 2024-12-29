@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditActivityDialog } from "./dialogs/EditActivityDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProjectActivityCardProps {
   projectActivity: {
@@ -25,29 +26,28 @@ export const ProjectActivityCard = ({
 }: ProjectActivityCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentActivity, setCurrentActivity] = useState(projectActivity);
+  const queryClient = useQueryClient();
 
-  console.log("ProjectActivityCard - Current activity:", currentActivity);
-
-  const handleEditClick = () => {
-    setIsEditDialogOpen(true);
-  };
+  console.log("ProjectActivityCard - Current activity:", projectActivity);
 
   const handleEditSuccess = async () => {
     console.log("ProjectActivityCard - Edit successful, calling onEditSuccess");
+    await queryClient.invalidateQueries({ 
+      queryKey: ['project-activities', projectActivity.project_id]
+    });
     await onEditSuccess();
     setIsEditDialogOpen(false);
   };
 
   return (
     <>
-      <Card key={currentActivity.id} className="p-4">
+      <Card className="p-4">
         <div className="space-y-2">
           <div className="flex justify-between items-start">
             <div>
-              <h4 className="font-medium">{currentActivity.event?.title}</h4>
+              <h4 className="font-medium">{projectActivity.event?.title}</h4>
               <p className="text-sm text-muted-foreground">
-                {currentActivity.event?.date} - {currentActivity.event?.time}
+                {projectActivity.event?.date} - {projectActivity.event?.time}
               </p>
             </div>
             <div className="flex gap-2">
@@ -57,7 +57,7 @@ export const ProjectActivityCard = ({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={handleEditClick}
+                      onClick={() => setIsEditDialogOpen(true)}
                       className="h-8 w-8 transition-colors hover:bg-secondary"
                       disabled={isLoading}
                     >
@@ -90,22 +90,22 @@ export const ProjectActivityCard = ({
             </div>
           </div>
           <div className="text-sm text-muted-foreground">
-            {currentActivity.event?.location}
+            {projectActivity.event?.location}
           </div>
-          {currentActivity.event?.description && (
+          {projectActivity.event?.description && (
             <p className="text-sm text-gray-600">
-              {currentActivity.event.description}
+              {projectActivity.event.description}
             </p>
           )}
-          {currentActivity.event?.special_requirements && (
+          {projectActivity.event?.special_requirements && (
             <div className="text-sm">
               <span className="font-medium">احتياجات خاصة: </span>
-              {currentActivity.event.special_requirements}
+              {projectActivity.event.special_requirements}
             </div>
           )}
-          {currentActivity.event?.location_url && (
+          {projectActivity.event?.location_url && (
             <a
-              href={currentActivity.event.location_url}
+              href={projectActivity.event.location_url}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-primary hover:underline"
@@ -117,11 +117,11 @@ export const ProjectActivityCard = ({
       </Card>
 
       <EditActivityDialog
-        activity={currentActivity}
+        activity={projectActivity}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={handleEditSuccess}
-        projectId={currentActivity.project_id}
+        projectId={projectActivity.project_id}
       />
     </>
   );

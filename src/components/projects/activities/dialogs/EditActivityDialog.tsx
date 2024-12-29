@@ -9,6 +9,7 @@ import { EditActivityForm } from "../form/EditActivityForm";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EditActivityDialogProps {
   activity: {
@@ -31,6 +32,7 @@ export const EditActivityDialog = ({
 }: EditActivityDialogProps) => {
   console.log('EditActivityDialog - Received activity:', activity);
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
   
   const formData = {
     id: activity.event.id,
@@ -68,10 +70,15 @@ export const EditActivityDialog = ({
 
       console.log('EditActivityDialog - Supabase update successful');
       
-      // Call onSave first to update parent state
+      // Invalidate queries to force a refresh
+      await queryClient.invalidateQueries({ 
+        queryKey: ['project-activities', projectId]
+      });
+      
+      // Call onSave to update parent state
       await onSave();
       
-      // Then show success message and close dialog
+      // Show success message and close dialog
       toast.success('تم تحديث النشاط بنجاح');
       onOpenChange(false);
       

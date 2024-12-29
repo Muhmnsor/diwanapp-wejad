@@ -31,12 +31,13 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
       if (error) throw error;
       return data || [];
     },
+    staleTime: 0,
+    gcTime: 0
   });
 
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', project.id],
     queryFn: async () => {
-      console.log("Fetching project activities for project:", project.id);
       const { data, error } = await supabase
         .from('project_events')
         .select(`
@@ -57,11 +58,10 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
         .order('event_order', { ascending: true });
 
       if (error) throw error;
-      console.log("Fetched project activities:", data);
       return data || [];
     },
     staleTime: 0,
-    gcTime: 0, // Using gcTime instead of cacheTime
+    gcTime: 0
   });
 
   // Calculate dashboard metrics
