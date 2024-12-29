@@ -2,8 +2,17 @@ export type EventStatus = 'available' | 'full' | 'ended' | 'notStarted' | 'event
 
 export interface EventStatusConfig {
   text: string;
-  className: string;
-  disabled: boolean;
+  variant: string;
+  color: string;
+  textColor: string;
+}
+
+export interface RegistrationStatusConfig {
+  text?: string;
+  badge?: {
+    text: string;
+    className: string;
+  };
 }
 
 export interface EventDates {

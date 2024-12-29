@@ -1,4 +1,4 @@
-import { CalendarIcon, Clock, MapPin, Users } from "lucide-react";
+import { CalendarIcon, MapPin, Users } from "lucide-react";
 import { EventTypeCardBadge } from "../badges/card/EventTypeCardBadge";
 import { BeneficiaryCardBadge } from "../badges/card/BeneficiaryCardBadge";
 import { PriceCardBadge } from "../badges/card/PriceCardBadge";
@@ -12,7 +12,7 @@ interface EventCardContentProps {
   date: string;
   endDate?: string;
   location: string;
-  eventType: string;
+  eventType: "online" | "in-person";
   price: number | null;
   beneficiaryType: string;
   certificateType: string;
