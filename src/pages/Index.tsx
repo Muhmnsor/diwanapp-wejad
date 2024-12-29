@@ -33,8 +33,14 @@ const Index = () => {
   } = useRegistrations();
 
   const now = new Date();
+
+  // فلترة الفعاليات المستقلة فقط (غير المرتبطة بمشاريع)
+  const filteredEvents = events.filter(event => {
+    console.log("Checking event:", event.title, "is_project_activity:", event.is_project_activity);
+    return event.is_project_activity !== true;
+  });
   
-  const upcomingEvents = events
+  const upcomingEvents = filteredEvents
     .filter((event: any) => {
       const eventDate = new Date(event.date);
       return eventDate >= now;
@@ -45,7 +51,7 @@ const Index = () => {
       return dateA.getTime() - dateB.getTime();
     });
 
-  const pastEvents = events
+  const pastEvents = filteredEvents
     .filter((event: any) => {
       const eventDate = new Date(event.date);
       return eventDate < now;
@@ -73,7 +79,8 @@ const Index = () => {
     }
 
     console.log("📊 حالة البيانات:", {
-      eventsCount: events.length,
+      totalEventsCount: events.length,
+      filteredEventsCount: filteredEvents.length,
       projectsCount: projects.length,
       registrationsCount: Object.keys(registrations).length,
       upcomingEventsCount: upcomingEvents.length,
@@ -85,6 +92,7 @@ const Index = () => {
     });
   }, [
     events, 
+    filteredEvents,
     projects,
     registrations, 
     upcomingEvents, 
@@ -104,7 +112,7 @@ const Index = () => {
       <Hero />
       <div className="container mx-auto px-4 space-y-12">
         <EventsTabs
-          events={events}
+          events={filteredEvents}
           upcomingEvents={upcomingEvents}
           pastEvents={pastEvents}
           activeTab={activeTab}
