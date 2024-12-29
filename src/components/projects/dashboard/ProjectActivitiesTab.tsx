@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectDashboardHeader } from "./ProjectDashboardHeader";
-import { ProjectEventsList } from "./ProjectEventsList";
+import { ProjectActivitiesList } from "./ProjectActivitiesList";
 import { AddProjectEventDialog } from "@/components/projects/events/AddProjectEventDialog";
 import { EditProjectActivityDialog } from "@/components/projects/activities/EditProjectActivityDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -76,10 +76,10 @@ export const ProjectActivitiesTab = ({
     <Card>
       <CardContent className="pt-6">
         <ProjectDashboardHeader onAddEvent={handleAddEvent} />
-        <ProjectEventsList
-          projectEvents={projectActivities}
-          onEditEvent={handleEditEvent}
-          onDeleteEvent={handleDeleteEvent}
+        <ProjectActivitiesList
+          projectActivities={projectActivities}
+          onEditActivity={handleEditEvent}
+          onDeleteActivity={handleDeleteEvent}
         />
 
         <AddProjectEventDialog

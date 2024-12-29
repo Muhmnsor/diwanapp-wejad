@@ -6,17 +6,17 @@ import { useState } from "react";
 import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface ProjectEventCardProps {
-  projectEvent: any;
+interface ProjectActivityCardProps {
+  projectActivity: any;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export const ProjectEventCard = ({ 
-  projectEvent,
+export const ProjectActivityCard = ({ 
+  projectActivity,
   onEdit,
   onDelete
-}: ProjectEventCardProps) => {
+}: ProjectActivityCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,13 +26,13 @@ export const ProjectEventCard = ({
 
   return (
     <>
-      <Card key={projectEvent.id} className="p-4">
+      <Card key={projectActivity.id} className="p-4">
         <div className="space-y-2">
           <div className="flex justify-between items-start">
             <div>
-              <h4 className="font-medium">{projectEvent.event?.title}</h4>
+              <h4 className="font-medium">{projectActivity.event?.title}</h4>
               <p className="text-sm text-muted-foreground">
-                {projectEvent.event?.date} - {projectEvent.event?.time}
+                {projectActivity.event?.date} - {projectActivity.event?.time}
               </p>
             </div>
             <div className="flex gap-2">
@@ -75,22 +75,22 @@ export const ProjectEventCard = ({
             </div>
           </div>
           <div className="text-sm text-muted-foreground">
-            {projectEvent.event?.location}
+            {projectActivity.event?.location}
           </div>
-          {projectEvent.event?.description && (
+          {projectActivity.event?.description && (
             <p className="text-sm text-gray-600">
-              {projectEvent.event.description}
+              {projectActivity.event.description}
             </p>
           )}
-          {projectEvent.event?.special_requirements && (
+          {projectActivity.event?.special_requirements && (
             <div className="text-sm">
               <span className="font-medium">احتياجات خاصة: </span>
-              {projectEvent.event.special_requirements}
+              {projectActivity.event.special_requirements}
             </div>
           )}
-          {projectEvent.event?.location_url && (
+          {projectActivity.event?.location_url && (
             <a
-              href={projectEvent.event.location_url}
+              href={projectActivity.event.location_url}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-primary hover:underline"
@@ -102,11 +102,11 @@ export const ProjectEventCard = ({
       </Card>
 
       <EditProjectActivityDialog
-        activity={projectEvent.event as ProjectActivity}
+        activity={projectActivity.event as ProjectActivity}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={onEdit}
-        projectId={projectEvent.project_id}
+        projectId={projectActivity.project_id}
       />
     </>
   );
