@@ -20,8 +20,8 @@ export const EventContent = ({ event, onRegister, isProject = false }: EventCont
   const getProjectDates = () => {
     if (isProject && 'start_date' in event && 'end_date' in event) {
       return {
-        start: formatDate(event.start_date),
-        end: formatDate(event.end_date)
+        start: formatDate(event.start_date as string),
+        end: formatDate(event.end_date as string)
       };
     }
     return null;
@@ -51,11 +51,16 @@ export const EventContent = ({ event, onRegister, isProject = false }: EventCont
       )}
 
       <EventInfo
-        certificateType={event.certificate_type}
-        eventHours={event.event_hours}
+        date={event.date}
+        time={event.time}
+        location={event.location || ''}
+        attendees={0}
+        maxAttendees={event.max_attendees}
         eventType={event.event_type}
         price={event.price}
         beneficiaryType={event.beneficiary_type}
+        certificateType={event.certificate_type}
+        eventHours={event.event_hours}
         location_url={event.location_url}
         eventPath={event.event_path}
         eventCategory={event.event_category}
@@ -63,7 +68,7 @@ export const EventContent = ({ event, onRegister, isProject = false }: EventCont
 
       {onRegister && (
         <EventRegisterButton
-          event={event}
+          status={event.status || 'available'}
           onRegister={onRegister}
         />
       )}
