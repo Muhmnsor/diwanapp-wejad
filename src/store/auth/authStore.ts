@@ -87,13 +87,23 @@ export const useAuthStore = create<AuthState>((set) => ({
 // Initialize auth state when the store is created
 useAuthStore.getState().initialize();
 
-// Set up auth state change listener
+// Set up auth state change listener with valid event types
 supabase.auth.onAuthStateChange(async (event, session) => {
   console.log("Auth state changed:", event, session);
   
-  if (event === 'SIGNED_OUT') {
-    useAuthStore.setState({ user: null, isAuthenticated: false });
-  } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-    await useAuthStore.getState().initialize();
+  switch (event) {
+    case 'SIGNED_OUT':
+      console.log("AuthStore: User signed out");
+      useAuthStore.setState({ user: null, isAuthenticated: false });
+      break;
+    case 'SIGNED_IN':
+    case 'TOKEN_REFRESHED':
+      console.log("AuthStore: User signed in or token refreshed");
+      if (session) {
+        await useAuthStore.getState().initialize();
+      }
+      break;
+    default:
+      console.log("AuthStore: Unhandled auth event:", event);
   }
 });
