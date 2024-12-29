@@ -13,12 +13,12 @@ export const RegistrationFields = ({ formData, setFormData }: RegistrationFields
         <label className="text-sm font-medium block mb-1.5">السعر (اتركه فارغاً للفعاليات المجانية)</label>
         <Input
           type="number"
-          value={formData.price === "free" ? "" : formData.price}
+          value={formData.price === null ? "" : formData.price}
           onChange={(e) => {
             const value = e.target.value;
             setFormData({
               ...formData,
-              price: value === "" ? "free" : Number(value)
+              price: value === "" ? null : Number(value)
             });
           }}
           placeholder="أدخل السعر"
