@@ -3,6 +3,7 @@ import { ProjectDashboardHeader } from "./ProjectDashboardHeader";
 import { ProjectActivitiesList } from "./ProjectActivitiesList";
 import { ActivityDialogsContainer } from "../activities/containers/ActivityDialogsContainer";
 import { useActivityManagement } from "../activities/hooks/useActivityManagement";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProjectActivitiesTabProps {
   project: {
@@ -19,6 +20,8 @@ export const ProjectActivitiesTab = ({
   projectActivities,
   refetchActivities
 }: ProjectActivitiesTabProps) => {
+  const queryClient = useQueryClient();
+
   const {
     selectedEvent,
     isAddEventOpen,
@@ -33,6 +36,12 @@ export const ProjectActivitiesTab = ({
     confirmDelete,
   } = useActivityManagement(project.id, refetchActivities);
 
+  const handleEditSuccess = async () => {
+    console.log("ProjectActivitiesTab - Handling edit success");
+    await refetchActivities();
+    await queryClient.invalidateQueries({ queryKey: ['project-activities', project.id] });
+  };
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -41,6 +50,7 @@ export const ProjectActivitiesTab = ({
           projectActivities={projectActivities}
           onEdit={handleEditEvent}
           onDelete={handleDeleteEvent}
+          onEditSuccess={handleEditSuccess}
         />
 
         <ActivityDialogsContainer

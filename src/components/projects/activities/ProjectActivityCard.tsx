@@ -14,12 +14,14 @@ interface ProjectActivityCardProps {
   };
   onEdit: () => void;
   onDelete: () => void;
+  onEditSuccess: () => Promise<void>;
 }
 
 export const ProjectActivityCard = ({ 
   projectActivity,
   onEdit,
-  onDelete
+  onDelete,
+  onEditSuccess
 }: ProjectActivityCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +34,8 @@ export const ProjectActivityCard = ({
   };
 
   const handleEditSuccess = async () => {
-    console.log("ProjectActivityCard - Edit successful, calling onEdit");
-    await onEdit();
+    console.log("ProjectActivityCard - Edit successful, calling onEditSuccess");
+    await onEditSuccess();
     setIsEditDialogOpen(false);
   };
 
