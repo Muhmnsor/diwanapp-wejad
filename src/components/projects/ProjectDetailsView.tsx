@@ -51,6 +51,8 @@ export const ProjectDetailsView = ({
             isAdmin={isAdmin}
             onEdit={onEdit}
             onDelete={() => setShowDeleteDialog(true)}
+            projectId={id}
+            isVisible={project.is_visible}
           />
 
           {isAdmin ? (

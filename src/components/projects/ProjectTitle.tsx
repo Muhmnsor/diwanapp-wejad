@@ -1,12 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "../events/ShareButton";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Eye, EyeOff, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProjectTitleProps {
   title: string;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  projectId: string;
+  isVisible?: boolean;
 }
 
 export const ProjectTitle = ({
@@ -14,7 +19,28 @@ export const ProjectTitle = ({
   isAdmin,
   onEdit,
   onDelete,
+  projectId,
+  isVisible = true,
 }: ProjectTitleProps) => {
+  const [visibility, setVisibility] = useState(isVisible);
+
+  const toggleVisibility = async () => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ is_visible: !visibility })
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      setVisibility(!visibility);
+      toast.success(visibility ? 'تم إخفاء المشروع' : 'تم إظهار المشروع');
+    } catch (error) {
+      console.error('Error toggling project visibility:', error);
+      toast.error('حدث خطأ أثناء تحديث حالة المشروع');
+    }
+  };
+
   console.log('ProjectTitle - isAdmin:', isAdmin);
 
   return (
@@ -23,6 +49,19 @@ export const ProjectTitle = ({
       <div className="flex gap-2 order-2 flex-wrap">
         {isAdmin && (
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={toggleVisibility}
+              className="w-8 h-8"
+              title={visibility ? 'إخفاء المشروع' : 'إظهار المشروع'}
+            >
+              {visibility ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <EyeOff className="h-4 w-4" />
+              )}
+            </Button>
             <Button 
               variant="outline" 
               size="icon"
