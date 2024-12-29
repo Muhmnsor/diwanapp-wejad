@@ -10,6 +10,7 @@ import EventFeedback from '@/pages/EventFeedback';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 export const AppRoutes = () => {
+  console.log('AppRoutes rendering');
   return (
     <Routes>
       <Route path="/" element={<Index />} />
@@ -40,7 +41,7 @@ export const AppRoutes = () => {
       />
       <Route path="/events/:id" element={<EventDetails />} />
       <Route
-        path="/events/create"
+        path="/create-event"
         element={
           <ProtectedRoute>
             <CreateEvent />
