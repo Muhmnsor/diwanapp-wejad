@@ -19,6 +19,7 @@ interface ProjectCardContentProps {
     color: string;
     textColor: string;
   };
+  isProject?: boolean;
 }
 
 export const ProjectCardContent = ({
@@ -30,7 +31,15 @@ export const ProjectCardContent = ({
   certificateType = "none",
   maxAttendees = 0,
   status,
+  isProject = false,
 }: ProjectCardContentProps) => {
+  console.log('ProjectCardContent rendering:', {
+    startDate,
+    endDate,
+    isProject,
+    type: isProject ? 'project' : 'event'
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-muted-foreground">

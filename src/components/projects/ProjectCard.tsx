@@ -18,6 +18,7 @@ interface ProjectCardProps {
   registration_end_date?: string | null;
   beneficiary_type: string;
   certificate_type?: string;
+  isProject?: boolean;
 }
 
 export const ProjectCard = ({ 
@@ -33,10 +34,18 @@ export const ProjectCard = ({
   registration_end_date,
   beneficiary_type,
   certificate_type = 'none',
+  isProject = false
 }: ProjectCardProps) => {
   const { data: registrationCounts } = useRegistrations();
   const currentAttendees = registrationCounts?.[id] || 0;
   
+  console.log('ProjectCard rendering:', {
+    id,
+    title,
+    isProject,
+    type: isProject ? 'project' : 'event'
+  });
+
   const status = getProjectStatus({
     startDate: start_date,
     endDate: end_date,
@@ -64,11 +73,12 @@ export const ProjectCard = ({
             certificateType={certificate_type}
             maxAttendees={max_attendees}
             status={status}
+            isProject={isProject}
           />
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button asChild className="w-full" size="sm">
-            <Link to={`/projects/${id}`}>عرض التفاصيل</Link>
+            <Link to={isProject ? `/projects/${id}` : `/events/${id}`}>عرض التفاصيل</Link>
           </Button>
         </CardFooter>
       </Card>

@@ -21,7 +21,8 @@ export const EventsSection = ({
     title, 
     eventsCount: events.length, 
     isProjects,
-    firstEvent: events[0] 
+    firstEvent: events[0],
+    type: isProjects ? 'project' : 'event'
   });
 
   if (events.length === 0) {
@@ -61,6 +62,7 @@ export const EventsSection = ({
                 registration_end_date={item.registration_end_date}
                 beneficiary_type={item.beneficiary_type}
                 certificate_type={item.certificate_type}
+                isProject={true}
               />
             ) : (
               <ActivityCard {...item} />
