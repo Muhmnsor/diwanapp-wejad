@@ -36,7 +36,13 @@ const Index = () => {
 
   // فلترة الفعاليات المستقلة فقط (غير المرتبطة بمشاريع)
   const filteredEvents = events.filter(event => {
-    console.log("Checking event:", event.title, "is_project_activity:", event.is_project_activity);
+    console.log("فحص الفعالية:", {
+      title: event.title,
+      is_project_activity: event.is_project_activity,
+      isFiltered: event.is_project_activity === true
+    });
+    
+    // تجاهل الأنشطة التي تنتمي إلى مشاريع بشكل صريح
     return event.is_project_activity !== true;
   });
   
