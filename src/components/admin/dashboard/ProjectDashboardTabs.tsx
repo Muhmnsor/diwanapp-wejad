@@ -1,31 +1,31 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardOverview } from "../DashboardOverview";
 import { DashboardRegistrations } from "../DashboardRegistrations";
-import { ReportsTab } from "./ReportsTab";
-import { FeedbackTab } from "./FeedbackTab";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface DashboardTabsProps {
-  event: {
+interface ProjectDashboardTabsProps {
+  project: {
     id: string;
     max_attendees: number;
-    date: string;
-    time: string;
+    start_date: string;
+    end_date: string;
     event_path?: string;
     event_category?: string;
   };
 }
 
-export const DashboardTabs = ({ event }: DashboardTabsProps) => {
+export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => {
+  console.log("ProjectDashboardTabs - project:", project);
+
   // Fetch registrations count
   const { data: registrations = [] } = useQuery({
-    queryKey: ['registrations', event.id],
+    queryKey: ['project-registrations', project.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('registrations')
         .select('*')
-        .eq('event_id', event.id);
+        .eq('project_id', project.id);
 
       if (error) throw error;
       return data || [];
@@ -34,8 +34,8 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
-  const remainingSeats = event.max_attendees - registrationCount;
-  const occupancyRate = (registrationCount / event.max_attendees) * 100;
+  const remainingSeats = project.max_attendees - registrationCount;
+  const occupancyRate = (registrationCount / project.max_attendees) * 100;
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
@@ -52,18 +52,6 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
         >
           المسجلين
         </TabsTrigger>
-        <TabsTrigger 
-          value="report"
-          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
-        >
-          التقارير
-        </TabsTrigger>
-        <TabsTrigger 
-          value="feedback"
-          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
-        >
-          التقييمات
-        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview" className="mt-6">
@@ -71,23 +59,15 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
           occupancyRate={occupancyRate}
-          eventDate={event.date}
-          eventTime={event.time}
-          eventPath={event.event_path}
-          eventCategory={event.event_category}
+          eventDate={project.start_date}
+          eventTime={project.end_date}
+          eventPath={project.event_path}
+          eventCategory={project.event_category}
         />
       </TabsContent>
 
       <TabsContent value="registrations" className="mt-6">
-        <DashboardRegistrations eventId={event.id} />
-      </TabsContent>
-
-      <TabsContent value="report" className="mt-6">
-        <ReportsTab eventId={event.id} />
-      </TabsContent>
-
-      <TabsContent value="feedback" className="mt-6">
-        <FeedbackTab eventId={event.id} />
+        <DashboardRegistrations eventId={project.id} />
       </TabsContent>
     </Tabs>
   );
