@@ -2,6 +2,7 @@ import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/for
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { ProjectActivityFormData } from "@/components/projects/activities/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface EventBasicFieldsProps {
   form: UseFormReturn<ProjectActivityFormData>;
@@ -36,66 +37,6 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
       />
       <FormField
         control={form.control}
-        name="date"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>تاريخ النشاط</FormLabel>
-            <FormControl>
-              <Input type="date" {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="time"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>وقت النشاط</FormLabel>
-            <FormControl>
-              <Input type="time" {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="location"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>موقع النشاط</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="location_url"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>رابط الموقع</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="special_requirements"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>متطلبات خاصة</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
         name="max_attendees"
         render={({ field }) => (
           <FormItem>
@@ -112,9 +53,17 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel>نوع النشاط</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر نوع النشاط" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="in-person">حضوري</SelectItem>
+                <SelectItem value="online">عن بعد</SelectItem>
+              </SelectContent>
+            </Select>
           </FormItem>
         )}
       />
@@ -136,9 +85,18 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel>نوع المستفيدين</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر نوع المستفيدين" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="men">رجال</SelectItem>
+                <SelectItem value="women">نساء</SelectItem>
+                <SelectItem value="both">رجال ونساء</SelectItem>
+              </SelectContent>
+            </Select>
           </FormItem>
         )}
       />
@@ -148,33 +106,18 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
         render={({ field }) => (
           <FormItem>
             <FormLabel>نوع الشهادة</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="event_path"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>مسار النشاط</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="event_category"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>فئة النشاط</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر نوع الشهادة" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="none">بدون شهادة</SelectItem>
+                <SelectItem value="attendance">شهادة حضور</SelectItem>
+                <SelectItem value="certified">شهادة معتمدة</SelectItem>
+              </SelectContent>
+            </Select>
           </FormItem>
         )}
       />
@@ -186,18 +129,6 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
             <FormLabel>عدد ساعات النشاط</FormLabel>
             <FormControl>
               <Input type="number" {...field} />
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="image_url"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>رابط الصورة</FormLabel>
-            <FormControl>
-              <Input {...field} />
             </FormControl>
           </FormItem>
         )}

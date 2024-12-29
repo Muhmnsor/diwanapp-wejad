@@ -14,13 +14,18 @@ interface AddProjectEventDialogProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   onSuccess: () => void;
+  project: {
+    event_path: string;
+    event_category: string;
+  };
 }
 
 export const AddProjectEventDialog = ({
   open,
   onOpenChange,
   projectId,
-  onSuccess
+  onSuccess,
+  project
 }: AddProjectEventDialogProps) => {
   const form = useForm<ProjectActivityFormData>({
     defaultValues: {
@@ -36,8 +41,6 @@ export const AddProjectEventDialog = ({
       price: null,
       beneficiary_type: "both",
       certificate_type: "none",
-      event_path: "environment",
-      event_category: "social",
       event_hours: 0,
       image_url: "/placeholder.svg"
     }
@@ -51,22 +54,9 @@ export const AddProjectEventDialog = ({
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .insert([{
-          title: data.title,
-          description: data.description,
-          date: data.date,
-          time: data.time,
-          location: data.location,
-          location_url: data.location_url,
-          special_requirements: data.special_requirements,
-          event_type: data.event_type,
-          max_attendees: data.max_attendees,
-          image_url: data.image_url,
-          beneficiary_type: data.beneficiary_type,
-          event_path: data.event_path,
-          event_category: data.event_category,
-          price: data.price,
-          event_hours: data.event_hours,
-          certificate_type: data.certificate_type
+          ...data,
+          event_path: project.event_path,
+          event_category: project.event_category
         }])
         .select()
         .single();
