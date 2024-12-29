@@ -2,7 +2,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ProjectCardContent } from "./cards/ProjectCardContent";
-import { useEffect } from "react"; // Added import for useEffect
+import { EyeOff } from "lucide-react";
+import { useEffect } from "react";
 
 interface ProjectCardProps {
   id: string;
@@ -20,6 +21,8 @@ interface ProjectCardProps {
   certificate_type?: string;
   event_path?: string;
   event_category?: string;
+  is_visible?: boolean;
+  className?: string;
 }
 
 export const ProjectCard = ({ 
@@ -36,7 +39,9 @@ export const ProjectCard = ({
   beneficiary_type,
   certificate_type = 'none',
   event_path,
-  event_category
+  event_category,
+  is_visible = true,
+  className = ""
 }: ProjectCardProps) => {
   
   useEffect(() => {
@@ -56,14 +61,21 @@ export const ProjectCard = ({
       },
       beneficiaryType: beneficiary_type,
       eventPath: event_path,
-      eventCategory: event_category
+      eventCategory: event_category,
+      isVisible: is_visible
     });
-  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, registration_end_date, beneficiary_type, event_path, event_category]);
+  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, registration_end_date, beneficiary_type, event_path, event_category, is_visible]);
 
   return (
-    <div className="w-[380px] sm:w-[460px] lg:w-[480px] mx-auto" dir="rtl">
+    <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
+        {!is_visible && (
+          <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+            <EyeOff className="w-4 h-4" />
+            مخفي
+          </div>
+        )}
         <CardHeader className="p-4">
           <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
         </CardHeader>
