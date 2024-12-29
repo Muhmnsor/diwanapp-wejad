@@ -1,7 +1,7 @@
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
-import { ProjectActivityFormData } from "../types";
+import { ProjectActivityFormData } from "@/types/activity";
 
 interface EventDateTimeFieldsProps {
   form: UseFormReturn<ProjectActivityFormData>;

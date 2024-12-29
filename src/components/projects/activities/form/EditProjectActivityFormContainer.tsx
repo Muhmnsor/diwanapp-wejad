@@ -5,12 +5,11 @@ import { useForm } from "react-hook-form";
 import { EventBasicFields } from "./EventBasicFields";
 import { EventDateTimeFields } from "./EventDateTimeFields";
 import { EventLocationFields } from "./EventLocationFields";
-import { ProjectActivityFormData } from "../types";
-import { Event } from "@/types/event";
+import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
 
 interface EditProjectActivityFormContainerProps {
-  activity: Event;
-  onSave: (updatedActivity: Event) => void;
+  activity: ProjectActivity;
+  onSave: (updatedActivity: ProjectActivity) => void;
   onCancel: () => void;
   projectId: string;
 }
@@ -41,9 +40,8 @@ export const EditProjectActivityFormContainer = ({
       event_path: activity.event_path,
       event_category: activity.event_category,
       price: activity.price,
-      event_hours: activity.event_hours || 0,
+      event_hours: activity.event_hours,
       image_url: activity.image_url,
-      is_visible: true
     },
   });
 
@@ -53,7 +51,7 @@ export const EditProjectActivityFormContainer = ({
       const updatedActivity = {
         ...activity,
         ...data,
-      } as Event;
+      };
       await onSave(updatedActivity);
     } finally {
       setIsLoading(false);
