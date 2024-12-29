@@ -32,7 +32,7 @@ export const EventsSection = ({
           {isPastEvents && <History className="w-6 h-6 text-[#9F9EA1]" />}
         </div>
         <div className="text-center text-[#9F9EA1] p-8 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
-          {isPastEvents ? 'لا توجد فعاليات سابقة' : 'لا توجد فعاليات قادمة حالياً'}
+          {isPastEvents ? 'لا توجد فعاليات سابقة' : isProjects ? 'لا توجد مشاريع حالياً' : 'لا توجد فعاليات قادمة حالياً'}
         </div>
       </section>
     );
