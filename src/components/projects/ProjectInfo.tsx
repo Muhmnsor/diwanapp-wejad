@@ -85,13 +85,17 @@ export const ProjectInfo = ({
         <div className="px-8 flex items-center gap-6">
           {eventPath && (
             <div className="flex items-center gap-2 text-gray-600">
-              <Folder className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+                <Folder className="w-5 h-5 text-primary" />
+              </div>
               <span>المسار: {formatEventPath(eventPath)}</span>
             </div>
           )}
           {eventCategory && (
             <div className="flex items-center gap-2 text-gray-600">
-              <Tag className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+                <Tag className="w-5 h-5 text-primary" />
+              </div>
               <span>التصنيف: {formatEventCategory(eventCategory)}</span>
             </div>
           )}
@@ -101,15 +105,21 @@ export const ProjectInfo = ({
       {/* Project Dates and Attendees */}
       <div className="px-8 space-y-4">
         <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-primary" />
+          </div>
           <span>تاريخ البداية: {startDate}</span>
         </div>
         <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-primary" />
+          </div>
           <span>تاريخ النهاية: {endDate}</span>
         </div>
         <div className="flex items-center gap-2 text-gray-600">
-          <Users className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+            <Users className="w-5 h-5 text-primary" />
+          </div>
           <span dir="rtl">{attendees} من {maxAttendees} مشارك</span>
         </div>
       </div>
