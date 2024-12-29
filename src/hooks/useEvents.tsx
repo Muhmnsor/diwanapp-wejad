@@ -9,6 +9,7 @@ export const useEvents = () => {
       try {
         console.log("🔄 جاري جلب الفعاليات...");
         
+        // تحديث الاستعلام للتأكد من جلب الفعاليات فقط وليس أنشطة المشاريع
         const { data: eventsData, error: eventsError } = await supabase
           .from("events")
           .select("*")
@@ -21,8 +22,14 @@ export const useEvents = () => {
           throw eventsError;
         }
 
+        // إضافة سجل تفصيلي لفهم البيانات التي تم جلبها
         console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData?.length);
-        console.log("📊 بيانات الفعاليات:", eventsData);
+        console.log("📊 تفاصيل الفعاليات:", eventsData?.map(event => ({
+          id: event.id,
+          title: event.title,
+          isProjectActivity: event.is_project_activity
+        })));
+        
         return eventsData || [];
       } catch (error) {
         console.error("❌ خطأ غير متوقع في جلب الفعاليات:", error);

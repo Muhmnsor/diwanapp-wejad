@@ -11,14 +11,26 @@ interface EventsSectionProps {
 
 export const EventsSection = ({ title, events, registrations, isPastEvents = false }: EventsSectionProps) => {
   const { user } = useAuthStore();
+  
+  // إضافة سجلات تفصيلية لتتبع البيانات
   console.log('📊 بيانات قسم الفعاليات:', {
     user,
-    eventsCount: events.length
+    eventsCount: events.length,
+    eventsDetails: events.map(event => ({
+      id: event.id,
+      title: event.title,
+      isProjectActivity: event.is_project_activity
+    }))
   });
 
-  // فلترة الفعاليات بناءً على الصلاحيات
+  // فلترة الفعاليات بناءً على الصلاحيات والتأكد من أنها ليست أنشطة مشاريع
   const visibleEvents = events.filter(event => {
-    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات
+    // التحقق من أن العنصر ليس نشاط مشروع
+    if (event.is_project_activity) {
+      return false;
+    }
+    
+    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات (غير المخفية)
     if (user?.isAdmin) {
       return true;
     }
