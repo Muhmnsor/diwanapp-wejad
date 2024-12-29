@@ -9,6 +9,7 @@ import CreateEvent from '@/pages/CreateEvent';
 import CreateProject from '@/pages/CreateProject';
 import EventFeedback from '@/pages/EventFeedback';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ProjectDetails from '@/pages/ProjectDetails';
 
 export const AppRoutes = () => {
   console.log('AppRoutes rendering');
@@ -41,6 +42,7 @@ export const AppRoutes = () => {
         }
       />
       <Route path="/events/:id" element={<EventDetails />} />
+      <Route path="/projects/:id" element={<ProjectDetails />} />
       <Route
         path="/create-event"
         element={
