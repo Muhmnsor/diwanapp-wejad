@@ -2,6 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ProjectCardContent } from "./cards/ProjectCardContent";
+import { useEffect } from "react"; // Added import for useEffect
 
 interface ProjectCardProps {
   id: string;
