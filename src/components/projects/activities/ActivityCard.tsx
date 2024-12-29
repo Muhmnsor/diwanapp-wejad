@@ -1,72 +1,114 @@
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Edit2, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { getEventStatus } from "@/utils/eventUtils";
+import { useEffect } from "react";
+import { EventCardContent } from "@/components/events/cards/EventCardContent";
+import { getRegistrationStatusConfig } from "@/utils/eventStatusUtils";
+import { useRegistrations } from "@/hooks/useRegistrations";
+import { EyeOff } from "lucide-react";
 
 interface ActivityCardProps {
-  activity: any;
-  onEdit: () => void;
-  onDelete: () => void;
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  image_url: string;
+  event_type: "online" | "in-person";
+  price: number | null;
+  max_attendees?: number;
+  registration_start_date?: string | null;
+  registration_end_date?: string | null;
+  beneficiary_type: string;
+  certificate_type?: string;
+  event_hours?: number;
+  is_visible?: boolean;
+  className?: string;
 }
 
 export const ActivityCard = ({ 
-  activity,
-  onEdit,
-  onDelete
+  id, 
+  title, 
+  date, 
+  location, 
+  image_url, 
+  event_type, 
+  price,
+  max_attendees = 0,
+  registration_start_date,
+  registration_end_date,
+  beneficiary_type,
+  certificate_type = 'none',
+  event_hours = 0,
+  is_visible = true,
+  className = ""
 }: ActivityCardProps) => {
+  const { data: registrationCounts } = useRegistrations();
+  const currentAttendees = registrationCounts?.[id] || 0;
+  
+  const status = getEventStatus({
+    date,
+    time: "00:00",
+    max_attendees,
+    registrationStartDate: registration_start_date,
+    registrationEndDate: registration_end_date,
+    beneficiaryType: beneficiary_type,
+    attendees: currentAttendees
+  } as any);
+
+  const statusConfig = getRegistrationStatusConfig(status);
+
+  useEffect(() => {
+    console.log('🎯 بيانات النشاط:', {
+      title,
+      certificate: {
+        type: certificate_type,
+        hours: event_hours
+      },
+      max_attendees,
+      currentAttendees,
+      registrationDates: {
+        start: registration_start_date,
+        end: registration_end_date
+      },
+      beneficiaryType: beneficiary_type,
+      status,
+      isVisible: is_visible
+    });
+  }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type, currentAttendees, status, is_visible]);
+
   return (
-    <Card key={activity.id} className="p-4">
-      <div className="space-y-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <h4 className="font-medium">{activity.event?.title}</h4>
-            <p className="text-sm text-muted-foreground">
-              {activity.event?.date} - {activity.event?.time}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onEdit}
-              className="h-8 w-8"
-            >
-              <Edit2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={onDelete}
-              className="h-8 w-8"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {activity.event?.location}
-        </div>
-        {activity.event?.description && (
-          <p className="text-sm text-gray-600">
-            {activity.event.description}
-          </p>
-        )}
-        {activity.event?.special_requirements && (
-          <div className="text-sm">
-            <span className="font-medium">احتياجات خاصة: </span>
-            {activity.event.special_requirements}
+    <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
+        <img src={image_url} alt={title} className="w-full h-40 object-cover" />
+        {!is_visible && (
+          <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+            <EyeOff className="w-4 h-4" />
+            مخفي
           </div>
         )}
-        {activity.event?.location_url && (
-          <a
-            href={activity.event.location_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-primary hover:underline"
-          >
-            رابط الموقع
-          </a>
-        )}
-      </div>
-    </Card>
+        <CardHeader className="p-4">
+          <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EventCardContent
+            date={date}
+            location={location}
+            eventType={event_type}
+            price={price}
+            beneficiaryType={beneficiary_type}
+            certificateType={certificate_type}
+            eventHours={event_hours}
+            maxAttendees={max_attendees}
+            status={statusConfig}
+          />
+        </CardContent>
+        <CardFooter className="p-4 pt-0">
+          <Button asChild className="w-full" size="sm">
+            <Link to={`/events/${id}`}>عرض التفاصيل</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
