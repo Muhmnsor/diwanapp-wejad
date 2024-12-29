@@ -9,7 +9,7 @@ export const useEvents = () => {
       try {
         console.log("🔄 محاولة جلب الفعاليات...");
         
-        // جلب الفعاليات التي ليست مرتبطة بمشاريع
+        // جلب الفعاليات التي ليست أنشطة مشروع
         const { data: eventsData, error: eventsError } = await supabase
           .from("events")
           .select(`
@@ -18,8 +18,7 @@ export const useEvents = () => {
               project_id
             )
           `)
-          .is('is_project_activity', false)
-          .is('project_events.project_id', null)
+          .is('is_project_activity', false)  // Explicitly filter out project activities
           .order("date", { ascending: true });
 
         if (eventsError) {
@@ -34,8 +33,7 @@ export const useEvents = () => {
           events: eventsData?.map(event => ({
             id: event.id,
             title: event.title,
-            is_project_activity: event.is_project_activity,
-            has_project: event.project_events?.length > 0
+            is_project_activity: event.is_project_activity
           }))
         });
 
