@@ -7,7 +7,11 @@ import { toast } from "sonner";
 import { EditActivityForm } from "./form/EditActivityForm";
 
 interface EditProjectActivityDialogProps {
-  activity: ProjectActivity;
+  activity: {
+    id: string;
+    project_id: string;
+    event: ProjectActivity;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: () => void;
@@ -42,7 +46,7 @@ export const EditProjectActivityDialog = ({
           special_requirements: data.special_requirements,
           event_hours: Number(data.event_hours),
         })
-        .eq('id', activity.id);
+        .eq('id', activity.event.id);
 
       if (updateError) {
         console.error('Error updating activity:', updateError);
@@ -66,7 +70,7 @@ export const EditProjectActivityDialog = ({
         <DialogTitle>تعديل النشاط</DialogTitle>
         <ScrollArea className="h-[calc(90vh-120px)]">
           <EditActivityForm
-            activity={activity}
+            activity={activity.event}
             onSave={onSave}
             onCancel={() => onOpenChange(false)}
             isLoading={isLoading}
