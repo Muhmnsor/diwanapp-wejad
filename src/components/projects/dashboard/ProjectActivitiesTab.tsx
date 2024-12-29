@@ -1,7 +1,9 @@
+import { Card, CardContent } from "@/components/ui/card";
 import { ProjectDashboardHeader } from "./ProjectDashboardHeader";
-import { ActivitiesList } from "../activities/ActivitiesList";
+import { ProjectActivitiesList } from "./ProjectActivitiesList";
 import { ActivityDialogsContainer } from "../activities/containers/ActivityDialogsContainer";
 import { useActivityManagement } from "../activities/hooks/useActivityManagement";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProjectActivitiesTabProps {
   project: {
@@ -13,11 +15,14 @@ interface ProjectActivitiesTabProps {
   refetchActivities: () => void;
 }
 
-export const ProjectActivitiesTab = ({
+export const ProjectActivitiesTab = ({ 
   project,
   projectActivities,
   refetchActivities
 }: ProjectActivitiesTabProps) => {
+  console.log("ProjectActivitiesTab - Initial render with activities:", projectActivities);
+  const queryClient = useQueryClient();
+
   const {
     selectedEvent,
     isAddEventOpen,
@@ -32,29 +37,40 @@ export const ProjectActivitiesTab = ({
     confirmDelete,
   } = useActivityManagement(project.id, refetchActivities);
 
-  return (
-    <div className="space-y-6">
-      <ProjectDashboardHeader onAddEvent={handleAddEvent} />
-      
-      <ActivitiesList
-        activities={projectActivities.map((pa: any) => pa.event)}
-        onEditActivity={handleEditEvent}
-        onDeleteActivity={handleDeleteEvent}
-      />
+  const handleEditSuccess = async () => {
+    console.log("ProjectActivitiesTab - Handling edit success");
+    await refetchActivities();
+    await queryClient.invalidateQueries({ 
+      queryKey: ['project-activities', project.id] 
+    });
+    console.log("ProjectActivitiesTab - Queries invalidated and activities refetched");
+  };
 
-      <ActivityDialogsContainer
-        projectId={project.id}
-        selectedEvent={selectedEvent}
-        isAddEventOpen={isAddEventOpen}
-        isEditEventOpen={isEditEventOpen}
-        isDeleteDialogOpen={isDeleteDialogOpen}
-        setIsAddEventOpen={setIsAddEventOpen}
-        setIsEditEventOpen={setIsEditEventOpen}
-        setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-        refetchActivities={refetchActivities}
-        confirmDelete={confirmDelete}
-        project={project}
-      />
-    </div>
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <ProjectDashboardHeader onAddEvent={handleAddEvent} />
+        <ProjectActivitiesList
+          projectActivities={projectActivities}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
+          onEditSuccess={handleEditSuccess}
+        />
+
+        <ActivityDialogsContainer
+          projectId={project.id}
+          selectedEvent={selectedEvent}
+          isAddEventOpen={isAddEventOpen}
+          setIsAddEventOpen={setIsAddEventOpen}
+          isEditEventOpen={isEditEventOpen}
+          setIsEditEventOpen={setIsEditEventOpen}
+          isDeleteDialogOpen={isDeleteDialogOpen}
+          setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+          refetchActivities={handleEditSuccess}
+          confirmDelete={confirmDelete}
+          project={project}
+        />
+      </CardContent>
+    </Card>
   );
 };

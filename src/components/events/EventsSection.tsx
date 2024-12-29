@@ -11,26 +11,17 @@ interface EventsSectionProps {
 
 export const EventsSection = ({ title, events, registrations, isPastEvents = false }: EventsSectionProps) => {
   const { user } = useAuthStore();
-  
-  // إضافة سجلات تفصيلية لتتبع البيانات
-  console.log('📊 بيانات قسم الفعاليات:', {
-    user,
-    eventsCount: events.length,
-    eventsDetails: events.map(event => ({
-      id: event.id,
-      title: event.title,
-      isProjectActivity: event.is_project_activity
-    }))
-  });
+  console.log('EventsSection - User:', user);
+  console.log('EventsSection - Events:', events);
 
-  // فلترة الفعاليات بناءً على الصلاحيات والتأكد من أنها ليست أنشطة مشاريع
+  // فلترة الفعاليات بناءً على الصلاحيات والنوع
   const visibleEvents = events.filter(event => {
-    // التحقق من أن العنصر ليس نشاط مشروع
+    // تجاهل الأنشطة التي تنتمي إلى مشاريع
     if (event.is_project_activity) {
       return false;
     }
     
-    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات (غير المخفية)
+    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات المستقلة
     if (user?.isAdmin) {
       return true;
     }
@@ -38,7 +29,7 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
     return event.is_visible !== false;
   });
 
-  console.log('📊 الفعاليات المرئية:', visibleEvents);
+  console.log('EventsSection - Filtered Events:', visibleEvents);
 
   if (visibleEvents.length === 0) {
     return (

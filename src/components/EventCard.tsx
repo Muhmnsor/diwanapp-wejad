@@ -59,7 +59,7 @@ export const EventCard = ({
   const statusConfig = getRegistrationStatusConfig(status);
 
   useEffect(() => {
-    console.log('🎫 بيانات الفعالية:', {
+    console.log('EventCard data:', {
       title,
       certificate: {
         type: certificate_type,

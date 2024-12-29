@@ -7,13 +7,11 @@ export const useEvents = () => {
     queryKey: ["events"],
     queryFn: async () => {
       try {
-        console.log("🔄 جاري جلب الفعاليات...");
+        console.log("🔄 محاولة جلب الفعاليات...");
         
-        // تحديث الاستعلام للتأكد من جلب الفعاليات فقط وليس أنشطة المشاريع
         const { data: eventsData, error: eventsError } = await supabase
           .from("events")
           .select("*")
-          .eq('is_project_activity', false)
           .order("date", { ascending: true });
 
         if (eventsError) {
@@ -22,14 +20,7 @@ export const useEvents = () => {
           throw eventsError;
         }
 
-        // إضافة سجل تفصيلي لفهم البيانات التي تم جلبها
         console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData?.length);
-        console.log("📊 تفاصيل الفعاليات:", eventsData?.map(event => ({
-          id: event.id,
-          title: event.title,
-          isProjectActivity: event.is_project_activity
-        })));
-        
         return eventsData || [];
       } catch (error) {
         console.error("❌ خطأ غير متوقع في جلب الفعاليات:", error);
@@ -38,7 +29,7 @@ export const useEvents = () => {
       }
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 0, // تم تغيير هذه القيمة لتحديث البيانات فوراً
+    refetchOnWindowFocus: true, // تفعيل التحديث عند العودة للصفحة
   });
 };
