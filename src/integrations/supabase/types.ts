@@ -424,102 +424,6 @@ export type Database = {
         }
         Relationships: []
       }
-      project_events: {
-        Row: {
-          created_at: string
-          event_id: string
-          event_order: number
-          id: string
-          project_id: string
-        }
-        Insert: {
-          created_at?: string
-          event_id: string
-          event_order: number
-          id?: string
-          project_id: string
-        }
-        Update: {
-          created_at?: string
-          event_id?: string
-          event_order?: number
-          id?: string
-          project_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_events_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      projects: {
-        Row: {
-          beneficiary_type: string
-          certificate_type: string | null
-          created_at: string
-          description: string | null
-          end_date: string
-          event_category: string
-          event_path: string
-          event_type: string
-          id: string
-          image_url: string
-          max_attendees: number
-          price: number | null
-          registration_end_date: string | null
-          registration_start_date: string | null
-          start_date: string
-          title: string
-        }
-        Insert: {
-          beneficiary_type?: string
-          certificate_type?: string | null
-          created_at?: string
-          description?: string | null
-          end_date: string
-          event_category?: string
-          event_path?: string
-          event_type?: string
-          id?: string
-          image_url: string
-          max_attendees?: number
-          price?: number | null
-          registration_end_date?: string | null
-          registration_start_date?: string | null
-          start_date: string
-          title: string
-        }
-        Update: {
-          beneficiary_type?: string
-          certificate_type?: string | null
-          created_at?: string
-          description?: string | null
-          end_date?: string
-          event_category?: string
-          event_path?: string
-          event_type?: string
-          id?: string
-          image_url?: string
-          max_attendees?: number
-          price?: number | null
-          registration_end_date?: string | null
-          registration_start_date?: string | null
-          start_date?: string
-          title?: string
-        }
-        Relationships: []
-      }
       registrations: {
         Row: {
           created_at: string
@@ -528,7 +432,6 @@ export type Database = {
           id: string
           name: string
           phone: string
-          project_id: string | null
           registration_number: string
         }
         Insert: {
@@ -538,7 +441,6 @@ export type Database = {
           id?: string
           name: string
           phone: string
-          project_id?: string | null
           registration_number: string
         }
         Update: {
@@ -548,7 +450,6 @@ export type Database = {
           id?: string
           name?: string
           phone?: string
-          project_id?: string | null
           registration_number?: string
         }
         Relationships: [
@@ -557,13 +458,6 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "registrations_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

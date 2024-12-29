@@ -18,12 +18,3 @@ export const getEventDateTime = (date: string, time: string = '00:00'): Date => 
   const [hours, minutes] = time.split(':').map(Number);
   return new Date(year, month - 1, day, hours, minutes);
 };
-
-export const formatDate = (date: string): string => {
-  const parsedDate = new Date(date);
-  return new Intl.DateTimeFormat('ar-SA', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(parsedDate);
-};

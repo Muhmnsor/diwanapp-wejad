@@ -6,7 +6,6 @@ import Settings from '@/pages/Settings';
 import Users from '@/pages/Users';
 import EventDetails from '@/pages/EventDetails';
 import CreateEvent from '@/pages/CreateEvent';
-import CreateProject from '@/pages/CreateProject';
 import EventFeedback from '@/pages/EventFeedback';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -46,14 +45,6 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreateEvent />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/create-project"
-        element={
-          <ProtectedRoute>
-            <CreateProject />
           </ProtectedRoute>
         }
       />
