@@ -1,18 +1,10 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
-import { ActivityBasicFields } from "./form/ActivityBasicFields";
-import { ActivityDateTimeFields } from "./form/ActivityDateTimeFields";
-import { ActivityLocationFields } from "./form/ActivityLocationFields";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { EditActivityForm } from "./form/EditActivityForm";
 
 interface EditProjectActivityDialogProps {
   activity: ProjectActivity;
@@ -31,19 +23,6 @@ export const EditProjectActivityDialog = ({
 }: EditProjectActivityDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   console.log('Activity data in EditProjectActivityDialog:', activity);
-
-  const form = useForm<ProjectActivityFormData>({
-    defaultValues: {
-      title: activity.title || "",
-      description: activity.description || "",
-      date: activity.date || "",
-      time: activity.time || "",
-      location: activity.location || "",
-      location_url: activity.location_url || "",
-      special_requirements: activity.special_requirements || "",
-      event_hours: activity.event_hours || 0,
-    }
-  });
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
     setIsLoading(true);
@@ -80,51 +59,13 @@ export const EditProjectActivityDialog = ({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
         <DialogTitle>تعديل النشاط</DialogTitle>
         <ScrollArea className="h-[calc(90vh-120px)]">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 pr-4">
-              <ActivityBasicFields form={form} />
-              <ActivityDateTimeFields form={form} />
-              <ActivityLocationFields form={form} />
-              
-              <FormField
-                control={form.control}
-                name="event_hours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>مدة النشاط (بالساعات)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        min="0"
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => onOpenChange(false)}
-                >
-                  إلغاء
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      جاري الحفظ...
-                    </span>
-                  ) : (
-                    "حفظ التغييرات"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
+          <EditActivityForm
+            activity={activity}
+            onSave={onSave}
+            onCancel={() => onOpenChange(false)}
+            isLoading={isLoading}
+            handleSubmit={handleSubmit}
+          />
         </ScrollArea>
       </DialogContent>
     </Dialog>
