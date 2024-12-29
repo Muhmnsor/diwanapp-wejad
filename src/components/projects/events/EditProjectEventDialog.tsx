@@ -16,7 +16,7 @@ interface EditProjectEventDialogProps {
   activity: ProjectActivity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (updatedActivity: ProjectActivity) => void;
+  onSave: () => void;
   projectId: string;
 }
 
@@ -44,6 +44,8 @@ export const EditProjectEventDialog = ({
 
   const handleSubmit = async (data: any) => {
     try {
+      console.log('Updating event with data:', data);
+      
       const { error } = await supabase
         .from('events')
         .update({
@@ -58,13 +60,13 @@ export const EditProjectEventDialog = ({
         })
         .eq('id', activity.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating event:', error);
+        throw error;
+      }
 
       toast.success("تم تحديث النشاط بنجاح");
-      onSave({
-        ...activity,
-        ...data
-      });
+      onSave();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating activity:', error);
@@ -170,7 +172,11 @@ export const EditProjectEventDialog = ({
                   <FormItem>
                     <FormLabel>مدة النشاط (بالساعات)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input 
+                        type="number" 
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
