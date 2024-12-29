@@ -4,12 +4,10 @@ interface DashboardOverviewProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  eventDate?: string;
-  eventTime?: string;
+  eventDate: string;
+  eventTime: string;
   eventPath?: string;
   eventCategory?: string;
-  activitiesCount?: number;
-  isProject?: boolean;
 }
 
 export const DashboardOverview = ({
@@ -19,9 +17,7 @@ export const DashboardOverview = ({
   eventDate,
   eventTime,
   eventPath,
-  eventCategory,
-  activitiesCount = 0,
-  isProject = false
+  eventCategory
 }: DashboardOverviewProps) => {
   console.log("DashboardOverview props:", {
     registrationCount,
@@ -30,9 +26,7 @@ export const DashboardOverview = ({
     eventDate,
     eventTime,
     eventPath,
-    eventCategory,
-    activitiesCount,
-    isProject
+    eventCategory
   });
 
   return (
@@ -40,11 +34,10 @@ export const DashboardOverview = ({
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      eventDate={isProject ? undefined : eventDate}
-      eventTime={isProject ? undefined : eventTime}
+      eventDate={eventDate}
+      eventTime={eventTime}
       eventPath={eventPath}
       eventCategory={eventCategory}
-      activitiesCount={isProject ? activitiesCount : undefined}
     />
   );
 };

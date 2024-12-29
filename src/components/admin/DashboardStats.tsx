@@ -1,20 +1,14 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Users, Calendar, Folder, Tag, ListChecks } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Calendar, Clock } from "lucide-react";
 
 interface DashboardStatsProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  eventDate?: string;
-  eventTime?: string;
+  eventDate: string;
+  eventTime: string;
   eventPath?: string;
   eventCategory?: string;
-  activitiesCount?: number;
 }
 
 export const DashboardStats = ({
@@ -25,8 +19,17 @@ export const DashboardStats = ({
   eventTime,
   eventPath,
   eventCategory,
-  activitiesCount
 }: DashboardStatsProps) => {
+  console.log("DashboardStats props:", {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    eventDate,
+    eventTime,
+    eventPath,
+    eventCategory,
+  });
+
   const formatEventPath = (path?: string) => {
     if (!path) return '';
     const pathMap: Record<string, string> = {
@@ -58,85 +61,46 @@ export const DashboardStats = ({
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" dir="rtl">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            عدد المسجلين
-          </CardTitle>
+          <CardTitle className="text-sm font-medium">إجمالي المسجلين</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{registrationCount}</div>
           <p className="text-xs text-muted-foreground">
-            المقاعد المتبقية: {remainingSeats}
+            متبقي {remainingSeats} مقعد
           </p>
         </CardContent>
       </Card>
-
-      {eventDate && eventTime ? (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              موعد الفعالية
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{eventDate}</div>
-            <p className="text-xs text-muted-foreground">
-              الوقت: {eventTime}
-            </p>
-          </CardContent>
-        </Card>
-      ) : activitiesCount !== undefined && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              عدد الأنشطة
-            </CardTitle>
-            <ListChecks className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activitiesCount}</div>
-            <p className="text-xs text-muted-foreground">
-              إجمالي الأنشطة المضافة
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
+      
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            نسبة الإشغال
-          </CardTitle>
+          <CardTitle className="text-sm font-medium">نسبة الإشغال</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {occupancyRate}%
-          </div>
+          <div className="text-2xl font-bold">{occupancyRate?.toFixed(1) || 0}%</div>
+          {eventPath && eventCategory && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {formatEventPath(eventPath)} - {formatEventCategory(eventCategory)}
+            </p>
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            التصنيف
-          </CardTitle>
-          <div className="flex gap-2">
-            <Folder className="h-4 w-4 text-muted-foreground" />
-            <Tag className="h-4 w-4 text-muted-foreground" />
-          </div>
+          <CardTitle className="text-sm font-medium">موعد الفعالية</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-md font-bold">
-            {formatEventPath(eventPath)}
+          <div className="text-2xl font-bold">{eventDate}</div>
+          <div className="flex items-center text-xs text-muted-foreground">
+            <Clock className="mr-1 h-3 w-3" />
+            {eventTime}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {formatEventCategory(eventCategory)}
-          </p>
         </CardContent>
       </Card>
     </div>
