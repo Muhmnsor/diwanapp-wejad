@@ -12,18 +12,15 @@ interface EditEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (updatedEvent: CustomEvent) => void;
-  isProjectEvent?: boolean;
 }
 
 export const EditEventDialog = ({ 
   event, 
   open, 
   onOpenChange, 
-  onSave,
-  isProjectEvent = false
+  onSave 
 }: EditEventDialogProps) => {
   console.log('Event data in EditEventDialog:', event);
-  console.log('Is project event:', isProjectEvent);
 
   const handleSave = async (updatedEvent: CustomEvent) => {
     await onSave(updatedEvent);
@@ -33,13 +30,12 @@ export const EditEventDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] [&_[data-radix-scroll-area-viewport]]:!pl-4 [&_[data-radix-scroll-area-viewport]]:!pr-0" dir="rtl">
-        <EditEventHeader isProjectEvent={isProjectEvent} />
+        <EditEventHeader />
         <ScrollArea className="h-[calc(90vh-120px)]">
           <EditEventFormContainer
             event={event}
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
-            isProjectEvent={isProjectEvent}
           />
         </ScrollArea>
       </DialogContent>

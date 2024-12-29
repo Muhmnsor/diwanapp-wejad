@@ -6,7 +6,7 @@ import { HoursCardBadge } from "../badges/card/HoursCardBadge";
 
 interface EventCardBadgesProps {
   eventType: "online" | "in-person";
-  price: number | "free" | null;
+  price: number | null;
   beneficiaryType: string;
   certificateType?: string;
   eventHours?: number;
@@ -27,7 +27,9 @@ export const EventCardBadges = ({
     eventHours
   });
 
+  // تحقق من وجود نوع الشهادة أولاً
   const shouldShowCertificate = certificateType && certificateType !== 'none';
+  // تحقق من وجود الساعات وأنها أكبر من صفر فقط إذا كان هناك شهادة
   const shouldShowHours = shouldShowCertificate && eventHours && eventHours > 0;
 
   return (

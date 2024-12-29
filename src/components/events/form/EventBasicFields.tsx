@@ -5,14 +5,9 @@ import { Event } from "@/store/eventStore";
 interface EventBasicFieldsProps {
   formData: Event;
   setFormData: (data: Event) => void;
-  isProjectEvent?: boolean;
 }
 
-export const EventBasicFields = ({ 
-  formData, 
-  setFormData,
-  isProjectEvent = false 
-}: EventBasicFieldsProps) => {
+export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProps) => {
   return (
     <div className="space-y-4">
       <div>

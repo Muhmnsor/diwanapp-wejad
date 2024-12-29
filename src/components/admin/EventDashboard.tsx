@@ -1,82 +1,64 @@
 import { useEffect, useState } from "react";
-import { EventCard } from "@/components/EventCard";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Event } from "@/store/eventStore";
+import { supabase } from "@/integrations/supabase/client";
+import { DashboardTabs } from "./dashboard/DashboardTabs";
+import { ProjectDashboardTabs } from "./dashboard/ProjectDashboardTabs";
 
 interface EventDashboardProps {
   eventId: string;
   isProject?: boolean;
-  onEditEvent?: (event: Event) => void;
 }
 
-export const EventDashboard = ({ 
-  eventId, 
-  isProject = false,
-  onEditEvent
-}: EventDashboardProps) => {
-  const [events, setEvents] = useState<Event[]>([]);
+export const EventDashboard = ({ eventId, isProject = false }: EventDashboardProps) => {
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
+    const fetchData = async () => {
       try {
-        // Fetch events logic here
-        // Example: const response = await fetch(`/api/events/${eventId}`);
-        // const data = await response.json();
-        // setEvents(data);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-        toast.error("حدث خطأ أثناء تحميل الفعاليات");
+        console.log(`Fetching ${isProject ? 'project' : 'event'} details for dashboard:`, eventId);
+        
+        const { data: result, error: fetchError } = await supabase
+          .from(isProject ? 'projects' : 'events')
+          .select('*')
+          .eq('id', eventId)
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error(`Error fetching ${isProject ? 'project' : 'event'}:`, fetchError);
+          setError(fetchError.message);
+          return;
+        }
+
+        if (!result) {
+          console.log(`No ${isProject ? 'project' : 'event'} found with ID:`, eventId);
+          setError(`${isProject ? 'المشروع' : 'الفعالية'} غير موجود`);
+          return;
+        }
+
+        setData(result);
+      } catch (err) {
+        console.error('Error in fetchData:', err);
+        setError('حدث خطأ غير متوقع');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEvents();
-  }, [eventId]);
-
-  const handleEditEvent = (event: Event) => {
-    if (isProject && onEditEvent) {
-      onEditEvent(event);
-    } else {
-      // Handle regular event editing
-      // Example: setSelectedEvent(event);
-      // setIsEditDialogOpen(true);
-    }
-  };
+    fetchData();
+  }, [eventId, isProject]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="p-4">جاري التحميل...</div>;
   }
 
-  return (
-    <div>
-      <h2 className="text-lg font-semibold mb-4">فعاليات</h2>
-      <div className="grid grid-cols-1 gap-4">
-        {events.map((event) => (
-          <EventCard 
-            key={event.id}
-            id={event.id || ''}  // Ensure id is always provided
-            title={event.title}
-            date={event.date}
-            location={event.location}
-            image_url={event.image_url || ''}
-            event_type={event.event_type}
-            price={event.price}
-            max_attendees={event.max_attendees}
-            registration_start_date={event.registration_start_date}
-            registration_end_date={event.registration_end_date}
-            beneficiary_type={event.beneficiary_type}
-            certificate_type={event.certificate_type}
-            event_hours={event.event_hours}
-            is_visible={event.is_visible}
-            onEdit={() => handleEditEvent(event)} 
-          />
-        ))}
-      </div>
-      <Button onClick={() => {/* Logic to add new event */}}>إضافة فعالية جديدة</Button>
-    </div>
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
+  }
+
+  return isProject ? (
+    <ProjectDashboardTabs project={data} />
+  ) : (
+    <DashboardTabs event={data} />
   );
 };

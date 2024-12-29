@@ -3,16 +3,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-interface EditEventHeaderProps {
-  isProjectEvent?: boolean;
-}
-
-export const EditEventHeader = ({ isProjectEvent }: EditEventHeaderProps) => {
+export const EditEventHeader = () => {
   return (
     <DialogHeader className="text-right">
-      <DialogTitle className="text-right">
-        {isProjectEvent ? 'تعديل فعالية المشروع' : 'تعديل الفعالية'}
-      </DialogTitle>
+      <DialogTitle className="text-right">تعديل الفعالية</DialogTitle>
     </DialogHeader>
   );
 };

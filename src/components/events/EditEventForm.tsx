@@ -1,6 +1,6 @@
 import { Event } from "@/store/eventStore";
-import { EventBasicFields } from "@/components/events/form/EventBasicFields";
-import { EditEventFormActions } from "@/components/events/form/EditEventFormActions";
+import { EventFormFields } from "./EventFormFields";
+import { EditEventFormActions } from "./form/EditEventFormActions";
 
 interface EditEventFormProps {
   formData: Event;
@@ -9,7 +9,6 @@ interface EditEventFormProps {
   onSave: () => void;
   onCancel: () => void;
   isLoading: boolean;
-  isProjectEvent?: boolean;
 }
 
 export const EditEventForm = ({ 
@@ -18,18 +17,16 @@ export const EditEventForm = ({
   onImageChange,
   onSave,
   onCancel,
-  isLoading,
-  isProjectEvent = false
+  isLoading
 }: EditEventFormProps) => {
   console.log('Form data in EditEventForm:', formData);
-  console.log('Is project event:', isProjectEvent);
   
   return (
     <div className="space-y-6">
-      <EventBasicFields
+      <EventFormFields
         formData={formData}
         setFormData={setFormData}
-        isProjectEvent={isProjectEvent}
+        onImageChange={onImageChange}
       />
       <EditEventFormActions
         onSave={onSave}

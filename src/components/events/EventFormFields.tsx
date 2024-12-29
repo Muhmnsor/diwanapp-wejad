@@ -10,29 +10,18 @@ interface EventFormFieldsProps {
   formData: Event;
   setFormData: (data: Event) => void;
   onImageChange?: (file: File | null) => void;
-  isProjectEvent?: boolean;
 }
 
-export const EventFormFields = ({ 
-  formData, 
-  setFormData, 
-  onImageChange,
-  isProjectEvent = false
-}: EventFormFieldsProps) => {
+export const EventFormFields = ({ formData, setFormData, onImageChange }: EventFormFieldsProps) => {
   console.log('Form data in EventFormFields:', formData);
-  console.log('Is project event:', isProjectEvent);
   
   return (
     <div className="space-y-4 text-right" dir="rtl">
       <BasicEventFields formData={formData} setFormData={setFormData} />
-      {!isProjectEvent && (
-        <>
-          <EventTypeFields formData={formData} setFormData={setFormData} />
-          <EventPathFields formData={formData} setFormData={setFormData} />
-          <CertificateFields formData={formData} setFormData={setFormData} />
-          <RegistrationFields formData={formData} setFormData={setFormData} />
-        </>
-      )}
+      <EventTypeFields formData={formData} setFormData={setFormData} />
+      <EventPathFields formData={formData} setFormData={setFormData} />
+      <CertificateFields formData={formData} setFormData={setFormData} />
+      <RegistrationFields formData={formData} setFormData={setFormData} />
       
       {onImageChange && (
         <div>
