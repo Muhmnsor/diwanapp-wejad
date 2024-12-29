@@ -11,6 +11,7 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   initialize: () => Promise<void>;
@@ -19,6 +20,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
+  isAdmin: false,
   initialize: async () => {
     try {
       console.log("AuthStore: Initializing auth state");

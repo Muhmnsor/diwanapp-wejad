@@ -1,20 +1,19 @@
-import { Badge } from "@/components/ui/badge";
-
 interface EventCardStatusProps {
-  maxAttendees: number;
   status: {
     text: string;
     variant: "default" | "secondary" | "destructive" | "accent";
     color: string;
     textColor: string;
   };
+  className?: string;
 }
 
 export const EventCardStatus = ({
-  status
+  status,
+  className = ""
 }: EventCardStatusProps) => {
   return (
-    <div className="flex">
+    <div className={`flex ${className}`}>
       <div 
         className={`
           px-4 py-1.5 

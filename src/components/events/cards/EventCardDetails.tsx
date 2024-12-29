@@ -1,21 +1,24 @@
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 interface EventCardDetailsProps {
   date: string;
-  location: string;
+  end?: string;
+  location?: string;
+  attendees: number;
+  maxAttendees: number;
 }
 
-export const EventCardDetails = ({ date, location }: EventCardDetailsProps) => {
+export const EventCardDetails = ({ date, end, location, attendees, maxAttendees }: EventCardDetailsProps) => {
   return (
-    <>
+    <div className="w-full space-y-2">
       <div className="flex items-center gap-2 text-gray-600 text-sm">
         <CalendarDays size={16} />
-        <span>{date}</span>
+        <span>{end ? `${date} - ${end}` : date}</span>
       </div>
-      <div className="flex items-center gap-2 text-gray-600 text-sm">
-        <MapPin size={16} />
-        <span>{location}</span>
+      <div className="flex items-center justify-between text-gray-600 text-sm">
+        <span>المسجلين</span>
+        <span>{attendees} / {maxAttendees}</span>
       </div>
-    </>
+    </div>
   );
 };

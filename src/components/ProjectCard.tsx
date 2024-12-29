@@ -5,6 +5,7 @@ import { EventCardStatus } from "./events/cards/EventCardStatus";
 import { EventCardDetails } from "./events/cards/EventCardDetails";
 import { getEventStatus } from "@/utils/eventUtils";
 import { Event } from "@/store/eventStore";
+import { BeneficiaryType } from "@/types/event";
 
 interface ProjectCardProps {
   id: string;
@@ -15,7 +16,7 @@ interface ProjectCardProps {
   image_url: string;
   event_type: "online" | "in-person";
   price: number | "free";
-  beneficiary_type: string;
+  beneficiary_type: BeneficiaryType;
   certificate_type?: string;
   event_hours?: number;
   max_attendees: number;
