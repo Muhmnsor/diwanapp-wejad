@@ -12,15 +12,14 @@ interface ProjectDashboardTabsProps {
     max_attendees: number;
     start_date: string;
     end_date: string;
-    event_path?: string;
-    event_category?: string;
+    event_path: string; // Changed from optional to required
+    event_category: string; // Changed from optional to required
   };
 }
 
 export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => {
   console.log("ProjectDashboardTabs - project:", project);
 
-  // Fetch registrations count
   const { data: registrations = [] } = useQuery({
     queryKey: ['project-registrations', project.id],
     queryFn: async () => {
@@ -34,7 +33,6 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     },
   });
 
-  // Fetch project activities
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', project.id],
     queryFn: async () => {
