@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Hero } from "@/components/home/Hero";
 import { EventsTabs } from "@/components/home/EventsTabs";
-import { ProjectsSection } from "@/components/home/ProjectsSection";
+import { ProjectTabs } from "@/components/home/ProjectTabs";
 import { useEvents } from "@/hooks/useEvents";
 import { useProjects } from "@/hooks/useProjects";
 import { useRegistrations } from "@/hooks/useRegistrations";
@@ -11,7 +11,8 @@ import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/authStore";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("upcoming");
+  const [activeEventsTab, setActiveEventsTab] = useState<"all" | "upcoming" | "past">("upcoming");
+  const [activeProjectsTab, setActiveProjectsTab] = useState<"all" | "upcoming" | "past">("upcoming");
   const { isAuthenticated } = useAuthStore();
   
   const { 
@@ -34,6 +35,7 @@ const Index = () => {
 
   const now = new Date();
   
+  // فلترة الفعاليات
   const upcomingEvents = events
     .filter((event: any) => {
       const eventDate = new Date(event.date);
@@ -53,6 +55,29 @@ const Index = () => {
     .sort((a: any, b: any) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+  // فلترة المشاريع
+  const upcomingProjects = projects
+    .filter((project: any) => {
+      const projectEndDate = new Date(project.end_date);
+      return projectEndDate >= now;
+    })
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.start_date);
+      const dateB = new Date(b.start_date);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+  const pastProjects = projects
+    .filter((project: any) => {
+      const projectEndDate = new Date(project.end_date);
+      return projectEndDate < now;
+    })
+    .sort((a: any, b: any) => {
+      const dateA = new Date(a.end_date);
+      const dateB = new Date(b.end_date);
       return dateB.getTime() - dateA.getTime();
     });
 
@@ -78,6 +103,8 @@ const Index = () => {
       registrationsCount: Object.keys(registrations).length,
       upcomingEventsCount: upcomingEvents.length,
       pastEventsCount: pastEvents.length,
+      upcomingProjectsCount: upcomingProjects.length,
+      pastProjectsCount: pastProjects.length,
       isEventsError,
       isProjectsError,
       isRegistrationsError,
@@ -88,7 +115,9 @@ const Index = () => {
     projects,
     registrations, 
     upcomingEvents, 
-    pastEvents, 
+    pastEvents,
+    upcomingProjects,
+    pastProjects,
     isEventsError,
     isProjectsError,
     isRegistrationsError,
@@ -107,13 +136,16 @@ const Index = () => {
           events={events}
           upcomingEvents={upcomingEvents}
           pastEvents={pastEvents}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          activeTab={activeEventsTab}
+          setActiveTab={setActiveEventsTab}
           registrations={registrations}
         />
-        <ProjectsSection
-          title="المشاريع"
+        <ProjectTabs
           projects={projects}
+          upcomingProjects={upcomingProjects}
+          pastProjects={pastProjects}
+          activeTab={activeProjectsTab}
+          setActiveTab={setActiveProjectsTab}
         />
       </div>
       <Footer />
