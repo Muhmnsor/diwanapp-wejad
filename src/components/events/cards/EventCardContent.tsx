@@ -7,7 +7,7 @@ interface EventCardContentProps {
   date: string;
   location: string;
   eventType: "online" | "in-person";
-  price: number | null;
+  price: number | "free" | null;
   beneficiaryType: string;
   certificateType?: string;
   eventHours?: number;

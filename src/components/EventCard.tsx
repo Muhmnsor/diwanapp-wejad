@@ -15,7 +15,7 @@ interface EventCardProps {
   location: string;
   image_url: string;
   event_type: "online" | "in-person";
-  price: number | "free" | null;  // Updated to match Event type
+  price: number | "free" | null;
   max_attendees?: number;
   registration_start_date?: string | null;
   registration_end_date?: string | null;
