@@ -1,8 +1,6 @@
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventsSection } from "@/components/events/EventsSection";
-import { useEffect } from "react";
-import { Calendar, CalendarRange, History } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useProjects } from "@/hooks/useProjects";
 
 interface EventsTabsProps {
   events: any[];
@@ -13,91 +11,76 @@ interface EventsTabsProps {
   registrations: { [key: string]: number };
 }
 
-export const EventsTabs = ({ 
-  events, 
-  upcomingEvents, 
-  pastEvents, 
-  activeTab, 
+export const EventsTabs = ({
+  events,
+  upcomingEvents,
+  pastEvents,
+  activeTab,
   setActiveTab,
-  registrations 
+  registrations,
 }: EventsTabsProps) => {
-  const isMobile = useIsMobile();
+  const { data: projects = [] } = useProjects();
 
-  // Set upcoming events as default tab on component mount
-  useEffect(() => {
-    setActiveTab("upcoming");
-  }, []);
-
-  const getTitle = (tab: "all" | "upcoming" | "past") => {
-    switch (tab) {
-      case "all":
-        return "جميع الفعاليات";
-      case "upcoming":
-        return "الفعاليات القادمة";
-      case "past":
-        return "الفعاليات السابقة";
-    }
-  };
+  console.log('EventsTabs rendering:', { 
+    totalEvents: events.length,
+    upcomingCount: upcomingEvents.length,
+    pastCount: pastEvents.length,
+    projectsCount: projects.length,
+    activeTab 
+  });
 
   return (
-    <div className="container mx-auto px-4 mt-12" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-6 mb-12 space-y-3 md:space-y-0">
-        <Button
-          variant={activeTab === "upcoming" ? "default" : "outline"}
-          onClick={() => setActiveTab("upcoming")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات القادمة" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <Calendar className="h-4 w-4 mr-2" />
-              الفعاليات القادمة
-            </>
-          ) : (
-            "الفعاليات القادمة"
-          )}
-        </Button>
-        <Button
-          variant={activeTab === "all" ? "default" : "outline"}
-          onClick={() => setActiveTab("all")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "جميع الفعاليات" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <CalendarRange className="h-4 w-4 mr-2" />
-              جميع الفعاليات
-            </>
-          ) : (
-            "جميع الفعاليات"
-          )}
-        </Button>
-        <Button
-          variant={activeTab === "past" ? "default" : "outline"}
-          onClick={() => setActiveTab("past")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات السابقة" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <History className="h-4 w-4 mr-2" />
-              الفعاليات السابقة
-            </>
-          ) : (
-            "الفعاليات السابقة"
-          )}
-        </Button>
+    <Tabs defaultValue={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+      <div className="flex justify-center mb-8">
+        <TabsList className="grid grid-cols-3 w-[400px]">
+          <TabsTrigger value="upcoming">القادمة</TabsTrigger>
+          <TabsTrigger value="past">السابقة</TabsTrigger>
+          <TabsTrigger value="all">الكل</TabsTrigger>
+        </TabsList>
       </div>
 
-      <EventsSection
-        title={getTitle(activeTab)}
-        events={activeTab === "all" ? events : activeTab === "upcoming" ? upcomingEvents : pastEvents}
-        registrations={registrations}
-        isPastEvents={activeTab === "past"}
-      />
-    </div>
+      <TabsContent value="all" className="space-y-8">
+        <EventsSection
+          title="المشاريع"
+          events={projects}
+          registrations={registrations}
+          isProjects={true}
+        />
+        <EventsSection
+          title="الفعاليات القادمة"
+          events={upcomingEvents}
+          registrations={registrations}
+        />
+        <EventsSection
+          title="الفعاليات السابقة"
+          events={pastEvents}
+          registrations={registrations}
+          isPastEvents={true}
+        />
+      </TabsContent>
+
+      <TabsContent value="upcoming" className="space-y-8">
+        <EventsSection
+          title="المشاريع"
+          events={projects}
+          registrations={registrations}
+          isProjects={true}
+        />
+        <EventsSection
+          title="الفعاليات القادمة"
+          events={upcomingEvents}
+          registrations={registrations}
+        />
+      </TabsContent>
+
+      <TabsContent value="past">
+        <EventsSection
+          title="الفعاليات السابقة"
+          events={pastEvents}
+          registrations={registrations}
+          isPastEvents={true}
+        />
+      </TabsContent>
+    </Tabs>
   );
 };

@@ -17,6 +17,13 @@ export const EventsSection = ({
   isPastEvents = false,
   isProjects = false
 }: EventsSectionProps) => {
+  console.log('EventsSection rendering:', { 
+    title, 
+    eventsCount: events.length, 
+    isProjects,
+    firstEvent: events[0] 
+  });
+
   if (events.length === 0) {
     return (
       <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
@@ -41,7 +48,20 @@ export const EventsSection = ({
         {events.map((item) => (
           <div key={item.id} className={`flex justify-center ${isPastEvents ? 'opacity-75' : ''}`}>
             {isProjects ? (
-              <ProjectCard {...item} />
+              <ProjectCard 
+                id={item.id}
+                title={item.title}
+                start_date={item.start_date}
+                end_date={item.end_date}
+                image_url={item.image_url}
+                event_type={item.event_type}
+                price={item.price}
+                max_attendees={item.max_attendees}
+                registration_start_date={item.registration_start_date}
+                registration_end_date={item.registration_end_date}
+                beneficiary_type={item.beneficiary_type}
+                certificate_type={item.certificate_type}
+              />
             ) : (
               <ActivityCard {...item} />
             )}
