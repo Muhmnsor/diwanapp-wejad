@@ -21,8 +21,8 @@ export const useEvents = () => {
           throw eventsError;
         }
 
-        console.log("✅ تم جلب الفعاليات المستقلة فقط، العدد:", eventsData?.length);
-        console.log("📊 الفعاليات المستقلة:", eventsData);
+        console.log("✅ تم جلب الفعاليات فقط (بدون أنشطة المشاريع)، العدد:", eventsData?.length);
+        console.log("📊 الفعاليات:", eventsData);
         
         return eventsData || [];
       } catch (error) {

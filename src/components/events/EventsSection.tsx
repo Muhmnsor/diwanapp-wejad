@@ -18,6 +18,7 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
   const visibleEvents = events.filter(event => {
     // تجاهل الأنشطة التي تنتمي إلى مشاريع
     if (event.is_project_activity) {
+      console.log('تم تجاهل نشاط المشروع:', event.title);
       return false;
     }
     
@@ -29,7 +30,7 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
     return event.is_visible !== false;
   });
 
-  console.log('EventsSection - Filtered Events:', visibleEvents);
+  console.log('EventsSection - الفعاليات المرئية:', visibleEvents);
 
   if (visibleEvents.length === 0) {
     return (
