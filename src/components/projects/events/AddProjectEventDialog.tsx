@@ -44,7 +44,7 @@ export const AddProjectEventDialog = ({
     try {
       console.log('Creating new project activity:', data);
       
-      // First, create the event with is_project_activity flag
+      // Create the activity directly with project_id
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .insert([{
@@ -57,28 +57,16 @@ export const AddProjectEventDialog = ({
           beneficiary_type: 'both',
           certificate_type: 'none',
           image_url: "/placeholder.svg",
-          is_project_activity: true, // This ensures it's marked as a project activity
-          is_visible: true
+          is_project_activity: true,
+          is_visible: true,
+          project_id: projectId // Add project_id directly to the activity
         }])
         .select()
         .single();
 
       if (eventError) throw eventError;
 
-      console.log('Event created successfully:', eventData);
-
-      // Then, link it to the project
-      const { error: linkError } = await supabase
-        .from('project_events')
-        .insert([{
-          project_id: projectId,
-          event_id: eventData.id,
-          event_order: 0
-        }]);
-
-      if (linkError) throw linkError;
-
-      console.log('Project event link created successfully');
+      console.log('Activity created successfully:', eventData);
 
       toast.success('تم إضافة النشاط بنجاح');
       onSuccess();
