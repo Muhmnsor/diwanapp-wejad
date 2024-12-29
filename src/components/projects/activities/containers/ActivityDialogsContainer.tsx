@@ -1,34 +1,36 @@
-import { AddProjectEventDialog } from "@/components/projects/events/AddProjectEventDialog";
-import { EditProjectActivityDialog } from "@/components/projects/activities/EditProjectActivityDialog";
+import { AddProjectEventDialog } from "../AddProjectEventDialog";
+import { EditProjectEventDialog } from "../EditProjectEventDialog";
 import { DeleteActivityDialog } from "../dialogs/DeleteActivityDialog";
-import { ProjectActivity } from "@/types/activity";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface ActivityDialogsContainerProps {
   projectId: string;
   selectedEvent: any;
   isAddEventOpen: boolean;
-  setIsAddEventOpen: (open: boolean) => void;
   isEditEventOpen: boolean;
-  setIsEditEventOpen: (open: boolean) => void;
   isDeleteDialogOpen: boolean;
+  setIsAddEventOpen: (open: boolean) => void;
+  setIsEditEventOpen: (open: boolean) => void;
   setIsDeleteDialogOpen: (open: boolean) => void;
   refetchActivities: () => void;
   confirmDelete: () => void;
+  project: {
+    event_path: string;
+    event_category: string;
+  };
 }
 
 export const ActivityDialogsContainer = ({
   projectId,
   selectedEvent,
   isAddEventOpen,
-  setIsAddEventOpen,
   isEditEventOpen,
-  setIsEditEventOpen,
   isDeleteDialogOpen,
+  setIsAddEventOpen,
+  setIsEditEventOpen,
   setIsDeleteDialogOpen,
   refetchActivities,
   confirmDelete,
+  project,
 }: ActivityDialogsContainerProps) => {
   return (
     <>
@@ -37,40 +39,26 @@ export const ActivityDialogsContainer = ({
         onOpenChange={setIsAddEventOpen}
         projectId={projectId}
         onSuccess={refetchActivities}
-        project={{ event_path: "", event_category: "" }}
+        project={project}
       />
 
       {selectedEvent && (
-        <EditProjectActivityDialog
-          activity={selectedEvent.event as ProjectActivity}
-          open={isEditEventOpen}
-          onOpenChange={setIsEditEventOpen}
-          onSave={async (updatedActivity: ProjectActivity) => {
-            try {
-              const { error } = await supabase
-                .from('events')
-                .update(updatedActivity)
-                .eq('id', selectedEvent.event.id);
+        <>
+          <EditProjectEventDialog
+            activity={selectedEvent}
+            open={isEditEventOpen}
+            onOpenChange={setIsEditEventOpen}
+            onSave={refetchActivities}
+            projectId={projectId}
+          />
 
-              if (error) throw error;
-
-              toast.success('تم تحديث النشاط بنجاح');
-              refetchActivities();
-              setIsEditEventOpen(false);
-            } catch (error) {
-              console.error('Error updating event:', error);
-              toast.error('حدث خطأ أثناء تحديث النشاط');
-            }
-          }}
-          projectId={projectId}
-        />
+          <DeleteActivityDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            onConfirm={confirmDelete}
+          />
+        </>
       )}
-
-      <DeleteActivityDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={confirmDelete}
-      />
     </>
   );
 };

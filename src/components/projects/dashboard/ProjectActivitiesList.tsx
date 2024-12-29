@@ -1,33 +1,34 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { ProjectActivityCard } from "./ProjectActivityCard";
 
 interface ProjectActivitiesListProps {
   projectActivities: any[];
-  onEditActivity: (activity: any) => void;
-  onDeleteActivity: (activity: any) => void;
+  onEdit: (event: any) => void;
+  onDelete: (event: any) => void;
 }
 
-export const ProjectActivitiesList = ({ 
+export const ProjectActivitiesList = ({
   projectActivities,
-  onEditActivity,
-  onDeleteActivity
+  onEdit,
+  onDelete,
 }: ProjectActivitiesListProps) => {
-  if (projectActivities.length === 0) {
+  console.log('Rendering activities list with:', projectActivities);
+  
+  if (!projectActivities?.length) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        لا توجد أنشطة مضافة لهذا المشروع
+      <div className="text-center p-8 text-gray-500">
+        لا توجد أنشطة مضافة بعد
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {projectActivities.map((projectActivity: any) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      {projectActivities.map((activity) => (
         <ProjectActivityCard
-          key={projectActivity.id}
-          projectActivity={projectActivity}
-          onEdit={() => onEditActivity(projectActivity)}
-          onDelete={() => onDeleteActivity(projectActivity)}
+          key={activity.id}
+          activity={activity}
+          onEdit={() => onEdit(activity)}
+          onDelete={() => onDelete(activity)}
         />
       ))}
     </div>
