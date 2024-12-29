@@ -1,10 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
-import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
 import { DashboardOverviewTab } from "./tabs/DashboardOverviewTab";
 import { DashboardRegistrationsTab } from "./tabs/DashboardRegistrationsTab";
+import { DashboardActivitiesTab } from "./tabs/DashboardActivitiesTab";
+import { DashboardReportsTab } from "./tabs/DashboardReportsTab";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -27,21 +27,6 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
         .from('registrations')
         .select('*')
         .eq('project_id', project.id);
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
-    queryKey: ['project-activities', project.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('project_id', project.id)
-        .eq('is_project_activity', true)
-        .order('created_at', { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -84,15 +69,11 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
       </TabsContent>
 
       <TabsContent value="activities" className="mt-6">
-        <ProjectActivitiesTab
-          project={project}
-          projectActivities={projectActivities}
-          refetchActivities={refetchActivities}
-        />
+        <DashboardActivitiesTab project={project} />
       </TabsContent>
 
       <TabsContent value="reports" className="mt-6">
-        <ReportsTab eventId={project.id} />
+        <DashboardReportsTab projectId={project.id} />
       </TabsContent>
     </Tabs>
   );
