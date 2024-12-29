@@ -74,7 +74,8 @@ export const AddProjectEventDialog = ({
           event_path: data.event_path,
           event_category: data.event_category,
           price: data.price,
-          event_hours: data.event_hours
+          event_hours: data.event_hours,
+          certificate_type: data.certificate_type
         }])
         .select()
         .single();
@@ -92,13 +93,13 @@ export const AddProjectEventDialog = ({
 
       if (linkError) throw linkError;
 
-      toast.success('تم إضافة الفعالية بنجاح');
+      toast.success('تم إضافة النشاط بنجاح');
       onSuccess();
       onOpenChange(false);
       form.reset();
     } catch (error) {
       console.error('Error creating project event:', error);
-      toast.error('حدث خطأ أثناء إضافة الفعالية');
+      toast.error('حدث خطأ أثناء إضافة النشاط');
     }
   };
 
@@ -106,7 +107,7 @@ export const AddProjectEventDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة فعالية جديدة</DialogTitle>
+          <DialogTitle>إضافة نشاط جديد</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -116,7 +117,7 @@ export const AddProjectEventDialog = ({
             <EventLocationFields form={form} />
 
             <div className="flex justify-end gap-2 mt-6">
-              <Button type="submit">إضافة الفعالية</Button>
+              <Button type="submit">إضافة النشاط</Button>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 إلغاء
               </Button>

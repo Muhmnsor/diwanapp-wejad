@@ -2,10 +2,10 @@ import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/for
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
-import { Event } from "@/store/eventStore";
+import { ProjectEventFormData } from "../types";
 
 interface EventBasicFieldsProps {
-  form: UseFormReturn<Event>;
+  form: UseFormReturn<ProjectEventFormData>;
 }
 
 export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
@@ -16,7 +16,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
         name="title"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>عنوان الفعالية</FormLabel>
+            <FormLabel>عنوان النشاط</FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -29,7 +29,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>وصف الفعالية</FormLabel>
+            <FormLabel>وصف النشاط</FormLabel>
             <FormControl>
               <Textarea {...field} />
             </FormControl>

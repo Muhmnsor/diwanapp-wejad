@@ -1,6 +1,6 @@
 export interface ProjectEventFormData {
   title: string;
-  description?: string;
+  description: string;
   date: string;
   time: string;
   location: string;
@@ -13,8 +13,8 @@ export interface ProjectEventFormData {
   price: number | null;
   beneficiary_type: "men" | "women" | "both";
   beneficiaryType: "men" | "women" | "both";
-  certificate_type: "none" | "participation" | "appreciation" | "completion";
-  certificateType: "none" | "participation" | "appreciation" | "completion";
+  certificate_type: string;
+  certificateType: string;
   event_path: string;
   eventPath: string;
   event_category: string;

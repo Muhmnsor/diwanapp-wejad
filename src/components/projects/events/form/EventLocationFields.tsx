@@ -2,10 +2,10 @@ import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/for
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
-import { Event } from "@/store/eventStore";
+import { ProjectEventFormData } from "../types";
 
 interface EventLocationFieldsProps {
-  form: UseFormReturn<Event>;
+  form: UseFormReturn<ProjectEventFormData>;
 }
 
 export const EventLocationFields = ({ form }: EventLocationFieldsProps) => {
@@ -44,7 +44,7 @@ export const EventLocationFields = ({ form }: EventLocationFieldsProps) => {
           <FormItem>
             <FormLabel>احتياجات خاصة (اختياري)</FormLabel>
             <FormControl>
-              <Textarea {...field} placeholder="أي متطلبات أو احتياجات خاصة للفعالية..." />
+              <Textarea {...field} placeholder="أي متطلبات أو احتياجات خاصة للنشاط..." />
             </FormControl>
           </FormItem>
         )}

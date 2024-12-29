@@ -1,10 +1,10 @@
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
-import { Event } from "@/store/eventStore";
+import { ProjectEventFormData } from "../types";
 
 interface EventDateTimeFieldsProps {
-  form: UseFormReturn<Event>;
+  form: UseFormReturn<ProjectEventFormData>;
 }
 
 export const EventDateTimeFields = ({ form }: EventDateTimeFieldsProps) => {
