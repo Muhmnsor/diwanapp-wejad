@@ -42,7 +42,7 @@ export const ProjectBadges = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-3 items-center pointer-events-none">
+    <div className="flex flex-wrap gap-3 items-center px-8 pointer-events-none">
       <Badge 
         variant={eventType === "online" ? "secondary" : "default"}
         className={`${eventType === "online" ? 'bg-[#8B5CF6] border-[#8B5CF6] text-white' : 'bg-[#0EA5E9] border-[#0EA5E9] text-white'} border`}
