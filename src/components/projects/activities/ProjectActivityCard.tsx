@@ -107,7 +107,7 @@ export const ProjectActivityCard = ({
       </Card>
 
       <EditProjectActivityDialog
-        activity={projectActivity.event}
+        activity={projectActivity}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={onEdit}

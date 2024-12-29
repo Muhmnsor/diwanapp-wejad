@@ -7,7 +7,11 @@ import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProjectActivityCardProps {
-  projectActivity: any;
+  projectActivity: {
+    id: string;
+    project_id: string;
+    event: ProjectActivity;
+  };
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -105,7 +109,7 @@ export const ProjectActivityCard = ({
 
       {isEditDialogOpen && (
         <EditProjectActivityDialog
-          activity={projectActivity.event as ProjectActivity}
+          activity={projectActivity}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           onSave={onEdit}
