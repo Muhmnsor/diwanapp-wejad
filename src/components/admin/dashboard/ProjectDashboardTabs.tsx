@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
+import { AddProjectEventDialog } from "@/components/projects/events/AddProjectEventDialog";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -21,6 +23,7 @@ interface ProjectDashboardTabsProps {
 
 export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => {
   console.log("ProjectDashboardTabs - project:", project);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
 
   // Fetch registrations count
   const { data: registrations = [] } = useQuery({
@@ -37,7 +40,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
   });
 
   // Fetch project events
-  const { data: projectEvents = [] } = useQuery({
+  const { data: projectEvents = [], refetch: refetchEvents } = useQuery({
     queryKey: ['project-events', project.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -47,9 +50,12 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           event:events (
             id,
             title,
+            description,
             date,
             time,
             location,
+            location_url,
+            special_requirements,
             event_type,
             max_attendees
           )
@@ -68,7 +74,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
   const occupancyRate = (registrationCount / project.max_attendees) * 100;
 
   const handleAddEvent = () => {
-    toast.info("سيتم إضافة هذه الميزة قريباً");
+    setIsAddEventOpen(true);
   };
 
   return (
@@ -129,16 +135,39 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
               <div className="space-y-4">
                 {projectEvents.map((projectEvent: any) => (
                   <Card key={projectEvent.id} className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">{projectEvent.event?.title}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {projectEvent.event?.date} - {projectEvent.event?.time}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{projectEvent.event?.title}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {projectEvent.event?.date} - {projectEvent.event?.time}
+                          </p>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {projectEvent.event?.location}
+                        </div>
+                      </div>
+                      {projectEvent.event?.description && (
+                        <p className="text-sm text-gray-600">
+                          {projectEvent.event.description}
                         </p>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {projectEvent.event?.location}
-                      </div>
+                      )}
+                      {projectEvent.event?.special_requirements && (
+                        <div className="text-sm">
+                          <span className="font-medium">احتياجات خاصة: </span>
+                          {projectEvent.event.special_requirements}
+                        </div>
+                      )}
+                      {projectEvent.event?.location_url && (
+                        <a
+                          href={projectEvent.event.location_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          رابط الموقع
+                        </a>
+                      )}
                     </div>
                   </Card>
                 ))}
@@ -147,6 +176,13 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           </CardContent>
         </Card>
       </TabsContent>
+
+      <AddProjectEventDialog
+        open={isAddEventOpen}
+        onOpenChange={setIsAddEventOpen}
+        projectId={project.id}
+        onSuccess={refetchEvents}
+      />
     </Tabs>
   );
 };
