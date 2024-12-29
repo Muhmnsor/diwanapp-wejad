@@ -31,7 +31,7 @@ export const EventContent = ({ event, onRegister, isProject = false }: EventCont
 
   // Format dates for projects
   const formattedDates = isProject ? {
-    date: event.start_date,
+    date: event.start_date || event.date,
     endDate: event.end_date,
     registrationStartDate: event.registration_start_date,
     registrationEndDate: event.registration_end_date
@@ -50,7 +50,7 @@ export const EventContent = ({ event, onRegister, isProject = false }: EventCont
           maxAttendees={event.max_attendees}
           eventType={event.event_type}
           price={event.price}
-          beneficiaryType={event.beneficiary_type}
+          beneficiaryType={event.beneficiary_type || event.beneficiaryType}
           certificateType={event.certificate_type}
           eventHours={event.event_hours}
           eventPath={event.event_path}

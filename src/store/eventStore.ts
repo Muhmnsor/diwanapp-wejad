@@ -15,7 +15,7 @@ export interface Event {
   max_attendees: number;
   event_type: "online" | "in-person";
   eventType?: "online" | "in-person";
-  price: number | "free";
+  price: number | null;
   beneficiaryType: BeneficiaryType;
   beneficiary_type?: BeneficiaryType;
   registrationStartDate?: string | null;
@@ -28,6 +28,9 @@ export interface Event {
   eventHours?: number;
   event_path: EventPathType;
   event_category: EventCategoryType;
+  // Add project-specific fields
+  start_date?: string;
+  end_date?: string;
 }
 
 interface EventStore {

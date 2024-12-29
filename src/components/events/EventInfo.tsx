@@ -1,5 +1,6 @@
 import { EventDetails } from "./details/EventDetails";
 import { EventBadges } from "./badges/EventBadges";
+import { BeneficiaryType } from "@/types/event";
 
 interface EventInfoProps {
   date: string;
@@ -9,9 +10,9 @@ interface EventInfoProps {
   location_url?: string;
   attendees: number;
   maxAttendees: number;
-  eventType: string;
+  eventType: "online" | "in-person";
   price?: number | null;
-  beneficiaryType?: string;
+  beneficiaryType?: BeneficiaryType;
   certificateType?: string;
   eventHours?: number | null;
   eventPath?: string;
@@ -58,7 +59,7 @@ export const EventInfo = ({
         <EventBadges
           eventType={eventType}
           price={price}
-          beneficiaryType={beneficiaryType}
+          beneficiaryType={beneficiaryType || 'both'}
           certificateType={certificateType}
           eventHours={eventHours}
         />
