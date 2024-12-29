@@ -32,7 +32,6 @@ export const EditActivityDialog = ({
   console.log('EditActivityDialog - Received activity:', activity);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Transform the activity data to match the expected form structure
   const formData = {
     id: activity.event.id,
     title: activity.event.title,

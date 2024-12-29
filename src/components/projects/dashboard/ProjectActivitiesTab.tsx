@@ -20,6 +20,7 @@ export const ProjectActivitiesTab = ({
   projectActivities,
   refetchActivities
 }: ProjectActivitiesTabProps) => {
+  console.log("ProjectActivitiesTab - Initial render with activities:", projectActivities);
   const queryClient = useQueryClient();
 
   const {
@@ -39,7 +40,10 @@ export const ProjectActivitiesTab = ({
   const handleEditSuccess = async () => {
     console.log("ProjectActivitiesTab - Handling edit success");
     await refetchActivities();
-    await queryClient.invalidateQueries({ queryKey: ['project-activities', project.id] });
+    await queryClient.invalidateQueries({ 
+      queryKey: ['project-activities', project.id] 
+    });
+    console.log("ProjectActivitiesTab - Queries invalidated and activities refetched");
   };
 
   return (
@@ -62,7 +66,7 @@ export const ProjectActivitiesTab = ({
           setIsEditEventOpen={setIsEditEventOpen}
           isDeleteDialogOpen={isDeleteDialogOpen}
           setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-          refetchActivities={refetchActivities}
+          refetchActivities={handleEditSuccess}
           confirmDelete={confirmDelete}
           project={project}
         />
