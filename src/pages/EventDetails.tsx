@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { EventDetailsView } from "@/components/events/EventDetailsView";
-import { EventDashboard } from "@/components/admin/EventDashboard";
-import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { handleEventDeletion } from "@/components/events/details/EventDeletionHandler";
+import { EventDetailsView } from "@/components/events/EventDetailsView";
+import { useAuthStore } from "@/store/authStore";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventDashboard } from "@/components/admin/EventDashboard";
 
 const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
@@ -18,8 +17,6 @@ const EventDetails = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  console.log('EventDetails - User:', user);
-
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -28,6 +25,7 @@ const EventDetails = () => {
           return;
         }
 
+        console.log("Fetching event with ID:", id);
         const { data, error: fetchError } = await supabase
           .from("events")
           .select("*")
@@ -41,6 +39,7 @@ const EventDetails = () => {
         }
 
         if (!data) {
+          console.log("No event found with ID:", id);
           setError("الفعالية غير موجودة");
           return;
         }
@@ -57,6 +56,33 @@ const EventDetails = () => {
 
     fetchEvent();
   }, [id]);
+
+  const handleEdit = () => {
+    console.log("Edit event clicked");
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    try {
+      const { error: deleteError } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) throw deleteError;
+
+      toast.success("تم حذف الفعالية بنجاح");
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("حدث خطأ أثناء حذف الفعالية");
+    }
+  };
+
+  const handleAddToCalendar = () => {
+    console.log("Add to calendar clicked");
+  };
 
   if (loading) {
     return (
@@ -83,41 +109,54 @@ const EventDetails = () => {
   }
 
   const isAdmin = user?.isAdmin;
-  console.log('EventDetails - isAdmin:', isAdmin);
-
-  const handleEdit = () => {
-    console.log("Edit event clicked");
-  };
-
-  const handleDelete = async () => {
-    try {
-      console.log("Delete event clicked");
-      await handleEventDeletion({
-        eventId: id!,
-        onSuccess: () => {
-          toast.success("تم حذف الفعالية بنجاح");
-          navigate('/');
-        }
-      });
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      toast.error("حدث خطأ أثناء حذف الفعالية");
-    }
-  };
-
-  const handleAddToCalendar = () => {
-    console.log("Add to calendar clicked");
-  };
 
   if (!event) {
     return null;
   }
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <main className="flex-1 py-12">
+  return (
+    <div className="min-h-screen flex flex-col">
+      <TopHeader />
+      <main className="flex-1">
+        {isAdmin ? (
+          <div className="bg-gray-50/50">
+            <Tabs defaultValue="details" className="w-full">
+              <div className="bg-white border-b">
+                <div className="container mx-auto">
+                  <TabsList className="w-full justify-start rounded-none bg-transparent h-auto py-2" dir="rtl">
+                    <TabsTrigger 
+                      value="details" 
+                      className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:border-b-2 rounded-none px-4 pb-2"
+                    >
+                      تفاصيل الفعالية
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="dashboard"
+                      className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:border-b-2 rounded-none px-4 pb-2"
+                    >
+                      لوحة التحكم
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </div>
+              
+              <TabsContent value="details" className="mt-0">
+                <EventDetailsView
+                  event={event}
+                  isAdmin={isAdmin}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onAddToCalendar={handleAddToCalendar}
+                  id={id!}
+                />
+              </TabsContent>
+
+              <TabsContent value="dashboard" className="mt-6 container mx-auto px-4">
+                <EventDashboard eventId={id!} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        ) : (
           <EventDetailsView
             event={event}
             isAdmin={isAdmin}
@@ -126,39 +165,7 @@ const EventDetails = () => {
             onAddToCalendar={handleAddToCalendar}
             id={id!}
           />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <TopHeader />
-      <main className="flex-1 py-12">
-        <div className="bg-gray-50/50">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
-              <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
-              <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details" className="mt-0">
-              <EventDetailsView
-                event={event}
-                isAdmin={isAdmin}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onAddToCalendar={handleAddToCalendar}
-                id={id!}
-              />
-            </TabsContent>
-
-            <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
-              <EventDashboard eventId={id!} />
-            </TabsContent>
-          </Tabs>
-        </div>
+        )}
       </main>
       <Footer />
     </div>
