@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { formatTime12Hour } from "@/utils/dateTimeUtils";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { EditProjectEventDialog } from "../../events/EditProjectEventDialog";
+import { EditProjectEventDialog } from "@/components/projects/events/EditProjectEventDialog";
 import { useState } from "react";
 
 interface ProjectActivitiesListProps {
