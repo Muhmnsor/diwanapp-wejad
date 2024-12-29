@@ -9,6 +9,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { AddProjectEventDialog } from "@/components/projects/events/AddProjectEventDialog";
+import { ReportsTab } from "./ReportsTab";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -98,6 +99,12 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
         >
           الفعاليات والأنشطة
         </TabsTrigger>
+        <TabsTrigger 
+          value="reports"
+          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+        >
+          التقارير
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview" className="mt-6">
@@ -175,6 +182,10 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
             )}
           </CardContent>
         </Card>
+      </TabsContent>
+
+      <TabsContent value="reports" className="mt-6">
+        <ReportsTab eventId={project.id} />
       </TabsContent>
 
       <AddProjectEventDialog
