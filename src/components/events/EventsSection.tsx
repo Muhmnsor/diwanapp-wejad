@@ -1,4 +1,4 @@
-import { EventCard } from "@/components/EventCard";
+import { ActivityCard } from "@/components/shared/ActivityCard";
 import { History } from "lucide-react";
 
 interface EventsSectionProps {
@@ -32,8 +32,9 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {events.map((event) => (
           <div key={event.id} className={`flex justify-center ${isPastEvents ? 'opacity-75' : ''}`}>
-            <EventCard 
+            <ActivityCard 
               {...event}
+              isProject={event.hasOwnProperty('start_date')}
               attendees={registrations[event.id] || 0}
             />
           </div>
