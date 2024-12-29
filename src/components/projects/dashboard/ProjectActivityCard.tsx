@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { EditProjectActivityDialog } from "../activities/EditProjectActivityDialog";
 import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EditActivityDialog } from "../activities/dialogs/EditActivityDialog";
 
 interface ProjectActivityCardProps {
   projectActivity: {
@@ -108,7 +108,7 @@ export const ProjectActivityCard = ({
       </Card>
 
       {isEditDialogOpen && (
-        <EditProjectActivityDialog
+        <EditActivityDialog
           activity={projectActivity}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}

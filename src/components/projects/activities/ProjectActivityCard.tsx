@@ -2,11 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { EditProjectActivityDialog } from "./EditProjectActivityDialog";
 import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatTime12Hour } from "@/utils/dateTimeUtils";
+import { EditActivityDialog } from "./dialogs/EditActivityDialog";
 
 interface ProjectActivityCardProps {
   projectActivity: {
@@ -18,10 +16,10 @@ interface ProjectActivityCardProps {
   onDelete: () => void;
 }
 
-export const ProjectActivityCard = ({
+export const ProjectActivityCard = ({ 
   projectActivity,
   onEdit,
-  onDelete,
+  onDelete
 }: ProjectActivityCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,20 +32,24 @@ export const ProjectActivityCard = ({
 
   return (
     <>
-      <Card className="p-4">
-        <div className="space-y-4">
+      <Card key={projectActivity.id} className="p-4">
+        <div className="space-y-2">
           <div className="flex justify-between items-start">
-            <h3 className="text-lg font-semibold">
-              {projectActivity.event.title}
-            </h3>
+            <div>
+              <h4 className="font-medium">{projectActivity.event?.title}</h4>
+              <p className="text-sm text-muted-foreground">
+                {projectActivity.event?.date} - {projectActivity.event?.time}
+              </p>
+            </div>
             <div className="flex gap-2">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
                       onClick={handleEditClick}
+                      className="h-8 w-8 transition-colors hover:bg-secondary"
                       disabled={isLoading}
                     >
                       <Edit2 className="h-4 w-4" />
@@ -63,12 +65,12 @@ export const ProjectActivityCard = ({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
                       onClick={onDelete}
-                      disabled={isLoading}
+                      className="h-8 w-8 transition-colors hover:bg-secondary"
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -78,35 +80,34 @@ export const ProjectActivityCard = ({
               </TooltipProvider>
             </div>
           </div>
-
-          {projectActivity.event.description && (
-            <p className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
+            {projectActivity.event?.location}
+          </div>
+          {projectActivity.event?.description && (
+            <p className="text-sm text-gray-600">
               {projectActivity.event.description}
             </p>
           )}
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>التاريخ</TableHead>
-                <TableHead>الوقت</TableHead>
-                <TableHead>المكان</TableHead>
-                <TableHead>عدد الساعات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell>{projectActivity.event.date}</TableCell>
-                <TableCell>{formatTime12Hour(projectActivity.event.time)}</TableCell>
-                <TableCell>{projectActivity.event.location}</TableCell>
-                <TableCell>{projectActivity.event.event_hours}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          {projectActivity.event?.special_requirements && (
+            <div className="text-sm">
+              <span className="font-medium">احتياجات خاصة: </span>
+              {projectActivity.event.special_requirements}
+            </div>
+          )}
+          {projectActivity.event?.location_url && (
+            <a
+              href={projectActivity.event.location_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              رابط الموقع
+            </a>
+          )}
         </div>
       </Card>
 
-      <EditProjectActivityDialog
+      <EditActivityDialog
         activity={projectActivity}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
