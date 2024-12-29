@@ -28,7 +28,7 @@ const ProjectDetails = () => {
           .from("projects")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
           console.error("Error fetching project:", fetchError);
@@ -37,6 +37,7 @@ const ProjectDetails = () => {
         }
 
         if (!data) {
+          console.log("No project found with ID:", id);
           setError("المشروع غير موجود");
           return;
         }
