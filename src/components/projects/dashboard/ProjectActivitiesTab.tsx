@@ -2,11 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ProjectDashboardHeader } from "./ProjectDashboardHeader";
 import { ProjectEventsList } from "./ProjectEventsList";
 import { AddProjectEventDialog } from "@/components/projects/events/AddProjectEventDialog";
-import { EditProjectEventDialog } from "@/components/projects/events/EditProjectEventDialog";
+import { EditProjectActivityDialog } from "@/components/projects/activities/EditProjectActivityDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ProjectActivity } from "@/types/activity";
 
 interface ProjectActivitiesTabProps {
   project: {
@@ -90,15 +91,15 @@ export const ProjectActivitiesTab = ({
         />
 
         {selectedEvent && (
-          <EditProjectEventDialog
-            event={selectedEvent.event}
+          <EditProjectActivityDialog
+            activity={selectedEvent.event}
             open={isEditEventOpen}
             onOpenChange={setIsEditEventOpen}
-            onSave={async (updatedEvent) => {
+            onSave={async (updatedActivity: ProjectActivity) => {
               try {
                 const { error } = await supabase
                   .from('events')
-                  .update(updatedEvent)
+                  .update(updatedActivity)
                   .eq('id', selectedEvent.event.id);
 
                 if (error) throw error;

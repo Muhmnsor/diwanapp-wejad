@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit2, Trash2 } from "lucide-react";
-import { EditProjectEventDialog } from "../events/EditProjectEventDialog";
+import { EditProjectActivityDialog } from "../activities/EditProjectActivityDialog";
 import { useState } from "react";
+import { ProjectActivity } from "@/types/activity";
 
 interface ProjectEventCardProps {
   projectEvent: any;
@@ -74,8 +75,8 @@ export const ProjectEventCard = ({
         </div>
       </Card>
 
-      <EditProjectEventDialog
-        event={projectEvent.event}
+      <EditProjectActivityDialog
+        activity={projectEvent.event as ProjectActivity}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onSave={onEdit}

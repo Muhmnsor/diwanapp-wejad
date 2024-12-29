@@ -12,8 +12,8 @@ interface ProjectDashboardTabsProps {
     max_attendees: number;
     start_date: string;
     end_date: string;
-    event_path: string; // Changed to required
-    event_category: string; // Changed to required
+    event_path: string;
+    event_category: string;
   };
 }
 

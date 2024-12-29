@@ -33,15 +33,7 @@ export const EditProjectActivityFormContainer = ({
       location: activity.location,
       location_url: activity.location_url || "",
       special_requirements: activity.special_requirements || "",
-      event_type: activity.event_type,
-      max_attendees: activity.max_attendees,
-      beneficiary_type: activity.beneficiary_type,
-      certificate_type: activity.certificate_type,
-      event_path: activity.event_path,
-      event_category: activity.event_category,
-      price: activity.price,
       event_hours: activity.event_hours,
-      image_url: activity.image_url,
     },
   });
 
