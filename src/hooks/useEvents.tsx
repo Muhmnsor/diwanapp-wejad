@@ -22,7 +22,19 @@ export const useEvents = () => {
         }
 
         console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData?.length);
-        return eventsData || [];
+        console.log("📊 بيانات الفعاليات:", eventsData);
+        
+        // تأكد من أن كل عنصر ليس نشاطاً
+        const filteredEvents = eventsData?.filter(event => {
+          if (event.is_project_activity) {
+            console.log("⚠️ تم استبعاد نشاط من القائمة:", event.title);
+            return false;
+          }
+          return true;
+        });
+
+        console.log("🎯 الفعاليات بعد الفلترة:", filteredEvents?.length);
+        return filteredEvents || [];
       } catch (error) {
         console.error("❌ خطأ غير متوقع في جلب الفعاليات:", error);
         toast.error("حدث خطأ في تحميل الفعاليات");
