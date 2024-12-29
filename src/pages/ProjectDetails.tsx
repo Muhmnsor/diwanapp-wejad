@@ -42,16 +42,18 @@ const ProjectDetails = () => {
         // Transform project data to match event structure
         const transformedProject = {
           ...data,
+          // Convert Date to string format for consistency
+          date: data.start_date ? new Date(data.start_date).toISOString().split('T')[0] : null,
           time: "00:00", // Default time for projects
-          registration_start_date: data.registration_start_date,
-          registration_end_date: data.registration_end_date,
+          registration_start_date: data.registration_start_date ? new Date(data.registration_start_date).toISOString().split('T')[0] : null,
+          registration_end_date: data.registration_end_date ? new Date(data.registration_end_date).toISOString().split('T')[0] : null,
           event_type: data.event_type || "in-person",
           certificate_type: data.certificate_type || "none",
           event_hours: null,
           location_url: null
         };
 
-        console.log("Fetched project:", transformedProject);
+        console.log("Transformed project data:", transformedProject);
         setProject(transformedProject);
       } catch (err) {
         console.error("Error in fetchProject:", err);
