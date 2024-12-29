@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProjectBadges } from "./badges/ProjectBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
+import { handleProjectDeletion } from "./ProjectDeletionHandler";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectDetailsViewProps {
   project: any;
@@ -11,9 +15,23 @@ interface ProjectDetailsViewProps {
 }
 
 export const ProjectDetailsView = ({ project, isAdmin, id }: ProjectDetailsViewProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const navigate = useNavigate();
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return format(date, "d MMMM yyyy", { locale: ar });
+  };
+
+  const handleDelete = async () => {
+    try {
+      await handleProjectDeletion({
+        projectId: id,
+        onSuccess: () => navigate("/")
+      });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+    }
   };
 
   return (
@@ -73,12 +91,23 @@ export const ProjectDetailsView = ({ project, isAdmin, id }: ProjectDetailsViewP
             {isAdmin && (
               <>
                 <Button variant="outline">تعديل</Button>
-                <Button variant="destructive">حذف</Button>
+                <Button 
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  حذف
+                </Button>
               </>
             )}
           </div>
         </div>
       </Card>
+
+      <ProjectDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };
