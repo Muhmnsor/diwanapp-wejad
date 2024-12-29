@@ -7,12 +7,12 @@ export const useEvents = () => {
     queryKey: ["events"],
     queryFn: async () => {
       try {
-        console.log("🔄 محاولة جلب الفعاليات...");
+        console.log("🔄 جاري جلب الفعاليات...");
         
         const { data: eventsData, error: eventsError } = await supabase
           .from("events")
           .select("*")
-          .eq('is_project_activity', false) // فلترة الأنشطة التابعة للمشاريع
+          .eq('is_project_activity', false)
           .order("date", { ascending: true });
 
         if (eventsError) {
@@ -21,9 +21,7 @@ export const useEvents = () => {
           throw eventsError;
         }
 
-        console.log("✅ تم جلب الفعاليات فقط (بدون أنشطة المشاريع)، العدد:", eventsData?.length);
-        console.log("📊 الفعاليات:", eventsData);
-        
+        console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData?.length);
         return eventsData || [];
       } catch (error) {
         console.error("❌ خطأ غير متوقع في جلب الفعاليات:", error);
