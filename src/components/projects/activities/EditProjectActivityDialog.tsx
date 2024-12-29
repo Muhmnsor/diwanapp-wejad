@@ -3,9 +3,9 @@ import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
-import { EventBasicFields } from "./form/EventBasicFields";
-import { EventDateTimeFields } from "./form/EventDateTimeFields";
-import { EventLocationFields } from "./form/EventLocationFields";
+import { ActivityBasicFields } from "./form/ActivityBasicFields";
+import { ActivityDateTimeFields } from "./form/ActivityDateTimeFields";
+import { ActivityLocationFields } from "./form/ActivityLocationFields";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -80,53 +80,51 @@ export const EditProjectActivityDialog = ({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
         <DialogTitle>تعديل النشاط</DialogTitle>
         <ScrollArea className="h-[calc(90vh-120px)]">
-          <div className="space-y-6 pr-4">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                <EventBasicFields form={form} />
-                <EventDateTimeFields form={form} />
-                <EventLocationFields form={form} />
-                
-                <FormField
-                  control={form.control}
-                  name="event_hours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>مدة النشاط (بالساعات)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          min="0"
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                    </FormItem>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 pr-4">
+              <ActivityBasicFields form={form} />
+              <ActivityDateTimeFields form={form} />
+              <ActivityLocationFields form={form} />
+              
+              <FormField
+                control={form.control}
+                name="event_hours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>مدة النشاط (بالساعات)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        min="0"
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => onOpenChange(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      جاري الحفظ...
+                    </span>
+                  ) : (
+                    "حفظ التغييرات"
                   )}
-                />
-                
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => onOpenChange(false)}
-                  >
-                    إلغاء
-                  </Button>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        جاري الحفظ...
-                      </span>
-                    ) : (
-                      "حفظ التغييرات"
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </div>
+                </Button>
+              </div>
+            </form>
+          </Form>
         </ScrollArea>
       </DialogContent>
     </Dialog>
