@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
-import { EventCard } from "./EventCard";
+import { EventCard } from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -58,7 +58,7 @@ export const EventDashboard = ({
         {events.map((event) => (
           <EventCard 
             key={event.id} 
-            event={event} 
+            {...event}
             onEdit={() => handleEditEvent(event)} 
           />
         ))}
