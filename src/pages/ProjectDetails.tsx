@@ -63,16 +63,39 @@ const ProjectDetails = () => {
   const handleDelete = async () => {
     if (!id) return;
     
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذا المشروع؟");
+    const confirmed = window.confirm("هل أنت متأكد من حذف هذا المشروع؟ لا يمكن التراجع عن هذا الإجراء.");
     if (!confirmed) return;
 
     try {
-      const { error } = await supabase
+      // First, delete related project_events
+      const { error: eventsError } = await supabase
+        .from("project_events")
+        .delete()
+        .eq("project_id", id);
+
+      if (eventsError) {
+        console.error("Error deleting project events:", eventsError);
+        throw eventsError;
+      }
+
+      // Then, delete related registrations
+      const { error: registrationsError } = await supabase
+        .from("registrations")
+        .delete()
+        .eq("project_id", id);
+
+      if (registrationsError) {
+        console.error("Error deleting project registrations:", registrationsError);
+        throw registrationsError;
+      }
+
+      // Finally, delete the project
+      const { error: projectError } = await supabase
         .from("projects")
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (projectError) throw projectError;
 
       toast.success("تم حذف المشروع بنجاح");
       navigate("/");
