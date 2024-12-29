@@ -7,11 +7,9 @@ import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/authStore";
-import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("upcoming");
-  const [projects, setProjects] = useState<any[]>([]);
   const { isAuthenticated } = useAuthStore();
   
   const { 
@@ -26,39 +24,12 @@ const Index = () => {
     error: registrationsError 
   } = useRegistrations();
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const { data: projectsData, error } = await supabase
-          .from('projects')
-          .select('*');
-        
-        if (error) throw error;
-        
-        setProjects(projectsData.map(project => ({
-          ...project,
-          event_type: project.event_type || 'in-person',
-          date: project.start_date,
-          time: '00:00'
-        })));
-        
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-        toast.error('حدث خطأ في تحميل المشاريع');
-      }
-    };
-
-    fetchProjects();
-  }, []);
-
   const now = new Date();
   
-  const allItems = [...events, ...projects];
-  
-  const upcomingItems = allItems
-    .filter((item: any) => {
-      const itemDate = new Date(item.date);
-      return itemDate >= now;
+  const upcomingEvents = events
+    .filter((event: any) => {
+      const eventDate = new Date(event.date);
+      return eventDate >= now;
     })
     .sort((a: any, b: any) => {
       const dateA = new Date(a.date);
@@ -66,10 +37,10 @@ const Index = () => {
       return dateA.getTime() - dateB.getTime();
     });
 
-  const pastItems = allItems
-    .filter((item: any) => {
-      const itemDate = new Date(item.date);
-      return itemDate < now;
+  const pastEvents = events
+    .filter((event: any) => {
+      const eventDate = new Date(event.date);
+      return eventDate < now;
     })
     .sort((a: any, b: any) => {
       const dateA = new Date(a.date);
@@ -90,20 +61,18 @@ const Index = () => {
 
     console.log("📊 حالة البيانات:", {
       eventsCount: events.length,
-      projectsCount: projects.length,
       registrationsCount: Object.keys(registrations).length,
-      upcomingItemsCount: upcomingItems.length,
-      pastItemsCount: pastItems.length,
+      upcomingEventsCount: upcomingEvents.length,
+      pastEventsCount: pastEvents.length,
       isEventsError,
       isRegistrationsError,
       isAuthenticated
     });
   }, [
-    events,
-    projects,
-    registrations,
-    upcomingItems,
-    pastItems,
+    events, 
+    registrations, 
+    upcomingEvents, 
+    pastEvents, 
     isEventsError,
     isRegistrationsError,
     eventsError,
@@ -117,9 +86,9 @@ const Index = () => {
       <Hero />
       <div className="container mx-auto px-4">
         <EventsTabs
-          events={allItems}
-          upcomingEvents={upcomingItems}
-          pastEvents={pastItems}
+          events={events}
+          upcomingEvents={upcomingEvents}
+          pastEvents={pastEvents}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           registrations={registrations}

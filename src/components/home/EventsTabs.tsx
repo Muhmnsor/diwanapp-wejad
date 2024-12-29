@@ -31,11 +31,11 @@ export const EventsTabs = ({
   const getTitle = (tab: "all" | "upcoming" | "past") => {
     switch (tab) {
       case "all":
-        return "جميع الفعاليات والمشاريع";
+        return "جميع الفعاليات";
       case "upcoming":
-        return "الفعاليات والمشاريع القادمة";
+        return "الفعاليات القادمة";
       case "past":
-        return "الفعاليات والمشاريع السابقة";
+        return "الفعاليات السابقة";
     }
   };
 
@@ -47,15 +47,15 @@ export const EventsTabs = ({
           onClick={() => setActiveTab("upcoming")}
           className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
           size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات والمشاريع القادمة" : undefined}
+          title={isMobile ? "الفعاليات القادمة" : undefined}
         >
           {isMobile ? (
             <>
               <Calendar className="h-4 w-4 mr-2" />
-              الفعاليات والمشاريع القادمة
+              الفعاليات القادمة
             </>
           ) : (
-            "الفعاليات والمشاريع القادمة"
+            "الفعاليات القادمة"
           )}
         </Button>
         <Button
@@ -63,15 +63,15 @@ export const EventsTabs = ({
           onClick={() => setActiveTab("all")}
           className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
           size={isMobile ? "default" : "default"}
-          title={isMobile ? "جميع الفعاليات والمشاريع" : undefined}
+          title={isMobile ? "جميع الفعاليات" : undefined}
         >
           {isMobile ? (
             <>
               <CalendarRange className="h-4 w-4 mr-2" />
-              جميع الفعاليات والمشاريع
+              جميع الفعاليات
             </>
           ) : (
-            "جميع الفعاليات والمشاريع"
+            "جميع الفعاليات"
           )}
         </Button>
         <Button
@@ -79,15 +79,15 @@ export const EventsTabs = ({
           onClick={() => setActiveTab("past")}
           className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
           size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات والمشاريع السابقة" : undefined}
+          title={isMobile ? "الفعاليات السابقة" : undefined}
         >
           {isMobile ? (
             <>
               <History className="h-4 w-4 mr-2" />
-              الفعاليات والمشاريع السابقة
+              الفعاليات السابقة
             </>
           ) : (
-            "الفعاليات والمشاريع السابقة"
+            "الفعاليات السابقة"
           )}
         </Button>
       </div>

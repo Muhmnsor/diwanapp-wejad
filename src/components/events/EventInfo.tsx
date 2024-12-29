@@ -1,82 +1,121 @@
-import { BeneficiaryCardBadge } from "./badges/card/BeneficiaryCardBadge";
-import { CertificateCardBadge } from "./badges/card/CertificateCardBadge";
-import { EventTypeCardBadge } from "./badges/card/EventTypeCardBadge";
-import { HoursCardBadge } from "./badges/card/HoursCardBadge";
-import { PriceCardBadge } from "./badges/card/PriceCardBadge";
-import { MapPin, Calendar, Clock } from "lucide-react";
-import { EventStatus } from "@/types/eventStatus";
+import { EventBadges } from "./badges/EventBadges";
+import { EventDetails } from "./details/EventDetails";
+import { BeneficiaryType } from "@/types/event";
+import { Tag, Folder } from "lucide-react";
 
 interface EventInfoProps {
   date: string;
-  time?: string;
+  time: string;
   location: string;
-  eventType: string;
-  price: number;
+  location_url?: string;
+  attendees: number | Array<any>;
   maxAttendees: number;
-  currentAttendees: number;
-  beneficiaryType: string;
+  eventType: "online" | "in-person";
+  price: number | "free";
+  beneficiaryType: BeneficiaryType;
   certificateType?: string;
-  eventHours?: number | null;
-  locationUrl?: string | null;
-  status: EventStatus;
-  isProject?: boolean;
+  eventHours?: number;
+  showBadges?: boolean;
+  eventPath?: string;
+  eventCategory?: string;
 }
 
-export const EventInfo = ({
-  date,
-  time,
-  location,
+export const EventInfo = ({ 
+  date, 
+  time, 
+  location, 
+  location_url,
+  attendees, 
+  maxAttendees,
   eventType,
   price,
-  maxAttendees,
-  currentAttendees,
   beneficiaryType,
-  certificateType = 'none',
+  certificateType,
   eventHours,
-  locationUrl,
-  isProject = false
+  showBadges = true,
+  eventPath,
+  eventCategory
 }: EventInfoProps) => {
+  console.log('EventInfo received props:', {
+    certificateType,
+    eventHours,
+    eventType,
+    price,
+    beneficiaryType,
+    location_url,
+    eventPath,
+    eventCategory
+  });
+
+  const formatEventPath = (path?: string) => {
+    if (!path) return '';
+    const pathMap: Record<string, string> = {
+      'environment': 'البيئة',
+      'community': 'المجتمع',
+      'content': 'المحتوى'
+    };
+    return pathMap[path] || path;
+  };
+
+  const formatEventCategory = (category?: string) => {
+    if (!category) return '';
+    const categoryMap: Record<string, string> = {
+      'social': 'اجتماعي',
+      'entertainment': 'ترفيهي',
+      'service': 'خدمي',
+      'educational': 'تعليمي',
+      'consulting': 'استشاري',
+      'interest': 'اهتمام',
+      'specialization': 'تخصص',
+      'spiritual': 'روحي',
+      'cultural': 'ثقافي',
+      'behavioral': 'سلوكي',
+      'skill': 'مهاري',
+      'health': 'صحي',
+      'diverse': 'متنوع'
+    };
+    return categoryMap[category] || category;
+  };
+
   return (
-    <div className="space-y-4" dir="rtl">
-      <div className="flex items-center gap-2 text-gray-600">
-        <Calendar className="w-5 h-5" />
-        <span>{date}</span>
-      </div>
+    <div className="space-y-8">
+      {showBadges && (
+        <EventBadges
+          eventType={eventType}
+          price={price}
+          beneficiaryType={beneficiaryType}
+          certificateType={certificateType}
+          eventHours={eventHours}
+        />
+      )}
       
-      {!isProject && time && (
-        <div className="flex items-center gap-2 text-gray-600">
-          <Clock className="w-5 h-5" />
-          <span>{time}</span>
+      {/* Event Categories Section */}
+      {(eventPath || eventCategory) && (
+        <div className="px-8 flex items-center gap-6">
+          {eventPath && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Folder className="w-5 h-5" />
+              <span>المسار: {formatEventPath(eventPath)}</span>
+            </div>
+          )}
+          {eventCategory && (
+            <div className="flex items-center gap-2 text-gray-600">
+              <Tag className="w-5 h-5" />
+              <span>التصنيف: {formatEventCategory(eventCategory)}</span>
+            </div>
+          )}
         </div>
       )}
-
-      <div className="flex items-center gap-2 text-gray-600">
-        <MapPin className="w-5 h-5" />
-        {locationUrl ? (
-          <a
-            href={locationUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            {location}
-          </a>
-        ) : (
-          <span>{location}</span>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-2 pt-4">
-        <EventTypeCardBadge eventType={eventType} />
-        <BeneficiaryCardBadge beneficiaryType={beneficiaryType} />
-        <PriceCardBadge price={price} />
-        <CertificateCardBadge certificateType={certificateType} />
-        {eventHours && <HoursCardBadge hours={eventHours} />}
-      </div>
-
-      <div className="text-sm text-gray-600">
-        عدد المقاعد: {currentAttendees}/{maxAttendees}
-      </div>
+      
+      <EventDetails
+        date={date}
+        time={time}
+        location={location}
+        location_url={location_url}
+        eventType={eventType}
+        attendees={attendees}
+        maxAttendees={maxAttendees}
+      />
     </div>
   );
 };
