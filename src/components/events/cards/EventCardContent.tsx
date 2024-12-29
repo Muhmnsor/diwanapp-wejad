@@ -28,7 +28,7 @@ export const EventCardContent = ({
   beneficiaryType,
   certificateType,
   eventHours,
-  maxAttendees,
+  maxAttendees = 0,
   status
 }: EventCardContentProps) => {
   return (
@@ -43,6 +43,8 @@ export const EventCardContent = ({
       <EventCardDetails
         date={date}
         location={location}
+        attendees={0}
+        maxAttendees={maxAttendees}
       />
       {maxAttendees > 0 && (
         <>
@@ -50,10 +52,7 @@ export const EventCardContent = ({
             <Users className="w-4 h-4" />
             <span>{maxAttendees} مقعد</span>
           </div>
-          <EventCardStatus
-            maxAttendees={maxAttendees}
-            status={status}
-          />
+          <EventCardStatus status={status} />
         </>
       )}
     </div>

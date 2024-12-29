@@ -8,7 +8,13 @@ interface EventCardDetailsProps {
   maxAttendees: number;
 }
 
-export const EventCardDetails = ({ date, end, location, attendees, maxAttendees }: EventCardDetailsProps) => {
+export const EventCardDetails = ({ 
+  date, 
+  end, 
+  location, 
+  attendees, 
+  maxAttendees 
+}: EventCardDetailsProps) => {
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-2 text-gray-600 text-sm">
