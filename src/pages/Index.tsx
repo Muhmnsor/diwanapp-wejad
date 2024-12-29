@@ -72,8 +72,8 @@ const Index = () => {
       toast.error("حدث خطأ في تحميل التسجيلات");
     }
 
-    console.log("📊 إحصائيات البيانات:", {
-      totalEventsCount: events.length,
+    console.log("📊 حالة البيانات:", {
+      eventsCount: events.length,
       projectsCount: projects.length,
       registrationsCount: Object.keys(registrations).length,
       upcomingEventsCount: upcomingEvents.length,
@@ -84,7 +84,7 @@ const Index = () => {
       isAuthenticated
     });
   }, [
-    events,
+    events, 
     projects,
     registrations, 
     upcomingEvents, 

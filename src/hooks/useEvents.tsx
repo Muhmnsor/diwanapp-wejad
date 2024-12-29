@@ -9,16 +9,9 @@ export const useEvents = () => {
       try {
         console.log("🔄 محاولة جلب الفعاليات...");
         
-        // جلب الفعاليات التي ليست أنشطة مشروع
         const { data: eventsData, error: eventsError } = await supabase
           .from("events")
-          .select(`
-            *,
-            project_events!left (
-              project_id
-            )
-          `)
-          .is('is_project_activity', false)  // Explicitly filter out project activities
+          .select("*")
           .order("date", { ascending: true });
 
         if (eventsError) {
@@ -27,16 +20,7 @@ export const useEvents = () => {
           throw eventsError;
         }
 
-        // تسجيل معلومات الفعاليات المسترجعة
-        console.log("✅ تم جلب الفعاليات المستقلة بنجاح:", {
-          totalCount: eventsData?.length,
-          events: eventsData?.map(event => ({
-            id: event.id,
-            title: event.title,
-            is_project_activity: event.is_project_activity
-          }))
-        });
-
+        console.log("✅ تم جلب الفعاليات بنجاح، العدد:", eventsData?.length);
         return eventsData || [];
       } catch (error) {
         console.error("❌ خطأ غير متوقع في جلب الفعاليات:", error);
@@ -45,7 +29,7 @@ export const useEvents = () => {
       }
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 0, // تم تغيير هذه القيمة لتحديث البيانات فوراً
+    refetchOnWindowFocus: true, // تفعيل التحديث عند العودة للصفحة
   });
 };

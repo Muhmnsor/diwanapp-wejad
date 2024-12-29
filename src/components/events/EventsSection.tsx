@@ -12,22 +12,19 @@ interface EventsSectionProps {
 export const EventsSection = ({ title, events, registrations, isPastEvents = false }: EventsSectionProps) => {
   const { user } = useAuthStore();
   console.log('EventsSection - User:', user);
-  console.log('EventsSection - Events before filtering:', events);
+  console.log('EventsSection - Events:', events);
 
-  // فلترة الفعاليات بناءً على الصلاحيات
+  // فلترة الفعاليات بناءً على الصلاحيات والنوع
   const visibleEvents = events.filter(event => {
-    // تسجيل معلومات الفعالية للتحقق
-    console.log('فحص الفعالية في EventsSection:', {
-      title: event.title,
-      is_visible: event.is_visible,
-      isAdmin: user?.isAdmin
-    });
+    // تجاهل الأنشطة التي تنتمي إلى مشاريع
+    if (event.is_project_activity) {
+      return false;
+    }
     
     // إذا كان المستخدم مشرف، اعرض جميع الفعاليات المستقلة
     if (user?.isAdmin) {
       return true;
     }
-    
     // للمستخدمين العاديين، اعرض فقط الفعاليات المرئية
     return event.is_visible !== false;
   });
