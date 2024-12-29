@@ -5,6 +5,7 @@ import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditActivityDialog } from "./dialogs/EditActivityDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 import {
   Table,
   TableBody,
@@ -52,9 +53,9 @@ export const ProjectActivityCard = ({
         <Table dir="rtl">
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="text-right font-bold">عنوان النشاط</TableHead>
-              <TableHead className="text-right font-bold">التاريخ والوقت</TableHead>
-              <TableHead className="text-right font-bold">الموقع</TableHead>
+              <TableHead className="text-right font-bold w-[200px]">عنوان النشاط</TableHead>
+              <TableHead className="text-right font-bold w-[180px]">التاريخ والوقت</TableHead>
+              <TableHead className="text-right font-bold w-[200px]">الموقع</TableHead>
               <TableHead className="text-right font-bold">الوصف</TableHead>
               <TableHead className="text-right font-bold">متطلبات خاصة</TableHead>
               <TableHead className="text-center font-bold w-[120px]">إجراءات</TableHead>
@@ -62,14 +63,17 @@ export const ProjectActivityCard = ({
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell className="font-medium">
+              <TableCell className="font-medium align-top">
                 {projectActivity.event?.title}
               </TableCell>
-              <TableCell>
-                {projectActivity.event?.date} - {projectActivity.event?.time}
+              <TableCell className="align-top">
+                <div>{formatDateWithDay(projectActivity.event?.date)}</div>
+                <div className="text-muted-foreground">
+                  {formatTime12Hour(projectActivity.event?.time)}
+                </div>
               </TableCell>
-              <TableCell>
-                {projectActivity.event?.location}
+              <TableCell className="align-top">
+                <div>{projectActivity.event?.location}</div>
                 {projectActivity.event?.location_url && (
                   <a
                     href={projectActivity.event.location_url}
@@ -81,17 +85,17 @@ export const ProjectActivityCard = ({
                   </a>
                 )}
               </TableCell>
-              <TableCell className="max-w-[200px]">
-                <div className="line-clamp-2">
+              <TableCell className="max-w-[300px] align-top">
+                <div className="line-clamp-3">
                   {projectActivity.event?.description}
                 </div>
               </TableCell>
-              <TableCell className="max-w-[200px]">
+              <TableCell className="max-w-[200px] align-top">
                 <div className="line-clamp-2">
                   {projectActivity.event?.special_requirements}
                 </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="align-top">
                 <div className="flex items-center justify-center gap-2">
                   <TooltipProvider>
                     <Tooltip>
