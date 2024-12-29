@@ -1,137 +1,133 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TopHeader } from "@/components/layout/TopHeader";
-import { Footer } from "@/components/layout/Footer";
-import { useState } from "react";
-import { EventFormFields } from "@/components/events/EventFormFields";
-import { EventFormActions } from "@/components/events/form/EventFormActions";
-import { useQueryClient } from "@tanstack/react-query";
-import { Event } from "@/types/event";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const CreateProject = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [isUploading, setIsUploading] = useState(false);
-  
-  const [formData, setFormData] = useState<Event>({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
     title: "",
     description: "",
-    date: "",
-    time: "",
-    location: "",
-    certificate_type: "none",
-    event_hours: 0,
-    price: "free",
+    start_date: "",
+    end_date: "",
     max_attendees: 0,
-    beneficiaryType: "both",
-    event_type: "in-person",
-    attendees: 0,
-    imageUrl: "",
     image_url: "",
-    registrationStartDate: "",
-    registrationEndDate: "",
+    beneficiary_type: "both",
+    price: "",
     registration_start_date: "",
     registration_end_date: "",
+    certificate_type: "none",
     event_path: "environment",
     event_category: "social"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting project form data:', formData);
-    
-    try {
-      const projectData = {
-        title: formData.title,
-        description: formData.description,
-        start_date: formData.date,
-        end_date: formData.date, // For now, using same date for end
-        max_attendees: formData.max_attendees,
-        image_url: formData.image_url || formData.imageUrl,
-        beneficiary_type: formData.beneficiaryType,
-        price: formData.price === "free" ? null : formData.price,
-        registration_start_date: formData.registration_start_date || formData.registrationStartDate,
-        registration_end_date: formData.registration_end_date || formData.registrationEndDate,
-        certificate_type: formData.certificate_type,
-        event_path: formData.event_path,
-        event_category: formData.event_category
-      };
+    setIsSubmitting(true);
 
-      console.log('Processed project data:', projectData);
+    try {
+      console.log('Creating new project:', formData);
       
       const { data: project, error } = await supabase
-        .from("projects")
-        .insert([projectData])
+        .from('projects')
+        .insert([formData])
         .select()
         .single();
 
       if (error) throw error;
 
       console.log('Project created successfully:', project);
-      await queryClient.invalidateQueries({ queryKey: ["projects"] });
-      
       toast.success("تم إنشاء المشروع بنجاح");
       navigate("/");
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error("حدث خطأ أثناء إنشاء المشروع");
-    }
-  };
-
-  const handleImageChange = async (file: File | null) => {
-    if (file) {
-      setIsUploading(true);
-      try {
-        const fileName = `event-images/${Date.now()}.${file.name.split('.').pop()}`;
-        const { error: uploadError } = await supabase.storage
-          .from('event-images')
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('event-images')
-          .getPublicUrl(fileName);
-
-        setFormData(prev => ({
-          ...prev,
-          imageUrl: publicUrl,
-          image_url: publicUrl
-        }));
-
-        toast.success("تم رفع الصورة بنجاح");
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        toast.error("حدث خطأ أثناء رفع الصورة");
-      } finally {
-        setIsUploading(false);
-      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background" dir="rtl">
-      <TopHeader />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-primary">إنشاء مشروع جديد</h1>
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <EventFormFields 
-                formData={formData} 
-                setFormData={setFormData as (data: Event) => void}
-                onImageChange={handleImageChange}
-              />
-              <EventFormActions 
-                isUploading={isUploading}
-                onCancel={() => navigate("/")}
-              />
-            </form>
+    <div className="container mx-auto px-4 py-8" dir="rtl">
+      <h1 className="text-2xl font-bold mb-6">إنشاء مشروع جديد</h1>
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+        <div>
+          <label className="block text-sm font-medium mb-2">عنوان المشروع</label>
+          <Input
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">وصف المشروع</label>
+          <Textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">تاريخ البداية</label>
+            <Input
+              type="date"
+              value={formData.start_date}
+              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">تاريخ النهاية</label>
+            <Input
+              type="date"
+              value={formData.end_date}
+              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              required
+            />
           </div>
         </div>
-      </main>
-      <Footer />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">تاريخ بدء التسجيل</label>
+            <Input
+              type="date"
+              value={formData.registration_start_date}
+              onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">تاريخ نهاية التسجيل</label>
+            <Input
+              type="date"
+              value={formData.registration_end_date}
+              onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">الحد الأقصى للمشاركين</label>
+          <Input
+            type="number"
+            value={formData.max_attendees}
+            onChange={(e) => setFormData({ ...formData, max_attendees: parseInt(e.target.value) })}
+            required
+            min="0"
+          />
+        </div>
+
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "جاري الإنشاء..." : "إنشاء المشروع"}
+        </Button>
+      </form>
     </div>
   );
 };
