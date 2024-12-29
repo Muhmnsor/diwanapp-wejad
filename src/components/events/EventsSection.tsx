@@ -1,4 +1,5 @@
 import { ActivityCard } from "@/components/shared/ActivityCard";
+import { ProjectCard } from "@/components/projects/ProjectCard";
 import { History } from "lucide-react";
 
 interface EventsSectionProps {
@@ -6,9 +7,16 @@ interface EventsSectionProps {
   events: any[];
   registrations: { [key: string]: number };
   isPastEvents?: boolean;
+  isProjects?: boolean;
 }
 
-export const EventsSection = ({ title, events, registrations, isPastEvents = false }: EventsSectionProps) => {
+export const EventsSection = ({ 
+  title, 
+  events, 
+  registrations, 
+  isPastEvents = false,
+  isProjects = false
+}: EventsSectionProps) => {
   if (events.length === 0) {
     return (
       <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
@@ -30,13 +38,13 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
         {isPastEvents && <History className="w-6 h-6 text-[#9F9EA1]" />}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {events.map((event) => (
-          <div key={event.id} className={`flex justify-center ${isPastEvents ? 'opacity-75' : ''}`}>
-            <ActivityCard 
-              {...event}
-              isProject={event.hasOwnProperty('start_date')}
-              attendees={registrations[event.id] || 0}
-            />
+        {events.map((item) => (
+          <div key={item.id} className={`flex justify-center ${isPastEvents ? 'opacity-75' : ''}`}>
+            {isProjects ? (
+              <ProjectCard {...item} />
+            ) : (
+              <ActivityCard {...item} />
+            )}
           </div>
         ))}
       </div>
