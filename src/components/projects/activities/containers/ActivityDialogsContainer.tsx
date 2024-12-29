@@ -37,7 +37,7 @@ export const ActivityDialogsContainer = ({
         onOpenChange={setIsAddEventOpen}
         projectId={projectId}
         onSuccess={refetchActivities}
-        project={{ id: projectId, event_path: "", event_category: "" }}
+        project={{ event_path: "", event_category: "" }}
       />
 
       {selectedEvent && (

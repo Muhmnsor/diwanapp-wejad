@@ -1,3 +1,4 @@
+import { Card, CardContent } from "@/components/ui/card";
 import { ProjectActivityCard } from "./ProjectActivityCard";
 
 interface ProjectActivitiesListProps {
