@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Project } from "@/types/project";
-import { EventFormFields } from "@/components/events/EventFormFields";
+import { ProjectFormFields } from "@/components/projects/ProjectFormFields";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 
 const CreateProject = () => {
@@ -84,7 +84,7 @@ const CreateProject = () => {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">إنشاء مشروع جديد</h1>
         <div className="bg-white rounded-lg p-6 shadow-sm">
-          <EventFormFields
+          <ProjectFormFields
             formData={formData}
             setFormData={setFormData}
             onImageChange={handleImageChange}
