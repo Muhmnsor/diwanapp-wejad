@@ -3,6 +3,7 @@ import { ProjectContent } from "./ProjectContent";
 import { ProjectImage } from "./ProjectImage";
 import { ProjectTitle } from "./ProjectTitle";
 import { ProjectAdminTabs } from "./admin/ProjectAdminTabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProjectDetailsViewProps {
   project: Project;
@@ -34,18 +35,23 @@ export const ProjectDetailsView = ({
             onDelete={onDelete}
           />
 
-          <ProjectContent 
-            project={project}
-          />
+          {isAdmin ? (
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+                <TabsTrigger value="details">تفاصيل المشروع</TabsTrigger>
+                <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" className="mt-0">
+                <ProjectContent project={project} />
+              </TabsContent>
 
-          {isAdmin && (
-            <div className="border-t">
-              <ProjectAdminTabs
-                project={project}
-                isAdmin={isAdmin}
-                id={id}
-              />
-            </div>
+              <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
+                <EventDashboard eventId={id} />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <ProjectContent project={project} />
           )}
         </div>
       </div>

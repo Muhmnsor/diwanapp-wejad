@@ -16,12 +16,24 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
 
   // Convert project dates to event format for status check
   const eventFormatData = {
+    id: project.id,
+    title: project.title,
+    description: project.description,
     date: project.start_date,
     time: "00:00",
+    location: "",
+    event_type: project.event_type,
+    price: project.price || 0,
+    max_attendees: project.max_attendees,
     registrationStartDate: project.registration_start_date,
     registrationEndDate: project.registration_end_date,
-    max_attendees: project.max_attendees,
+    beneficiaryType: project.beneficiary_type,
+    certificate_type: project.certificate_type || "none",
+    event_hours: 0,
     attendees: 0, // You might want to fetch this from the database
+    imageUrl: project.image_url,
+    event_path: project.event_path,
+    event_category: project.event_category
   };
 
   const status = getEventStatus(eventFormatData);
@@ -58,7 +70,7 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
         <ProjectDescription description={project.description} />
       </div>
 
-      <div className="p-8">
+      <div className="px-8 py-6">
         <EventRegisterButton
           status={status}
           onRegister={() => setShowRegistrationDialog(true)}
@@ -68,15 +80,7 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
       <EventRegistrationDialog
         open={showRegistrationDialog}
         onOpenChange={setShowRegistrationDialog}
-        event={{
-          ...project,
-          title: project.title,
-          date: project.start_date,
-          time: "00:00",
-          location: "",
-          price: project.price || "free",
-          certificate_type: project.certificate_type || "none"
-        }}
+        event={eventFormatData}
       />
     </div>
   );
