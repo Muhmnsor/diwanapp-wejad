@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { AddProjectEventDialog } from "@/components/projects/events/AddProjectEventDialog";
 import { ReportsTab } from "./ReportsTab";
-import { EditEventDialog } from "@/components/events/EditEventDialog";
+import { EditProjectEventDialog } from "@/components/projects/events/EditProjectEventDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -294,11 +294,12 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
       />
 
       {selectedEvent && (
-        <EditEventDialog
+        <EditProjectEventDialog
           event={selectedEvent.event}
           open={isEditEventOpen}
           onOpenChange={setIsEditEventOpen}
           onSave={handleEventUpdate}
+          projectId={project.id}
         />
       )}
 
