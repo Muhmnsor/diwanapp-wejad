@@ -16,4 +16,5 @@ export interface Project {
   event_category?: string;
   registration_start_date: string | null;
   registration_end_date: string | null;
+  is_visible?: boolean;
 }
