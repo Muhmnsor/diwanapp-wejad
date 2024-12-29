@@ -1,6 +1,6 @@
 import { ProjectBadges } from "./badges/ProjectBadges";
 import { BeneficiaryType } from "@/types/event";
-import { Tag, Folder, Calendar } from "lucide-react";
+import { Tag, Folder, Calendar, Users } from "lucide-react";
 
 interface ProjectInfoProps {
   startDate: string;

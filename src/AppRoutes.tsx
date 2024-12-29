@@ -8,7 +8,7 @@ import EventDetails from "./pages/EventDetails";
 import CreateEvent from "./pages/CreateEvent";
 import EventFeedback from "./pages/EventFeedback";
 import ProjectDetails from "./pages/ProjectDetails";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const AppRoutes = () => {
   return (
