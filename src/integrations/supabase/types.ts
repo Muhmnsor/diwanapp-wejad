@@ -478,7 +478,6 @@ export type Database = {
           event_type: string
           id: string
           image_url: string
-          is_visible: boolean | null
           max_attendees: number
           price: number | null
           registration_end_date: string | null
@@ -497,7 +496,6 @@ export type Database = {
           event_type?: string
           id?: string
           image_url: string
-          is_visible?: boolean | null
           max_attendees?: number
           price?: number | null
           registration_end_date?: string | null
@@ -516,7 +514,6 @@ export type Database = {
           event_type?: string
           id?: string
           image_url?: string
-          is_visible?: boolean | null
           max_attendees?: number
           price?: number | null
           registration_end_date?: string | null

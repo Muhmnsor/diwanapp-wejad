@@ -1,112 +1,96 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Project } from "@/types/project";
 import { ProjectContent } from "./ProjectContent";
-import { ProjectTitle } from "./ProjectTitle";
 import { ProjectImage } from "./ProjectImage";
-import { ProjectInfo } from "./ProjectInfo";
-import { ProjectDescription } from "./ProjectDescription";
-import { Eye, EyeOff, Pencil, Trash } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { ProjectTitle } from "./ProjectTitle";
+import { ProjectAdminTabs } from "./admin/ProjectAdminTabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventDashboard } from "@/components/admin/EventDashboard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface ProjectDetailsViewProps {
-  project: any;
-  isAdmin?: boolean;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  id?: string;
+  project: Project;
+  isAdmin: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  id: string;
 }
 
-export const ProjectDetailsView = ({ 
-  project, 
-  isAdmin = false, 
-  onEdit, 
+export const ProjectDetailsView = ({
+  project,
+  isAdmin,
+  onEdit,
   onDelete,
-  id 
+  id
 }: ProjectDetailsViewProps) => {
-  const [isVisible, setIsVisible] = useState(project.is_visible);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  console.log('ProjectDetailsView - User is admin:', isAdmin);
 
-  const handleVisibilityToggle = async () => {
-    if (!id) return;
-    
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('projects')
-        .update({ is_visible: !isVisible })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setIsVisible(!isVisible);
-      toast.success(isVisible ? 'تم إخفاء المشروع' : 'تم إظهار المشروع');
-    } catch (error) {
-      console.error('Error updating project visibility:', error);
-      toast.error('حدث خطأ أثناء تحديث حالة المشروع');
-    } finally {
-      setIsUpdating(false);
-    }
+  const handleDelete = () => {
+    setShowDeleteDialog(false);
+    onDelete();
   };
 
   return (
-    <div className="container mx-auto px-4">
-      <div className="bg-white dark:bg-[#1F2937] rounded-2xl shadow-sm overflow-hidden">
-        <ProjectImage imageUrl={project.image_url} title={project.title} />
-        
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <ProjectTitle title={project.title} />
-            {isAdmin && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleVisibilityToggle}
-                  disabled={isUpdating}
-                  title={isVisible ? 'إخفاء المشروع' : 'إظهار المشروع'}
-                >
-                  {isVisible ? (
-                    <Eye className="h-4 w-4 text-primary" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={onEdit}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={onDelete}
-                >
-                  <Trash className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <ProjectInfo
-            startDate={project.start_date}
-            endDate={project.end_date}
-            eventType={project.event_type}
-            price={project.price}
-            beneficiaryType={project.beneficiary_type}
-            certificateType={project.certificate_type}
-            maxAttendees={project.max_attendees}
-            eventPath={project.event_path}
-            eventCategory={project.event_category}
+    <div className="min-h-screen bg-gray-50">
+      <ProjectImage imageUrl={project.image_url} title={project.title} />
+      
+      <div className="container mx-auto px-4 -mt-10 relative z-10">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <ProjectTitle
+            title={project.title}
+            isAdmin={isAdmin}
+            onEdit={onEdit}
+            onDelete={() => setShowDeleteDialog(true)}
           />
 
-          {project.description && (
-            <ProjectDescription description={project.description} />
+          {isAdmin ? (
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+                <TabsTrigger value="details">تفاصيل المشروع</TabsTrigger>
+                <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" className="mt-0">
+                <ProjectContent project={project} />
+              </TabsContent>
+
+              <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
+                <EventDashboard eventId={id} isProject={true} />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <ProjectContent project={project} />
           )}
 
-          <ProjectContent project={project} />
+          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialogContent className="text-right" dir="rtl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>هل أنت متأكد من حذف هذا المشروع؟</AlertDialogTitle>
+                <AlertDialogDescription>
+                  سيتم حذف المشروع وجميع البيانات المرتبطة به بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-row-reverse gap-2">
+                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDelete}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  حذف المشروع
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
