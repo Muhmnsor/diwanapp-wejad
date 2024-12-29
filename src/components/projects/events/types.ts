@@ -6,9 +6,10 @@ export interface ProjectEventFormData {
   location: string;
   location_url?: string;
   special_requirements?: string;
-  attendees?: number;
+  attendees: number;
   max_attendees: number;
   event_type: "online" | "in-person";
+  eventType?: "online" | "in-person";
   price: number | null;
   beneficiary_type: "men" | "women" | "both";
   beneficiaryType: "men" | "women" | "both";
