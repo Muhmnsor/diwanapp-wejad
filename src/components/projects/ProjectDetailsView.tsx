@@ -23,9 +23,7 @@ export const ProjectDetailsView = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProjectImage imageUrl={project.image_url} title={project.title} />
-      
-      <div className="container mx-auto px-4 -mt-10 relative z-10">
+      <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <ProjectTitle
             title={project.title}
@@ -33,10 +31,21 @@ export const ProjectDetailsView = ({
             onEdit={onEdit}
             onDelete={onDelete}
           />
-
-          <ProjectContent 
-            project={project}
-          />
+          
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/2 md:order-2">
+              <ProjectContent 
+                project={project}
+              />
+            </div>
+            
+            <div className="md:w-1/2 md:order-1">
+              <ProjectImage 
+                imageUrl={project.image_url} 
+                title={project.title} 
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
