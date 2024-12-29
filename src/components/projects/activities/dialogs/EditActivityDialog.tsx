@@ -18,7 +18,7 @@ interface EditActivityDialogProps {
     project_id: string;
     event: ProjectActivity;
   };
-  open: boolean;
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: () => void;
   projectId: string;
@@ -26,7 +26,7 @@ interface EditActivityDialogProps {
 
 export const EditActivityDialog = ({ 
   activity, 
-  open, 
+  isOpen, 
   onOpenChange,
   onSave,
   projectId
@@ -89,8 +89,8 @@ export const EditActivityDialog = ({
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] space-y-4 text-right" dir="rtl">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="fixed left-4 top-4 max-w-[600px] h-[90vh] space-y-4 text-right" dir="rtl">
         <EditProjectEventHeader />
         <Separator className="my-4" />
         <ScrollArea className="h-[calc(90vh-120px)] pl-4">
