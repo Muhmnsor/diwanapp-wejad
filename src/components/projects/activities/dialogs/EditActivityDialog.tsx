@@ -10,6 +10,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Separator } from "@/components/ui/separator";
 
 interface EditActivityDialogProps {
   activity: {
@@ -70,15 +71,12 @@ export const EditActivityDialog = ({
 
       console.log('EditActivityDialog - Supabase update successful');
       
-      // Invalidate queries to force a refresh
       await queryClient.invalidateQueries({ 
         queryKey: ['project-activities', projectId]
       });
       
-      // Call onSave to update parent state
       await onSave();
       
-      // Show success message and close dialog
       toast.success('تم تحديث النشاط بنجاح');
       onOpenChange(false);
       
@@ -92,9 +90,10 @@ export const EditActivityDialog = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] space-y-4" dir="rtl">
         <EditProjectEventHeader />
-        <ScrollArea className="h-[calc(90vh-120px)]">
+        <Separator className="my-4" />
+        <ScrollArea className="h-[calc(90vh-120px)] pr-4">
           <EditActivityForm
             activity={formData}
             onSave={onSave}
