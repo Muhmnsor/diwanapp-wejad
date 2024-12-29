@@ -1,5 +1,6 @@
 import { EventCard } from "@/components/EventCard";
 import { History } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 
 interface EventsSectionProps {
   title: string;
@@ -9,7 +10,23 @@ interface EventsSectionProps {
 }
 
 export const EventsSection = ({ title, events, registrations, isPastEvents = false }: EventsSectionProps) => {
-  if (events.length === 0) {
+  const { user } = useAuthStore();
+  console.log('EventsSection - User:', user);
+  console.log('EventsSection - Events:', events);
+
+  // فلترة الفعاليات بناءً على الصلاحيات
+  const visibleEvents = events.filter(event => {
+    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات
+    if (user?.isAdmin) {
+      return true;
+    }
+    // للمستخدمين العاديين، اعرض فقط الفعاليات المرئية
+    return event.is_visible !== false;
+  });
+
+  console.log('EventsSection - Filtered Events:', visibleEvents);
+
+  if (visibleEvents.length === 0) {
     return (
       <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
         <div className={`border-r-4 ${isPastEvents ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-8 flex items-center gap-2`}>
@@ -30,11 +47,11 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
         {isPastEvents && <History className="w-6 h-6 text-[#9F9EA1]" />}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {events.map((event) => (
-          <div key={event.id} className={`flex justify-center ${isPastEvents ? 'opacity-75' : ''}`}>
+        {visibleEvents.map((event) => (
+          <div key={event.id} className="flex justify-center">
             <EventCard 
-              {...event}
-              attendees={registrations[event.id] || 0}
+              {...event} 
+              className={!event.is_visible ? "opacity-50" : ""}
             />
           </div>
         ))}
