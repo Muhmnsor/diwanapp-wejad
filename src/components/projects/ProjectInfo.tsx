@@ -98,7 +98,7 @@ export const ProjectInfo = ({
         </div>
       )}
       
-      {/* Project Dates */}
+      {/* Project Dates and Attendees */}
       <div className="px-8 space-y-4">
         <div className="flex items-center gap-2 text-gray-600">
           <Calendar className="w-5 h-5" />
@@ -110,15 +110,7 @@ export const ProjectInfo = ({
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <Users className="w-5 h-5" />
-          <span>المقاعد المتاحة: {maxAttendees}</span>
-        </div>
-        <div className="flex items-center gap-2 text-gray-600">
-          <Users className="w-5 h-5" />
-          <span>عدد المسجلين: {attendees}</span>
-        </div>
-        <div className="flex items-center gap-2 text-gray-600">
-          <Users className="w-5 h-5" />
-          <span>المقاعد المتبقية: {maxAttendees - attendees}</span>
+          <span dir="rtl">{attendees} من {maxAttendees} مشارك</span>
         </div>
       </div>
     </div>
