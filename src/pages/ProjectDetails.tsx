@@ -55,6 +55,33 @@ const ProjectDetails = () => {
     fetchProject();
   }, [id]);
 
+  const handleEdit = () => {
+    console.log("Edit project clicked, navigating to edit page");
+    navigate(`/projects/${id}/edit`);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    const confirmed = window.confirm("هل أنت متأكد من حذف هذا المشروع؟");
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("تم حذف المشروع بنجاح");
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error("حدث خطأ أثناء حذف المشروع");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -80,16 +107,6 @@ const ProjectDetails = () => {
   }
 
   const isAdmin = user?.isAdmin;
-
-  const handleEdit = () => {
-    console.log("Edit project clicked");
-    toast.info("سيتم تنفيذ هذه الميزة قريباً");
-  };
-
-  const handleDelete = async () => {
-    console.log("Delete project clicked");
-    toast.info("سيتم تنفيذ هذه الميزة قريباً");
-  };
 
   if (!project) {
     return null;
