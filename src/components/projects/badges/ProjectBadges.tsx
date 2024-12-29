@@ -31,9 +31,9 @@ export const ProjectBadges = ({
 
       <Badge variant="outline" className="flex items-center gap-1">
         <Users2 className="w-3 h-3" />
-        {beneficiaryType === "male"
+        {beneficiaryType === "men"
           ? "رجال"
-          : beneficiaryType === "female"
+          : beneficiaryType === "women"
           ? "نساء"
           : "رجال ونساء"}
       </Badge>
