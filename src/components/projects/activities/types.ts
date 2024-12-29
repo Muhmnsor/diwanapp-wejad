@@ -6,7 +6,6 @@ export interface ProjectActivityFormData {
   location: string;
   location_url?: string;
   special_requirements?: string;
-  attendees: number;
   max_attendees: number;
   event_type: "online" | "in-person";
   price: number | null;
@@ -16,4 +15,5 @@ export interface ProjectActivityFormData {
   event_category: string;
   event_hours: number;
   image_url: string;
+  is_visible?: boolean;
 }

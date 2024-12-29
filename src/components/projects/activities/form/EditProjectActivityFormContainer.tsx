@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Event } from "@/store/eventStore";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -7,54 +6,55 @@ import { EventBasicFields } from "./EventBasicFields";
 import { EventDateTimeFields } from "./EventDateTimeFields";
 import { EventLocationFields } from "./EventLocationFields";
 import { ProjectActivityFormData } from "../types";
+import { Event } from "@/types/event";
 
 interface EditProjectActivityFormContainerProps {
-  event: Event;
-  onSave: (updatedEvent: Event) => void;
+  activity: Event;
+  onSave: (updatedActivity: Event) => void;
   onCancel: () => void;
   projectId: string;
 }
 
 export const EditProjectActivityFormContainer = ({
-  event,
+  activity,
   onSave,
   onCancel,
   projectId
 }: EditProjectActivityFormContainerProps) => {
-  console.log('Form data in EditProjectActivityFormContainer:', event);
+  console.log('Form data in EditProjectActivityFormContainer:', activity);
   
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ProjectActivityFormData>({
     defaultValues: {
-      title: event.title,
-      description: event.description || "",
-      date: event.date,
-      time: event.time,
-      location: event.location,
-      location_url: event.location_url || "",
-      special_requirements: event.special_requirements || "",
-      event_type: event.event_type,
-      max_attendees: event.max_attendees,
-      attendees: event.attendees,
-      beneficiary_type: event.beneficiary_type,
-      certificate_type: event.certificate_type,
-      event_path: event.event_path,
-      event_category: event.event_category,
-      price: event.price,
-      event_hours: event.event_hours,
-      image_url: event.image_url,
+      title: activity.title,
+      description: activity.description || "",
+      date: activity.date,
+      time: activity.time,
+      location: activity.location,
+      location_url: activity.location_url || "",
+      special_requirements: activity.special_requirements || "",
+      event_type: activity.event_type,
+      max_attendees: activity.max_attendees,
+      beneficiary_type: activity.beneficiary_type,
+      certificate_type: activity.certificate_type,
+      event_path: activity.event_path,
+      event_category: activity.event_category,
+      price: activity.price,
+      event_hours: activity.event_hours || 0,
+      image_url: activity.image_url,
+      is_visible: true
     },
   });
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
     setIsLoading(true);
     try {
-      const updatedEvent = {
-        ...event,
+      const updatedActivity = {
+        ...activity,
         ...data,
-      };
-      await onSave(updatedEvent);
+      } as Event;
+      await onSave(updatedActivity);
     } finally {
       setIsLoading(false);
     }
