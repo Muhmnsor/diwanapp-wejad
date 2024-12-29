@@ -29,7 +29,7 @@ export const EditActivityDialog = ({
   onSave,
   projectId
 }: EditActivityDialogProps) => {
-  console.log('Activity data in EditActivityDialog:', activity);
+  console.log('EditActivityDialog - Received activity:', activity);
   const [isLoading, setIsLoading] = useState(false);
   
   // Transform the activity data to match the expected form structure
@@ -48,6 +48,8 @@ export const EditActivityDialog = ({
   const handleSubmit = async (data: ProjectActivityFormData) => {
     setIsLoading(true);
     try {
+      console.log('EditActivityDialog - Submitting update with data:', data);
+      
       const { error } = await supabase
         .from('events')
         .update({
@@ -64,11 +66,14 @@ export const EditActivityDialog = ({
 
       if (error) throw error;
 
-      // First update the UI
-      await onSave();
-      // Then show success message and close dialog
-      toast.success('تم تحديث النشاط بنجاح');
+      console.log('EditActivityDialog - Update successful');
+      
+      // Close dialog first
       onOpenChange(false);
+      
+      // Then update UI and show success message
+      await onSave();
+      toast.success('تم تحديث النشاط بنجاح');
     } catch (error) {
       console.error('Error updating activity:', error);
       toast.error('حدث خطأ أثناء تحديث النشاط');
