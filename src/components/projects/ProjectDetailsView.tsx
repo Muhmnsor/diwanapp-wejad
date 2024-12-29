@@ -4,6 +4,7 @@ import { ProjectImage } from "./ProjectImage";
 import { ProjectTitle } from "./ProjectTitle";
 import { ProjectAdminTabs } from "./admin/ProjectAdminTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventDashboard } from "@/components/admin/EventDashboard";
 
 interface ProjectDetailsViewProps {
   project: Project;

@@ -6,6 +6,7 @@ import { EventRegisterButton } from "../events/EventRegisterButton";
 import { EventRegistrationDialog } from "../events/EventRegistrationDialog";
 import { useState } from "react";
 import { getEventStatus } from "@/utils/eventUtils";
+import { EventPathType, EventCategoryType } from "@/types/event";
 
 interface ProjectContentProps {
   project: Project;
@@ -32,8 +33,8 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
     event_hours: 0,
     attendees: 0, // You might want to fetch this from the database
     imageUrl: project.image_url,
-    event_path: project.event_path,
-    event_category: project.event_category
+    event_path: project.event_path as EventPathType,
+    event_category: project.event_category as EventCategoryType
   };
 
   const status = getEventStatus(eventFormatData);
