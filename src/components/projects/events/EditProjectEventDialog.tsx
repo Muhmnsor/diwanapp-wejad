@@ -12,11 +12,11 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface EditProjectActivityDialogProps {
+interface EditProjectEventDialogProps {
   activity: ProjectActivity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: () => void;
+  onSave: (updatedActivity: ProjectActivity) => void;
   projectId: string;
 }
 
@@ -26,8 +26,8 @@ export const EditProjectEventDialog = ({
   onOpenChange,
   onSave,
   projectId
-}: EditProjectActivityDialogProps) => {
-  console.log('بيانات النشاط في نموذج التعديل:', activity);
+}: EditProjectEventDialogProps) => {
+  console.log('Activity data in EditProjectEventDialog:', activity);
   
   const form = useForm({
     defaultValues: {
@@ -44,8 +44,6 @@ export const EditProjectEventDialog = ({
 
   const handleSubmit = async (data: any) => {
     try {
-      console.log('جاري تحديث بيانات النشاط:', data);
-      
       const { error } = await supabase
         .from('events')
         .update({
@@ -60,16 +58,16 @@ export const EditProjectEventDialog = ({
         })
         .eq('id', activity.id);
 
-      if (error) {
-        console.error('خطأ في تحديث النشاط:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast.success("تم تحديث النشاط بنجاح");
-      onSave();
+      onSave({
+        ...activity,
+        ...data
+      });
       onOpenChange(false);
     } catch (error) {
-      console.error('خطأ في تحديث النشاط:', error);
+      console.error('Error updating activity:', error);
       toast.error("حدث خطأ أثناء تحديث النشاط");
     }
   };
@@ -172,11 +170,7 @@ export const EditProjectEventDialog = ({
                   <FormItem>
                     <FormLabel>مدة النشاط (بالساعات)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
+                      <Input type="number" {...field} />
                     </FormControl>
                   </FormItem>
                 )}
