@@ -24,6 +24,7 @@ interface EventCardProps {
   event_hours?: number;
   is_visible?: boolean;
   className?: string;
+  onEdit?: () => void;  // Added this prop
 }
 
 export const EventCard = ({ 
@@ -41,7 +42,8 @@ export const EventCard = ({
   certificate_type = 'none',
   event_hours = 0,
   is_visible = true,
-  className = ""
+  className = "",
+  onEdit
 }: EventCardProps) => {
   const { data: registrationCounts } = useRegistrations();
   const currentAttendees = registrationCounts?.[id] || 0;
@@ -103,10 +105,15 @@ export const EventCard = ({
             status={statusConfig}
           />
         </CardContent>
-        <CardFooter className="p-4 pt-0">
-          <Button asChild className="w-full" size="sm">
+        <CardFooter className="p-4 pt-0 flex gap-2">
+          <Button asChild className="flex-1" size="sm">
             <Link to={`/events/${id}`}>عرض التفاصيل</Link>
           </Button>
+          {onEdit && (
+            <Button onClick={onEdit} variant="outline" size="sm">
+              تعديل
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>
