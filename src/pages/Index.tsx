@@ -7,9 +7,13 @@ import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/authStore";
+import { ProjectsList } from "@/components/projects/ProjectsList";
+import { supabase } from "@/integrations/supabase/client";
+import { Project } from "@/types/project";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"all" | "upcoming" | "past">("upcoming");
+  const [projects, setProjects] = useState<Project[]>([]);
   const { isAuthenticated } = useAuthStore();
   
   const { 
@@ -23,6 +27,30 @@ const Index = () => {
     isError: isRegistrationsError,
     error: registrationsError 
   } = useRegistrations();
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching projects:", error);
+          toast.error("حدث خطأ في تحميل المشاريع");
+          return;
+        }
+
+        setProjects(data || []);
+      } catch (err) {
+        console.error("Error in fetchProjects:", err);
+        toast.error("حدث خطأ غير متوقع");
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const now = new Date();
   
@@ -64,6 +92,7 @@ const Index = () => {
       registrationsCount: Object.keys(registrations).length,
       upcomingEventsCount: upcomingEvents.length,
       pastEventsCount: pastEvents.length,
+      projectsCount: projects.length,
       isEventsError,
       isRegistrationsError,
       isAuthenticated
@@ -72,7 +101,8 @@ const Index = () => {
     events, 
     registrations, 
     upcomingEvents, 
-    pastEvents, 
+    pastEvents,
+    projects,
     isEventsError,
     isRegistrationsError,
     eventsError,
@@ -93,6 +123,11 @@ const Index = () => {
           setActiveTab={setActiveTab}
           registrations={registrations}
         />
+
+        <div className="py-12">
+          <h2 className="text-2xl font-bold mb-6">المشاريع</h2>
+          <ProjectsList projects={projects} />
+        </div>
       </div>
       <Footer />
     </div>
