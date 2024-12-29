@@ -1,9 +1,9 @@
-import { ProjectActivityCard } from "./ProjectActivityCard";
+import { ProjectActivityCard } from "../activities/ProjectActivityCard";
 
 interface ProjectActivitiesListProps {
   projectActivities: any[];
-  onEdit: (event: any) => void;
-  onDelete: (event: any) => void;
+  onEdit: (activity: any) => void;
+  onDelete: (activity: any) => void;
 }
 
 export const ProjectActivitiesList = ({
@@ -11,16 +11,8 @@ export const ProjectActivitiesList = ({
   onEdit,
   onDelete,
 }: ProjectActivitiesListProps) => {
-  console.log('Rendering activities list with:', projectActivities);
+  console.log("ProjectActivitiesList - activities:", projectActivities);
   
-  if (!projectActivities?.length) {
-    return (
-      <div className="text-center p-8 text-gray-500">
-        لا توجد أنشطة مضافة بعد
-      </div>
-    );
-  }
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       {projectActivities.map((projectActivity) => (

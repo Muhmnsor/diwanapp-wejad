@@ -1,4 +1,13 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface DeleteActivityDialogProps {
   isOpen: boolean;
@@ -13,18 +22,16 @@ export const DeleteActivityDialog = ({
 }: DeleteActivityDialogProps) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent dir="rtl">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>هل أنت متأكد من حذف هذا النشاط؟</AlertDialogTitle>
           <AlertDialogDescription>
-            سيتم حذف النشاط بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.
+            لا يمكن التراجع عن هذا الإجراء بعد تنفيذه.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="gap-2">
-          <AlertDialogAction onClick={onConfirm}>
-            نعم، احذف النشاط
-          </AlertDialogAction>
+        <AlertDialogFooter>
           <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>حذف</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
