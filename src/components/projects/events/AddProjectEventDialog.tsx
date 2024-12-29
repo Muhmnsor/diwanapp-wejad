@@ -30,7 +30,16 @@ export const AddProjectEventDialog = ({
       time: "",
       location: "",
       location_url: "",
-      special_requirements: ""
+      special_requirements: "",
+      max_attendees: 0,
+      event_type: "in-person",
+      price: null,
+      beneficiary_type: "both",
+      certificate_type: "none",
+      event_path: "environment",
+      event_category: "social",
+      image_url: "/placeholder.svg",
+      event_hours: 0
     }
   });
 
@@ -49,10 +58,14 @@ export const AddProjectEventDialog = ({
           location: data.location,
           location_url: data.location_url,
           special_requirements: data.special_requirements,
-          event_type: 'in-person',
-          max_attendees: 0,
-          image_url: '/placeholder.svg',
-          beneficiary_type: 'both'
+          event_type: data.event_type,
+          max_attendees: data.max_attendees,
+          image_url: data.image_url,
+          beneficiary_type: data.beneficiary_type,
+          event_path: data.event_path,
+          event_category: data.event_category,
+          price: data.price,
+          event_hours: data.event_hours
         }])
         .select()
         .single();
