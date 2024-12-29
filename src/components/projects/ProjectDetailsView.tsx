@@ -5,6 +5,17 @@ import { ProjectTitle } from "./ProjectTitle";
 import { ProjectAdminTabs } from "./admin/ProjectAdminTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDashboard } from "@/components/admin/EventDashboard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface ProjectDetailsViewProps {
   project: Project;
@@ -21,7 +32,13 @@ export const ProjectDetailsView = ({
   onDelete,
   id
 }: ProjectDetailsViewProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   console.log('ProjectDetailsView - User is admin:', isAdmin);
+
+  const handleDelete = () => {
+    setShowDeleteDialog(false);
+    onDelete();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -33,7 +50,7 @@ export const ProjectDetailsView = ({
             title={project.title}
             isAdmin={isAdmin}
             onEdit={onEdit}
-            onDelete={onDelete}
+            onDelete={() => setShowDeleteDialog(true)}
           />
 
           {isAdmin ? (
@@ -54,6 +71,26 @@ export const ProjectDetailsView = ({
           ) : (
             <ProjectContent project={project} />
           )}
+
+          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialogContent className="text-right" dir="rtl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>هل أنت متأكد من حذف هذا المشروع؟</AlertDialogTitle>
+                <AlertDialogDescription>
+                  سيتم حذف المشروع وجميع البيانات المرتبطة به بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-row-reverse gap-2">
+                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDelete}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  حذف المشروع
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
