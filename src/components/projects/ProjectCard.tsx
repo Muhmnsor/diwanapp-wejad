@@ -90,6 +90,7 @@ export const ProjectCard = ({
             maxAttendees={max_attendees}
             eventPath={event_path}
             eventCategory={event_category}
+            projectId={id}
           />
         </CardContent>
         <CardFooter className="p-4 pt-0">
