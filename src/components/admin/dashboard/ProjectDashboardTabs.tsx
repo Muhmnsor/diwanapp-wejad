@@ -3,6 +3,10 @@ import { DashboardOverview } from "../DashboardOverview";
 import { DashboardRegistrations } from "../DashboardRegistrations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -32,10 +36,40 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     },
   });
 
+  // Fetch project events
+  const { data: projectEvents = [] } = useQuery({
+    queryKey: ['project-events', project.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_events')
+        .select(`
+          *,
+          event:events (
+            id,
+            title,
+            date,
+            time,
+            location,
+            event_type,
+            max_attendees
+          )
+        `)
+        .eq('project_id', project.id)
+        .order('event_order', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
   const remainingSeats = project.max_attendees - registrationCount;
   const occupancyRate = (registrationCount / project.max_attendees) * 100;
+
+  const handleAddEvent = () => {
+    toast.info("سيتم إضافة هذه الميزة قريباً");
+  };
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
@@ -51,6 +85,12 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           className="flex-1 max-w-[200px] data-[state=active]:bg-white"
         >
           المسجلين
+        </TabsTrigger>
+        <TabsTrigger 
+          value="events"
+          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+        >
+          الفعاليات والأنشطة
         </TabsTrigger>
       </TabsList>
       
@@ -68,6 +108,44 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
 
       <TabsContent value="registrations" className="mt-6">
         <DashboardRegistrations eventId={project.id} />
+      </TabsContent>
+
+      <TabsContent value="events" className="mt-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold">فعاليات وأنشطة المشروع</h3>
+              <Button onClick={handleAddEvent} className="gap-2">
+                <Plus className="w-4 h-4" />
+                إضافة فعالية
+              </Button>
+            </div>
+            
+            {projectEvents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                لا توجد فعاليات مضافة لهذا المشروع
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {projectEvents.map((projectEvent: any) => (
+                  <Card key={projectEvent.id} className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium">{projectEvent.event?.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {projectEvent.event?.date} - {projectEvent.event?.time}
+                        </p>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {projectEvent.event?.location}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </TabsContent>
     </Tabs>
   );
