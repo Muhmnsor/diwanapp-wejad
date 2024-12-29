@@ -1,6 +1,7 @@
 import { ProjectBadges } from "./badges/ProjectBadges";
 import { BeneficiaryType } from "@/types/event";
 import { Tag, Folder, Calendar, Users } from "lucide-react";
+import { useDashboardData } from "@/components/admin/dashboard/useDashboardData";
 
 interface ProjectInfoProps {
   startDate: string;
@@ -109,7 +110,15 @@ export const ProjectInfo = ({
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <Users className="w-5 h-5" />
-          <span>عدد المقاعد: {maxAttendees}</span>
+          <span>المقاعد المتاحة: {maxAttendees}</span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-600">
+          <Users className="w-5 h-5" />
+          <span>عدد المسجلين: {attendees}</span>
+        </div>
+        <div className="flex items-center gap-2 text-gray-600">
+          <Users className="w-5 h-5" />
+          <span>المقاعد المتبقية: {maxAttendees - attendees}</span>
         </div>
       </div>
     </div>

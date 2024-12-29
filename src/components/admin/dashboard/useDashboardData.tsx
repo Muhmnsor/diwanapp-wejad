@@ -12,7 +12,7 @@ export const useDashboardData = (eventId: string) => {
         .from('events')
         .select('*')
         .eq('id', eventId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching event:', error);
