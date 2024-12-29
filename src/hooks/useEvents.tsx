@@ -1,32 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/authStore";
 
 export const useEvents = () => {
-  const { isAdmin } = useAuthStore();
-
   return useQuery({
     queryKey: ["events"],
     queryFn: async () => {
       try {
         console.log("🔄 محاولة جلب الفعاليات...");
         
-        // Get all project events first
-        const { data: projectEvents } = await supabase
-          .from("project_events")
-          .select("event_id");
-        
-        const projectEventIds = projectEvents?.map(pe => pe.event_id) || [];
-
-        // For regular users, exclude events that belong to projects
-        let query = supabase.from("events").select("*");
-        
-        if (!isAdmin) {
-          query = query.not('id', 'in', projectEventIds);
-        }
-
-        const { data: eventsData, error: eventsError } = await query;
+        const { data: eventsData, error: eventsError } = await supabase
+          .from("events")
+          .select("*")
+          .order("date", { ascending: true });
 
         if (eventsError) {
           console.error("❌ خطأ في جلب الفعاليات:", eventsError);
@@ -43,6 +29,7 @@ export const useEvents = () => {
       }
     },
     gcTime: 1000 * 60 * 5, // 5 minutes
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // تم تغيير هذه القيمة لتحديث البيانات فوراً
+    refetchOnWindowFocus: true, // تفعيل التحديث عند العودة للصفحة
   });
 };

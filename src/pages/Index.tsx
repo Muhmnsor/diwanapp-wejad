@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Hero } from "@/components/home/Hero";
 import { EventsTabs } from "@/components/home/EventsTabs";
 import { useEvents } from "@/hooks/useEvents";
-import { useProjects } from "@/hooks/useProjects";
 import { useRegistrations } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
@@ -18,12 +17,6 @@ const Index = () => {
     isError: isEventsError,
     error: eventsError 
   } = useEvents();
-
-  const {
-    data: projects = [],
-    isError: isProjectsError,
-    error: projectsError
-  } = useProjects();
   
   const { 
     data: registrations = {}, 
@@ -55,37 +48,10 @@ const Index = () => {
       return dateB.getTime() - dateA.getTime();
     });
 
-  const upcomingProjects = projects
-    .filter((project: any) => {
-      const endDate = new Date(project.end_date);
-      return endDate >= now;
-    })
-    .sort((a: any, b: any) => {
-      const dateA = new Date(a.start_date);
-      const dateB = new Date(b.start_date);
-      return dateA.getTime() - dateB.getTime();
-    });
-
-  const pastProjects = projects
-    .filter((project: any) => {
-      const endDate = new Date(project.end_date);
-      return endDate < now;
-    })
-    .sort((a: any, b: any) => {
-      const dateA = new Date(a.end_date);
-      const dateB = new Date(b.end_date);
-      return dateB.getTime() - dateA.getTime();
-    });
-
   useEffect(() => {
     if (isEventsError) {
       console.error("❌ خطأ في جلب الفعاليات:", eventsError);
       toast.error("حدث خطأ في تحميل الفعاليات");
-    }
-
-    if (isProjectsError) {
-      console.error("❌ خطأ في جلب المشاريع:", projectsError);
-      toast.error("حدث خطأ في تحميل المشاريع");
     }
 
     if (isRegistrationsError && isAuthenticated) {
@@ -95,28 +61,21 @@ const Index = () => {
 
     console.log("📊 حالة البيانات:", {
       eventsCount: events.length,
-      projectsCount: projects.length,
       registrationsCount: Object.keys(registrations).length,
-      upcomingItemsCount: upcomingEvents.length + upcomingProjects.length,
-      pastItemsCount: pastEvents.length + pastProjects.length,
+      upcomingEventsCount: upcomingEvents.length,
+      pastEventsCount: pastEvents.length,
       isEventsError,
-      isProjectsError,
       isRegistrationsError,
       isAuthenticated
     });
   }, [
-    events,
-    projects,
-    registrations,
-    upcomingEvents,
-    upcomingProjects,
-    pastEvents,
-    pastProjects,
+    events, 
+    registrations, 
+    upcomingEvents, 
+    pastEvents, 
     isEventsError,
-    isProjectsError,
     isRegistrationsError,
     eventsError,
-    projectsError,
     registrationsError,
     isAuthenticated
   ]);
@@ -128,7 +87,6 @@ const Index = () => {
       <div className="container mx-auto px-4">
         <EventsTabs
           events={events}
-          projects={projects}
           upcomingEvents={upcomingEvents}
           pastEvents={pastEvents}
           activeTab={activeTab}
