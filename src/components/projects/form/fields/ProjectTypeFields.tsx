@@ -8,7 +8,7 @@ interface ProjectTypeFieldsProps {
 
 export const ProjectTypeFields = ({ formData, setFormData }: ProjectTypeFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4 text-right">
       <div>
         <label className="block text-sm font-medium mb-1.5">نوع المشروع</label>
         <Select
@@ -44,6 +44,6 @@ export const ProjectTypeFields = ({ formData, setFormData }: ProjectTypeFieldsPr
           </SelectContent>
         </Select>
       </div>
-    </>
+    </div>
   );
 };

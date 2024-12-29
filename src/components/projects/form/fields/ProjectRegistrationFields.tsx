@@ -7,7 +7,7 @@ interface ProjectRegistrationFieldsProps {
 
 export const ProjectRegistrationFields = ({ formData, setFormData }: ProjectRegistrationFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4 text-right">
       <div>
         <label className="block text-sm font-medium mb-1.5">السعر (اتركه فارغاً للمشاريع المجانية)</label>
         <Input
@@ -33,6 +33,6 @@ export const ProjectRegistrationFields = ({ formData, setFormData }: ProjectRegi
           className="text-right"
         />
       </div>
-    </>
+    </div>
   );
 };
