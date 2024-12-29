@@ -5,6 +5,8 @@ import { useState } from "react";
 import { EditProjectActivityDialog } from "./EditProjectActivityDialog";
 import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatTime12Hour } from "@/utils/dateTimeUtils";
 
 interface ProjectActivityCardProps {
   projectActivity: {
@@ -35,14 +37,9 @@ export const ProjectActivityCard = ({
       <Card className="p-4">
         <div className="space-y-4">
           <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-lg font-semibold">
-                {projectActivity.event.title}
-              </h3>
-              <p className="text-sm text-gray-500">
-                {projectActivity.event.description}
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold">
+              {projectActivity.event.title}
+            </h3>
             <div className="flex gap-2">
               <TooltipProvider>
                 <Tooltip>
@@ -82,24 +79,30 @@ export const ProjectActivityCard = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">التاريخ:</span>{" "}
-              {projectActivity.event.date}
-            </div>
-            <div>
-              <span className="font-medium">الوقت:</span>{" "}
-              {projectActivity.event.time}
-            </div>
-            <div>
-              <span className="font-medium">المكان:</span>{" "}
-              {projectActivity.event.location}
-            </div>
-            <div>
-              <span className="font-medium">عدد الساعات:</span>{" "}
-              {projectActivity.event.event_hours}
-            </div>
-          </div>
+          {projectActivity.event.description && (
+            <p className="text-sm text-gray-500">
+              {projectActivity.event.description}
+            </p>
+          )}
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>التاريخ</TableHead>
+                <TableHead>الوقت</TableHead>
+                <TableHead>المكان</TableHead>
+                <TableHead>عدد الساعات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>{projectActivity.event.date}</TableCell>
+                <TableCell>{formatTime12Hour(projectActivity.event.time)}</TableCell>
+                <TableCell>{projectActivity.event.location}</TableCell>
+                <TableCell>{projectActivity.event.event_hours}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </Card>
 
