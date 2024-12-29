@@ -1,7 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "./ShareButton";
-import { CalendarDays, Edit2, Trash2 } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { CalendarPlus, Pencil, Trash } from "lucide-react";
 
 interface EventTitleProps {
   title: string;
@@ -9,6 +7,7 @@ interface EventTitleProps {
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
+  isProject?: boolean;
 }
 
 export const EventTitle = ({
@@ -17,43 +16,44 @@ export const EventTitle = ({
   onEdit,
   onDelete,
   onAddToCalendar,
+  isProject = false
 }: EventTitleProps) => {
-  const isMobile = useIsMobile();
   console.log('EventTitle - isAdmin:', isAdmin);
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-8 py-6 border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10 gap-4" dir="rtl">
-      <h1 className="text-2xl md:text-[32px] leading-tight font-semibold text-[#1A1F2C] order-1">{title}</h1>
-      <div className="flex gap-2 order-2 flex-wrap">
+    <div className="px-6 pt-6 pb-4 border-b flex items-center justify-between">
+      <h1 className="text-2xl font-bold">{title}</h1>
+      <div className="flex gap-2">
         {isAdmin && (
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+          <>
+            <Button
+              variant="outline"
               size="icon"
               onClick={onEdit}
-              className="w-8 h-8"
+              className="h-8 w-8"
             >
-              <Edit2 className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="icon"
               onClick={onDelete}
-              className="w-8 h-8"
+              className="h-8 w-8"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
             </Button>
-          </div>
+          </>
         )}
-        <ShareButton url={window.location.href} title={title} />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onAddToCalendar}
-          className="w-8 h-8"
-        >
-          <CalendarDays className="h-4 w-4" />
-        </Button>
+        {!isProject && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onAddToCalendar}
+            className="h-8 w-8"
+          >
+            <CalendarPlus className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
