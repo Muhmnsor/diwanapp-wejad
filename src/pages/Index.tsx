@@ -36,14 +36,26 @@ const Index = () => {
 
   // فلترة الفعاليات المستقلة فقط (غير المرتبطة بمشاريع)
   const filteredEvents = events.filter(event => {
-    console.log("فحص الفعالية:", {
+    // تسجيل تفاصيل كاملة عن الفعالية للتحقق
+    console.log("🔍 فحص تفاصيل الفعالية:", {
       title: event.title,
+      id: event.id,
       is_project_activity: event.is_project_activity,
-      isFiltered: event.is_project_activity === true
+      project_events: projects.find(p => 
+        p.events?.some(e => e.id === event.id)
+      )?.title
     });
     
-    // تجاهل الأنشطة التي تنتمي إلى مشاريع بشكل صريح
-    return event.is_project_activity !== true;
+    // التحقق من أن الفعالية ليست نشاطاً في مشروع
+    const isProjectActivity = event.is_project_activity === true;
+    
+    if (isProjectActivity) {
+      console.log("❌ استبعاد نشاط المشروع:", event.title);
+      return false;
+    }
+    
+    console.log("✅ قبول الفعالية المستقلة:", event.title);
+    return true;
   });
   
   const upcomingEvents = filteredEvents
@@ -84,7 +96,7 @@ const Index = () => {
       toast.error("حدث خطأ في تحميل التسجيلات");
     }
 
-    console.log("📊 حالة البيانات:", {
+    console.log("📊 إحصائيات البيانات:", {
       totalEventsCount: events.length,
       filteredEventsCount: filteredEvents.length,
       projectsCount: projects.length,
