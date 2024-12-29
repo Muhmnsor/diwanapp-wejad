@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportsTab } from "./ReportsTab";
+import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
 import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
 import { DashboardOverviewTab } from "./tabs/DashboardOverviewTab";
 import { DashboardRegistrationsTab } from "./tabs/DashboardRegistrationsTab";
