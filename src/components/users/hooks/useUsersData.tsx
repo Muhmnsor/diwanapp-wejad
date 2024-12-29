@@ -24,15 +24,7 @@ export const useUsersData = () => {
     queryFn: async () => {
       console.log('Fetching users with roles...');
       
-      const { data: usersResponse, error: usersError } = await supabase.functions.invoke('manage-users', {
-        body: { operation: 'get_users' }
-      });
-
-      if (usersError) {
-        console.error('Error fetching users:', usersError);
-        throw usersError;
-      }
-
+      // استدعاء واحد فقط لجلب المستخدمين مع أدوارهم
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -41,6 +33,11 @@ export const useUsersData = () => {
             id,
             name,
             description
+          ),
+          auth.users!user_id (
+            id,
+            email,
+            last_sign_in_at
           )
         `);
 
@@ -51,26 +48,19 @@ export const useUsersData = () => {
 
       console.log('User roles data:', userRolesData);
 
-      const userRolesMap = (userRolesData as any[]).reduce((acc, curr) => {
-        // تأكد من أن roles موجود وأن له خاصية name
-        if (curr.roles && typeof curr.roles.name === 'string') {
-          acc[curr.user_id] = curr.roles.name;
-        }
-        return acc;
-      }, {} as Record<string, string>);
-
-      console.log('User roles map:', userRolesMap);
-
-      const transformedUsers = usersResponse.users.map(authUser => ({
-        id: authUser.id,
-        username: authUser.email,
-        role: userRolesMap[authUser.id] || 'لم يتم تعيين دور',
-        lastLogin: authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at).toLocaleString('ar-SA') : 'لم يسجل دخول بعد'
+      const transformedUsers = userRolesData.map((data: any) => ({
+        id: data.user_id,
+        username: data.auth.users.email,
+        role: data.roles?.name || 'لم يتم تعيين دور',
+        lastLogin: data.auth.users.last_sign_in_at 
+          ? new Date(data.auth.users.last_sign_in_at).toLocaleString('ar-SA') 
+          : 'لم يسجل دخول بعد'
       }));
 
       console.log('Transformed users with roles:', transformedUsers);
       return transformedUsers as User[];
-    }
+    },
+    staleTime: 1000 * 30, // تخزين مؤقت لمدة 30 ثانية
   });
 
   return {
