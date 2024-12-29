@@ -7,7 +7,7 @@ export const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Left Side - Logo and Social Links */}
-          <div className="order-last md:order-last flex flex-col justify-between">
+          <div className="order-last md:order-last flex flex-col items-center justify-between">
             <img 
               src="/lovable-uploads/2f147e3a-170c-48d5-acdf-219169839b0a.png" 
               alt="Diwan Logo" 
@@ -15,7 +15,7 @@ export const Footer = () => {
             />
             
             {/* Social Links */}
-            <div className="flex items-center justify-start space-x-4 rtl:space-x-reverse">
+            <div className="flex items-center justify-center space-x-4 rtl:space-x-reverse w-full">
               <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
                 <X className="w-6 h-6" />
               </a>
