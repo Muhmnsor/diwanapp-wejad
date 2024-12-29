@@ -27,9 +27,9 @@ export const EventLocationFields = ({ form }: EventLocationFieldsProps) => {
         name="location_url"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>رابط الموقع</FormLabel>
+            <FormLabel>رابط الموقع (قوقل ماب)</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} dir="ltr" placeholder="https://maps.google.com/..." />
             </FormControl>
           </FormItem>
         )}
@@ -39,9 +39,9 @@ export const EventLocationFields = ({ form }: EventLocationFieldsProps) => {
         name="special_requirements"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>متطلبات خاصة</FormLabel>
+            <FormLabel>احتياجات خاصة</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} placeholder="أي متطلبات أو احتياجات خاصة للنشاط..." />
             </FormControl>
           </FormItem>
         )}

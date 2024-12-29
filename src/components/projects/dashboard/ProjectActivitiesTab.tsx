@@ -11,6 +11,8 @@ import { toast } from "sonner";
 interface ProjectActivitiesTabProps {
   project: {
     id: string;
+    event_path: string;
+    event_category: string;
   };
   projectActivities: any[];
   refetchActivities: () => void;
@@ -58,32 +60,14 @@ export const ProjectActivitiesTab = ({
 
       if (eventError) throw eventError;
 
-      toast.success('تم حذف الفعالية بنجاح');
+      toast.success('تم حذف النشاط بنجاح');
       refetchActivities();
     } catch (error) {
       console.error('Error deleting event:', error);
-      toast.error('حدث خطأ أثناء حذف الفعالية');
+      toast.error('حدث خطأ أثناء حذف النشاط');
     } finally {
       setIsDeleteDialogOpen(false);
       setSelectedEvent(null);
-    }
-  };
-
-  const handleEventUpdate = async (updatedEvent: any) => {
-    try {
-      const { error } = await supabase
-        .from('events')
-        .update(updatedEvent)
-        .eq('id', selectedEvent.event.id);
-
-      if (error) throw error;
-
-      toast.success('تم تحديث الفعالية بنجاح');
-      refetchActivities();
-      setIsEditEventOpen(false);
-    } catch (error) {
-      console.error('Error updating event:', error);
-      toast.error('حدث خطأ أثناء تحديث الفعالية');
     }
   };
 
@@ -102,6 +86,7 @@ export const ProjectActivitiesTab = ({
           onOpenChange={setIsAddEventOpen}
           projectId={project.id}
           onSuccess={refetchActivities}
+          project={project}
         />
 
         {selectedEvent && (
@@ -109,7 +94,23 @@ export const ProjectActivitiesTab = ({
             event={selectedEvent.event}
             open={isEditEventOpen}
             onOpenChange={setIsEditEventOpen}
-            onSave={handleEventUpdate}
+            onSave={async (updatedEvent) => {
+              try {
+                const { error } = await supabase
+                  .from('events')
+                  .update(updatedEvent)
+                  .eq('id', selectedEvent.event.id);
+
+                if (error) throw error;
+
+                toast.success('تم تحديث النشاط بنجاح');
+                refetchActivities();
+                setIsEditEventOpen(false);
+              } catch (error) {
+                console.error('Error updating event:', error);
+                toast.error('حدث خطأ أثناء تحديث النشاط');
+              }
+            }}
             projectId={project.id}
           />
         )}
@@ -117,14 +118,14 @@ export const ProjectActivitiesTab = ({
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent dir="rtl">
             <AlertDialogHeader>
-              <AlertDialogTitle>هل أنت متأكد من حذف هذه الفعالية؟</AlertDialogTitle>
+              <AlertDialogTitle>هل أنت متأكد من حذف هذا النشاط؟</AlertDialogTitle>
               <AlertDialogDescription>
-                سيتم حذف الفعالية بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.
+                سيتم حذف النشاط بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-2">
               <AlertDialogAction onClick={confirmDelete}>
-                نعم، احذف الفعالية
+                نعم، احذف النشاط
               </AlertDialogAction>
               <AlertDialogCancel>إلغاء</AlertDialogCancel>
             </AlertDialogFooter>

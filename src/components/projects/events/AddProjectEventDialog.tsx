@@ -36,13 +36,7 @@ export const AddProjectEventDialog = ({
       location: "",
       location_url: "",
       special_requirements: "",
-      max_attendees: 0,
-      event_type: "in-person",
-      price: null,
-      beneficiary_type: "both",
-      certificate_type: "none",
-      event_hours: 0,
-      image_url: "/placeholder.svg"
+      event_hours: 0
     }
   });
 
@@ -56,7 +50,13 @@ export const AddProjectEventDialog = ({
         .insert([{
           ...data,
           event_path: project.event_path,
-          event_category: project.event_category
+          event_category: project.event_category,
+          event_type: 'in-person',
+          max_attendees: 0,
+          price: 0,
+          beneficiary_type: 'both',
+          certificate_type: 'none',
+          image_url: "/placeholder.svg"
         }])
         .select()
         .single();

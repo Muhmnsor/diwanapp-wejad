@@ -39,7 +39,7 @@ export const EventDateTimeFields = ({ form }: EventDateTimeFieldsProps) => {
         name="event_hours"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>عدد الساعات</FormLabel>
+            <FormLabel>مدة النشاط (بالساعات)</FormLabel>
             <FormControl>
               <Input type="number" {...field} />
             </FormControl>
