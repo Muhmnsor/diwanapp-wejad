@@ -1,4 +1,4 @@
-import { AddActivityDialog } from "../dialogs/AddActivityDialog";
+import { AddProjectEventDialog } from "../../events/AddProjectEventDialog";
 import { EditProjectEventDialog } from "../../events/EditProjectEventDialog";
 import { DeleteActivityDialog } from "../dialogs/DeleteActivityDialog";
 
@@ -34,7 +34,7 @@ export const ActivityDialogsContainer = ({
 }: ActivityDialogsContainerProps) => {
   return (
     <>
-      <AddActivityDialog
+      <AddProjectEventDialog
         open={isAddEventOpen}
         onOpenChange={setIsAddEventOpen}
         projectId={projectId}
