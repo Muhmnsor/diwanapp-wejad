@@ -46,10 +46,11 @@ export const EditActivityDialog = ({
   };
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
+    console.log('EditActivityDialog - Starting submission with data:', data);
     setIsLoading(true);
+    
     try {
-      console.log('EditActivityDialog - Submitting update with data:', data);
-      
+      console.log('EditActivityDialog - Updating Supabase');
       const { error } = await supabase
         .from('events')
         .update({
@@ -66,14 +67,15 @@ export const EditActivityDialog = ({
 
       if (error) throw error;
 
-      console.log('EditActivityDialog - Update successful');
+      console.log('EditActivityDialog - Supabase update successful');
       
-      // Close dialog first
+      // Call onSave first to update parent state
+      await onSave();
+      
+      // Then show success message and close dialog
+      toast.success('تم تحديث النشاط بنجاح');
       onOpenChange(false);
       
-      // Then update UI and show success message
-      await onSave();
-      toast.success('تم تحديث النشاط بنجاح');
     } catch (error) {
       console.error('Error updating activity:', error);
       toast.error('حدث خطأ أثناء تحديث النشاط');

@@ -23,22 +23,29 @@ export const ProjectActivityCard = ({
 }: ProjectActivityCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentActivity, setCurrentActivity] = useState(projectActivity);
 
-  console.log("ProjectActivityCard - projectActivity:", projectActivity);
+  console.log("ProjectActivityCard - Current activity:", currentActivity);
 
   const handleEditClick = () => {
     setIsEditDialogOpen(true);
   };
 
+  const handleEditSuccess = async () => {
+    console.log("ProjectActivityCard - Edit successful, calling onEdit");
+    await onEdit();
+    setIsEditDialogOpen(false);
+  };
+
   return (
     <>
-      <Card key={projectActivity.id} className="p-4">
+      <Card key={currentActivity.id} className="p-4">
         <div className="space-y-2">
           <div className="flex justify-between items-start">
             <div>
-              <h4 className="font-medium">{projectActivity.event?.title}</h4>
+              <h4 className="font-medium">{currentActivity.event?.title}</h4>
               <p className="text-sm text-muted-foreground">
-                {projectActivity.event?.date} - {projectActivity.event?.time}
+                {currentActivity.event?.date} - {currentActivity.event?.time}
               </p>
             </div>
             <div className="flex gap-2">
@@ -81,22 +88,22 @@ export const ProjectActivityCard = ({
             </div>
           </div>
           <div className="text-sm text-muted-foreground">
-            {projectActivity.event?.location}
+            {currentActivity.event?.location}
           </div>
-          {projectActivity.event?.description && (
+          {currentActivity.event?.description && (
             <p className="text-sm text-gray-600">
-              {projectActivity.event.description}
+              {currentActivity.event.description}
             </p>
           )}
-          {projectActivity.event?.special_requirements && (
+          {currentActivity.event?.special_requirements && (
             <div className="text-sm">
               <span className="font-medium">احتياجات خاصة: </span>
-              {projectActivity.event.special_requirements}
+              {currentActivity.event.special_requirements}
             </div>
           )}
-          {projectActivity.event?.location_url && (
+          {currentActivity.event?.location_url && (
             <a
-              href={projectActivity.event.location_url}
+              href={currentActivity.event.location_url}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-primary hover:underline"
@@ -108,11 +115,11 @@ export const ProjectActivityCard = ({
       </Card>
 
       <EditActivityDialog
-        activity={projectActivity}
+        activity={currentActivity}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        onSave={onEdit}
-        projectId={projectActivity.project_id}
+        onSave={handleEditSuccess}
+        projectId={currentActivity.project_id}
       />
     </>
   );
