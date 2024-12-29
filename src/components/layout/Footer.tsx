@@ -11,7 +11,7 @@ export const Footer = () => {
             <img 
               src="/lovable-uploads/eca67883-2474-4656-a5b3-5abaf42f015b.png" 
               alt="Diwan Logo" 
-              className="w-full h-auto max-w-xl mb-6"
+              className="w-full h-auto max-w-xl mb-3" // تم تقليل قيمة margin-bottom من mb-6 إلى mb-3
             />
             
             {/* Social Links */}
