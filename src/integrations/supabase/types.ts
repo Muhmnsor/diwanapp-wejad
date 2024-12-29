@@ -472,6 +472,7 @@ export type Database = {
           end_date: string
           event_category: string
           event_path: string
+          event_type: string
           id: string
           image_url: string
           max_attendees: number
@@ -489,6 +490,7 @@ export type Database = {
           end_date: string
           event_category?: string
           event_path?: string
+          event_type?: string
           id?: string
           image_url: string
           max_attendees?: number
@@ -506,6 +508,7 @@ export type Database = {
           end_date?: string
           event_category?: string
           event_path?: string
+          event_type?: string
           id?: string
           image_url?: string
           max_attendees?: number
