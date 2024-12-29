@@ -22,7 +22,9 @@ export const CreateProjectForm = () => {
     beneficiary_type: "both",
     certificate_type: "none",
     event_path: "environment",
-    event_category: "social"
+    event_category: "social",
+    registration_start_date: null,
+    registration_end_date: null
   });
 
   const handleImageChange = async (file: File | null) => {
@@ -58,7 +60,9 @@ export const CreateProjectForm = () => {
           beneficiary_type: formData.beneficiary_type,
           certificate_type: formData.certificate_type,
           event_path: formData.event_path,
-          event_category: formData.event_category
+          event_category: formData.event_category,
+          registration_start_date: formData.registration_start_date,
+          registration_end_date: formData.registration_end_date
         }])
         .select()
         .single();

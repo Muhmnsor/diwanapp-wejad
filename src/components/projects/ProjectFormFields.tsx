@@ -53,6 +53,26 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
       </div>
 
       <div>
+        <label className="text-sm font-medium block mb-1.5">تاريخ بداية التسجيل</label>
+        <Input
+          type="date"
+          value={formData.registration_start_date || ''}
+          onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+          className="text-right"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium block mb-1.5">تاريخ نهاية التسجيل</label>
+        <Input
+          type="date"
+          value={formData.registration_end_date || ''}
+          onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
+          className="text-right"
+        />
+      </div>
+
+      <div>
         <label className="text-sm font-medium block mb-1.5">نوع المشروع</label>
         <Select
           value={formData.event_type}
