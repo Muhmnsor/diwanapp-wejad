@@ -2,10 +2,13 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { ProjectActivity } from "@/types/activity";
+import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditProjectEventHeader } from "../../events/EditProjectEventHeader";
 import { EditActivityForm } from "../form/EditActivityForm";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EditActivityDialogProps {
   activity: {
@@ -27,6 +30,7 @@ export const EditActivityDialog = ({
   projectId
 }: EditActivityDialogProps) => {
   console.log('Activity data in EditActivityDialog:', activity);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Transform the activity data to match the expected form structure
   const formData = {
@@ -40,6 +44,36 @@ export const EditActivityDialog = ({
     special_requirements: activity.event.special_requirements,
     event_hours: activity.event.event_hours
   };
+
+  const handleSubmit = async (data: ProjectActivityFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: data.title,
+          description: data.description,
+          date: data.date,
+          time: data.time,
+          location: data.location,
+          location_url: data.location_url,
+          special_requirements: data.special_requirements,
+          event_hours: data.event_hours
+        })
+        .eq('id', activity.event.id);
+
+      if (error) throw error;
+
+      toast.success('تم تحديث النشاط بنجاح');
+      onSave();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error('حدث خطأ أثناء تحديث النشاط');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,10 +84,8 @@ export const EditActivityDialog = ({
             activity={formData}
             onSave={onSave}
             onCancel={() => onOpenChange(false)}
-            isLoading={false}
-            handleSubmit={async () => {
-              await onSave();
-            }}
+            isLoading={isLoading}
+            handleSubmit={handleSubmit}
           />
         </ScrollArea>
       </DialogContent>
