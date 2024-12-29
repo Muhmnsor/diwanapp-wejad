@@ -1,105 +1,64 @@
 import { Event } from "@/store/eventStore";
-import { EventInfo } from "./EventInfo";
 import { EventDescription } from "./EventDescription";
+import { EventInfo } from "./EventInfo";
 import { EventRegisterButton } from "./EventRegisterButton";
-import { EventBadges } from "./badges/EventBadges";
-import { useEffect, useState } from "react";
+import { formatDateWithDay } from "@/utils/dateTimeUtils";
+import { formatTime12Hour } from "@/utils/dateTimeUtils";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useRegistrations } from "@/hooks/useRegistrations";
 
 interface EventContentProps {
   event: Event;
-  onRegister: () => void;
+  onRegister?: () => void;
+  isProject?: boolean;
 }
 
-export const EventContent = ({ event, onRegister }: EventContentProps) => {
+export const EventContent = ({ event, onRegister, isProject = false }: EventContentProps) => {
   const { data: registrationCounts } = useRegistrations();
-  const [eventStatus, setEventStatus] = useState(() => getEventStatus(event));
+  const currentAttendees = registrationCounts?.[event.id] || 0;
 
-  useEffect(() => {
-    const currentAttendees = registrationCounts?.[event.id] || 0;
-    
-    console.log('Event data in content updated:', {
-      title: event.title,
-      date: event.date,
-      registrationDates: {
-        start: event.registrationStartDate,
-        end: event.registrationEndDate
-      },
-      attendees: currentAttendees,
-      maxAttendees: event.max_attendees,
-      certificateType: event.certificate_type,
-      eventHours: event.event_hours,
-      beneficiaryType: event.beneficiary_type,
-      eventType: event.event_type,
-      price: event.price,
-      location_url: event.location_url,
-      eventPath: event.event_path,
-      eventCategory: event.event_category
-    });
+  const status = getEventStatus({
+    date: event.date,
+    time: event.time,
+    max_attendees: event.max_attendees,
+    registrationStartDate: event.registration_start_date,
+    registrationEndDate: event.registration_end_date,
+    beneficiaryType: event.beneficiary_type,
+    attendees: currentAttendees
+  });
 
-    const newStatus = getEventStatus({
-      ...event,
-      attendees: currentAttendees
-    });
-    
-    console.log('Event status updated to:', newStatus);
-    setEventStatus(newStatus);
-  }, [
-    event.date, 
-    event.registrationStartDate, 
-    event.registrationEndDate,
-    event.max_attendees,
-    event.certificate_type,
-    event.event_hours,
-    event.beneficiary_type,
-    event.event_type,
-    event.price,
-    event.id,
-    registrationCounts
-  ]);
+  const formatDate = (date: string | null) => {
+    if (!date) return "";
+    return formatDateWithDay(date);
+  };
 
   return (
-    <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
-      <div className="py-8">
-        <EventBadges
-          eventType={event.event_type}
-          price={event.price}
-          beneficiaryType={event.beneficiary_type}
-          certificateType={event.certificate_type}
-          eventHours={event.event_hours}
-        />
-      </div>
+    <div className="p-6 space-y-6">
+      <EventDescription description={event.description} />
+      
+      <EventInfo
+        date={isProject ? `من ${formatDate(event.start_date)} إلى ${formatDate(event.end_date)}` : formatDate(event.date)}
+        time={isProject ? undefined : formatTime12Hour(event.time)}
+        location={event.location}
+        eventType={event.event_type}
+        price={event.price}
+        maxAttendees={event.max_attendees}
+        currentAttendees={currentAttendees}
+        beneficiaryType={event.beneficiary_type}
+        certificateType={event.certificate_type}
+        eventHours={event.event_hours}
+        locationUrl={event.location_url}
+        status={status}
+        isProject={isProject}
+      />
 
-      <div className="py-8 px-8">
-        <EventInfo
-          date={event.date}
-          time={event.time}
-          location={event.location}
-          location_url={event.location_url}
-          attendees={registrationCounts?.[event.id] || 0}
-          maxAttendees={event.max_attendees}
-          eventType={event.event_type}
-          price={event.price}
-          beneficiaryType={event.beneficiary_type}
-          certificateType={event.certificate_type}
-          eventHours={event.event_hours}
-          eventPath={event.event_path}
-          eventCategory={event.event_category}
-          showBadges={false}
+      {onRegister && (
+        <EventRegisterButton
+          onClick={onRegister}
+          status={status}
+          isProject={isProject}
         />
-      </div>
-
-      <div className="py-8">
-        <EventDescription description={event.description} />
-      </div>
-
-      <div className="px-8 py-6">
-        <EventRegisterButton 
-          status={eventStatus}
-          onRegister={onRegister}
-        />
-      </div>
+      )}
     </div>
   );
 };
