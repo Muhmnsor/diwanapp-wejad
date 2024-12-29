@@ -101,8 +101,9 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     setIsAddEventOpen(true);
   };
 
-  const handleEditEvent = (event: any) => {
-    setSelectedEvent(event);
+  const handleEditEvent = (projectEvent: any) => {
+    console.log("Editing project event:", projectEvent);
+    setSelectedEvent(projectEvent);
     setIsEditEventOpen(true);
   };
 
@@ -152,6 +153,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
 
       toast.success('تم تحديث الفعالية بنجاح');
       refetchEvents();
+      setIsEditEventOpen(false);
     } catch (error) {
       console.error('Error updating event:', error);
       toast.error('حدث خطأ أثناء تحديث الفعالية');

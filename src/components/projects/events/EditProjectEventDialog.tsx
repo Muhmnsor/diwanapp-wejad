@@ -34,12 +34,14 @@ export const EditProjectEventDialog = ({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] [&_[data-radix-scroll-area-viewport]]:!pl-4 [&_[data-radix-scroll-area-viewport]]:!pr-0" dir="rtl">
         <EditProjectEventHeader />
         <ScrollArea className="h-[calc(90vh-120px)]">
-          <EditProjectEventFormContainer
-            event={event}
-            onSave={handleSave}
-            onCancel={() => onOpenChange(false)}
-            projectId={projectId}
-          />
+          <div className="space-y-6 pr-4">
+            <EditProjectEventFormContainer
+              event={event}
+              onSave={handleSave}
+              onCancel={() => onOpenChange(false)}
+              projectId={projectId}
+            />
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
