@@ -6,7 +6,7 @@ import {
 export const EditProjectEventHeader = () => {
   return (
     <DialogHeader className="text-right">
-      <DialogTitle className="text-right">تعديل فعالية المشروع</DialogTitle>
+      <DialogTitle className="text-right">تعديل نشاط المشروع</DialogTitle>
     </DialogHeader>
   );
 };
