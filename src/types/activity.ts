@@ -8,6 +8,8 @@ export interface ProjectActivity {
   location_url?: string;
   event_hours: number;
   special_requirements?: string;
+  project_id: string;
+  is_project_activity: boolean;
 }
 
 export interface ProjectActivityFormData {
