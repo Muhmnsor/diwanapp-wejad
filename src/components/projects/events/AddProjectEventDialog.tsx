@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { EventBasicFields } from "./form/EventBasicFields";
 import { EventDateTimeFields } from "./form/EventDateTimeFields";
 import { EventLocationFields } from "./form/EventLocationFields";
-import { ProjectEventFormData } from "./types";
+import { ProjectActivityFormData } from "@/components/projects/activities/types";
 
 interface AddProjectEventDialogProps {
   open: boolean;
@@ -22,7 +22,7 @@ export const AddProjectEventDialog = ({
   projectId,
   onSuccess
 }: AddProjectEventDialogProps) => {
-  const form = useForm<ProjectEventFormData>({
+  const form = useForm<ProjectActivityFormData>({
     defaultValues: {
       title: "",
       description: "",
@@ -31,27 +31,19 @@ export const AddProjectEventDialog = ({
       location: "",
       location_url: "",
       special_requirements: "",
-      attendees: 0,
       max_attendees: 0,
       event_type: "in-person",
-      eventType: "in-person",
       price: null,
       beneficiary_type: "both",
-      beneficiaryType: "both",
       certificate_type: "none",
-      certificateType: "none",
       event_path: "environment",
-      eventPath: "environment",
       event_category: "social",
-      eventCategory: "social",
       event_hours: 0,
-      eventHours: 0,
-      image_url: "/placeholder.svg",
-      imageUrl: "/placeholder.svg"
+      image_url: "/placeholder.svg"
     }
   });
 
-  const onSubmit = async (data: ProjectEventFormData) => {
+  const onSubmit = async (data: ProjectActivityFormData) => {
     try {
       console.log('Creating new project event:', data);
       
@@ -68,7 +60,6 @@ export const AddProjectEventDialog = ({
           special_requirements: data.special_requirements,
           event_type: data.event_type,
           max_attendees: data.max_attendees,
-          attendees: data.attendees,
           image_url: data.image_url,
           beneficiary_type: data.beneficiary_type,
           event_path: data.event_path,

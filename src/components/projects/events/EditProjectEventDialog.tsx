@@ -2,16 +2,16 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { ProjectEventFormData } from "../types";
+import { ProjectActivityFormData } from "@/components/projects/activities/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditProjectEventHeader } from "./EditProjectEventHeader";
 import { EditProjectEventFormContainer } from "./form/EditProjectEventFormContainer";
 
 interface EditProjectEventDialogProps {
-  event: ProjectEventFormData;
+  event: ProjectActivityFormData;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (updatedEvent: ProjectEventFormData) => void;
+  onSave: (updatedEvent: ProjectActivityFormData) => void;
   projectId: string;
 }
 
@@ -24,7 +24,7 @@ export const EditProjectEventDialog = ({
 }: EditProjectEventDialogProps) => {
   console.log('Event data in EditProjectEventDialog:', event);
 
-  const handleSave = async (updatedEvent: ProjectEventFormData) => {
+  const handleSave = async (updatedEvent: ProjectActivityFormData) => {
     await onSave(updatedEvent);
     onOpenChange(false);
   };
