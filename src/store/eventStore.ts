@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { BeneficiaryType, EventPathType, EventCategoryType } from '@/types/event';
-import { EventStatus } from '@/types/eventStatus';
 
 export interface Event {
   id?: string;
@@ -29,7 +28,6 @@ export interface Event {
   eventHours?: number;
   event_path: EventPathType;
   event_category: EventCategoryType;
-  status?: EventStatus;
 }
 
 interface EventStore {

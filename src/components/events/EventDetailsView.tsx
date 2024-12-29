@@ -37,7 +37,6 @@ export const EventDetailsView = ({
 
   console.log('EventDetailsView - User:', user);
   console.log('EventDetailsView - isAdmin:', isAdmin);
-  console.log('EventDetailsView - Event Data:', event);
 
   useEffect(() => {
     setCurrentEvent(event);
@@ -65,8 +64,6 @@ export const EventDetailsView = ({
 
   if (!currentEvent) return null;
 
-  const isProject = 'start_date' in currentEvent && 'end_date' in currentEvent;
-
   return (
     <div className="min-h-screen bg-gray-50">
       <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
@@ -74,18 +71,16 @@ export const EventDetailsView = ({
       <div className="container mx-auto px-4 -mt-10 relative z-10">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <EventTitle
-            title={isProject ? `مشروع: ${currentEvent.title}` : currentEvent.title}
+            title={currentEvent.title}
             isAdmin={isAdmin}
             onEdit={() => setIsEditDialogOpen(true)}
             onDelete={() => setIsDeleteDialogOpen(true)}
             onAddToCalendar={onAddToCalendar}
-            isProject={isProject}
           />
 
           <EventContent 
             event={currentEvent}
             onRegister={handleRegister}
-            isProject={isProject}
           />
         </div>
       </div>
