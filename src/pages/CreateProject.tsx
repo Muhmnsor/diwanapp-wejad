@@ -5,8 +5,6 @@ import { toast } from "sonner";
 import { Project } from "@/types/project";
 import { ProjectFormFields } from "@/components/projects/ProjectFormFields";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
-import { TopHeader } from "@/components/layout/TopHeader";
-import { Footer } from "@/components/layout/Footer";
 
 const CreateProject = () => {
   const navigate = useNavigate();
@@ -82,37 +80,33 @@ const CreateProject = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <TopHeader />
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">إنشاء مشروع جديد</h1>
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <ProjectFormFields
-              formData={formData}
-              setFormData={setFormData}
-              onImageChange={handleImageChange}
-            />
-            <div className="flex justify-start gap-2 mt-6">
-              <button
-                onClick={handleSubmit}
-                disabled={isLoading}
-                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
-              >
-                {isLoading ? "جاري الإنشاء..." : "إنشاء المشروع"}
-              </button>
-              <button
-                onClick={handleCancel}
-                disabled={isLoading}
-                className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
-              >
-                إلغاء
-              </button>
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">إنشاء مشروع جديد</h1>
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <ProjectFormFields
+            formData={formData}
+            setFormData={setFormData}
+            onImageChange={handleImageChange}
+          />
+          <div className="flex justify-start gap-2 mt-6">
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isLoading ? "جاري الإنشاء..." : "إنشاء المشروع"}
+            </button>
+            <button
+              onClick={handleCancel}
+              disabled={isLoading}
+              className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
+            >
+              إلغاء
+            </button>
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 };
