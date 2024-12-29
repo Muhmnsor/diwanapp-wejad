@@ -63,15 +63,6 @@ export const BasicEventFields = ({ formData, setFormData }: BasicEventFieldsProp
           dir="ltr"
         />
       </div>
-      <div>
-        <label className="text-sm font-medium block mb-1.5">متطلبات خاصة (اختياري)</label>
-        <Textarea
-          value={formData.special_requirements || ""}
-          onChange={(e) => setFormData({ ...formData, special_requirements: e.target.value })}
-          className="text-right"
-          placeholder="أي متطلبات أو احتياجات خاصة للفعالية..."
-        />
-      </div>
     </>
   );
 };
