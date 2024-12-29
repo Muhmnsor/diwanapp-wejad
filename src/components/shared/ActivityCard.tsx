@@ -9,10 +9,8 @@ import { useRegistrations } from "@/hooks/useRegistrations";
 interface ActivityCardProps {
   id: string;
   title: string;
-  date?: string;
-  start_date?: string;
-  end_date?: string;
-  location?: string;
+  date: string;
+  location: string;
   image_url: string;
   event_type: "online" | "in-person";
   price: number | null;
@@ -28,10 +26,8 @@ interface ActivityCardProps {
 export const ActivityCard = ({ 
   id, 
   title, 
-  date,
-  start_date,
-  end_date, 
-  location = "", 
+  date, 
+  location, 
   image_url, 
   event_type, 
   price,
@@ -47,16 +43,14 @@ export const ActivityCard = ({
   const currentAttendees = registrationCounts?.[id] || 0;
   
   const status = getEventStatus({
-    date: date || start_date,
+    date,
     time: "00:00",
     max_attendees,
     registrationStartDate: registration_start_date,
     registrationEndDate: registration_end_date,
     beneficiaryType: beneficiary_type,
-    attendees: currentAttendees,
-    isProject,
-    endDate: end_date
-  });
+    attendees: currentAttendees
+  } as any);
 
   const statusConfig = getRegistrationStatusConfig(status);
 
@@ -69,8 +63,7 @@ export const ActivityCard = ({
         </CardHeader>
         <CardContent>
           <EventCardContent
-            date={date || start_date}
-            endDate={end_date}
+            date={date}
             location={location}
             eventType={event_type}
             price={price}
@@ -79,7 +72,6 @@ export const ActivityCard = ({
             eventHours={event_hours}
             maxAttendees={max_attendees}
             status={statusConfig}
-            isProject={isProject}
           />
         </CardContent>
         <CardFooter className="p-4 pt-0">

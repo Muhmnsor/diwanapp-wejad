@@ -1,81 +1,60 @@
-import { CalendarIcon, MapPin, Users } from "lucide-react";
-import { EventTypeCardBadge } from "../badges/card/EventTypeCardBadge";
-import { BeneficiaryCardBadge } from "../badges/card/BeneficiaryCardBadge";
-import { PriceCardBadge } from "../badges/card/PriceCardBadge";
-import { CertificateCardBadge } from "../badges/card/CertificateCardBadge";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
+import { EventCardBadges } from "./EventCardBadges";
+import { EventCardDetails } from "./EventCardDetails";
+import { EventCardStatus } from "./EventCardStatus";
+import { Users } from "lucide-react";
 
-interface ProjectCardContentProps {
+interface EventCardContentProps {
   date: string;
-  endDate?: string;
-  location?: string;
+  location: string;
+  eventType: "online" | "in-person";
   price: number | null;
   beneficiaryType: string;
-  certificateType: string;
-  maxAttendees: number;
+  certificateType?: string;
+  eventHours?: number;
+  maxAttendees?: number;
   status: {
-    badge?: {
-      text: string;
-      className: string;
-    };
+    text: string;
+    variant: "default" | "secondary" | "destructive" | "accent";
+    color: string;
+    textColor: string;
   };
-  isProject?: boolean;
 }
 
 export const EventCardContent = ({
   date,
-  endDate,
   location,
+  eventType,
   price,
   beneficiaryType,
   certificateType,
+  eventHours,
   maxAttendees,
-  status,
-  isProject = false
-}: ProjectCardContentProps) => {
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return format(date, "dd MMMM yyyy", { locale: ar });
-  };
-
+  status
+}: EventCardContentProps) => {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm">
-        <CalendarIcon className="w-4 h-4" />
-        <span>
-          {isProject ? (
-            <>
-              {formatDate(date)} - {formatDate(endDate || date)}
-            </>
-          ) : (
-            formatDate(date)
-          )}
-        </span>
-      </div>
-      {location && (
-        <div className="flex items-center gap-2 text-sm">
-          <MapPin className="w-4 h-4" />
-          <span>{location}</span>
-        </div>
-      )}
-      <div className="flex items-center gap-2 text-sm">
-        <Users className="w-4 h-4" />
-        <span>{maxAttendees} مقعد</span>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <BeneficiaryCardBadge beneficiaryType={beneficiaryType} />
-        <PriceCardBadge price={price} />
-        {certificateType !== 'none' && (
-          <CertificateCardBadge certificateType={certificateType} />
-        )}
-      </div>
-      {status.badge && (
-        <div className="mt-2">
-          <span className={`inline-block px-2 py-1 text-xs rounded ${status.badge.className}`}>
-            {status.badge.text}
-          </span>
-        </div>
+    <div className="space-y-3 p-4 pt-0">
+      <EventCardBadges
+        eventType={eventType}
+        price={price}
+        beneficiaryType={beneficiaryType}
+        certificateType={certificateType}
+        eventHours={eventHours}
+      />
+      <EventCardDetails
+        date={date}
+        location={location}
+      />
+      {maxAttendees > 0 && (
+        <>
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
+            <Users className="w-4 h-4" />
+            <span>{maxAttendees} مقعد</span>
+          </div>
+          <EventCardStatus
+            maxAttendees={maxAttendees}
+            status={status}
+          />
+        </>
       )}
     </div>
   );

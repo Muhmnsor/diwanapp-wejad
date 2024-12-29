@@ -1,6 +1,7 @@
 import { Event } from "@/store/eventStore";
 import { EventStatus } from "@/types/eventStatus";
 import { getEventDateTime } from "./dateUtils";
+import { getStatusConfig } from "./eventStatusConfig";
 
 export const arabicToEnglishNum = (str: string) => {
   return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
@@ -16,54 +17,38 @@ export const isEventPassed = (event: Event): boolean => {
   return eventDateTime < now;
 };
 
-export const getEventStatus = (event: {
-  date: string;
-  time: string;
-  max_attendees: number;
-  registrationStartDate?: string | null;
-  registrationEndDate?: string | null;
-  beneficiaryType: string;
-  attendees: number;
-  isProject?: boolean;
-  endDate?: string;
-}): EventStatus => {
+export const getEventStatus = (event: Event): EventStatus => {
   if (!event) {
     console.log('Event is undefined in getEventStatus');
     return 'notStarted';
   }
 
   console.log('Checking event status for:', {
+    title: event.title,
     date: event.date,
     time: event.time,
-    registrationStartDate: event.registrationStartDate,
-    registrationEndDate: event.registrationEndDate,
+    registrationStartDate: event.registrationStartDate || event.registration_start_date,
+    registrationEndDate: event.registrationEndDate || event.registration_end_date,
     attendees: event.attendees,
-    max_attendees: event.max_attendees,
-    isProject: event.isProject,
-    endDate: event.endDate
+    max_attendees: event.max_attendees
   });
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const eventDateTime = getEventDateTime(event.date, event.time);
   
   // تحويل تواريخ التسجيل إلى كائنات Date
-  const registrationStartDate = event.registrationStartDate ? 
-    new Date(event.registrationStartDate) : null;
-  const registrationEndDate = event.registrationEndDate ? 
-    new Date(event.registrationEndDate) : null;
-
-  // للمشاريع، نستخدم تاريخ النهاية للتحقق من انتهاء المشروع
-  const eventDateTime = event.isProject && event.endDate ? 
-    new Date(event.endDate) : 
-    getEventDateTime(event.date, event.time);
+  const registrationStartDate = (event.registrationStartDate || event.registration_start_date) ? 
+    new Date(event.registrationStartDate || event.registration_start_date) : null;
+  const registrationEndDate = (event.registrationEndDate || event.registration_end_date) ? 
+    new Date(event.registrationEndDate || event.registration_end_date) : null;
 
   // تسجيل التواريخ للتحقق
   console.log('Registration dates:', {
     start: registrationStartDate?.toISOString(),
     end: registrationEndDate?.toISOString(),
     now: now.toISOString(),
-    today: today.toISOString(),
-    eventEnd: eventDateTime.toISOString()
+    today: today.toISOString()
   });
 
   // التحقق من بدء موعد التسجيل
@@ -95,15 +80,16 @@ export const getEventStatus = (event: {
     }
   }
 
-  // التحقق من بدء الفعالية أو المشروع
+  // التحقق من بدء الفعالية
   if (now >= eventDateTime) {
-    console.log('Event/Project has already started or ended');
+    console.log('Event has already started or ended');
     return 'eventStarted';
   }
 
   // التحقق من اكتمال العدد
-  if (event.max_attendees && event.attendees >= event.max_attendees) {
-    console.log('Event/Project is full - no more seats available');
+  const currentAttendees = typeof event.attendees === 'number' ? event.attendees : 0;
+  if (event.max_attendees && currentAttendees >= event.max_attendees) {
+    console.log('Event is full - no more seats available');
     return 'full';
   }
 
@@ -111,4 +97,4 @@ export const getEventStatus = (event: {
   return 'available';
 };
 
-export { getStatusConfig } from "./eventStatusConfig";
+export { getStatusConfig };
