@@ -9,7 +9,16 @@ interface ProjectsSectionProps {
 }
 
 export const ProjectsSection = ({ title, projects, registrations, isPastProjects = false }: ProjectsSectionProps) => {
-  if (projects.length === 0) {
+  // تحويل التواريخ إلى كائنات Date للمقارنة
+  const now = new Date();
+  
+  // فلترة المشاريع بناءً على تاريخ الانتهاء
+  const filteredProjects = projects.filter(project => {
+    const endDate = new Date(project.end_date);
+    return isPastProjects ? endDate < now : endDate >= now;
+  });
+
+  if (filteredProjects.length === 0) {
     return (
       <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
         <div className={`border-r-4 ${isPastProjects ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-8 flex items-center gap-2`}>
@@ -30,7 +39,7 @@ export const ProjectsSection = ({ title, projects, registrations, isPastProjects
         {isPastProjects && <History className="w-6 h-6 text-[#9F9EA1]" />}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {projects.map((project) => (
+        {filteredProjects.map((project) => (
           <div key={project.id} className={`flex justify-center ${isPastProjects ? 'opacity-75' : ''}`}>
             <ProjectCard 
               {...project}

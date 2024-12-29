@@ -3,8 +3,6 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { EventCardBadges } from "./events/cards/EventCardBadges";
 import { EventCardStatus } from "./events/cards/EventCardStatus";
 import { EventCardDetails } from "./events/cards/EventCardDetails";
-import { getEventStatus } from "@/utils/eventUtils";
-import { Event } from "@/store/eventStore";
 import { BeneficiaryType } from "@/types/event";
 
 interface ProjectCardProps {
@@ -42,30 +40,23 @@ export const ProjectCard = ({
   registration_start_date,
   registration_end_date,
 }: ProjectCardProps) => {
-  // Transform project dates to match event format for status checking
-  const projectAsEvent: Event = {
-    id,
-    title,
-    description,
-    date: end_date,
-    time: "00:00",
-    location: "",
-    event_type,
-    price: typeof price === "number" ? price : 0,
-    max_attendees,
-    attendees,
-    beneficiaryType: beneficiary_type,
-    registrationStartDate: registration_start_date,
-    registrationEndDate: registration_end_date,
-    certificateType: certificate_type,
-    eventHours: event_hours,
-    image_url,
-    location_url: "",
-    event_path: "environment",
-    event_category: "social"
-  };
+  // التحقق من حالة المشروع
+  const now = new Date();
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+  const regStartDate = registration_start_date ? new Date(registration_start_date) : null;
+  const regEndDate = registration_end_date ? new Date(registration_end_date) : null;
 
-  const status = getEventStatus(projectAsEvent);
+  let status = "available";
+  if (endDate < now) {
+    status = "ended";
+  } else if (attendees >= max_attendees) {
+    status = "full";
+  } else if (regStartDate && now < regStartDate) {
+    status = "notStarted";
+  } else if (regEndDate && now > regEndDate) {
+    status = "ended";
+  }
 
   return (
     <Link to={`/projects/${id}`}>
