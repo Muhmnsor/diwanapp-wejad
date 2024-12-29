@@ -41,11 +41,11 @@ export const ProjectDetailsView = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-12">
       <ProjectImage imageUrl={project.image_url} title={project.title} />
       
       <div className="container mx-auto px-4 -mt-10 relative z-10">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
           <ProjectTitle
             title={project.title}
             isAdmin={isAdmin}
@@ -66,7 +66,7 @@ export const ProjectDetailsView = ({
                 <ProjectContent project={project} />
               </TabsContent>
 
-              <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
+              <TabsContent value="dashboard" className="mt-6 px-4 md:px-8 pb-8">
                 <EventDashboard eventId={id} isProject={true} />
               </TabsContent>
             </Tabs>
