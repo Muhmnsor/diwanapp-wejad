@@ -1,64 +1,69 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { DashboardTabs } from "./dashboard/DashboardTabs";
-import { ProjectDashboardTabs } from "./dashboard/ProjectDashboardTabs";
+import { Event } from "@/store/eventStore";
+import { EventCard } from "./EventCard";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface EventDashboardProps {
   eventId: string;
   isProject?: boolean;
+  onEditEvent?: (event: Event) => void;
 }
 
-export const EventDashboard = ({ eventId, isProject = false }: EventDashboardProps) => {
-  const [data, setData] = useState<any>(null);
+export const EventDashboard = ({ 
+  eventId, 
+  isProject = false,
+  onEditEvent
+}: EventDashboardProps) => {
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchEvents = async () => {
+      setLoading(true);
       try {
-        console.log(`Fetching ${isProject ? 'project' : 'event'} details for dashboard:`, eventId);
-        
-        const { data: result, error: fetchError } = await supabase
-          .from(isProject ? 'projects' : 'events')
-          .select('*')
-          .eq('id', eventId)
-          .maybeSingle();
-
-        if (fetchError) {
-          console.error(`Error fetching ${isProject ? 'project' : 'event'}:`, fetchError);
-          setError(fetchError.message);
-          return;
-        }
-
-        if (!result) {
-          console.log(`No ${isProject ? 'project' : 'event'} found with ID:`, eventId);
-          setError(`${isProject ? 'المشروع' : 'الفعالية'} غير موجود`);
-          return;
-        }
-
-        setData(result);
-      } catch (err) {
-        console.error('Error in fetchData:', err);
-        setError('حدث خطأ غير متوقع');
+        // Fetch events logic here
+        // Example: const response = await fetch(`/api/events/${eventId}`);
+        // const data = await response.json();
+        // setEvents(data);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        toast.error("حدث خطأ أثناء تحميل الفعاليات");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [eventId, isProject]);
+    fetchEvents();
+  }, [eventId]);
+
+  const handleEditEvent = (event: Event) => {
+    if (isProject && onEditEvent) {
+      onEditEvent(event);
+    } else {
+      // Handle regular event editing
+      // Example: setSelectedEvent(event);
+      // setIsEditDialogOpen(true);
+    }
+  };
 
   if (loading) {
-    return <div className="p-4">جاري التحميل...</div>;
+    return <div>Loading...</div>;
   }
 
-  if (error) {
-    return <div className="p-4 text-red-500">{error}</div>;
-  }
-
-  return isProject ? (
-    <ProjectDashboardTabs project={data} />
-  ) : (
-    <DashboardTabs event={data} />
+  return (
+    <div>
+      <h2 className="text-lg font-semibold mb-4">فعاليات</h2>
+      <div className="grid grid-cols-1 gap-4">
+        {events.map((event) => (
+          <EventCard 
+            key={event.id} 
+            event={event} 
+            onEdit={() => handleEditEvent(event)} 
+          />
+        ))}
+      </div>
+      <Button onClick={() => {/* Logic to add new event */}}>إضافة فعالية جديدة</Button>
+    </div>
   );
 };

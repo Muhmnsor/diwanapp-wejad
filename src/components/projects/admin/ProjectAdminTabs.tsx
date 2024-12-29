@@ -1,40 +1,57 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Project } from "@/types/project";
 import { EventDashboard } from "@/components/admin/EventDashboard";
+import { ProjectContent } from "../ProjectContent";
+import { Project } from "@/types/project";
+import { Event } from "@/store/eventStore";
+import { EditProjectEventDialog } from "../events/EditProjectEventDialog";
+import { useState } from "react";
 
 interface ProjectAdminTabsProps {
   project: Project;
-  isAdmin: boolean;
   id: string;
 }
 
-export const ProjectAdminTabs = ({
-  project,
-  isAdmin,
-  id,
-}: ProjectAdminTabsProps) => {
-  console.log('ProjectAdminTabs - isAdmin:', isAdmin);
+export const ProjectAdminTabs = ({ project, id }: ProjectAdminTabsProps) => {
+  const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  if (!isAdmin) return null;
+  const handleEditEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setIsEditEventDialogOpen(true);
+  };
+
+  const handleUpdateEvent = async (updatedEvent: Event) => {
+    // Handle event update logic here
+    console.log('Updating project event:', updatedEvent);
+  };
 
   return (
-    <div className="container mx-auto px-4">
-      <Tabs defaultValue="details" className="w-full">
-        <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
-          <TabsTrigger value="details">تفاصيل المشروع</TabsTrigger>
-          <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="details" className="mt-0">
-          <div className="py-6">
-            {/* Project details content will be rendered in ProjectDetailsView */}
-          </div>
-        </TabsContent>
+    <Tabs defaultValue="details" className="w-full">
+      <TabsList className="w-full justify-start border-b rounded-none bg-white grid grid-cols-2" dir="rtl">
+        <TabsTrigger value="details" className="flex-1">تفاصيل المشروع</TabsTrigger>
+        <TabsTrigger value="dashboard" className="flex-1">لوحة التحكم</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="details" className="mt-0">
+        <ProjectContent project={project} />
+      </TabsContent>
 
-        <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
-          <EventDashboard eventId={id} />
-        </TabsContent>
-      </Tabs>
-    </div>
+      <TabsContent value="dashboard" className="mt-6 px-4 md:px-8 pb-8">
+        <EventDashboard 
+          eventId={id} 
+          isProject={true} 
+          onEditEvent={handleEditEvent}
+        />
+      </TabsContent>
+
+      {selectedEvent && (
+        <EditProjectEventDialog
+          event={selectedEvent}
+          open={isEditEventDialogOpen}
+          onOpenChange={setIsEditEventDialogOpen}
+          onSave={handleUpdateEvent}
+        />
+      )}
+    </Tabs>
   );
 };
