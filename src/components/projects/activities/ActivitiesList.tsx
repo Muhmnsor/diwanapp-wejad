@@ -1,7 +1,22 @@
 import { ActivityCard } from "./ActivityCard";
 
 interface ActivitiesListProps {
-  activities: any[];
+  activities: Array<{
+    id: string;
+    title: string;
+    date: string;
+    location: string;
+    image_url: string;
+    event_type: "online" | "in-person";
+    price: number | null;
+    max_attendees?: number;
+    registration_start_date?: string | null;
+    registration_end_date?: string | null;
+    beneficiary_type: string;
+    certificate_type?: string;
+    event_hours?: number;
+    is_visible?: boolean;
+  }>;
   onEditActivity: (activity: any) => void;
   onDeleteActivity: (activity: any) => void;
 }
@@ -21,10 +36,10 @@ export const ActivitiesList = ({
 
   return (
     <div className="space-y-4">
-      {activities.map((activity: any) => (
+      {activities.map((activity) => (
         <ActivityCard
           key={activity.id}
-          activity={activity}
+          {...activity}
           onEdit={() => onEditActivity(activity)}
           onDelete={() => onDeleteActivity(activity)}
         />

@@ -24,6 +24,8 @@ interface ActivityCardProps {
   event_hours?: number;
   is_visible?: boolean;
   className?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export const ActivityCard = ({ 
@@ -41,7 +43,9 @@ export const ActivityCard = ({
   certificate_type = 'none',
   event_hours = 0,
   is_visible = true,
-  className = ""
+  className = "",
+  onEdit,
+  onDelete
 }: ActivityCardProps) => {
   const { data: registrationCounts } = useRegistrations();
   const currentAttendees = registrationCounts?.[id] || 0;
@@ -103,10 +107,24 @@ export const ActivityCard = ({
             status={statusConfig}
           />
         </CardContent>
-        <CardFooter className="p-4 pt-0">
+        <CardFooter className="p-4 pt-0 flex justify-between">
           <Button asChild className="w-full" size="sm">
             <Link to={`/events/${id}`}>عرض التفاصيل</Link>
           </Button>
+          {(onEdit || onDelete) && (
+            <div className="flex gap-2 mr-2">
+              {onEdit && (
+                <Button variant="outline" size="sm" onClick={onEdit}>
+                  تعديل
+                </Button>
+              )}
+              {onDelete && (
+                <Button variant="outline" size="sm" onClick={onDelete}>
+                  حذف
+                </Button>
+              )}
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>
