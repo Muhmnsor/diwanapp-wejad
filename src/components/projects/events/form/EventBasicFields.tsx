@@ -2,10 +2,10 @@ import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/for
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
-import { ProjectEventFormData } from "../types";
+import { Event } from "@/store/eventStore";
 
 interface EventBasicFieldsProps {
-  form: UseFormReturn<ProjectEventFormData>;
+  form: UseFormReturn<Event>;
 }
 
 export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
