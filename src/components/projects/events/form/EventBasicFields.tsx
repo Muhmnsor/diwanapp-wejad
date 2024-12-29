@@ -1,5 +1,6 @@
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
 import { ProjectActivityFormData } from "@/components/projects/activities/types";
 
@@ -22,14 +23,19 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>وصف النشاط</FormLabel>
+            <FormLabel>نموذج النشاط</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Textarea 
+                {...field} 
+                placeholder="وصف تفصيلي للنشاط..."
+                className="min-h-[100px] resize-y"
+              />
             </FormControl>
           </FormItem>
         )}
