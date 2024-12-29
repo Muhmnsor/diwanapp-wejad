@@ -81,7 +81,7 @@ export const DashboardStats = ({
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{occupancyRate.toFixed(1)}%</div>
+          <div className="text-2xl font-bold">{occupancyRate?.toFixed(1) || 0}%</div>
           {eventPath && eventCategory && (
             <p className="text-xs text-muted-foreground mt-1">
               {formatEventPath(eventPath)} - {formatEventCategory(eventCategory)}

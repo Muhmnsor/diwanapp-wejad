@@ -3,34 +3,40 @@ import { DashboardOverview } from "../DashboardOverview";
 import { DashboardRegistrations } from "../DashboardRegistrations";
 import { ReportsTab } from "./ReportsTab";
 import { FeedbackTab } from "./FeedbackTab";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardTabsProps {
-  registrationCount: number;
-  remainingSeats: number;
-  occupancyRate: number;
-  eventDate: string;
-  eventTime: string;
-  registrations: any[];
-  eventTitle: string;
-  eventId: string;
-  eventPath?: string;
-  eventCategory?: string;
+  event: {
+    id: string;
+    max_attendees: number;
+    date: string;
+    time: string;
+    event_path?: string;
+    event_category?: string;
+  };
+  isProject?: boolean;
 }
 
-export const DashboardTabs = ({
-  registrationCount,
-  remainingSeats,
-  occupancyRate,
-  eventDate,
-  eventTime,
-  eventId,
-  eventPath,
-  eventCategory,
-}: DashboardTabsProps) => {
-  console.log("DashboardTabs props:", {
-    eventPath,
-    eventCategory
+export const DashboardTabs = ({ event, isProject = false }: DashboardTabsProps) => {
+  // Fetch registrations count
+  const { data: registrations = [] } = useQuery({
+    queryKey: ['registrations', event.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq(isProject ? 'project_id' : 'event_id', event.id);
+
+      if (error) throw error;
+      return data || [];
+    },
   });
+
+  // Calculate dashboard metrics
+  const registrationCount = registrations.length;
+  const remainingSeats = event.max_attendees - registrationCount;
+  const occupancyRate = (registrationCount / event.max_attendees) * 100;
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
@@ -66,23 +72,23 @@ export const DashboardTabs = ({
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
           occupancyRate={occupancyRate}
-          eventDate={eventDate}
-          eventTime={eventTime}
-          eventPath={eventPath}
-          eventCategory={eventCategory}
+          eventDate={event.date}
+          eventTime={event.time}
+          eventPath={event.event_path}
+          eventCategory={event.event_category}
         />
       </TabsContent>
 
       <TabsContent value="registrations" className="mt-6">
-        <DashboardRegistrations eventId={eventId} />
+        <DashboardRegistrations eventId={event.id} />
       </TabsContent>
 
       <TabsContent value="report" className="mt-6">
-        <ReportsTab eventId={eventId} />
+        <ReportsTab eventId={event.id} />
       </TabsContent>
 
       <TabsContent value="feedback" className="mt-6">
-        <FeedbackTab eventId={eventId} />
+        <FeedbackTab eventId={event.id} />
       </TabsContent>
     </Tabs>
   );
