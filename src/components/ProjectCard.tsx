@@ -4,6 +4,7 @@ import { EventCardBadges } from "./events/cards/EventCardBadges";
 import { EventCardStatus } from "./events/cards/EventCardStatus";
 import { EventCardDetails } from "./events/cards/EventCardDetails";
 import { getEventStatus } from "@/utils/eventUtils";
+import { Event } from "@/store/eventStore";
 
 interface ProjectCardProps {
   id: string;
@@ -41,13 +42,26 @@ export const ProjectCard = ({
   registration_end_date,
 }: ProjectCardProps) => {
   // Transform project dates to match event format for status checking
-  const projectAsEvent = {
+  const projectAsEvent: Event = {
+    id,
+    title,
+    description,
     date: end_date,
     time: "00:00",
-    registrationStartDate: registration_start_date,
-    registrationEndDate: registration_end_date,
+    location: "",
+    event_type,
+    price: typeof price === "number" ? price : 0,
     max_attendees,
     attendees,
+    beneficiaryType: beneficiary_type,
+    registrationStartDate: registration_start_date,
+    registrationEndDate: registration_end_date,
+    certificateType: certificate_type,
+    eventHours: event_hours,
+    image_url,
+    location_url: "",
+    event_path: "environment",
+    event_category: "social"
   };
 
   const status = getEventStatus(projectAsEvent);
@@ -61,7 +75,15 @@ export const ProjectCard = ({
             alt={title}
             className="w-full h-48 object-cover"
           />
-          <EventCardStatus status={status} className="absolute top-4 left-4" />
+          <EventCardStatus 
+            status={{
+              text: status,
+              variant: "default",
+              color: "bg-primary",
+              textColor: "text-white"
+            }} 
+            className="absolute top-4 left-4" 
+          />
         </div>
 
         <CardContent className="p-4">
@@ -70,7 +92,7 @@ export const ProjectCard = ({
 
           <EventCardBadges
             eventType={event_type}
-            price={price}
+            price={typeof price === "number" ? price : 0}
             beneficiaryType={beneficiary_type}
             certificateType={certificate_type}
             eventHours={event_hours}
@@ -80,7 +102,7 @@ export const ProjectCard = ({
         <CardFooter className="bg-gray-50 p-4">
           <EventCardDetails
             date={start_date}
-            endDate={end_date}
+            end={end_date}
             attendees={attendees}
             maxAttendees={max_attendees}
           />

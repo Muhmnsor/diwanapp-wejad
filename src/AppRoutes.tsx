@@ -5,6 +5,7 @@ import Dashboard from '@/pages/Dashboard';
 import Settings from '@/pages/Settings';
 import Users from '@/pages/Users';
 import EventDetails from '@/pages/EventDetails';
+import ProjectDetails from '@/pages/ProjectDetails';
 import CreateEvent from '@/pages/CreateEvent';
 import EventFeedback from '@/pages/EventFeedback';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -40,6 +41,7 @@ export const AppRoutes = () => {
         }
       />
       <Route path="/events/:id" element={<EventDetails />} />
+      <Route path="/projects/:id" element={<ProjectDetails />} />
       <Route
         path="/create-event"
         element={
