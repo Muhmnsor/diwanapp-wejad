@@ -1,20 +1,23 @@
-import { Routes, Route } from 'react-router-dom';
-import Index from '@/pages/Index';
-import Login from '@/pages/Login';
-import Dashboard from '@/pages/Dashboard';
-import Settings from '@/pages/Settings';
-import Users from '@/pages/Users';
-import EventDetails from '@/pages/EventDetails';
-import CreateEvent from '@/pages/CreateEvent';
-import EventFeedback from '@/pages/EventFeedback';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import { Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
+import Users from "./pages/Users";
+import EventDetails from "./pages/EventDetails";
+import CreateEvent from "./pages/CreateEvent";
+import EventFeedback from "./pages/EventFeedback";
+import ProjectDetails from "./pages/ProjectDetails";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
-export const AppRoutes = () => {
-  console.log('AppRoutes rendering');
+const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/events/:id" element={<EventDetails />} />
+      <Route path="/projects/:id" element={<ProjectDetails />} />
+      <Route path="/events/:id/feedback" element={<EventFeedback />} />
       <Route
         path="/dashboard"
         element={
@@ -39,16 +42,16 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route path="/events/:id" element={<EventDetails />} />
       <Route
-        path="/create-event"
+        path="/events/create"
         element={
           <ProtectedRoute>
             <CreateEvent />
           </ProtectedRoute>
         }
       />
-      <Route path="/events/:id/feedback" element={<EventFeedback />} />
     </Routes>
   );
 };
+
+export default AppRoutes;
