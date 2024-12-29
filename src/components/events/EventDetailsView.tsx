@@ -35,7 +35,8 @@ export const EventDetailsView = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
 
-  console.log('EventDetailsView - Current Event/Project:', currentEvent);
+  console.log('EventDetailsView - User:', user);
+  console.log('EventDetailsView - isAdmin:', isAdmin);
 
   useEffect(() => {
     setCurrentEvent(event);
@@ -63,9 +64,6 @@ export const EventDetailsView = ({
 
   if (!currentEvent) return null;
 
-  // Check if this is a project by looking for start_date
-  const isProject = 'start_date' in currentEvent;
-
   return (
     <div className="min-h-screen bg-gray-50">
       <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
@@ -78,13 +76,11 @@ export const EventDetailsView = ({
             onEdit={() => setIsEditDialogOpen(true)}
             onDelete={() => setIsDeleteDialogOpen(true)}
             onAddToCalendar={onAddToCalendar}
-            isProject={isProject}
           />
 
           <EventContent 
             event={currentEvent}
             onRegister={handleRegister}
-            isProject={isProject}
           />
         </div>
       </div>

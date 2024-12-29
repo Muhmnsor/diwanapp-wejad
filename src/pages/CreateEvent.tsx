@@ -9,6 +9,7 @@ import { Event } from "@/store/eventStore";
 import { EventFormActions } from "@/components/events/form/EventFormActions";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Rename the function to match the file name and use default export
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -26,7 +27,7 @@ const CreateEvent = () => {
     certificateType: "none",
     event_hours: 0,
     eventHours: 0,
-    price: null,
+    price: "free",
     max_attendees: 0,
     beneficiaryType: "both",
     event_type: "in-person",
@@ -69,7 +70,7 @@ const CreateEvent = () => {
             certificateType: event.certificate_type || "none",
             event_hours: event.event_hours || 0,
             eventHours: event.event_hours || 0,
-            price: event.price,
+            price: event.price || "free",
             max_attendees: event.max_attendees || 0,
             beneficiaryType: event.beneficiary_type || "both",
             event_type: event.event_type || "in-person",
@@ -107,7 +108,7 @@ const CreateEvent = () => {
         location: formData.location,
         certificate_type: formData.certificate_type,
         event_hours: formData.event_hours,
-        price: formData.price,
+        price: formData.price === "free" ? null : formData.price,
         max_attendees: formData.max_attendees,
         beneficiary_type: formData.beneficiaryType,
         event_type: formData.event_type,

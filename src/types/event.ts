@@ -1,4 +1,4 @@
-export type BeneficiaryType = 'men' | 'women' | 'both' | 'children' | 'all';
+export type BeneficiaryType = 'men' | 'women' | 'both';
 
 export type EventPathType = 'environment' | 'community' | 'content';
 export type EventCategoryType = 
@@ -20,7 +20,7 @@ export interface EventType {
   max_attendees: number;
   event_type: "online" | "in-person";
   eventType: "online" | "in-person";
-  price: number | null;
+  price: number | "free";
   beneficiaryType: BeneficiaryType;
   beneficiary_type: BeneficiaryType;
   registrationStartDate?: string | null;
@@ -35,7 +35,4 @@ export interface EventType {
   event_path: EventPathType;
   eventCategory: EventCategoryType;
   event_category: EventCategoryType;
-  // Project specific fields
-  start_date?: string;
-  end_date?: string;
 }

@@ -50,7 +50,7 @@ export const EditEventFormContainer = ({
         imageUrl = publicUrl;
       }
 
-      const price = formData.price === null ? null : Number(formData.price);
+      const price = formData.price === "free" ? null : formData.price;
 
       const eventToSave: Event = {
         ...formData,
