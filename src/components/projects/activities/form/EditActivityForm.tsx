@@ -31,6 +31,8 @@ export const EditActivityForm = ({
   isLoading,
   handleSubmit: onSubmit
 }: EditActivityFormProps) => {
+  console.log('EditActivityForm - Initializing with activity:', activity);
+  
   const form = useForm<ProjectActivityFormData>({
     defaultValues: {
       title: activity.title || "",
@@ -44,9 +46,14 @@ export const EditActivityForm = ({
     }
   });
 
+  const handleFormSubmit = async (data: ProjectActivityFormData) => {
+    console.log('EditActivityForm - Submitting form with data:', data);
+    await onSubmit(data);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pr-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 pr-4">
         <ActivityBasicFields form={form} />
         <ActivityDateTimeFields form={form} />
         <ActivityLocationFields form={form} />

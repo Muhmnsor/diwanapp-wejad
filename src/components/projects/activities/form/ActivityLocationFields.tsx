@@ -10,7 +10,7 @@ interface ActivityLocationFieldsProps {
 
 export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4">
       <FormField
         control={form.control}
         name="location"
@@ -39,6 +39,24 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
 
       <FormField
         control={form.control}
+        name="event_hours"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>مدة النشاط (بالساعات)</FormLabel>
+            <FormControl>
+              <Input 
+                type="number" 
+                {...field} 
+                min="0"
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="special_requirements"
         render={({ field }) => (
           <FormItem>
@@ -49,6 +67,6 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 };
