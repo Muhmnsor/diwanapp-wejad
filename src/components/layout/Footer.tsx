@@ -9,7 +9,7 @@ export const Footer = () => {
           {/* Left Side - Logo and Social Links */}
           <div className="order-last md:order-last flex flex-col items-center justify-between">
             <img 
-              src="/lovable-uploads/2f147e3a-170c-48d5-acdf-219169839b0a.png" 
+              src="/lovable-uploads/eca67883-2474-4656-a5b3-5abaf42f015b.png" 
               alt="Diwan Logo" 
               className="w-full h-auto max-w-xl mb-6"
             />
