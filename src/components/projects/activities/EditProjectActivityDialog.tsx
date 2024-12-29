@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ProjectActivity } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,8 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 interface EditProjectActivityDialogProps {
   activity: ProjectActivity;
@@ -76,6 +78,7 @@ export const EditProjectActivityDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
+        <DialogTitle>تعديل النشاط</DialogTitle>
         <ScrollArea className="h-[calc(90vh-120px)]">
           <div className="space-y-6 pr-4">
             <Form {...form}>
@@ -83,6 +86,19 @@ export const EditProjectActivityDialog = ({
                 <EventBasicFields form={form} />
                 <EventDateTimeFields form={form} />
                 <EventLocationFields form={form} />
+                
+                <FormField
+                  control={form.control}
+                  name="event_hours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>مدة النشاط (بالساعات)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} min="0" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
                 
                 <div className="flex justify-end gap-2">
                   <Button 
