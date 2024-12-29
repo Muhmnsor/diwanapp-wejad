@@ -15,7 +15,7 @@ interface EventCardProps {
   location: string;
   image_url: string;
   event_type: "online" | "in-person";
-  price: number | null;
+  price: number | "free" | null;  // Updated to match Event type
   max_attendees?: number;
   registration_start_date?: string | null;
   registration_end_date?: string | null;
@@ -24,7 +24,7 @@ interface EventCardProps {
   event_hours?: number;
   is_visible?: boolean;
   className?: string;
-  onEdit?: () => void;  // Added this prop
+  onEdit?: () => void;
 }
 
 export const EventCard = ({ 
