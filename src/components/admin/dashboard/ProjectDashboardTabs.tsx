@@ -160,28 +160,28 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
-      <TabsList className="w-full justify-start bg-secondary/20 p-1 rounded-xl">
+      <TabsList className="w-full grid grid-cols-4 bg-secondary/20 p-1 rounded-xl">
         <TabsTrigger 
           value="overview" 
-          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+          className="data-[state=active]:bg-white"
         >
           نظرة عامة
         </TabsTrigger>
         <TabsTrigger 
           value="registrations"
-          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+          className="data-[state=active]:bg-white"
         >
           المسجلين
         </TabsTrigger>
         <TabsTrigger 
           value="events"
-          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+          className="data-[state=active]:bg-white"
         >
           الفعاليات والأنشطة
         </TabsTrigger>
         <TabsTrigger 
           value="reports"
-          className="flex-1 max-w-[200px] data-[state=active]:bg-white"
+          className="data-[state=active]:bg-white"
         >
           التقارير
         </TabsTrigger>
