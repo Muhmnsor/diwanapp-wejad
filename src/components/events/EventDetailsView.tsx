@@ -9,6 +9,8 @@ import { useAuthStore } from "@/store/authStore";
 import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventUpdate } from "./details/handlers/EventUpdateHandler";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -62,6 +64,23 @@ export const EventDetailsView = ({
     setIsDeleteDialogOpen(false);
   };
 
+  const handleVisibilityChange = async (visible: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ is_visible: visible })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setCurrentEvent(prev => prev ? { ...prev, is_visible: visible } : null);
+      toast.success(visible ? 'تم إظهار الفعالية' : 'تم إخفاء الفعالية');
+    } catch (error) {
+      console.error('Error updating event visibility:', error);
+      toast.error('حدث خطأ أثناء تحديث حالة الظهور');
+    }
+  };
+
   if (!currentEvent) return null;
 
   return (
@@ -76,6 +95,8 @@ export const EventDetailsView = ({
             onEdit={() => setIsEditDialogOpen(true)}
             onDelete={() => setIsDeleteDialogOpen(true)}
             onAddToCalendar={onAddToCalendar}
+            isVisible={currentEvent.is_visible}
+            onVisibilityChange={handleVisibilityChange}
           />
 
           <EventContent 

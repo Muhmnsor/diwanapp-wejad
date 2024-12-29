@@ -28,6 +28,7 @@ export interface Event {
   eventHours?: number;
   event_path: EventPathType;
   event_category: EventCategoryType;
+  is_visible?: boolean;
 }
 
 interface EventStore {
