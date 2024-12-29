@@ -9,6 +9,7 @@ import { Event } from "@/store/eventStore";
 import { EventFormActions } from "@/components/events/form/EventFormActions";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Rename the function to match the file name and use default export
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { id } = useParams();
