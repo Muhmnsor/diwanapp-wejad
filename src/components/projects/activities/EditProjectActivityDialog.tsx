@@ -5,6 +5,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EditActivityForm } from "./form/EditActivityForm";
+import { useNavigate } from "react-router-dom";
 
 interface EditProjectActivityDialogProps {
   activity: ProjectActivity;
@@ -22,6 +23,7 @@ export const EditProjectActivityDialog = ({
   projectId
 }: EditProjectActivityDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   console.log('Activity data in EditProjectActivityDialog:', activity);
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
@@ -46,6 +48,8 @@ export const EditProjectActivityDialog = ({
       toast.success("تم تحديث النشاط بنجاح");
       onSave();
       onOpenChange(false);
+      // Refresh the current page instead of navigating away
+      window.location.reload();
     } catch (error) {
       console.error('Error updating activity:', error);
       toast.error("حدث خطأ أثناء تحديث النشاط");
