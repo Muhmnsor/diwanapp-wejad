@@ -37,23 +37,11 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     queryKey: ['project-activities', project.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('project_events')
-        .select(`
-          *,
-          event:events (
-            id,
-            title,
-            description,
-            date,
-            time,
-            location,
-            location_url,
-            special_requirements,
-            event_hours
-          )
-        `)
+        .from('events')
+        .select('*')
         .eq('project_id', project.id)
-        .order('event_order', { ascending: true });
+        .eq('is_project_activity', true)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
       return data || [];

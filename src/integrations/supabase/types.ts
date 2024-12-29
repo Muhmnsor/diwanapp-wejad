@@ -263,6 +263,7 @@ export type Database = {
           location_url: string | null
           max_attendees: number
           price: number | null
+          project_id: string | null
           registration_end_date: string | null
           registration_start_date: string | null
           special_requirements: string | null
@@ -287,6 +288,7 @@ export type Database = {
           location_url?: string | null
           max_attendees?: number
           price?: number | null
+          project_id?: string | null
           registration_end_date?: string | null
           registration_start_date?: string | null
           special_requirements?: string | null
@@ -311,13 +313,22 @@ export type Database = {
           location_url?: string | null
           max_attendees?: number
           price?: number | null
+          project_id?: string | null
           registration_end_date?: string | null
           registration_start_date?: string | null
           special_requirements?: string | null
           time?: string
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_logs: {
         Row: {
@@ -432,45 +443,6 @@ export type Database = {
           id?: string
         }
         Relationships: []
-      }
-      project_events: {
-        Row: {
-          created_at: string
-          event_id: string
-          event_order: number
-          id: string
-          project_id: string
-        }
-        Insert: {
-          created_at?: string
-          event_id: string
-          event_order: number
-          id?: string
-          project_id: string
-        }
-        Update: {
-          created_at?: string
-          event_id?: string
-          event_order?: number
-          id?: string
-          project_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_events_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       projects: {
         Row: {
