@@ -1,18 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { EventStatus } from "@/types/eventStatus";
 import { getStatusConfig } from "@/utils/eventStatusConfig";
-import { useEffect } from "react";
 
 interface EventRegisterButtonProps {
   status: EventStatus;
   onRegister: () => void;
+  isProject?: boolean;
 }
 
-export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonProps) => {
-  useEffect(() => {
-    console.log('EventRegisterButton status:', status);
-  }, [status]);
-  
+export const EventRegisterButton = ({ status, onRegister, isProject = false }: EventRegisterButtonProps) => {
   const config = getStatusConfig(status);
 
   return (
@@ -23,7 +19,7 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
       disabled={config.disabled}
       variant={status === 'available' ? 'default' : 'secondary'}
     >
-      {config.text}
+      {isProject ? "سجل في المشروع" : config.text}
     </Button>
   );
 };

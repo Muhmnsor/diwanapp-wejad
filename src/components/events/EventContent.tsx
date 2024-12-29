@@ -6,6 +6,7 @@ import { formatDateWithDay } from "@/utils/dateTimeUtils";
 import { formatTime12Hour } from "@/utils/dateTimeUtils";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useRegistrations } from "@/hooks/useRegistrations";
+import { EventStatus } from "@/types/eventStatus";
 
 interface EventContentProps {
   event: Event;
@@ -15,7 +16,7 @@ interface EventContentProps {
 
 export const EventContent = ({ event, onRegister, isProject = false }: EventContentProps) => {
   const { data: registrationCounts } = useRegistrations();
-  const currentAttendees = registrationCounts?.[event.id] || 0;
+  const currentAttendees = registrationCounts?.[event.id || ''] || 0;
 
   const status = getEventStatus({
     date: event.date,
@@ -54,7 +55,7 @@ export const EventContent = ({ event, onRegister, isProject = false }: EventCont
 
       {onRegister && (
         <EventRegisterButton
-          onClick={onRegister}
+          onRegister={onRegister}
           status={status}
           isProject={isProject}
         />

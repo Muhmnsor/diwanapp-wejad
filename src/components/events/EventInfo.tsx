@@ -11,7 +11,7 @@ interface EventInfoProps {
   time?: string;
   location: string;
   eventType: string;
-  price: number | null;
+  price: number;
   maxAttendees: number;
   currentAttendees: number;
   beneficiaryType: string;
@@ -67,10 +67,10 @@ export const EventInfo = ({
       </div>
 
       <div className="flex flex-wrap gap-2 pt-4">
-        <EventTypeCardBadge type={eventType} />
-        <BeneficiaryCardBadge type={beneficiaryType} />
+        <EventTypeCardBadge eventType={eventType} />
+        <BeneficiaryCardBadge beneficiaryType={beneficiaryType} />
         <PriceCardBadge price={price} />
-        <CertificateCardBadge type={certificateType} />
+        <CertificateCardBadge certificateType={certificateType} />
         {eventHours && <HoursCardBadge hours={eventHours} />}
       </div>
 
