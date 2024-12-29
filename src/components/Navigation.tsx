@@ -70,7 +70,7 @@ export const Navigation = () => {
       )}
       {isAuthenticated && (
         <div className="flex gap-2">
-          <Link to="/create-event">
+          <Link to="/events/create">
             <Button 
               variant="outline" 
               size={isMobile ? "icon" : "sm"} 
