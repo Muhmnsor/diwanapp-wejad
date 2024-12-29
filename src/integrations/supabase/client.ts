@@ -7,11 +7,24 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined
+    storage: localStorage,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
   },
   global: {
     headers: {
       'apikey': supabaseAnonKey
     }
+  }
+});
+
+// Listen for auth state changes
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth state changed:', event, session?.user?.id);
+  
+  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+    // Clear any auth data from localStorage
+    localStorage.removeItem('supabase.auth.token');
+    console.log('Cleared auth data from localStorage');
   }
 });
