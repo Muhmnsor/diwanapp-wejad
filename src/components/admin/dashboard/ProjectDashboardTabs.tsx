@@ -4,7 +4,7 @@ import { DashboardRegistrations } from "../DashboardRegistrations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportsTab } from "./ReportsTab";
-import { ProjectEventsTab } from "@/components/projects/dashboard/ProjectEventsTab";
+import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -34,9 +34,9 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     },
   });
 
-  // Fetch project events
-  const { data: projectEvents = [], refetch: refetchEvents } = useQuery({
-    queryKey: ['project-events', project.id],
+  // Fetch project activities
+  const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
+    queryKey: ['project-activities', project.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('project_events')
@@ -93,10 +93,10 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           المسجلين
         </TabsTrigger>
         <TabsTrigger 
-          value="events"
+          value="activities"
           className="data-[state=active]:bg-white"
         >
-          الفعاليات والأنشطة
+          الأنشطة
         </TabsTrigger>
         <TabsTrigger 
           value="reports"
@@ -122,11 +122,11 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
         <DashboardRegistrations eventId={project.id} />
       </TabsContent>
 
-      <TabsContent value="events" className="mt-6">
-        <ProjectEventsTab
+      <TabsContent value="activities" className="mt-6">
+        <ProjectActivitiesTab
           project={project}
-          projectEvents={projectEvents}
-          refetchEvents={refetchEvents}
+          projectActivities={projectActivities}
+          refetchActivities={refetchActivities}
         />
       </TabsContent>
 
