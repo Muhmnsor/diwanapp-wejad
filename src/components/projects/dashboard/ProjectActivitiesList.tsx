@@ -23,12 +23,12 @@ export const ProjectActivitiesList = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-      {projectActivities.map((activity) => (
+      {projectActivities.map((projectActivity) => (
         <ProjectActivityCard
-          key={activity.id}
-          activity={activity}
-          onEdit={() => onEdit(activity)}
-          onDelete={() => onDelete(activity)}
+          key={projectActivity.id}
+          projectActivity={projectActivity}
+          onEdit={() => onEdit(projectActivity)}
+          onDelete={() => onDelete(projectActivity)}
         />
       ))}
     </div>

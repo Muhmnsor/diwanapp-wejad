@@ -1,5 +1,5 @@
-import { AddProjectEventDialog } from "../AddProjectEventDialog";
-import { EditProjectEventDialog } from "../EditProjectEventDialog";
+import { AddProjectEventDialog } from "../../events/AddProjectEventDialog";
+import { EditProjectEventDialog } from "../../events/EditProjectEventDialog";
 import { DeleteActivityDialog } from "../dialogs/DeleteActivityDialog";
 
 interface ActivityDialogsContainerProps {
@@ -53,7 +53,7 @@ export const ActivityDialogsContainer = ({
           />
 
           <DeleteActivityDialog
-            open={isDeleteDialogOpen}
+            isOpen={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
             onConfirm={confirmDelete}
           />

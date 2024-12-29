@@ -39,8 +39,8 @@ export const ProjectActivitiesTab = ({
         <ProjectDashboardHeader onAddEvent={handleAddEvent} />
         <ProjectActivitiesList
           projectActivities={projectActivities}
-          onEditActivity={handleEditEvent}
-          onDeleteActivity={handleDeleteEvent}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
         />
 
         <ActivityDialogsContainer
@@ -54,6 +54,7 @@ export const ProjectActivitiesTab = ({
           setIsDeleteDialogOpen={setIsDeleteDialogOpen}
           refetchActivities={refetchActivities}
           confirmDelete={confirmDelete}
+          project={project}
         />
       </CardContent>
     </Card>
