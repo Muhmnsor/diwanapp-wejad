@@ -1,107 +1,89 @@
-import { Project } from "@/types/project";
-import { ProjectFormFields } from "@/components/projects/ProjectFormFields";
-import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { ProjectFormFields } from "./ProjectFormFields";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 
 export const CreateProjectForm = () => {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Project>({
-    id: "",
-    title: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-    max_attendees: 0,
-    image_url: "",
-    event_type: "in-person",
-    price: null,
-    beneficiary_type: "both",
-    certificate_type: "none",
-    event_path: "environment",
-    event_category: "social"
-  });
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const form = useForm();
 
-  const handleImageChange = async (file: File | null) => {
-    if (!file) return;
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
-      const { publicUrl, error } = await handleImageUpload(file);
-      if (error) throw error;
-      setFormData(prev => ({ ...prev, image_url: publicUrl }));
-      toast.success("تم رفع الصورة بنجاح");
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error("حدث خطأ أثناء رفع الصورة");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('projects')
-        .insert([{
-          title: formData.title,
-          description: formData.description,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          max_attendees: formData.max_attendees,
-          image_url: formData.image_url,
-          event_type: formData.event_type,
-          price: formData.price,
-          beneficiary_type: formData.beneficiary_type,
-          certificate_type: formData.certificate_type,
-          event_path: formData.event_path,
-          event_category: formData.event_category
-        }])
-        .select()
-        .single();
+        .insert([data]);
 
       if (error) throw error;
 
-      toast.success("تم إنشاء المشروع بنجاح");
-      navigate(`/projects/${data.id}`);
+      toast({
+        title: "تم إنشاء المشروع بنجاح",
+        description: "سيتم تحويلك إلى صفحة المشروع",
+      });
+
+      navigate('/');
     } catch (error) {
       console.error('Error creating project:', error);
-      toast.error("حدث خطأ أثناء إنشاء المشروع");
+      toast({
+        variant: "destructive",
+        title: "حدث خطأ",
+        description: "لم نتمكن من إنشاء المشروع. الرجاء المحاولة مرة أخرى.",
+      });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    navigate(-1);
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
-      <ProjectFormFields
-        formData={formData}
-        setFormData={setFormData}
-        onImageChange={handleImageChange}
-      />
-      <div className="flex justify-start gap-2 mt-6">
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
-        >
-          {isLoading ? "جاري الإنشاء..." : "إنشاء المشروع"}
-        </button>
-        <button
-          onClick={handleCancel}
-          disabled={isLoading}
-          className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
-        >
-          إلغاء
-        </button>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="p-6">
+            <h1 className="text-2xl font-bold mb-6 text-right">إنشاء مشروع جديد</h1>
+            
+            <div className="flex flex-col md:flex-row gap-8">
+              <div className="md:w-1/2 md:order-2">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <ProjectFormFields form={form} />
+                    
+                    <div className="flex justify-end gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate('/')}
+                      >
+                        إلغاء
+                      </Button>
+                      <Button type="submit" disabled={isLoading}>
+                        {isLoading ? "جاري الإنشاء..." : "إنشاء المشروع"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
+              
+              <div className="md:w-1/2 md:order-1">
+                <div className="bg-gray-100 rounded-lg h-full min-h-[400px] flex items-center justify-center">
+                  <div className="text-center p-6">
+                    <p className="text-gray-500">
+                      سيتم عرض صورة المشروع هنا بعد اختيارها
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+export default CreateProjectForm;
