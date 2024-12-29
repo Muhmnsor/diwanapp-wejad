@@ -85,13 +85,13 @@ export const ProjectInfo = ({
         <div className="px-8 flex items-center gap-6">
           {eventPath && (
             <div className="flex items-center gap-2 text-gray-600">
-              <Folder className="w-5 h-5" />
+              <Folder className="w-5 h-5 text-primary" />
               <span>المسار: {formatEventPath(eventPath)}</span>
             </div>
           )}
           {eventCategory && (
             <div className="flex items-center gap-2 text-gray-600">
-              <Tag className="w-5 h-5" />
+              <Tag className="w-5 h-5 text-primary" />
               <span>التصنيف: {formatEventCategory(eventCategory)}</span>
             </div>
           )}
@@ -101,15 +101,15 @@ export const ProjectInfo = ({
       {/* Project Dates and Attendees */}
       <div className="px-8 space-y-4">
         <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="w-5 h-5" />
+          <Calendar className="w-5 h-5 text-primary" />
           <span>تاريخ البداية: {startDate}</span>
         </div>
         <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="w-5 h-5" />
+          <Calendar className="w-5 h-5 text-primary" />
           <span>تاريخ النهاية: {endDate}</span>
         </div>
         <div className="flex items-center gap-2 text-gray-600">
-          <Users className="w-5 h-5" />
+          <Users className="w-5 h-5 text-primary" />
           <span dir="rtl">{attendees} من {maxAttendees} مشارك</span>
         </div>
       </div>
