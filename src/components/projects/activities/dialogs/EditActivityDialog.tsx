@@ -64,8 +64,10 @@ export const EditActivityDialog = ({
 
       if (error) throw error;
 
+      // First update the UI
+      await onSave();
+      // Then show success message and close dialog
       toast.success('تم تحديث النشاط بنجاح');
-      onSave();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating activity:', error);
