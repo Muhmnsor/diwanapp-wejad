@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Event } from "@/store/eventStore";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { EventBasicFields } from "./EventBasicFields";
 import { EventDateTimeFields } from "./EventDateTimeFields";
 import { EventLocationFields } from "./EventLocationFields";
+import { ProjectEventFormData } from "../types";
 
 interface EditProjectEventFormContainerProps {
-  event: Event;
-  onSave: (updatedEvent: Event) => void;
+  event: ProjectEventFormData;
+  onSave: (updatedEvent: ProjectEventFormData) => void;
   onCancel: () => void;
   projectId: string;
 }
@@ -24,7 +24,7 @@ export const EditProjectEventFormContainer = ({
   
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<Event>({
+  const form = useForm<ProjectEventFormData>({
     defaultValues: {
       title: event.title,
       description: event.description || "",
@@ -45,7 +45,7 @@ export const EditProjectEventFormContainer = ({
     },
   });
 
-  const handleSubmit = async (data: Event) => {
+  const handleSubmit = async (data: ProjectEventFormData) => {
     setIsLoading(true);
     try {
       const updatedEvent = {
