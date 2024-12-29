@@ -1,54 +1,51 @@
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
-import { ProjectEventFormData } from "../types";
+import { ProjectActivityFormData } from "@/components/projects/activities/types";
 
 interface EventLocationFieldsProps {
-  form: UseFormReturn<ProjectEventFormData>;
+  form: UseFormReturn<ProjectActivityFormData>;
 }
 
 export const EventLocationFields = ({ form }: EventLocationFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4">
       <FormField
         control={form.control}
         name="location"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>المكان</FormLabel>
+            <FormLabel>الموقع</FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
           </FormItem>
         )}
       />
-
       <FormField
         control={form.control}
         name="location_url"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>رابط المكان (اختياري)</FormLabel>
+            <FormLabel>رابط الموقع</FormLabel>
             <FormControl>
-              <Input {...field} dir="ltr" placeholder="https://maps.google.com/..." />
+              <Input {...field} />
             </FormControl>
           </FormItem>
         )}
       />
-
       <FormField
         control={form.control}
         name="special_requirements"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>احتياجات خاصة (اختياري)</FormLabel>
+            <FormLabel>متطلبات خاصة</FormLabel>
             <FormControl>
-              <Textarea {...field} placeholder="أي متطلبات أو احتياجات خاصة للنشاط..." />
+              <Input {...field} />
             </FormControl>
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 };

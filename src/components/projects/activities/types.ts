@@ -1,3 +1,5 @@
+import { EventPathType, EventCategoryType } from "@/types/event";
+
 export interface ProjectActivityFormData {
   title: string;
   description: string;
@@ -11,8 +13,8 @@ export interface ProjectActivityFormData {
   price: number | null;
   beneficiary_type: "men" | "women" | "both";
   certificate_type: string;
-  event_path: string;
-  event_category: string;
+  event_path: EventPathType;
+  event_category: EventCategoryType;
   event_hours: number;
   image_url: string;
   is_visible?: boolean;
