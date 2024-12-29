@@ -11,7 +11,7 @@ export const ProjectDashboardHeader = ({ onAddEvent }: ProjectDashboardHeaderPro
       <h3 className="text-lg font-semibold">أنشطة المشروع</h3>
       <Button onClick={onAddEvent} className="gap-2">
         <Plus className="w-4 h-4" />
-        إضافة فعالية
+        إضافة نشاط
       </Button>
     </div>
   );
