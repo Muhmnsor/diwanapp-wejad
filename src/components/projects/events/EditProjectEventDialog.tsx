@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface EditProjectEventDialogProps {
+interface EditProjectActivityDialogProps {
   activity: ProjectActivity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,8 +26,8 @@ export const EditProjectEventDialog = ({
   onOpenChange,
   onSave,
   projectId
-}: EditProjectEventDialogProps) => {
-  console.log('Activity data in EditProjectEventDialog:', activity);
+}: EditProjectActivityDialogProps) => {
+  console.log('بيانات النشاط في نموذج التعديل:', activity);
   
   const form = useForm({
     defaultValues: {
@@ -44,7 +44,7 @@ export const EditProjectEventDialog = ({
 
   const handleSubmit = async (data: any) => {
     try {
-      console.log('Updating event with data:', data);
+      console.log('جاري تحديث بيانات النشاط:', data);
       
       const { error } = await supabase
         .from('events')
@@ -61,7 +61,7 @@ export const EditProjectEventDialog = ({
         .eq('id', activity.id);
 
       if (error) {
-        console.error('Error updating event:', error);
+        console.error('خطأ في تحديث النشاط:', error);
         throw error;
       }
 
@@ -69,7 +69,7 @@ export const EditProjectEventDialog = ({
       onSave();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating activity:', error);
+      console.error('خطأ في تحديث النشاط:', error);
       toast.error("حدث خطأ أثناء تحديث النشاط");
     }
   };
