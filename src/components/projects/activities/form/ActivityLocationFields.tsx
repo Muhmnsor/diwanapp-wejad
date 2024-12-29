@@ -62,7 +62,11 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
           <FormItem>
             <FormLabel>احتياجات خاصة (اختياري)</FormLabel>
             <FormControl>
-              <Textarea {...field} placeholder="أي متطلبات أو احتياجات خاصة للنشاط..." />
+              <Textarea 
+                {...field} 
+                placeholder="أي متطلبات أو احتياجات خاصة للنشاط..."
+                className="min-h-[100px] resize-y"
+              />
             </FormControl>
           </FormItem>
         )}

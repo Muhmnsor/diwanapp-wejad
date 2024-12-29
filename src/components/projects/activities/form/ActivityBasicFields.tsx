@@ -18,7 +18,7 @@ export const ActivityBasicFields = ({ form }: ActivityBasicFieldsProps) => {
           <FormItem>
             <FormLabel>عنوان النشاط</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="أدخل عنوان النشاط" />
+              <Input {...field} />
             </FormControl>
           </FormItem>
         )}
@@ -29,9 +29,13 @@ export const ActivityBasicFields = ({ form }: ActivityBasicFieldsProps) => {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>وصف النشاط</FormLabel>
+            <FormLabel>نموذج النشاط</FormLabel>
             <FormControl>
-              <Textarea {...field} placeholder="أدخل وصف النشاط" className="h-32" />
+              <Textarea 
+                {...field} 
+                placeholder="وصف تفصيلي للنشاط..."
+                className="min-h-[100px] resize-y"
+              />
             </FormControl>
           </FormItem>
         )}
