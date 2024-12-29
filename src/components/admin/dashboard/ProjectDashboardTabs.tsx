@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
 import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
-import { DashboardOverviewTab } from "./tabs/DashboardOverviewTab";
-import { DashboardRegistrationsTab } from "./tabs/DashboardRegistrationsTab";
+import { DashboardOverviewTab } from "@/components/admin/dashboard/DashboardOverviewTab";
+import { DashboardRegistrationsTab } from "@/components/admin/dashboard/DashboardRegistrationsTab";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -60,8 +60,8 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
       console.log("Fetched project activities:", data);
       return data || [];
     },
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the data
+    staleTime: 0,
+    gcTime: 0, // Using gcTime instead of cacheTime
   });
 
   // Calculate dashboard metrics
