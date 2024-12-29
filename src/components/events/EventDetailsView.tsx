@@ -103,10 +103,12 @@ export const EventDetailsView = ({
 
           {children}
 
-          <EventContent 
-            event={currentEvent}
-            onRegister={handleRegister}
-          />
+          {!isAdmin && (
+            <EventContent 
+              event={currentEvent}
+              onRegister={handleRegister}
+            />
+          )}
         </div>
       </div>
 

@@ -148,15 +148,15 @@ const EventDetails = () => {
                   </div>
                 </div>
 
-                <TabsContent value="details" className="mt-0">
-                  <div className="container mx-auto px-4">
+                <div className="container mx-auto px-4">
+                  <TabsContent value="details" className="mt-6">
                     {/* Event content will be rendered here by EventDetailsView */}
-                  </div>
-                </TabsContent>
+                  </TabsContent>
 
-                <TabsContent value="dashboard" className="mt-6 container mx-auto px-4">
-                  <EventDashboard eventId={id!} />
-                </TabsContent>
+                  <TabsContent value="dashboard" className="mt-6">
+                    <EventDashboard eventId={id!} />
+                  </TabsContent>
+                </div>
               </Tabs>
             </EventDetailsView>
           </div>
