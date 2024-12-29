@@ -5,7 +5,9 @@ import {
 import { ProjectActivity } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditProjectEventHeader } from "./EditProjectEventHeader";
-import { Form } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 
 interface EditProjectEventDialogProps {
