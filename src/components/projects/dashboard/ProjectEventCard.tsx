@@ -4,6 +4,7 @@ import { Edit2, Trash2 } from "lucide-react";
 import { EditProjectActivityDialog } from "../activities/EditProjectActivityDialog";
 import { useState } from "react";
 import { ProjectActivity } from "@/types/activity";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProjectEventCardProps {
   projectEvent: any;
@@ -17,6 +18,11 @@ export const ProjectEventCard = ({
   onDelete
 }: ProjectEventCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleEditClick = () => {
+    setIsEditDialogOpen(true);
+  };
 
   return (
     <>
@@ -30,22 +36,42 @@ export const ProjectEventCard = ({
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsEditDialogOpen(true)}
-                className="h-8 w-8"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onDelete}
-                className="h-8 w-8"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleEditClick}
+                      className="h-8 w-8 transition-colors hover:bg-secondary"
+                      disabled={isLoading}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>تعديل النشاط</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={onDelete}
+                      className="h-8 w-8 transition-colors hover:bg-secondary"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>حذف النشاط</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
           <div className="text-sm text-muted-foreground">
