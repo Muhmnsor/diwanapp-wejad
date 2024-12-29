@@ -23,6 +23,7 @@ const ProjectDetails = () => {
           return;
         }
 
+        console.log("Fetching project with ID:", id);
         const { data, error: fetchError } = await supabase
           .from("projects")
           .select("*")
@@ -102,7 +103,7 @@ const ProjectDetails = () => {
           isAdmin={isAdmin}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          id={id!}
+          id={id}
         />
       </main>
       <Footer />
