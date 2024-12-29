@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
 import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
-import { DashboardOverviewTab } from "@/components/admin/dashboard/DashboardOverviewTab";
-import { DashboardRegistrationsTab } from "@/components/admin/dashboard/DashboardRegistrationsTab";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
+import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -87,16 +87,19 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
       </TabsList>
       
       <TabsContent value="overview" className="mt-6">
-        <DashboardOverviewTab
+        <DashboardOverview
           registrationCount={registrationCount}
           remainingSeats={remainingSeats}
           occupancyRate={occupancyRate}
-          project={project}
+          eventDate={project.start_date}
+          eventTime={project.end_date}
+          eventPath={project.event_path}
+          eventCategory={project.event_category}
         />
       </TabsContent>
 
       <TabsContent value="registrations" className="mt-6">
-        <DashboardRegistrationsTab projectId={project.id} />
+        <DashboardRegistrations eventId={project.id} />
       </TabsContent>
 
       <TabsContent value="activities" className="mt-6">
