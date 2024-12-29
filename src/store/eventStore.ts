@@ -29,6 +29,7 @@ export interface Event {
   event_path: EventPathType;
   event_category: EventCategoryType;
   is_visible?: boolean;
+  special_requirements?: string | null;
 }
 
 interface EventStore {
