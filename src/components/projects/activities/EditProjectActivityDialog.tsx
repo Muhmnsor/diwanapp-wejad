@@ -5,7 +5,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EditActivityForm } from "./form/EditActivityForm";
-import { useNavigate } from "react-router-dom";
 
 interface EditProjectActivityDialogProps {
   activity: ProjectActivity;
@@ -23,13 +22,15 @@ export const EditProjectActivityDialog = ({
   projectId
 }: EditProjectActivityDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   console.log('Activity data in EditProjectActivityDialog:', activity);
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
+    console.log('Submitting form with data:', data);
     setIsLoading(true);
+    
     try {
-      const { error } = await supabase
+      // Update the events table
+      const { error: updateError } = await supabase
         .from('events')
         .update({
           title: data.title,
@@ -39,17 +40,18 @@ export const EditProjectActivityDialog = ({
           location: data.location,
           location_url: data.location_url,
           special_requirements: data.special_requirements,
-          event_hours: data.event_hours,
+          event_hours: Number(data.event_hours),
         })
-        .eq('id', activity.id);
+        .eq('id', activity.event.id);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating activity:', updateError);
+        throw updateError;
+      }
 
       toast.success("تم تحديث النشاط بنجاح");
       onSave();
       onOpenChange(false);
-      // Refresh the current page instead of navigating away
-      window.location.reload();
     } catch (error) {
       console.error('Error updating activity:', error);
       toast.error("حدث خطأ أثناء تحديث النشاط");
@@ -64,7 +66,7 @@ export const EditProjectActivityDialog = ({
         <DialogTitle>تعديل النشاط</DialogTitle>
         <ScrollArea className="h-[calc(90vh-120px)]">
           <EditActivityForm
-            activity={activity}
+            activity={activity.event}
             onSave={onSave}
             onCancel={() => onOpenChange(false)}
             isLoading={isLoading}
