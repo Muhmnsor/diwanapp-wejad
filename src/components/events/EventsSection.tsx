@@ -14,9 +14,14 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
   console.log('EventsSection - User:', user);
   console.log('EventsSection - Events:', events);
 
-  // فلترة الفعاليات بناءً على الصلاحيات
+  // فلترة الفعاليات بناءً على الصلاحيات والنوع
   const visibleEvents = events.filter(event => {
-    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات
+    // تجاهل الأنشطة التي تنتمي إلى مشاريع
+    if (event.is_project_activity) {
+      return false;
+    }
+    
+    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات المستقلة
     if (user?.isAdmin) {
       return true;
     }
