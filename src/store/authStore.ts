@@ -24,8 +24,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log("AuthStore: Initializing auth state");
       
       // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       
+      if (error) {
+        console.error("AuthStore: Error getting session:", error);
+        set({ user: null, isAuthenticated: false });
+        return;
+      }
+
       if (!session) {
         console.log("AuthStore: No active session found");
         set({ user: null, isAuthenticated: false });
@@ -101,8 +107,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         password
       });
 
-      console.log("AuthStore: Sign in response:", { authData, signInError });
-
       if (signInError) {
         console.error("AuthStore: Sign in error:", signInError);
         throw signInError;
@@ -175,7 +179,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   logout: async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       set({ user: null, isAuthenticated: false });
       toast.success('تم تسجيل الخروج بنجاح');
     } catch (error) {
@@ -188,13 +194,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 // Initialize auth state when the store is created
 useAuthStore.getState().initialize();
 
-// Listen for auth changes
-supabase.auth.onAuthStateChange((event, session) => {
+// Set up auth state change listener
+supabase.auth.onAuthStateChange(async (event, session) => {
   console.log("Auth state changed:", event, session);
   
-  if (event === 'SIGNED_OUT') {
+  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
     useAuthStore.setState({ user: null, isAuthenticated: false });
-  } else if (event === 'SIGNED_IN' && session) {
-    useAuthStore.getState().initialize();
+  } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+    await useAuthStore.getState().initialize();
   }
 });
