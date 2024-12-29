@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { TopHeader } from "@/components/layout/TopHeader";
+import { Footer } from "@/components/layout/Footer";
 
 const CreateProject = () => {
   const navigate = useNavigate();
@@ -52,82 +54,86 @@ const CreateProject = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8" dir="rtl">
-      <h1 className="text-2xl font-bold mb-6">إنشاء مشروع جديد</h1>
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-        <div>
-          <label className="block text-sm font-medium mb-2">عنوان المشروع</label>
-          <Input
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">وصف المشروع</label>
-          <Textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="min-h-screen flex flex-col" dir="rtl">
+      <TopHeader />
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        <h1 className="text-3xl font-bold mb-8">إنشاء مشروع جديد</h1>
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
           <div>
-            <label className="block text-sm font-medium mb-2">تاريخ البداية</label>
+            <label className="block text-sm font-medium mb-2">عنوان المشروع</label>
             <Input
-              type="date"
-              value={formData.start_date}
-              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-2">تاريخ النهاية</label>
-            <Input
-              type="date"
-              value={formData.end_date}
-              onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+            <label className="block text-sm font-medium mb-2">وصف المشروع</label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               required
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">تاريخ البداية</label>
+              <Input
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">تاريخ النهاية</label>
+              <Input
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">تاريخ بدء التسجيل</label>
+              <Input
+                type="date"
+                value={formData.registration_start_date}
+                onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">تاريخ نهاية التسجيل</label>
+              <Input
+                type="date"
+                value={formData.registration_end_date}
+                onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium mb-2">تاريخ بدء التسجيل</label>
+            <label className="block text-sm font-medium mb-2">الحد الأقصى للمشاركين</label>
             <Input
-              type="date"
-              value={formData.registration_start_date}
-              onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
+              type="number"
+              value={formData.max_attendees}
+              onChange={(e) => setFormData({ ...formData, max_attendees: parseInt(e.target.value) })}
+              required
+              min="0"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">تاريخ نهاية التسجيل</label>
-            <Input
-              type="date"
-              value={formData.registration_end_date}
-              onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
-            />
-          </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">الحد الأقصى للمشاركين</label>
-          <Input
-            type="number"
-            value={formData.max_attendees}
-            onChange={(e) => setFormData({ ...formData, max_attendees: parseInt(e.target.value) })}
-            required
-            min="0"
-          />
-        </div>
-
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "جاري الإنشاء..." : "إنشاء المشروع"}
-        </Button>
-      </form>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? "جاري الإنشاء..." : "إنشاء المشروع"}
+          </Button>
+        </form>
+      </div>
+      <Footer />
     </div>
   );
 };
