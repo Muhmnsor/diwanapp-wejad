@@ -149,7 +149,7 @@ const EventDetails = () => {
                   </div>
                 </div>
 
-                <div className="container mx-auto px-4">
+                <div className="container mx-auto px-4 pb-8">
                   <TabsContent value="details" className="mt-6">
                     <EventContent 
                       event={event}
