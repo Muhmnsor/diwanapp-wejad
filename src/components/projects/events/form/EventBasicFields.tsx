@@ -10,7 +10,7 @@ interface EventBasicFieldsProps {
 
 export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-right" dir="rtl">
       <FormField
         control={form.control}
         name="title"
@@ -18,7 +18,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
           <FormItem>
             <FormLabel>عنوان النشاط</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} className="text-right" />
             </FormControl>
           </FormItem>
         )}
@@ -34,7 +34,7 @@ export const EventBasicFields = ({ form }: EventBasicFieldsProps) => {
               <Textarea 
                 {...field} 
                 placeholder="وصف تفصيلي للنشاط..."
-                className="min-h-[100px] resize-y"
+                className="min-h-[100px] resize-y text-right"
               />
             </FormControl>
           </FormItem>
