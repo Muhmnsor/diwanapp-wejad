@@ -7,31 +7,29 @@ export const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Left Side - Logo and Social Links */}
-          <div className="order-last md:order-last flex flex-col space-y-6">
+          <div className="order-last md:order-last flex flex-col justify-between">
             <img 
               src="/lovable-uploads/2f147e3a-170c-48d5-acdf-219169839b0a.png" 
               alt="Diwan Logo" 
-              className="w-full h-auto max-w-xl"
+              className="w-full h-auto max-w-xl mb-6"
             />
             
             {/* Social Links */}
-            <div className="flex flex-col items-start w-full">
-              <div className="flex justify-start space-x-4 rtl:space-x-reverse mb-4">
-                <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
-                  <X className="w-6 h-6" />
-                </a>
-                <a href="https://instagram.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
-                  <Instagram className="w-6 h-6" />
-                </a>
-                <a href="https://linkedin.com/company/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
-                  <Linkedin className="w-6 h-6" />
-                </a>
-              </div>
+            <div className="flex items-center justify-start space-x-4 rtl:space-x-reverse">
+              <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
+                <X className="w-6 h-6" />
+              </a>
+              <a href="https://instagram.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
+                <Instagram className="w-6 h-6" />
+              </a>
+              <a href="https://linkedin.com/company/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
+                <Linkedin className="w-6 h-6" />
+              </a>
               <a 
                 href="https://www.dfy.org.sa" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 transition-colors"
+                className="text-primary hover:text-primary/80 transition-colors mr-2"
               >
                 www.dfy.org.sa
               </a>
