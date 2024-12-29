@@ -263,6 +263,7 @@ export type Database = {
           price: number | null
           registration_end_date: string | null
           registration_start_date: string | null
+          special_requirements: string | null
           time: string
           title: string
         }
@@ -284,6 +285,7 @@ export type Database = {
           price?: number | null
           registration_end_date?: string | null
           registration_start_date?: string | null
+          special_requirements?: string | null
           time: string
           title: string
         }
@@ -305,6 +307,7 @@ export type Database = {
           price?: number | null
           registration_end_date?: string | null
           registration_start_date?: string | null
+          special_requirements?: string | null
           time?: string
           title?: string
         }

@@ -1,27 +1,19 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { EventBasicFields } from "./form/EventBasicFields";
+import { EventDateTimeFields } from "./form/EventDateTimeFields";
+import { EventLocationFields } from "./form/EventLocationFields";
+import { ProjectEventFormData } from "./types";
 
 interface AddProjectEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
   onSuccess: () => void;
-}
-
-interface ProjectEventFormData {
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  location_url?: string;
-  special_requirements?: string;
 }
 
 export const AddProjectEventDialog = ({
@@ -97,98 +89,9 @@ export const AddProjectEventDialog = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>عنوان الفعالية</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>وصف الفعالية</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>التاريخ</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الوقت</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>المكان</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="location_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>رابط المكان (اختياري)</FormLabel>
-                  <FormControl>
-                    <Input {...field} dir="ltr" placeholder="https://maps.google.com/..." />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="special_requirements"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>احتياجات خاصة (اختياري)</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} placeholder="أي متطلبات أو احتياجات خاصة للفعالية..." />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <EventBasicFields form={form} />
+            <EventDateTimeFields form={form} />
+            <EventLocationFields form={form} />
 
             <div className="flex justify-end gap-2 mt-6">
               <Button type="submit">إضافة الفعالية</Button>
