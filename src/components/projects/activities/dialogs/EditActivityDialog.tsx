@@ -90,10 +90,10 @@ export const EditActivityDialog = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] space-y-4" dir="rtl">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] space-y-4 text-right" dir="rtl">
         <EditProjectEventHeader />
         <Separator className="my-4" />
-        <ScrollArea className="h-[calc(90vh-120px)] pr-4">
+        <ScrollArea className="h-[calc(90vh-120px)] pl-4">
           <EditActivityForm
             activity={formData}
             onSave={onSave}

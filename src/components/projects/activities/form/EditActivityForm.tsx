@@ -53,7 +53,7 @@ export const EditActivityForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 pr-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6 text-right" dir="rtl">
         <ActivityBasicFields form={form} />
         <ActivityDateTimeFields form={form} />
         <ActivityLocationFields form={form} />

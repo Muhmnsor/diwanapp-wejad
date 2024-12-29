@@ -10,7 +10,7 @@ interface ActivityLocationFieldsProps {
 
 export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-right" dir="rtl">
       <FormField
         control={form.control}
         name="location"
@@ -18,7 +18,7 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
           <FormItem>
             <FormLabel>المكان</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} className="text-right" />
             </FormControl>
           </FormItem>
         )}
@@ -31,7 +31,7 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
           <FormItem>
             <FormLabel>رابط المكان (اختياري)</FormLabel>
             <FormControl>
-              <Input {...field} dir="ltr" placeholder="https://maps.google.com/..." />
+              <Input {...field} dir="ltr" placeholder="https://maps.google.com/..." className="text-left" />
             </FormControl>
           </FormItem>
         )}
@@ -49,6 +49,7 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
                 {...field} 
                 min="0"
                 onChange={(e) => field.onChange(Number(e.target.value))}
+                className="text-right"
               />
             </FormControl>
           </FormItem>
@@ -65,7 +66,7 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
               <Textarea 
                 {...field} 
                 placeholder="أي متطلبات أو احتياجات خاصة للنشاط..."
-                className="min-h-[100px] resize-y"
+                className="min-h-[100px] resize-y text-right"
               />
             </FormControl>
           </FormItem>
