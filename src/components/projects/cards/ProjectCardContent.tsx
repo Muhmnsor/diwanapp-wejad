@@ -28,7 +28,7 @@ export const ProjectCardContent = ({
   eventCategory
 }: ProjectCardContentProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 p-4 pt-0">
       <div className="flex flex-wrap gap-2">
         <EventTypeCardBadge eventType={eventType} />
         <PriceCardBadge price={price} />
@@ -47,10 +47,12 @@ export const ProjectCardContent = ({
           <CalendarDays className="w-4 h-4" />
           <span>إلى: {endDate}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          <span>عدد المقاعد: {maxAttendees}</span>
-        </div>
+        {maxAttendees > 0 && (
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span>{maxAttendees} مقعد</span>
+          </div>
+        )}
       </div>
     </div>
   );
