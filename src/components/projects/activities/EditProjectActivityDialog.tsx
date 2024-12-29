@@ -42,7 +42,7 @@ export const EditProjectActivityDialog = ({
           special_requirements: data.special_requirements,
           event_hours: Number(data.event_hours),
         })
-        .eq('id', activity.event.id);
+        .eq('id', activity.id);
 
       if (updateError) {
         console.error('Error updating activity:', updateError);
@@ -66,7 +66,7 @@ export const EditProjectActivityDialog = ({
         <DialogTitle>تعديل النشاط</DialogTitle>
         <ScrollArea className="h-[calc(90vh-120px)]">
           <EditActivityForm
-            activity={activity.event}
+            activity={activity}
             onSave={onSave}
             onCancel={() => onOpenChange(false)}
             isLoading={isLoading}
