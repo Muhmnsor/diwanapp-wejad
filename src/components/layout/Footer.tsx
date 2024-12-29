@@ -6,9 +6,14 @@ export const Footer = () => {
     <footer className="mt-auto py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center" dir="rtl">
-          {/* Logo - Right Side */}
-          <div className="flex items-center justify-center md:justify-start order-first">
-            <Logo className="w-24 h-24" />
+          {/* Logo and Slogan - Right Side */}
+          <div className="flex flex-col items-center md:items-start order-first">
+            <img 
+              src="/lovable-uploads/2f147e3a-170c-48d5-acdf-219169839b0a.png" 
+              alt="Diwan Logo" 
+              className="w-48 h-auto mb-2"
+            />
+            <p className="text-primary text-lg font-semibold mt-2">ديوان .. شريك الشباب</p>
           </div>
           
           {/* Center Content */}
