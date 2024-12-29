@@ -5,54 +5,46 @@ import { useForm } from "react-hook-form";
 import { EventBasicFields } from "./EventBasicFields";
 import { EventDateTimeFields } from "./EventDateTimeFields";
 import { EventLocationFields } from "./EventLocationFields";
-import { ProjectEventFormData } from "../types";
+import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
 
 interface EditProjectEventFormContainerProps {
-  event: ProjectEventFormData;
-  onSave: (updatedEvent: ProjectEventFormData) => void;
+  activity: ProjectActivity;
+  onSave: (updatedActivity: ProjectActivity) => void;
   onCancel: () => void;
   projectId: string;
 }
 
 export const EditProjectEventFormContainer = ({
-  event,
+  activity,
   onSave,
   onCancel,
   projectId
 }: EditProjectEventFormContainerProps) => {
-  console.log('Form data in EditProjectEventFormContainer:', event);
+  console.log('Form data in EditProjectEventFormContainer:', activity);
   
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<ProjectEventFormData>({
+  const form = useForm<ProjectActivityFormData>({
     defaultValues: {
-      title: event.title,
-      description: event.description || "",
-      date: event.date,
-      time: event.time,
-      location: event.location,
-      location_url: event.location_url || "",
-      special_requirements: event.special_requirements || "",
-      event_type: event.event_type,
-      max_attendees: event.max_attendees,
-      beneficiary_type: event.beneficiary_type,
-      certificate_type: event.certificate_type,
-      event_path: event.event_path,
-      event_category: event.event_category,
-      price: event.price,
-      event_hours: event.event_hours,
-      image_url: event.image_url,
+      title: activity.title,
+      description: activity.description || "",
+      date: activity.date,
+      time: activity.time,
+      location: activity.location,
+      location_url: activity.location_url || "",
+      special_requirements: activity.special_requirements || "",
+      event_hours: activity.event_hours,
     },
   });
 
-  const handleSubmit = async (data: ProjectEventFormData) => {
+  const handleSubmit = async (data: ProjectActivityFormData) => {
     setIsLoading(true);
     try {
-      const updatedEvent = {
-        ...event,
+      const updatedActivity = {
+        ...activity,
         ...data,
       };
-      await onSave(updatedEvent);
+      await onSave(updatedActivity);
     } finally {
       setIsLoading(false);
     }

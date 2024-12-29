@@ -12,8 +12,8 @@ interface ProjectDashboardTabsProps {
     max_attendees: number;
     start_date: string;
     end_date: string;
-    event_path?: string;
-    event_category?: string;
+    event_path: string; // Changed to required
+    event_category: string; // Changed to required
   };
 }
 
@@ -49,17 +49,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
             location,
             location_url,
             special_requirements,
-            event_type,
-            max_attendees,
-            image_url,
-            beneficiary_type,
-            certificate_type,
-            event_hours,
-            price,
-            registration_start_date,
-            registration_end_date,
-            event_path,
-            event_category
+            event_hours
           )
         `)
         .eq('project_id', project.id)

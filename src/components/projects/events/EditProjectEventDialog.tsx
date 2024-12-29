@@ -2,30 +2,30 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { ProjectActivityFormData } from "@/components/projects/activities/types";
+import { ProjectActivity } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditProjectEventHeader } from "./EditProjectEventHeader";
 import { EditProjectEventFormContainer } from "./form/EditProjectEventFormContainer";
 
 interface EditProjectEventDialogProps {
-  event: ProjectActivityFormData;
+  activity: ProjectActivity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (updatedEvent: ProjectActivityFormData) => void;
+  onSave: (updatedActivity: ProjectActivity) => void;
   projectId: string;
 }
 
 export const EditProjectEventDialog = ({ 
-  event, 
+  activity, 
   open, 
   onOpenChange,
   onSave,
   projectId
 }: EditProjectEventDialogProps) => {
-  console.log('Event data in EditProjectEventDialog:', event);
+  console.log('Activity data in EditProjectEventDialog:', activity);
 
-  const handleSave = async (updatedEvent: ProjectActivityFormData) => {
-    await onSave(updatedEvent);
+  const handleSave = async (updatedActivity: ProjectActivity) => {
+    await onSave(updatedActivity);
     onOpenChange(false);
   };
 
@@ -36,7 +36,7 @@ export const EditProjectEventDialog = ({
         <ScrollArea className="h-[calc(90vh-120px)]">
           <div className="space-y-6 pr-4">
             <EditProjectEventFormContainer
-              event={event}
+              activity={activity}
               onSave={handleSave}
               onCancel={() => onOpenChange(false)}
               projectId={projectId}
