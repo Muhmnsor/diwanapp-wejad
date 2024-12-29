@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { EventCardBadges } from "./events/cards/EventCardBadges";
 import { ProjectCardStatus } from "./projects/cards/ProjectCardStatus";
 import { ProjectCardDetails } from "./projects/cards/ProjectCardDetails";
+import { ProjectBadges } from "./projects/badges/ProjectBadges";
 import { BeneficiaryType } from "@/types/event";
 
 interface ProjectCardProps {
@@ -72,9 +72,9 @@ export const ProjectCard = ({
           <h3 className="text-xl font-semibold mb-2 text-right">{title}</h3>
           <p className="text-gray-600 mb-4 text-right line-clamp-2">{description}</p>
 
-          <EventCardBadges
+          <ProjectBadges
             eventType={event_type}
-            price={typeof price === "number" ? price : 0}
+            price={price}
             beneficiaryType={beneficiary_type}
             certificateType={certificate_type}
             eventHours={event_hours}

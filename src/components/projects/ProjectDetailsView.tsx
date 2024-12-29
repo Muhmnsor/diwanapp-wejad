@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { EventCardBadges } from "../events/cards/EventCardBadges";
+import { ProjectBadges } from "./badges/ProjectBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -36,7 +36,7 @@ export const ProjectDetailsView = ({ project, isAdmin, id }: ProjectDetailsViewP
           </div>
 
           <div className="flex flex-wrap gap-4 justify-end">
-            <EventCardBadges
+            <ProjectBadges
               eventType={project.event_type}
               price={project.price}
               beneficiaryType={project.beneficiary_type}
