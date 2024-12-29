@@ -3,22 +3,23 @@ import { EventTypeCardBadge } from "../badges/card/EventTypeCardBadge";
 import { BeneficiaryCardBadge } from "../badges/card/BeneficiaryCardBadge";
 import { PriceCardBadge } from "../badges/card/PriceCardBadge";
 import { CertificateCardBadge } from "../badges/card/CertificateCardBadge";
-import { HoursCardBadge } from "../badges/card/HoursCardBadge";
-import { RegistrationStatusConfig } from "@/types/eventStatus";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
-interface EventCardContentProps {
+interface ProjectCardContentProps {
   date: string;
   endDate?: string;
-  location: string;
-  eventType: "online" | "in-person";
+  location?: string;
   price: number | null;
   beneficiaryType: string;
   certificateType: string;
-  eventHours?: number;
   maxAttendees: number;
-  status: RegistrationStatusConfig;
+  status: {
+    badge?: {
+      text: string;
+      className: string;
+    };
+  };
   isProject?: boolean;
 }
 
@@ -26,15 +27,13 @@ export const EventCardContent = ({
   date,
   endDate,
   location,
-  eventType,
   price,
   beneficiaryType,
   certificateType,
-  eventHours,
   maxAttendees,
   status,
   isProject = false
-}: EventCardContentProps) => {
+}: ProjectCardContentProps) => {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return format(date, "dd MMMM yyyy", { locale: ar });
@@ -65,14 +64,10 @@ export const EventCardContent = ({
         <span>{maxAttendees} مقعد</span>
       </div>
       <div className="flex flex-wrap gap-2">
-        <EventTypeCardBadge eventType={eventType} />
         <BeneficiaryCardBadge beneficiaryType={beneficiaryType} />
         <PriceCardBadge price={price} />
         {certificateType !== 'none' && (
           <CertificateCardBadge certificateType={certificateType} />
-        )}
-        {eventHours && eventHours > 0 && (
-          <HoursCardBadge hours={eventHours} />
         )}
       </div>
       {status.badge && (

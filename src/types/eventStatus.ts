@@ -1,4 +1,9 @@
-export type EventStatus = 'available' | 'full' | 'ended' | 'notStarted' | 'eventStarted';
+export type EventStatus = 
+  | 'available'
+  | 'full'
+  | 'ended'
+  | 'notStarted'
+  | 'eventStarted';
 
 export interface EventStatusConfig {
   text: string;
@@ -16,7 +21,8 @@ export interface RegistrationStatusConfig {
 }
 
 export interface EventDates {
-  eventDate: Date;
-  registrationStartDate: Date | null;
-  registrationEndDate: Date | null;
+  registrationStartDate?: string | null;
+  registrationEndDate?: string | null;
+  date: string;
+  time: string;
 }
