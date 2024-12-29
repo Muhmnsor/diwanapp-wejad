@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Event } from "@/store/eventStore";
 import { EventCard } from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Event } from "@/store/eventStore";
 
 interface EventDashboardProps {
   eventId: string;
@@ -57,8 +57,21 @@ export const EventDashboard = ({
       <div className="grid grid-cols-1 gap-4">
         {events.map((event) => (
           <EventCard 
-            key={event.id} 
-            {...event}
+            key={event.id}
+            id={event.id || ''}  // Ensure id is always provided
+            title={event.title}
+            date={event.date}
+            location={event.location}
+            image_url={event.image_url || ''}
+            event_type={event.event_type}
+            price={event.price}
+            max_attendees={event.max_attendees}
+            registration_start_date={event.registration_start_date}
+            registration_end_date={event.registration_end_date}
+            beneficiary_type={event.beneficiary_type}
+            certificate_type={event.certificate_type}
+            event_hours={event.event_hours}
+            is_visible={event.is_visible}
             onEdit={() => handleEditEvent(event)} 
           />
         ))}
