@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ProjectActivity } from "@/types/activity";
+import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
@@ -32,7 +32,7 @@ export const EditProjectActivityDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   console.log('Activity data in EditProjectActivityDialog:', activity);
 
-  const form = useForm({
+  const form = useForm<ProjectActivityFormData>({
     defaultValues: {
       title: activity.title || "",
       description: activity.description || "",
@@ -45,7 +45,7 @@ export const EditProjectActivityDialog = ({
     }
   });
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ProjectActivityFormData) => {
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -94,7 +94,12 @@ export const EditProjectActivityDialog = ({
                     <FormItem>
                       <FormLabel>مدة النشاط (بالساعات)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} min="0" />
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          min="0"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
