@@ -8,6 +8,7 @@ import { EventDetailsView } from "@/components/events/EventDetailsView";
 import { useAuthStore } from "@/store/authStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDashboard } from "@/components/admin/EventDashboard";
+import { EventContent } from "@/components/events/EventContent";
 
 const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
@@ -150,7 +151,10 @@ const EventDetails = () => {
 
                 <div className="container mx-auto px-4">
                   <TabsContent value="details" className="mt-6">
-                    {/* Event content will be rendered here by EventDetailsView */}
+                    <EventContent 
+                      event={event}
+                      onRegister={() => {}}
+                    />
                   </TabsContent>
 
                   <TabsContent value="dashboard" className="mt-6">
