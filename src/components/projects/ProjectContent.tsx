@@ -5,7 +5,6 @@ import { ProjectBadges } from "./badges/ProjectBadges";
 import { EventRegisterButton } from "../events/EventRegisterButton";
 import { EventRegistrationDialog } from "../events/EventRegistrationDialog";
 import { useState } from "react";
-import { EventStatus } from "@/types/eventStatus";
 import { getEventStatus } from "@/utils/eventUtils";
 
 interface ProjectContentProps {
@@ -75,7 +74,8 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
           date: project.start_date,
           time: "00:00",
           location: "",
-          price: project.price || "free"
+          price: project.price || "free",
+          certificate_type: project.certificate_type || "none"
         }}
       />
     </div>

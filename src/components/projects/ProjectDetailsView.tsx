@@ -2,6 +2,7 @@ import { Project } from "@/types/project";
 import { ProjectContent } from "./ProjectContent";
 import { ProjectImage } from "./ProjectImage";
 import { ProjectTitle } from "./ProjectTitle";
+import { ProjectAdminTabs } from "./admin/ProjectAdminTabs";
 
 interface ProjectDetailsViewProps {
   project: Project;
@@ -36,6 +37,16 @@ export const ProjectDetailsView = ({
           <ProjectContent 
             project={project}
           />
+
+          {isAdmin && (
+            <div className="border-t">
+              <ProjectAdminTabs
+                project={project}
+                isAdmin={isAdmin}
+                id={id}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
