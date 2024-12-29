@@ -8,19 +8,19 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface ProjectEventsTabProps {
+interface ProjectActivitiesTabProps {
   project: {
     id: string;
   };
-  projectEvents: any[];
-  refetchEvents: () => void;
+  projectActivities: any[];
+  refetchActivities: () => void;
 }
 
-export const ProjectEventsTab = ({ 
+export const ProjectActivitiesTab = ({ 
   project,
-  projectEvents,
-  refetchEvents
-}: ProjectEventsTabProps) => {
+  projectActivities,
+  refetchActivities
+}: ProjectActivitiesTabProps) => {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isEditEventOpen, setIsEditEventOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -59,7 +59,7 @@ export const ProjectEventsTab = ({
       if (eventError) throw eventError;
 
       toast.success('تم حذف الفعالية بنجاح');
-      refetchEvents();
+      refetchActivities();
     } catch (error) {
       console.error('Error deleting event:', error);
       toast.error('حدث خطأ أثناء حذف الفعالية');
@@ -79,7 +79,7 @@ export const ProjectEventsTab = ({
       if (error) throw error;
 
       toast.success('تم تحديث الفعالية بنجاح');
-      refetchEvents();
+      refetchActivities();
       setIsEditEventOpen(false);
     } catch (error) {
       console.error('Error updating event:', error);
@@ -92,7 +92,7 @@ export const ProjectEventsTab = ({
       <CardContent className="pt-6">
         <ProjectDashboardHeader onAddEvent={handleAddEvent} />
         <ProjectEventsList
-          projectEvents={projectEvents}
+          projectEvents={projectActivities}
           onEditEvent={handleEditEvent}
           onDeleteEvent={handleDeleteEvent}
         />
@@ -101,7 +101,7 @@ export const ProjectEventsTab = ({
           open={isAddEventOpen}
           onOpenChange={setIsAddEventOpen}
           projectId={project.id}
-          onSuccess={refetchEvents}
+          onSuccess={refetchActivities}
         />
 
         {selectedEvent && (
