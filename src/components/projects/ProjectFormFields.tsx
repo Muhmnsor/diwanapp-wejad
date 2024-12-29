@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BeneficiaryType } from "@/types/event";
 import { Card } from "@/components/ui/card";
-import { EventPathFields } from "@/components/events/form/fields/EventPathFields";
+import { ProjectPathFields } from "@/components/projects/form/fields/ProjectPathFields";
 
 interface ProjectFormFieldsProps {
   formData: Project;
@@ -176,7 +176,7 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
             />
           </div>
 
-          <EventPathFields
+          <ProjectPathFields
             formData={formData}
             setFormData={setFormData}
           />
