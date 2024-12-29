@@ -42,9 +42,9 @@ export const AddProjectEventDialog = ({
 
   const onSubmit = async (data: ProjectActivityFormData) => {
     try {
-      console.log('Creating new project event:', data);
+      console.log('Creating new project activity:', data);
       
-      // First, create the event
+      // First, create the event with is_project_activity set to true
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .insert([{
@@ -56,12 +56,16 @@ export const AddProjectEventDialog = ({
           price: 0,
           beneficiary_type: 'both',
           certificate_type: 'none',
-          image_url: "/placeholder.svg"
+          image_url: "/placeholder.svg",
+          is_project_activity: true, // Set this explicitly
+          is_visible: true
         }])
         .select()
         .single();
 
       if (eventError) throw eventError;
+
+      console.log('Created event:', eventData);
 
       // Then, link it to the project
       const { error: linkError } = await supabase
@@ -74,12 +78,13 @@ export const AddProjectEventDialog = ({
 
       if (linkError) throw linkError;
 
+      console.log('Linked event to project successfully');
       toast.success('تم إضافة النشاط بنجاح');
       onSuccess();
       onOpenChange(false);
       form.reset();
     } catch (error) {
-      console.error('Error creating project event:', error);
+      console.error('Error creating project activity:', error);
       toast.error('حدث خطأ أثناء إضافة النشاط');
     }
   };
