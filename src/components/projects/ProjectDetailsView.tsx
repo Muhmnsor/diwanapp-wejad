@@ -1,89 +1,19 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProjectBadges } from "./badges/ProjectBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
-import { handleProjectDeletion } from "./ProjectDeletionHandler";
-import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProjectDetailsViewProps {
   project: any;
   isAdmin: boolean;
   id: string;
-  error?: string | null;
-  isLoading?: boolean;
 }
 
-export const ProjectDetailsView = ({ 
-  project, 
-  isAdmin, 
-  id, 
-  error, 
-  isLoading 
-}: ProjectDetailsViewProps) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const navigate = useNavigate();
-
+export const ProjectDetailsView = ({ project, isAdmin, id }: ProjectDetailsViewProps) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return format(date, "d MMMM yyyy", { locale: ar });
-  };
-
-  const handleDelete = async () => {
-    try {
-      await handleProjectDeletion({
-        projectId: id,
-        onSuccess: () => navigate("/")
-      });
-    } catch (error) {
-      console.error("Error deleting project:", error);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 flex items-center justify-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Alert variant="destructive">
-          <AlertDescription>
-            {error}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (!project) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Alert>
-          <AlertDescription>
-            لم يتم العثور على المشروع
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  const getRegistrationStatus = () => {
-    const now = new Date();
-    const regStartDate = project.registration_start_date ? new Date(project.registration_start_date) : null;
-    const regEndDate = project.registration_end_date ? new Date(project.registration_end_date) : null;
-    
-    if (!regStartDate || !regEndDate) return "متاح للتسجيل";
-    if (now < regStartDate) return "لم يبدأ التسجيل بعد";
-    if (now > regEndDate) return "انتهى التسجيل";
-    return "متاح للتسجيل";
   };
 
   return (
@@ -117,11 +47,11 @@ export const ProjectDetailsView = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2 text-right">
-              <h3 className="font-semibold">تاريخ بداية المشروع</h3>
+              <h3 className="font-semibold">تاريخ البداية</h3>
               <p>{formatDate(project.start_date)}</p>
             </div>
             <div className="space-y-2 text-right">
-              <h3 className="font-semibold">تاريخ نهاية المشروع</h3>
+              <h3 className="font-semibold">تاريخ النهاية</h3>
               <p>{formatDate(project.end_date)}</p>
             </div>
             {project.registration_start_date && (
@@ -136,43 +66,19 @@ export const ProjectDetailsView = ({
                 <p>{formatDate(project.registration_end_date)}</p>
               </div>
             )}
-            <div className="space-y-2 text-right">
-              <h3 className="font-semibold">حالة التسجيل</h3>
-              <p>{getRegistrationStatus()}</p>
-            </div>
-            <div className="space-y-2 text-right">
-              <h3 className="font-semibold">العدد المتاح</h3>
-              <p>{project.max_attendees} مشارك</p>
-            </div>
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button 
-              variant="outline"
-              disabled={getRegistrationStatus() !== "متاح للتسجيل"}
-            >
-              التسجيل في المشروع
-            </Button>
+            <Button variant="outline">التسجيل في المشروع</Button>
             {isAdmin && (
               <>
                 <Button variant="outline">تعديل</Button>
-                <Button 
-                  variant="destructive"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  حذف
-                </Button>
+                <Button variant="destructive">حذف</Button>
               </>
             )}
           </div>
         </div>
       </Card>
-
-      <ProjectDeleteDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={handleDelete}
-      />
     </div>
   );
 };
