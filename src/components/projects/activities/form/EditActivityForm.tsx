@@ -46,9 +46,11 @@ export const EditActivityForm = ({
     }
   });
 
+  const onSubmit = form.handleSubmit(handleSubmit);
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 pr-4">
+      <form onSubmit={onSubmit} className="space-y-6 pr-4">
         <ActivityBasicFields form={form} />
         <ActivityDateTimeFields form={form} />
         <ActivityLocationFields form={form} />
