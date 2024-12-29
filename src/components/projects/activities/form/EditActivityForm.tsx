@@ -4,8 +4,6 @@ import { ProjectActivityFormData } from "@/types/activity";
 import { ActivityBasicFields } from "./ActivityBasicFields";
 import { ActivityDateTimeFields } from "./ActivityDateTimeFields";
 import { ActivityLocationFields } from "./ActivityLocationFields";
-import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { EditActivityFormActions } from "./EditActivityFormActions";
 
 interface EditActivityFormProps {
@@ -31,7 +29,7 @@ export const EditActivityForm = ({
   onSave,
   onCancel,
   isLoading,
-  handleSubmit
+  handleSubmit: onSubmit
 }: EditActivityFormProps) => {
   const form = useForm<ProjectActivityFormData>({
     defaultValues: {
@@ -46,32 +44,12 @@ export const EditActivityForm = ({
     }
   });
 
-  const onSubmit = form.handleSubmit(handleSubmit);
-
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-6 pr-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pr-4">
         <ActivityBasicFields form={form} />
         <ActivityDateTimeFields form={form} />
         <ActivityLocationFields form={form} />
-        
-        <FormField
-          control={form.control}
-          name="event_hours"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>مدة النشاط (بالساعات)</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  {...field} 
-                  min="0"
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
         
         <EditActivityFormActions 
           onCancel={onCancel}
