@@ -9,6 +9,8 @@ import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EditProjectEventDialogProps {
   activity: ProjectActivity;
@@ -26,27 +28,48 @@ export const EditProjectEventDialog = ({
   projectId
 }: EditProjectEventDialogProps) => {
   console.log('Activity data in EditProjectEventDialog:', activity);
-
+  
   const form = useForm({
     defaultValues: {
-      title: activity.title,
+      title: activity.title || "",
       description: activity.description || "",
-      date: activity.date,
-      time: activity.time,
-      location: activity.location,
+      date: activity.date || "",
+      time: activity.time || "",
+      location: activity.location || "",
       location_url: activity.location_url || "",
       special_requirements: activity.special_requirements || "",
-      event_hours: activity.event_hours,
+      event_hours: activity.event_hours || 0,
     },
   });
 
-  const handleSave = async (data: any) => {
-    const updatedActivity = {
-      ...activity,
-      ...data,
-    };
-    await onSave(updatedActivity);
-    onOpenChange(false);
+  const handleSubmit = async (data: any) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: data.title,
+          description: data.description,
+          date: data.date,
+          time: data.time,
+          location: data.location,
+          location_url: data.location_url,
+          special_requirements: data.special_requirements,
+          event_hours: data.event_hours,
+        })
+        .eq('id', activity.id);
+
+      if (error) throw error;
+
+      toast.success("تم تحديث النشاط بنجاح");
+      onSave({
+        ...activity,
+        ...data
+      });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error("حدث خطأ أثناء تحديث النشاط");
+    }
   };
 
   return (
@@ -54,111 +77,107 @@ export const EditProjectEventDialog = ({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
         <EditProjectEventHeader />
         <ScrollArea className="h-[calc(90vh-120px)]">
-          <div className="space-y-6 pr-4">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>عنوان النشاط</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>وصف النشاط</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>تاريخ النشاط</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="time"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>وقت النشاط</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>الموقع</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="location_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>رابط الموقع (قوقل ماب)</FormLabel>
-                        <FormControl>
-                          <Input {...field} dir="ltr" placeholder="https://maps.google.com/..." />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="special_requirements"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>احتياجات خاصة</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="أي متطلبات أو احتياجات خاصة للنشاط..." />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="event_hours"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>مدة النشاط (بالساعات)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <Button type="submit">حفظ التغييرات</Button>
-              </form>
-            </Form>
-          </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 pr-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>عنوان النشاط</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>وصف النشاط</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>تاريخ النشاط</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>وقت النشاط</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الموقع</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>رابط الموقع (قوقل ماب)</FormLabel>
+                    <FormControl>
+                      <Input dir="ltr" placeholder="https://maps.google.com/..." {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="special_requirements"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>احتياجات خاصة</FormLabel>
+                    <FormControl>
+                      <Input placeholder="أي متطلبات أو احتياجات خاصة للنشاط..." {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="event_hours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>مدة النشاط (بالساعات)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">حفظ التغييرات</Button>
+            </form>
+          </Form>
         </ScrollArea>
       </DialogContent>
     </Dialog>
