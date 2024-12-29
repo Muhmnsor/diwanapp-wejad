@@ -1,46 +1,110 @@
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ProjectActivity } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { EditProjectActivityHeader } from "./EditProjectActivityHeader";
-import { EditProjectActivityFormContainer } from "./form/EditProjectActivityFormContainer";
+import { useForm } from "react-hook-form";
+import { Form } from "@/components/ui/form";
+import { EventBasicFields } from "./form/EventBasicFields";
+import { EventDateTimeFields } from "./form/EventDateTimeFields";
+import { EventLocationFields } from "./form/EventLocationFields";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EditProjectActivityDialogProps {
   activity: ProjectActivity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (updatedActivity: ProjectActivity) => void;
+  onSave: () => void;
   projectId: string;
 }
 
-export const EditProjectActivityDialog = ({ 
-  activity, 
-  open, 
+export const EditProjectActivityDialog = ({
+  activity,
+  open,
   onOpenChange,
   onSave,
   projectId
 }: EditProjectActivityDialogProps) => {
+  const [isLoading, setIsLoading] = useState(false);
   console.log('Activity data in EditProjectActivityDialog:', activity);
 
-  const handleSave = async (updatedActivity: ProjectActivity) => {
-    await onSave(updatedActivity);
-    onOpenChange(false);
+  const form = useForm({
+    defaultValues: {
+      title: activity.title || "",
+      description: activity.description || "",
+      date: activity.date || "",
+      time: activity.time || "",
+      location: activity.location || "",
+      location_url: activity.location_url || "",
+      special_requirements: activity.special_requirements || "",
+      event_hours: activity.event_hours || 0,
+    }
+  });
+
+  const handleSubmit = async (data: any) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: data.title,
+          description: data.description,
+          date: data.date,
+          time: data.time,
+          location: data.location,
+          location_url: data.location_url,
+          special_requirements: data.special_requirements,
+          event_hours: data.event_hours,
+        })
+        .eq('id', activity.id);
+
+      if (error) throw error;
+
+      toast.success("تم تحديث النشاط بنجاح");
+      onSave();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating activity:', error);
+      toast.error("حدث خطأ أثناء تحديث النشاط");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] [&_[data-radix-scroll-area-viewport]]:!pl-4 [&_[data-radix-scroll-area-viewport]]:!pr-0" dir="rtl">
-        <EditProjectActivityHeader />
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh]" dir="rtl">
         <ScrollArea className="h-[calc(90vh-120px)]">
           <div className="space-y-6 pr-4">
-            <EditProjectActivityFormContainer
-              activity={activity}
-              onSave={handleSave}
-              onCancel={() => onOpenChange(false)}
-              projectId={projectId}
-            />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                <EventBasicFields form={form} />
+                <EventDateTimeFields form={form} />
+                <EventLocationFields form={form} />
+                
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => onOpenChange(false)}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        جاري الحفظ...
+                      </span>
+                    ) : (
+                      "حفظ التغييرات"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </div>
         </ScrollArea>
       </DialogContent>
