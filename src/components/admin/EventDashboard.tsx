@@ -1,31 +1,59 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { DashboardTabs } from "./dashboard/DashboardTabs";
-import { useDashboardData } from "./dashboard/useDashboardData";
 
-export const EventDashboard = ({ eventId }: { eventId: string }) => {
-  const { data, isLoading, error } = useDashboardData(eventId);
+interface EventDashboardProps {
+  eventId: string;
+  isProject?: boolean;
+}
 
-  if (isLoading) {
-    return <div className="text-center p-8">جاري التحميل...</div>;
+export const EventDashboard = ({ eventId, isProject = false }: EventDashboardProps) => {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log(`Fetching ${isProject ? 'project' : 'event'} details for dashboard:`, eventId);
+        
+        const { data: result, error: fetchError } = await supabase
+          .from(isProject ? 'projects' : 'events')
+          .select('*')
+          .eq('id', eventId)
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error(`Error fetching ${isProject ? 'project' : 'event'}:`, fetchError);
+          setError(fetchError.message);
+          return;
+        }
+
+        if (!result) {
+          console.log(`No ${isProject ? 'project' : 'event'} found with ID:`, eventId);
+          setError(`${isProject ? 'المشروع' : 'الفعالية'} غير موجود`);
+          return;
+        }
+
+        setData(result);
+      } catch (err) {
+        console.error('Error in fetchData:', err);
+        setError('حدث خطأ غير متوقع');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [eventId, isProject]);
+
+  if (loading) {
+    return <div className="p-4">جاري التحميل...</div>;
   }
 
-  if (error || !data?.event) {
-    return <div className="text-center p-8 text-red-500">لم يتم العثور على الفعالية</div>;
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
   }
 
-  return (
-    <div className="space-y-6">
-      <DashboardTabs
-        registrationCount={data.registrationCount}
-        remainingSeats={data.remainingSeats}
-        occupancyRate={data.occupancyRate}
-        eventDate={data.event.date}
-        eventTime={data.event.time}
-        registrations={data.registrations}
-        eventTitle={data.event.title}
-        eventId={eventId}
-        eventPath={data.event.event_path}
-        eventCategory={data.event.event_category}
-      />
-    </div>
-  );
+  return <DashboardTabs event={data} isProject={isProject} />;
 };

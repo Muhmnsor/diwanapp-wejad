@@ -48,7 +48,7 @@ export const ProjectDetailsView = ({
               </TabsContent>
 
               <TabsContent value="dashboard" className="mt-6 px-4 md:px-8">
-                <EventDashboard eventId={id} />
+                <EventDashboard eventId={id} isProject={true} />
               </TabsContent>
             </Tabs>
           ) : (
