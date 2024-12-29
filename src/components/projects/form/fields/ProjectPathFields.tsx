@@ -26,7 +26,7 @@ export const ProjectPathFields = ({ formData, setFormData }: ProjectPathFieldsPr
       <div>
         <label className="text-sm font-medium block mb-1.5">المسار</label>
         <Select
-          value={formData.event_path}
+          value={formData.event_path || 'environment'}
           onValueChange={(value: EventPathType) => {
             setFormData({
               ...formData,
@@ -49,7 +49,7 @@ export const ProjectPathFields = ({ formData, setFormData }: ProjectPathFieldsPr
       <div>
         <label className="text-sm font-medium block mb-1.5">الفئة</label>
         <Select
-          value={formData.event_category}
+          value={formData.event_category || 'social'}
           onValueChange={(value: EventCategoryType) => 
             setFormData({ ...formData, event_category: value })
           }
@@ -58,7 +58,7 @@ export const ProjectPathFields = ({ formData, setFormData }: ProjectPathFieldsPr
             <SelectValue placeholder="اختر الفئة" />
           </SelectTrigger>
           <SelectContent>
-            {getCategoryOptions(formData.event_path).map((category) => (
+            {getCategoryOptions(formData.event_path as EventPathType).map((category) => (
               <SelectItem key={category} value={category}>
                 {category === 'social' && 'اجتماعي'}
                 {category === 'entertainment' && 'ترفيهي'}
