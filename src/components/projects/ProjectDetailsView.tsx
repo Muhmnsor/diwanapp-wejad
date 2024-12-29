@@ -7,14 +7,23 @@ import { ar } from "date-fns/locale";
 import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
 import { handleProjectDeletion } from "./ProjectDeletionHandler";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProjectDetailsViewProps {
   project: any;
   isAdmin: boolean;
   id: string;
+  error?: string | null;
+  isLoading?: boolean;
 }
 
-export const ProjectDetailsView = ({ project, isAdmin, id }: ProjectDetailsViewProps) => {
+export const ProjectDetailsView = ({ 
+  project, 
+  isAdmin, 
+  id, 
+  error, 
+  isLoading 
+}: ProjectDetailsViewProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const navigate = useNavigate();
 
@@ -33,6 +42,38 @@ export const ProjectDetailsView = ({ project, isAdmin, id }: ProjectDetailsViewP
       console.error("Error deleting project:", error);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert>
+          <AlertDescription>
+            لم يتم العثور على المشروع
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 space-y-8">

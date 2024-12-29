@@ -15,21 +15,21 @@ const ProjectDetails = () => {
   const { id } = useParams();
   const { user } = useAuthStore();
 
-  console.log('ProjectDetails - User:', user);
-
   useEffect(() => {
     const fetchProject = async () => {
       try {
         if (!id) {
           setError("معرف المشروع غير موجود");
+          setLoading(false);
           return;
         }
 
+        console.log('Fetching project with ID:', id);
         const { data, error: fetchError } = await supabase
           .from("projects")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
           console.error("Error fetching project:", fetchError);
@@ -44,6 +44,7 @@ const ProjectDetails = () => {
 
         console.log("Fetched project:", data);
         setProject(data);
+        setError(null);
       } catch (err) {
         console.error("Error in fetchProject:", err);
         setError("حدث خطأ غير متوقع");
@@ -55,35 +56,7 @@ const ProjectDetails = () => {
     fetchProject();
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-red-500">{error}</div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   const isAdmin = user?.isAdmin;
-
-  if (!project) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -97,7 +70,13 @@ const ProjectDetails = () => {
             </TabsList>
             
             <TabsContent value="details" className="mt-0">
-              <ProjectDetailsView project={project} isAdmin={isAdmin} id={id!} />
+              <ProjectDetailsView 
+                project={project} 
+                isAdmin={isAdmin} 
+                id={id!} 
+                error={error}
+                isLoading={loading}
+              />
             </TabsContent>
 
             {isAdmin && (
