@@ -33,32 +33,8 @@ const Index = () => {
   } = useRegistrations();
 
   const now = new Date();
-
-  // فلترة الفعاليات المستقلة فقط (غير المرتبطة بمشاريع)
-  const filteredEvents = events.filter(event => {
-    // تسجيل تفاصيل كاملة عن الفعالية للتحقق
-    console.log("🔍 فحص تفاصيل الفعالية:", {
-      title: event.title,
-      id: event.id,
-      is_project_activity: event.is_project_activity,
-      project_events: projects.find(p => 
-        p.events?.some(e => e.id === event.id)
-      )?.title
-    });
-    
-    // التحقق من أن الفعالية ليست نشاطاً في مشروع
-    const isProjectActivity = event.is_project_activity === true;
-    
-    if (isProjectActivity) {
-      console.log("❌ استبعاد نشاط المشروع:", event.title);
-      return false;
-    }
-    
-    console.log("✅ قبول الفعالية المستقلة:", event.title);
-    return true;
-  });
   
-  const upcomingEvents = filteredEvents
+  const upcomingEvents = events
     .filter((event: any) => {
       const eventDate = new Date(event.date);
       return eventDate >= now;
@@ -69,7 +45,7 @@ const Index = () => {
       return dateA.getTime() - dateB.getTime();
     });
 
-  const pastEvents = filteredEvents
+  const pastEvents = events
     .filter((event: any) => {
       const eventDate = new Date(event.date);
       return eventDate < now;
@@ -98,7 +74,6 @@ const Index = () => {
 
     console.log("📊 إحصائيات البيانات:", {
       totalEventsCount: events.length,
-      filteredEventsCount: filteredEvents.length,
       projectsCount: projects.length,
       registrationsCount: Object.keys(registrations).length,
       upcomingEventsCount: upcomingEvents.length,
@@ -109,8 +84,7 @@ const Index = () => {
       isAuthenticated
     });
   }, [
-    events, 
-    filteredEvents,
+    events,
     projects,
     registrations, 
     upcomingEvents, 
@@ -130,7 +104,7 @@ const Index = () => {
       <Hero />
       <div className="container mx-auto px-4 space-y-12">
         <EventsTabs
-          events={filteredEvents}
+          events={events}
           upcomingEvents={upcomingEvents}
           pastEvents={pastEvents}
           activeTab={activeTab}
