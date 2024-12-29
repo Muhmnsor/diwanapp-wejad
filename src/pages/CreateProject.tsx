@@ -7,27 +7,25 @@ import { useState } from "react";
 import { EventFormFields } from "@/components/events/EventFormFields";
 import { EventFormActions } from "@/components/events/form/EventFormActions";
 import { useQueryClient } from "@tanstack/react-query";
+import { Event } from "@/types/event";
 
 const CreateProject = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Event>({
     title: "",
     description: "",
     date: "",
     time: "",
     location: "",
     certificate_type: "none",
-    certificateType: "none",
     event_hours: 0,
-    eventHours: 0,
     price: "free",
     max_attendees: 0,
     beneficiaryType: "both",
     event_type: "in-person",
-    eventType: "in-person",
     attendees: 0,
     imageUrl: "",
     image_url: "",
@@ -113,22 +111,26 @@ const CreateProject = () => {
   };
 
   return (
-    <div className="min-h-screen" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-background" dir="rtl">
       <TopHeader />
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">إنشاء مشروع جديد</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <EventFormFields 
-            formData={formData} 
-            setFormData={setFormData}
-            onImageChange={handleImageChange}
-          />
-          <EventFormActions 
-            isUploading={isUploading}
-            onCancel={() => navigate("/")}
-          />
-        </form>
-      </div>
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8 text-primary">إنشاء مشروع جديد</h1>
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <EventFormFields 
+                formData={formData} 
+                setFormData={setFormData as (data: Event) => void}
+                onImageChange={handleImageChange}
+              />
+              <EventFormActions 
+                isUploading={isUploading}
+                onCancel={() => navigate("/")}
+              />
+            </form>
+          </div>
+        </div>
+      </main>
       <Footer />
     </div>
   );
