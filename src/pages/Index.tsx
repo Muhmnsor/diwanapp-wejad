@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Hero } from "@/components/home/Hero";
 import { EventsTabs } from "@/components/home/EventsTabs";
+import { ProjectsSection } from "@/components/home/ProjectsSection";
 import { useEvents } from "@/hooks/useEvents";
+import { useProjects } from "@/hooks/useProjects";
 import { useRegistrations } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
@@ -17,6 +19,12 @@ const Index = () => {
     isError: isEventsError,
     error: eventsError 
   } = useEvents();
+  
+  const {
+    data: projects = [],
+    isError: isProjectsError,
+    error: projectsError
+  } = useProjects();
   
   const { 
     data: registrations = {}, 
@@ -54,6 +62,11 @@ const Index = () => {
       toast.error("حدث خطأ في تحميل الفعاليات");
     }
 
+    if (isProjectsError) {
+      console.error("❌ خطأ في جلب المشاريع:", projectsError);
+      toast.error("حدث خطأ في تحميل المشاريع");
+    }
+
     if (isRegistrationsError && isAuthenticated) {
       console.error("❌ خطأ في جلب التسجيلات:", registrationsError);
       toast.error("حدث خطأ في تحميل التسجيلات");
@@ -61,21 +74,26 @@ const Index = () => {
 
     console.log("📊 حالة البيانات:", {
       eventsCount: events.length,
+      projectsCount: projects.length,
       registrationsCount: Object.keys(registrations).length,
       upcomingEventsCount: upcomingEvents.length,
       pastEventsCount: pastEvents.length,
       isEventsError,
+      isProjectsError,
       isRegistrationsError,
       isAuthenticated
     });
   }, [
     events, 
+    projects,
     registrations, 
     upcomingEvents, 
     pastEvents, 
     isEventsError,
+    isProjectsError,
     isRegistrationsError,
     eventsError,
+    projectsError,
     registrationsError,
     isAuthenticated
   ]);
@@ -84,7 +102,7 @@ const Index = () => {
     <div className="min-h-screen" dir="rtl">
       <TopHeader />
       <Hero />
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 space-y-12">
         <EventsTabs
           events={events}
           upcomingEvents={upcomingEvents}
@@ -92,6 +110,10 @@ const Index = () => {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           registrations={registrations}
+        />
+        <ProjectsSection
+          title="المشاريع"
+          projects={projects}
         />
       </div>
       <Footer />
