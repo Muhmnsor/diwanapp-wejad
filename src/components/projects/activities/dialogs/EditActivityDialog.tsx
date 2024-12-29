@@ -4,7 +4,7 @@ import {
 } from "@/components/ui/dialog";
 import { ProjectActivity } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { EditProjectEventHeader } from "../../../events/EditProjectEventHeader";
+import { EditProjectEventHeader } from "../../events/EditProjectEventHeader";
 import { EditActivityForm } from "../form/EditActivityForm";
 
 interface EditActivityDialogProps {
@@ -50,7 +50,10 @@ export const EditActivityDialog = ({
             activity={formData}
             onSave={onSave}
             onCancel={() => onOpenChange(false)}
-            projectId={projectId}
+            isLoading={false}
+            handleSubmit={async () => {
+              await onSave();
+            }}
           />
         </ScrollArea>
       </DialogContent>
