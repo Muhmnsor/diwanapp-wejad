@@ -7,7 +7,6 @@ interface RegistrationFormProps {
   eventTime: string;
   eventLocation: string;
   onSubmit: () => void;
-  isProject?: boolean;
 }
 
 export const RegistrationForm = ({ 
@@ -17,8 +16,9 @@ export const RegistrationForm = ({
   eventTime,
   eventLocation,
   onSubmit,
-  isProject = false
 }: RegistrationFormProps) => {
+  console.log('Rendering event registration form for:', eventTitle);
+  
   return (
     <RegistrationFormContainer
       eventTitle={eventTitle}
@@ -27,7 +27,7 @@ export const RegistrationForm = ({
       eventTime={eventTime}
       eventLocation={eventLocation}
       onSubmit={onSubmit}
-      isProject={isProject}
+      isProject={false}
     />
   );
 };
