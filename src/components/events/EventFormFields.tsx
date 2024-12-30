@@ -5,6 +5,7 @@ import { EventTypeFields } from "./form/fields/EventTypeFields";
 import { CertificateFields } from "./form/fields/CertificateFields";
 import { RegistrationFields } from "./form/fields/RegistrationFields";
 import { EventPathFields } from "./form/fields/EventPathFields";
+import { RegistrationFieldsSelector } from "./form/fields/RegistrationFieldsSelector";
 
 interface EventFormFieldsProps {
   formData: Event;
@@ -22,6 +23,7 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
       <EventPathFields formData={formData} setFormData={setFormData} />
       <CertificateFields formData={formData} setFormData={setFormData} />
       <RegistrationFields formData={formData} setFormData={setFormData} />
+      <RegistrationFieldsSelector formData={formData} setFormData={setFormData} />
       
       {onImageChange && (
         <div>

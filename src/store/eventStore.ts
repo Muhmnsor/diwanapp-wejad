@@ -30,6 +30,14 @@ export interface Event {
   event_category: EventCategoryType;
   is_visible?: boolean;
   special_requirements?: string | null;
+  // New registration fields
+  arabic_name?: boolean;
+  english_name?: boolean;
+  education_level?: boolean;
+  birth_date?: boolean;
+  national_id?: boolean;
+  email?: boolean;
+  phone?: boolean;
 }
 
 interface EventStore {
