@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AttendanceStats } from "./AttendanceStats";
 import { AttendanceControls } from "./AttendanceControls";
 import { AttendanceTable } from "./AttendanceTable";
-import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
+import { useActivityAttendance } from "@/hooks/attendance/useActivityAttendance";
 import { toast } from "sonner";
 
 interface ProjectPreparationTabProps {
@@ -56,7 +56,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
   const { 
     handleAttendanceChange, 
     handleGroupAttendance 
-  } = useAttendanceManagement(projectId);
+  } = useActivityAttendance(projectId);
 
   const stats = {
     total: registrations.length,
