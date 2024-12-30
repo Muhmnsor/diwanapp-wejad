@@ -1,6 +1,7 @@
 import { RegistrationStatsCard } from "./RegistrationStatsCard";
 import { PathCategoryCard } from "./PathCategoryCard";
 import { ActivitiesStatsCard } from "./ActivitiesStatsCard";
+import { AttendanceAverageCard } from "./AttendanceAverageCard";
 import { ActivityAttendanceCard } from "./ActivityAttendanceCard";
 import { ActivityRatingCard } from "./ActivityRatingCard";
 
@@ -53,6 +54,15 @@ export const DashboardStatsContent = ({
 
       {!isEvent && (
         <>
+          <ActivitiesStatsCard
+            activities={{
+              total: activities.total,
+              completed: activities.completed
+            }}
+          />
+          <AttendanceAverageCard
+            averageAttendance={activities.averageAttendance}
+          />
           <ActivityAttendanceCard
             type="highest"
             title="أعلى نسبة حضور"
@@ -73,9 +83,6 @@ export const DashboardStatsContent = ({
             title="أقل نشاط تقييماً"
             activity={ratingStats?.lowest}
           />
-          <div className="lg:col-span-4">
-            <ActivitiesStatsCard activities={activities} />
-          </div>
         </>
       )}
     </div>
