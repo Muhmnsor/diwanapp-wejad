@@ -28,16 +28,8 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
         .eq('project_id', projectId);
 
       if (error) throw error;
-
-      // Add total activities count and current activity ID to each registration
-      const registrationsWithTotals = data?.map(registration => ({
-        ...registration,
-        total_activities: activities.length,
-        current_activity_id: selectedActivity
-      })) || [];
-
-      console.log("Fetched registrations:", registrationsWithTotals);
-      return registrationsWithTotals;
+      console.log("Fetched registrations:", data);
+      return data || [];
     },
     enabled: !!projectId,
   });
