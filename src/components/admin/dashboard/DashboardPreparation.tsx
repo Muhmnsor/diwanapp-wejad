@@ -3,18 +3,34 @@ import { AttendanceStats } from "./preparation/AttendanceStats";
 import { AttendanceControls } from "./preparation/AttendanceControls";
 import { AttendanceTable } from "./preparation/AttendanceTable";
 import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardPreparationProps {
   eventId: string;
 }
 
 export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => {
+  const { data: registrations = [], isLoading } = useQuery({
+    queryKey: ['registrations', eventId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('registrations')
+        .select(`
+          *,
+          attendance_records(*)
+        `)
+        .eq('event_id', eventId);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const {
-    registrations,
-    isLoading,
     attendanceStats,
     setAttendanceStats,
-    handleAttendance,
+    handleAttendanceChange,
     handleBarcodeScanned,
     handleGroupAttendance
   } = useAttendanceManagement(eventId);
@@ -59,7 +75,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
       <AttendanceStats stats={attendanceStats} />
       <AttendanceTable 
         registrations={registrations} 
-        onAttendanceChange={handleAttendance}
+        onAttendanceChange={handleAttendanceChange}
       />
     </div>
   );
