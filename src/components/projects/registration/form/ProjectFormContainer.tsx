@@ -3,8 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { ProjectRegistrationFields } from "./ProjectRegistrationFields";
-import { ProjectRegistrationActions } from "./ProjectRegistrationActions";
+import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
 import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
 
 interface ProjectFormContainerProps {

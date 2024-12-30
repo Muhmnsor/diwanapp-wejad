@@ -5,25 +5,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ProjectFormContainer } from "./form/ProjectFormContainer";
+import { Project } from "@/types/project";
 
 interface ProjectRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectTitle: string;
-  projectPrice: number | "free" | null;
-  startDate: string;
-  endDate: string;
-  eventType: string;
+  project: Project;
 }
 
 export const ProjectRegistrationDialog = ({
   open,
   onOpenChange,
-  projectTitle,
-  projectPrice,
-  startDate,
-  endDate,
-  eventType,
+  project,
 }: ProjectRegistrationDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,11 +25,11 @@ export const ProjectRegistrationDialog = ({
           <DialogTitle className="text-right">التسجيل في المشروع</DialogTitle>
         </DialogHeader>
         <ProjectFormContainer
-          projectTitle={projectTitle}
-          projectPrice={projectPrice}
-          startDate={startDate}
-          endDate={endDate}
-          eventType={eventType}
+          projectTitle={project.title}
+          projectPrice={project.price}
+          startDate={project.start_date}
+          endDate={project.end_date}
+          eventType={project.event_type}
           onSubmit={() => onOpenChange(false)}
         />
       </DialogContent>
