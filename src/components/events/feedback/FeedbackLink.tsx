@@ -6,13 +6,15 @@ import { Copy } from "lucide-react";
 
 interface FeedbackLinkProps {
   eventId: string;
+  isActivity?: boolean;
 }
 
-export const FeedbackLink = ({ eventId }: FeedbackLinkProps) => {
+export const FeedbackLink = ({ eventId, isActivity = false }: FeedbackLinkProps) => {
   const [copied, setCopied] = useState(false);
-  const feedbackUrl = `${window.location.origin}/event/${eventId}/feedback`;
+  const path = isActivity ? 'activity' : 'event';
+  const feedbackUrl = `${window.location.origin}/${path}/${eventId}/feedback`;
 
-  console.log('Generating feedback URL for event:', eventId);
+  console.log(`Generating feedback URL for ${isActivity ? 'activity' : 'event'}:`, eventId);
   console.log('Generated feedback URL:', feedbackUrl);
 
   const handleCopy = async () => {

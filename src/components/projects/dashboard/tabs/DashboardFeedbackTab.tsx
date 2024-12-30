@@ -101,7 +101,7 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
         <CardContent className="px-0 space-y-6">
           <div className="mb-6">
             <h4 className="text-sm font-medium mb-2">رابط التقييم</h4>
-            <FeedbackLink eventId={activity.id} />
+            <FeedbackLink eventId={activity.id} isActivity={true} />
           </div>
           {activity.feedback.map((feedback, index) => (
             <div key={index} className="space-y-6 border-b pb-6 last:border-0">
