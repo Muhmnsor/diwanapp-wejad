@@ -12,10 +12,17 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
   const calculateAttendanceStats = (registration: any) => {
     if (!registration.attendance_records) return { count: 0, percentage: 0 };
     
-    const presentCount = registration.attendance_records.filter(
+    // Filter attendance records for this registration that have status 'present'
+    const presentRecords = registration.attendance_records.filter(
       (record: any) => record.status === 'present'
-    ).length;
+    );
     
+    // Count unique activities where the user was present
+    const uniquePresentActivities = new Set(
+      presentRecords.map((record: any) => record.activity_id)
+    );
+    
+    const presentCount = uniquePresentActivities.size;
     const totalActivities = registration.total_activities || 1;
     const percentage = (presentCount / totalActivities) * 100;
     
@@ -41,17 +48,21 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
         <TableBody>
           {registrations.map((registration: any) => {
             const stats = calculateAttendanceStats(registration);
+            const currentActivityRecord = registration.attendance_records?.find(
+              (record: any) => record.activity_id === registration.current_activity_id
+            );
+
             return (
               <TableRow key={registration.id}>
                 <TableCell>{registration.name}</TableCell>
                 <TableCell>{registration.registration_number}</TableCell>
                 <TableCell>
-                  {registration.attendance_records?.[0]?.status === 'present' ? (
+                  {currentActivityRecord?.status === 'present' ? (
                     <span className="text-green-600 flex items-center gap-1">
                       <CheckCircle className="h-4 w-4" />
                       حاضر
                     </span>
-                  ) : registration.attendance_records?.[0]?.status === 'absent' ? (
+                  ) : currentActivityRecord?.status === 'absent' ? (
                     <span className="text-red-600 flex items-center gap-1">
                       <XCircle className="h-4 w-4" />
                       غائب
