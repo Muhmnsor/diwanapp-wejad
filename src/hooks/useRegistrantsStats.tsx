@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface RegistrantStats {
   id: string;
-  name: string;
+  arabic_name: string;
   email: string;
   phone: string;
   attendedActivities: number;
@@ -24,7 +24,7 @@ export const useRegistrantsStats = (projectId: string) => {
         .from('registrations')
         .select(`
           id,
-          name,
+          arabic_name,
           email,
           phone,
           attendance_records (
@@ -64,7 +64,7 @@ export const useRegistrantsStats = (projectId: string) => {
 
         return {
           id: reg.id,
-          name: reg.name,
+          arabic_name: reg.arabic_name,
           email: reg.email,
           phone: reg.phone,
           attendedActivities,

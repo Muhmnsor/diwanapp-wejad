@@ -582,7 +582,7 @@ export type Database = {
       }
       registrations: {
         Row: {
-          arabic_name: string | null
+          arabic_name: string
           birth_date: string | null
           created_at: string
           education_level: string | null
@@ -590,7 +590,6 @@ export type Database = {
           english_name: string | null
           event_id: string | null
           id: string
-          name: string
           national_id: string | null
           phone: string
           project_id: string | null
@@ -598,7 +597,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          arabic_name?: string | null
+          arabic_name: string
           birth_date?: string | null
           created_at?: string
           education_level?: string | null
@@ -606,7 +605,6 @@ export type Database = {
           english_name?: string | null
           event_id?: string | null
           id?: string
-          name: string
           national_id?: string | null
           phone: string
           project_id?: string | null
@@ -614,7 +612,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          arabic_name?: string | null
+          arabic_name?: string
           birth_date?: string | null
           created_at?: string
           education_level?: string | null
@@ -622,7 +620,6 @@ export type Database = {
           english_name?: string | null
           event_id?: string | null
           id?: string
-          name?: string
           national_id?: string | null
           phone?: string
           project_id?: string | null

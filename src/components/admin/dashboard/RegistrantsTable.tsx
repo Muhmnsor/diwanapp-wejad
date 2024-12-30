@@ -9,13 +9,13 @@ import {
 import { Progress } from "@/components/ui/progress";
 
 interface RegistrantStats {
-  name: string;
+  id: string;
+  arabic_name: string;
+  email: string;
+  phone: string;
   attendedActivities: number;
   totalActivities: number;
   attendancePercentage: number;
-  id: string;
-  email: string;
-  phone: string;
 }
 
 interface RegistrantsTableProps {
@@ -55,7 +55,7 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
               className="border-b border-gray-200 hover:bg-gray-50"
             >
               <TableCell className="text-right text-gray-500">{index + 1}</TableCell>
-              <TableCell className="text-right">{registrant.name}</TableCell>
+              <TableCell className="text-right">{registrant.arabic_name}</TableCell>
               <TableCell className="text-right">{registrant.email}</TableCell>
               <TableCell className="text-right">{registrant.phone}</TableCell>
               <TableCell className="text-right">

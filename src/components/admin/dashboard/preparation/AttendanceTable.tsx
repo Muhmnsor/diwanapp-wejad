@@ -23,7 +23,7 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
         <TableBody>
           {registrations.map((registration: any) => (
             <TableRow key={registration.id}>
-              <TableCell>{registration.name}</TableCell>
+              <TableCell>{registration.arabic_name}</TableCell>
               <TableCell>{registration.registration_number}</TableCell>
               <TableCell>
                 {registration.attendance_records?.[0]?.status === 'present' ? (
