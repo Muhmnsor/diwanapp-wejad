@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { EventFeedbackForm } from "../EventFeedbackForm";
 
 export const FeedbackFormContainer = () => {
   const navigate = useNavigate();
-  const { id: eventId } = useParams();
+  const { id } = useParams();
+  const location = useLocation();
+  const isActivity = location.pathname.includes('/activity/');
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [name, setName] = useState("");
@@ -19,8 +22,8 @@ export const FeedbackFormContainer = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!eventId) {
-      toast.error("لم يتم العثور على معرف الفعالية");
+    if (!id) {
+      toast.error(isActivity ? "لم يتم العثور على معرف النشاط" : "لم يتم العثور على معرف الفعالية");
       return;
     }
 
@@ -32,12 +35,12 @@ export const FeedbackFormContainer = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('Submitting feedback for event:', eventId);
+      console.log('Submitting feedback for:', isActivity ? 'activity' : 'event', id);
       
       const { error } = await supabase
         .from('event_feedback')
         .insert({
-          event_id: eventId,
+          event_id: id,
           feedback_text: feedbackText.trim(),
           overall_rating: overallRating,
           content_rating: contentRating,
@@ -53,7 +56,7 @@ export const FeedbackFormContainer = () => {
       }
 
       toast.success("تم إرسال التقييم بنجاح");
-      navigate(`/event/${eventId}`);
+      navigate(isActivity ? `/activity/${id}` : `/events/${id}`);
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error("حدث خطأ أثناء إرسال التقييم");
