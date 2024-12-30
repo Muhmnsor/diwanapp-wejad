@@ -24,8 +24,6 @@ interface DashboardOverviewProps {
 
 interface RegistrantStats {
   name: string;
-  email: string;
-  phone: string;
   attendedActivities: number;
   totalActivities: number;
   attendancePercentage: number;
@@ -63,8 +61,6 @@ export const DashboardOverview = ({
         .select(`
           id,
           name,
-          email,
-          phone,
           attendance_records(*)
         `)
         .eq('project_id', projectId);
@@ -96,8 +92,6 @@ export const DashboardOverview = ({
 
         return {
           name: reg.name,
-          email: reg.email,
-          phone: reg.phone,
           attendedActivities,
           totalActivities,
           attendancePercentage: totalActivities > 0 
@@ -131,18 +125,14 @@ export const DashboardOverview = ({
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">الاسم</TableHead>
-                <TableHead className="text-right">البريد الإلكتروني</TableHead>
-                <TableHead className="text-right">رقم الجوال</TableHead>
                 <TableHead className="text-right">الأنشطة المحضورة</TableHead>
                 <TableHead className="text-right">نسبة الحضور</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {registrantsStats.map((registrant: RegistrantStats) => (
-                <TableRow key={registrant.email}>
+                <TableRow key={registrant.name}>
                   <TableCell>{registrant.name}</TableCell>
-                  <TableCell>{registrant.email}</TableCell>
-                  <TableCell>{registrant.phone}</TableCell>
                   <TableCell>
                     {registrant.attendedActivities} من {registrant.totalActivities}
                   </TableCell>
