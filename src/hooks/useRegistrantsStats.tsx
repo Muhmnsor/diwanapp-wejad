@@ -14,6 +14,8 @@ export const useRegistrantsStats = (projectId?: string) => {
     queryFn: async () => {
       if (!projectId) return [];
 
+      console.log('Fetching registrants stats for project:', projectId);
+
       // Get all registrations for this project
       const { data: registrations, error: regError } = await supabase
         .from('registrations')
@@ -29,6 +31,8 @@ export const useRegistrantsStats = (projectId?: string) => {
         throw regError;
       }
 
+      console.log('Fetched registrations:', registrations);
+
       // Get total number of activities for this project
       const { data: activities, error: actError } = await supabase
         .from('events')
@@ -40,6 +44,8 @@ export const useRegistrantsStats = (projectId?: string) => {
         console.error('Error fetching activities:', actError);
         throw actError;
       }
+
+      console.log('Fetched activities:', activities);
 
       const totalActivities = activities?.length || 0;
 
