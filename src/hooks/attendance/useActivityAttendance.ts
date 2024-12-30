@@ -67,6 +67,11 @@ export const useActivityAttendance = (projectId: string) => {
   };
 
   const handleGroupAttendance = async (status: 'present' | 'absent', activityId: string) => {
+    if (!activityId) {
+      toast.error("الرجاء اختيار النشاط أولاً");
+      return;
+    }
+
     try {
       console.log('Processing group attendance for activity:', activityId, 'with status:', status);
       
@@ -85,6 +90,8 @@ export const useActivityAttendance = (projectId: string) => {
       for (const registration of registrations) {
         await handleAttendanceChange(registration.id, status, activityId);
       }
+
+      toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
 
     } catch (error) {
       console.error('Error in group attendance:', error);

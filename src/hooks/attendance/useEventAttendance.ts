@@ -85,6 +85,8 @@ export const useEventAttendance = (eventId: string) => {
         await handleAttendanceChange(registration.id, status);
       }
 
+      toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
+
     } catch (error) {
       console.error('Error in group attendance:', error);
       toast.error('حدث خطأ في تسجيل الحضور الجماعي');
