@@ -39,7 +39,7 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
           <TableRow className="border-b border-gray-200">
             <TableHead className="text-right w-[50px]">م</TableHead>
             <TableHead className="text-right">الاسم</TableHead>
-            <TableHead className="text-right">الأنشطة المشاركة</TableHead>
+            <TableHead className="text-right">عدد الأنشطة التي حضرها</TableHead>
             <TableHead className="text-right">نسبة الحضور</TableHead>
           </TableRow>
         </TableHeader>
