@@ -73,7 +73,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
 
     const registration = registrations.find(r => r.registration_number === code);
     if (registration) {
-      await handleAttendanceChange(registration.id, 'present');
+      await handleAttendanceChange(registration.id, 'present', selectedActivity);
       refetchAttendance();
     } else {
       toast.error('رقم التسجيل غير موجود');
@@ -85,7 +85,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
       toast.error("الرجاء اختيار النشاط أولاً");
       return;
     }
-    await handleGroupAttendance(status);
+    await handleGroupAttendance(status, selectedActivity);
     refetchAttendance();
   };
 
@@ -139,7 +139,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
                   )
                 }))}
                 onAttendanceChange={async (registrationId, status) => {
-                  await handleAttendanceChange(registrationId, status);
+                  await handleAttendanceChange(registrationId, status, selectedActivity);
                   refetchAttendance();
                 }}
               />

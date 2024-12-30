@@ -9,7 +9,7 @@ interface AttendanceStats {
   notRecorded: number;
 }
 
-export const useAttendanceManagement = (eventId: string) => {
+export const useAttendanceManagement = (projectId: string) => {
   const [attendanceStats, setAttendanceStats] = useState<AttendanceStats>({
     total: 0,
     present: 0,
@@ -17,15 +17,15 @@ export const useAttendanceManagement = (eventId: string) => {
     notRecorded: 0
   });
 
-  const handleAttendanceChange = async (registrationId: string, status: 'present' | 'absent') => {
+  const handleAttendanceChange = async (registrationId: string, status: 'present' | 'absent', activityId?: string) => {
     try {
-      console.log('Updating attendance for registration:', registrationId, 'with status:', status);
+      console.log('Updating attendance for registration:', registrationId, 'with status:', status, 'for activity:', activityId);
       
       const { data: existingRecord } = await supabase
         .from('attendance_records')
         .select('*')
         .eq('registration_id', registrationId)
-        .eq('event_id', eventId)
+        .eq(activityId ? 'activity_id' : 'event_id', activityId || projectId)
         .maybeSingle();
 
       if (existingRecord) {
@@ -41,7 +41,8 @@ export const useAttendanceManagement = (eventId: string) => {
           .from('attendance_records')
           .insert({
             registration_id: registrationId,
-            event_id: eventId,
+            [activityId ? 'activity_id' : 'event_id']: activityId || projectId,
+            project_id: projectId,
             status,
             check_in_time: status === 'present' ? new Date().toISOString() : null
           });
@@ -54,37 +55,44 @@ export const useAttendanceManagement = (eventId: string) => {
     }
   };
 
-  const handleBarcodeScanned = async (code: string) => {
+  const handleGroupAttendance = async (status: 'present' | 'absent', activityId?: string) => {
     try {
-      const { data: registration } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('registration_number', code)
-        .eq('event_id', eventId)
-        .maybeSingle();
-
-      if (registration) {
-        await handleAttendanceChange(registration.id, 'present');
-        toast.success('تم تسجيل الحضور بنجاح');
-      } else {
-        toast.error('رقم التسجيل غير موجود');
-      }
-    } catch (error) {
-      console.error('Error scanning barcode:', error);
-      toast.error('حدث خطأ في قراءة الباركود');
-    }
-  };
-
-  const handleGroupAttendance = async (status: 'present' | 'absent') => {
-    try {
+      console.log('Processing group attendance with status:', status, 'for activity:', activityId);
+      
       const { data: registrations } = await supabase
         .from('registrations')
         .select('*')
-        .eq('event_id', eventId);
+        .eq('project_id', projectId);
 
       if (registrations) {
         for (const registration of registrations) {
-          await handleAttendanceChange(registration.id, status);
+          // Check if attendance record already exists
+          const { data: existingRecord } = await supabase
+            .from('attendance_records')
+            .select('*')
+            .eq('registration_id', registration.id)
+            .eq(activityId ? 'activity_id' : 'event_id', activityId || projectId)
+            .maybeSingle();
+
+          if (existingRecord) {
+            await supabase
+              .from('attendance_records')
+              .update({
+                status,
+                check_in_time: status === 'present' ? new Date().toISOString() : null
+              })
+              .eq('id', existingRecord.id);
+          } else {
+            await supabase
+              .from('attendance_records')
+              .insert({
+                registration_id: registration.id,
+                [activityId ? 'activity_id' : 'event_id']: activityId || projectId,
+                project_id: projectId,
+                status,
+                check_in_time: status === 'present' ? new Date().toISOString() : null
+              });
+          }
         }
         toast.success(status === 'present' ? 'تم تسجيل حضور الجميع' : 'تم تسجيل غياب الجميع');
       }
@@ -98,7 +106,6 @@ export const useAttendanceManagement = (eventId: string) => {
     attendanceStats,
     setAttendanceStats,
     handleAttendanceChange,
-    handleBarcodeScanned,
     handleGroupAttendance
   };
 };
