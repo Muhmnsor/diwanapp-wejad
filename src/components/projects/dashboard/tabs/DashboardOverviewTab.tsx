@@ -33,7 +33,8 @@ export const DashboardOverviewTab = ({
         .select(`
           id,
           title,
-          attendance_records(status)
+          attendance_records(status),
+          event_feedback(overall_rating)
         `)
         .eq('project_id', project.id)
         .eq('is_project_activity', true);
@@ -54,11 +55,16 @@ export const DashboardOverviewTab = ({
           ? (presentAttendees / totalAttendees) * 100 
           : 0;
 
+        const ratings = activity.event_feedback?.map((f: any) => f.overall_rating).filter(Boolean) || [];
+        const averageRating = ratings.length > 0 
+          ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
+          : 0;
+
         return {
           id: activity.id,
           title: activity.title,
           attendanceRate,
-          attendance_records: activity.attendance_records
+          rating: averageRating
         };
       });
 
@@ -70,7 +76,7 @@ export const DashboardOverviewTab = ({
   // Calculate overall stats
   const totalActivities = projectActivities.length;
   const completedActivities = projectActivities.filter(
-    activity => activity.attendance_records?.some((record: any) => record.status === 'present')
+    activity => activity.attendanceRate > 0
   ).length;
   
   const averageAttendanceRate = projectActivities.length > 0
