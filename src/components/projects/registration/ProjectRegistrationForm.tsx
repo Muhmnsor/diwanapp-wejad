@@ -28,7 +28,6 @@ export const ProjectRegistrationForm = ({
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     phone: "",
     cardNumber: "",
@@ -99,11 +98,10 @@ export const ProjectRegistrationForm = ({
         .from('registrations')
         .insert({
           project_id: id,
-          name: formData.name,
+          arabic_name: formData.arabicName, // Updated to use arabic_name
           email: formData.email,
           phone: formData.phone,
           registration_number: uniqueId,
-          arabic_name: formData.arabicName,
           english_name: formData.englishName,
           education_level: formData.educationLevel,
           birth_date: formData.birthDate,
