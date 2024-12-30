@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackLink } from "@/components/events/feedback/FeedbackLink";
-import { Progress } from "@/components/ui/progress";
 
 interface ActivityFeedback {
   overall_rating: number;
@@ -39,6 +38,12 @@ export const ActivityFeedbackCard = ({ id, title, date, feedback }: ActivityFeed
     presenter: 'تقييم المقدم'
   };
 
+  const getRatingColor = (rating: number) => {
+    if (rating >= 4) return 'text-green-600 bg-green-50';
+    if (rating >= 3) return 'text-yellow-600 bg-yellow-50';
+    return 'text-red-600 bg-red-50';
+  };
+
   return (
     <Card className="p-6">
       <CardHeader className="px-0 pt-0">
@@ -64,15 +69,19 @@ export const ActivityFeedbackCard = ({ id, title, date, feedback }: ActivityFeed
               </div>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(averages).map(([key, value]) => (
-                <div key={key} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{ratingLabels[key as keyof typeof ratingLabels]}</span>
-                    <span className="text-sm font-bold">{value.toFixed(1)}/5</span>
+                <Card key={key} className={`p-4 ${getRatingColor(value)}`}>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <span className="text-sm font-medium mb-2">
+                      {ratingLabels[key as keyof typeof ratingLabels]}
+                    </span>
+                    <span className="text-2xl font-bold">
+                      {value.toFixed(1)}
+                    </span>
+                    <span className="text-xs mt-1">من 5</span>
                   </div>
-                  <Progress value={(value / 5) * 100} className="h-2" />
-                </div>
+                </Card>
               ))}
             </div>
           </div>
