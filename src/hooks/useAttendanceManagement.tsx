@@ -30,11 +30,20 @@ export const useAttendanceManagement = (projectId: string) => {
     }
   };
 
+  const handleGroupAttendance = async (status: 'present' | 'absent', activityId?: string) => {
+    console.log('Handling group attendance:', { status, activityId });
+    
+    if (activityId) {
+      await activityGroupAttendance(status, activityId);
+    } else {
+      await eventGroupAttendance(status);
+    }
+  };
+
   return {
     attendanceStats: eventStats,
     setAttendanceStats: setEventStats,
     handleAttendanceChange,
-    handleEventGroupAttendance: eventGroupAttendance,
-    handleActivityGroupAttendance: activityGroupAttendance
+    handleGroupAttendance
   };
 };
