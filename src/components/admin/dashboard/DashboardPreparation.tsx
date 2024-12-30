@@ -122,6 +122,40 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     }
   };
 
+  const handleBarcodeScanned = async (code: string) => {
+    console.log('Scanning barcode:', code);
+    const registration = registrations.find(r => r.registration_number === code);
+    
+    if (registration) {
+      await handleAttendance(registration.id, 'present');
+      toast.success('تم تسجيل الحضور بنجاح');
+    } else {
+      toast.error('لم يتم العثور على رقم التسجيل');
+    }
+  };
+
+  const handleGroupAttendance = async (status: 'present' | 'absent') => {
+    console.log('Recording group attendance:', status);
+    const unrecordedRegistrations = registrations.filter(
+      registration => !registration.attendance_records?.[0]
+    );
+
+    try {
+      for (const registration of unrecordedRegistrations) {
+        await handleAttendance(registration.id, status);
+      }
+      
+      toast.success(
+        status === 'present' 
+          ? 'تم تسجيل حضور جميع المشاركين' 
+          : 'تم تسجيل غياب جميع المشاركين'
+      );
+    } catch (error) {
+      console.error('Error in group attendance:', error);
+      toast.error('حدث خطأ في تسجيل الحضور الجماعي');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -132,7 +166,10 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
 
   return (
     <div className="space-y-6 bg-white rounded-lg shadow-sm p-6">
-      <AttendanceControls />
+      <AttendanceControls 
+        onBarcodeScanned={handleBarcodeScanned}
+        onGroupAttendance={handleGroupAttendance}
+      />
       <AttendanceStats stats={attendanceStats} />
       <AttendanceTable 
         registrations={registrations} 
