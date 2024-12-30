@@ -33,6 +33,7 @@ export const DashboardOverviewTab = ({
         .select(`
           id,
           title,
+          date,
           attendance_records(status),
           event_feedback(overall_rating)
         `)
@@ -63,6 +64,7 @@ export const DashboardOverviewTab = ({
         return {
           id: activity.id,
           title: activity.title,
+          date: activity.date,
           attendanceRate,
           rating: averageRating
         };
@@ -72,16 +74,6 @@ export const DashboardOverviewTab = ({
       return activitiesWithStats;
     }
   });
-
-  // Calculate overall stats
-  const totalActivities = projectActivities.length;
-  const completedActivities = projectActivities.filter(
-    activity => activity.attendanceRate > 0
-  ).length;
-  
-  const averageAttendanceRate = projectActivities.length > 0
-    ? projectActivities.reduce((sum, activity) => sum + (activity.attendanceRate || 0), 0) / projectActivities.length
-    : 0;
 
   return (
     <DashboardOverview
@@ -94,9 +86,6 @@ export const DashboardOverviewTab = ({
       eventCategory={project.event_category}
       projectId={project.id}
       projectActivities={projectActivities}
-      totalActivities={totalActivities}
-      completedActivities={completedActivities}
-      averageAttendanceRate={averageAttendanceRate}
     />
   );
 };

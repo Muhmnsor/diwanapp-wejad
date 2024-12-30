@@ -11,6 +11,13 @@ interface DashboardOverviewProps {
   eventPath?: string;
   eventCategory?: string;
   projectId?: string;
+  projectActivities?: {
+    id: string;
+    title: string;
+    date: string;
+    attendanceRate?: number;
+    rating?: number;
+  }[];
 }
 
 export const DashboardOverview = ({
@@ -21,7 +28,8 @@ export const DashboardOverview = ({
   eventTime,
   eventPath,
   eventCategory,
-  projectId
+  projectId,
+  projectActivities = []
 }: DashboardOverviewProps) => {
   console.log("DashboardOverview props:", {
     registrationCount,
@@ -31,7 +39,8 @@ export const DashboardOverview = ({
     eventTime,
     eventPath,
     eventCategory,
-    projectId
+    projectId,
+    projectActivities
   });
 
   const { registrantsStats, isLoading } = useRegistrantsStats(projectId || '');
@@ -46,6 +55,7 @@ export const DashboardOverview = ({
         eventTime={eventTime}
         eventPath={eventPath}
         eventCategory={eventCategory}
+        projectActivities={projectActivities}
       />
 
       <RegistrantsTable 
