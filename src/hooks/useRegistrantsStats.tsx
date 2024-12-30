@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface RegistrantStats {
+  id: string;
   name: string;
+  email: string;
+  phone: string;
   attendedActivities: number;
   totalActivities: number;
   attendancePercentage: number;
@@ -22,6 +25,8 @@ export const useRegistrantsStats = (projectId: string) => {
         .select(`
           id,
           name,
+          email,
+          phone,
           attendance_records (
             status,
             activity_id
@@ -58,7 +63,10 @@ export const useRegistrantsStats = (projectId: string) => {
         ).length || 0;
 
         return {
+          id: reg.id,
           name: reg.name,
+          email: reg.email,
+          phone: reg.phone,
           attendedActivities,
           totalActivities,
           attendancePercentage: totalActivities > 0 
