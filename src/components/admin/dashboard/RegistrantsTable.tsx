@@ -37,17 +37,19 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
       <Table dir="rtl">
         <TableHeader>
           <TableRow className="border-b border-gray-200">
+            <TableHead className="text-right w-[50px]">م</TableHead>
             <TableHead className="text-right">الاسم</TableHead>
             <TableHead className="text-right">الأنشطة المشاركة</TableHead>
             <TableHead className="text-right">نسبة الحضور</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {registrantsStats.map((registrant: RegistrantStats) => (
+          {registrantsStats.map((registrant: RegistrantStats, index: number) => (
             <TableRow 
               key={registrant.name}
               className="border-b border-gray-200 hover:bg-gray-50"
             >
+              <TableCell className="text-right text-gray-500">{index + 1}</TableCell>
               <TableCell className="text-right">{registrant.name}</TableCell>
               <TableCell className="text-right">
                 {registrant.attendedActivities} من {registrant.totalActivities}
