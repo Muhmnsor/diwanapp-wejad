@@ -9,7 +9,6 @@ import { useAuthStore } from "@/store/authStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDashboard } from "@/components/admin/EventDashboard";
 import { EventContent } from "@/components/events/EventContent";
-import { useQuery } from "@tanstack/react-query";
 
 const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
@@ -18,35 +17,6 @@ const EventDetails = () => {
   const { id } = useParams();
   const { user } = useAuthStore();
   const navigate = useNavigate();
-
-  // Add query to check if user is admin
-  const { data: userRoles } = useQuery({
-    queryKey: ['user-roles', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data: userRolesData, error } = await supabase
-        .from('user_roles')
-        .select(`
-          role_id,
-          roles (
-            name
-          )
-        `)
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error fetching user roles:', error);
-        return [];
-      }
-
-      console.log('User roles:', userRolesData);
-      return userRolesData;
-    },
-    enabled: !!user
-  });
-
-  const isAdmin = userRoles?.some(role => role.roles?.name === 'admin' || role.roles?.name === 'event_executor');
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -138,6 +108,8 @@ const EventDetails = () => {
       </div>
     );
   }
+
+  const isAdmin = user?.isAdmin;
 
   if (!event) {
     return null;
