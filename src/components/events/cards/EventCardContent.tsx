@@ -32,7 +32,7 @@ export const EventCardContent = ({
   status
 }: EventCardContentProps) => {
   return (
-    <div className="space-y-3 p-4 pt-0">
+    <div className="space-y-3 p-4 pt-0" dir="rtl">
       <EventCardBadges
         eventType={eventType}
         price={price}
@@ -47,9 +47,9 @@ export const EventCardContent = ({
         />
         {maxAttendees > 0 && (
           <>
-            <div className="flex items-center gap-2 text-gray-600 text-sm justify-end">
-              <span className="text-right">{maxAttendees} مقعد</span>
+            <div className="flex items-center gap-2 text-gray-600 text-sm">
               <Users className="w-4 h-4" />
+              <span>{maxAttendees} مقعد</span>
             </div>
             <EventCardStatus
               maxAttendees={maxAttendees}
