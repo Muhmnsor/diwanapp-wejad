@@ -6,23 +6,14 @@ export const Footer = () => {
     <footer className="mt-auto py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          {/* Right Side - Logo and Content */}
-          <div className="order-last md:order-first flex flex-col items-end justify-between">
+          {/* Left Side - Logo and Social Links */}
+          <div className="order-last md:order-last flex flex-col items-center justify-between">
             <img 
               src="/lovable-uploads/eca67883-2474-4656-a5b3-5abaf42f015b.png" 
               alt="Diwan Logo" 
               className="w-full h-auto max-w-xl mb-1"
             />
-            <div className="text-right">
-              <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
-              <p className="text-[#9F9EA1] mb-1">المملكة العربية السعودية - المدينة المنورة</p>
-              <p className="text-[#9F9EA1] mb-2">رقم الترخيص 5531</p>
-              <p className="text-primary text-lg font-semibold">ديوان .. شريك الشباب</p>
-            </div>
-          </div>
-          
-          {/* Left Side - Social Links */}
-          <div className="order-first md:order-last flex flex-col items-center justify-end">
+            
             {/* Social Links */}
             <div className="flex items-center justify-center space-x-4 rtl:space-x-reverse w-full">
               <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
@@ -42,6 +33,17 @@ export const Footer = () => {
               >
                 www.dfy.org.sa
               </a>
+            </div>
+          </div>
+          
+          {/* Right Side - Content */}
+          <div className="flex flex-col space-y-8 items-start" dir="rtl">
+            {/* Text Content */}
+            <div className="text-right">
+              <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
+              <p className="text-[#9F9EA1] mb-1">المملكة العربية السعودية - المدينة المنورة</p>
+              <p className="text-[#9F9EA1] mb-2">رقم الترخيص 5531</p>
+              <p className="text-primary text-lg font-semibold">ديوان .. شريك الشباب</p>
             </div>
           </div>
         </div>

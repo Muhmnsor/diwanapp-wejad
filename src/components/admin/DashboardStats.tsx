@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, TrendingDown, Activity, Star } from "lucide-react";
-import { parseDate } from "@/utils/dateUtils";
 
 interface DashboardStatsProps {
   registrationCount: number;
@@ -13,7 +12,6 @@ interface DashboardStatsProps {
   projectActivities?: {
     id: string;
     title: string;
-    date: string;
     attendanceRate?: number;
     rating?: number;
   }[];
@@ -29,6 +27,9 @@ export const DashboardStats = ({
   eventPath,
   eventCategory,
   projectActivities = [],
+  totalActivities = 0,
+  completedActivities = 0,
+  averageAttendanceRate = 0,
 }: DashboardStatsProps) => {
   console.log("DashboardStats props:", {
     registrationCount,
@@ -37,6 +38,9 @@ export const DashboardStats = ({
     eventPath,
     eventCategory,
     projectActivities,
+    totalActivities,
+    completedActivities,
+    averageAttendanceRate,
   });
 
   const formatEventPath = (path?: string) => {
@@ -69,43 +73,19 @@ export const DashboardStats = ({
     return categoryMap[category] || category;
   };
 
-  // Calculate activities metrics
-  const today = new Date();
-  const totalActivities = projectActivities.length;
-  
-  const completedActivities = projectActivities.filter(activity => {
-    const activityDate = parseDate(activity.date);
-    return activityDate && activityDate < today;
-  }).length;
-
-  const remainingActivities = totalActivities - completedActivities;
-
-  // Calculate average attendance rate only for completed activities
-  const completedActivitiesWithAttendance = projectActivities.filter(activity => {
-    const activityDate = parseDate(activity.date);
-    return activityDate && activityDate < today && typeof activity.attendanceRate === 'number';
-  });
-
-  const averageAttendanceRate = completedActivitiesWithAttendance.length > 0
-    ? completedActivitiesWithAttendance.reduce((sum, activity) => sum + (activity.attendanceRate || 0), 0) / completedActivitiesWithAttendance.length
-    : 0;
-
   // Find activities with highest and lowest attendance rates
-  const activitiesWithAttendance = projectActivities.filter(activity => typeof activity.attendanceRate === 'number');
-  const sortedByAttendance = [...activitiesWithAttendance].sort((a, b) => 
+  const sortedByAttendance = [...projectActivities].sort((a, b) => 
     (b.attendanceRate || 0) - (a.attendanceRate || 0)
   );
-  
   const highestAttendance = sortedByAttendance[0];
   const lowestAttendance = sortedByAttendance[sortedByAttendance.length - 1];
 
-  // Find activities with highest ratings
-  const activitiesWithRatings = projectActivities.filter(activity => typeof activity.rating === 'number');
-  const sortedByRating = [...activitiesWithRatings].sort((a, b) => 
+  // Find activities with highest and lowest ratings
+  const sortedByRating = [...projectActivities].sort((a, b) => 
     (b.rating || 0) - (a.rating || 0)
   );
-  
   const highestRated = sortedByRating[0];
+  const lowestRated = sortedByRating[sortedByRating.length - 1];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -144,7 +124,7 @@ export const DashboardStats = ({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {remainingActivities} من {totalActivities}
+            {totalActivities - completedActivities} من {totalActivities}
           </div>
           <p className="text-xs text-muted-foreground">
             متوسط نسبة الحضور {averageAttendanceRate?.toFixed(1)}%
