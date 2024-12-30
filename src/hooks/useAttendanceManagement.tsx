@@ -55,6 +55,28 @@ export const useAttendanceManagement = (projectId: string, selectedActivityId: s
     enabled: !!selectedActivityId
   });
 
+  const fetchActivityAttendance = async (activityId: string) => {
+    const { data, error } = await supabase
+      .from('attendance_records')
+      .select('status')
+      .eq('project_id', projectId)
+      .eq('activity_id', activityId);
+
+    if (error) {
+      console.error('Error fetching activity attendance:', error);
+      return { total: 0, present: 0, absent: 0, notRecorded: 0 };
+    }
+
+    const stats = {
+      total: data.length,
+      present: data.filter(r => r.status === 'present').length,
+      absent: data.filter(r => r.status === 'absent').length,
+      notRecorded: 0
+    };
+
+    return stats;
+  };
+
   const handleAttendance = async (registrationId: string, status: 'present' | 'absent') => {
     try {
       if (!selectedActivityId) {
@@ -185,6 +207,7 @@ export const useAttendanceManagement = (projectId: string, selectedActivityId: s
     setAttendanceStats,
     handleAttendance,
     handleBarcodeScanned,
-    handleGroupAttendance
+    handleGroupAttendance,
+    fetchActivityAttendance
   };
 };
