@@ -33,7 +33,7 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
 
   return (
     <div className="bg-white rounded-lg p-6 shadow">
-      <h3 className="text-lg font-semibold mb-4 text-right">قائمة المسجلين وإحصائيات الحضور</h3>
+      <h3 className="text-lg font-semibold mb-4 text-right">احصائيات الحضور</h3>
       <Table dir="rtl">
         <TableHeader>
           <TableRow className="border-b border-gray-200">
