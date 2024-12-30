@@ -102,11 +102,18 @@ export const useAttendanceManagement = (eventId: string) => {
 
   const handleGroupAttendance = async (status: 'present' | 'absent') => {
     console.log('Recording group attendance:', status);
-    const unrecordedRegistrations = registrations.filter(
-      registration => !registration.attendance_records?.[0]
-    );
-
     try {
+      // Get registrations without attendance records
+      const unrecordedRegistrations = registrations.filter(
+        registration => !registration.attendance_records?.length
+      );
+
+      if (unrecordedRegistrations.length === 0) {
+        toast.info('لا يوجد مشاركين بدون تسجيل حضور');
+        return;
+      }
+
+      // Process each registration sequentially
       for (const registration of unrecordedRegistrations) {
         await handleAttendance(registration.id, status);
       }
@@ -116,6 +123,9 @@ export const useAttendanceManagement = (eventId: string) => {
           ? 'تم تسجيل حضور جميع المشاركين' 
           : 'تم تسجيل غياب جميع المشاركين'
       );
+
+      // Refresh the data
+      refetch();
     } catch (error) {
       console.error('Error in group attendance:', error);
       toast.error('حدث خطأ في تسجيل الحضور الجماعي');
