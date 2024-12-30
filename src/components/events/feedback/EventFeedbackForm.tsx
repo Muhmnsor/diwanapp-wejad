@@ -70,7 +70,7 @@ export const EventFeedbackForm = ({
         disabled={isSubmitting} 
         className="w-full bg-primary hover:bg-primary/90"
       >
-        {isSubmitting ? "جاري الإرسال..." : "إرسال التقييم"}
+        {isSubmitting ? "جاري الإرسال..." : "إرسال تقييم النشاط"}
       </Button>
     </form>
   );
