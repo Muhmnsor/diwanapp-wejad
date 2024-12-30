@@ -27,15 +27,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
         end: event.registrationEndDate
       },
       attendees: currentAttendees,
-      maxAttendees: event.max_attendees,
-      certificateType: event.certificate_type,
-      eventHours: event.event_hours,
-      beneficiaryType: event.beneficiary_type,
-      eventType: event.event_type,
-      price: event.price,
-      location_url: event.location_url,
-      eventPath: event.event_path,
-      eventCategory: event.event_category
+      maxAttendees: event.max_attendees
     });
 
     const newStatus = getEventStatus({
@@ -50,14 +42,14 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     event.registrationStartDate, 
     event.registrationEndDate,
     event.max_attendees,
-    event.certificate_type,
-    event.event_hours,
-    event.beneficiary_type,
-    event.event_type,
-    event.price,
     event.id,
     registrationCounts
   ]);
+
+  const handleRegister = () => {
+    console.log('Registration initiated for event:', event.id);
+    onRegister();
+  };
 
   return (
     <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
@@ -97,7 +89,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       <div className="px-8 py-6">
         <EventRegisterButton 
           status={eventStatus}
-          onRegister={onRegister}
+          onRegister={handleRegister}
         />
       </div>
     </div>
