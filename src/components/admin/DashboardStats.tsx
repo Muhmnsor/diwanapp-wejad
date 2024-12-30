@@ -8,10 +8,12 @@ interface DashboardStatsProps {
   occupancyRate: number;
   project: {
     id: string;
-    start_date: string;
-    end_date: string;
+    start_date?: string;
+    end_date?: string;
     event_path: string;
     event_category: string;
+    date?: string;
+    averageRating?: number;
   };
   activities: {
     total: number;
@@ -48,12 +50,21 @@ export const DashboardStats = ({
     isEvent
   });
 
+  // Transform project data based on whether it's an event or project
+  const transformedProject = {
+    id: project.id,
+    event_path: project.event_path,
+    event_category: project.event_category,
+    date: isEvent ? project.date : undefined,
+    averageRating: project.averageRating
+  };
+
   return (
     <DashboardStatsContent
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      project={project}
+      project={transformedProject}
       activities={activities}
       attendanceStats={attendanceStats}
       ratingStats={ratingStats}

@@ -14,7 +14,7 @@ interface DashboardStatsContentProps {
     id: string;
     event_path: string;
     event_category: string;
-    date: string;
+    date?: string;
     averageRating?: number;
   };
   activities?: {
@@ -41,7 +41,7 @@ export const DashboardStatsContent = ({
   activities,
   attendanceStats,
   ratingStats,
-  isEvent
+  isEvent = false
 }: DashboardStatsContentProps) => {
   console.log("DashboardStatsContent props:", {
     activities,
