@@ -17,7 +17,7 @@ export interface Event {
   location_url?: string;
   image_url: string;
   event_type: "online" | "in-person";
-  price: number | null;
+  price: number | "free" | null;
   max_attendees: number;
   registration_start_date?: string;
   registration_end_date?: string;
@@ -29,6 +29,17 @@ export interface Event {
   special_requirements?: string;
   is_project_activity?: boolean;
   project_id?: string;
+  attendees?: number;
+  // Aliases for backward compatibility
+  imageUrl?: string;
+  eventType?: "online" | "in-person";
+  registrationStartDate?: string;
+  registrationEndDate?: string;
+  beneficiaryType?: BeneficiaryType;
+  certificateType?: string;
+  eventHours?: number;
+  eventPath?: EventPathType;
+  eventCategory?: EventCategoryType;
 }
 
 // For backward compatibility
