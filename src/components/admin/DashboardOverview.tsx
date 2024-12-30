@@ -34,7 +34,7 @@ export const DashboardOverview = ({
     projectId
   });
 
-  const { registrantsStats, isLoading } = useRegistrantsStats(projectId);
+  const { registrantsStats, isLoading } = useRegistrantsStats(projectId || '');
 
   return (
     <div className="space-y-8">

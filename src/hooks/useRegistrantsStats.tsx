@@ -8,7 +8,7 @@ export interface RegistrantStats {
   attendancePercentage: number;
 }
 
-export const useRegistrantsStats = (projectId?: string) => {
+export const useRegistrantsStats = (projectId: string) => {
   const { data: registrantsStats = [], isLoading } = useQuery({
     queryKey: ['registrants-stats', projectId],
     queryFn: async () => {
@@ -34,7 +34,7 @@ export const useRegistrantsStats = (projectId?: string) => {
         throw regError;
       }
 
-      console.log('Fetched registrations:', registrations);
+      console.log('Fetched registrations with attendance:', registrations);
 
       // 2. Get total number of activities for this project
       const { data: activities, error: actError } = await supabase
@@ -52,7 +52,7 @@ export const useRegistrantsStats = (projectId?: string) => {
       console.log('Total activities:', totalActivities);
 
       // 3. Calculate stats for each registrant
-      return registrations.map((reg: any): RegistrantStats => {
+      return registrations?.map((reg: any): RegistrantStats => {
         const attendedActivities = reg.attendance_records?.filter(
           (record: any) => record.status === 'present'
         ).length || 0;
@@ -65,7 +65,7 @@ export const useRegistrantsStats = (projectId?: string) => {
             ? (attendedActivities / totalActivities) * 100 
             : 0
         };
-      });
+      }) || [];
     },
     enabled: !!projectId
   });

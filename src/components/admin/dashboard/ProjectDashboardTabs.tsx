@@ -83,6 +83,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           eventTime={project.end_date}
           eventPath={project.event_path}
           eventCategory={project.event_category}
+          projectId={project.id}
         />
       </TabsContent>
 
