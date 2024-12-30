@@ -6,7 +6,17 @@ export const Footer = () => {
     <footer className="mt-auto py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-          {/* Left Side - Logo and Social Links */}
+          {/* Right Side - Logo and Content */}
+          <div className="order-first md:order-first flex flex-col items-end justify-between">
+            <div className="text-right">
+              <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
+              <p className="text-[#9F9EA1] mb-1">المملكة العربية السعودية - المدينة المنورة</p>
+              <p className="text-[#9F9EA1] mb-2">رقم الترخيص 5531</p>
+              <p className="text-primary text-lg font-semibold">ديوان .. شريك الشباب</p>
+            </div>
+          </div>
+          
+          {/* Left Side - Social Links and Logo */}
           <div className="order-last md:order-last flex flex-col items-center justify-between">
             <img 
               src="/lovable-uploads/eca67883-2474-4656-a5b3-5abaf42f015b.png" 
@@ -33,17 +43,6 @@ export const Footer = () => {
               >
                 www.dfy.org.sa
               </a>
-            </div>
-          </div>
-          
-          {/* Right Side - Content */}
-          <div className="flex flex-col space-y-8 items-start" dir="rtl">
-            {/* Text Content */}
-            <div className="text-right">
-              <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
-              <p className="text-[#9F9EA1] mb-1">المملكة العربية السعودية - المدينة المنورة</p>
-              <p className="text-[#9F9EA1] mb-2">رقم الترخيص 5531</p>
-              <p className="text-primary text-lg font-semibold">ديوان .. شريك الشباب</p>
             </div>
           </div>
         </div>
