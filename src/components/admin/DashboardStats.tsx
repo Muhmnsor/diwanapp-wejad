@@ -51,7 +51,7 @@ export const DashboardStats = ({
           id,
           title,
           date,
-          attendance_records(*)
+          attendance_records!attendance_records_activity_id_fkey(*)
         `)
         .eq('project_id', project.id)
         .eq('is_project_activity', true)
