@@ -87,7 +87,7 @@ const EventDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col" dir="rtl">
         <TopHeader />
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -99,7 +99,7 @@ const EventDetails = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col" dir="rtl">
         <TopHeader />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-red-500">{error}</div>
@@ -116,7 +116,7 @@ const EventDetails = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       <main className="flex-1">
         {isAdmin ? (
@@ -131,8 +131,11 @@ const EventDetails = () => {
             >
               <Tabs defaultValue="details" className="w-full">
                 <div className="bg-white border-b mt-4">
-                  <div className="container mx-auto">
-                    <TabsList className="w-full justify-start rounded-none bg-transparent h-auto py-2" dir="rtl">
+                  <div className="container mx-auto px-4">
+                    <TabsList 
+                      className="w-full justify-start rounded-none bg-transparent h-auto py-2" 
+                      dir="rtl"
+                    >
                       <TabsTrigger 
                         value="details" 
                         className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:border-b-2 rounded-none px-4 pb-2"
@@ -149,7 +152,7 @@ const EventDetails = () => {
                   </div>
                 </div>
 
-                <div className="container mx-auto px-4 pb-8">
+                <div className="container mx-auto px-4 pb-8" dir="rtl">
                   <TabsContent value="details" className="mt-6">
                     <EventContent 
                       event={event}
