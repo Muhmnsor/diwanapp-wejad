@@ -13,19 +13,26 @@ interface DashboardOverviewProps {
     event_path: string;
     event_category: string;
   };
+  activities?: {
+    total: number;
+    completed: number;
+    averageAttendance: number;
+  };
 }
 
 export const DashboardOverview = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project
+  project,
+  activities
 }: DashboardOverviewProps) => {
   console.log("DashboardOverview props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
-    project
+    project,
+    activities
   });
 
   const { registrantsStats, isLoading } = useRegistrantsStats(project.id);
@@ -37,6 +44,7 @@ export const DashboardOverview = ({
         remainingSeats={remainingSeats}
         occupancyRate={occupancyRate}
         project={project}
+        activities={activities}
       />
 
       <RegistrantsTable 

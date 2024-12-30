@@ -25,6 +25,14 @@ export const DashboardOverviewTab = ({
   project,
   activities
 }: DashboardOverviewTabProps) => {
+  console.log("DashboardOverviewTab props:", {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    project,
+    activities
+  });
+
   return (
     <DashboardOverview
       registrationCount={registrationCount}
