@@ -15,6 +15,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
   const { data: registrations = [], isLoading, refetch } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
+      console.log('Fetching registrations for event:', eventId);
       const { data, error } = await supabase
         .from('registrations')
         .select(`
@@ -24,6 +25,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
         .eq('event_id', eventId);
 
       if (error) throw error;
+      console.log('Fetched registrations:', data);
       return data || [];
     },
   });
@@ -49,6 +51,18 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     } catch (error) {
       console.error('Error scanning barcode:', error);
       toast.error('حدث خطأ في تسجيل الحضور');
+    }
+  };
+
+  const handleIndividualAttendanceChange = async (registrationId: string, status: 'present' | 'absent') => {
+    try {
+      console.log('Updating individual attendance for registration:', registrationId, 'with status:', status);
+      await handleAttendanceChange(registrationId, status);
+      await refetch();
+      toast.success(status === 'present' ? 'تم تسجيل الحضور بنجاح' : 'تم تسجيل الغياب بنجاح');
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      toast.error('حدث خطأ في تحديث الحضور');
     }
   };
 
@@ -103,7 +117,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
       <AttendanceStats stats={attendanceStats} />
       <AttendanceTable 
         registrations={registrations} 
-        onAttendanceChange={handleAttendanceChange}
+        onAttendanceChange={handleIndividualAttendanceChange}
       />
     </div>
   );
