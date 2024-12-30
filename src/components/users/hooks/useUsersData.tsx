@@ -24,6 +24,7 @@ export const useUsersData = () => {
     queryFn: async () => {
       console.log('Fetching users with roles...');
       
+      // استدعاء واحد فقط لجلب المستخدمين مع أدوارهم
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -33,9 +34,10 @@ export const useUsersData = () => {
             name,
             description
           ),
-          profiles!user_id (
+          auth.users!user_id (
             id,
-            email
+            email,
+            last_sign_in_at
           )
         `);
 
@@ -48,15 +50,17 @@ export const useUsersData = () => {
 
       const transformedUsers = userRolesData.map((data: any) => ({
         id: data.user_id,
-        username: data.profiles?.email,
+        username: data.auth.users.email,
         role: data.roles?.name || 'لم يتم تعيين دور',
-        lastLogin: 'لم يسجل دخول بعد'
+        lastLogin: data.auth.users.last_sign_in_at 
+          ? new Date(data.auth.users.last_sign_in_at).toLocaleString('ar-SA') 
+          : 'لم يسجل دخول بعد'
       }));
 
       console.log('Transformed users with roles:', transformedUsers);
       return transformedUsers as User[];
     },
-    staleTime: 1000 * 30, // Cache for 30 seconds
+    staleTime: 1000 * 30, // تخزين مؤقت لمدة 30 ثانية
   });
 
   return {

@@ -13,7 +13,7 @@ import { Event } from "@/store/eventStore";
 interface EventRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  event: Event;
+  event: Event & { isProject?: boolean };
 }
 
 export const EventRegistrationDialog = ({
@@ -67,6 +67,7 @@ export const EventRegistrationDialog = ({
             eventTime={event.time}
             eventLocation={event.location}
             onSubmit={() => onOpenChange(false)}
+            isProject={event.isProject}
           />
         )}
       </DialogContent>

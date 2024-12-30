@@ -1,46 +1,38 @@
 export type BeneficiaryType = 'men' | 'women' | 'both';
 
 export type EventPathType = 'environment' | 'community' | 'content';
-
 export type EventCategoryType = 
   | 'social' | 'entertainment' | 'service' | 'educational' | 'consulting' // for environment
   | 'interest' | 'specialization' // for community
   | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
 
-export interface Event {
-  id: string;
+export interface EventType {
+  id?: string;
   title: string;
   description: string;
   date: string;
   time: string;
   location: string;
   location_url?: string;
-  image_url: string;
-  event_type: "online" | "in-person";
-  price: number | "free" | null;
-  max_attendees: number;
-  registration_start_date?: string;
-  registration_end_date?: string;
-  beneficiary_type: BeneficiaryType;
-  certificate_type: string;
-  event_hours?: number;
-  event_path: EventPathType;
-  event_category: EventCategoryType;
-  special_requirements?: string;
-  is_project_activity?: boolean;
-  project_id?: string;
-  attendees?: number;
-  // Aliases for backward compatibility
   imageUrl?: string;
-  eventType?: "online" | "in-person";
-  registrationStartDate?: string;
-  registrationEndDate?: string;
-  beneficiaryType?: BeneficiaryType;
-  certificateType?: string;
-  eventHours?: number;
-  eventPath?: EventPathType;
-  eventCategory?: EventCategoryType;
+  image_url?: string;
+  attendees: number;
+  max_attendees: number;
+  event_type: "online" | "in-person";
+  eventType: "online" | "in-person";
+  price: number | "free";
+  beneficiaryType: BeneficiaryType;
+  beneficiary_type: BeneficiaryType;
+  registrationStartDate?: string | null;
+  registrationEndDate?: string | null;
+  registration_start_date?: string | null;
+  registration_end_date?: string | null;
+  certificate_type: string;
+  certificateType: string;
+  event_hours: number | null;
+  eventHours: number | null;
+  eventPath: EventPathType;
+  event_path: EventPathType;
+  eventCategory: EventCategoryType;
+  event_category: EventCategoryType;
 }
-
-// For backward compatibility
-export type EventType = Event;

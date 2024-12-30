@@ -1,4 +1,4 @@
-import { Event } from "@/types/event";
+import { EventType } from "@/types/event";
 import { EventInfo } from "../EventInfo";
 import { EventDescription } from "../EventDescription";
 import { EventRegisterButton } from "../EventRegisterButton";
@@ -6,43 +6,40 @@ import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect, useState } from "react";
 
 interface EventDetailsContentProps {
-  event: Event;
+  event: EventType;
   onRegister: () => void;
 }
 
 export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentProps) => {
   const [eventStatus, setEventStatus] = useState(() => getEventStatus({
     ...event,
-    registrationStartDate: event.registration_start_date,
-    registrationEndDate: event.registration_end_date,
     max_attendees: event.max_attendees
   }));
 
   useEffect(() => {
-    console.log('Event data in content updated:', {
+    console.log('Event data in details content:', {
       title: event.title,
       date: event.date,
       registrationDates: {
-        start: event.registration_start_date,
-        end: event.registration_end_date
+        start: event.registrationStartDate,
+        end: event.registrationEndDate
       },
       attendees: event.attendees,
-      maxAttendees: event.max_attendees
+      maxAttendees: event.max_attendees,
+      eventPath: event.event_path,
+      eventCategory: event.event_category
     });
 
     const newStatus = getEventStatus({
       ...event,
-      registrationStartDate: event.registration_start_date,
-      registrationEndDate: event.registration_end_date,
-      attendees: event.attendees,
       max_attendees: event.max_attendees
     });
     console.log('Event status updated to:', newStatus);
     setEventStatus(newStatus);
   }, [
     event.date, 
-    event.registration_start_date, 
-    event.registration_end_date,
+    event.registrationStartDate, 
+    event.registrationEndDate,
     event.attendees,
     event.max_attendees
   ]);
@@ -50,9 +47,6 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
   const handleRegister = () => {
     const status = getEventStatus({
       ...event,
-      registrationStartDate: event.registration_start_date,
-      registrationEndDate: event.registration_end_date,
-      attendees: event.attendees,
       max_attendees: event.max_attendees
     });
     console.log('Attempting registration with status:', status);
@@ -75,11 +69,11 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
           location_url={event.location_url}
           attendees={event.attendees}
           maxAttendees={event.max_attendees}
-          eventType={event.event_type}
+          eventType={event.eventType}
           price={event.price}
-          beneficiaryType={event.beneficiary_type}
-          certificateType={event.certificate_type}
-          eventHours={event.event_hours}
+          beneficiaryType={event.beneficiaryType}
+          certificateType={event.certificateType}
+          eventHours={event.eventHours}
           eventPath={event.event_path}
           eventCategory={event.event_category}
           showBadges={true}

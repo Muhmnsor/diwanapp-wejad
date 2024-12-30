@@ -10,23 +10,16 @@ interface EventRegisterButtonProps {
 
 export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonProps) => {
   useEffect(() => {
-    console.log('EventRegisterButton rendered with status:', status);
+    console.log('EventRegisterButton status:', status);
   }, [status]);
   
   const config = getStatusConfig(status);
-
-  const handleClick = () => {
-    console.log('Register button clicked, status:', status);
-    if (!config.disabled) {
-      onRegister();
-    }
-  };
 
   return (
     <Button 
       size="lg" 
       className={`w-full rounded-2xl h-14 text-lg ${config.className}`}
-      onClick={handleClick}
+      onClick={onRegister}
       disabled={config.disabled}
       variant={status === 'available' ? 'default' : 'secondary'}
     >
