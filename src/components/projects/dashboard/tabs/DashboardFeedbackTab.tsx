@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FeedbackStats } from "@/components/events/feedback/components/FeedbackStats";
-import { FeedbackComments } from "@/components/events/feedback/components/FeedbackComments";
+import { RatingInput } from "@/components/events/feedback/RatingInput";
+import { PersonalInfoSection } from "@/components/events/feedback/PersonalInfoSection";
+import { RatingsSection } from "@/components/events/feedback/RatingsSection";
+import { CommentsSection } from "@/components/events/feedback/CommentsSection";
 
 interface ActivityFeedback {
   id: string;
@@ -80,13 +82,6 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
       );
     }
 
-    const averages = {
-      overall: activity.feedback.reduce((sum, f) => sum + (f.overall_rating || 0), 0) / activity.feedback.length,
-      content: activity.feedback.reduce((sum, f) => sum + (f.content_rating || 0), 0) / activity.feedback.length,
-      organization: activity.feedback.reduce((sum, f) => sum + (f.organization_rating || 0), 0) / activity.feedback.length,
-      presenter: activity.feedback.reduce((sum, f) => sum + (f.presenter_rating || 0), 0) / activity.feedback.length,
-    };
-
     return (
       <Card key={activity.id} className="p-6">
         <CardHeader className="px-0 pt-0">
@@ -94,13 +89,40 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
           <div className="text-sm text-muted-foreground">{activity.date}</div>
         </CardHeader>
         <CardContent className="px-0 space-y-6">
-          <FeedbackStats 
-            feedback={activity.feedback}
-            averages={averages}
-          />
-          <FeedbackComments 
-            feedback={activity.feedback}
-          />
+          {activity.feedback.map((feedback, index) => (
+            <div key={index} className="space-y-6 border-b pb-6 last:border-0">
+              <RatingsSection
+                overallRating={feedback.overall_rating}
+                contentRating={feedback.content_rating}
+                organizationRating={feedback.organization_rating}
+                presenterRating={feedback.presenter_rating}
+                onOverallRatingChange={() => {}}
+                onContentRatingChange={() => {}}
+                onOrganizationRatingChange={() => {}}
+                onPresenterRatingChange={() => {}}
+              />
+              
+              {(feedback.name || feedback.phone) && (
+                <div className="mt-6">
+                  <PersonalInfoSection
+                    name={feedback.name || ''}
+                    phone={feedback.phone || ''}
+                    onNameChange={() => {}}
+                    onPhoneChange={() => {}}
+                  />
+                </div>
+              )}
+              
+              {feedback.feedback_text && (
+                <div className="mt-6">
+                  <CommentsSection
+                    value={feedback.feedback_text}
+                    onChange={() => {}}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
