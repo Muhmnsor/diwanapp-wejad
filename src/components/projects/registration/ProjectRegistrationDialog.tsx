@@ -9,6 +9,7 @@ import { AlertCircle } from "lucide-react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { Project } from "@/types/project";
 import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
+import { EventPathType, EventCategoryType } from "@/types/event";
 
 interface ProjectRegistrationDialogProps {
   open: boolean;
@@ -34,8 +35,8 @@ export const ProjectRegistrationDialog = ({
     registrationEndDate: project.registration_end_date,
     certificate_type: project.certificate_type || 'none',
     event_type: project.event_type || 'in-person',
-    event_path: project.event_path || 'environment',
-    event_category: project.event_category || 'social',
+    event_path: (project.event_path || 'environment') as EventPathType,
+    event_category: (project.event_category || 'social') as EventCategoryType,
     imageUrl: project.image_url,
     price: project.price || 0,
     max_attendees: project.max_attendees || 0,

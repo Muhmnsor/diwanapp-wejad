@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { PersonalInfoFields } from "../../events/form/PersonalInfoFields";
-import { PaymentFields } from "../../events/form/PaymentFields";
+import { ProjectRegistrationFields } from "./form/ProjectRegistrationFields";
+import { ProjectRegistrationActions } from "./form/ProjectRegistrationActions";
 
 interface ProjectRegistrationFormProps {
   projectTitle: string;
@@ -142,91 +141,17 @@ export const ProjectRegistrationForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-      <PersonalInfoFields
+      <ProjectRegistrationFields
         formData={formData}
         setFormData={setFormData}
+        projectPrice={projectPrice}
       />
       
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">الاسم بالعربية</label>
-            <input
-              type="text"
-              value={formData.arabicName}
-              onChange={(e) => setFormData(prev => ({ ...prev, arabicName: e.target.value }))}
-              className="w-full p-2 border rounded-md"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">الاسم بالإنجليزية</label>
-            <input
-              type="text"
-              value={formData.englishName}
-              onChange={(e) => setFormData(prev => ({ ...prev, englishName: e.target.value }))}
-              className="w-full p-2 border rounded-md"
-              required
-            />
-          </div>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1">المستوى التعليمي</label>
-          <select
-            value={formData.educationLevel}
-            onChange={(e) => setFormData(prev => ({ ...prev, educationLevel: e.target.value }))}
-            className="w-full p-2 border rounded-md"
-            required
-          >
-            <option value="">اختر المستوى التعليمي</option>
-            <option value="high_school">ثانوي</option>
-            <option value="bachelor">بكالوريوس</option>
-            <option value="master">ماجستير</option>
-            <option value="phd">دكتوراه</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">تاريخ الميلاد</label>
-          <input
-            type="date"
-            value={formData.birthDate}
-            onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
-            className="w-full p-2 border rounded-md"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">رقم الهوية</label>
-          <input
-            type="text"
-            value={formData.nationalId}
-            onChange={(e) => setFormData(prev => ({ ...prev, nationalId: e.target.value }))}
-            className="w-full p-2 border rounded-md"
-            required
-            pattern="\d{10}"
-            title="يجب أن يتكون رقم الهوية من 10 أرقام"
-          />
-        </div>
-      </div>
-      
-      {isPaidProject && (
-        <PaymentFields
-          formData={formData}
-          setFormData={setFormData}
-          eventPrice={projectPrice}
-        />
-      )}
-
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? "جاري المعالجة..." : isPaidProject ? `الدفع وتأكيد التسجيل (${projectPrice} ريال)` : "تأكيد التسجيل"}
-      </Button>
+      <ProjectRegistrationActions
+        isSubmitting={isSubmitting}
+        isPaidProject={isPaidProject}
+        projectPrice={projectPrice}
+      />
     </form>
   );
 };
