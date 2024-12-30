@@ -35,29 +35,36 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     handleGroupAttendance
   } = useAttendanceManagement(eventId);
 
-  // Add handleBarcodeScanned function for single events
   const handleBarcodeScanned = async (code: string) => {
-    console.log('Scanning barcode for event:', eventId, 'code:', code);
-    const registration = registrations.find(r => r.registration_number === code);
-    if (registration) {
-      await handleAttendanceChange(registration.id, 'present');
-      await refetch(); // Refresh the data after updating
-      toast.success('تم تسجيل الحضور بنجاح');
-    } else {
-      toast.error('رقم التسجيل غير موجود');
+    try {
+      console.log('Scanning barcode for event:', eventId, 'code:', code);
+      const registration = registrations.find(r => r.registration_number === code);
+      if (registration) {
+        await handleAttendanceChange(registration.id, 'present');
+        await refetch();
+        toast.success('تم تسجيل الحضور بنجاح');
+      } else {
+        toast.error('رقم التسجيل غير موجود');
+      }
+    } catch (error) {
+      console.error('Error scanning barcode:', error);
+      toast.error('حدث خطأ في تسجيل الحضور');
     }
   };
 
-  // Wrap handleGroupAttendance to refresh data after update
   const handleGroupAttendanceWithRefresh = async (status: 'present' | 'absent') => {
-    console.log('Processing group attendance for event:', eventId, 'with status:', status);
-    await handleGroupAttendance(status);
-    await refetch(); // Refresh the data after group update
-    toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
+    try {
+      console.log('Processing group attendance for event:', eventId, 'with status:', status);
+      await handleGroupAttendance(status);
+      await refetch();
+      toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
+    } catch (error) {
+      console.error('Error in group attendance:', error);
+      toast.error('حدث خطأ في تسجيل الحضور الجماعي');
+    }
   };
 
   useEffect(() => {
-    // Calculate attendance statistics
     const stats = {
       total: registrations.length,
       present: 0,
