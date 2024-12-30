@@ -42,7 +42,7 @@ export const ConfirmationCard = ({
     console.log("Save card button clicked");
     const success = await exportCardAsImage(
       "confirmation-card",
-      `تأكيد-التسجيل-${eventTitle}.png`
+      `تأكيد-التسجيل-${isProjectActivity ? projectTitle : eventTitle}.png`
     );
 
     if (success) {
@@ -62,20 +62,22 @@ export const ConfirmationCard = ({
     }
   };
 
+  const displayTitle = isProjectActivity ? `${eventTitle} (${projectTitle})` : eventTitle;
+
   return (
     <div className="space-y-4" dir="rtl">
       <Card id="confirmation-card" className="bg-white p-6 space-y-6 max-w-md mx-auto">
         <div className="flex items-center justify-between">
           <Ticket className="w-8 h-8 text-primary" />
-          {isProjectActivity && projectTitle && (
+          {!isProjectActivity && projectTitle && (
             <div className="text-xs text-muted-foreground">
-              نشاط ضمن مشروع: {projectTitle}
+              تسجيل في مشروع: {projectTitle}
             </div>
           )}
         </div>
         
         <ConfirmationHeader 
-          eventTitle={eventTitle} 
+          eventTitle={displayTitle} 
           registrationId={registrationId} 
         />
         <ConfirmationQR registrationId={registrationId} />

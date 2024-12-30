@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { ProjectRegistrationFields } from "./form/ProjectRegistrationFields";
 import { ProjectRegistrationActions } from "./form/ProjectRegistrationActions";
+import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
 
 interface ProjectRegistrationFormProps {
   projectTitle: string;
@@ -40,6 +41,8 @@ export const ProjectRegistrationForm = ({
     nationalId: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [registrationId, setRegistrationId] = useState<string>("");
 
   const checkExistingRegistration = async (email: string) => {
     console.log("Checking for existing project registration...");
@@ -125,8 +128,8 @@ export const ProjectRegistrationForm = ({
         queryKey: ['registrations', id] 
       });
       
-      toast.success("تم التسجيل بنجاح");
-      onSubmit();
+      setRegistrationId(uniqueId);
+      setShowConfirmation(true);
       
       console.log('Project registration successful:', uniqueId);
     } catch (error) {
@@ -138,6 +141,21 @@ export const ProjectRegistrationForm = ({
   };
 
   const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
+
+  if (showConfirmation) {
+    return (
+      <RegistrationConfirmation
+        open={showConfirmation}
+        onOpenChange={setShowConfirmation}
+        registrationId={registrationId}
+        eventTitle={projectTitle}
+        eventPrice={projectPrice}
+        isProjectActivity={false}
+        projectTitle={projectTitle}
+        formData={formData}
+      />
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
