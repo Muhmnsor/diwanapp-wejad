@@ -123,7 +123,7 @@ export const DashboardOverview = ({
         ) : (
           <Table dir="rtl">
             <TableHeader>
-              <TableRow>
+              <TableRow className="border-b border-gray-200">
                 <TableHead className="text-right">الاسم</TableHead>
                 <TableHead className="text-right">الأنشطة المحضورة</TableHead>
                 <TableHead className="text-right">نسبة الحضور</TableHead>
@@ -131,7 +131,10 @@ export const DashboardOverview = ({
             </TableHeader>
             <TableBody>
               {registrantsStats.map((registrant: RegistrantStats) => (
-                <TableRow key={registrant.name}>
+                <TableRow 
+                  key={registrant.name}
+                  className="border-b border-gray-200 hover:bg-gray-50"
+                >
                   <TableCell>{registrant.name}</TableCell>
                   <TableCell>
                     {registrant.attendedActivities} من {registrant.totalActivities}
