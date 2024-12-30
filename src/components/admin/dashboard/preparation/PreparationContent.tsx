@@ -1,3 +1,4 @@
+import { FC } from "react";
 import { AttendanceStats } from "./AttendanceStats";
 import { AttendanceControls } from "./AttendanceControls";
 import { AttendanceTable } from "./AttendanceTable";
@@ -14,32 +15,30 @@ interface PreparationContentProps {
   registrations: any[];
   attendanceRecords: any[];
   onAttendanceChange: (registrationId: string, status: 'present' | 'absent') => Promise<void>;
+  totalActivities: number;
 }
 
-export const PreparationContent = ({
+export const PreparationContent: FC<PreparationContentProps> = ({
   stats,
   onBarcodeScanned,
   onGroupAttendance,
   registrations,
   attendanceRecords,
-  onAttendanceChange
-}: PreparationContentProps) => {
+  onAttendanceChange,
+  totalActivities
+}) => {
   return (
-    <>
+    <div className="space-y-6">
       <AttendanceStats stats={stats} />
       <AttendanceControls
         onBarcodeScanned={onBarcodeScanned}
         onGroupAttendance={onGroupAttendance}
       />
       <AttendanceTable
-        registrations={registrations.map(registration => ({
-          ...registration,
-          attendance_records: attendanceRecords.filter(
-            record => record.registration_id === registration.id
-          )
-        }))}
+        registrations={registrations}
         onAttendanceChange={onAttendanceChange}
+        totalActivities={totalActivities}
       />
-    </>
+    </div>
   );
 };
