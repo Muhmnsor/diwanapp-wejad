@@ -5,6 +5,7 @@ import { ReportsTab } from "./ReportsTab";
 import { FeedbackTab } from "./FeedbackTab";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DashboardPreparation } from "./DashboardPreparation";
 
 interface DashboardTabsProps {
   event: {
@@ -39,7 +40,7 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
-      <TabsList className="w-full grid grid-cols-4 bg-secondary/20 p-1 rounded-xl">
+      <TabsList className="w-full grid grid-cols-5 bg-secondary/20 p-1 rounded-xl">
         <TabsTrigger 
           value="overview" 
           className="data-[state=active]:bg-white"
@@ -51,6 +52,12 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
           className="data-[state=active]:bg-white"
         >
           المسجلين
+        </TabsTrigger>
+        <TabsTrigger 
+          value="preparation"
+          className="data-[state=active]:bg-white"
+        >
+          التحضير
         </TabsTrigger>
         <TabsTrigger 
           value="report"
@@ -80,6 +87,10 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
       <TabsContent value="registrations" className="mt-6">
         <DashboardRegistrations eventId={event.id} />
+      </TabsContent>
+
+      <TabsContent value="preparation" className="mt-6">
+        <DashboardPreparation eventId={event.id} />
       </TabsContent>
 
       <TabsContent value="report" className="mt-6">
