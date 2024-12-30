@@ -1,20 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { PersonalInfoSection } from "./PersonalInfoSection";
 import { RatingsSection } from "./RatingsSection";
-import { CommentsSection } from "./CommentsSection";
 
 interface EventFeedbackFormProps {
   isSubmitting: boolean;
-  feedbackText: string;
-  name: string;
-  phone: string;
   overallRating: number | null;
   contentRating: number | null;
   organizationRating: number | null;
   presenterRating: number | null;
-  onFeedbackTextChange: (value: string) => void;
-  onNameChange: (value: string) => void;
-  onPhoneChange: (value: string) => void;
   onOverallRatingChange: (value: number) => void;
   onContentRatingChange: (value: number) => void;
   onOrganizationRatingChange: (value: number) => void;
@@ -24,16 +16,10 @@ interface EventFeedbackFormProps {
 
 export const EventFeedbackForm = ({
   isSubmitting,
-  feedbackText,
-  name,
-  phone,
   overallRating,
   contentRating,
   organizationRating,
   presenterRating,
-  onFeedbackTextChange,
-  onNameChange,
-  onPhoneChange,
   onOverallRatingChange,
   onContentRatingChange,
   onOrganizationRatingChange,
@@ -51,18 +37,6 @@ export const EventFeedbackForm = ({
         onContentRatingChange={onContentRatingChange}
         onOrganizationRatingChange={onOrganizationRatingChange}
         onPresenterRatingChange={onPresenterRatingChange}
-      />
-
-      <PersonalInfoSection
-        name={name}
-        phone={phone}
-        onNameChange={onNameChange}
-        onPhoneChange={onPhoneChange}
-      />
-
-      <CommentsSection
-        value={feedbackText}
-        onChange={onFeedbackTextChange}
       />
 
       <Button 
