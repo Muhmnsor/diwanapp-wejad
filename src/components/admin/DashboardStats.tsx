@@ -7,8 +7,6 @@ interface DashboardStatsProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  eventDate: string;
-  eventTime: string;
   eventPath?: string;
   eventCategory?: string;
   projectActivities?: {
