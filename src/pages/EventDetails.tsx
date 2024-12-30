@@ -130,36 +130,39 @@ const EventDetails = () => {
               id={id!}
             >
               <Tabs defaultValue="details" className="w-full">
-                <div className="container mx-auto px-4 mt-12">
-                  <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-6 mb-12 space-y-3 md:space-y-0">
-                    <TabsList className="w-full justify-stretch bg-secondary/50">
+                <div className="bg-white border-b mt-4">
+                  <div className="container mx-auto px-4">
+                    <TabsList 
+                      className="w-full justify-start rounded-none bg-transparent h-auto py-2" 
+                      dir="rtl"
+                    >
                       <TabsTrigger 
-                        value="details"
-                        className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-none"
+                        value="details" 
+                        className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:border-b-2 rounded-none px-4 pb-2"
                       >
                         تفاصيل الفعالية
                       </TabsTrigger>
                       <TabsTrigger 
                         value="dashboard"
-                        className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-none"
+                        className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:border-b-2 rounded-none px-4 pb-2"
                       >
                         لوحة التحكم
                       </TabsTrigger>
                     </TabsList>
                   </div>
+                </div>
 
-                  <div className="container mx-auto px-4 pb-8" dir="rtl">
-                    <TabsContent value="details" className="mt-6">
-                      <EventContent 
-                        event={event}
-                        onRegister={() => {}}
-                      />
-                    </TabsContent>
+                <div className="container mx-auto px-4 pb-8" dir="rtl">
+                  <TabsContent value="details" className="mt-6">
+                    <EventContent 
+                      event={event}
+                      onRegister={() => {}}
+                    />
+                  </TabsContent>
 
-                    <TabsContent value="dashboard" className="mt-6">
-                      <EventDashboard eventId={id!} />
-                    </TabsContent>
-                  </div>
+                  <TabsContent value="dashboard" className="mt-6">
+                    <EventDashboard eventId={id!} />
+                  </TabsContent>
                 </div>
               </Tabs>
             </EventDetailsView>
