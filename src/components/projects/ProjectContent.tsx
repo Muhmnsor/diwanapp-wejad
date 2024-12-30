@@ -3,7 +3,7 @@ import { ProjectInfo } from "./ProjectInfo";
 import { ProjectDescription } from "./ProjectDescription";
 import { ProjectBadges } from "./badges/ProjectBadges";
 import { EventRegisterButton } from "../events/EventRegisterButton";
-import { EventRegistrationDialog } from "../events/EventRegistrationDialog";
+import { ProjectRegistrationDialog } from "./registration/ProjectRegistrationDialog";
 import { useState } from "react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { EventPathType, EventCategoryType } from "@/types/event";
@@ -78,13 +78,10 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
         />
       </div>
 
-      <EventRegistrationDialog
+      <ProjectRegistrationDialog
         open={showRegistrationDialog}
         onOpenChange={setShowRegistrationDialog}
-        event={{
-          ...eventFormatData,
-          isProject: true
-        }}
+        project={project}
       />
     </div>
   );

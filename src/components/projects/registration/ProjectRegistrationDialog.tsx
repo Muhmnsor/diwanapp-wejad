@@ -21,6 +21,7 @@ export const ProjectRegistrationDialog = ({
   onOpenChange,
   project,
 }: ProjectRegistrationDialogProps) => {
+  // تحويل بيانات المشروع إلى تنسيق Event للتحقق من حالة التسجيل
   const eventData = {
     ...project,
     date: project.end_date,
@@ -31,6 +32,14 @@ export const ProjectRegistrationDialog = ({
     event_hours: 0,
     registrationStartDate: project.registration_start_date,
     registrationEndDate: project.registration_end_date,
+    certificate_type: project.certificate_type || 'none',
+    event_type: project.event_type || 'in-person',
+    event_path: project.event_path || 'environment',
+    event_category: project.event_category || 'social',
+    imageUrl: project.image_url,
+    price: project.price || 0,
+    max_attendees: project.max_attendees || 0,
+    is_visible: project.is_visible
   };
   
   const status = getEventStatus(eventData);
