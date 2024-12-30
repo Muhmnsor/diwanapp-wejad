@@ -1,20 +1,17 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { PersonalInfoFields } from "./PersonalInfoFields";
-import { PaymentFields } from "./PaymentFields";
-import { RegistrationConfirmation } from "../RegistrationConfirmation";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { RegistrationFormInputs } from "../RegistrationFormInputs";
 
 interface RegistrationFormContainerProps {
   eventTitle: string;
-  eventPrice: number | "free" | null;
+  eventPrice: number | null;
   eventDate: string;
   eventTime: string;
   eventLocation: string;
   onSubmit: () => void;
+  isProject?: boolean;
 }
 
 export const RegistrationFormContainer = ({
@@ -24,36 +21,19 @@ export const RegistrationFormContainer = ({
   eventTime,
   eventLocation,
   onSubmit,
+  isProject = false
 }: RegistrationFormContainerProps) => {
+  const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
-  const { id } = useParams();
-  const queryClient = useQueryClient();
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    arabic_name: "",
-    english_name: "",
-    education_level: "",
-    birth_date: "",
-    national_id: "",
-  });
-
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [registrationId, setRegistrationId] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const checkExistingRegistration = async (email: string) => {
-    console.log("Checking for existing registration...");
+    console.log('Checking existing registration for:', { email, id, isProject });
+    
     const { data, error } = await supabase
       .from('registrations')
       .select('id')
-      .eq('event_id', id)
+      .eq(isProject ? 'project_id' : 'event_id', id)
       .eq('email', email);
 
     if (error) {
@@ -61,42 +41,18 @@ export const RegistrationFormContainer = ({
       throw error;
     }
 
-    return data && data.length > 0;
+    return data?.length > 0;
   };
 
-  const processPayment = async (registrationData: any) => {
-    console.log("Processing payment...");
-    const { error: paymentError } = await supabase
-      .from('payment_transactions')
-      .insert({
-        registration_id: registrationData.id,
-        amount: eventPrice,
-        status: 'completed',
-        payment_method: 'card',
-        payment_gateway: 'local_gateway'
-      });
-
-    if (paymentError) {
-      console.error('Error processing payment:', paymentError);
-      throw paymentError;
-    }
-
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Starting registration process...");
-    setIsSubmitting(true);
-
+  const handleSubmit = async (formData: any) => {
     try {
-      const hasExistingRegistration = await checkExistingRegistration(formData.email);
-      
-      if (hasExistingRegistration) {
+      setLoading(true);
+      const existing = await checkExistingRegistration(formData.email);
+      if (existing) {
         toast({
           variant: "destructive",
-          title: "لا يمكن إكمال التسجيل",
-          description: "لقد قمت بالتسجيل في هذه الفعالية مسبقاً",
+          title: "تسجيل موجود",
+          description: "هذا البريد الإلكتروني مسجل بالفعل."
         });
         return;
       }
@@ -104,7 +60,6 @@ export const RegistrationFormContainer = ({
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
       const registrationData = {
-        event_id: id,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -115,95 +70,49 @@ export const RegistrationFormContainer = ({
         birth_date: formData.birth_date || null,
         national_id: formData.national_id || null,
       };
+
+      if (isProject) {
+        registrationData['project_id'] = id;
+      } else {
+        registrationData['event_id'] = id;
+      }
       
       const { data: newRegistration, error: registrationError } = await supabase
         .from('registrations')
-        .insert(registrationData)
+        .insert([registrationData])
         .select()
         .single();
 
       if (registrationError) {
-        console.error('Error submitting registration:', registrationError);
+        console.error('Error creating registration:', registrationError);
         throw registrationError;
       }
 
-      if (eventPrice !== "free" && eventPrice !== null && eventPrice > 0) {
-        const paymentSuccess = await processPayment(newRegistration);
-        if (!paymentSuccess) {
-          throw new Error('Payment processing failed');
-        }
-      }
-
-      await queryClient.invalidateQueries({ 
-        queryKey: ['registrations', id] 
+      toast({
+        title: "تم التسجيل بنجاح",
+        description: "تم تسجيلك في الفعالية."
       });
-      
-      setRegistrationId(uniqueId);
-      setShowConfirmation(true);
-      setIsRegistered(true);
-      
-      console.log('Registration successful:', uniqueId);
+      onSubmit();
     } catch (error) {
-      console.error('Error in registration process:', error);
+      console.error('Error in form submission:', error);
       toast({
         variant: "destructive",
         title: "حدث خطأ",
-        description: "لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى",
+        description: "حدث خطأ أثناء إرسال النموذج. يرجى المحاولة مرة أخرى."
       });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
-  };
-
-  const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
-
-  const getButtonText = () => {
-    if (isSubmitting) {
-      return "جاري المعالجة...";
-    }
-    if (isPaidEvent) {
-      return `الدفع وتأكيد التسجيل (${eventPrice} ريال)`;
-    }
-    return "تأكيد التسجيل";
   };
 
   return (
-    <>
-      {!isRegistered && (
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <PersonalInfoFields
-            formData={formData}
-            setFormData={setFormData}
-          />
-          {isPaidEvent && (
-            <PaymentFields
-              formData={formData}
-              setFormData={setFormData}
-              eventPrice={eventPrice}
-            />
-          )}
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isSubmitting}
-          >
-            {getButtonText()}
-          </Button>
-        </form>
-      )}
-
-      <RegistrationConfirmation
-        open={showConfirmation}
-        onOpenChange={setShowConfirmation}
-        registrationId={registrationId}
-        eventTitle={eventTitle}
-        eventPrice={eventPrice}
-        eventDate={eventDate}
-        eventTime={eventTime}
-        eventLocation={eventLocation}
-        formData={formData}
-        onPayment={() => {}}
-      />
-    </>
+    <RegistrationFormInputs
+      eventTitle={eventTitle}
+      eventPrice={eventPrice}
+      eventDate={eventDate}
+      eventTime={eventTime}
+      eventLocation={eventLocation}
+      onSubmit={handleSubmit}
+    />
   );
 };

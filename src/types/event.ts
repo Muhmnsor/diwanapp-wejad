@@ -1,5 +1,11 @@
-export type EventPathType = "environment" | "community" | "content";
-export type EventCategoryType = "social" | "educational" | "cultural" | "sports" | "other";
+export type BeneficiaryType = 'men' | 'women' | 'both';
+
+export type EventPathType = 'environment' | 'community' | 'content';
+
+export type EventCategoryType = 
+  | 'social' | 'entertainment' | 'service' | 'educational' | 'consulting' // for environment
+  | 'interest' | 'specialization' // for community
+  | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
 
 export interface Event {
   id: string;
@@ -15,7 +21,7 @@ export interface Event {
   max_attendees: number;
   registration_start_date?: string;
   registration_end_date?: string;
-  beneficiary_type: "men" | "women" | "both";
+  beneficiary_type: BeneficiaryType;
   certificate_type: string;
   event_hours?: number;
   event_path: EventPathType;
@@ -24,3 +30,6 @@ export interface Event {
   is_project_activity?: boolean;
   project_id?: string;
 }
+
+// For backward compatibility
+export type EventType = Event;
