@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AttendanceStats } from "./AttendanceStats";
-import { AttendanceControls } from "./AttendanceControls";
-import { AttendanceTable } from "./AttendanceTable";
 import { useActivityAttendance } from "@/hooks/attendance/useActivityAttendance";
 import { toast } from "sonner";
+import { ActivitySelector } from "./ActivitySelector";
+import { PreparationContent } from "./PreparationContent";
 
 interface ProjectPreparationTabProps {
   projectId: string;
@@ -115,43 +113,25 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">تحضير الأنشطة</h2>
-            <Select
-              value={selectedActivity || ""}
-              onValueChange={(value) => setSelectedActivity(value)}
-            >
-              <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="اختر النشاط" />
-              </SelectTrigger>
-              <SelectContent>
-                {activities.map((activity) => (
-                  <SelectItem key={activity.id} value={activity.id}>
-                    {activity.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ActivitySelector
+              activities={activities}
+              selectedActivity={selectedActivity}
+              onActivityChange={setSelectedActivity}
+            />
           </div>
 
           {selectedActivity ? (
-            <>
-              <AttendanceStats stats={stats} />
-              <AttendanceControls
-                onBarcodeScanned={handleBarcodeScanned}
-                onGroupAttendance={handleGroupAttendanceClick}
-              />
-              <AttendanceTable
-                registrations={registrations.map(registration => ({
-                  ...registration,
-                  attendance_records: attendanceRecords.filter(
-                    record => record.registration_id === registration.id
-                  )
-                }))}
-                onAttendanceChange={async (registrationId, status) => {
-                  await handleAttendanceChange(registrationId, status, selectedActivity);
-                  refetchAttendance();
-                }}
-              />
-            </>
+            <PreparationContent
+              stats={stats}
+              onBarcodeScanned={handleBarcodeScanned}
+              onGroupAttendance={handleGroupAttendanceClick}
+              registrations={registrations}
+              attendanceRecords={attendanceRecords}
+              onAttendanceChange={async (registrationId, status) => {
+                await handleAttendanceChange(registrationId, status, selectedActivity);
+                refetchAttendance();
+              }}
+            />
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               الرجاء اختيار النشاط لعرض قائمة التحضير
