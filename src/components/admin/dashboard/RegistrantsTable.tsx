@@ -38,7 +38,7 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
         <TableHeader>
           <TableRow className="border-b border-gray-200">
             <TableHead className="text-right">الاسم</TableHead>
-            <TableHead className="text-right">الأنشطة المحضورة</TableHead>
+            <TableHead className="text-right">الأنشطة المشاركة</TableHead>
             <TableHead className="text-right">نسبة الحضور</TableHead>
           </TableRow>
         </TableHeader>
@@ -48,11 +48,11 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
               key={registrant.name}
               className="border-b border-gray-200 hover:bg-gray-50"
             >
-              <TableCell>{registrant.name}</TableCell>
-              <TableCell>
+              <TableCell className="text-right">{registrant.name}</TableCell>
+              <TableCell className="text-right">
                 {registrant.attendedActivities} من {registrant.totalActivities}
               </TableCell>
-              <TableCell className="w-[200px]">
+              <TableCell className="text-right w-[200px]">
                 <div className="flex items-center gap-2">
                   <Progress value={registrant.attendancePercentage} className="h-2" />
                   <span className="text-sm text-gray-500">
