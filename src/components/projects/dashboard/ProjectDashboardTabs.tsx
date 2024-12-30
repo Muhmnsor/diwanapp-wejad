@@ -1,10 +1,11 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { DashboardOverviewTab } from "./tabs/DashboardOverviewTab";
-import { DashboardRegistrationsTab } from "./tabs/DashboardRegistrationsTab";
-import { DashboardActivitiesTab } from "./tabs/DashboardActivitiesTab";
-import { DashboardReportsTab } from "./tabs/DashboardReportsTab";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
+import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
+import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
+import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
+import { ProjectTabsList } from "./ProjectTabsList";
+import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -19,61 +20,56 @@ interface ProjectDashboardTabsProps {
 
 export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => {
   console.log("ProjectDashboardTabs - project:", project);
+  
+  const { 
+    registrations,
+    projectActivities,
+    refetchActivities,
+    metrics,
+    isLoading 
+  } = useProjectDashboard(project.id);
 
-  const { data: registrations = [] } = useQuery({
-    queryKey: ['project-registrations', project.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('project_id', project.id);
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Calculate dashboard metrics
-  const registrationCount = registrations.length;
-  const remainingSeats = project.max_attendees - registrationCount;
-  const occupancyRate = (registrationCount / project.max_attendees) * 100;
+  if (isLoading) {
+    return <div>جاري التحميل...</div>;
+  }
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
-      <TabsList className="w-full grid grid-cols-4 bg-secondary/20 p-1 rounded-xl">
-        <TabsTrigger value="overview" className="data-[state=active]:bg-white">
-          نظرة عامة
-        </TabsTrigger>
-        <TabsTrigger value="registrations" className="data-[state=active]:bg-white">
-          المسجلين
-        </TabsTrigger>
-        <TabsTrigger value="activities" className="data-[state=active]:bg-white">
-          الأنشطة
-        </TabsTrigger>
-        <TabsTrigger value="reports" className="data-[state=active]:bg-white">
-          التقارير
-        </TabsTrigger>
-      </TabsList>
+      <ProjectTabsList />
       
       <TabsContent value="overview" className="mt-6">
-        <DashboardOverviewTab
-          registrationCount={registrationCount}
-          remainingSeats={remainingSeats}
-          occupancyRate={occupancyRate}
-          project={project}
+        <DashboardOverview
+          registrationCount={metrics.registrationCount}
+          remainingSeats={metrics.remainingSeats}
+          occupancyRate={metrics.occupancyRate}
+          eventDate={project.start_date}
+          eventTime={project.end_date}
+          eventPath={project.event_path}
+          eventCategory={project.event_category}
         />
       </TabsContent>
 
       <TabsContent value="registrations" className="mt-6">
-        <DashboardRegistrationsTab projectId={project.id} />
+        <DashboardRegistrations eventId={project.id} />
       </TabsContent>
 
       <TabsContent value="activities" className="mt-6">
-        <DashboardActivitiesTab project={project} />
+        <ProjectActivitiesTab
+          project={project}
+          projectActivities={projectActivities}
+          refetchActivities={refetchActivities}
+        />
+      </TabsContent>
+
+      <TabsContent value="preparation" className="mt-6">
+        <ProjectPreparationTab 
+          projectId={project.id}
+          activities={projectActivities}
+        />
       </TabsContent>
 
       <TabsContent value="reports" className="mt-6">
-        <DashboardReportsTab projectId={project.id} />
+        <ReportsTab eventId={project.id} />
       </TabsContent>
     </Tabs>
   );
