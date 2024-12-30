@@ -10,6 +10,8 @@ interface ActivitiesStatsCardProps {
 }
 
 export const ActivitiesStatsCard = ({ activities }: ActivitiesStatsCardProps) => {
+  console.log("Activities stats:", activities); // Add logging to debug
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
