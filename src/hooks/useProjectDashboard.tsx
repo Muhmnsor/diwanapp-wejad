@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useProjectDashboard = (projectId: string) => {
-  // Fetch project details along with registrations and activities
+  // Fetch project details
   const { data: projectData, isLoading: isProjectLoading } = useQuery({
     queryKey: ['project-details', projectId],
     queryFn: async () => {
@@ -22,7 +22,7 @@ export const useProjectDashboard = (projectId: string) => {
     enabled: !!projectId,
   });
 
-  // Fetch project registrations
+  // Fetch project registrations with their attendance records
   const { data: registrations = [], isLoading: isRegistrationsLoading } = useQuery({
     queryKey: ['project-registrations', projectId],
     queryFn: async () => {
@@ -39,10 +39,9 @@ export const useProjectDashboard = (projectId: string) => {
       console.log("Fetched registrations:", data);
       return data || [];
     },
-    enabled: !!projectId,
   });
 
-  // Fetch project activities
+  // Fetch project activities with their attendance records
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
@@ -51,7 +50,7 @@ export const useProjectDashboard = (projectId: string) => {
         .from('events')
         .select(`
           *,
-          attendance_records(*)
+          attendance_records!attendance_records_activity_id_fkey(*)
         `)
         .eq('project_id', projectId)
         .eq('is_project_activity', true)
@@ -97,12 +96,12 @@ export const useProjectDashboard = (projectId: string) => {
     return Math.round(average);
   };
 
+  const averageAttendance = calculateAverageAttendance();
+
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
   const remainingSeats = projectData?.max_attendees ? projectData.max_attendees - registrationCount : 0;
   const occupancyRate = projectData?.max_attendees ? (registrationCount / projectData.max_attendees) * 100 : 0;
-
-  const averageAttendance = calculateAverageAttendance();
 
   console.log("Final dashboard metrics:", {
     registrationCount,
