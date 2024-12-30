@@ -71,7 +71,7 @@ export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">متوسط التقييم</CardTitle>
+        <CardTitle className="text-sm font-medium">مستوى تقييم المشروع</CardTitle>
         <Star className={`h-4 w-4 ${getRatingColor(averageRating)}`} />
       </CardHeader>
       <CardContent>
@@ -79,7 +79,7 @@ export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {
           {averageRating.toFixed(1)}
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          من 5 نجوم
+          متوسط تقييم جميع أنشطة المشروع
         </p>
       </CardContent>
     </Card>
