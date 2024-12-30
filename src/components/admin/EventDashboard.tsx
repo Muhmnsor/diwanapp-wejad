@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardTabs } from "./dashboard/DashboardTabs";
-import { ProjectDashboardTabs } from "./dashboard/ProjectDashboardTabs";
 
 interface EventDashboardProps {
   eventId: string;
-  isProject?: boolean;
 }
 
-export const EventDashboard = ({ eventId, isProject = false }: EventDashboardProps) => {
+export const EventDashboard = ({ eventId }: EventDashboardProps) => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,23 +14,23 @@ export const EventDashboard = ({ eventId, isProject = false }: EventDashboardPro
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log(`Fetching ${isProject ? 'project' : 'event'} details for dashboard:`, eventId);
+        console.log('Fetching event details for dashboard:', eventId);
         
         const { data: result, error: fetchError } = await supabase
-          .from(isProject ? 'projects' : 'events')
+          .from('events')
           .select('*')
           .eq('id', eventId)
           .maybeSingle();
 
         if (fetchError) {
-          console.error(`Error fetching ${isProject ? 'project' : 'event'}:`, fetchError);
+          console.error('Error fetching event:', fetchError);
           setError(fetchError.message);
           return;
         }
 
         if (!result) {
-          console.log(`No ${isProject ? 'project' : 'event'} found with ID:`, eventId);
-          setError(`${isProject ? 'المشروع' : 'الفعالية'} غير موجود`);
+          console.log('No event found with ID:', eventId);
+          setError('الفعالية غير موجودة');
           return;
         }
 
@@ -46,7 +44,7 @@ export const EventDashboard = ({ eventId, isProject = false }: EventDashboardPro
     };
 
     fetchData();
-  }, [eventId, isProject]);
+  }, [eventId]);
 
   if (loading) {
     return <div className="p-4">جاري التحميل...</div>;
@@ -56,9 +54,5 @@ export const EventDashboard = ({ eventId, isProject = false }: EventDashboardPro
     return <div className="p-4 text-red-500">{error}</div>;
   }
 
-  return isProject ? (
-    <ProjectDashboardTabs project={data} />
-  ) : (
-    <DashboardTabs event={data} />
-  );
+  return <DashboardTabs event={data} />;
 };
