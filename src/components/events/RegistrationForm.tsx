@@ -61,8 +61,6 @@ export const RegistrationForm = ({
 
   const processPayment = async (registrationData: any) => {
     console.log("Processing payment...");
-    // Here we would integrate with a real payment gateway
-    // For now, we'll simulate a successful payment
     const { error: paymentError } = await supabase
       .from('payment_transactions')
       .insert({
@@ -199,6 +197,7 @@ export const RegistrationForm = ({
         eventTime={eventTime}
         eventLocation={eventLocation}
         formData={formData}
+        isProjectActivity={isProject}
         onPayment={() => {}}
       />
     </>
