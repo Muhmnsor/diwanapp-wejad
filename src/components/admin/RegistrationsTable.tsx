@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,82 +7,89 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface RegistrationsTableProps {
   registrations: any[];
-  onDeleteRegistration: (id: string) => void;
+  eventId: string;
+  onAttendanceChange: () => void;
 }
 
-export const RegistrationsTable = ({
+export const RegistrationsTable = ({ 
   registrations,
-  onDeleteRegistration,
+  eventId,
+  onAttendanceChange
 }: RegistrationsTableProps) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleDelete = async (id: string) => {
+  const handleAttendance = async (registrationId: string, status: 'present' | 'absent') => {
     try {
-      setLoading(true);
       const { error } = await supabase
-        .from("registrations")
-        .delete()
-        .eq("id", id);
+        .from('attendance_records')
+        .upsert({
+          event_id: eventId,
+          registration_id: registrationId,
+          status,
+          check_in_time: new Date().toISOString(),
+        }, {
+          onConflict: 'registration_id,event_id'
+        });
 
       if (error) throw error;
 
-      onDeleteRegistration(id);
-      toast.success("تم حذف التسجيل بنجاح");
+      toast.success(status === 'present' ? 'تم تسجيل الحضور بنجاح' : 'تم تسجيل الغياب بنجاح');
+      onAttendanceChange();
     } catch (error) {
-      console.error("Error deleting registration:", error);
-      toast.error("حدث خطأ أثناء حذف التسجيل");
-    } finally {
-      setLoading(false);
+      console.error('Error recording attendance:', error);
+      toast.error('حدث خطأ أثناء تسجيل الحضور');
     }
   };
 
-  if (!registrations.length) {
-    return (
-      <div className="text-center py-12 text-gray-500 bg-gray-50">
-        لا يوجد تسجيلات حتى الآن
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full overflow-auto">
-      <Table dir="rtl">
-        <TableHeader className="bg-gray-50">
+    <div className="p-4">
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableHead className="text-right font-semibold">الاسم</TableHead>
-            <TableHead className="text-right font-semibold">البريد الإلكتروني</TableHead>
-            <TableHead className="text-right font-semibold">رقم الجوال</TableHead>
-            <TableHead className="text-right font-semibold">رقم التسجيل</TableHead>
-            <TableHead className="text-right font-semibold">تاريخ التسجيل</TableHead>
-            <TableHead className="text-center font-semibold w-[100px]">إجراءات</TableHead>
+            <TableHead>الاسم</TableHead>
+            <TableHead>البريد الإلكتروني</TableHead>
+            <TableHead>رقم الجوال</TableHead>
+            <TableHead>رقم التسجيل</TableHead>
+            <TableHead>الحضور</TableHead>
+            <TableHead>الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {registrations.map((registration) => (
-            <TableRow key={registration.id} className="hover:bg-gray-50">
-              <TableCell className="font-medium">{registration.name}</TableCell>
+            <TableRow key={registration.id}>
+              <TableCell>{registration.name}</TableCell>
               <TableCell>{registration.email}</TableCell>
               <TableCell>{registration.phone}</TableCell>
               <TableCell>{registration.registration_number}</TableCell>
               <TableCell>
-                {new Date(registration.created_at).toLocaleDateString("ar-SA")}
+                {registration.attendance_records?.some((record: any) => record.status === 'present')
+                  ? <span className="text-green-500">حاضر</span>
+                  : <span className="text-red-500">غائب</span>
+                }
               </TableCell>
-              <TableCell className="text-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-red-50 hover:text-red-500"
-                  onClick={() => handleDelete(registration.id)}
-                  disabled={loading}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleAttendance(registration.id, 'present')}
+                    className="h-8 w-8 text-green-500"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleAttendance(registration.id, 'absent')}
+                    className="h-8 w-8 text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
