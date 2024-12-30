@@ -37,17 +37,20 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({
   };
 
   const getAttendanceStatus = (registration: any) => {
-    const currentRecord = registration.attendance_records?.[0];
+    // Find the attendance record for the current activity
+    const currentActivityRecord = registration.attendance_records?.find(
+      record => record.activity_id === registration.attendance_records[0]?.activity_id
+    );
     
-    if (!currentRecord) {
+    if (!currentActivityRecord) {
       return { status: 'not_recorded', display: 'لم يتم التحضير' };
     }
 
-    if (currentRecord.status === 'present') {
+    if (currentActivityRecord.status === 'present') {
       return { status: 'present', display: 'حاضر' };
     }
 
-    if (currentRecord.status === 'absent') {
+    if (currentActivityRecord.status === 'absent') {
       return { status: 'absent', display: 'غائب' };
     }
 
