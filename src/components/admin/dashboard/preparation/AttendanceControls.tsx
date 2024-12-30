@@ -6,12 +6,12 @@ import { GroupDialog } from "./dialogs/GroupDialog";
 
 interface AttendanceControlsProps {
   onBarcodeScanned: (code: string) => void;
-  onGroupAction: (status: 'present' | 'absent') => void;
+  onGroupAttendance: (status: 'present' | 'absent') => void;
 }
 
 export const AttendanceControls: FC<AttendanceControlsProps> = ({
   onBarcodeScanned,
-  onGroupAction,
+  onGroupAttendance,
 }) => {
   const [showBarcodeDialog, setShowBarcodeDialog] = useState(false);
   const [showGroupDialog, setShowGroupDialog] = useState(false);
@@ -44,7 +44,7 @@ export const AttendanceControls: FC<AttendanceControlsProps> = ({
       <GroupDialog
         open={showGroupDialog}
         onOpenChange={setShowGroupDialog}
-        onGroupAction={onGroupAction}
+        onGroupAction={onGroupAttendance}
       />
     </div>
   );

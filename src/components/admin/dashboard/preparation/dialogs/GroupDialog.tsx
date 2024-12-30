@@ -1,6 +1,12 @@
 import { FC } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { UserCheck, UserX } from "lucide-react";
 
 interface GroupDialogProps {
   open: boolean;
@@ -15,18 +21,19 @@ export const GroupDialog: FC<GroupDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>تحضير جماعي</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="flex justify-center gap-4 py-4">
           <Button
             onClick={() => {
               onGroupAction('present');
               onOpenChange(false);
             }}
-            className="w-full"
+            className="flex-1"
           >
+            <UserCheck className="h-4 w-4 ml-2" />
             تحضير الجميع
           </Button>
           <Button
@@ -35,8 +42,9 @@ export const GroupDialog: FC<GroupDialogProps> = ({
               onOpenChange(false);
             }}
             variant="destructive"
-            className="w-full"
+            className="flex-1"
           >
+            <UserX className="h-4 w-4 ml-2" />
             تغييب الجميع
           </Button>
         </div>
