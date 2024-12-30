@@ -14,8 +14,6 @@ interface ProjectPreparationTabProps {
 
 export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparationTabProps) => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
-  const [selectedRegistration, setSelectedRegistration] = useState<string | null>(null);
-  const [mode, setMode] = useState<'activity' | 'registrant'>('activity');
 
   const { data: registrations = [], refetch: refetchRegistrations } = useQuery({
     queryKey: ['project-registrations', projectId],
@@ -37,21 +35,20 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
   });
 
   const { data: attendanceRecords = [], refetch: refetchAttendance } = useQuery({
-    queryKey: ['activity-attendance', selectedActivity, selectedRegistration, mode],
+    queryKey: ['activity-attendance', selectedActivity],
     queryFn: async () => {
-      console.log("Fetching attendance records for:", mode === 'activity' ? 'activity' : 'registrant');
+      console.log("Fetching attendance records for activity:", selectedActivity);
       const { data, error } = await supabase
         .from('attendance_records')
         .select('*')
-        .eq('project_id', projectId)
-        .eq(mode === 'activity' ? 'activity_id' : 'registration_id', 
-            mode === 'activity' ? selectedActivity : selectedRegistration);
+        .eq('activity_id', selectedActivity)
+        .eq('project_id', projectId);
 
       if (error) throw error;
       console.log("Fetched attendance records:", data);
       return data || [];
     },
-    enabled: mode === 'activity' ? !!selectedActivity : !!selectedRegistration,
+    enabled: !!selectedActivity,
   });
 
   const { 
@@ -67,22 +64,14 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
   };
 
   const handleBarcodeScanned = async (code: string) => {
-    if (mode === 'activity' && !selectedActivity) {
+    if (!selectedActivity) {
       toast.error("الرجاء اختيار النشاط أولاً");
       return;
     }
 
     const registration = registrations.find(r => r.registration_number === code);
     if (registration) {
-      if (mode === 'activity') {
-        await handleAttendanceChange(registration.id, 'present', selectedActivity!);
-      } else {
-        // Handle registrant mode attendance
-        const activitiesToUpdate = activities.map(a => a.id);
-        for (const activityId of activitiesToUpdate) {
-          await handleAttendanceChange(registration.id, 'present', activityId);
-        }
-      }
+      await handleAttendanceChange(registration.id, 'present', selectedActivity);
       refetchAttendance();
       toast.success('تم تسجيل الحضور بنجاح');
     } else {
@@ -91,21 +80,13 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
   };
 
   const handleGroupAttendanceClick = async (status: 'present' | 'absent') => {
-    if (mode === 'activity' && !selectedActivity) {
+    if (!selectedActivity) {
       toast.error("الرجاء اختيار النشاط أولاً");
       return;
     }
     try {
-      if (mode === 'activity') {
-        console.log('Processing group attendance for activity:', selectedActivity, 'with status:', status);
-        await handleGroupAttendance(status, selectedActivity!);
-      } else {
-        // Handle registrant mode group attendance
-        const activitiesToUpdate = activities.map(a => a.id);
-        for (const activityId of activitiesToUpdate) {
-          await handleGroupAttendance(status, activityId);
-        }
-      }
+      console.log('Processing group attendance for activity:', selectedActivity, 'with status:', status);
+      await handleGroupAttendance(status, selectedActivity);
       await refetchAttendance();
       toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
     } catch (error) {
@@ -134,17 +115,12 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
             <h2 className="text-xl font-semibold">تحضير الأنشطة</h2>
             <ActivitySelector
               activities={activities}
-              registrations={registrations}
               selectedActivity={selectedActivity}
-              selectedRegistration={selectedRegistration}
               onActivityChange={setSelectedActivity}
-              onRegistrationChange={setSelectedRegistration}
-              mode={mode}
-              onModeChange={setMode}
             />
           </div>
 
-          {(mode === 'activity' ? selectedActivity : selectedRegistration) ? (
+          {selectedActivity ? (
             <PreparationContent
               stats={stats}
               onBarcodeScanned={handleBarcodeScanned}
@@ -152,23 +128,13 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
               registrations={registrations}
               attendanceRecords={attendanceRecords}
               onAttendanceChange={async (registrationId, status) => {
-                if (mode === 'activity') {
-                  await handleAttendanceChange(registrationId, status, selectedActivity!);
-                } else {
-                  // Handle registrant mode attendance change
-                  const activitiesToUpdate = activities.map(a => a.id);
-                  for (const activityId of activitiesToUpdate) {
-                    await handleAttendanceChange(registrationId, status, activityId);
-                  }
-                }
+                await handleAttendanceChange(registrationId, status, selectedActivity);
                 refetchAttendance();
               }}
             />
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              {mode === 'activity' ? 
-                'الرجاء اختيار النشاط لعرض قائمة التحضير' : 
-                'الرجاء اختيار المستفيد لعرض قائمة التحضير'}
+              الرجاء اختيار النشاط لعرض قائمة التحضير
             </div>
           )}
         </div>
