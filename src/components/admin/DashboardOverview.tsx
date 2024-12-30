@@ -8,20 +8,9 @@ interface DashboardOverviewProps {
   occupancyRate: number;
   eventDate: string;
   eventTime: string;
-  project?: {
-    event_path?: string;
-    event_category?: string;
-    id?: string;
-  };
-  projectActivities?: {
-    id: string;
-    title: string;
-    attendanceRate?: number;
-    rating?: number;
-  }[];
-  totalActivities?: number;
-  completedActivities?: number;
-  averageAttendanceRate?: number;
+  eventPath?: string;
+  eventCategory?: string;
+  projectId?: string;
 }
 
 export const DashboardOverview = ({
@@ -30,11 +19,9 @@ export const DashboardOverview = ({
   occupancyRate,
   eventDate,
   eventTime,
-  project,
-  projectActivities = [],
-  totalActivities = 0,
-  completedActivities = 0,
-  averageAttendanceRate = 0
+  eventPath,
+  eventCategory,
+  projectId
 }: DashboardOverviewProps) => {
   console.log("DashboardOverview props:", {
     registrationCount,
@@ -42,14 +29,12 @@ export const DashboardOverview = ({
     occupancyRate,
     eventDate,
     eventTime,
-    project,
-    projectActivities,
-    totalActivities,
-    completedActivities,
-    averageAttendanceRate
+    eventPath,
+    eventCategory,
+    projectId
   });
 
-  const { registrantsStats, isLoading } = useRegistrantsStats(project?.id || '');
+  const { registrantsStats, isLoading } = useRegistrantsStats(projectId || '');
 
   return (
     <div className="space-y-8">
@@ -59,12 +44,8 @@ export const DashboardOverview = ({
         occupancyRate={occupancyRate}
         eventDate={eventDate}
         eventTime={eventTime}
-        eventPath={project?.event_path}
-        eventCategory={project?.event_category}
-        projectActivities={projectActivities}
-        totalActivities={totalActivities}
-        completedActivities={completedActivities}
-        averageAttendanceRate={averageAttendanceRate}
+        eventPath={eventPath}
+        eventCategory={eventCategory}
       />
 
       <RegistrantsTable 

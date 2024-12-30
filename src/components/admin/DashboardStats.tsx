@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, TrendingUp, TrendingDown, Activity, Star } from "lucide-react";
+import { Users, Calendar, Clock } from "lucide-react";
 
 interface DashboardStatsProps {
   registrationCount: number;
@@ -9,38 +9,25 @@ interface DashboardStatsProps {
   eventTime: string;
   eventPath?: string;
   eventCategory?: string;
-  projectActivities?: {
-    id: string;
-    title: string;
-    attendanceRate?: number;
-    rating?: number;
-  }[];
-  totalActivities?: number;
-  completedActivities?: number;
-  averageAttendanceRate?: number;
 }
 
 export const DashboardStats = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
+  eventDate,
+  eventTime,
   eventPath,
   eventCategory,
-  projectActivities = [],
-  totalActivities = 0,
-  completedActivities = 0,
-  averageAttendanceRate = 0,
 }: DashboardStatsProps) => {
   console.log("DashboardStats props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
+    eventDate,
+    eventTime,
     eventPath,
     eventCategory,
-    projectActivities,
-    totalActivities,
-    completedActivities,
-    averageAttendanceRate,
   });
 
   const formatEventPath = (path?: string) => {
@@ -72,20 +59,6 @@ export const DashboardStats = ({
     };
     return categoryMap[category] || category;
   };
-
-  // Find activities with highest and lowest attendance rates
-  const sortedByAttendance = [...projectActivities].sort((a, b) => 
-    (b.attendanceRate || 0) - (a.attendanceRate || 0)
-  );
-  const highestAttendance = sortedByAttendance[0];
-  const lowestAttendance = sortedByAttendance[sortedByAttendance.length - 1];
-
-  // Find activities with highest and lowest ratings
-  const sortedByRating = [...projectActivities].sort((a, b) => 
-    (b.rating || 0) - (a.rating || 0)
-  );
-  const highestRated = sortedByRating[0];
-  const lowestRated = sortedByRating[sortedByRating.length - 1];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -119,55 +92,15 @@ export const DashboardStats = ({
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">الأنشطة المتبقية</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">موعد الفعالية</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {totalActivities - completedActivities} من {totalActivities}
+          <div className="text-2xl font-bold">{eventDate}</div>
+          <div className="flex items-center text-xs text-muted-foreground">
+            <Clock className="mr-1 h-3 w-3" />
+            {eventTime}
           </div>
-          <p className="text-xs text-muted-foreground">
-            متوسط نسبة الحضور {averageAttendanceRate?.toFixed(1)}%
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أعلى نسبة حضور</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-lg font-bold">{highestAttendance?.title || '-'}</div>
-          <p className="text-xs text-muted-foreground">
-            {highestAttendance?.attendanceRate?.toFixed(1) || 0}%
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أقل نسبة حضور</CardTitle>
-          <TrendingDown className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-lg font-bold">{lowestAttendance?.title || '-'}</div>
-          <p className="text-xs text-muted-foreground">
-            {lowestAttendance?.attendanceRate?.toFixed(1) || 0}%
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أعلى تقييم نشاط</CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-lg font-bold">{highestRated?.title || '-'}</div>
-          <p className="text-xs text-muted-foreground">
-            {highestRated?.rating?.toFixed(1) || 0} من 5
-          </p>
         </CardContent>
       </Card>
     </div>

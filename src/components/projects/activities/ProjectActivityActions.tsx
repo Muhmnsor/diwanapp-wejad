@@ -4,7 +4,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ProjectActivity } from "@/types/activity";
 import { useState } from "react";
 import { EditActivityDialog } from "./dialogs/EditActivityDialog";
-import { DeleteActivityDialog } from "./dialogs/DeleteActivityDialog";
 
 interface ProjectActivityActionsProps {
   activity: ProjectActivity;
@@ -20,21 +19,10 @@ export const ProjectActivityActions = ({
   onEditSuccess
 }: ProjectActivityActionsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEditClick = () => {
     onEdit();
-  };
-
-  const handleDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    console.log("Confirming delete for activity:", activity.id);
-    onDelete();
-    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -65,7 +53,7 @@ export const ProjectActivityActions = ({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={handleDeleteClick}
+                onClick={onDelete}
                 className="h-8 w-8 transition-colors hover:bg-secondary"
               >
                 <Trash2 className="h-4 w-4" />
@@ -91,12 +79,6 @@ export const ProjectActivityActions = ({
           projectId={activity.project_id}
         />
       )}
-
-      <DeleteActivityDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-      />
     </>
   );
 };
