@@ -11,28 +11,16 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
     queryKey: ['registrations', eventId],
     queryFn: async () => {
       if (!eventId) {
-        console.error('No ID provided');
+        console.error('No event ID provided');
         return [];
       }
 
-      // First, check if this is a project by querying the projects table
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('id', eventId)
-        .maybeSingle();
+      console.log('Fetching registrations for event:', eventId);
 
-      console.log('Checking if ID is a project:', projectData);
-
-      // Determine if this is a project or event
-      const isProject = !!projectData;
-      console.log('Is this a project?', isProject);
-
-      // Query registrations based on whether this is a project or event
       const { data, error } = await supabase
         .from('registrations')
         .select('*')
-        .eq(isProject ? 'project_id' : 'event_id', eventId);
+        .eq('event_id', eventId);
 
       if (error) {
         console.error('Error fetching registrations:', error);
