@@ -24,11 +24,13 @@ export const DashboardOverviewTab = ({
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      eventDate={project.start_date}
-      eventTime={project.end_date}
-      eventPath={project.event_path}
-      eventCategory={project.event_category}
-      projectId={project.id}
+      project={{
+        id: project.id,
+        start_date: project.start_date,
+        end_date: project.end_date,
+        event_path: project.event_path || '',
+        event_category: project.event_category || ''
+      }}
     />
   );
 };
