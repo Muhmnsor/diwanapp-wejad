@@ -19,6 +19,8 @@ interface RegistrationConfirmationProps {
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
+  isProjectActivity?: boolean;
+  projectTitle?: string;
   formData: {
     name: string;
     email: string;
@@ -35,6 +37,8 @@ export const RegistrationConfirmation = ({
   eventDate,
   eventTime,
   eventLocation,
+  isProjectActivity,
+  projectTitle,
   formData,
 }: RegistrationConfirmationProps) => {
   const [isClosing, setIsClosing] = useState(false);
@@ -83,6 +87,8 @@ export const RegistrationConfirmation = ({
           eventDate={eventDate}
           eventTime={eventTime}
           eventLocation={eventLocation}
+          isProjectActivity={isProjectActivity}
+          projectTitle={projectTitle}
           onSave={() => setHasDownloaded(true)}
         />
 

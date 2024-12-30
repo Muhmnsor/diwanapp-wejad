@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, Ticket } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { exportCardAsImage } from "@/utils/cardExport";
 import { ConfirmationHeader } from "./ConfirmationHeader";
@@ -19,6 +19,8 @@ interface ConfirmationCardProps {
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
+  isProjectActivity?: boolean;
+  projectTitle?: string;
   onSave?: () => void;
 }
 
@@ -29,6 +31,8 @@ export const ConfirmationCard = ({
   eventDate,
   eventTime,
   eventLocation,
+  isProjectActivity,
+  projectTitle,
   onSave
 }: ConfirmationCardProps) => {
   const { toast } = useToast();
@@ -61,6 +65,15 @@ export const ConfirmationCard = ({
   return (
     <div className="space-y-4" dir="rtl">
       <Card id="confirmation-card" className="bg-white p-6 space-y-6 max-w-md mx-auto">
+        <div className="flex items-center justify-between">
+          <Ticket className="w-8 h-8 text-primary" />
+          {isProjectActivity && projectTitle && (
+            <div className="text-xs text-muted-foreground">
+              نشاط ضمن مشروع: {projectTitle}
+            </div>
+          )}
+        </div>
+        
         <ConfirmationHeader 
           eventTitle={eventTitle} 
           registrationId={registrationId} 
