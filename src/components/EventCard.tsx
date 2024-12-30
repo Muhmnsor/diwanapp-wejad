@@ -78,11 +78,11 @@ export const EventCard = ({
   }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type, currentAttendees, status, is_visible]);
 
   return (
-    <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`}>
+    <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <img src={image_url} alt={title} className="w-full h-40 object-cover" />
         {!is_visible && (
-          <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+          <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
             <EyeOff className="w-4 h-4" />
             مخفي
           </div>
