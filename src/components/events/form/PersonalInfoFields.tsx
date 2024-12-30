@@ -1,4 +1,6 @@
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EventPathType } from "@/types/event";
 
 interface PersonalInfoFieldsProps {
   formData: {
@@ -10,6 +12,7 @@ interface PersonalInfoFieldsProps {
     education_level?: string;
     birth_date?: string;
     national_id?: string;
+    event_path?: EventPathType;
   };
   setFormData: (data: any) => void;
 }
@@ -78,15 +81,24 @@ export const PersonalInfoFields = ({ formData, setFormData }: PersonalInfoFields
         </div>
       )}
 
-      <div>
-        <label className="text-sm font-medium block mb-1.5">الاسم</label>
-        <Input
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="text-right"
-          required
-        />
-      </div>
+      {formData.event_path !== undefined && (
+        <div>
+          <label className="text-sm font-medium block mb-1.5">المسار</label>
+          <Select
+            value={formData.event_path}
+            onValueChange={(value: EventPathType) => setFormData({ ...formData, event_path: value })}
+          >
+            <SelectTrigger className="text-right">
+              <SelectValue placeholder="اختر المسار" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="environment">البيئة</SelectItem>
+              <SelectItem value="community">المجتمع</SelectItem>
+              <SelectItem value="content">المحتوى</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div>
         <label className="text-sm font-medium block mb-1.5">البريد الإلكتروني</label>
