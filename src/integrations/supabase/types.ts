@@ -15,6 +15,7 @@ export type Database = {
           created_at: string
           event_id: string | null
           id: string
+          project_id: string | null
           recorded_by: string | null
           registration_id: string | null
           status: string | null
@@ -24,6 +25,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           id?: string
+          project_id?: string | null
           recorded_by?: string | null
           registration_id?: string | null
           status?: string | null
@@ -33,6 +35,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           id?: string
+          project_id?: string | null
           recorded_by?: string | null
           registration_id?: string | null
           status?: string | null
@@ -43,6 +46,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
@@ -446,6 +456,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          attendance_requirement_type: string | null
           beneficiary_type: string
           certificate_type: string | null
           created_at: string
@@ -461,10 +472,13 @@ export type Database = {
           price: number | null
           registration_end_date: string | null
           registration_start_date: string | null
+          required_activities_count: number | null
+          required_attendance_percentage: number | null
           start_date: string
           title: string
         }
         Insert: {
+          attendance_requirement_type?: string | null
           beneficiary_type?: string
           certificate_type?: string | null
           created_at?: string
@@ -480,10 +494,13 @@ export type Database = {
           price?: number | null
           registration_end_date?: string | null
           registration_start_date?: string | null
+          required_activities_count?: number | null
+          required_attendance_percentage?: number | null
           start_date: string
           title: string
         }
         Update: {
+          attendance_requirement_type?: string | null
           beneficiary_type?: string
           certificate_type?: string | null
           created_at?: string
@@ -499,6 +516,8 @@ export type Database = {
           price?: number | null
           registration_end_date?: string | null
           registration_start_date?: string | null
+          required_activities_count?: number | null
+          required_attendance_percentage?: number | null
           start_date?: string
           title?: string
         }
