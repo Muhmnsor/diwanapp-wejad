@@ -75,11 +75,11 @@ export const EventStatsContent = ({
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
           <CardTitle className="text-sm font-medium">
             موعد الفعالية
           </CardTitle>
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
@@ -89,11 +89,11 @@ export const EventStatsContent = ({
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
+          <Star className="h-4 w-4 text-muted-foreground" />
           <CardTitle className="text-sm font-medium">
             متوسط التقييم
           </CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
