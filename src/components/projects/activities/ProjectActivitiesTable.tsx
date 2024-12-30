@@ -15,6 +15,8 @@ export const ProjectActivitiesTable = ({
   onDelete,
   onEditSuccess
 }: ProjectActivitiesTableProps) => {
+  console.log("ProjectActivitiesTable - Rendering with activities:", activities);
+
   if (!activities || activities.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">

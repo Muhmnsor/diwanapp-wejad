@@ -20,31 +20,31 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
   };
 
   const handleDeleteEvent = (event: any) => {
+    console.log("Handling delete for event:", event);
     setSelectedEvent(event);
     setIsDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
     try {
-      const { error: projectEventError } = await supabase
-        .from('project_events')
-        .delete()
-        .eq('event_id', selectedEvent.event.id)
-        .eq('project_id', projectId);
+      console.log("Starting delete process for event:", selectedEvent);
 
-      if (projectEventError) throw projectEventError;
-
+      // Delete the event directly since it's a project activity
       const { error: eventError } = await supabase
         .from('events')
         .delete()
-        .eq('id', selectedEvent.event.id);
+        .eq('id', selectedEvent.id)
+        .eq('project_id', projectId);
 
-      if (eventError) throw eventError;
+      if (eventError) {
+        console.error('Error deleting event:', eventError);
+        throw eventError;
+      }
 
       toast.success('تم حذف النشاط بنجاح');
-      refetchActivities();
+      await refetchActivities();
     } catch (error) {
-      console.error('Error deleting event:', error);
+      console.error('Error in delete process:', error);
       toast.error('حدث خطأ أثناء حذف النشاط');
     } finally {
       setIsDeleteDialogOpen(false);
