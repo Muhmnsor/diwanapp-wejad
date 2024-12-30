@@ -1,96 +1,76 @@
 import { useEffect, useState } from "react";
-import { AttendanceStats } from "./preparation/AttendanceStats";
-import { AttendanceControls } from "./preparation/AttendanceControls";
-import { AttendanceTable } from "./preparation/AttendanceTable";
 import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
-import { ProjectActivity } from "@/types/activity";
+import { AttendanceControls } from "./preparation/AttendanceControls";
+import { AttendanceStats } from "./preparation/AttendanceStats";
+import { AttendanceTable } from "./preparation/AttendanceTable";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DashboardPreparationProps {
-  projectId: string;
-  activities: ProjectActivity[];
+  projectId?: string;
+  eventId?: string;
+  activities?: any[];
 }
 
-export const DashboardPreparation = ({ projectId, activities }: DashboardPreparationProps) => {
+export const DashboardPreparation = ({ projectId, eventId, activities = [] }: DashboardPreparationProps) => {
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
-  
   const {
     registrations,
-    isLoading,
-    attendanceStats,
-    setAttendanceStats,
-    handleAttendance,
+    stats,
     handleBarcodeScanned,
-    handleGroupAttendance
-  } = useAttendanceManagement(projectId, selectedActivityId);
+    handleGroupAttendance,
+    handleAttendanceChange,
+    fetchRegistrations,
+  } = useAttendanceManagement(projectId, eventId, selectedActivityId);
 
   useEffect(() => {
-    // Calculate attendance statistics
-    const stats = {
-      total: registrations.length,
-      present: 0,
-      absent: 0,
-      notRecorded: 0
-    };
+    if (projectId && selectedActivityId) {
+      console.log("Fetching registrations for activity:", selectedActivityId);
+      fetchRegistrations();
+    } else if (eventId) {
+      console.log("Fetching registrations for event:", eventId);
+      fetchRegistrations();
+    }
+  }, [projectId, eventId, selectedActivityId, fetchRegistrations]);
 
-    registrations.forEach(registration => {
-      const attendanceRecord = registration.attendance_records?.[0];
-      if (!attendanceRecord) {
-        stats.notRecorded++;
-      } else if (attendanceRecord.status === 'present') {
-        stats.present++;
-      } else if (attendanceRecord.status === 'absent') {
-        stats.absent++;
-      }
-    });
-
-    setAttendanceStats(stats);
-  }, [registrations, setAttendanceStats]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  // Only show activity selector for projects
+  const showActivitySelector = projectId && activities && activities.length > 0;
 
   return (
-    <div className="space-y-6 bg-white rounded-lg shadow-sm p-6">
-      <div className="mb-6">
-        <label htmlFor="activity" className="block text-sm font-medium text-gray-700 mb-2">
-          اختر النشاط
-        </label>
-        <select
-          id="activity"
-          className="w-full p-2 border rounded-md"
-          value={selectedActivityId || ''}
-          onChange={(e) => setSelectedActivityId(e.target.value || null)}
-        >
-          <option value="">اختر النشاط</option>
-          {activities.map((activity) => (
-            <option key={activity.id} value={activity.id}>
-              {activity.title}
-            </option>
-          ))}
-        </select>
-      </div>
-      
-      {selectedActivityId ? (
+    <div className="space-y-6">
+      {showActivitySelector ? (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">اختر النشاط للتحضير</h3>
+          <Select
+            value={selectedActivityId || ""}
+            onValueChange={(value) => setSelectedActivityId(value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="اختر النشاط" />
+            </SelectTrigger>
+            <SelectContent>
+              {activities.map((activity) => (
+                <SelectItem key={activity.id} value={activity.id}>
+                  {activity.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+
+      {/* Show attendance controls only if it's a single event or if an activity is selected */}
+      {(!showActivitySelector || (showActivitySelector && selectedActivityId)) && (
         <>
-          <AttendanceControls 
+          <AttendanceControls
             onBarcodeScanned={handleBarcodeScanned}
             onGroupAttendance={handleGroupAttendance}
           />
-          <AttendanceStats stats={attendanceStats} />
-          <AttendanceTable 
-            registrations={registrations} 
-            onAttendanceChange={handleAttendance}
+          <AttendanceStats stats={stats} />
+          <AttendanceTable
+            registrations={registrations}
+            onAttendanceChange={handleAttendanceChange}
           />
         </>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          الرجاء اختيار نشاط للبدء في التحضير
-        </div>
       )}
     </div>
   );

@@ -1,190 +1,186 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useAttendanceManagement = (projectId: string, selectedActivityId: string | null) => {
-  const [attendanceStats, setAttendanceStats] = useState({
+export const useAttendanceManagement = (
+  projectId?: string,
+  eventId?: string,
+  activityId?: string | null
+) => {
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [stats, setStats] = useState({
     total: 0,
     present: 0,
     absent: 0,
-    notRecorded: 0
+    notRecorded: 0,
   });
 
-  const { data: registrations = [], isLoading, refetch } = useQuery({
-    queryKey: ['registrations-preparation', projectId, selectedActivityId],
-    queryFn: async () => {
-      console.log('Fetching registrations for project:', projectId, 'and activity:', selectedActivityId);
+  const fetchRegistrations = useCallback(async () => {
+    try {
+      console.log("Fetching registrations with params:", { projectId, eventId, activityId });
       
-      if (!selectedActivityId) return [];
-
-      const { data, error } = await supabase
-        .from('registrations')
+      // Determine which registrations to fetch based on context
+      const { data: regs, error: regsError } = await supabase
+        .from("registrations")
         .select(`
           *,
-          attendance_records!inner(*)
+          attendance_records!left (
+            status,
+            check_in_time
+          )
         `)
-        .eq('project_id', projectId)
-        .eq('attendance_records.activity_id', selectedActivityId);
+        .eq(projectId ? "project_id" : "event_id", projectId || eventId);
 
-      if (error) {
-        console.error('Error fetching registrations:', error);
-        throw error;
-      }
+      if (regsError) throw regsError;
 
-      // Get all registrations for this project
-      const { data: allRegistrations, error: allRegError } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('project_id', projectId);
+      // Process registrations and their attendance records
+      const processedRegistrations = regs.map((reg: any) => {
+        let attendanceRecord = null;
+        
+        if (reg.attendance_records && reg.attendance_records.length > 0) {
+          if (activityId) {
+            // For activities, find the specific activity attendance record
+            attendanceRecord = reg.attendance_records.find((record: any) => 
+              record.activity_id === activityId
+            );
+          } else {
+            // For single events, use the first (and should be only) record
+            attendanceRecord = reg.attendance_records[0];
+          }
+        }
 
-      if (allRegError) throw allRegError;
-
-      // Map attendance records to all registrations
-      const mappedRegistrations = allRegistrations.map(reg => {
-        const matchingReg = data?.find(d => d.id === reg.id);
         return {
           ...reg,
-          attendance_records: matchingReg ? matchingReg.attendance_records : []
+          attendance_status: attendanceRecord?.status || null,
+          check_in_time: attendanceRecord?.check_in_time || null,
         };
       });
 
-      console.log('Mapped registrations:', mappedRegistrations);
-      return mappedRegistrations || [];
-    },
-    enabled: !!selectedActivityId
-  });
+      setRegistrations(processedRegistrations);
 
-  const handleAttendance = async (registrationId: string, status: 'present' | 'absent') => {
+      // Calculate stats
+      const total = processedRegistrations.length;
+      const present = processedRegistrations.filter(r => r.attendance_status === 'present').length;
+      const absent = processedRegistrations.filter(r => r.attendance_status === 'absent').length;
+      const notRecorded = total - (present + absent);
+
+      setStats({
+        total,
+        present,
+        absent,
+        notRecorded,
+      });
+
+    } catch (error) {
+      console.error("Error fetching registrations:", error);
+      toast.error("حدث خطأ في جلب التسجيلات");
+    }
+  }, [projectId, eventId, activityId]);
+
+  const handleAttendanceChange = async (registrationId: string, status: 'present' | 'absent') => {
     try {
-      if (!selectedActivityId) {
-        toast.error('الرجاء اختيار نشاط أولاً');
-        return;
-      }
-
-      console.log('Recording attendance:', { registrationId, status, selectedActivityId });
+      const timestamp = new Date().toISOString();
       
-      const { data: existingRecord, error: fetchError } = await supabase
+      // Check if there's an existing record
+      const { data: existingRecord } = await supabase
         .from('attendance_records')
         .select('*')
         .eq('registration_id', registrationId)
-        .eq('activity_id', selectedActivityId)
+        .eq(activityId ? 'activity_id' : 'event_id', activityId || eventId)
         .maybeSingle();
 
-      if (fetchError) {
-        console.error('Error checking existing attendance:', fetchError);
-        throw fetchError;
-      }
-
-      let result;
-      
       if (existingRecord) {
-        const { data, error } = await supabase
+        // Update existing record
+        const { error: updateError } = await supabase
           .from('attendance_records')
           .update({
             status,
-            check_in_time: status === 'present' ? new Date().toISOString() : null,
+            check_in_time: timestamp,
           })
-          .eq('id', existingRecord.id)
-          .select();
+          .eq('id', existingRecord.id);
 
-        if (error) throw error;
-        result = data;
+        if (updateError) throw updateError;
       } else {
-        const { data, error } = await supabase
+        // Create new record
+        const { error: insertError } = await supabase
           .from('attendance_records')
           .insert({
             registration_id: registrationId,
-            project_id: projectId,
-            activity_id: selectedActivityId,
             status,
-            check_in_time: status === 'present' ? new Date().toISOString() : null,
-          })
-          .select();
+            check_in_time: timestamp,
+            ...(activityId ? { activity_id: activityId } : { event_id: eventId }),
+            ...(projectId ? { project_id: projectId } : {}),
+          });
 
-        if (error) throw error;
-        result = data;
+        if (insertError) throw insertError;
       }
 
-      console.log('Attendance recorded:', result);
-      toast.success(status === 'present' ? 'تم تسجيل الحضور' : 'تم تسجيل الغياب');
-      
-      refetch();
+      toast.success("تم تحديث الحضور بنجاح");
+      await fetchRegistrations();
     } catch (error) {
-      console.error('Error recording attendance:', error);
-      toast.error('حدث خطأ في تسجيل الحضور');
+      console.error("Error updating attendance:", error);
+      toast.error("حدث خطأ في تحديث الحضور");
     }
   };
 
   const handleBarcodeScanned = async (code: string) => {
-    if (!selectedActivityId) {
-      toast.error('الرجاء اختيار نشاط أولاً');
-      return;
-    }
+    try {
+      const { data: registration, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('registration_number', code)
+        .eq(projectId ? 'project_id' : 'event_id', projectId || eventId)
+        .single();
 
-    console.log('Scanning barcode:', code);
-    const registration = registrations.find(r => r.registration_number === code);
-    
-    if (registration) {
-      await handleAttendance(registration.id, 'present');
-      toast.success('تم تسجيل الحضور بنجاح');
-    } else {
-      toast.error('لم يتم العثور على رقم التسجيل');
+      if (error) throw error;
+
+      if (registration) {
+        await handleAttendanceChange(registration.id, 'present');
+        toast.success("تم تسجيل الحضور بنجاح");
+      } else {
+        toast.error("لم يتم العثور على رقم التسجيل");
+      }
+    } catch (error) {
+      console.error("Error processing barcode:", error);
+      toast.error("حدث خطأ في معالجة الباركود");
     }
   };
 
   const handleGroupAttendance = async (status: 'present' | 'absent') => {
-    if (!selectedActivityId) {
-      toast.error('الرجاء اختيار نشاط أولاً');
-      return;
-    }
-
-    console.log('Recording group attendance:', status);
     try {
-      // Get all registrations that need updating
-      const registrationsToUpdate = registrations.filter(registration => {
-        // If no attendance records, include for update
-        if (!registration.attendance_records?.length) {
-          return true;
-        }
-        // If has attendance records but different status, include for update
-        const lastRecord = registration.attendance_records[registration.attendance_records.length - 1];
-        return lastRecord.status !== status;
-      });
-
-      if (registrationsToUpdate.length === 0) {
-        toast.info('لا يوجد مشاركين بحاجة لتحديث الحضور');
-        return;
-      }
-
-      console.log('Registrations to update:', registrationsToUpdate);
-
-      // Process each registration sequentially
-      for (const registration of registrationsToUpdate) {
-        await handleAttendance(registration.id, status);
-      }
+      const timestamp = new Date().toISOString();
       
-      toast.success(
-        status === 'present' 
-          ? 'تم تسجيل حضور جميع المشاركين' 
-          : 'تم تسجيل غياب جميع المشاركين'
-      );
+      // Get all registrations without attendance records
+      const unrecordedRegistrations = registrations.filter(r => !r.attendance_status);
+      
+      for (const reg of unrecordedRegistrations) {
+        const { error: insertError } = await supabase
+          .from('attendance_records')
+          .insert({
+            registration_id: reg.id,
+            status,
+            check_in_time: timestamp,
+            ...(activityId ? { activity_id: activityId } : { event_id: eventId }),
+            ...(projectId ? { project_id: projectId } : {}),
+          });
 
-      // Refresh the data
-      refetch();
+        if (insertError) throw insertError;
+      }
+
+      toast.success("تم تحديث الحضور الجماعي بنجاح");
+      await fetchRegistrations();
     } catch (error) {
-      console.error('Error in group attendance:', error);
-      toast.error('حدث خطأ في تسجيل الحضور الجماعي');
+      console.error("Error in group attendance:", error);
+      toast.error("حدث خطأ في تحديث الحضور الجماعي");
     }
   };
 
   return {
     registrations,
-    isLoading,
-    attendanceStats,
-    setAttendanceStats,
-    handleAttendance,
+    stats,
     handleBarcodeScanned,
-    handleGroupAttendance
+    handleGroupAttendance,
+    handleAttendanceChange,
+    fetchRegistrations,
   };
 };
