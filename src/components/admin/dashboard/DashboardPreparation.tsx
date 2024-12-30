@@ -11,7 +11,12 @@ interface DashboardPreparationProps {
 }
 
 export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => {
-  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
+  const [attendanceStats, setAttendanceStats] = useState({
+    total: 0,
+    present: 0,
+    absent: 0,
+    notRecorded: 0
+  });
 
   const { data: registrations = [], isLoading, refetch } = useQuery({
     queryKey: ['registrations-preparation', eventId],
@@ -34,6 +39,29 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
       return data || [];
     },
   });
+
+  useEffect(() => {
+    // Calculate attendance statistics
+    const stats = {
+      total: registrations.length,
+      present: 0,
+      absent: 0,
+      notRecorded: 0
+    };
+
+    registrations.forEach(registration => {
+      const attendanceRecord = registration.attendance_records?.[0];
+      if (!attendanceRecord) {
+        stats.notRecorded++;
+      } else if (attendanceRecord.status === 'present') {
+        stats.present++;
+      } else if (attendanceRecord.status === 'absent') {
+        stats.absent++;
+      }
+    });
+
+    setAttendanceStats(stats);
+  }, [registrations]);
 
   const handleAttendance = async (registrationId: string, status: 'present' | 'absent') => {
     try {
@@ -115,6 +143,26 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
             <UserCheck className="h-4 w-4 ml-2" />
             تحضير جماعي
           </Button>
+        </div>
+      </div>
+
+      {/* Attendance Statistics */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="text-sm text-gray-500">إجمالي المسجلين</div>
+          <div className="text-2xl font-semibold">{attendanceStats.total}</div>
+        </div>
+        <div className="bg-green-50 p-4 rounded-lg">
+          <div className="text-sm text-green-600">الحضور</div>
+          <div className="text-2xl font-semibold text-green-600">{attendanceStats.present}</div>
+        </div>
+        <div className="bg-red-50 p-4 rounded-lg">
+          <div className="text-sm text-red-600">الغياب</div>
+          <div className="text-2xl font-semibold text-red-600">{attendanceStats.absent}</div>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="text-sm text-gray-500">لم يتم التحضير</div>
+          <div className="text-2xl font-semibold">{attendanceStats.notRecorded}</div>
         </div>
       </div>
       
