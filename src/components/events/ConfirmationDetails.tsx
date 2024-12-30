@@ -5,6 +5,7 @@ interface ConfirmationDetailsProps {
     name: string;
     email: string;
     phone: string;
+    arabic_name?: string;
   };
   eventDate?: string;
   eventTime?: string;
@@ -22,7 +23,7 @@ export const ConfirmationDetails = ({
       <div className="space-y-2">
         <p className="text-sm font-medium">معلومات المسجل:</p>
         <div className="text-sm space-y-1">
-          <p>الاسم: {formData.name}</p>
+          <p>الاسم الثلاثي: {formData.arabic_name || formData.name}</p>
           <p>البريد الإلكتروني: {formData.email}</p>
           <p>رقم الجوال: {formData.phone}</p>
         </div>
