@@ -17,7 +17,6 @@ interface ProjectPreparationTabProps {
 export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparationTabProps) => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
 
-  // Fetch project registrations
   const { data: registrations = [], refetch: refetchRegistrations } = useQuery({
     queryKey: ['project-registrations', projectId],
     queryFn: async () => {
@@ -37,7 +36,6 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
     enabled: !!projectId,
   });
 
-  // Fetch attendance records for selected activity
   const { data: attendanceRecords = [], refetch: refetchAttendance } = useQuery({
     queryKey: ['activity-attendance', selectedActivity],
     queryFn: async () => {
@@ -55,9 +53,11 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
     enabled: !!selectedActivity,
   });
 
-  const { handleAttendanceChange, handleGroupAttendance } = useAttendanceManagement(projectId);
+  const { 
+    handleAttendanceChange, 
+    handleActivityGroupAttendance 
+  } = useAttendanceManagement(projectId);
 
-  // Calculate attendance stats
   const stats = {
     total: registrations.length,
     present: attendanceRecords.filter(record => record.status === 'present').length,
@@ -75,6 +75,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
     if (registration) {
       await handleAttendanceChange(registration.id, 'present', selectedActivity);
       refetchAttendance();
+      toast.success('تم تسجيل الحضور بنجاح');
     } else {
       toast.error('رقم التسجيل غير موجود');
     }
@@ -85,8 +86,14 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
       toast.error("الرجاء اختيار النشاط أولاً");
       return;
     }
-    await handleGroupAttendance(status, selectedActivity);
-    refetchAttendance();
+    try {
+      await handleActivityGroupAttendance(status, selectedActivity);
+      await refetchAttendance();
+      toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
+    } catch (error) {
+      console.error('Error in group attendance:', error);
+      toast.error('حدث خطأ في تسجيل الحضور الجماعي');
+    }
   };
 
   if (activities.length === 0) {

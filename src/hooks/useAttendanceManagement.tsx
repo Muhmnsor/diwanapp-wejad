@@ -52,7 +52,6 @@ export const useAttendanceManagement = (projectId: string) => {
         if (insertError) throw insertError;
       }
 
-      // Update local stats immediately
       setAttendanceStats(prev => {
         const newStats = { ...prev };
         if (existingRecord) {
@@ -73,15 +72,14 @@ export const useAttendanceManagement = (projectId: string) => {
     }
   };
 
-  const handleGroupAttendance = async (status: 'present' | 'absent', activityId?: string) => {
+  const handleEventGroupAttendance = async (status: 'present' | 'absent') => {
     try {
-      console.log('Processing group attendance with status:', status, 'for activity:', activityId);
+      console.log('Processing group attendance for event:', projectId, 'with status:', status);
       
-      // Get all registrations that don't have attendance records yet
       const { data: registrations } = await supabase
         .from('registrations')
         .select('id')
-        .eq(activityId ? 'project_id' : 'event_id', activityId ? projectId : projectId);
+        .eq('event_id', projectId);
 
       if (!registrations) {
         console.log('No registrations found');
@@ -90,13 +88,12 @@ export const useAttendanceManagement = (projectId: string) => {
 
       console.log('Found registrations:', registrations);
 
-      // Process each registration
       for (const registration of registrations) {
         const { data: existingRecord } = await supabase
           .from('attendance_records')
           .select('*')
           .eq('registration_id', registration.id)
-          .eq(activityId ? 'activity_id' : 'event_id', activityId || projectId)
+          .eq('event_id', projectId)
           .maybeSingle();
 
         if (!existingRecord) {
@@ -104,8 +101,7 @@ export const useAttendanceManagement = (projectId: string) => {
             .from('attendance_records')
             .insert({
               registration_id: registration.id,
-              [activityId ? 'activity_id' : 'event_id']: activityId || projectId,
-              project_id: activityId ? projectId : null,
+              event_id: projectId,
               status,
               check_in_time: status === 'present' ? new Date().toISOString() : null
             });
@@ -117,11 +113,74 @@ export const useAttendanceManagement = (projectId: string) => {
         }
       }
 
-      // Update local stats immediately after group operation
       const { data: updatedRecords } = await supabase
         .from('attendance_records')
         .select('status')
-        .eq(activityId ? 'activity_id' : 'event_id', activityId || projectId);
+        .eq('event_id', projectId);
+
+      if (updatedRecords) {
+        const newStats = {
+          total: registrations.length,
+          present: updatedRecords.filter(r => r.status === 'present').length,
+          absent: updatedRecords.filter(r => r.status === 'absent').length,
+          notRecorded: registrations.length - updatedRecords.length
+        };
+        setAttendanceStats(newStats);
+      }
+
+    } catch (error) {
+      console.error('Error in group attendance:', error);
+      toast.error('حدث خطأ في تسجيل الحضور الجماعي');
+      throw error;
+    }
+  };
+
+  const handleActivityGroupAttendance = async (status: 'present' | 'absent', activityId: string) => {
+    try {
+      console.log('Processing group attendance for activity:', activityId, 'with status:', status);
+      
+      const { data: registrations } = await supabase
+        .from('registrations')
+        .select('id')
+        .eq('project_id', projectId);
+
+      if (!registrations) {
+        console.log('No registrations found');
+        return;
+      }
+
+      console.log('Found registrations:', registrations);
+
+      for (const registration of registrations) {
+        const { data: existingRecord } = await supabase
+          .from('attendance_records')
+          .select('*')
+          .eq('registration_id', registration.id)
+          .eq('activity_id', activityId)
+          .maybeSingle();
+
+        if (!existingRecord) {
+          const { error: insertError } = await supabase
+            .from('attendance_records')
+            .insert({
+              registration_id: registration.id,
+              activity_id: activityId,
+              project_id: projectId,
+              status,
+              check_in_time: status === 'present' ? new Date().toISOString() : null
+            });
+
+          if (insertError) {
+            console.error('Error inserting attendance record:', insertError);
+            continue;
+          }
+        }
+      }
+
+      const { data: updatedRecords } = await supabase
+        .from('attendance_records')
+        .select('status')
+        .eq('activity_id', activityId);
 
       if (updatedRecords) {
         const newStats = {
@@ -144,6 +203,7 @@ export const useAttendanceManagement = (projectId: string) => {
     attendanceStats,
     setAttendanceStats,
     handleAttendanceChange,
-    handleGroupAttendance
+    handleEventGroupAttendance,
+    handleActivityGroupAttendance
   };
 };

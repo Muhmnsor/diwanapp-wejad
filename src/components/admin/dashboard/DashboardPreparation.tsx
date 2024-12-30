@@ -34,7 +34,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     attendanceStats,
     setAttendanceStats,
     handleAttendanceChange,
-    handleGroupAttendance
+    handleEventGroupAttendance
   } = useAttendanceManagement(eventId);
 
   const handleBarcodeScanned = async (code: string) => {
@@ -69,7 +69,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
   const handleGroupAttendanceWithRefresh = async (status: 'present' | 'absent') => {
     try {
       console.log('Processing group attendance for event:', eventId, 'with status:', status);
-      await handleGroupAttendance(status);
+      await handleEventGroupAttendance(status);
       await refetch();
       toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
     } catch (error) {
