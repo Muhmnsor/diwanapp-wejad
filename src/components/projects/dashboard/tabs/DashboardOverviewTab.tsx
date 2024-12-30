@@ -7,11 +7,11 @@ interface DashboardOverviewTabProps {
   remainingSeats: number;
   occupancyRate: number;
   project: {
+    id: string;
     start_date: string;
     end_date: string;
     event_path?: string;
     event_category?: string;
-    id: string;
   };
 }
 
@@ -40,20 +40,22 @@ export const DashboardOverviewTab = ({
     queryFn: async () => {
       console.log('Fetching project activities stats for project:', project.id);
       
-      const { data: activities, error: activitiesError } = await supabase
+      const { data: activities, error } = await supabase
         .from('events')
         .select(`
           id,
           title,
           date,
-          attendance_records(status)
+          attendance_records (
+            status
+          )
         `)
         .eq('project_id', project.id)
         .eq('is_project_activity', true);
 
-      if (activitiesError) {
-        console.error('Error fetching activities:', activitiesError);
-        throw activitiesError;
+      if (error) {
+        console.error('Error fetching project activities:', error);
+        throw error;
       }
 
       console.log('Raw activities data:', activities);
@@ -77,18 +79,21 @@ export const DashboardOverviewTab = ({
         ? attendanceRates.reduce((sum: number, rate: number) => sum + rate, 0) / attendanceRates.length
         : 0;
 
-      console.log('Calculated stats:', {
-        totalActivities: activities?.length || 0,
-        completedActivities: completedActivities.length,
-        averageAttendanceRate
-      });
-
-      return {
+      const result = {
         activities: activities || [],
         totalActivities: activities?.length || 0,
         completedActivities: completedActivities.length,
         averageAttendanceRate
       };
+
+      console.log('Processed activities data:', result);
+      return result;
+    },
+    initialData: {
+      activities: [],
+      totalActivities: 0,
+      completedActivities: 0,
+      averageAttendanceRate: 0
     }
   });
 
