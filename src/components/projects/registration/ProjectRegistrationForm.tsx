@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
@@ -24,7 +24,6 @@ export const ProjectRegistrationForm = ({
   eventType,
   onSubmit,
 }: ProjectRegistrationFormProps) => {
-  const { toast } = useToast();
   const { id } = useParams();
   const queryClient = useQueryClient();
   
@@ -35,7 +34,6 @@ export const ProjectRegistrationForm = ({
     cardNumber: "",
     expiryDate: "",
     cvv: "",
-    // إضافة حقول خاصة بالمشروع
     arabicName: "",
     englishName: "",
     educationLevel: "",
@@ -89,11 +87,7 @@ export const ProjectRegistrationForm = ({
       const hasExistingRegistration = await checkExistingRegistration(formData.email);
       
       if (hasExistingRegistration) {
-        toast({
-          variant: "destructive",
-          title: "لا يمكن إكمال التسجيل",
-          description: "لقد قمت بالتسجيل في هذا المشروع مسبقاً",
-        });
+        toast.error("لقد قمت بالتسجيل في هذا المشروع مسبقاً");
         return;
       }
 
@@ -107,7 +101,6 @@ export const ProjectRegistrationForm = ({
           email: formData.email,
           phone: formData.phone,
           registration_number: uniqueId,
-          // إضافة البيانات الإضافية
           arabic_name: formData.arabicName,
           english_name: formData.englishName,
           education_level: formData.educationLevel,
@@ -139,27 +132,13 @@ export const ProjectRegistrationForm = ({
       console.log('Project registration successful:', uniqueId);
     } catch (error) {
       console.error('Error in registration process:', error);
-      toast({
-        variant: "destructive",
-        title: "حدث خطأ",
-        description: "لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى",
-      });
+      toast.error("لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
-
-  const getButtonText = () => {
-    if (isSubmitting) {
-      return "جاري المعالجة...";
-    }
-    if (isPaidProject) {
-      return `الدفع وتأكيد التسجيل (${projectPrice} ريال)`;
-    }
-    return "تأكيد التسجيل";
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -168,7 +147,6 @@ export const ProjectRegistrationForm = ({
         setFormData={setFormData}
       />
       
-      {/* حقول إضافية خاصة بالمشروع */}
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -247,7 +225,7 @@ export const ProjectRegistrationForm = ({
         className="w-full" 
         disabled={isSubmitting}
       >
-        {getButtonText()}
+        {isSubmitting ? "جاري المعالجة..." : isPaidProject ? `الدفع وتأكيد التسجيل (${projectPrice} ريال)` : "تأكيد التسجيل"}
       </Button>
     </form>
   );

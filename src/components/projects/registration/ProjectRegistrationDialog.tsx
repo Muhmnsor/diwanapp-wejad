@@ -21,13 +21,19 @@ export const ProjectRegistrationDialog = ({
   onOpenChange,
   project,
 }: ProjectRegistrationDialogProps) => {
-  const status = getEventStatus({
+  const eventData = {
     ...project,
     date: project.end_date,
+    time: "00:00",
+    location: "",
+    attendees: 0,
+    beneficiaryType: project.beneficiary_type,
+    event_hours: 0,
     registrationStartDate: project.registration_start_date,
     registrationEndDate: project.registration_end_date,
-  });
+  };
   
+  const status = getEventStatus(eventData);
   console.log('Project registration status:', status);
 
   if (status !== 'available' && open) {

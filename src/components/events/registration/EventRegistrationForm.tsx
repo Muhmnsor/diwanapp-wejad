@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
@@ -24,7 +24,6 @@ export const EventRegistrationForm = ({
   eventLocation,
   onSubmit,
 }: EventRegistrationFormProps) => {
-  const { toast } = useToast();
   const { id } = useParams();
   const queryClient = useQueryClient();
   
@@ -39,7 +38,7 @@ export const EventRegistrationForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const checkExistingRegistration = async (email: string) => {
-    console.log("Checking for existing event registration...");
+    console.log("Checking for existing registration...");
     const { data, error } = await supabase
       .from('registrations')
       .select('id')
@@ -55,7 +54,7 @@ export const EventRegistrationForm = ({
   };
 
   const processPayment = async (registrationData: any) => {
-    console.log("Processing payment for event...");
+    console.log("Processing payment...");
     const { error: paymentError } = await supabase
       .from('payment_transactions')
       .insert({
@@ -76,18 +75,14 @@ export const EventRegistrationForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting event registration process...");
+    console.log("Starting registration process...");
     setIsSubmitting(true);
 
     try {
       const hasExistingRegistration = await checkExistingRegistration(formData.email);
       
       if (hasExistingRegistration) {
-        toast({
-          variant: "destructive",
-          title: "لا يمكن إكمال التسجيل",
-          description: "لقد قمت بالتسجيل في هذه الفعالية مسبقاً",
-        });
+        toast.error("لقد قمت بالتسجيل في هذه الفعالية مسبقاً");
         return;
       }
 
@@ -124,14 +119,10 @@ export const EventRegistrationForm = ({
       toast.success("تم التسجيل بنجاح");
       onSubmit();
       
-      console.log('Event registration successful:', uniqueId);
+      console.log('Registration successful:', uniqueId);
     } catch (error) {
       console.error('Error in registration process:', error);
-      toast({
-        variant: "destructive",
-        title: "حدث خطأ",
-        description: "لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى",
-      });
+      toast.error("لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى");
     } finally {
       setIsSubmitting(false);
     }
