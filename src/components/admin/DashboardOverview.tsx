@@ -13,7 +13,7 @@ interface DashboardOverviewProps {
     event_path: string;
     event_category: string;
   };
-  activities?: {
+  activities: {
     total: number;
     completed: number;
     averageAttendance: number;
