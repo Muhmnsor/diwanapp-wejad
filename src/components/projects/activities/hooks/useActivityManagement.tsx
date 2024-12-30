@@ -40,7 +40,10 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
         .eq('id', selectedEvent.id)
         .eq('project_id', projectId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting event:', error);
+        throw error;
+      }
 
       toast.success('تم حذف النشاط بنجاح');
       await refetchActivities();

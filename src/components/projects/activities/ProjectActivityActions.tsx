@@ -7,7 +7,11 @@ import { EditActivityDialog } from "./dialogs/EditActivityDialog";
 import { DeleteActivityDialog } from "./dialogs/DeleteActivityDialog";
 
 interface ProjectActivityActionsProps {
-  activity: ProjectActivity;
+  activity: {
+    id: string;
+    project_id: string;
+    event: ProjectActivity;
+  };
   onEdit: () => void;
   onDelete: () => void;
   onEditSuccess: () => Promise<void>;
@@ -28,12 +32,12 @@ export const ProjectActivityActions = ({
   };
 
   const handleDeleteClick = () => {
-    console.log("Opening delete dialog for activity:", activity);
+    console.log("Opening delete dialog for activity:", activity.event);
     setIsDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = () => {
-    console.log("Confirming delete for activity:", activity);
+    console.log("Confirming delete for activity:", activity.event);
     onDelete();
     setIsDeleteDialogOpen(false);
   };
@@ -81,11 +85,7 @@ export const ProjectActivityActions = ({
 
       {isEditDialogOpen && (
         <EditActivityDialog
-          activity={{
-            id: activity.id,
-            project_id: activity.project_id,
-            event: activity
-          }}
+          activity={activity}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           onSave={onEditSuccess}
