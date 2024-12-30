@@ -39,13 +39,29 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          attendance_records (
+            status,
+            registration_id
+          )
+        `)
         .eq('project_id', project.id)
         .eq('is_project_activity', true)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+
+      // Calculate attendance rates for each activity
+      const activitiesWithStats = data?.map(activity => ({
+        ...activity,
+        attendanceRate: activity.attendance_records?.length > 0
+          ? (activity.attendance_records.filter(record => record.status === 'present').length / activity.attendance_records.length) * 100
+          : 0
+      })) || [];
+
+      console.log("Activities with attendance stats:", activitiesWithStats);
+      return activitiesWithStats;
     },
   });
 
@@ -53,6 +69,23 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
   const registrationCount = registrations.length;
   const remainingSeats = project.max_attendees - registrationCount;
   const occupancyRate = (registrationCount / project.max_attendees) * 100;
+
+  // Calculate activities metrics
+  const totalActivities = projectActivities.length;
+  const completedActivities = projectActivities.filter(activity => 
+    activity.attendance_records?.some(record => record.status === 'present')
+  ).length;
+
+  // Calculate average attendance rate
+  const averageAttendanceRate = projectActivities.length > 0
+    ? projectActivities.reduce((sum, activity) => sum + (activity.attendanceRate || 0), 0) / projectActivities.length
+    : 0;
+
+  console.log("Activities metrics:", {
+    totalActivities,
+    completedActivities,
+    averageAttendanceRate
+  });
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
@@ -84,6 +117,10 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           eventPath={project.event_path}
           eventCategory={project.event_category}
           projectId={project.id}
+          projectActivities={projectActivities}
+          totalActivities={totalActivities}
+          completedActivities={completedActivities}
+          averageAttendanceRate={averageAttendanceRate}
         />
       </TabsContent>
 
