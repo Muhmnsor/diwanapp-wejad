@@ -16,9 +16,13 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({
   totalActivities 
 }) => {
   const calculateAttendanceStats = (registration: any) => {
+    if (!registration.attendance_records) {
+      return { attended: 0, percentage: 0 };
+    }
+
     const attendedActivities = new Set(
       registration.attendance_records
-        ?.filter(record => record.status === 'present')
+        .filter(record => record.status === 'present')
         .map(record => record.activity_id)
     ).size;
 
@@ -30,6 +34,24 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({
       attended: attendedActivities,
       percentage
     };
+  };
+
+  const getAttendanceStatus = (registration: any) => {
+    const currentRecord = registration.attendance_records?.[0];
+    
+    if (!currentRecord) {
+      return { status: 'not_recorded', display: 'لم يتم التحضير' };
+    }
+
+    if (currentRecord.status === 'present') {
+      return { status: 'present', display: 'حاضر' };
+    }
+
+    if (currentRecord.status === 'absent') {
+      return { status: 'absent', display: 'غائب' };
+    }
+
+    return { status: 'not_recorded', display: 'لم يتم التحضير' };
   };
 
   return (
@@ -46,6 +68,7 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({
         <TableBody>
           {registrations.map((registration: any) => {
             const stats = calculateAttendanceStats(registration);
+            const attendanceStatus = getAttendanceStatus(registration);
             
             return (
               <TableRow key={registration.id}>
@@ -62,12 +85,12 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  {registration.attendance_records?.[0]?.status === 'present' ? (
+                  {attendanceStatus.status === 'present' ? (
                     <span className="text-green-600 flex items-center gap-1">
                       <CheckCircle className="h-4 w-4" />
                       حاضر
                     </span>
-                  ) : registration.attendance_records?.[0]?.status === 'absent' ? (
+                  ) : attendanceStatus.status === 'absent' ? (
                     <span className="text-red-600 flex items-center gap-1">
                       <XCircle className="h-4 w-4" />
                       غائب
