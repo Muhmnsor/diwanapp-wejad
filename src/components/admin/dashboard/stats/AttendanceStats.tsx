@@ -2,7 +2,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import { StatCard } from "./StatCard";
 
 interface AttendanceStatsProps {
-  projectActivities: {
+  projectActivities?: {
     id: string;
     title: string;
     attendanceRate?: number;
@@ -10,8 +10,8 @@ interface AttendanceStatsProps {
   }[];
 }
 
-export const AttendanceStats = ({ projectActivities }: AttendanceStatsProps) => {
-  const sortedByAttendance = [...projectActivities].sort((a, b) => 
+export const AttendanceStats = ({ projectActivities = [] }: AttendanceStatsProps) => {
+  const sortedByAttendance = [...(projectActivities || [])].sort((a, b) => 
     (b.attendanceRate || 0) - (a.attendanceRate || 0)
   );
   const highestAttendance = sortedByAttendance[0];

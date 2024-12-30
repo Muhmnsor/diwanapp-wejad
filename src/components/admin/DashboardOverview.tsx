@@ -14,18 +14,23 @@ interface DashboardOverviewProps {
   eventCategory?: string;
   projectId?: string;
   ActivityStatsComponent?: ReactNode;
+  projectActivities?: {
+    id: string;
+    title: string;
+    attendanceRate?: number;
+    rating?: number;
+  }[];
 }
 
 export const DashboardOverview = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  eventDate,
-  eventTime,
   eventPath,
   eventCategory,
   projectId,
-  ActivityStatsComponent
+  ActivityStatsComponent,
+  projectActivities = []
 }: DashboardOverviewProps) => {
   return (
     <Card>
@@ -35,16 +40,12 @@ export const DashboardOverview = ({
             registrationCount={registrationCount}
             remainingSeats={remainingSeats}
             occupancyRate={occupancyRate}
-          />
-          {ActivityStatsComponent}
-          <AttendanceStats
-            eventDate={eventDate}
-            eventTime={eventTime}
-          />
-          <RatingStats
             eventPath={eventPath}
             eventCategory={eventCategory}
           />
+          {ActivityStatsComponent}
+          <AttendanceStats projectActivities={projectActivities} />
+          <RatingStats projectActivities={projectActivities} />
         </div>
       </CardContent>
     </Card>

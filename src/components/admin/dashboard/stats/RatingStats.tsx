@@ -2,7 +2,7 @@ import { Star } from "lucide-react";
 import { StatCard } from "./StatCard";
 
 interface RatingStatsProps {
-  projectActivities: {
+  projectActivities?: {
     id: string;
     title: string;
     attendanceRate?: number;
@@ -10,8 +10,8 @@ interface RatingStatsProps {
   }[];
 }
 
-export const RatingStats = ({ projectActivities }: RatingStatsProps) => {
-  const sortedByRating = [...projectActivities].sort((a, b) => 
+export const RatingStats = ({ projectActivities = [] }: RatingStatsProps) => {
+  const sortedByRating = [...(projectActivities || [])].sort((a, b) => 
     (b.rating || 0) - (a.rating || 0)
   );
   const highestRated = sortedByRating[0];
