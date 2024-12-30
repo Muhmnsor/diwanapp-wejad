@@ -14,6 +14,7 @@ interface RegistrationFormProps {
   eventTime: string;
   eventLocation: string;
   onSubmit: () => void;
+  isProject?: boolean;
 }
 
 export const RegistrationForm = ({ 
@@ -22,10 +23,11 @@ export const RegistrationForm = ({
   eventDate,
   eventTime,
   eventLocation,
-  onSubmit 
+  onSubmit,
+  isProject = false
 }: RegistrationFormProps) => {
   const { toast } = useToast();
-  const { id: eventId } = useParams();
+  const { id } = useParams();
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
@@ -46,7 +48,7 @@ export const RegistrationForm = ({
     const { data, error } = await supabase
       .from('registrations')
       .select('id')
-      .eq('event_id', eventId)
+      .eq(isProject ? 'project_id' : 'event_id', id)
       .eq('email', email);
 
     if (error) {
@@ -98,16 +100,24 @@ export const RegistrationForm = ({
 
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
+      // Create registration with the correct ID field based on type
+      const registrationData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        registration_number: uniqueId
+      };
+
+      if (isProject) {
+        registrationData['project_id'] = id;
+      } else {
+        registrationData['event_id'] = id;
+      }
+      
       // Create registration
-      const { data: registrationData, error: registrationError } = await supabase
+      const { data: newRegistration, error: registrationError } = await supabase
         .from('registrations')
-        .insert({
-          event_id: eventId,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          registration_number: uniqueId
-        })
+        .insert(registrationData)
         .select()
         .single();
 
@@ -118,13 +128,15 @@ export const RegistrationForm = ({
 
       // If this is a paid event, process the payment
       if (eventPrice !== "free" && eventPrice !== null && eventPrice > 0) {
-        const paymentSuccess = await processPayment(registrationData);
+        const paymentSuccess = await processPayment(newRegistration);
         if (!paymentSuccess) {
           throw new Error('Payment processing failed');
         }
       }
 
-      await queryClient.invalidateQueries({ queryKey: ['registrations', eventId] });
+      await queryClient.invalidateQueries({ 
+        queryKey: ['registrations', id] 
+      });
       
       setRegistrationId(uniqueId);
       setShowConfirmation(true);

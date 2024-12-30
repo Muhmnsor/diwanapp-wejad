@@ -31,7 +31,7 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
     beneficiaryType: project.beneficiary_type,
     certificate_type: project.certificate_type || "none",
     event_hours: 0,
-    attendees: 0, // You might want to fetch this from the database
+    attendees: 0,
     imageUrl: project.image_url,
     event_path: project.event_path as EventPathType,
     event_category: project.event_category as EventCategoryType
@@ -81,7 +81,10 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
       <EventRegistrationDialog
         open={showRegistrationDialog}
         onOpenChange={setShowRegistrationDialog}
-        event={eventFormatData}
+        event={{
+          ...eventFormatData,
+          isProject: true
+        }}
       />
     </div>
   );
