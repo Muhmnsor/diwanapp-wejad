@@ -33,6 +33,21 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
     },
   });
 
+  // Fetch activities for this event if it's a project
+  const { data: activities = [] } = useQuery({
+    queryKey: ['project-activities', event.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('project_id', event.id)
+        .eq('is_project_activity', true);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
   const remainingSeats = event.max_attendees - registrationCount;
@@ -41,34 +56,19 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
       <TabsList className="w-full grid grid-cols-5 bg-secondary/20 p-1 rounded-xl">
-        <TabsTrigger 
-          value="overview" 
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="overview" className="data-[state=active]:bg-white">
           نظرة عامة
         </TabsTrigger>
-        <TabsTrigger 
-          value="registrations"
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="registrations" className="data-[state=active]:bg-white">
           المسجلين
         </TabsTrigger>
-        <TabsTrigger 
-          value="preparation"
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="preparation" className="data-[state=active]:bg-white">
           التحضير
         </TabsTrigger>
-        <TabsTrigger 
-          value="report"
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="report" className="data-[state=active]:bg-white">
           التقارير
         </TabsTrigger>
-        <TabsTrigger 
-          value="feedback"
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="feedback" className="data-[state=active]:bg-white">
           التقييمات
         </TabsTrigger>
       </TabsList>
@@ -90,7 +90,10 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
       </TabsContent>
 
       <TabsContent value="preparation" className="mt-6">
-        <DashboardPreparation eventId={event.id} />
+        <DashboardPreparation 
+          projectId={event.id}
+          activities={activities}
+        />
       </TabsContent>
 
       <TabsContent value="report" className="mt-6">
