@@ -11,13 +11,19 @@ interface DashboardOverviewTabProps {
     event_category?: string;
     id: string;
   };
+  activities?: {
+    total: number;
+    completed: number;
+    averageAttendance: number;
+  };
 }
 
 export const DashboardOverviewTab = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project
+  project,
+  activities
 }: DashboardOverviewTabProps) => {
   return (
     <DashboardOverview
@@ -31,6 +37,7 @@ export const DashboardOverviewTab = ({
         event_path: project.event_path || '',
         event_category: project.event_category || ''
       }}
+      activities={activities}
     />
   );
 };
