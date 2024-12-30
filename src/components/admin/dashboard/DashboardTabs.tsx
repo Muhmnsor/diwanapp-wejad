@@ -90,6 +90,7 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
             completed: 0,
             averageAttendance: 0
           }}
+          isEvent={true}
         />
       </TabsContent>
 
