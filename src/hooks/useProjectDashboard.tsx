@@ -21,6 +21,21 @@ export const useProjectDashboard = (projectId: string) => {
     enabled: !!projectId,
   });
 
+  const { data: projectData } = useQuery({
+    queryKey: ['project-details', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!projectId,
+  });
+
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
@@ -87,8 +102,8 @@ export const useProjectDashboard = (projectId: string) => {
 
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
-  const remainingSeats = project.max_attendees ? project.max_attendees - registrationCount : 0;
-  const occupancyRate = project.max_attendees ? (registrationCount / project.max_attendees) * 100 : 0;
+  const remainingSeats = projectData?.max_attendees ? projectData.max_attendees - registrationCount : 0;
+  const occupancyRate = projectData?.max_attendees ? (registrationCount / projectData.max_attendees) * 100 : 0;
 
   // Calculate completed activities
   const completedActivities = projectActivities.filter(activity => {
