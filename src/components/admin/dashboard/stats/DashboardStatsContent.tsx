@@ -10,8 +10,7 @@ interface DashboardStatsContentProps {
   remainingSeats: number;
   occupancyRate: number;
   project: {
-    event_path: string;
-    event_category: string;
+    id: string;
   };
   activities: {
     total: number;
@@ -53,10 +52,7 @@ export const DashboardStatsContent = ({
         occupancyRate={occupancyRate}
       />
       
-      <PathCategoryCard
-        eventPath={project.event_path}
-        eventCategory={project.event_category}
-      />
+      <PathCategoryCard projectId={project.id} />
 
       {!isEvent && (
         <>
