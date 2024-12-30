@@ -17,7 +17,4 @@ export interface Project {
   registration_start_date: string | null;
   registration_end_date: string | null;
   is_visible?: boolean;
-  required_attendance_percentage?: number;
-  required_activities_count?: number;
-  attendance_requirement_type?: 'count' | 'percentage';
 }

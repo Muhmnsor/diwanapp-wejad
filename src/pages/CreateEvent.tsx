@@ -9,6 +9,7 @@ import { Event } from "@/store/eventStore";
 import { EventFormActions } from "@/components/events/form/EventFormActions";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Rename the function to match the file name and use default export
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -39,15 +40,7 @@ const CreateEvent = () => {
     registration_start_date: "",
     registration_end_date: "",
     event_path: "environment",
-    event_category: "social",
-    // Default values for registration fields
-    arabic_name: false,
-    english_name: false,
-    education_level: false,
-    birth_date: false,
-    national_id: false,
-    email: true,
-    phone: true
+    event_category: "social"
   });
 
   useEffect(() => {
@@ -56,51 +49,41 @@ const CreateEvent = () => {
 
       try {
         console.log('Fetching event data for editing, ID:', id);
-        const [eventResult, fieldsResult] = await Promise.all([
-          supabase.from("events").select("*").eq("id", id).single(),
-          supabase.from("event_registration_fields").select("*").eq("event_id", id).single()
-        ]);
+        const { data: event, error } = await supabase
+          .from("events")
+          .select("*")
+          .eq("id", id)
+          .single();
 
-        if (eventResult.error) throw eventResult.error;
+        if (error) throw error;
 
-        console.log('Fetched event data:', eventResult.data);
-        console.log('Fetched registration fields:', fieldsResult.data);
+        console.log('Fetched event data:', event);
         
-        if (eventResult.data) {
+        if (event) {
           setFormData({
-            ...eventResult.data,
-            ...fieldsResult.data,
-            title: eventResult.data.title || "",
-            description: eventResult.data.description || "",
-            date: eventResult.data.date || "",
-            time: eventResult.data.time || "",
-            location: eventResult.data.location || "",
-            certificate_type: eventResult.data.certificate_type || "none",
-            certificateType: eventResult.data.certificate_type || "none",
-            event_hours: eventResult.data.event_hours || 0,
-            eventHours: eventResult.data.event_hours || 0,
-            price: eventResult.data.price || "free",
-            max_attendees: eventResult.data.max_attendees || 0,
-            beneficiaryType: eventResult.data.beneficiary_type || "both",
-            event_type: eventResult.data.event_type || "in-person",
-            eventType: eventResult.data.event_type || "in-person",
+            title: event.title || "",
+            description: event.description || "",
+            date: event.date || "",
+            time: event.time || "",
+            location: event.location || "",
+            certificate_type: event.certificate_type || "none",
+            certificateType: event.certificate_type || "none",
+            event_hours: event.event_hours || 0,
+            eventHours: event.event_hours || 0,
+            price: event.price || "free",
+            max_attendees: event.max_attendees || 0,
+            beneficiaryType: event.beneficiary_type || "both",
+            event_type: event.event_type || "in-person",
+            eventType: event.event_type || "in-person",
             attendees: 0,
-            imageUrl: eventResult.data.image_url || "",
-            image_url: eventResult.data.image_url || "",
-            registrationStartDate: eventResult.data.registration_start_date || "",
-            registrationEndDate: eventResult.data.registration_end_date || "",
-            registration_start_date: eventResult.data.registration_start_date || "",
-            registration_end_date: eventResult.data.registration_end_date || "",
-            event_path: eventResult.data.event_path || "environment",
-            event_category: eventResult.data.event_category || "social",
-            // Registration fields with defaults if not found
-            arabic_name: fieldsResult.data?.arabic_name ?? false,
-            english_name: fieldsResult.data?.english_name ?? false,
-            education_level: fieldsResult.data?.education_level ?? false,
-            birth_date: fieldsResult.data?.birth_date ?? false,
-            national_id: fieldsResult.data?.national_id ?? false,
-            email: fieldsResult.data?.email ?? true,
-            phone: fieldsResult.data?.phone ?? true
+            imageUrl: event.image_url || "",
+            image_url: event.image_url || "",
+            registrationStartDate: event.registration_start_date || "",
+            registrationEndDate: event.registration_end_date || "",
+            registration_start_date: event.registration_start_date || "",
+            registration_end_date: event.registration_end_date || "",
+            event_path: event.event_path || "environment",
+            event_category: event.event_category || "social"
           });
         }
       } catch (error) {
@@ -136,56 +119,22 @@ const CreateEvent = () => {
         event_category: formData.event_category
       };
 
-      const registrationFieldsData = {
-        arabic_name: formData.arabic_name,
-        english_name: formData.english_name,
-        education_level: formData.education_level,
-        birth_date: formData.birth_date,
-        national_id: formData.national_id,
-        email: formData.email,
-        phone: formData.phone
-      };
-
-      let eventId = id;
+      let result;
       
       if (isEditMode) {
         console.log('Updating event with ID:', id);
-        const { error: eventError } = await supabase
+        result = await supabase
           .from("events")
           .update(eventData)
           .eq("id", id);
-
-        if (eventError) throw eventError;
-
-        const { error: fieldsError } = await supabase
-          .from("event_registration_fields")
-          .upsert({
-            ...registrationFieldsData,
-            event_id: id
-          });
-
-        if (fieldsError) throw fieldsError;
       } else {
         console.log('Creating new event');
-        const { data: newEvent, error: eventError } = await supabase
+        result = await supabase
           .from("events")
-          .insert([eventData])
-          .select()
-          .single();
-
-        if (eventError) throw eventError;
-        
-        eventId = newEvent.id;
-
-        const { error: fieldsError } = await supabase
-          .from("event_registration_fields")
-          .insert([{
-            ...registrationFieldsData,
-            event_id: eventId
-          }]);
-
-        if (fieldsError) throw fieldsError;
+          .insert([eventData]);
       }
+
+      if (result.error) throw result.error;
 
       await queryClient.invalidateQueries({ queryKey: ["events"] });
 

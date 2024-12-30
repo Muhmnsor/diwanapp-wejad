@@ -13,16 +13,6 @@ export const parseDate = (dateStr: string | null | undefined): Date | null => {
   }
 };
 
-export const formatDate = (date: string): string => {
-  try {
-    const parsedDate = new Date(date);
-    return parsedDate.toLocaleDateString('ar-SA');
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return date;
-  }
-};
-
 export const getEventDateTime = (date: string, time: string = '00:00'): Date => {
   const [year, month, day] = date.split('-').map(Number);
   const [hours, minutes] = time.split(':').map(Number);

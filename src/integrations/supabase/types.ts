@@ -186,53 +186,6 @@ export type Database = {
           },
         ]
       }
-      event_registration_fields: {
-        Row: {
-          arabic_name: boolean | null
-          birth_date: boolean | null
-          created_at: string
-          education_level: boolean | null
-          email: boolean | null
-          english_name: boolean | null
-          event_id: string | null
-          id: string
-          national_id: boolean | null
-          phone: boolean | null
-        }
-        Insert: {
-          arabic_name?: boolean | null
-          birth_date?: boolean | null
-          created_at?: string
-          education_level?: boolean | null
-          email?: boolean | null
-          english_name?: boolean | null
-          event_id?: string | null
-          id?: string
-          national_id?: boolean | null
-          phone?: boolean | null
-        }
-        Update: {
-          arabic_name?: boolean | null
-          birth_date?: boolean | null
-          created_at?: string
-          education_level?: boolean | null
-          email?: boolean | null
-          english_name?: boolean | null
-          event_id?: string | null
-          id?: string
-          national_id?: boolean | null
-          phone?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_registration_fields_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       event_reports: {
         Row: {
           additional_links: string[] | null
@@ -582,48 +535,33 @@ export type Database = {
       }
       registrations: {
         Row: {
-          arabic_name: string | null
-          birth_date: string | null
           created_at: string
-          education_level: string | null
           email: string
-          english_name: string | null
           event_id: string | null
           id: string
           name: string
-          national_id: string | null
           phone: string
           project_id: string | null
           registration_number: string
           updated_at: string | null
         }
         Insert: {
-          arabic_name?: string | null
-          birth_date?: string | null
           created_at?: string
-          education_level?: string | null
           email: string
-          english_name?: string | null
           event_id?: string | null
           id?: string
           name: string
-          national_id?: string | null
           phone: string
           project_id?: string | null
           registration_number: string
           updated_at?: string | null
         }
         Update: {
-          arabic_name?: string | null
-          birth_date?: string | null
           created_at?: string
-          education_level?: string | null
           email?: string
-          english_name?: string | null
           event_id?: string | null
           id?: string
           name?: string
-          national_id?: string | null
           phone?: string
           project_id?: string | null
           registration_number?: string
