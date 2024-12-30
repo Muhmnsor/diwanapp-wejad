@@ -117,7 +117,7 @@ export const RegistrationForm = ({
       }
 
       // If this is a paid event, process the payment
-      if (eventPrice !== "free" && eventPrice !== null) {
+      if (eventPrice !== "free" && eventPrice !== null && eventPrice > 0) {
         const paymentSuccess = await processPayment(registrationData);
         if (!paymentSuccess) {
           throw new Error('Payment processing failed');
@@ -144,7 +144,7 @@ export const RegistrationForm = ({
   };
 
   // Determine if this is a paid event
-  const isPaidEvent = eventPrice !== "free" && eventPrice !== null;
+  const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
 
   // Get the appropriate button text based on event price
   const getButtonText = () => {
