@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AttendanceStats } from "./AttendanceStats";
 import { AttendanceControls } from "./AttendanceControls";
 import { AttendanceTable } from "./AttendanceTable";
+import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 import { toast } from "sonner";
 
 interface ProjectPreparationTabProps {
@@ -17,7 +18,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
 
   // Fetch project registrations
-  const { data: registrations = [] } = useQuery({
+  const { data: registrations = [], refetch: refetchRegistrations } = useQuery({
     queryKey: ['project-registrations', projectId],
     queryFn: async () => {
       console.log("Fetching project registrations for:", projectId);
@@ -54,54 +55,14 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
     enabled: !!selectedActivity,
   });
 
+  const { handleAttendanceChange, handleGroupAttendance } = useAttendanceManagement(projectId, selectedActivity);
+
   // Calculate attendance stats
   const stats = {
     total: registrations.length,
     present: attendanceRecords.filter(record => record.status === 'present').length,
     absent: attendanceRecords.filter(record => record.status === 'absent').length,
     notRecorded: registrations.length - attendanceRecords.length
-  };
-
-  const handleAttendanceChange = async (registrationId: string, status: 'present' | 'absent') => {
-    if (!selectedActivity) {
-      toast.error("الرجاء اختيار النشاط أولاً");
-      return;
-    }
-
-    try {
-      const { data: existingRecord } = await supabase
-        .from('attendance_records')
-        .select('*')
-        .eq('registration_id', registrationId)
-        .eq('activity_id', selectedActivity)
-        .maybeSingle();
-
-      if (existingRecord) {
-        await supabase
-          .from('attendance_records')
-          .update({
-            status,
-            check_in_time: status === 'present' ? new Date().toISOString() : null
-          })
-          .eq('id', existingRecord.id);
-      } else {
-        await supabase
-          .from('attendance_records')
-          .insert({
-            registration_id: registrationId,
-            activity_id: selectedActivity,
-            project_id: projectId,
-            status,
-            check_in_time: status === 'present' ? new Date().toISOString() : null
-          });
-      }
-
-      toast.success(status === 'present' ? 'تم تسجيل الحضور' : 'تم تسجيل الغياب');
-      refetchAttendance();
-    } catch (error) {
-      console.error('Error updating attendance:', error);
-      toast.error('حدث خطأ في تسجيل الحضور');
-    }
   };
 
   const handleBarcodeScanned = async (code: string) => {
@@ -113,42 +74,15 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
     const registration = registrations.find(r => r.registration_number === code);
     if (registration) {
       await handleAttendanceChange(registration.id, 'present');
+      refetchAttendance();
     } else {
       toast.error('رقم التسجيل غير موجود');
     }
   };
 
-  const handleGroupAttendance = async (status: 'present' | 'absent') => {
-    if (!selectedActivity) {
-      toast.error("الرجاء اختيار النشاط أولاً");
-      return;
-    }
-
-    try {
-      for (const registration of registrations) {
-        const hasAttendance = attendanceRecords.some(
-          record => record.registration_id === registration.id
-        );
-
-        if (!hasAttendance) {
-          await supabase
-            .from('attendance_records')
-            .insert({
-              registration_id: registration.id,
-              activity_id: selectedActivity,
-              project_id: projectId,
-              status,
-              check_in_time: status === 'present' ? new Date().toISOString() : null
-            });
-        }
-      }
-
-      toast.success(status === 'present' ? 'تم تسجيل حضور الجميع' : 'تم تسجيل غياب الجميع');
-      refetchAttendance();
-    } catch (error) {
-      console.error('Error in group attendance:', error);
-      toast.error('حدث خطأ في تسجيل الحضور الجماعي');
-    }
+  const handleGroupAttendanceClick = async (status: 'present' | 'absent') => {
+    await handleGroupAttendance(registrations, status);
+    refetchAttendance();
   };
 
   if (activities.length === 0) {
@@ -191,7 +125,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
               <AttendanceStats stats={stats} />
               <AttendanceControls
                 onBarcodeScanned={handleBarcodeScanned}
-                onGroupAttendance={handleGroupAttendance}
+                onGroupAttendance={handleGroupAttendanceClick}
               />
               <AttendanceTable
                 registrations={registrations.map(registration => ({
@@ -200,7 +134,10 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
                     record => record.registration_id === registration.id
                   )
                 }))}
-                onAttendanceChange={handleAttendanceChange}
+                onAttendanceChange={async (registrationId, status) => {
+                  await handleAttendanceChange(registrationId, status);
+                  refetchAttendance();
+                }}
               />
             </>
           ) : (
