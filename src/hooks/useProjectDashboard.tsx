@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useProjectDashboard = (projectId: string) => {
+  // Fetch project registrations
   const { data: registrations = [], isLoading: isRegistrationsLoading } = useQuery({
     queryKey: ['project-registrations', projectId],
     queryFn: async () => {
@@ -21,6 +22,7 @@ export const useProjectDashboard = (projectId: string) => {
     enabled: !!projectId,
   });
 
+  // Fetch project details
   const { data: projectData } = useQuery({
     queryKey: ['project-details', projectId],
     queryFn: async () => {
@@ -36,6 +38,7 @@ export const useProjectDashboard = (projectId: string) => {
     enabled: !!projectId,
   });
 
+  // Fetch project activities
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
@@ -53,24 +56,26 @@ export const useProjectDashboard = (projectId: string) => {
     },
   });
 
+  // Calculate attendance statistics for activities only
   const { data: attendanceStats } = useQuery({
     queryKey: ['project-activities-attendance', projectId],
     queryFn: async () => {
-      console.log('Fetching activities attendance stats:', projectId);
+      console.log('Calculating attendance stats for project:', projectId);
       
-      // Get completed activities first
+      // Get completed activities
       const completedActivities = projectActivities.filter(activity => {
         const activityDate = new Date(activity.date);
         return activityDate < new Date();
       });
 
-      console.log('Completed activities:', completedActivities.length);
+      console.log('Number of completed activities:', completedActivities.length);
       
       if (completedActivities.length === 0 || registrations.length === 0) {
+        console.log('No completed activities or registrations found');
         return { totalPresent: 0, averageAttendance: 0 };
       }
 
-      // Get all attendance records for completed activities
+      // Get attendance records for completed activities only
       const { data: records, error } = await supabase
         .from('attendance_records')
         .select('*')
@@ -78,19 +83,21 @@ export const useProjectDashboard = (projectId: string) => {
         .eq('status', 'present')
         .in('activity_id', completedActivities.map(a => a.id));
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching attendance records:', error);
+        throw error;
+      }
 
-      // Calculate total present attendees
+      console.log('Attendance records found:', records?.length);
+
+      // Calculate attendance statistics
       const totalPresent = records?.length || 0;
-      
-      // Calculate average attendance
-      // Only consider completed activities and registered participants
       const totalPossibleAttendance = completedActivities.length * registrations.length;
       const averageAttendance = totalPossibleAttendance > 0
         ? Math.round((totalPresent / totalPossibleAttendance) * 100)
         : 0;
 
-      console.log('Activities attendance stats:', {
+      console.log('Attendance statistics:', {
         totalPresent,
         completedActivities: completedActivities.length,
         totalPossibleAttendance,
@@ -111,13 +118,13 @@ export const useProjectDashboard = (projectId: string) => {
   const remainingSeats = projectData?.max_attendees ? projectData.max_attendees - registrationCount : 0;
   const occupancyRate = projectData?.max_attendees ? (registrationCount / projectData.max_attendees) * 100 : 0;
 
-  // Calculate completed activities
+  // Get completed activities count
   const completedActivities = projectActivities.filter(activity => {
     const activityDate = new Date(activity.date);
     return activityDate < new Date();
   }).length;
 
-  console.log("Dashboard metrics:", {
+  console.log("Final dashboard metrics:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
