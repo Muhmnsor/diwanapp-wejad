@@ -31,7 +31,6 @@ export const RegistrationsTable = ({
   });
   const [localRegistrations, setLocalRegistrations] = useState(registrations);
 
-  // Add useEffect to update localRegistrations when registrations prop changes
   useEffect(() => {
     setLocalRegistrations(registrations);
   }, [registrations]);
@@ -73,6 +72,8 @@ export const RegistrationsTable = ({
   const handleSave = async (id: string) => {
     try {
       setLoading(true);
+      console.log("Updating registration with data:", editForm);
+      
       const { data, error } = await supabase
         .from('registrations')
         .update({
@@ -83,9 +84,14 @@ export const RegistrationsTable = ({
         .eq('id', id)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating registration:", error);
+        throw error;
+      }
 
-      // Update local state
+      console.log("Update response:", data);
+
+      // Update local state with the updated data from the server
       setLocalRegistrations(prevRegistrations => 
         prevRegistrations.map(reg => 
           reg.id === id ? { ...reg, ...editForm } : reg
