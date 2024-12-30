@@ -1,59 +1,74 @@
+import { useEffect, useState } from "react";
+import { RegistrationsTable } from "./RegistrationsTable";
+import { ExportButton } from "./ExportButton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RegistrationsTable } from "./RegistrationsTable";
-import { Card } from "@/components/ui/card";
-import { AttendanceStats } from "./attendance/AttendanceStats";
-import { ExportButton } from "./ExportButton";
 
-interface DashboardRegistrationsProps {
-  eventId: string;
-}
+export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
+  const [registrations, setRegistrations] = useState<any[]>([]);
 
-export const DashboardRegistrations = ({ eventId }: DashboardRegistrationsProps) => {
-  console.log("DashboardRegistrations - eventId:", eventId);
-
-  const { data: registrations = [], refetch: refetchRegistrations } = useQuery({
-    queryKey: ['event-registrations', eventId],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['registrations', eventId],
     queryFn: async () => {
+      if (!eventId) {
+        console.error('No event ID provided');
+        return [];
+      }
+
+      console.log('Fetching registrations for event:', eventId);
       const { data, error } = await supabase
         .from('registrations')
-        .select(`
-          *,
-          attendance_records(*)
-        `)
+        .select('*')
         .eq('event_id', eventId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching registrations:', error);
+        throw error;
+      }
+
+      console.log('Registrations data:', data);
       return data || [];
     },
+    enabled: !!eventId
   });
 
-  const prepareExportData = () => {
-    return registrations.map(reg => ({
-      'الاسم': reg.name,
-      'البريد الإلكتروني': reg.email,
-      'رقم الجوال': reg.phone,
-      'رقم التسجيل': reg.registration_number,
-      'الحضور': reg.attendance_records?.some((record: any) => record.status === 'present') ? 'حاضر' : 'غائب'
-    }));
-  };
+  useEffect(() => {
+    if (data) {
+      setRegistrations(data);
+    }
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        حدث خطأ في تحميل التسجيلات
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <AttendanceStats registrations={registrations} />
-        <ExportButton 
-          data={prepareExportData()} 
-          filename="registrations"
-        />
+    <div className="space-y-6 bg-white rounded-lg shadow-sm p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-[#1A1F2C]">التسجيلات</h2>
+        <ExportButton data={registrations} filename="registrations" />
       </div>
-      <Card>
+      
+      <div className="overflow-hidden rounded-lg border border-gray-200">
         <RegistrationsTable 
           registrations={registrations} 
-          eventId={eventId}
-          onAttendanceChange={refetchRegistrations}
+          onDeleteRegistration={(id) => {
+            setRegistrations(registrations.filter(reg => reg.id !== id));
+          }} 
         />
-      </Card>
+      </div>
     </div>
   );
 };
