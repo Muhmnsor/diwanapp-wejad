@@ -12,7 +12,7 @@ interface DashboardPreparationProps {
 }
 
 export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => {
-  const { data: registrations = [], isLoading } = useQuery({
+  const { data: registrations = [], isLoading, refetch } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,10 +41,19 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     const registration = registrations.find(r => r.registration_number === code);
     if (registration) {
       await handleAttendanceChange(registration.id, 'present');
+      await refetch(); // Refresh the data after updating
       toast.success('تم تسجيل الحضور بنجاح');
     } else {
       toast.error('رقم التسجيل غير موجود');
     }
+  };
+
+  // Wrap handleGroupAttendance to refresh data after update
+  const handleGroupAttendanceWithRefresh = async (status: 'present' | 'absent') => {
+    console.log('Processing group attendance for event:', eventId, 'with status:', status);
+    await handleGroupAttendance(status);
+    await refetch(); // Refresh the data after group update
+    toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
   };
 
   useEffect(() => {
@@ -82,7 +91,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     <div className="space-y-6 bg-white rounded-lg shadow-sm p-6">
       <AttendanceControls 
         onBarcodeScanned={handleBarcodeScanned}
-        onGroupAttendance={handleGroupAttendance}
+        onGroupAttendance={handleGroupAttendanceWithRefresh}
       />
       <AttendanceStats stats={attendanceStats} />
       <AttendanceTable 
