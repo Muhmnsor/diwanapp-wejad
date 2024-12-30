@@ -543,6 +543,7 @@ export type Database = {
           phone: string
           project_id: string | null
           registration_number: string
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
@@ -553,6 +554,7 @@ export type Database = {
           phone: string
           project_id?: string | null
           registration_number: string
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
@@ -563,6 +565,7 @@ export type Database = {
           phone?: string
           project_id?: string | null
           registration_number?: string
+          updated_at?: string | null
         }
         Relationships: [
           {

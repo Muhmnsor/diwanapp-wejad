@@ -15,34 +15,45 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
         return [];
       }
 
-      // First, check if this is a project by querying the projects table
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('id', eventId)
-        .maybeSingle();
+      try {
+        // First, check if this is a project by querying the projects table
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('id', eventId)
+          .maybeSingle();
 
-      console.log('Checking if ID is a project:', projectData);
+        if (projectError) {
+          console.error('Error checking project:', projectError);
+          throw projectError;
+        }
 
-      // Determine if this is a project or event
-      const isProject = !!projectData;
-      console.log('Is this a project?', isProject);
+        console.log('Checking if ID is a project:', projectData);
 
-      // Query registrations based on whether this is a project or event
-      const { data, error } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq(isProject ? 'project_id' : 'event_id', eventId);
+        // Determine if this is a project or event
+        const isProject = !!projectData;
+        console.log('Is this a project?', isProject);
 
-      if (error) {
-        console.error('Error fetching registrations:', error);
-        throw error;
+        // Query registrations based on whether this is a project or event
+        const { data: registrationsData, error: registrationsError } = await supabase
+          .from('registrations')
+          .select('*')
+          .eq(isProject ? 'project_id' : 'event_id', eventId);
+
+        if (registrationsError) {
+          console.error('Error fetching registrations:', registrationsError);
+          throw registrationsError;
+        }
+
+        console.log('Fetched registrations:', registrationsData);
+        return registrationsData || [];
+      } catch (err) {
+        console.error('Error in registration query:', err);
+        throw err;
       }
-
-      console.log('Fetched registrations:', data);
-      return data || [];
     },
-    enabled: !!eventId
+    enabled: !!eventId,
+    retry: 1
   });
 
   useEffect(() => {
