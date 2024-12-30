@@ -55,7 +55,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
 
   const { 
     handleAttendanceChange, 
-    handleActivityGroupAttendance 
+    handleGroupAttendance 
   } = useAttendanceManagement(projectId);
 
   const stats = {
@@ -87,7 +87,8 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
       return;
     }
     try {
-      await handleActivityGroupAttendance(status, selectedActivity);
+      console.log('Processing group attendance for activity:', selectedActivity, 'with status:', status);
+      await handleGroupAttendance(status, selectedActivity);
       await refetchAttendance();
       toast.success(status === 'present' ? 'تم تحضير جميع المشاركين' : 'تم تغييب جميع المشاركين');
     } catch (error) {
