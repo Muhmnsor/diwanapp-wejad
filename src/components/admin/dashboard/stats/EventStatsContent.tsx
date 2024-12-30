@@ -11,7 +11,7 @@ interface EventStatsContentProps {
     id: string;
     event_path: string;
     event_category: string;
-    date: string;
+    date?: string;
     averageRating?: number;
   };
 }
@@ -22,6 +22,8 @@ export const EventStatsContent = ({
   occupancyRate,
   project
 }: EventStatsContentProps) => {
+  console.log("EventStatsContent props:", { project });
+
   const getArabicPath = (path: string) => {
     const pathMap: Record<string, string> = {
       'environment': 'البيئة',
@@ -80,7 +82,9 @@ export const EventStatsContent = ({
           <CalendarDays className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatDateWithDay(project.date)}</div>
+          <div className="text-2xl font-bold">
+            {project.date ? formatDateWithDay(project.date) : 'لم يتم تحديد الموعد'}
+          </div>
         </CardContent>
       </Card>
 
