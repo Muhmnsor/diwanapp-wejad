@@ -56,9 +56,11 @@ export const useRegistrationActions = (onDeleteRegistration: (id: string) => voi
           name: editForm.name,
           email: editForm.email,
           phone: editForm.phone,
+          updated_at: new Date().toISOString() // Add timestamp for update
         })
         .eq('id', id)
-        .select();
+        .select('*')
+        .single();
 
       if (error) {
         console.error("Error updating registration:", error);
@@ -68,10 +70,10 @@ export const useRegistrationActions = (onDeleteRegistration: (id: string) => voi
       console.log("Update response:", data);
       toast.success('تم تحديث بيانات المسجل بنجاح');
       setEditingId(null);
-      return data[0];
-    } catch (error) {
+      return data;
+    } catch (error: any) {
       console.error('Error updating registration:', error);
-      toast.error('حدث خطأ أثناء تحديث البيانات');
+      toast.error(error.message || 'حدث خطأ أثناء تحديث البيانات');
       throw error;
     } finally {
       setLoading(false);

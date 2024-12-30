@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
   const [registrations, setRegistrations] = useState<any[]>([]);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['registrations', eventId],
     queryFn: async () => {
       if (!eventId) {
@@ -51,6 +51,11 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
     }
   }, [data]);
 
+  const handleDeleteRegistration = async (id: string) => {
+    setRegistrations(prev => prev.filter(reg => reg.id !== id));
+    await refetch(); // Refresh the data after deletion
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -77,9 +82,7 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
       <div className="overflow-hidden rounded-lg border border-gray-200">
         <RegistrationsTable 
           registrations={registrations} 
-          onDeleteRegistration={(id) => {
-            setRegistrations(registrations.filter(reg => reg.id !== id));
-          }} 
+          onDeleteRegistration={handleDeleteRegistration}
         />
       </div>
     </div>

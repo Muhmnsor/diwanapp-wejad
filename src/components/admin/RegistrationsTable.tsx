@@ -3,6 +3,7 @@ import { Table, TableBody } from "@/components/ui/table";
 import { RegistrationTableHeader } from "./registrations/RegistrationTableHeader";
 import { RegistrationTableRow } from "./registrations/RegistrationTableRow";
 import { useRegistrationActions } from "./registrations/useRegistrationActions";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RegistrationsTableProps {
   registrations: any[];
@@ -14,6 +15,8 @@ export const RegistrationsTable = ({
   onDeleteRegistration,
 }: RegistrationsTableProps) => {
   const [localRegistrations, setLocalRegistrations] = useState(registrations);
+  const queryClient = useQueryClient();
+  
   const {
     loading,
     editingId,
@@ -41,8 +44,9 @@ export const RegistrationsTable = ({
           reg.id === id ? { ...reg, ...updatedRegistration } : reg
         )
       );
+      // Invalidate and refetch registrations
+      queryClient.invalidateQueries({ queryKey: ['registrations'] });
     } catch (error) {
-      // Error is already handled in handleSave
       console.error("Error in handleSaveWrapper:", error);
     }
   };
