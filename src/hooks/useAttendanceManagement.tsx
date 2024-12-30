@@ -1,6 +1,5 @@
 import { useEventAttendance } from "./attendance/useEventAttendance";
 import { useActivityAttendance } from "./attendance/useActivityAttendance";
-import { AttendanceStats } from "./attendance/types";
 
 export const useAttendanceManagement = (projectId: string) => {
   const {
@@ -30,6 +29,8 @@ export const useAttendanceManagement = (projectId: string) => {
   };
 
   return {
+    attendanceStats: eventStats,
+    setAttendanceStats: setEventStats,
     handleAttendanceChange,
     handleEventGroupAttendance,
     handleActivityGroupAttendance
