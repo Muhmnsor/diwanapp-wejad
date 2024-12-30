@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useAttendanceManagement = (projectId: string, activityId: string | null) => {
+export const useAttendanceManagement = (projectId: string, selectedActivityId: string | null) => {
   const [attendanceStats, setAttendanceStats] = useState({
     total: 0,
     present: 0,
@@ -12,45 +12,63 @@ export const useAttendanceManagement = (projectId: string, activityId: string | 
   });
 
   const { data: registrations = [], isLoading, refetch } = useQuery({
-    queryKey: ['registrations-preparation', projectId, activityId],
+    queryKey: ['registrations-preparation', projectId, selectedActivityId],
     queryFn: async () => {
-      console.log('Fetching registrations for project:', projectId, 'and activity:', activityId);
+      console.log('Fetching registrations for project:', projectId, 'and activity:', selectedActivityId);
       
-      if (!activityId) return [];
+      if (!selectedActivityId) return [];
 
       const { data, error } = await supabase
         .from('registrations')
         .select(`
           *,
-          attendance_records(*)
+          attendance_records!inner(*)
         `)
-        .eq('project_id', projectId);
+        .eq('project_id', projectId)
+        .eq('attendance_records.activity_id', selectedActivityId);
 
       if (error) {
         console.error('Error fetching registrations:', error);
         throw error;
       }
 
-      console.log('Fetched registrations:', data);
-      return data || [];
+      // Get all registrations for this project
+      const { data: allRegistrations, error: allRegError } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (allRegError) throw allRegError;
+
+      // Map attendance records to all registrations
+      const mappedRegistrations = allRegistrations.map(reg => {
+        const matchingReg = data?.find(d => d.id === reg.id);
+        return {
+          ...reg,
+          attendance_records: matchingReg ? matchingReg.attendance_records : []
+        };
+      });
+
+      console.log('Mapped registrations:', mappedRegistrations);
+      return mappedRegistrations || [];
     },
-    enabled: !!activityId // Only fetch when an activity is selected
+    enabled: !!selectedActivityId
   });
 
   const handleAttendance = async (registrationId: string, status: 'present' | 'absent') => {
     try {
-      if (!activityId) {
+      if (!selectedActivityId) {
         toast.error('الرجاء اختيار نشاط أولاً');
         return;
       }
 
-      console.log('Recording attendance:', { registrationId, status, activityId });
+      console.log('Recording attendance:', { registrationId, status, selectedActivityId });
       
       const { data: existingRecord, error: fetchError } = await supabase
         .from('attendance_records')
         .select('*')
         .eq('registration_id', registrationId)
-        .eq('activity_id', activityId)
+        .eq('activity_id', selectedActivityId)
         .maybeSingle();
 
       if (fetchError) {
@@ -78,7 +96,7 @@ export const useAttendanceManagement = (projectId: string, activityId: string | 
           .insert({
             registration_id: registrationId,
             project_id: projectId,
-            activity_id: activityId,
+            activity_id: selectedActivityId,
             status,
             check_in_time: status === 'present' ? new Date().toISOString() : null,
           })
@@ -99,7 +117,7 @@ export const useAttendanceManagement = (projectId: string, activityId: string | 
   };
 
   const handleBarcodeScanned = async (code: string) => {
-    if (!activityId) {
+    if (!selectedActivityId) {
       toast.error('الرجاء اختيار نشاط أولاً');
       return;
     }
@@ -116,7 +134,7 @@ export const useAttendanceManagement = (projectId: string, activityId: string | 
   };
 
   const handleGroupAttendance = async (status: 'present' | 'absent') => {
-    if (!activityId) {
+    if (!selectedActivityId) {
       toast.error('الرجاء اختيار نشاط أولاً');
       return;
     }
