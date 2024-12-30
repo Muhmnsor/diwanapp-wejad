@@ -4,6 +4,8 @@ import { DashboardRegistrations } from "../DashboardRegistrations";
 import { DashboardPreparation } from "./DashboardPreparation";
 import { ReportsTab } from "./ReportsTab";
 import { FeedbackTab } from "./FeedbackTab";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardTabsProps {
   event: {
@@ -14,21 +16,72 @@ interface DashboardTabsProps {
     event_category: string;
     start_date: string;
     end_date: string;
+    date: string;
   };
 }
 
 export const DashboardTabs = ({ event }: DashboardTabsProps) => {
-  // Calculate stats
-  const registrationCount = 0; // This should be calculated from actual data
-  const remainingSeats = event.max_attendees - registrationCount;
-  const occupancyRate = (registrationCount / event.max_attendees) * 100;
+  // Fetch event stats including registrations and ratings
+  const { data: eventStats } = useQuery({
+    queryKey: ['eventStats', event.id],
+    queryFn: async () => {
+      console.log('Fetching event stats for:', event.id);
+      
+      // Get registrations count
+      const { data: registrations, error: regError } = await supabase
+        .from('registrations')
+        .select('*', { count: 'exact' })
+        .eq('event_id', event.id);
+
+      if (regError) {
+        console.error('Error fetching registrations:', regError);
+        throw regError;
+      }
+
+      // Get average rating
+      const { data: feedback, error: feedbackError } = await supabase
+        .from('event_feedback')
+        .select('overall_rating')
+        .eq('event_id', event.id);
+
+      if (feedbackError) {
+        console.error('Error fetching feedback:', feedbackError);
+        throw feedbackError;
+      }
+
+      const registrationCount = registrations?.length || 0;
+      const remainingSeats = event.max_attendees - registrationCount;
+      const occupancyRate = (registrationCount / event.max_attendees) * 100;
+
+      // Calculate average rating
+      const averageRating = feedback?.length 
+        ? feedback.reduce((acc, curr) => acc + (curr.overall_rating || 0), 0) / feedback.length 
+        : undefined;
+
+      console.log('Event stats calculated:', {
+        registrationCount,
+        remainingSeats,
+        occupancyRate,
+        averageRating
+      });
+
+      return {
+        registrationCount,
+        remainingSeats,
+        occupancyRate,
+        averageRating
+      };
+    }
+  });
 
   const projectData = {
     id: event.id,
     start_date: event.start_date || '',
     end_date: event.end_date || '',
     event_path: event.event_path,
-    event_category: event.event_category
+    event_category: event.event_category,
+    date: event.date,
+    averageRating: eventStats?.averageRating
   };
 
   return (
@@ -68,9 +121,9 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
       <TabsContent value="overview" className="mt-6">
         <DashboardOverview
-          registrationCount={registrationCount}
-          remainingSeats={remainingSeats}
-          occupancyRate={occupancyRate}
+          registrationCount={eventStats?.registrationCount || 0}
+          remainingSeats={eventStats?.remainingSeats || 0}
+          occupancyRate={eventStats?.occupancyRate || 0}
           project={projectData}
           isEvent={true}
         />

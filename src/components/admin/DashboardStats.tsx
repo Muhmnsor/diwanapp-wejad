@@ -15,7 +15,7 @@ interface DashboardStatsProps {
     date?: string;
     averageRating?: number;
   };
-  activities: {
+  activities?: {
     total: number;
     completed: number;
     averageAttendance: number;
@@ -56,7 +56,7 @@ export const DashboardStats = ({
     event_path: project.event_path,
     event_category: project.event_category,
     date: isEvent ? project.date : undefined,
-    averageRating: project.averageRating
+    averageRating: isEvent ? project.averageRating : undefined
   };
 
   return (
