@@ -44,6 +44,8 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     averageAttendance: attendanceStats?.averageAttendance || 0
   };
 
+  console.log("Activities stats:", activitiesStats);
+
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
       <ProjectTabsList />
