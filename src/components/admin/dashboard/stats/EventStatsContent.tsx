@@ -1,5 +1,7 @@
 import { RegistrationStatsCard } from "./RegistrationStatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CalendarDays, Star } from "lucide-react";
+import { formatDateWithDay } from "@/utils/dateTimeUtils";
 
 interface EventStatsContentProps {
   registrationCount: number;
@@ -9,6 +11,8 @@ interface EventStatsContentProps {
     id: string;
     event_path: string;
     event_category: string;
+    date: string;
+    averageRating?: number;
   };
 }
 
@@ -18,6 +22,34 @@ export const EventStatsContent = ({
   occupancyRate,
   project
 }: EventStatsContentProps) => {
+  const getArabicPath = (path: string) => {
+    const pathMap: Record<string, string> = {
+      'environment': 'البيئة',
+      'community': 'المجتمع',
+      'content': 'المحتوى'
+    };
+    return pathMap[path] || path;
+  };
+
+  const getArabicCategory = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      'social': 'اجتماعي',
+      'entertainment': 'ترفيهي',
+      'service': 'خدمي',
+      'educational': 'تعليمي',
+      'consulting': 'استشاري',
+      'interest': 'اهتمام',
+      'specialization': 'تخصص',
+      'spiritual': 'روحي',
+      'cultural': 'ثقافي',
+      'behavioral': 'سلوكي',
+      'skill': 'مهاري',
+      'health': 'صحي',
+      'diverse': 'متنوع'
+    };
+    return categoryMap[category] || category;
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <RegistrationStatsCard
@@ -33,10 +65,38 @@ export const EventStatsContent = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{project.event_path}</div>
+          <div className="text-2xl font-bold">{getArabicPath(project.event_path)}</div>
           <p className="text-xs text-muted-foreground">
-            {project.event_category}
+            {getArabicCategory(project.event_category)}
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            موعد الفعالية
+          </CardTitle>
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatDateWithDay(project.date)}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            متوسط التقييم
+          </CardTitle>
+          <Star className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {project.averageRating ? 
+              `${project.averageRating.toFixed(1)} / 5` : 
+              'لا يوجد تقييم'}
+          </div>
         </CardContent>
       </Card>
     </div>
