@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useProjectDashboard = (projectId: string) => {
-  const { data: registrations = [], isLoading } = useQuery({
+  const { data: registrations = [], isLoading: isRegistrationsLoading } = useQuery({
     queryKey: ['project-registrations', projectId],
     queryFn: async () => {
       console.log("Fetching project registrations for:", projectId);
@@ -38,6 +38,32 @@ export const useProjectDashboard = (projectId: string) => {
     },
   });
 
+  const { data: attendanceStats } = useQuery({
+    queryKey: ['project-attendance-stats', projectId],
+    queryFn: async () => {
+      console.log('Fetching attendance stats:', projectId);
+      const { data: records, error } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('status', 'present');
+
+      if (error) throw error;
+
+      const totalPresent = records?.length || 0;
+      const totalActivities = projectActivities.length;
+      const averageAttendance = totalActivities > 0 ? Math.round(totalPresent / totalActivities) : 0;
+
+      console.log('Attendance stats:', { totalPresent, totalActivities, averageAttendance });
+      
+      return {
+        totalPresent,
+        averageAttendance
+      };
+    },
+    enabled: !!projectId && projectActivities.length > 0,
+  });
+
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
   const remainingSeats = projectId ? (registrations[0]?.max_attendees || 0) - registrationCount : 0;
@@ -46,12 +72,13 @@ export const useProjectDashboard = (projectId: string) => {
   return {
     registrations,
     projectActivities,
+    attendanceStats,
     refetchActivities,
     metrics: {
       registrationCount,
       remainingSeats,
       occupancyRate
     },
-    isLoading
+    isLoading: isRegistrationsLoading
   };
 };

@@ -11,6 +11,11 @@ interface DashboardStatsProps {
     event_path: string;
     event_category: string;
   };
+  activities?: {
+    total: number;
+    completed: number;
+    averageAttendance: number;
+  };
 }
 
 export const DashboardStats = ({
@@ -18,12 +23,14 @@ export const DashboardStats = ({
   remainingSeats,
   occupancyRate,
   project,
+  activities,
 }: DashboardStatsProps) => {
   console.log("DashboardStats props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
     project,
+    activities,
   });
 
   const formatEventPath = (path?: string) => {
@@ -92,9 +99,11 @@ export const DashboardStats = ({
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">10/15</div>
+          <div className="text-2xl font-bold">
+            {activities ? `${activities.completed}/${activities.total}` : '0/0'}
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
-            متوسط الحضور: 25 مشارك
+            متوسط الحضور: {activities?.averageAttendance || 0} مشارك
           </p>
         </CardContent>
       </Card>

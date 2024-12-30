@@ -24,6 +24,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
   const { 
     registrations,
     projectActivities,
+    attendanceStats,
     refetchActivities,
     metrics,
     isLoading 
@@ -32,6 +33,16 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
   if (isLoading) {
     return <div>جاري التحميل...</div>;
   }
+
+  // Calculate activities stats
+  const activitiesStats = {
+    total: projectActivities.length,
+    completed: projectActivities.filter(activity => {
+      const activityDate = new Date(activity.date);
+      return activityDate < new Date();
+    }).length,
+    averageAttendance: attendanceStats?.averageAttendance || 0
+  };
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
@@ -43,6 +54,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           remainingSeats={metrics.remainingSeats}
           occupancyRate={metrics.occupancyRate}
           project={project}
+          activities={activitiesStats}
         />
       </TabsContent>
 
