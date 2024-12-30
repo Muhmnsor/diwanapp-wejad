@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useAttendanceManagement = (eventId: string) => {
+export const useAttendanceManagement = (projectId: string, activityId: string | null) => {
   const [attendanceStats, setAttendanceStats] = useState({
     total: 0,
     present: 0,
@@ -12,16 +12,19 @@ export const useAttendanceManagement = (eventId: string) => {
   });
 
   const { data: registrations = [], isLoading, refetch } = useQuery({
-    queryKey: ['registrations-preparation', eventId],
+    queryKey: ['registrations-preparation', projectId, activityId],
     queryFn: async () => {
-      console.log('Fetching registrations for preparation:', eventId);
+      console.log('Fetching registrations for project:', projectId, 'and activity:', activityId);
+      
+      if (!activityId) return [];
+
       const { data, error } = await supabase
         .from('registrations')
         .select(`
           *,
           attendance_records(*)
         `)
-        .eq('event_id', eventId);
+        .eq('project_id', projectId);
 
       if (error) {
         console.error('Error fetching registrations:', error);
@@ -31,17 +34,23 @@ export const useAttendanceManagement = (eventId: string) => {
       console.log('Fetched registrations:', data);
       return data || [];
     },
+    enabled: !!activityId // Only fetch when an activity is selected
   });
 
   const handleAttendance = async (registrationId: string, status: 'present' | 'absent') => {
     try {
-      console.log('Recording attendance:', { registrationId, status });
+      if (!activityId) {
+        toast.error('الرجاء اختيار نشاط أولاً');
+        return;
+      }
+
+      console.log('Recording attendance:', { registrationId, status, activityId });
       
       const { data: existingRecord, error: fetchError } = await supabase
         .from('attendance_records')
         .select('*')
         .eq('registration_id', registrationId)
-        .eq('event_id', eventId)
+        .eq('activity_id', activityId)
         .maybeSingle();
 
       if (fetchError) {
@@ -68,7 +77,8 @@ export const useAttendanceManagement = (eventId: string) => {
           .from('attendance_records')
           .insert({
             registration_id: registrationId,
-            event_id: eventId,
+            project_id: projectId,
+            activity_id: activityId,
             status,
             check_in_time: status === 'present' ? new Date().toISOString() : null,
           })
@@ -89,6 +99,11 @@ export const useAttendanceManagement = (eventId: string) => {
   };
 
   const handleBarcodeScanned = async (code: string) => {
+    if (!activityId) {
+      toast.error('الرجاء اختيار نشاط أولاً');
+      return;
+    }
+
     console.log('Scanning barcode:', code);
     const registration = registrations.find(r => r.registration_number === code);
     
@@ -101,6 +116,11 @@ export const useAttendanceManagement = (eventId: string) => {
   };
 
   const handleGroupAttendance = async (status: 'present' | 'absent') => {
+    if (!activityId) {
+      toast.error('الرجاء اختيار نشاط أولاً');
+      return;
+    }
+
     console.log('Recording group attendance:', status);
     try {
       // Get all registrations that need updating

@@ -1,14 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AttendanceStats } from "./preparation/AttendanceStats";
 import { AttendanceControls } from "./preparation/AttendanceControls";
 import { AttendanceTable } from "./preparation/AttendanceTable";
 import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
+import { ProjectActivity } from "@/types/activity";
 
 interface DashboardPreparationProps {
-  eventId: string;
+  projectId: string;
+  activities: ProjectActivity[];
 }
 
-export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => {
+export const DashboardPreparation = ({ projectId, activities }: DashboardPreparationProps) => {
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  
   const {
     registrations,
     isLoading,
@@ -17,7 +21,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     handleAttendance,
     handleBarcodeScanned,
     handleGroupAttendance
-  } = useAttendanceManagement(eventId);
+  } = useAttendanceManagement(projectId, selectedActivityId);
 
   useEffect(() => {
     // Calculate attendance statistics
@@ -52,15 +56,42 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
 
   return (
     <div className="space-y-6 bg-white rounded-lg shadow-sm p-6">
-      <AttendanceControls 
-        onBarcodeScanned={handleBarcodeScanned}
-        onGroupAttendance={handleGroupAttendance}
-      />
-      <AttendanceStats stats={attendanceStats} />
-      <AttendanceTable 
-        registrations={registrations} 
-        onAttendanceChange={handleAttendance}
-      />
+      <div className="mb-6">
+        <label htmlFor="activity" className="block text-sm font-medium text-gray-700 mb-2">
+          اختر النشاط
+        </label>
+        <select
+          id="activity"
+          className="w-full p-2 border rounded-md"
+          value={selectedActivityId || ''}
+          onChange={(e) => setSelectedActivityId(e.target.value || null)}
+        >
+          <option value="">اختر النشاط</option>
+          {activities.map((activity) => (
+            <option key={activity.id} value={activity.id}>
+              {activity.title}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      {selectedActivityId ? (
+        <>
+          <AttendanceControls 
+            onBarcodeScanned={handleBarcodeScanned}
+            onGroupAttendance={handleGroupAttendance}
+          />
+          <AttendanceStats stats={attendanceStats} />
+          <AttendanceTable 
+            registrations={registrations} 
+            onAttendanceChange={handleAttendance}
+          />
+        </>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          الرجاء اختيار نشاط للبدء في التحضير
+        </div>
+      )}
     </div>
   );
 };
