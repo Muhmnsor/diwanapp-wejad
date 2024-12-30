@@ -118,7 +118,6 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
       <AttendanceTable 
         registrations={registrations} 
         onAttendanceChange={handleIndividualAttendanceChange}
-        totalActivities={1} // Since this is for a single event, we set it to 1
       />
     </div>
   );

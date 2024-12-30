@@ -131,7 +131,6 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
                 await handleAttendanceChange(registrationId, status, selectedActivity);
                 refetchAttendance();
               }}
-              totalActivities={activities.length}
             />
           ) : (
             <div className="text-center py-8 text-muted-foreground">
