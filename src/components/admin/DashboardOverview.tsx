@@ -1,8 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { RegistrationStats } from "./dashboard/stats/RegistrationStats";
-import { RatingStats } from "./dashboard/stats/RatingStats";
-import { AttendanceStats } from "./dashboard/stats/AttendanceStats";
-import { ReactNode } from "react";
+import { DashboardStats } from "./DashboardStats";
+import { RegistrantsTable } from "./dashboard/RegistrantsTable";
+import { useRegistrantsStats } from "@/hooks/useRegistrantsStats";
 
 interface DashboardOverviewProps {
   registrationCount: number;
@@ -13,41 +11,47 @@ interface DashboardOverviewProps {
   eventPath?: string;
   eventCategory?: string;
   projectId?: string;
-  ActivityStatsComponent?: ReactNode;
-  projectActivities?: {
-    id: string;
-    title: string;
-    attendanceRate?: number;
-    rating?: number;
-  }[];
 }
 
 export const DashboardOverview = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
+  eventDate,
+  eventTime,
   eventPath,
   eventCategory,
-  projectId,
-  ActivityStatsComponent,
-  projectActivities = []
+  projectId
 }: DashboardOverviewProps) => {
+  console.log("DashboardOverview props:", {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    eventDate,
+    eventTime,
+    eventPath,
+    eventCategory,
+    projectId
+  });
+
+  const { registrantsStats, isLoading } = useRegistrantsStats(projectId || '');
+
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <RegistrationStats
-            registrationCount={registrationCount}
-            remainingSeats={remainingSeats}
-            occupancyRate={occupancyRate}
-            eventPath={eventPath}
-            eventCategory={eventCategory}
-          />
-          {ActivityStatsComponent}
-          <AttendanceStats projectActivities={projectActivities} />
-          <RatingStats projectActivities={projectActivities} />
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-8">
+      <DashboardStats
+        registrationCount={registrationCount}
+        remainingSeats={remainingSeats}
+        occupancyRate={occupancyRate}
+        eventDate={eventDate}
+        eventTime={eventTime}
+        eventPath={eventPath}
+        eventCategory={eventCategory}
+      />
+
+      <RegistrantsTable 
+        registrantsStats={registrantsStats}
+        isLoading={isLoading}
+      />
+    </div>
   );
 };
