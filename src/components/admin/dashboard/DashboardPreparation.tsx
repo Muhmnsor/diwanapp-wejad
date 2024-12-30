@@ -5,6 +5,7 @@ import { AttendanceTable } from "./preparation/AttendanceTable";
 import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface DashboardPreparationProps {
   eventId: string;
@@ -31,9 +32,20 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     attendanceStats,
     setAttendanceStats,
     handleAttendanceChange,
-    handleBarcodeScanned,
     handleGroupAttendance
   } = useAttendanceManagement(eventId);
+
+  // Add handleBarcodeScanned function for single events
+  const handleBarcodeScanned = async (code: string) => {
+    console.log('Scanning barcode for event:', eventId, 'code:', code);
+    const registration = registrations.find(r => r.registration_number === code);
+    if (registration) {
+      await handleAttendanceChange(registration.id, 'present');
+      toast.success('تم تسجيل الحضور بنجاح');
+    } else {
+      toast.error('رقم التسجيل غير موجود');
+    }
+  };
 
   useEffect(() => {
     // Calculate attendance statistics
