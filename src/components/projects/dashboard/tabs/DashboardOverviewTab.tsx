@@ -1,6 +1,6 @@
-import { DashboardOverview } from "@/components/admin/DashboardOverview";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
 
 interface DashboardOverviewTabProps {
   registrationCount: number;
@@ -19,7 +19,7 @@ export const DashboardOverviewTab = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project
+  project,
 }: DashboardOverviewTabProps) => {
   // Fetch project activities with attendance and feedback data
   const { data: projectActivities = [] } = useQuery({
@@ -73,7 +73,6 @@ export const DashboardOverviewTab = ({
     }
   });
 
-  // Calculate overall stats
   const totalActivities = projectActivities.length;
   const completedActivities = projectActivities.filter(
     activity => activity.attendanceRate > 0
@@ -82,6 +81,8 @@ export const DashboardOverviewTab = ({
   const averageAttendanceRate = projectActivities.length > 0
     ? projectActivities.reduce((sum, activity) => sum + (activity.attendanceRate || 0), 0) / projectActivities.length
     : 0;
+
+  console.log('Total activities:', totalActivities);
 
   return (
     <DashboardOverview
