@@ -58,26 +58,31 @@ export const useProjectDashboard = (projectId: string) => {
     queryFn: async () => {
       console.log('Fetching activities attendance stats:', projectId);
       
-      // Get all attendance records for activities in this project
+      // Get completed activities first
+      const completedActivities = projectActivities.filter(activity => {
+        const activityDate = new Date(activity.date);
+        return activityDate < new Date();
+      });
+
+      console.log('Completed activities:', completedActivities.length);
+      
+      if (completedActivities.length === 0 || registrations.length === 0) {
+        return { totalPresent: 0, averageAttendance: 0 };
+      }
+
+      // Get all attendance records for completed activities
       const { data: records, error } = await supabase
         .from('attendance_records')
         .select('*')
         .eq('project_id', projectId)
-        .is('event_id', null) // Ignore event records
-        .not('activity_id', 'is', null) // Only activity records
-        .eq('status', 'present'); // Only count present attendees
+        .eq('status', 'present')
+        .in('activity_id', completedActivities.map(a => a.id));
 
       if (error) throw error;
 
       // Calculate total present attendees
       const totalPresent = records?.length || 0;
       
-      // Get completed activities
-      const completedActivities = projectActivities.filter(activity => {
-        const activityDate = new Date(activity.date);
-        return activityDate < new Date();
-      });
-
       // Calculate average attendance
       // Only consider completed activities and registered participants
       const totalPossibleAttendance = completedActivities.length * registrations.length;
@@ -89,7 +94,8 @@ export const useProjectDashboard = (projectId: string) => {
         totalPresent,
         completedActivities: completedActivities.length,
         totalPossibleAttendance,
-        averageAttendance
+        averageAttendance,
+        registrationsCount: registrations.length
       });
       
       return {
