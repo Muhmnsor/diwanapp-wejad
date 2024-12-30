@@ -1,17 +1,15 @@
 import { PersonalInfoFields } from "./form/PersonalInfoFields";
 import { PaymentFields } from "./form/PaymentFields";
 
-interface FormData {
-  name: string;
-  email: string;
-  phone: string;
-  cardNumber?: string;
-  expiryDate?: string;
-  cvv?: string;
-}
-
 interface RegistrationFormInputsProps {
-  formData: FormData;
+  formData: {
+    name: string;
+    email: string;
+    phone: string;
+    cardNumber?: string;
+    expiryDate?: string;
+    cvv?: string;
+  };
   setFormData: (data: any) => void;
   eventPrice: number | "free" | null;
   showPaymentFields?: boolean;
@@ -32,11 +30,7 @@ export const RegistrationFormInputs = ({
       
       {showPaymentFields && (
         <PaymentFields
-          formData={{
-            cardNumber: formData.cardNumber || '',
-            expiryDate: formData.expiryDate || '',
-            cvv: formData.cvv || ''
-          }}
+          formData={formData}
           setFormData={setFormData}
           eventPrice={eventPrice}
         />
