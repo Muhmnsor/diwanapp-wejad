@@ -103,25 +103,18 @@ export const useAttendanceManagement = (eventId: string) => {
   const handleGroupAttendance = async (status: 'present' | 'absent') => {
     console.log('Recording group attendance:', status);
     try {
-      // Get all registrations that haven't been marked today
-      const today = new Date().toISOString().split('T')[0];
-      const registrationsToUpdate = registrations.filter(registration => {
-        const lastRecord = registration.attendance_records?.[0];
-        if (!lastRecord) return true;
-        
-        const recordDate = new Date(lastRecord.created_at).toISOString().split('T')[0];
-        return recordDate !== today;
-      });
+      // Get registrations without attendance records
+      const unrecordedRegistrations = registrations.filter(
+        registration => !registration.attendance_records?.length
+      );
 
-      console.log('Registrations to update:', registrationsToUpdate);
-
-      if (registrationsToUpdate.length === 0) {
-        toast.info('تم تحديث حضور جميع المشاركين لهذا اليوم');
+      if (unrecordedRegistrations.length === 0) {
+        toast.info('لا يوجد مشاركين بدون تسجيل حضور');
         return;
       }
 
       // Process each registration sequentially
-      for (const registration of registrationsToUpdate) {
+      for (const registration of unrecordedRegistrations) {
         await handleAttendance(registration.id, status);
       }
       
