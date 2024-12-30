@@ -43,48 +43,54 @@ export const useProjectDashboard = (projectId: string) => {
     queryFn: async () => {
       console.log('Fetching activities attendance stats:', projectId);
       
-      // فقط سجلات الحضور المرتبطة بالأنشطة وليس الفعاليات
+      // Get all attendance records for activities in this project
       const { data: records, error } = await supabase
         .from('attendance_records')
         .select('*')
         .eq('project_id', projectId)
-        .is('event_id', null) // تجاهل سجلات الفعاليات
-        .not('activity_id', 'is', null) // فقط سجلات الأنشطة
-        .eq('status', 'present');
+        .is('event_id', null) // Ignore event records
+        .not('activity_id', 'is', null) // Only activity records
+        .eq('status', 'present'); // Only count present attendees
 
       if (error) throw error;
 
+      // Calculate total present attendees
       const totalPresent = records?.length || 0;
-      const totalActivities = projectActivities.length;
-      const totalRegistrations = registrations.length;
+      
+      // Get completed activities
+      const completedActivities = projectActivities.filter(activity => {
+        const activityDate = new Date(activity.date);
+        return activityDate < new Date();
+      });
 
-      // حساب متوسط الحضور للأنشطة فقط
-      const averageAttendance = totalRegistrations > 0 && totalActivities > 0
-        ? (totalPresent / (totalRegistrations * totalActivities)) * 100
+      // Calculate average attendance
+      // Only consider completed activities and registered participants
+      const totalPossibleAttendance = completedActivities.length * registrations.length;
+      const averageAttendance = totalPossibleAttendance > 0
+        ? Math.round((totalPresent / totalPossibleAttendance) * 100)
         : 0;
 
       console.log('Activities attendance stats:', {
         totalPresent,
-        totalActivities,
-        totalRegistrations,
+        completedActivities: completedActivities.length,
+        totalPossibleAttendance,
         averageAttendance
       });
       
       return {
         totalPresent,
-        averageAttendance: Math.round(averageAttendance)
+        averageAttendance
       };
     },
     enabled: !!projectId && projectActivities.length > 0 && registrations.length > 0,
   });
 
-  // حساب مقاييس لوحة التحكم
+  // Calculate dashboard metrics
   const registrationCount = registrations.length;
-  const project = registrations[0]?.project || {};
   const remainingSeats = project.max_attendees ? project.max_attendees - registrationCount : 0;
   const occupancyRate = project.max_attendees ? (registrationCount / project.max_attendees) * 100 : 0;
 
-  // حساب إحصائيات الأنشطة
+  // Calculate completed activities
   const completedActivities = projectActivities.filter(activity => {
     const activityDate = new Date(activity.date);
     return activityDate < new Date();

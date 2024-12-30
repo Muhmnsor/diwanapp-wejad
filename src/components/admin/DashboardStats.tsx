@@ -103,7 +103,7 @@ export const DashboardStats = ({
             {activities ? `${activities.completed}/${activities.total}` : '0/0'}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            متوسط الحضور: {activities?.averageAttendance || 0} مشارك
+            متوسط الحضور: {activities?.averageAttendance || 0}%
           </p>
         </CardContent>
       </Card>
