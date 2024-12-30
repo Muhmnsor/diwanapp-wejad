@@ -16,13 +16,16 @@ export const useRegistrantsStats = (projectId?: string) => {
 
       console.log('Fetching registrants stats for project:', projectId);
 
-      // Get all registrations for this project
+      // 1. Get all registrations for this project
       const { data: registrations, error: regError } = await supabase
         .from('registrations')
         .select(`
           id,
           name,
-          attendance_records(*)
+          attendance_records!inner (
+            status,
+            activity_id
+          )
         `)
         .eq('project_id', projectId);
 
@@ -33,7 +36,7 @@ export const useRegistrantsStats = (projectId?: string) => {
 
       console.log('Fetched registrations:', registrations);
 
-      // Get total number of activities for this project
+      // 2. Get total number of activities for this project
       const { data: activities, error: actError } = await supabase
         .from('events')
         .select('id')
@@ -45,11 +48,10 @@ export const useRegistrantsStats = (projectId?: string) => {
         throw actError;
       }
 
-      console.log('Fetched activities:', activities);
-
       const totalActivities = activities?.length || 0;
+      console.log('Total activities:', totalActivities);
 
-      // Calculate stats for each registrant
+      // 3. Calculate stats for each registrant
       return registrations.map((reg: any): RegistrantStats => {
         const attendedActivities = reg.attendance_records?.filter(
           (record: any) => record.status === 'present'

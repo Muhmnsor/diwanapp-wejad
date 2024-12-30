@@ -21,12 +21,14 @@ interface RegistrantsTableProps {
 }
 
 export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTableProps) => {
+  console.log('RegistrantsTable - stats:', registrantsStats);
+  
   if (isLoading) {
     return <div className="text-center py-4">جاري التحميل...</div>;
   }
 
-  if (!registrantsStats.length) {
-    return <div className="text-center py-4">لا يوجد مسجلين حتى الآن</div>;
+  if (!registrantsStats?.length) {
+    return <div className="text-center py-4">لا يوجد بيانات حضور متاحة</div>;
   }
 
   return (
