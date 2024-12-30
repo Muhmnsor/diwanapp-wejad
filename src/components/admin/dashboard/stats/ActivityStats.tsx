@@ -12,11 +12,20 @@ export const ActivityStats = ({
   completedActivities,
   averageAttendanceRate
 }: ActivityStatsProps) => {
+  console.log('ActivityStats props:', {
+    totalActivities,
+    completedActivities,
+    averageAttendanceRate
+  });
+
+  const remainingActivities = totalActivities - completedActivities;
+  const formattedAttendanceRate = averageAttendanceRate?.toFixed(1) || '0';
+
   return (
     <StatCard
       title="الأنشطة المتبقية"
-      value={`${totalActivities - completedActivities} من ${totalActivities}`}
-      subtitle={`متوسط نسبة الحضور ${averageAttendanceRate?.toFixed(1)}%`}
+      value={`${remainingActivities} من ${totalActivities}`}
+      subtitle={`متوسط نسبة الحضور ${formattedAttendanceRate}%`}
       icon={Activity}
     />
   );

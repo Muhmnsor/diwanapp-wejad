@@ -32,12 +32,10 @@ export const DashboardOverviewTab = ({
           id,
           title,
           date,
-          attendance_records(status),
-          event_feedback(overall_rating)
+          attendance_records(status)
         `)
         .eq('project_id', project.id)
-        .eq('is_project_activity', true)
-        .order('date', { ascending: true });
+        .eq('is_project_activity', true);
 
       if (activitiesError) {
         console.error('Error fetching activities:', activitiesError);
@@ -47,55 +45,37 @@ export const DashboardOverviewTab = ({
       console.log('Raw activities data:', activities);
 
       const currentDate = new Date().toISOString().split('T')[0];
+      const completedActivities = activities?.filter(
+        (activity: any) => activity.date <= currentDate
+      ) || [];
 
-      const activitiesWithStats = activities.map(activity => {
+      // Calculate average attendance rate
+      const attendanceRates = activities?.map((activity: any) => {
         const totalAttendees = activity.attendance_records?.length || 0;
         const presentAttendees = activity.attendance_records?.filter(
           (record: any) => record.status === 'present'
         ).length || 0;
         
-        const attendanceRate = totalAttendees > 0 
-          ? (presentAttendees / totalAttendees) * 100 
-          : 0;
+        return totalAttendees > 0 ? (presentAttendees / totalAttendees) * 100 : 0;
+      }) || [];
 
-        const ratings = activity.event_feedback?.map((f: any) => f.overall_rating).filter(Boolean) || [];
-        const averageRating = ratings.length > 0 
-          ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
-          : 0;
+      const averageAttendanceRate = attendanceRates.length > 0
+        ? attendanceRates.reduce((sum: number, rate: number) => sum + rate, 0) / attendanceRates.length
+        : 0;
 
-        const isPastActivity = new Date(activity.date) < new Date(currentDate);
-
-        return {
-          id: activity.id,
-          title: activity.title,
-          date: activity.date,
-          attendanceRate,
-          rating: averageRating,
-          isPastActivity
-        };
+      console.log('Calculated stats:', {
+        totalActivities: activities?.length || 0,
+        completedActivities: completedActivities.length,
+        averageAttendanceRate
       });
 
-      console.log('Activities with calculated stats:', activitiesWithStats);
-      return activitiesWithStats;
+      return {
+        activities: activities || [],
+        totalActivities: activities?.length || 0,
+        completedActivities: completedActivities.length,
+        averageAttendanceRate
+      };
     }
-  });
-
-  console.log('Project activities after query:', projectActivities);
-
-  const totalActivities = projectActivities?.length || 0;
-  const completedActivities = projectActivities?.filter(
-    activity => activity.isPastActivity
-  ).length || 0;
-  
-  const averageAttendanceRate = projectActivities?.length > 0
-    ? projectActivities.reduce((sum, activity) => sum + (activity.attendanceRate || 0), 0) / projectActivities.length
-    : 0;
-
-  console.log('Dashboard stats:', {
-    totalActivities,
-    completedActivities,
-    averageAttendanceRate,
-    projectActivities
   });
 
   return (
@@ -108,10 +88,10 @@ export const DashboardOverviewTab = ({
       eventPath={project.event_path}
       eventCategory={project.event_category}
       projectId={project.id}
-      projectActivities={projectActivities}
-      totalActivities={totalActivities}
-      completedActivities={completedActivities}
-      averageAttendanceRate={averageAttendanceRate}
+      projectActivities={projectActivities?.activities || []}
+      totalActivities={projectActivities?.totalActivities || 0}
+      completedActivities={projectActivities?.completedActivities || 0}
+      averageAttendanceRate={projectActivities?.averageAttendanceRate || 0}
     />
   );
 };
