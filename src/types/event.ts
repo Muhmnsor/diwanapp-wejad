@@ -1,38 +1,26 @@
-export type BeneficiaryType = 'men' | 'women' | 'both';
+export type EventPathType = "environment" | "community" | "content";
+export type EventCategoryType = "social" | "educational" | "cultural" | "sports" | "other";
 
-export type EventPathType = 'environment' | 'community' | 'content';
-export type EventCategoryType = 
-  | 'social' | 'entertainment' | 'service' | 'educational' | 'consulting' // for environment
-  | 'interest' | 'specialization' // for community
-  | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
-
-export interface EventType {
-  id?: string;
+export interface Event {
+  id: string;
   title: string;
   description: string;
   date: string;
   time: string;
   location: string;
   location_url?: string;
-  imageUrl?: string;
-  image_url?: string;
-  attendees: number;
-  max_attendees: number;
+  image_url: string;
   event_type: "online" | "in-person";
-  eventType: "online" | "in-person";
-  price: number | "free";
-  beneficiaryType: BeneficiaryType;
-  beneficiary_type: BeneficiaryType;
-  registrationStartDate?: string | null;
-  registrationEndDate?: string | null;
-  registration_start_date?: string | null;
-  registration_end_date?: string | null;
+  price: number | null;
+  max_attendees: number;
+  registration_start_date?: string;
+  registration_end_date?: string;
+  beneficiary_type: "men" | "women" | "both";
   certificate_type: string;
-  certificateType: string;
-  event_hours: number | null;
-  eventHours: number | null;
-  eventPath: EventPathType;
+  event_hours?: number;
   event_path: EventPathType;
-  eventCategory: EventCategoryType;
   event_category: EventCategoryType;
+  special_requirements?: string;
+  is_project_activity?: boolean;
+  project_id?: string;
 }

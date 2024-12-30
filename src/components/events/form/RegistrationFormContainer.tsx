@@ -15,7 +15,6 @@ interface RegistrationFormContainerProps {
   eventTime: string;
   eventLocation: string;
   onSubmit: () => void;
-  isProject?: boolean;
 }
 
 export const RegistrationFormContainer = ({
@@ -25,7 +24,6 @@ export const RegistrationFormContainer = ({
   eventTime,
   eventLocation,
   onSubmit,
-  isProject = false
 }: RegistrationFormContainerProps) => {
   const { toast } = useToast();
   const { id } = useParams();
@@ -55,7 +53,7 @@ export const RegistrationFormContainer = ({
     const { data, error } = await supabase
       .from('registrations')
       .select('id')
-      .eq(isProject ? 'project_id' : 'event_id', id)
+      .eq('event_id', id)
       .eq('email', email);
 
     if (error) {
@@ -106,6 +104,7 @@ export const RegistrationFormContainer = ({
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
       const registrationData = {
+        event_id: id,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -116,12 +115,6 @@ export const RegistrationFormContainer = ({
         birth_date: formData.birth_date || null,
         national_id: formData.national_id || null,
       };
-
-      if (isProject) {
-        registrationData['project_id'] = id;
-      } else {
-        registrationData['event_id'] = id;
-      }
       
       const { data: newRegistration, error: registrationError } = await supabase
         .from('registrations')
