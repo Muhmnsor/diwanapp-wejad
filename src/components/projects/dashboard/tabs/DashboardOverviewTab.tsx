@@ -33,12 +33,13 @@ export const DashboardOverviewTab = ({
         .select(`
           id,
           title,
+          date,
           attendance_records(status),
           event_feedback(overall_rating)
         `)
         .eq('project_id', project.id)
         .eq('is_project_activity', true)
-        .order('created_at', { ascending: true });
+        .order('date', { ascending: true });
 
       if (activitiesError) {
         console.error('Error fetching activities:', activitiesError);
@@ -46,6 +47,8 @@ export const DashboardOverviewTab = ({
       }
 
       console.log('Raw activities data:', activities);
+
+      const currentDate = new Date().toISOString().split('T')[0];
 
       // حساب الإحصائيات لكل نشاط
       const activitiesWithStats = activities.map(activity => {
@@ -63,11 +66,15 @@ export const DashboardOverviewTab = ({
           ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
           : 0;
 
+        const isPastActivity = activity.date < currentDate;
+
         return {
           id: activity.id,
           title: activity.title,
+          date: activity.date,
           attendanceRate,
-          rating: averageRating
+          rating: averageRating,
+          isPastActivity
         };
       });
 
@@ -78,7 +85,7 @@ export const DashboardOverviewTab = ({
 
   const totalActivities = projectActivities.length;
   const completedActivities = projectActivities.filter(
-    activity => activity.attendanceRate > 0
+    activity => activity.isPastActivity
   ).length;
   
   const averageAttendanceRate = projectActivities.length > 0
