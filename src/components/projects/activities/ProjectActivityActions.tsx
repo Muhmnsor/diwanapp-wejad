@@ -28,10 +28,12 @@ export const ProjectActivityActions = ({
   };
 
   const handleDeleteClick = () => {
+    console.log("Opening delete dialog for activity:", activity);
     setIsDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = () => {
+    console.log("Confirming delete for activity:", activity);
     onDelete();
     setIsDeleteDialogOpen(false);
   };

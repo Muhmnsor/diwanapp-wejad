@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { ProjectActivity } from "@/types/activity";
 
 export const useActivityManagement = (projectId: string, refetchActivities: () => void) => {
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<ProjectActivity | null>(null);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isEditEventOpen, setIsEditEventOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -13,13 +13,13 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
     setIsAddEventOpen(true);
   };
 
-  const handleEditEvent = (projectEvent: any) => {
+  const handleEditEvent = (projectEvent: ProjectActivity) => {
     console.log("Editing project event:", projectEvent);
     setSelectedEvent(projectEvent);
     setIsEditEventOpen(true);
   };
 
-  const handleDeleteEvent = (event: any) => {
+  const handleDeleteEvent = (event: ProjectActivity) => {
     console.log("Deleting project event:", event);
     setSelectedEvent(event);
     setIsDeleteDialogOpen(true);
@@ -27,6 +27,11 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
 
   const confirmDelete = async () => {
     try {
+      if (!selectedEvent) {
+        console.error("No event selected for deletion");
+        return;
+      }
+
       console.log("Confirming delete for event:", selectedEvent);
 
       const { error } = await supabase
