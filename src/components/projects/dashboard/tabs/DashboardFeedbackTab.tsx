@@ -5,6 +5,7 @@ import { RatingInput } from "@/components/events/feedback/RatingInput";
 import { PersonalInfoSection } from "@/components/events/feedback/PersonalInfoSection";
 import { RatingsSection } from "@/components/events/feedback/RatingsSection";
 import { CommentsSection } from "@/components/events/feedback/CommentsSection";
+import { FeedbackLink } from "@/components/events/feedback/FeedbackLink";
 
 interface ActivityFeedback {
   id: string;
@@ -68,12 +69,21 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
     return <div className="text-center p-4">جاري تحميل التقييمات...</div>;
   }
 
+  if (!activitiesFeedback || activitiesFeedback.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground">
+        لا توجد أنشطة لعرض تقييماتها
+      </div>
+    );
+  }
+
   const renderActivityFeedback = (activity: ActivityFeedback) => {
-    if (!activity?.feedback || activity.feedback.length === 0) {
+    if (!activity?.feedback) {
       return (
         <Card key={activity.id} className="p-6">
           <CardHeader className="px-0 pt-0">
             <CardTitle className="text-lg font-semibold">{activity.title}</CardTitle>
+            <div className="text-sm text-muted-foreground">{activity.date}</div>
           </CardHeader>
           <CardContent className="px-0 text-muted-foreground">
             لا توجد تقييمات لهذا النشاط
@@ -89,6 +99,10 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
           <div className="text-sm text-muted-foreground">{activity.date}</div>
         </CardHeader>
         <CardContent className="px-0 space-y-6">
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-2">رابط التقييم</h4>
+            <FeedbackLink eventId={activity.id} />
+          </div>
           {activity.feedback.map((feedback, index) => (
             <div key={index} className="space-y-6 border-b pb-6 last:border-0">
               <RatingsSection
@@ -132,13 +146,7 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">تقييم الأنشطة</h2>
       <div className="space-y-6">
-        {activitiesFeedback && activitiesFeedback.length > 0 ? (
-          activitiesFeedback.map(renderActivityFeedback)
-        ) : (
-          <div className="text-center text-muted-foreground">
-            لا توجد أنشطة لعرض تقييماتها
-          </div>
-        )}
+        {activitiesFeedback.map(renderActivityFeedback)}
       </div>
     </div>
   );
