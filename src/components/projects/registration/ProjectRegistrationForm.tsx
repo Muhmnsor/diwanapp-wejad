@@ -153,6 +153,7 @@ export const ProjectRegistrationForm = ({
         isProjectActivity={false}
         projectTitle={projectTitle}
         formData={formData}
+        onPayment={() => {}}
       />
     );
   }

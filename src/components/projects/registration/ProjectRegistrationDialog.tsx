@@ -10,7 +10,6 @@ import { getEventStatus } from "@/utils/eventUtils";
 import { Project } from "@/types/project";
 import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
 import { EventPathType, EventCategoryType } from "@/types/event";
-import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
 
 interface ProjectRegistrationDialogProps {
   open: boolean;
@@ -89,7 +88,6 @@ export const ProjectRegistrationDialog = ({
             endDate={project.end_date}
             eventType={project.event_type}
             onSubmit={() => onOpenChange(false)}
-            isProject={true}
           />
         )}
       </DialogContent>
