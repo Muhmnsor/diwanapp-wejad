@@ -2,6 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useProjectDashboard = (projectId: string) => {
+  // Fetch project details along with registrations and activities
+  const { data: projectData, isLoading: isProjectLoading } = useQuery({
+    queryKey: ['project-details', projectId],
+    queryFn: async () => {
+      console.log("Fetching project details for:", projectId);
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching project details:", error);
+        throw error;
+      }
+      return data;
+    },
+    enabled: !!projectId,
+  });
+
   // Fetch project registrations
   const { data: registrations = [], isLoading: isRegistrationsLoading } = useQuery({
     queryKey: ['project-registrations', projectId],
@@ -108,6 +128,6 @@ export const useProjectDashboard = (projectId: string) => {
         averageAttendance
       }
     },
-    isLoading: isRegistrationsLoading
+    isLoading: isProjectLoading || isRegistrationsLoading
   };
 };
