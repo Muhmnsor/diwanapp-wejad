@@ -52,19 +52,7 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
       </div>
 
       <div className="py-8 px-8">
-        <ProjectInfo
-          startDate={project.start_date}
-          endDate={project.end_date}
-          attendees={0}
-          maxAttendees={project.max_attendees}
-          eventType={project.event_type}
-          price={project.price}
-          beneficiaryType={project.beneficiary_type}
-          certificateType={project.certificate_type}
-          eventPath={project.event_path}
-          eventCategory={project.event_category}
-          showBadges={false}
-        />
+        <ProjectInfo project={project} />
       </div>
 
       <div className="py-8">
