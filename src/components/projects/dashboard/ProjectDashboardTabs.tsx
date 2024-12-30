@@ -5,6 +5,7 @@ import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/
 import { ProjectTabsList } from "./tabs/ProjectTabsList";
 import { DashboardOverviewTab } from "./tabs/DashboardOverviewTab";
 import { DashboardActivitiesTab } from "./tabs/DashboardActivitiesTab";
+import { DashboardFeedbackTab } from "./tabs/DashboardFeedbackTab";
 import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 interface ProjectDashboardTabsProps {
@@ -52,6 +53,10 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
 
       <TabsContent value="activities" className="mt-6">
         <DashboardActivitiesTab project={project} />
+      </TabsContent>
+
+      <TabsContent value="feedback" className="mt-6">
+        <DashboardFeedbackTab projectId={project.id} />
       </TabsContent>
 
       <TabsContent value="preparation" className="mt-6">
