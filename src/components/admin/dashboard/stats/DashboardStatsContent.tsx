@@ -4,6 +4,7 @@ import { ActivitiesStatsCard } from "./ActivitiesStatsCard";
 import { AttendanceAverageCard } from "./AttendanceAverageCard";
 import { ActivityAttendanceCard } from "./ActivityAttendanceCard";
 import { ActivityRatingCard } from "./ActivityRatingCard";
+import { EventStatsContent } from "./EventStatsContent";
 
 interface DashboardStatsContentProps {
   registrationCount: number;
@@ -11,20 +12,22 @@ interface DashboardStatsContentProps {
   occupancyRate: number;
   project: {
     id: string;
+    event_path: string;
+    event_category: string;
   };
-  activities: {
+  activities?: {
     total: number;
     completed: number;
     averageAttendance: number;
   };
-  attendanceStats: {
+  attendanceStats?: {
     highest: any;
     lowest: any;
-  } | undefined;
-  ratingStats: {
+  };
+  ratingStats?: {
     highest: any;
     lowest: any;
-  } | undefined;
+  };
   isEvent?: boolean;
 }
 
@@ -41,8 +44,20 @@ export const DashboardStatsContent = ({
   console.log("DashboardStatsContent props:", {
     activities,
     attendanceStats,
-    ratingStats
+    ratingStats,
+    isEvent
   });
+
+  if (isEvent) {
+    return (
+      <EventStatsContent
+        registrationCount={registrationCount}
+        remainingSeats={remainingSeats}
+        occupancyRate={occupancyRate}
+        project={project}
+      />
+    );
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -54,39 +69,40 @@ export const DashboardStatsContent = ({
       
       <PathCategoryCard projectId={project.id} />
 
-      {!isEvent && (
-        <>
-          <ActivitiesStatsCard
-            activities={{
-              total: activities.total,
-              completed: activities.completed
-            }}
-          />
-          <AttendanceAverageCard
-            averageAttendance={activities.averageAttendance}
-          />
-          <ActivityAttendanceCard
-            type="highest"
-            title="أعلى نسبة حضور"
-            activity={attendanceStats?.highest}
-          />
-          <ActivityAttendanceCard
-            type="lowest"
-            title="أقل نسبة حضور"
-            activity={attendanceStats?.lowest}
-          />
-          <ActivityRatingCard
-            type="highest"
-            title="أعلى نشاط تقييماً"
-            activity={ratingStats?.highest}
-          />
-          <ActivityRatingCard
-            type="lowest"
-            title="أقل نشاط تقييماً"
-            activity={ratingStats?.lowest}
-          />
-        </>
-      )}
+      <ActivitiesStatsCard
+        activities={{
+          total: activities?.total || 0,
+          completed: activities?.completed || 0
+        }}
+      />
+      
+      <AttendanceAverageCard
+        averageAttendance={activities?.averageAttendance || 0}
+      />
+      
+      <ActivityAttendanceCard
+        type="highest"
+        title="أعلى نسبة حضور"
+        activity={attendanceStats?.highest}
+      />
+      
+      <ActivityAttendanceCard
+        type="lowest"
+        title="أقل نسبة حضور"
+        activity={attendanceStats?.lowest}
+      />
+      
+      <ActivityRatingCard
+        type="highest"
+        title="أعلى نشاط تقييماً"
+        activity={ratingStats?.highest}
+      />
+      
+      <ActivityRatingCard
+        type="lowest"
+        title="أقل نشاط تقييماً"
+        activity={ratingStats?.lowest}
+      />
     </div>
   );
 };
