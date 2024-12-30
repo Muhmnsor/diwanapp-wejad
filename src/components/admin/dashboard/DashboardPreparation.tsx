@@ -23,11 +23,14 @@ export const DashboardPreparation = ({ projectId, eventId, activities = [] }: Da
   } = useAttendanceManagement(projectId, eventId, selectedActivityId);
 
   useEffect(() => {
-    if (projectId && selectedActivityId) {
-      console.log("Fetching registrations for activity:", selectedActivityId);
-      fetchRegistrations();
-    } else if (eventId) {
+    // For regular events, fetch registrations directly
+    if (eventId && !projectId) {
       console.log("Fetching registrations for event:", eventId);
+      fetchRegistrations();
+    }
+    // For project activities, only fetch when an activity is selected
+    else if (projectId && selectedActivityId) {
+      console.log("Fetching registrations for activity:", selectedActivityId);
       fetchRegistrations();
     }
   }, [projectId, eventId, selectedActivityId, fetchRegistrations]);
@@ -35,9 +38,12 @@ export const DashboardPreparation = ({ projectId, eventId, activities = [] }: Da
   // Only show activity selector for projects
   const showActivitySelector = projectId && activities && activities.length > 0;
 
+  // For regular events, show attendance components directly
+  const showAttendanceComponents = (!projectId && eventId) || (projectId && selectedActivityId);
+
   return (
     <div className="space-y-6">
-      {showActivitySelector ? (
+      {showActivitySelector && (
         <div className="space-y-4">
           <h3 className="text-lg font-medium">اختر النشاط للتحضير</h3>
           <Select
@@ -56,10 +62,9 @@ export const DashboardPreparation = ({ projectId, eventId, activities = [] }: Da
             </SelectContent>
           </Select>
         </div>
-      ) : null}
+      )}
 
-      {/* Show attendance controls only if it's a single event or if an activity is selected */}
-      {(!showActivitySelector || (showActivitySelector && selectedActivityId)) && (
+      {showAttendanceComponents && (
         <>
           <AttendanceControls
             onBarcodeScanned={handleBarcodeScanned}
