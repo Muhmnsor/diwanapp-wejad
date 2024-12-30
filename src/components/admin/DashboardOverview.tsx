@@ -1,6 +1,8 @@
-import { DashboardStats } from "./DashboardStats";
-import { RegistrantsTable } from "./dashboard/RegistrantsTable";
-import { useRegistrantsStats } from "@/hooks/useRegistrantsStats";
+import { Card, CardContent } from "@/components/ui/card";
+import { RegistrationStats } from "./dashboard/stats/RegistrationStats";
+import { RatingStats } from "./dashboard/stats/RatingStats";
+import { AttendanceStats } from "./dashboard/stats/AttendanceStats";
+import { ReactNode } from "react";
 
 interface DashboardOverviewProps {
   registrationCount: number;
@@ -11,15 +13,7 @@ interface DashboardOverviewProps {
   eventPath?: string;
   eventCategory?: string;
   projectId?: string;
-  projectActivities?: {
-    id: string;
-    title: string;
-    attendanceRate?: number;
-    rating?: number;
-  }[];
-  totalActivities?: number;
-  completedActivities?: number;
-  averageAttendanceRate?: number;
+  ActivityStatsComponent?: ReactNode;
 }
 
 export const DashboardOverview = ({
@@ -31,46 +25,28 @@ export const DashboardOverview = ({
   eventPath,
   eventCategory,
   projectId,
-  projectActivities = [],
-  totalActivities = 0,
-  completedActivities = 0,
-  averageAttendanceRate = 0
+  ActivityStatsComponent
 }: DashboardOverviewProps) => {
-  console.log("DashboardOverview props:", {
-    registrationCount,
-    remainingSeats,
-    occupancyRate,
-    eventDate,
-    eventTime,
-    eventPath,
-    eventCategory,
-    projectId,
-    projectActivities,
-    totalActivities,
-    completedActivities,
-    averageAttendanceRate
-  });
-
-  const { registrantsStats, isLoading } = useRegistrantsStats(projectId || '');
-
   return (
-    <div className="space-y-8">
-      <DashboardStats
-        registrationCount={registrationCount}
-        remainingSeats={remainingSeats}
-        occupancyRate={occupancyRate}
-        eventPath={eventPath}
-        eventCategory={eventCategory}
-        projectActivities={projectActivities}
-        totalActivities={totalActivities}
-        completedActivities={completedActivities}
-        averageAttendanceRate={averageAttendanceRate}
-      />
-
-      <RegistrantsTable 
-        registrantsStats={registrantsStats}
-        isLoading={isLoading}
-      />
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <RegistrationStats
+            registrationCount={registrationCount}
+            remainingSeats={remainingSeats}
+            occupancyRate={occupancyRate}
+          />
+          {ActivityStatsComponent}
+          <AttendanceStats
+            eventDate={eventDate}
+            eventTime={eventTime}
+          />
+          <RatingStats
+            eventPath={eventPath}
+            eventCategory={eventCategory}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 };
