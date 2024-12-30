@@ -6,29 +6,35 @@ interface DashboardOverviewProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  project: {
-    start_date: string;
-    end_date: string;
-    event_path?: string;
-    event_category?: string;
-    id: string;
-  };
+  eventDate: string;
+  eventTime: string;
+  eventPath?: string;
+  eventCategory?: string;
+  projectId?: string;
 }
 
 export const DashboardOverview = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project
+  eventDate,
+  eventTime,
+  eventPath,
+  eventCategory,
+  projectId
 }: DashboardOverviewProps) => {
   console.log("DashboardOverview props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
-    project
+    eventDate,
+    eventTime,
+    eventPath,
+    eventCategory,
+    projectId
   });
 
-  const { registrantsStats, isLoading } = useRegistrantsStats(project.id);
+  const { registrantsStats, isLoading } = useRegistrantsStats(projectId || '');
 
   return (
     <div className="space-y-8">
@@ -36,7 +42,10 @@ export const DashboardOverview = ({
         registrationCount={registrationCount}
         remainingSeats={remainingSeats}
         occupancyRate={occupancyRate}
-        project={project}
+        eventDate={eventDate}
+        eventTime={eventTime}
+        eventPath={eventPath}
+        eventCategory={eventCategory}
       />
 
       <RegistrantsTable 
