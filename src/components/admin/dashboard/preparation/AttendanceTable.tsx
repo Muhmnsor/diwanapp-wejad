@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 
 interface AttendanceTableProps {
   registrations: any[];
@@ -15,8 +15,6 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
         <TableHeader>
           <TableRow>
             <TableHead className="text-right">الاسم</TableHead>
-            <TableHead className="text-right">رقم الجوال</TableHead>
-            <TableHead className="text-right">البريد الإلكتروني</TableHead>
             <TableHead className="text-right">رقم التسجيل</TableHead>
             <TableHead className="text-right">الحالة</TableHead>
             <TableHead className="text-right">الإجراءات</TableHead>
@@ -26,13 +24,11 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
           {registrations.map((registration: any) => (
             <TableRow key={registration.id}>
               <TableCell>{registration.name}</TableCell>
-              <TableCell>{registration.phone}</TableCell>
-              <TableCell>{registration.email}</TableCell>
               <TableCell>{registration.registration_number}</TableCell>
               <TableCell>
                 {registration.attendance_records?.[0]?.status === 'present' ? (
                   <span className="text-green-600 flex items-center gap-1">
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle className="h-4 w-4" />
                     حاضر
                   </span>
                 ) : registration.attendance_records?.[0]?.status === 'absent' ? (
@@ -52,7 +48,7 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
                     className="text-green-600"
                     onClick={() => onAttendanceChange(registration.id, 'present')}
                   >
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
