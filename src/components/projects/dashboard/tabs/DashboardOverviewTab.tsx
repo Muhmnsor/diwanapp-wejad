@@ -21,13 +21,11 @@ export const DashboardOverviewTab = ({
   occupancyRate,
   project,
 }: DashboardOverviewTabProps) => {
-  // جلب أنشطة المشروع مع بيانات الحضور والتقييم
   const { data: projectActivities = [] } = useQuery({
     queryKey: ['project-activities-stats', project.id],
     queryFn: async () => {
       console.log('Fetching project activities stats for project:', project.id);
       
-      // جلب الأنشطة
       const { data: activities, error: activitiesError } = await supabase
         .from('events')
         .select(`
@@ -83,12 +81,13 @@ export const DashboardOverviewTab = ({
     }
   });
 
-  const totalActivities = projectActivities.length;
-  const completedActivities = projectActivities.filter(
+  // حساب الإحصائيات الإجمالية
+  const totalActivities = projectActivities?.length || 0;
+  const completedActivities = projectActivities?.filter(
     activity => activity.isPastActivity
-  ).length;
+  ).length || 0;
   
-  const averageAttendanceRate = projectActivities.length > 0
+  const averageAttendanceRate = projectActivities?.length > 0
     ? projectActivities.reduce((sum, activity) => sum + (activity.attendanceRate || 0), 0) / projectActivities.length
     : 0;
 
