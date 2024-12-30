@@ -40,6 +40,7 @@ export const DashboardOverviewTab = ({
     queryFn: async () => {
       console.log('Fetching project activities stats for project:', project.id);
       
+      // Fetch activities with their attendance records
       const { data: activities, error } = await supabase
         .from('events')
         .select(`
@@ -61,11 +62,13 @@ export const DashboardOverviewTab = ({
       console.log('Raw activities data:', activities);
 
       const currentDate = new Date().toISOString().split('T')[0];
+      
+      // Calculate completed activities (activities with past dates)
       const completedActivities = activities?.filter(
         (activity: any) => activity.date <= currentDate
       ) || [];
 
-      // Calculate average attendance rate
+      // Calculate attendance rates for each activity
       const attendanceRates = activities?.map((activity: any) => {
         const totalAttendees = activity.attendance_records?.length || 0;
         const presentAttendees = activity.attendance_records?.filter(
@@ -75,6 +78,7 @@ export const DashboardOverviewTab = ({
         return totalAttendees > 0 ? (presentAttendees / totalAttendees) * 100 : 0;
       }) || [];
 
+      // Calculate average attendance rate
       const averageAttendanceRate = attendanceRates.length > 0
         ? attendanceRates.reduce((sum: number, rate: number) => sum + rate, 0) / attendanceRates.length
         : 0;
