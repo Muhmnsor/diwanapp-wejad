@@ -25,6 +25,10 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
     return <div className="text-center py-4">جاري التحميل...</div>;
   }
 
+  if (!registrantsStats.length) {
+    return <div className="text-center py-4">لا يوجد مسجلين حتى الآن</div>;
+  }
+
   return (
     <div className="bg-white rounded-lg p-6 shadow">
       <h3 className="text-lg font-semibold mb-4 text-right">قائمة المسجلين وإحصائيات الحضور</h3>
