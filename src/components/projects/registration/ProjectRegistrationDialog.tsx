@@ -4,32 +4,76 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { getEventStatus } from "@/utils/eventUtils";
+import { Project } from "@/types/project";
 import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
 
 interface ProjectRegistrationDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  projectId: string;
-  maxAttendees: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  project: Project;
 }
 
 export const ProjectRegistrationDialog = ({
-  isOpen,
-  onClose,
-  projectId,
-  maxAttendees,
+  open,
+  onOpenChange,
+  project,
 }: ProjectRegistrationDialogProps) => {
+  const status = getEventStatus({
+    ...project,
+    date: project.end_date,
+    registrationStartDate: project.registration_start_date,
+    registrationEndDate: project.registration_end_date,
+  });
+  
+  console.log('Project registration status:', status);
+
+  if (status !== 'available' && open) {
+    console.log('Closing dialog because registration is not allowed. Status:', status);
+    onOpenChange(false);
+    return null;
+  }
+
+  const getStatusMessage = () => {
+    switch (status) {
+      case 'full':
+        return "اكتمل التسجيل";
+      case 'ended':
+        return "انتهى التسجيل";
+      case 'notStarted':
+        return "لم يبدأ التسجيل بعد";
+      case 'eventStarted':
+        return "انتهى المشروع";
+      default:
+        return "";
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-right">التسجيل في المشروع</DialogTitle>
+          <DialogTitle className="text-right">تسجيل في {project.title}</DialogTitle>
         </DialogHeader>
-        <ProjectRegistrationForm
-          projectId={projectId}
-          maxAttendees={maxAttendees}
-          onSuccess={onClose}
-        />
+        {status !== 'available' ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {getStatusMessage()}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <ProjectRegistrationForm
+            projectTitle={project.title}
+            projectPrice={project.price}
+            startDate={project.start_date}
+            endDate={project.end_date}
+            eventType={project.event_type}
+            onSubmit={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
