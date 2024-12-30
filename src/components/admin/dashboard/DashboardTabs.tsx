@@ -85,6 +85,11 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
             event_path: event.event_path || '',
             event_category: event.event_category || ''
           }}
+          activities={{
+            total: 0,
+            completed: 0,
+            averageAttendance: 0
+          }}
         />
       </TabsContent>
 

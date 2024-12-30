@@ -54,6 +54,12 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
   const remainingSeats = project.max_attendees - registrationCount;
   const occupancyRate = (registrationCount / project.max_attendees) * 100;
 
+  // Calculate completed activities
+  const completedActivities = projectActivities.filter(activity => {
+    const activityDate = new Date(activity.date);
+    return activityDate < new Date();
+  }).length;
+
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
       <TabsList className="w-full grid grid-cols-5 bg-secondary/20 p-1 rounded-xl">
@@ -80,6 +86,11 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           remainingSeats={remainingSeats}
           occupancyRate={occupancyRate}
           project={project}
+          activities={{
+            total: projectActivities.length,
+            completed: completedActivities,
+            averageAttendance: 0 // This will be updated when we implement attendance tracking
+          }}
         />
       </TabsContent>
 
