@@ -130,7 +130,7 @@ const EventDetails = () => {
               id={id!}
             >
               <Tabs defaultValue="details" className="w-full">
-                <div className="bg-white border-b">
+                <div className="bg-white">
                   <div className="container mx-auto">
                     <TabsList 
                       className="w-full justify-start rounded-none bg-transparent h-auto" 
@@ -138,13 +138,13 @@ const EventDetails = () => {
                     >
                       <TabsTrigger 
                         value="details" 
-                        className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
+                        className="data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-4 py-2"
                       >
                         تفاصيل الفعالية
                       </TabsTrigger>
                       <TabsTrigger 
                         value="dashboard"
-                        className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2"
+                        className="data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-4 py-2"
                       >
                         لوحة التحكم
                       </TabsTrigger>
