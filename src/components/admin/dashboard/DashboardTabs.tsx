@@ -85,8 +85,8 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
   };
 
   return (
-    <Tabs defaultValue="overview" className="w-full space-y-6">
-      <TabsList className="w-full justify-start h-auto p-0 bg-transparent" dir="rtl">
+    <Tabs defaultValue="overview" className="w-full space-y-6" dir="rtl">
+      <TabsList className="w-full justify-start h-auto p-0 bg-transparent">
         <TabsTrigger
           value="overview"
           className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary px-4 py-2"

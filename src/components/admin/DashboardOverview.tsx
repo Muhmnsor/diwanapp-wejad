@@ -41,7 +41,7 @@ export const DashboardOverview = ({
   const { registrantsStats, isLoading } = useRegistrantsStats(project?.id);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" dir="rtl">
       <DashboardStats
         registrationCount={registrationCount}
         remainingSeats={remainingSeats}
