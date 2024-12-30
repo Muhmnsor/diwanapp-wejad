@@ -29,17 +29,7 @@ export const useAttendanceManagement = (projectId: string) => {
     }
   };
 
-  const handleEventGroupAttendance = async (status: 'present' | 'absent') => {
-    await handleEventGroupAttendance(status);
-  };
-
-  const handleActivityGroupAttendance = async (status: 'present' | 'absent', activityId: string) => {
-    await handleActivityGroupAttendance(status, activityId);
-  };
-
   return {
-    attendanceStats: activityId ? activityStats : eventStats,
-    setAttendanceStats: activityId ? setActivityStats : setEventStats,
     handleAttendanceChange,
     handleEventGroupAttendance,
     handleActivityGroupAttendance
