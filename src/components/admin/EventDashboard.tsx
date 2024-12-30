@@ -59,6 +59,6 @@ export const EventDashboard = ({ eventId, isProject = false }: EventDashboardPro
   return isProject ? (
     <ProjectDashboardTabs project={data} />
   ) : (
-    <DashboardTabs event={data} showRegistrants={false} />
+    <DashboardTabs event={data} />
   );
 };
