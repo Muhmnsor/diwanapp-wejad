@@ -48,7 +48,6 @@ export const DashboardOverviewTab = ({
 
       const currentDate = new Date().toISOString().split('T')[0];
 
-      // حساب الإحصائيات لكل نشاط
       const activitiesWithStats = activities.map(activity => {
         const totalAttendees = activity.attendance_records?.length || 0;
         const presentAttendees = activity.attendance_records?.filter(
@@ -64,7 +63,7 @@ export const DashboardOverviewTab = ({
           ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
           : 0;
 
-        const isPastActivity = activity.date < currentDate;
+        const isPastActivity = new Date(activity.date) < new Date(currentDate);
 
         return {
           id: activity.id,
@@ -81,7 +80,8 @@ export const DashboardOverviewTab = ({
     }
   });
 
-  // حساب الإحصائيات الإجمالية
+  console.log('Project activities after query:', projectActivities);
+
   const totalActivities = projectActivities?.length || 0;
   const completedActivities = projectActivities?.filter(
     activity => activity.isPastActivity
