@@ -29,6 +29,7 @@ export const RegistrationsTable = ({
     email: "",
     phone: "",
   });
+  const [localRegistrations, setLocalRegistrations] = useState(registrations);
 
   const handleDelete = async (id: string) => {
     try {
@@ -67,21 +68,27 @@ export const RegistrationsTable = ({
   const handleSave = async (id: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('registrations')
         .update({
           name: editForm.name,
           email: editForm.email,
           phone: editForm.phone,
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
       if (error) throw error;
 
+      // Update local state
+      setLocalRegistrations(prevRegistrations => 
+        prevRegistrations.map(reg => 
+          reg.id === id ? { ...reg, ...editForm } : reg
+        )
+      );
+      
       toast.success('تم تحديث بيانات المسجل بنجاح');
       setEditingId(null);
-      // Refresh the page to show updated data
-      window.location.reload();
     } catch (error) {
       console.error('Error updating registration:', error);
       toast.error('حدث خطأ أثناء تحديث البيانات');
@@ -112,7 +119,7 @@ export const RegistrationsTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {registrations.map((registration) => (
+          {localRegistrations.map((registration) => (
             <TableRow key={registration.id} className="hover:bg-gray-50">
               <TableCell className="font-medium">
                 {editingId === registration.id ? (
