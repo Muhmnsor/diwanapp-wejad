@@ -6,7 +6,7 @@ interface AttendanceAverageCardProps {
 }
 
 export const AttendanceAverageCard = ({ averageAttendance }: AttendanceAverageCardProps) => {
-  console.log("Average attendance:", averageAttendance);
+  console.log("Rendering AttendanceAverageCard with average:", averageAttendance);
 
   return (
     <Card>
