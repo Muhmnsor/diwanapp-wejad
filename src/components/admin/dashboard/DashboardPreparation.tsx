@@ -38,7 +38,7 @@ export const DashboardPreparation = ({ projectId, eventId, activities = [] }: Da
   // Only show activity selector for projects
   const showActivitySelector = projectId && activities && activities.length > 0;
 
-  // For regular events, show attendance components directly
+  // For regular events or selected activities, show attendance components
   const showAttendanceComponents = (!projectId && eventId) || (projectId && selectedActivityId);
 
   return (
