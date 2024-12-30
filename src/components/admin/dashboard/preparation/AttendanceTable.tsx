@@ -57,16 +57,18 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
                 <TableCell>{registration.name}</TableCell>
                 <TableCell>{registration.registration_number}</TableCell>
                 <TableCell>
-                  {currentActivityRecord?.status === 'present' ? (
-                    <span className="text-green-600 flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4" />
-                      حاضر
-                    </span>
-                  ) : currentActivityRecord?.status === 'absent' ? (
-                    <span className="text-red-600 flex items-center gap-1">
-                      <XCircle className="h-4 w-4" />
-                      غائب
-                    </span>
+                  {currentActivityRecord ? (
+                    currentActivityRecord.status === 'present' ? (
+                      <span className="text-green-600 flex items-center gap-1">
+                        <CheckCircle className="h-4 w-4" />
+                        حاضر
+                      </span>
+                    ) : (
+                      <span className="text-red-600 flex items-center gap-1">
+                        <XCircle className="h-4 w-4" />
+                        غائب
+                      </span>
+                    )
                   ) : (
                     <span className="text-gray-500">لم يتم التحضير</span>
                   )}
