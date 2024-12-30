@@ -6,14 +6,14 @@ export const useAttendanceManagement = (projectId: string) => {
     attendanceStats: eventStats,
     setAttendanceStats: setEventStats,
     handleAttendanceChange: handleEventAttendanceChange,
-    handleGroupAttendance: handleEventGroupAttendance
+    handleGroupAttendance: eventGroupAttendance
   } = useEventAttendance(projectId);
 
   const {
     attendanceStats: activityStats,
     setAttendanceStats: setActivityStats,
     handleAttendanceChange: handleActivityAttendanceChange,
-    handleGroupAttendance: handleActivityGroupAttendance
+    handleGroupAttendance: activityGroupAttendance
   } = useActivityAttendance(projectId);
 
   const handleAttendanceChange = async (
@@ -21,6 +21,8 @@ export const useAttendanceManagement = (projectId: string) => {
     status: 'present' | 'absent',
     activityId?: string
   ) => {
+    console.log('Handling attendance change:', { registrationId, status, activityId });
+    
     if (activityId) {
       await handleActivityAttendanceChange(registrationId, status, activityId);
     } else {
@@ -32,7 +34,7 @@ export const useAttendanceManagement = (projectId: string) => {
     attendanceStats: eventStats,
     setAttendanceStats: setEventStats,
     handleAttendanceChange,
-    handleEventGroupAttendance,
-    handleActivityGroupAttendance
+    handleEventGroupAttendance: eventGroupAttendance,
+    handleActivityGroupAttendance: activityGroupAttendance
   };
 };
