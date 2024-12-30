@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { AttendanceStats } from "./preparation/AttendanceStats";
 import { AttendanceControls } from "./preparation/AttendanceControls";
 import { AttendanceTable } from "./preparation/AttendanceTable";
-import { useAttendanceManagement } from "@/hooks/useAttendanceManagement";
+import { useEventAttendance } from "@/hooks/attendance/useEventAttendance";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,7 +35,7 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     setAttendanceStats,
     handleAttendanceChange,
     handleGroupAttendance
-  } = useAttendanceManagement(eventId);
+  } = useEventAttendance(eventId);
 
   const handleBarcodeScanned = async (code: string) => {
     try {

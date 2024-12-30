@@ -82,43 +82,7 @@ export const useEventAttendance = (eventId: string) => {
       console.log('Found registrations:', registrations);
 
       for (const registration of registrations) {
-        const { data: existingRecord } = await supabase
-          .from('attendance_records')
-          .select('*')
-          .eq('registration_id', registration.id)
-          .eq('event_id', eventId)
-          .maybeSingle();
-
-        if (!existingRecord) {
-          const { error: insertError } = await supabase
-            .from('attendance_records')
-            .insert({
-              registration_id: registration.id,
-              event_id: eventId,
-              status,
-              check_in_time: status === 'present' ? new Date().toISOString() : null
-            });
-
-          if (insertError) {
-            console.error('Error inserting attendance record:', insertError);
-            continue;
-          }
-        }
-      }
-
-      const { data: updatedRecords } = await supabase
-        .from('attendance_records')
-        .select('status')
-        .eq('event_id', eventId);
-
-      if (updatedRecords) {
-        const newStats = {
-          total: registrations.length,
-          present: updatedRecords.filter(r => r.status === 'present').length,
-          absent: updatedRecords.filter(r => r.status === 'absent').length,
-          notRecorded: registrations.length - updatedRecords.length
-        };
-        setAttendanceStats(newStats);
+        await handleAttendanceChange(registration.id, status);
       }
 
     } catch (error) {
