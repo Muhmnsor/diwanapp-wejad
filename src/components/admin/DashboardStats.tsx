@@ -75,7 +75,7 @@ export const DashboardStats = ({
         attendanceCount: activity.attendance_records.filter(record => record.status === 'present').length,
         totalRegistrations,
         percentage: totalRegistrations > 0 
-          ? (activity.attendance_records.filter(record => record.status === 'present').length / totalRegistrations)
+          ? (activity.attendance_records.filter(record => record.status === 'present').length / totalRegistrations) * 100
           : 0
       }));
 
@@ -128,7 +128,7 @@ export const DashboardStats = ({
             ? activity.event_feedback.reduce((sum: number, feedback: any) => sum + (feedback.overall_rating || 0), 0) / activity.event_feedback.length
             : 0
         }))
-        .filter(activity => activity.rating > 0); // Only include activities with ratings
+        .filter(activity => activity.rating > 0);
 
       if (!activitiesWithRatings.length) {
         console.log('No activities found with ratings');

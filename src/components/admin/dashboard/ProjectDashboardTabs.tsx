@@ -39,12 +39,16 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select('*')
+        .select(`
+          *,
+          attendance_records!attendance_records_activity_id_fkey(status)
+        `)
         .eq('project_id', project.id)
         .eq('is_project_activity', true)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
+      console.log("Fetched activities with attendance:", data);
       return data || [];
     },
   });
@@ -54,11 +58,33 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
   const remainingSeats = project.max_attendees - registrationCount;
   const occupancyRate = (registrationCount / project.max_attendees) * 100;
 
-  // Calculate completed activities
+  // Calculate completed activities and average attendance
   const completedActivities = projectActivities.filter(activity => {
     const activityDate = new Date(activity.date);
     return activityDate < new Date();
-  }).length;
+  });
+
+  const calculateAverageAttendance = () => {
+    if (!completedActivities.length || !registrations.length) return 0;
+
+    const totalAttendance = completedActivities.reduce((sum, activity) => {
+      const presentCount = activity.attendance_records?.filter(
+        (record: { status: string }) => record.status === 'present'
+      ).length || 0;
+      return sum + (presentCount / registrations.length) * 100;
+    }, 0);
+
+    const average = totalAttendance / completedActivities.length;
+    console.log("Average attendance calculation:", {
+      totalAttendance,
+      completedActivities: completedActivities.length,
+      registrations: registrations.length,
+      average
+    });
+    return Math.round(average);
+  };
+
+  const averageAttendance = calculateAverageAttendance();
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
@@ -88,8 +114,8 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           project={project}
           activities={{
             total: projectActivities.length,
-            completed: completedActivities,
-            averageAttendance: 0 // This will be updated when we implement attendance tracking
+            completed: completedActivities.length,
+            averageAttendance
           }}
         />
       </TabsContent>
