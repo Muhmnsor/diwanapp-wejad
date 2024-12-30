@@ -1,113 +1,54 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardOverview } from "../DashboardOverview";
-import { DashboardRegistrations } from "../DashboardRegistrations";
-import { ReportsTab } from "./ReportsTab";
-import { FeedbackTab } from "./FeedbackTab";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { DashboardPreparation } from "./DashboardPreparation";
+import { useDashboardData } from "./useDashboardData";
 
 interface DashboardTabsProps {
-  event: {
-    id: string;
-    max_attendees: number;
-    date: string;
-    time: string;
-    event_path?: string;
-    event_category?: string;
-  };
+  event: any;
+  showRegistrants?: boolean;
 }
 
-export const DashboardTabs = ({ event }: DashboardTabsProps) => {
-  // Fetch registrations count
-  const { data: registrations = [] } = useQuery({
-    queryKey: ['registrations', event.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('event_id', event.id);
+export const DashboardTabs = ({ event, showRegistrants = true }: DashboardTabsProps) => {
+  const { data, isLoading, error } = useDashboardData(event.id);
 
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  if (isLoading) {
+    return <div className="p-4">جاري التحميل...</div>;
+  }
 
-  // Calculate dashboard metrics
-  const registrationCount = registrations.length;
-  const remainingSeats = event.max_attendees - registrationCount;
-  const occupancyRate = (registrationCount / event.max_attendees) * 100;
+  if (error || !data) {
+    return <div className="p-4 text-red-500">حدث خطأ في تحميل البيانات</div>;
+  }
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
-      <TabsList className="w-full grid grid-cols-5 bg-secondary/20 p-1 rounded-xl">
-        <TabsTrigger 
-          value="overview" 
-          className="data-[state=active]:bg-white"
-        >
-          نظرة عامة
-        </TabsTrigger>
-        <TabsTrigger 
-          value="registrations"
-          className="data-[state=active]:bg-white"
-        >
-          المسجلين
-        </TabsTrigger>
-        <TabsTrigger 
-          value="preparation"
-          className="data-[state=active]:bg-white"
-        >
-          التحضير
-        </TabsTrigger>
-        <TabsTrigger 
-          value="report"
-          className="data-[state=active]:bg-white"
-        >
-          التقارير
-        </TabsTrigger>
-        <TabsTrigger 
-          value="feedback"
-          className="data-[state=active]:bg-white"
-        >
-          التقييمات
-        </TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="overview" className="mt-6">
-        <DashboardOverview
-          registrationCount={registrationCount}
-          remainingSeats={remainingSeats}
-          occupancyRate={occupancyRate}
-          project={{
-            id: event.id,
-            start_date: event.date,
-            end_date: event.time,
-            event_path: event.event_path || '',
-            event_category: event.event_category || ''
-          }}
-          activities={{
-            total: 0,
-            completed: 0,
-            averageAttendance: 0
-          }}
-        />
-      </TabsContent>
+      <div className="bg-white border-b">
+        <div className="container mx-auto">
+          <TabsList className="w-full justify-start rounded-none bg-transparent h-auto py-2">
+            <TabsTrigger
+              value="overview"
+              className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-primary data-[state=active]:border-b-2 rounded-none px-4 pb-2"
+            >
+              نظرة عامة
+            </TabsTrigger>
+          </TabsList>
+        </div>
+      </div>
 
-      <TabsContent value="registrations" className="mt-6">
-        <DashboardRegistrations eventId={event.id} />
-      </TabsContent>
-
-      <TabsContent value="preparation" className="mt-6">
-        <DashboardPreparation eventId={event.id} />
-      </TabsContent>
-
-      <TabsContent value="report" className="mt-6">
-        <ReportsTab eventId={event.id} />
-      </TabsContent>
-
-      <TabsContent value="feedback" className="mt-6">
-        <FeedbackTab eventId={event.id} />
-      </TabsContent>
+      <div className="container mx-auto px-4">
+        <TabsContent value="overview" className="mt-0">
+          <DashboardOverview
+            registrationCount={data.registrationCount}
+            remainingSeats={data.remainingSeats}
+            occupancyRate={data.occupancyRate}
+            project={event}
+            activities={{
+              total: 0,
+              completed: 0,
+              averageAttendance: 0
+            }}
+            showRegistrants={showRegistrants}
+          />
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };

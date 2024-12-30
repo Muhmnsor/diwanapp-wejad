@@ -18,6 +18,7 @@ interface DashboardOverviewProps {
     completed: number;
     averageAttendance: number;
   };
+  showRegistrants?: boolean;
 }
 
 export const DashboardOverview = ({
@@ -25,14 +26,16 @@ export const DashboardOverview = ({
   remainingSeats,
   occupancyRate,
   project,
-  activities
+  activities,
+  showRegistrants = true
 }: DashboardOverviewProps) => {
   console.log("DashboardOverview props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
     project,
-    activities
+    activities,
+    showRegistrants
   });
 
   const { registrantsStats, isLoading } = useRegistrantsStats(project.id);
@@ -47,10 +50,12 @@ export const DashboardOverview = ({
         activities={activities}
       />
 
-      <RegistrantsTable 
-        registrantsStats={registrantsStats}
-        isLoading={isLoading}
-      />
+      {showRegistrants && (
+        <RegistrantsTable 
+          registrantsStats={registrantsStats}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 };
