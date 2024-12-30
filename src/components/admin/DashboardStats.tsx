@@ -1,12 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, Clock } from "lucide-react";
+import { Users } from "lucide-react";
 
 interface DashboardStatsProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  eventDate: string;
-  eventTime: string;
   eventPath?: string;
   eventCategory?: string;
 }
@@ -15,8 +13,6 @@ export const DashboardStats = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  eventDate,
-  eventTime,
   eventPath,
   eventCategory,
 }: DashboardStatsProps) => {
@@ -24,8 +20,6 @@ export const DashboardStats = ({
     registrationCount,
     remainingSeats,
     occupancyRate,
-    eventDate,
-    eventTime,
     eventPath,
     eventCategory,
   });
@@ -61,7 +55,7 @@ export const DashboardStats = ({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">إجمالي المسجلين</CardTitle>
@@ -87,20 +81,6 @@ export const DashboardStats = ({
               {formatEventPath(eventPath)} - {formatEventCategory(eventCategory)}
             </p>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">موعد الفعالية</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{eventDate}</div>
-          <div className="flex items-center text-xs text-muted-foreground">
-            <Clock className="mr-1 h-3 w-3" />
-            {eventTime}
-          </div>
         </CardContent>
       </Card>
     </div>

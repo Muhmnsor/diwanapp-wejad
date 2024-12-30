@@ -6,8 +6,6 @@ interface DashboardOverviewProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  eventDate: string;
-  eventTime: string;
   eventPath?: string;
   eventCategory?: string;
   projectId?: string;
@@ -17,8 +15,6 @@ export const DashboardOverview = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  eventDate,
-  eventTime,
   eventPath,
   eventCategory,
   projectId
@@ -27,8 +23,6 @@ export const DashboardOverview = ({
     registrationCount,
     remainingSeats,
     occupancyRate,
-    eventDate,
-    eventTime,
     eventPath,
     eventCategory,
     projectId
@@ -42,8 +36,6 @@ export const DashboardOverview = ({
         registrationCount={registrationCount}
         remainingSeats={remainingSeats}
         occupancyRate={occupancyRate}
-        eventDate={eventDate}
-        eventTime={eventTime}
         eventPath={eventPath}
         eventCategory={eventCategory}
       />
