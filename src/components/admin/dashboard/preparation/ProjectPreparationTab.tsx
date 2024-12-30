@@ -55,7 +55,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
     enabled: !!selectedActivity,
   });
 
-  const { handleAttendanceChange, handleGroupAttendance } = useAttendanceManagement(projectId, selectedActivity);
+  const { handleAttendanceChange, handleGroupAttendance } = useAttendanceManagement(projectId);
 
   // Calculate attendance stats
   const stats = {
@@ -81,7 +81,11 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
   };
 
   const handleGroupAttendanceClick = async (status: 'present' | 'absent') => {
-    await handleGroupAttendance(registrations, status);
+    if (!selectedActivity) {
+      toast.error("الرجاء اختيار النشاط أولاً");
+      return;
+    }
+    await handleGroupAttendance(status);
     refetchAttendance();
   };
 
