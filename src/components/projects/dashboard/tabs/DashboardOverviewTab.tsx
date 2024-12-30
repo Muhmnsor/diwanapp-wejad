@@ -66,7 +66,7 @@ export const DashboardOverviewTab = ({
       // Calculate completed activities (activities with past dates)
       const completedActivities = activities?.filter(
         (activity: any) => activity.date <= currentDate
-      ) || [];
+      ).length || 0;
 
       // Calculate attendance rates for each activity
       const attendanceRates = activities?.map((activity: any) => {
@@ -86,7 +86,7 @@ export const DashboardOverviewTab = ({
       const result = {
         activities: activities || [],
         totalActivities: activities?.length || 0,
-        completedActivities: completedActivities.length,
+        completedActivities,
         averageAttendanceRate
       };
 
