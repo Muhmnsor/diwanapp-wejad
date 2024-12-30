@@ -130,7 +130,7 @@ const EventDetails = () => {
               id={id!}
             >
               <Tabs defaultValue="details" className="w-full">
-                <div className="bg-white">
+                <div className="bg-white border-b">
                   <div className="container mx-auto">
                     <TabsList 
                       className="w-full justify-start rounded-none bg-transparent h-auto" 
