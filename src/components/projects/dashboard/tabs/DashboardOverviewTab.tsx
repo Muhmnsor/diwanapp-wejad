@@ -21,13 +21,13 @@ export const DashboardOverviewTab = ({
   occupancyRate,
   project,
 }: DashboardOverviewTabProps) => {
-  // Fetch project activities with attendance and feedback data
+  // جلب أنشطة المشروع مع بيانات الحضور والتقييم
   const { data: projectActivities = [] } = useQuery({
     queryKey: ['project-activities-stats', project.id],
     queryFn: async () => {
-      console.log('Fetching project activities stats');
+      console.log('Fetching project activities stats for project:', project.id);
       
-      // Get activities
+      // جلب الأنشطة
       const { data: activities, error: activitiesError } = await supabase
         .from('events')
         .select(`
@@ -37,14 +37,17 @@ export const DashboardOverviewTab = ({
           event_feedback(overall_rating)
         `)
         .eq('project_id', project.id)
-        .eq('is_project_activity', true);
+        .eq('is_project_activity', true)
+        .order('created_at', { ascending: true });
 
       if (activitiesError) {
         console.error('Error fetching activities:', activitiesError);
         throw activitiesError;
       }
 
-      // Calculate stats for each activity
+      console.log('Raw activities data:', activities);
+
+      // حساب الإحصائيات لكل نشاط
       const activitiesWithStats = activities.map(activity => {
         const totalAttendees = activity.attendance_records?.length || 0;
         const presentAttendees = activity.attendance_records?.filter(
@@ -68,7 +71,7 @@ export const DashboardOverviewTab = ({
         };
       });
 
-      console.log('Activities with stats:', activitiesWithStats);
+      console.log('Activities with calculated stats:', activitiesWithStats);
       return activitiesWithStats;
     }
   });
@@ -82,7 +85,12 @@ export const DashboardOverviewTab = ({
     ? projectActivities.reduce((sum, activity) => sum + (activity.attendanceRate || 0), 0) / projectActivities.length
     : 0;
 
-  console.log('Total activities:', totalActivities);
+  console.log('Dashboard stats:', {
+    totalActivities,
+    completedActivities,
+    averageAttendanceRate,
+    projectActivities
+  });
 
   return (
     <DashboardOverview
