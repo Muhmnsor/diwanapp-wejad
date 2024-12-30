@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { ProjectActivity } from "@/types/activity";
 
 export const useActivityManagement = (projectId: string, refetchActivities: () => void) => {
-  const [selectedEvent, setSelectedEvent] = useState<ProjectActivity | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isEditEventOpen, setIsEditEventOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -13,40 +13,36 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
     setIsAddEventOpen(true);
   };
 
-  const handleEditEvent = (projectEvent: ProjectActivity) => {
+  const handleEditEvent = (projectEvent: any) => {
     console.log("Editing project event:", projectEvent);
     setSelectedEvent(projectEvent);
     setIsEditEventOpen(true);
   };
 
-  const handleDeleteEvent = (event: ProjectActivity) => {
-    console.log("Deleting project event:", event);
+  const handleDeleteEvent = (event: any) => {
     setSelectedEvent(event);
     setIsDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
     try {
-      if (!selectedEvent) {
-        console.error("No event selected for deletion");
-        return;
-      }
-
-      console.log("Confirming delete for event:", selectedEvent);
-
-      const { error } = await supabase
-        .from('events')
+      const { error: projectEventError } = await supabase
+        .from('project_events')
         .delete()
-        .eq('id', selectedEvent.id)
+        .eq('event_id', selectedEvent.event.id)
         .eq('project_id', projectId);
 
-      if (error) {
-        console.error('Error deleting event:', error);
-        throw error;
-      }
+      if (projectEventError) throw projectEventError;
+
+      const { error: eventError } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', selectedEvent.event.id);
+
+      if (eventError) throw eventError;
 
       toast.success('تم حذف النشاط بنجاح');
-      await refetchActivities();
+      refetchActivities();
     } catch (error) {
       console.error('Error deleting event:', error);
       toast.error('حدث خطأ أثناء حذف النشاط');

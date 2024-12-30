@@ -4,14 +4,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ProjectActivity } from "@/types/activity";
 import { useState } from "react";
 import { EditActivityDialog } from "./dialogs/EditActivityDialog";
-import { DeleteActivityDialog } from "./dialogs/DeleteActivityDialog";
 
 interface ProjectActivityActionsProps {
-  activity: {
-    id: string;
-    project_id: string;
-    event: ProjectActivity;
-  };
+  activity: ProjectActivity;
   onEdit: () => void;
   onDelete: () => void;
   onEditSuccess: () => Promise<void>;
@@ -24,22 +19,10 @@ export const ProjectActivityActions = ({
   onEditSuccess
 }: ProjectActivityActionsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEditClick = () => {
     onEdit();
-  };
-
-  const handleDeleteClick = () => {
-    console.log("Opening delete dialog for activity:", activity.event);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    console.log("Confirming delete for activity:", activity.event);
-    onDelete();
-    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -70,7 +53,7 @@ export const ProjectActivityActions = ({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={handleDeleteClick}
+                onClick={onDelete}
                 className="h-8 w-8 transition-colors hover:bg-secondary"
               >
                 <Trash2 className="h-4 w-4" />
@@ -85,19 +68,17 @@ export const ProjectActivityActions = ({
 
       {isEditDialogOpen && (
         <EditActivityDialog
-          activity={activity}
+          activity={{
+            id: activity.id,
+            project_id: activity.project_id,
+            event: activity
+          }}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           onSave={onEditSuccess}
           projectId={activity.project_id}
         />
       )}
-
-      <DeleteActivityDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-      />
     </>
   );
 };
