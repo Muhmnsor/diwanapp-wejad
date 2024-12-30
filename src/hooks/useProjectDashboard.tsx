@@ -71,25 +71,39 @@ export const useProjectDashboard = (projectId: string) => {
   const calculateAverageAttendance = () => {
     console.log('Calculating average attendance for project:', projectId);
     
-    if (!completedActivities.length || !registrations.length) {
-      console.log('No completed activities or registrations found');
+    if (!completedActivities.length) {
+      console.log('No completed activities found');
       return 0;
     }
 
-    const totalAttendance = completedActivities.reduce((sum, activity) => {
+    if (!registrations.length) {
+      console.log('No registrations found');
+      return 0;
+    }
+
+    // Calculate total attendance percentage across all completed activities
+    const totalAttendancePercentage = completedActivities.reduce((sum, activity) => {
       const presentCount = activity.attendance_records?.filter(
         (record: { status: string }) => record.status === 'present'
       ).length || 0;
       
-      return sum + (presentCount / registrations.length) * 100;
+      const attendancePercentage = (presentCount / registrations.length) * 100;
+      
+      console.log('Activity attendance calculation:', {
+        activityTitle: activity.title,
+        presentCount,
+        totalRegistrations: registrations.length,
+        attendancePercentage
+      });
+      
+      return sum + attendancePercentage;
     }, 0);
 
-    const average = totalAttendance / completedActivities.length;
+    const average = totalAttendancePercentage / completedActivities.length;
     
-    console.log('Average attendance calculation:', {
-      totalAttendance,
-      completedActivities: completedActivities.length,
-      registrations: registrations.length,
+    console.log('Final average attendance calculation:', {
+      totalAttendancePercentage,
+      completedActivitiesCount: completedActivities.length,
       average: Math.round(average)
     });
     
