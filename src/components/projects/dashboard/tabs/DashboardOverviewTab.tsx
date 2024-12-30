@@ -15,13 +15,27 @@ interface DashboardOverviewTabProps {
   };
 }
 
+interface ActivityStats {
+  activities: Array<{
+    id: string;
+    title: string;
+    date: string;
+    attendance_records: Array<{
+      status: string;
+    }>;
+  }>;
+  totalActivities: number;
+  completedActivities: number;
+  averageAttendanceRate: number;
+}
+
 export const DashboardOverviewTab = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
   project,
 }: DashboardOverviewTabProps) => {
-  const { data: projectActivities = [] } = useQuery({
+  const { data: projectActivities } = useQuery<ActivityStats>({
     queryKey: ['project-activities-stats', project.id],
     queryFn: async () => {
       console.log('Fetching project activities stats for project:', project.id);
