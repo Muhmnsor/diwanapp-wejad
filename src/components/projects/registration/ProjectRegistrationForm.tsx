@@ -98,7 +98,7 @@ export const ProjectRegistrationForm = ({
         .from('registrations')
         .insert({
           project_id: id,
-          arabic_name: formData.arabicName, // Updated to use arabic_name
+          arabic_name: formData.arabicName,
           email: formData.email,
           phone: formData.phone,
           registration_number: uniqueId,
@@ -150,7 +150,10 @@ export const ProjectRegistrationForm = ({
         eventPrice={projectPrice}
         isProjectActivity={false}
         projectTitle={projectTitle}
-        formData={formData}
+        formData={{
+          ...formData,
+          name: formData.arabicName // For backward compatibility with RegistrationConfirmation
+        }}
         onPayment={() => {}}
       />
     );

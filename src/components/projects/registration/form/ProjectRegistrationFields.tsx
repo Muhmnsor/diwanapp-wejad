@@ -4,7 +4,6 @@ import { PaymentFields } from "@/components/events/form/PaymentFields";
 
 interface ProjectRegistrationFieldsProps {
   formData: {
-    name: string;
     email: string;
     phone: string;
     cardNumber: string;
