@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       attendance_records: {
         Row: {
+          activity_id: string | null
           check_in_time: string | null
           created_at: string
           event_id: string | null
@@ -21,6 +22,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          activity_id?: string | null
           check_in_time?: string | null
           created_at?: string
           event_id?: string | null
@@ -31,6 +33,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          activity_id?: string | null
           check_in_time?: string | null
           created_at?: string
           event_id?: string | null
@@ -41,6 +44,13 @@ export type Database = {
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "attendance_records_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attendance_records_event_id_fkey"
             columns: ["event_id"]
