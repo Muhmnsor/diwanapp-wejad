@@ -28,7 +28,7 @@ export const RegistrantsTable = ({ registrantsStats, isLoading }: RegistrantsTab
   }
 
   if (!registrantsStats?.length) {
-    return <div className="text-center py-4">لا يوجد بيانات حضور متاحة</div>;
+    return <div className="text-center py-4">لا يوجد مسجلين في هذا المشروع</div>;
   }
 
   return (

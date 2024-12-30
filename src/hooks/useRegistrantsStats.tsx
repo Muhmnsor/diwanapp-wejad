@@ -22,7 +22,7 @@ export const useRegistrantsStats = (projectId?: string) => {
         .select(`
           id,
           name,
-          attendance_records!inner (
+          attendance_records (
             status,
             activity_id
           )
