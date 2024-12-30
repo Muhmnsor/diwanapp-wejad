@@ -9,10 +9,9 @@ import './App.css';
 const queryClient = new QueryClient();
 
 function App() {
-  const initialize = useAuthStore(state => state.initialize);
+  const { initialize } = useAuthStore();
 
   useEffect(() => {
-    // Initialize auth store after component mounts
     initialize();
   }, [initialize]);
 
