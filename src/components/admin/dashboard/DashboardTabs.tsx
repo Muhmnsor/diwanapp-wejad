@@ -6,10 +6,31 @@ import { ReportsTab } from "./ReportsTab";
 import { FeedbackTab } from "./FeedbackTab";
 
 interface DashboardTabsProps {
-  event: any;
+  event: {
+    id: string;
+    title: string;
+    max_attendees: number;
+    event_path: string;
+    event_category: string;
+    start_date: string;
+    end_date: string;
+  };
 }
 
 export const DashboardTabs = ({ event }: DashboardTabsProps) => {
+  // Calculate stats
+  const registrationCount = 0; // This should be calculated from actual data
+  const remainingSeats = event.max_attendees - registrationCount;
+  const occupancyRate = (registrationCount / event.max_attendees) * 100;
+
+  const projectData = {
+    id: event.id,
+    start_date: event.start_date || '',
+    end_date: event.end_date || '',
+    event_path: event.event_path,
+    event_category: event.event_category
+  };
+
   return (
     <Tabs defaultValue="overview" className="w-full space-y-6">
       <TabsList className="w-full justify-start h-auto p-0 bg-transparent" dir="rtl">
@@ -46,23 +67,29 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
       </TabsList>
 
       <TabsContent value="overview" className="mt-6">
-        <DashboardOverview event={event} isEvent={true} />
+        <DashboardOverview
+          registrationCount={registrationCount}
+          remainingSeats={remainingSeats}
+          occupancyRate={occupancyRate}
+          project={projectData}
+          isEvent={true}
+        />
       </TabsContent>
 
       <TabsContent value="registrations" className="mt-6">
-        <DashboardRegistrations event={event} />
+        <DashboardRegistrations eventId={event.id} />
       </TabsContent>
 
       <TabsContent value="preparation" className="mt-6">
-        <DashboardPreparation event={event} />
+        <DashboardPreparation eventId={event.id} />
       </TabsContent>
 
       <TabsContent value="reports" className="mt-6">
-        <ReportsTab event={event} />
+        <ReportsTab eventId={event.id} />
       </TabsContent>
 
       <TabsContent value="feedback" className="mt-6">
-        <FeedbackTab event={event} />
+        <FeedbackTab eventId={event.id} />
       </TabsContent>
     </Tabs>
   );

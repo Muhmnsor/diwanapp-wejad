@@ -13,7 +13,7 @@ interface DashboardOverviewProps {
     event_path: string;
     event_category: string;
   };
-  activities: {
+  activities?: {
     total: number;
     completed: number;
     averageAttendance: number;
@@ -38,7 +38,7 @@ export const DashboardOverview = ({
     isEvent
   });
 
-  const { registrantsStats, isLoading } = useRegistrantsStats(project.id);
+  const { registrantsStats, isLoading } = useRegistrantsStats(project?.id);
 
   return (
     <div className="space-y-8">
@@ -48,6 +48,7 @@ export const DashboardOverview = ({
         occupancyRate={occupancyRate}
         project={project}
         activities={activities}
+        isEvent={isEvent}
       />
 
       {!isEvent && (
