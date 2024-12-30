@@ -2,7 +2,6 @@ import { Input } from "@/components/ui/input";
 
 interface ProjectPersonalInfoFieldsProps {
   formData: {
-    name: string;
     email: string;
     phone: string;
     arabicName: string;
