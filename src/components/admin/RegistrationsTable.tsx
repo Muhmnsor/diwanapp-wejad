@@ -1,17 +1,8 @@
 import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Trash2, Pencil, Check, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Table, TableBody } from "@/components/ui/table";
+import { RegistrationTableHeader } from "./registrations/RegistrationTableHeader";
+import { RegistrationTableRow } from "./registrations/RegistrationTableRow";
+import { useRegistrationActions } from "./registrations/useRegistrationActions";
 
 interface RegistrationsTableProps {
   registrations: any[];
@@ -22,89 +13,37 @@ export const RegistrationsTable = ({
   registrations,
   onDeleteRegistration,
 }: RegistrationsTableProps) => {
-  const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
   const [localRegistrations, setLocalRegistrations] = useState(registrations);
+  const {
+    loading,
+    editingId,
+    editForm,
+    setEditForm,
+    handleDelete,
+    handleEdit,
+    handleCancel,
+    handleSave,
+  } = useRegistrationActions(onDeleteRegistration);
 
   useEffect(() => {
     setLocalRegistrations(registrations);
   }, [registrations]);
 
-  const handleDelete = async (id: string) => {
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveWrapper = async (id: string) => {
     try {
-      setLoading(true);
-      const { error } = await supabase
-        .from("registrations")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      onDeleteRegistration(id);
-      toast.success("تم حذف التسجيل بنجاح");
-    } catch (error) {
-      console.error("Error deleting registration:", error);
-      toast.error("حدث خطأ أثناء حذف التسجيل");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = (registration: any) => {
-    setEditingId(registration.id);
-    setEditForm({
-      name: registration.name,
-      email: registration.email,
-      phone: registration.phone,
-    });
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditForm({ name: "", email: "", phone: "" });
-  };
-
-  const handleSave = async (id: string) => {
-    try {
-      setLoading(true);
-      console.log("Updating registration with data:", editForm);
-      
-      const { data, error } = await supabase
-        .from('registrations')
-        .update({
-          name: editForm.name,
-          email: editForm.email,
-          phone: editForm.phone,
-        })
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error("Error updating registration:", error);
-        throw error;
-      }
-
-      console.log("Update response:", data);
-
-      // Update local state with the updated data from the server
-      setLocalRegistrations(prevRegistrations => 
-        prevRegistrations.map(reg => 
-          reg.id === id ? { ...reg, ...editForm } : reg
+      const updatedRegistration = await handleSave(id);
+      setLocalRegistrations(prevRegistrations =>
+        prevRegistrations.map(reg =>
+          reg.id === id ? { ...reg, ...updatedRegistration } : reg
         )
       );
-      
-      toast.success('تم تحديث بيانات المسجل بنجاح');
-      setEditingId(null);
     } catch (error) {
-      console.error('Error updating registration:', error);
-      toast.error('حدث خطأ أثناء تحديث البيانات');
-    } finally {
-      setLoading(false);
+      // Error is already handled in handleSave
+      console.error("Error in handleSaveWrapper:", error);
     }
   };
 
@@ -119,106 +58,21 @@ export const RegistrationsTable = ({
   return (
     <div className="w-full overflow-auto">
       <Table dir="rtl">
-        <TableHeader className="bg-gray-50">
-          <TableRow>
-            <TableHead className="text-right font-semibold">الاسم</TableHead>
-            <TableHead className="text-right font-semibold">البريد الإلكتروني</TableHead>
-            <TableHead className="text-right font-semibold">رقم الجوال</TableHead>
-            <TableHead className="text-right font-semibold">رقم التسجيل</TableHead>
-            <TableHead className="text-right font-semibold">تاريخ التسجيل</TableHead>
-            <TableHead className="text-center font-semibold w-[100px]">إجراءات</TableHead>
-          </TableRow>
-        </TableHeader>
+        <RegistrationTableHeader />
         <TableBody>
           {localRegistrations.map((registration) => (
-            <TableRow key={registration.id} className="hover:bg-gray-50">
-              <TableCell className="font-medium">
-                {editingId === registration.id ? (
-                  <Input
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full text-right"
-                  />
-                ) : (
-                  registration.name
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === registration.id ? (
-                  <Input
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="w-full text-right"
-                    dir="ltr"
-                  />
-                ) : (
-                  registration.email
-                )}
-              </TableCell>
-              <TableCell>
-                {editingId === registration.id ? (
-                  <Input
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full text-right"
-                    dir="ltr"
-                  />
-                ) : (
-                  registration.phone
-                )}
-              </TableCell>
-              <TableCell>{registration.registration_number}</TableCell>
-              <TableCell>
-                {new Date(registration.created_at).toLocaleDateString("ar-SA")}
-              </TableCell>
-              <TableCell className="text-center">
-                <div className="flex gap-2 justify-center">
-                  {editingId === registration.id ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSave(registration.id)}
-                        className="h-8 w-8 p-0"
-                        disabled={loading}
-                      >
-                        <Check className="h-4 w-4 text-green-500" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCancel}
-                        className="h-8 w-8 p-0"
-                        disabled={loading}
-                      >
-                        <X className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(registration)}
-                        className="h-8 w-8 p-0"
-                        disabled={loading}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="hover:bg-red-50 hover:text-red-500"
-                        onClick={() => handleDelete(registration.id)}
-                        disabled={loading}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
+            <RegistrationTableRow
+              key={registration.id}
+              registration={registration}
+              editingId={editingId}
+              editForm={editForm}
+              loading={loading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onSave={handleSaveWrapper}
+              onCancel={handleCancel}
+              onEditFormChange={handleEditFormChange}
+            />
           ))}
         </TableBody>
       </Table>
