@@ -16,6 +16,7 @@ interface DashboardStatsProps {
     completed: number;
     averageAttendance: number;
   };
+  isEvent?: boolean;
 }
 
 export const DashboardStats = ({
@@ -24,6 +25,7 @@ export const DashboardStats = ({
   occupancyRate,
   project,
   activities,
+  isEvent = false
 }: DashboardStatsProps) => {
   console.log("DashboardStats props:", {
     registrationCount,
@@ -31,6 +33,7 @@ export const DashboardStats = ({
     occupancyRate,
     project,
     activities,
+    isEvent
   });
 
   const formatEventPath = (path?: string) => {
@@ -93,20 +96,22 @@ export const DashboardStats = ({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">الأنشطة والحضور</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {activities ? `${activities.completed}/${activities.total}` : '0/0'}
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            متوسط الحضور: {activities?.averageAttendance || 0}%
-          </p>
-        </CardContent>
-      </Card>
+      {!isEvent && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">الأنشطة والحضور</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {activities ? `${activities.completed}/${activities.total}` : '0/0'}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              متوسط الحضور: {activities?.averageAttendance || 0}%
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
