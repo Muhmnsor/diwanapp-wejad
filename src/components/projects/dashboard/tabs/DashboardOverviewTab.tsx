@@ -9,6 +9,7 @@ interface DashboardOverviewTabProps {
     end_date: string;
     event_path?: string;
     event_category?: string;
+    id: string;
   };
 }
 
@@ -27,6 +28,7 @@ export const DashboardOverviewTab = ({
       eventTime={project.end_date}
       eventPath={project.event_path}
       eventCategory={project.event_category}
+      projectId={project.id}
     />
   );
 };

@@ -1,10 +1,10 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
-import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
-import { DashboardOverview } from "@/components/admin/DashboardOverview";
 import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
 import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
-import { ProjectTabsList } from "./ProjectTabsList";
+import { ProjectTabsList } from "./tabs/ProjectTabsList";
+import { DashboardOverviewTab } from "./tabs/DashboardOverviewTab";
+import { DashboardActivitiesTab } from "./tabs/DashboardActivitiesTab";
 import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 interface ProjectDashboardTabsProps {
@@ -38,15 +38,11 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
       <ProjectTabsList />
       
       <TabsContent value="overview" className="mt-6">
-        <DashboardOverview
+        <DashboardOverviewTab
           registrationCount={metrics.registrationCount}
           remainingSeats={metrics.remainingSeats}
           occupancyRate={metrics.occupancyRate}
-          eventDate={project.start_date}
-          eventTime={project.end_date}
-          eventPath={project.event_path}
-          eventCategory={project.event_category}
-          projectId={project.id}
+          project={project}
         />
       </TabsContent>
 
@@ -55,11 +51,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
       </TabsContent>
 
       <TabsContent value="activities" className="mt-6">
-        <ProjectActivitiesTab
-          project={project}
-          projectActivities={projectActivities}
-          refetchActivities={refetchActivities}
-        />
+        <DashboardActivitiesTab project={project} />
       </TabsContent>
 
       <TabsContent value="preparation" className="mt-6">
