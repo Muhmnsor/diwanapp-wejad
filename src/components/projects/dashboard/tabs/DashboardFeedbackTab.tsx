@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star } from "lucide-react";
 import { FeedbackStats } from "@/components/events/feedback/components/FeedbackStats";
 import { FeedbackComments } from "@/components/events/feedback/components/FeedbackComments";
 
@@ -21,6 +20,8 @@ interface ActivityFeedback {
 }
 
 export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
+  console.log('DashboardFeedbackTab - Initializing with projectId:', projectId);
+  
   const { data: activitiesFeedback, isLoading } = useQuery({
     queryKey: ['project-activities-feedback', projectId],
     queryFn: async () => {
@@ -45,9 +46,13 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
         .eq('project_id', projectId)
         .eq('is_project_activity', true);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching activities feedback:', error);
+        throw error;
+      }
+      
       console.log('Fetched activities with feedback:', activities);
-
+      
       return activities?.map(activity => ({
         id: activity.id,
         title: activity.title,
@@ -58,11 +63,11 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
   });
 
   if (isLoading) {
-    return <div>جاري التحميل...</div>;
+    return <div className="text-center p-4">جاري تحميل التقييمات...</div>;
   }
 
   const renderActivityFeedback = (activity: ActivityFeedback) => {
-    if (!activity.feedback.length) {
+    if (!activity?.feedback || activity.feedback.length === 0) {
       return (
         <Card key={activity.id} className="p-6">
           <CardHeader className="px-0 pt-0">
@@ -105,8 +110,9 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">تقييم الأنشطة</h2>
       <div className="space-y-6">
-        {activitiesFeedback?.map(renderActivityFeedback)}
-        {(!activitiesFeedback || activitiesFeedback.length === 0) && (
+        {activitiesFeedback && activitiesFeedback.length > 0 ? (
+          activitiesFeedback.map(renderActivityFeedback)
+        ) : (
           <div className="text-center text-muted-foreground">
             لا توجد أنشطة لعرض تقييماتها
           </div>
