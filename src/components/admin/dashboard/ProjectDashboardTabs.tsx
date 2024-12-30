@@ -5,6 +5,7 @@ import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
 import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
 import { DashboardOverview } from "@/components/admin/DashboardOverview";
 import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
+import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -55,7 +56,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
 
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
-      <TabsList className="w-full grid grid-cols-4 bg-secondary/20 p-1 rounded-xl">
+      <TabsList className="w-full grid grid-cols-5 bg-secondary/20 p-1 rounded-xl">
         <TabsTrigger value="overview" className="data-[state=active]:bg-white">
           نظرة عامة
         </TabsTrigger>
@@ -64,6 +65,9 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
         </TabsTrigger>
         <TabsTrigger value="activities" className="data-[state=active]:bg-white">
           الأنشطة
+        </TabsTrigger>
+        <TabsTrigger value="preparation" className="data-[state=active]:bg-white">
+          التحضير
         </TabsTrigger>
         <TabsTrigger value="reports" className="data-[state=active]:bg-white">
           التقارير
@@ -91,6 +95,13 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           project={project}
           projectActivities={projectActivities}
           refetchActivities={refetchActivities}
+        />
+      </TabsContent>
+
+      <TabsContent value="preparation" className="mt-6">
+        <ProjectPreparationTab 
+          projectId={project.id}
+          activities={projectActivities}
         />
       </TabsContent>
 
