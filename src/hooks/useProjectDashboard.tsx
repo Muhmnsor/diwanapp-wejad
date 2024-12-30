@@ -30,7 +30,7 @@ export const useProjectDashboard = (projectId: string) => {
         .select('*')
         .eq('project_id', projectId)
         .eq('is_project_activity', true)
-        .order('created_at', { ascending: true });
+        .order('date', { ascending: true });
 
       if (error) throw error;
       console.log('Fetched activities:', data);
@@ -52,7 +52,9 @@ export const useProjectDashboard = (projectId: string) => {
 
       const totalPresent = records?.length || 0;
       const totalActivities = projectActivities.length;
-      const averageAttendance = totalActivities > 0 ? Math.round(totalPresent / totalActivities) : 0;
+      const averageAttendance = totalActivities > 0 
+        ? Math.round((totalPresent / totalActivities) / registrations.length) 
+        : 0;
 
       console.log('Attendance stats:', { totalPresent, totalActivities, averageAttendance });
       
@@ -61,13 +63,20 @@ export const useProjectDashboard = (projectId: string) => {
         averageAttendance
       };
     },
-    enabled: !!projectId && projectActivities.length > 0,
+    enabled: !!projectId && projectActivities.length > 0 && registrations.length > 0,
   });
 
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
-  const remainingSeats = projectId ? (registrations[0]?.max_attendees || 0) - registrationCount : 0;
-  const occupancyRate = registrationCount > 0 ? (registrationCount / (registrations[0]?.max_attendees || 1)) * 100 : 0;
+  const project = registrations[0]?.project || {};
+  const remainingSeats = project.max_attendees ? project.max_attendees - registrationCount : 0;
+  const occupancyRate = project.max_attendees ? (registrationCount / project.max_attendees) * 100 : 0;
+
+  // Calculate activities stats
+  const completedActivities = projectActivities.filter(activity => {
+    const activityDate = new Date(activity.date);
+    return activityDate < new Date();
+  }).length;
 
   return {
     registrations,
@@ -77,7 +86,12 @@ export const useProjectDashboard = (projectId: string) => {
     metrics: {
       registrationCount,
       remainingSeats,
-      occupancyRate
+      occupancyRate,
+      activitiesStats: {
+        total: projectActivities.length,
+        completed: completedActivities,
+        averageAttendance: attendanceStats?.averageAttendance || 0
+      }
     },
     isLoading: isRegistrationsLoading
   };
