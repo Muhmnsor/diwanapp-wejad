@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle2, XCircle, UserCheck, QrCode } from "lucide-react";
+import { toast } from "sonner";
 
 interface DashboardPreparationProps {
   eventId: string;
@@ -12,7 +13,7 @@ interface DashboardPreparationProps {
 export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => {
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
 
-  const { data: registrations = [], isLoading } = useQuery({
+  const { data: registrations = [], isLoading, refetch } = useQuery({
     queryKey: ['registrations-preparation', eventId],
     queryFn: async () => {
       console.log('Fetching registrations for preparation:', eventId);
@@ -38,23 +39,58 @@ export const DashboardPreparation = ({ eventId }: DashboardPreparationProps) => 
     try {
       console.log('Recording attendance:', { registrationId, status });
       
-      const { data, error } = await supabase
+      // First check if an attendance record already exists
+      const { data: existingRecord, error: fetchError } = await supabase
         .from('attendance_records')
-        .upsert({
-          registration_id: registrationId,
-          event_id: eventId,
-          status,
-          check_in_time: status === 'present' ? new Date().toISOString() : null,
-        })
-        .select();
+        .select('*')
+        .eq('registration_id', registrationId)
+        .eq('event_id', eventId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (fetchError) {
+        console.error('Error checking existing attendance:', fetchError);
+        throw fetchError;
+      }
 
-      console.log('Attendance recorded:', data);
+      let result;
+      
+      if (existingRecord) {
+        // Update existing record
+        const { data, error } = await supabase
+          .from('attendance_records')
+          .update({
+            status,
+            check_in_time: status === 'present' ? new Date().toISOString() : null,
+          })
+          .eq('id', existingRecord.id)
+          .select();
+
+        if (error) throw error;
+        result = data;
+      } else {
+        // Create new record
+        const { data, error } = await supabase
+          .from('attendance_records')
+          .insert({
+            registration_id: registrationId,
+            event_id: eventId,
+            status,
+            check_in_time: status === 'present' ? new Date().toISOString() : null,
+          })
+          .select();
+
+        if (error) throw error;
+        result = data;
+      }
+
+      console.log('Attendance recorded:', result);
+      toast.success(status === 'present' ? 'تم تسجيل الحضور' : 'تم تسجيل الغياب');
+      
       // Refresh the data
-      // Note: In a production app, we would update the cache instead of refetching
+      refetch();
     } catch (error) {
       console.error('Error recording attendance:', error);
+      toast.error('حدث خطأ في تسجيل الحضور');
     }
   };
 
