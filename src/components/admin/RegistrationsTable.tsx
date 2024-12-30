@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -30,6 +30,11 @@ export const RegistrationsTable = ({
     phone: "",
   });
   const [localRegistrations, setLocalRegistrations] = useState(registrations);
+
+  // Add useEffect to update localRegistrations when registrations prop changes
+  useEffect(() => {
+    setLocalRegistrations(registrations);
+  }, [registrations]);
 
   const handleDelete = async (id: string) => {
     try {
