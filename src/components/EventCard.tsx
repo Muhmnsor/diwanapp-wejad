@@ -1,12 +1,12 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Card } from "@/components/ui/card";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect } from "react";
 import { EventCardContent } from "./events/cards/EventCardContent";
 import { getRegistrationStatusConfig } from "@/utils/eventStatusUtils";
 import { useRegistrations } from "@/hooks/useRegistrations";
-import { EyeOff } from "lucide-react";
+import { EventCardHeader } from "./events/cards/EventCardHeader";
+import { EventCardImage } from "./events/cards/EventCardImage";
+import { EventCardFooter } from "./events/cards/EventCardFooter";
 
 interface EventCardProps {
   id: string;
@@ -80,34 +80,24 @@ export const EventCard = ({
   return (
     <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
-        <img src={image_url} alt={title} className="w-full h-40 object-cover" />
-        {!is_visible && (
-          <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
-            <EyeOff className="w-4 h-4" />
-            مخفي
-          </div>
-        )}
-        <CardHeader className="p-4">
-          <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EventCardContent
-            date={date}
-            location={location}
-            eventType={event_type}
-            price={price}
-            beneficiaryType={beneficiary_type}
-            certificateType={certificate_type}
-            eventHours={event_hours}
-            maxAttendees={max_attendees}
-            status={statusConfig}
-          />
-        </CardContent>
-        <CardFooter className="p-4 pt-0">
-          <Button asChild className="w-full" size="sm">
-            <Link to={`/events/${id}`}>عرض التفاصيل</Link>
-          </Button>
-        </CardFooter>
+        <EventCardImage 
+          imageUrl={image_url}
+          title={title}
+          isVisible={is_visible}
+        />
+        <EventCardHeader title={title} />
+        <EventCardContent
+          date={date}
+          location={location}
+          eventType={event_type}
+          price={price}
+          beneficiaryType={beneficiary_type}
+          certificateType={certificate_type}
+          eventHours={event_hours}
+          maxAttendees={max_attendees}
+          status={statusConfig}
+        />
+        <EventCardFooter eventId={id} />
       </Card>
     </div>
   );
