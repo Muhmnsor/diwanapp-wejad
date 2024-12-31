@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { RegistrationFormData } from "../../hooks/useRegistrationState";
+import { RegistrationFormData } from "../../types/registration";
 
 interface PersonalInfoFieldsProps {
   formData: RegistrationFormData;

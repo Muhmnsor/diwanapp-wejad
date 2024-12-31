@@ -1,6 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RegistrationFormData } from "../../hooks/useRegistrationState";
+import { RegistrationFormData } from "../../types/registration";
 
 interface EducationFieldsProps {
   formData: RegistrationFormData;

@@ -2,7 +2,7 @@ import { PersonalInfoFields } from "./fields/PersonalInfoFields";
 import { EducationFields } from "./fields/EducationFields";
 import { IdentityFields } from "./fields/IdentityFields";
 import { PaymentFields } from "./fields/PaymentFields";
-import { RegistrationFormData } from "../hooks/useRegistrationState";
+import { RegistrationFormData } from "../types/registration";
 
 interface EventRegistrationFieldsProps {
   formData: RegistrationFormData;
