@@ -3,32 +3,32 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { ProjectRegistrationFields } from "./form/ProjectRegistrationFields";
-import { ProjectRegistrationActions } from "./form/ProjectRegistrationActions";
+import { EventRegistrationFields } from "./form/EventRegistrationFields";
+import { EventRegistrationActions } from "./form/EventRegistrationActions";
 import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
 
-interface ProjectRegistrationFormProps {
-  projectTitle: string;
-  projectPrice: number | "free" | null;
-  startDate: string;
-  endDate: string;
-  eventType: string;
+interface EventRegistrationFormProps {
+  eventTitle: string;
+  eventPrice: number | "free" | null;
+  eventDate: string;
+  eventTime: string;
+  eventLocation: string;
   onSubmit: () => void;
 }
 
-export const ProjectRegistrationForm = ({ 
-  projectTitle, 
-  projectPrice,
-  startDate,
-  endDate,
-  eventType,
+export const EventRegistrationForm = ({
+  eventTitle,
+  eventPrice,
+  eventDate,
+  eventTime,
+  eventLocation,
   onSubmit,
-}: ProjectRegistrationFormProps) => {
+}: EventRegistrationFormProps) => {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  
+
   const [formData, setFormData] = useState({
-    name: "", // Added name property to match the type requirements
+    name: "",
     email: "",
     phone: "",
     cardNumber: "",
@@ -45,11 +45,11 @@ export const ProjectRegistrationForm = ({
   const [registrationId, setRegistrationId] = useState<string>("");
 
   const checkExistingRegistration = async (email: string) => {
-    console.log("Checking for existing project registration...");
+    console.log("Checking for existing registration...");
     const { data, error } = await supabase
       .from('registrations')
       .select('id')
-      .eq('project_id', id)
+      .eq('event_id', id)
       .eq('email', email);
 
     if (error) {
@@ -61,12 +61,12 @@ export const ProjectRegistrationForm = ({
   };
 
   const processPayment = async (registrationData: any) => {
-    console.log("Processing payment for project...");
+    console.log("Processing payment...");
     const { error: paymentError } = await supabase
       .from('payment_transactions')
       .insert({
         registration_id: registrationData.id,
-        amount: projectPrice,
+        amount: eventPrice,
         status: 'completed',
         payment_method: 'card',
         payment_gateway: 'local_gateway'
@@ -82,14 +82,14 @@ export const ProjectRegistrationForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting project registration process...");
+    console.log("Starting registration process...");
     setIsSubmitting(true);
 
     try {
       const hasExistingRegistration = await checkExistingRegistration(formData.email);
       
       if (hasExistingRegistration) {
-        toast.error("لقد قمت بالتسجيل في هذا المشروع مسبقاً");
+        toast.error("لقد قمت بالتسجيل في هذه الفعالية مسبقاً");
         return;
       }
 
@@ -98,12 +98,12 @@ export const ProjectRegistrationForm = ({
       const { data: newRegistration, error: registrationError } = await supabase
         .from('registrations')
         .insert({
-          project_id: id,
-          arabic_name: formData.arabicName,
-          name: formData.name, // Added name field
+          event_id: id,
+          name: formData.arabicName,
           email: formData.email,
           phone: formData.phone,
           registration_number: uniqueId,
+          arabic_name: formData.arabicName,
           english_name: formData.englishName,
           education_level: formData.educationLevel,
           birth_date: formData.birthDate,
@@ -117,7 +117,7 @@ export const ProjectRegistrationForm = ({
         throw registrationError;
       }
 
-      if (projectPrice !== "free" && projectPrice !== null && projectPrice > 0) {
+      if (eventPrice !== "free" && eventPrice !== null && eventPrice > 0) {
         const paymentSuccess = await processPayment(newRegistration);
         if (!paymentSuccess) {
           throw new Error('Payment processing failed');
@@ -131,7 +131,7 @@ export const ProjectRegistrationForm = ({
       setRegistrationId(uniqueId);
       setShowConfirmation(true);
       
-      console.log('Project registration successful:', uniqueId);
+      console.log('Registration successful:', uniqueId);
     } catch (error) {
       console.error('Error in registration process:', error);
       toast.error("لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى");
@@ -140,7 +140,7 @@ export const ProjectRegistrationForm = ({
     }
   };
 
-  const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
+  const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
 
   if (showConfirmation) {
     return (
@@ -148,14 +148,12 @@ export const ProjectRegistrationForm = ({
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
         registrationId={registrationId}
-        eventTitle={projectTitle}
-        eventPrice={projectPrice}
-        isProjectActivity={false}
-        projectTitle={projectTitle}
-        formData={{
-          ...formData,
-          name: formData.arabicName // For backward compatibility with RegistrationConfirmation
-        }}
+        eventTitle={eventTitle}
+        eventPrice={eventPrice}
+        eventDate={eventDate}
+        eventTime={eventTime}
+        eventLocation={eventLocation}
+        formData={formData}
         onPayment={() => {}}
       />
     );
@@ -163,16 +161,16 @@ export const ProjectRegistrationForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-      <ProjectRegistrationFields
+      <EventRegistrationFields
         formData={formData}
         setFormData={setFormData}
-        projectPrice={projectPrice}
+        projectPrice={eventPrice}
       />
       
-      <ProjectRegistrationActions
+      <EventRegistrationActions
         isSubmitting={isSubmitting}
-        isPaidProject={isPaidProject}
-        projectPrice={projectPrice}
+        isPaidProject={isPaidEvent}
+        projectPrice={eventPrice}
       />
     </form>
   );
