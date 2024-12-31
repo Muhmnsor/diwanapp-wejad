@@ -18,3 +18,14 @@ export const getEventDateTime = (date: string, time: string = '00:00'): Date => 
   const [hours, minutes] = time.split(':').map(Number);
   return new Date(year, month - 1, day, hours, minutes);
 };
+
+export const formatDate = (date: string | Date): string => {
+  if (!date) return '-';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('ar-SA', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};

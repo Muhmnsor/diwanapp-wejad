@@ -20,6 +20,7 @@ interface RegistrationTableRowProps {
     registration_number: string;
     created_at: string;
   };
+  editingId?: string;
   isEditing: boolean;
   loading: boolean;
   editForm: any;
