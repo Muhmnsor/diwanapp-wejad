@@ -17,19 +17,20 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     console.log('Starting deletion process for event:', eventId);
 
     // 1. Delete feedback first
-    const { data: feedbackData, error: feedbackError } = await supabase
+    console.log('Deleting feedback...');
+    const { error: feedbackError } = await supabase
       .from('event_feedback')
       .delete()
-      .eq('event_id', eventId)
-      .select();
+      .eq('event_id', eventId);
 
     if (feedbackError) {
       console.error('Error deleting feedback:', feedbackError);
       throw feedbackError;
     }
-    console.log('Feedback deleted:', feedbackData);
+    console.log('Feedback deleted successfully');
 
     // 2. Delete attendance records
+    console.log('Deleting attendance records...');
     const { error: attendanceError } = await supabase
       .from('attendance_records')
       .delete()
@@ -42,6 +43,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     console.log('Attendance records deleted successfully');
 
     // 3. Delete notifications
+    console.log('Deleting notifications...');
     const { error: notificationsError } = await supabase
       .from('notification_logs')
       .delete()
@@ -54,6 +56,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     console.log('Notifications deleted successfully');
 
     // 4. Delete reports
+    console.log('Deleting reports...');
     const { error: reportsError } = await supabase
       .from('event_reports')
       .delete()
@@ -66,6 +69,7 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     console.log('Reports deleted successfully');
 
     // 5. Delete registrations
+    console.log('Deleting registrations...');
     const { error: registrationsError } = await supabase
       .from('registrations')
       .delete()
@@ -77,7 +81,34 @@ export const handleEventDeletion = async ({ eventId, onSuccess }: EventDeletionH
     }
     console.log('Registrations deleted successfully');
 
-    // 6. Finally delete the event itself
+    // 6. Delete notification settings
+    console.log('Deleting notification settings...');
+    const { error: settingsError } = await supabase
+      .from('event_notification_settings')
+      .delete()
+      .eq('event_id', eventId);
+
+    if (settingsError) {
+      console.error('Error deleting notification settings:', settingsError);
+      throw settingsError;
+    }
+    console.log('Notification settings deleted successfully');
+
+    // 7. Delete registration fields
+    console.log('Deleting registration fields...');
+    const { error: fieldsError } = await supabase
+      .from('event_registration_fields')
+      .delete()
+      .eq('event_id', eventId);
+
+    if (fieldsError) {
+      console.error('Error deleting registration fields:', fieldsError);
+      throw fieldsError;
+    }
+    console.log('Registration fields deleted successfully');
+
+    // 8. Finally delete the event itself
+    console.log('Deleting event...');
     const { error: eventError } = await supabase
       .from('events')
       .delete()
