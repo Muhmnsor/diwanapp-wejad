@@ -3,7 +3,6 @@ import { Event } from "@/store/eventStore";
 import { EventImage } from "../EventImage";
 import { EventTitle } from "../EventTitle";
 import { EventContent } from "../EventContent";
-import { AdminTabs } from "./AdminTabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +13,7 @@ interface EventDetailsContainerProps {
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onAddToCalendar: () => void;
   onRegister: () => void;
   id: string;
 }
@@ -23,6 +23,7 @@ export const EventDetailsContainer = ({
   isAdmin,
   onEdit,
   onDelete,
+  onAddToCalendar,
   onRegister,
   id
 }: EventDetailsContainerProps) => {
@@ -56,6 +57,7 @@ export const EventDetailsContainer = ({
             isAdmin={isAdmin}
             onEdit={onEdit}
             onDelete={() => setShowDeleteDialog(true)}
+            onAddToCalendar={onAddToCalendar}
             isVisible={visibility}
             onVisibilityChange={handleVisibilityChange}
           />

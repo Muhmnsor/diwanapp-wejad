@@ -7,7 +7,6 @@ import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventUpdate } from "./details/handlers/EventUpdateHandler";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
 import { EventDetailsContainer } from "./details/EventDetailsContainer";
-import { supabase } from "@/integrations/supabase/client";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -16,7 +15,6 @@ interface EventDetailsViewProps {
   onDelete: () => void;
   onAddToCalendar: () => void;
   id: string;
-  children?: React.ReactNode;
 }
 
 export const EventDetailsView = ({
@@ -26,7 +24,6 @@ export const EventDetailsView = ({
   onDelete,
   onAddToCalendar,
   id,
-  children
 }: EventDetailsViewProps) => {
   const [currentEvent, setCurrentEvent] = useState<Event | null>(event);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -73,7 +70,6 @@ export const EventDetailsView = ({
         onAddToCalendar={onAddToCalendar}
         onRegister={handleRegister}
         id={id}
-        children={children}
       />
 
       <EditEventDialog 
