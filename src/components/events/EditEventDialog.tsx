@@ -33,7 +33,7 @@ export const EditEventDialog = ({
         <EditEventHeader />
         <ScrollArea className="h-[calc(90vh-120px)]">
           <EditEventFormContainer
-            event={event}
+            eventId={event.id}
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
           />

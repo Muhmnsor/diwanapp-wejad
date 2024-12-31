@@ -7,10 +7,16 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface EditEventFormContainerProps {
-  eventId: string;
+  eventId?: string;
+  onSave: (updatedEvent: Event) => void;
+  onCancel: () => void;
 }
 
-export const EditEventFormContainer = ({ eventId }: EditEventFormContainerProps) => {
+export const EditEventFormContainer = ({ 
+  eventId,
+  onSave,
+  onCancel 
+}: EditEventFormContainerProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Event>({
@@ -48,6 +54,8 @@ export const EditEventFormContainer = ({ eventId }: EditEventFormContainerProps)
 
   useEffect(() => {
     const fetchEventData = async () => {
+      if (!eventId) return;
+      
       try {
         // Fetch event data
         const { data: eventData, error: eventError } = await supabase
@@ -90,9 +98,7 @@ export const EditEventFormContainer = ({ eventId }: EditEventFormContainerProps)
       }
     };
 
-    if (eventId) {
-      fetchEventData();
-    }
+    fetchEventData();
   }, [eventId]);
 
   const handleImageChange = async (file: File | null) => {
@@ -159,18 +165,14 @@ export const EditEventFormContainer = ({ eventId }: EditEventFormContainerProps)
 
       if (fieldsError) throw fieldsError;
 
+      await onSave(formData);
       toast.success("تم تحديث الفعالية بنجاح");
-      navigate(`/events/${eventId}`);
     } catch (error) {
       console.error('Error updating event:', error);
       toast.error("حدث خطأ أثناء تحديث الفعالية");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    navigate(-1);
   };
 
   return (
@@ -189,7 +191,7 @@ export const EditEventFormContainer = ({ eventId }: EditEventFormContainerProps)
           {isLoading ? "جاري التحديث..." : "تحديث الفعالية"}
         </button>
         <button
-          onClick={handleCancel}
+          onClick={onCancel}
           disabled={isLoading}
           className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
         >
