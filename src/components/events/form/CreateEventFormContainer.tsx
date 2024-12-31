@@ -61,6 +61,8 @@ export const CreateEventFormContainer = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      console.log('Creating event with data:', formData);
+      
       // Insert event data
       const { data: eventData, error: eventError } = await supabase
         .from('events')
@@ -86,6 +88,24 @@ export const CreateEventFormContainer = () => {
         .single();
 
       if (eventError) throw eventError;
+
+      // Insert registration fields
+      const { error: fieldsError } = await supabase
+        .from('event_registration_fields')
+        .insert([{
+          event_id: eventData.id,
+          arabic_name: formData.registration_fields.arabic_name,
+          english_name: formData.registration_fields.english_name,
+          education_level: formData.registration_fields.education_level,
+          birth_date: formData.registration_fields.birth_date,
+          national_id: formData.registration_fields.national_id,
+          email: formData.registration_fields.email,
+          phone: formData.registration_fields.phone,
+          gender: formData.registration_fields.gender,
+          work_status: formData.registration_fields.work_status
+        }]);
+
+      if (fieldsError) throw fieldsError;
 
       toast.success("تم إنشاء الفعالية بنجاح");
       navigate(`/events/${eventData.id}`);
