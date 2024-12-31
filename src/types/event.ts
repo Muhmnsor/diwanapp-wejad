@@ -11,6 +11,7 @@ export interface EventType {
   title: string;
   description: string;
   date: string;
+  end_date?: string;
   time: string;
   location: string;
   location_url?: string;
