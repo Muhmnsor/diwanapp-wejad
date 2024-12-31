@@ -2,7 +2,7 @@ import { useRegistrationState } from "./useRegistrationState";
 import { useRegistrationSubmit } from "./useRegistrationSubmit";
 
 export const useRegistration = (
-  onSubmit: (e: React.FormEvent) => void,
+  onSubmit: () => void,
   isProject: boolean = false
 ) => {
   const {
@@ -28,9 +28,12 @@ export const useRegistration = (
   });
 
   const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submitted with data:', formData);
+    
     await handleSubmit(e);
     if (onSubmit) {
-      onSubmit(e);
+      onSubmit();
     }
   };
 

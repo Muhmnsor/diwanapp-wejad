@@ -4,16 +4,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { RegistrationForm } from "./RegistrationForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { Event } from "@/store/eventStore";
+import { EventRegistrationForm } from "./registration/EventRegistrationForm";
 
 interface EventRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  event: Event & { isProject?: boolean };
+  event: Event;
 }
 
 export const EventRegistrationDialog = ({
@@ -24,7 +24,6 @@ export const EventRegistrationDialog = ({
   const status = getEventStatus(event);
   console.log('Registration status in dialog:', status);
 
-  // Close dialog if registration is not available
   if (status !== 'available' && open) {
     console.log('Closing dialog because registration is not allowed. Status:', status);
     onOpenChange(false);
@@ -48,7 +47,12 @@ export const EventRegistrationDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="sm:max-w-[425px]"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
         </DialogHeader>
@@ -60,14 +64,13 @@ export const EventRegistrationDialog = ({
             </AlertDescription>
           </Alert>
         ) : (
-          <RegistrationForm
+          <EventRegistrationForm
             eventTitle={event.title}
             eventPrice={event.price}
             eventDate={event.date}
             eventTime={event.time}
             eventLocation={event.location}
             onSubmit={() => onOpenChange(false)}
-            isProject={event.isProject}
           />
         )}
       </DialogContent>

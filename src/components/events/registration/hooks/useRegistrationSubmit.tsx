@@ -1,11 +1,13 @@
-import { useToast } from "@/components/ui/use-toast";
-import { useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { RegistrationFormData } from "../types/registration";
+import { v4 as uuidv4 } from "uuid";
 
 interface UseRegistrationSubmitProps {
-  formData: RegistrationFormData;
+  formData: {
+    name: string;
+    email: string;
+    phone: string;
+  };
   setIsSubmitting: (value: boolean) => void;
   setRegistrationId: (value: string) => void;
   setIsRegistered: (value: boolean) => void;
@@ -21,93 +23,40 @@ export const useRegistrationSubmit = ({
   setShowConfirmation,
   isProject,
 }: UseRegistrationSubmitProps) => {
-  const { toast } = useToast();
-  const { id } = useParams();
-  const queryClient = useQueryClient();
-
-  const checkExistingRegistration = async (email: string) => {
-    console.log("Checking for existing registration...");
-    const { data, error } = await supabase
-      .from('registrations')
-      .select('id')
-      .eq(isProject ? 'project_id' : 'event_id', id)
-      .eq('email', email);
-
-    if (error) {
-      console.error('Error checking registration:', error);
-      throw error;
-    }
-
-    return data && data.length > 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log("Starting registration process...");
+    console.log('Starting registration submission...');
+    
     setIsSubmitting(true);
-
+    
     try {
-      const hasExistingRegistration = await checkExistingRegistration(formData.email);
-      
-      if (hasExistingRegistration) {
-        toast({
-          variant: "destructive",
-          title: "لا يمكن إكمال التسجيل",
-          description: "لقد قمت بالتسجيل في هذه الفعالية مسبقاً",
-        });
-        return;
-      }
+      const registrationId = uuidv4();
+      const registrationNumber = `REG-${registrationId.split('-')[0]}`;
 
-      const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const registrationData = {
-        [isProject ? 'project_id' : 'event_id']: id,
-        arabic_name: formData.arabicName,
-        email: formData.email,
-        phone: formData.phone,
-        registration_number: uniqueId,
-        english_name: formData.englishName || null,
-        education_level: formData.educationLevel || null,
-        birth_date: formData.birthDate || null,
-        national_id: formData.nationalId || null,
-        gender: formData.gender || null,
-        work_status: formData.workStatus || null,
-      };
-
-      console.log('Submitting registration data:', registrationData);
-      
-      const { error: registrationError } = await supabase
+      const { error } = await supabase
         .from('registrations')
-        .insert(registrationData)
-        .select()
-        .single();
+        .insert([
+          {
+            id: registrationId,
+            arabic_name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            registration_number: registrationNumber,
+          }
+        ]);
 
-      if (registrationError) {
-        console.error('Error submitting registration:', registrationError);
-        throw registrationError;
+      if (error) {
+        console.error('Registration error:', error);
+        throw error;
       }
 
-      await queryClient.invalidateQueries({ 
-        queryKey: ['registrations', id] 
-      });
-      
-      setRegistrationId(uniqueId);
+      console.log('Registration successful:', registrationId);
+      setRegistrationId(registrationId);
       setIsRegistered(true);
       setShowConfirmation(true);
       
-      console.log('Registration successful:', {
-        uniqueId,
-        isRegistered: true,
-        showConfirmation: true
-      });
-
     } catch (error) {
-      console.error('Error in registration process:', error);
-      toast({
-        variant: "destructive",
-        title: "حدث خطأ",
-        description: "لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى",
-      });
+      console.error('Registration failed:', error);
     } finally {
       setIsSubmitting(false);
     }
