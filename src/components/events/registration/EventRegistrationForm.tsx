@@ -10,7 +10,6 @@ interface EventRegistrationFormProps {
   eventTime: string;
   eventLocation: string;
   onSubmit: () => void;
-  isProject?: boolean;
 }
 
 export const EventRegistrationForm = ({
@@ -20,7 +19,6 @@ export const EventRegistrationForm = ({
   eventTime,
   eventLocation,
   onSubmit,
-  isProject = false
 }: EventRegistrationFormProps) => {
   const queryClient = useQueryClient();
   
@@ -37,7 +35,7 @@ export const EventRegistrationForm = ({
     if (onSubmit) {
       onSubmit();
     }
-  }, isProject);
+  }, false); // false indicates this is not a project registration
 
   console.log('Registration state:', {
     showConfirmation,
@@ -66,7 +64,7 @@ export const EventRegistrationForm = ({
         eventTime={eventTime}
         eventLocation={eventLocation}
         formData={confirmationFormData}
-        isProjectActivity={isProject}
+        isProjectActivity={false}
         onPayment={() => {}}
       />
     );
@@ -80,7 +78,6 @@ export const EventRegistrationForm = ({
       eventTime={eventTime}
       eventLocation={eventLocation}
       onSubmit={handleSubmit}
-      isProject={isProject}
     />
   );
 };

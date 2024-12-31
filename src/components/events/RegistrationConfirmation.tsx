@@ -34,7 +34,9 @@ export const RegistrationConfirmation = ({
   formData,
   onPayment,
 }: RegistrationConfirmationProps) => {
-  if (isProjectActivity) {
+  console.log('RegistrationConfirmation - isProjectActivity:', isProjectActivity);
+  
+  if (isProjectActivity && projectTitle) {
     return (
       <ProjectActivityConfirmationDialog
         open={open}

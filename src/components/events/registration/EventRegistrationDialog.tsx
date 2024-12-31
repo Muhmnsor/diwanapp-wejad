@@ -24,6 +24,15 @@ export const EventRegistrationDialog = ({
   const status = getEventStatus(event);
   console.log('Event registration status:', status);
 
+  // Don't allow registration for project activities
+  if (event.is_project_activity) {
+    console.log('Cannot register for project activities');
+    if (open) {
+      onOpenChange(false);
+    }
+    return null;
+  }
+
   if (status !== 'available' && open) {
     console.log('Closing dialog because registration is not allowed. Status:', status);
     onOpenChange(false);
