@@ -18,11 +18,10 @@ export const EventRegisterButton = ({ status, onRegister }: EventRegisterButtonP
   return (
     <Button 
       size="lg" 
-      className={`w-full rounded-2xl h-14 text-lg font-medium ${config.className}`}
+      className={`w-full rounded-2xl h-14 text-lg ${config.className}`}
       onClick={onRegister}
       disabled={config.disabled}
       variant={status === 'available' ? 'default' : 'secondary'}
-      dir="rtl"
     >
       {config.text}
     </Button>

@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EditEventDialog } from "./EditEventDialog";
 import { EventContent } from "./EventContent";
+import { EventImage } from "./EventImage";
+import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { useAuthStore } from "@/store/authStore";
-import { EventDetailsHeader } from "./details/EventDetailsHeader";
-import { EventDetailsTabs } from "./details/EventDetailsTabs";
-import { EventDetailsDeleteDialog } from "./details/EventDetailsDeleteDialog";
+import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventUpdate } from "./details/handlers/EventUpdateHandler";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
 import { toast } from "sonner";
@@ -41,6 +41,10 @@ export const EventDetailsView = ({
 
   console.log('EventDetailsView - User:', user);
   console.log('EventDetailsView - isAdmin:', isAdmin);
+
+  useEffect(() => {
+    setCurrentEvent(event);
+  }, [event]);
 
   const handleUpdateEvent = async (updatedEvent: Event) => {
     const result = await handleEventUpdate(updatedEvent, id);
@@ -83,29 +87,30 @@ export const EventDetailsView = ({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <EventDetailsHeader
-        event={currentEvent}
-        isAdmin={isAdmin}
-        onEdit={() => setIsEditDialogOpen(true)}
-        onDelete={() => setIsDeleteDialogOpen(true)}
-        onAddToCalendar={onAddToCalendar}
-        onVisibilityChange={handleVisibilityChange}
-      />
+      <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
+      
+      <div className="container mx-auto px-4 -mt-10 relative z-10">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+          <EventTitle
+            title={currentEvent.title}
+            isAdmin={isAdmin}
+            onEdit={() => setIsEditDialogOpen(true)}
+            onDelete={() => setIsDeleteDialogOpen(true)}
+            onAddToCalendar={onAddToCalendar}
+            isVisible={currentEvent.is_visible}
+            onVisibilityChange={handleVisibilityChange}
+          />
 
-      {children}
+          {children}
 
-      {isAdmin ? (
-        <EventDetailsTabs event={currentEvent} id={id} />
-      ) : (
-        <div className="container mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {!isAdmin && (
             <EventContent 
               event={currentEvent}
               onRegister={handleRegister}
             />
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       <EditEventDialog 
         open={isEditDialogOpen} 
@@ -120,7 +125,7 @@ export const EventDetailsView = ({
         event={currentEvent}
       />
 
-      <EventDetailsDeleteDialog
+      <EventDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
