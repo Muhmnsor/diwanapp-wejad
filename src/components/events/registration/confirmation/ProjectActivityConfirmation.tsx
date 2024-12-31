@@ -13,6 +13,7 @@ interface ProjectActivityConfirmationProps {
     email: string;
     phone: string;
   };
+  projectTitle?: string; // Added this prop
 }
 
 export const ProjectActivityConfirmation = ({
@@ -21,13 +22,22 @@ export const ProjectActivityConfirmation = ({
   registrationId,
   eventTitle,
   formData,
+  projectTitle, // Added this prop
 }: ProjectActivityConfirmationProps) => {
+  console.log('ProjectActivityConfirmation - Rendering with:', {
+    registrationId,
+    eventTitle,
+    formData,
+    projectTitle,
+    open
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md mx-auto">
         <div className="space-y-4">
           <EventConfirmationCard
-            eventTitle={eventTitle}
+            eventTitle={projectTitle || eventTitle}
             registrationId={registrationId}
             registrantInfo={formData}
           />

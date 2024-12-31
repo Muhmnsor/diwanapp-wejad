@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { ConfirmationCard } from "../ConfirmationCard";
+import { EventConfirmationCard } from "./EventConfirmationCard";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -112,69 +112,16 @@ export const ProjectActivityConfirmationDialog = ({
     }, 300);
   };
 
-  const handleDownloadSuccess = () => {
-    console.log('Card downloaded successfully');
-    setHasDownloaded(true);
-    toast.success('تم حفظ بطاقة التأكيد بنجاح');
-  };
-
-  // Validate only required fields based on registration fields configuration
-  const validateRequiredFields = () => {
-    if (!registrationFields) return false;
-
-    const requiredValidations = {
-      name: !registrationFields.arabic_name || (registrationFields.arabic_name && formData.name),
-      email: !registrationFields.email || (registrationFields.email && formData.email),
-      phone: !registrationFields.phone || (registrationFields.phone && formData.phone)
-    };
-
-    console.log('Validating project required fields:', {
-      registrationFields,
-      formData,
-      validations: requiredValidations
-    });
-
-    return Object.values(requiredValidations).every(isValid => isValid);
-  };
-
-  // Return null if required fields are not valid
-  if (!validateRequiredFields()) {
-    console.log('Project required fields validation failed:', {
-      formData,
-      registrationFields
-    });
-    return null;
-  }
-
   return (
     <Dialog 
       open={open} 
-      onOpenChange={(newOpen) => {
-        console.log('Dialog onOpenChange triggered:', {
-          newOpen,
-          currentOpen: open,
-          isClosing,
-          hasDownloaded
-        });
-        if (!newOpen) {
-          handleCloseDialog();
-        }
-      }}
+      onOpenChange={handleCloseDialog}
     >
       <DialogContent 
         className="max-w-md mx-auto"
-        onPointerDownOutside={(e) => {
-          console.log('Preventing outside click close');
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          console.log('Preventing escape key close');
-          e.preventDefault();
-        }}
-        onInteractOutside={(e) => {
-          console.log('Preventing interaction outside');
-          e.preventDefault();
-        }}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-center">تم التسجيل بنجاح!</DialogTitle>
@@ -184,16 +131,15 @@ export const ProjectActivityConfirmationDialog = ({
           </div>
         </DialogHeader>
         
-        <ConfirmationCard
-          eventTitle={eventTitle}
+        <EventConfirmationCard
+          eventTitle={projectTitle || eventTitle}
           registrationId={registrationId}
-          formData={formData}
-          eventDate={eventDate}
-          eventTime={eventTime}
-          eventLocation={eventLocation}
-          isProjectActivity={true}
-          projectTitle={projectTitle}
-          onSave={handleDownloadSuccess}
+          registrantInfo={formData}
+          eventDetails={{
+            date: eventDate,
+            time: eventTime,
+            location: eventLocation
+          }}
         />
 
         <Button 
