@@ -11,7 +11,7 @@ interface RegistrationFormContainerProps {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
-  onSubmit: () => void;
+  onSubmit: (e: React.FormEvent) => void;
   isProject?: boolean;
 }
 
@@ -50,7 +50,6 @@ export const RegistrationFormContainer = ({
 
       console.log('Fetched registration fields:', eventFields);
       
-      // إذا لم يتم العثور على إعدادات الحقول، نستخدم الإعدادات الافتراضية
       if (!eventFields) {
         return {
           arabic_name: true,
@@ -77,7 +76,7 @@ export const RegistrationFormContainer = ({
   const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
 
   return (
-    <form onSubmit={(e) => handleSubmit(e, eventPrice)} className="space-y-4 mt-4">
+    <form onSubmit={onSubmit} className="space-y-4 mt-4">
       <RegistrationFormInputs
         formData={formData}
         setFormData={setFormData}

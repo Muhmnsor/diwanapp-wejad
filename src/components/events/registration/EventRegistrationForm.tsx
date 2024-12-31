@@ -61,7 +61,7 @@ export const EventRegistrationForm = ({
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      onSubmit={handleSubmit}
+      onSubmit={(e: React.FormEvent) => handleSubmit(e)}
       isProject={isProject}
     />
   );
