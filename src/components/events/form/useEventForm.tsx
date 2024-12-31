@@ -80,42 +80,68 @@ export const useEventForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form data:', formData);
+    setIsUploading(true);
     
     try {
-      const eventData = {
-        title: formData.title,
-        description: formData.description,
-        date: formData.date,
-        time: formData.time,
-        location: formData.location,
-        certificate_type: formData.certificate_type,
-        event_hours: formData.event_hours,
-        price: formData.price === "free" ? null : formData.price,
-        max_attendees: formData.max_attendees,
-        beneficiary_type: formData.beneficiaryType,
-        event_type: formData.event_type,
-        image_url: formData.image_url || formData.imageUrl,
-        registration_start_date: formData.registration_start_date || formData.registrationStartDate,
-        registration_end_date: formData.registration_end_date || formData.registrationEndDate,
-        event_path: formData.event_path,
-        event_category: formData.event_category,
-        registration_fields: formData.registration_fields
-      };
-
-      const { error } = await supabase
+      console.log('Creating event with data:', formData);
+      
+      // 1. First create the event
+      const { data: eventData, error: eventError } = await supabase
         .from("events")
-        .insert([eventData]);
+        .insert([{
+          title: formData.title,
+          description: formData.description,
+          date: formData.date,
+          time: formData.time,
+          location: formData.location,
+          certificate_type: formData.certificate_type,
+          event_hours: formData.event_hours,
+          price: formData.price === "free" ? null : formData.price,
+          max_attendees: formData.max_attendees,
+          beneficiary_type: formData.beneficiaryType,
+          event_type: formData.event_type,
+          image_url: formData.image_url || formData.imageUrl,
+          registration_start_date: formData.registration_start_date || formData.registrationStartDate,
+          registration_end_date: formData.registration_end_date || formData.registrationEndDate,
+          event_path: formData.event_path,
+          event_category: formData.event_category,
+          location_url: formData.location_url
+        }])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (eventError) throw eventError;
+
+      // 2. Then update the registration fields
+      const { error: fieldsError } = await supabase
+        .from("event_registration_fields")
+        .update({
+          arabic_name: formData.registration_fields.arabic_name,
+          email: formData.registration_fields.email,
+          phone: formData.registration_fields.phone,
+          english_name: formData.registration_fields.english_name,
+          education_level: formData.registration_fields.education_level,
+          birth_date: formData.registration_fields.birth_date,
+          national_id: formData.registration_fields.national_id,
+          gender: formData.registration_fields.gender,
+          work_status: formData.registration_fields.work_status
+        })
+        .eq('event_id', eventData.id);
+
+      if (fieldsError) {
+        console.error('Error updating registration fields:', fieldsError);
+        toast.error("تم إنشاء الفعالية ولكن حدث خطأ في حفظ إعدادات التسجيل");
+      }
 
       await queryClient.invalidateQueries({ queryKey: ["events"] });
 
       toast.success("تم إنشاء الفعالية بنجاح");
       navigate("/");
     } catch (error) {
-      console.error('Error saving event:', error);
+      console.error('Error creating event:', error);
       toast.error("حدث خطأ أثناء إنشاء الفعالية");
+    } finally {
+      setIsUploading(false);
     }
   };
 

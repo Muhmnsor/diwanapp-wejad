@@ -12,7 +12,7 @@ export const EventFormActions = ({ isUploading, onCancel }: EventFormActionsProp
         type="submit"
         disabled={isUploading}
       >
-        {isUploading ? "جاري الرفع..." : "حفظ التغييرات"}
+        {isUploading ? "جاري الإنشاء..." : "إنشاء الفعالية"}
       </Button>
       <Button 
         type="button" 
