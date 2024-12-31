@@ -29,6 +29,11 @@ export const useRegistrationSubmit = ({
     console.log('Form data:', formData);
     console.log('Event/Project ID from URL:', id);
     
+    if (!formData.arabicName || !formData.email || !formData.phone) {
+      console.error('Required fields are missing');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -42,7 +47,7 @@ export const useRegistrationSubmit = ({
         email: formData.email,
         phone: formData.phone,
         education_level: formData.educationLevel || null,
-        birth_date: formData.birthDate || null, // Send null if empty
+        birth_date: formData.birthDate || null,
         national_id: formData.nationalId || null,
         gender: formData.gender || null,
         work_status: formData.workStatus || null,
