@@ -2,7 +2,15 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Registration {
+  id: string;
+  arabic_name: string;
+  email: string;
+  phone: string;
+}
+
 export const useRegistrationActions = (onRegistrationDeleted: (id: string) => void) => {
+  const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -10,7 +18,7 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
     phone: "",
   });
 
-  const handleEdit = (registration: any) => {
+  const handleEdit = (registration: Registration) => {
     console.log('Editing registration:', registration);
     setEditingId(registration.id);
     setEditForm({
@@ -20,8 +28,9 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
     });
   };
 
-  const handleSave = async () => {
-    if (!editingId) return;
+  const handleSave = async (id: string) => {
+    if (!id) return;
+    setLoading(true);
 
     try {
       console.log('Saving registration with data:', editForm);
@@ -32,15 +41,19 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
           email: editForm.email,
           phone: editForm.phone,
         })
-        .eq('id', editingId);
+        .eq('id', id);
 
       if (error) throw error;
 
       toast.success('تم تحديث التسجيل بنجاح');
       setEditingId(null);
+      return { ...editForm };
     } catch (error) {
       console.error('Error updating registration:', error);
       toast.error('حدث خطأ أثناء تحديث التسجيل');
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,6 +67,7 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
   };
 
   const handleDelete = async (id: string) => {
+    setLoading(true);
     try {
       const { error } = await supabase
         .from('registrations')
@@ -67,6 +81,8 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
     } catch (error) {
       console.error('Error deleting registration:', error);
       toast.error('حدث خطأ أثناء حذف التسجيل');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,8 +95,10 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
   };
 
   return {
+    loading,
     editingId,
     editForm,
+    setEditForm,
     handleEdit,
     handleSave,
     handleCancel,

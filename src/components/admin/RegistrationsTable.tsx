@@ -5,8 +5,15 @@ import { RegistrationTableRow } from "./registrations/RegistrationTableRow";
 import { useRegistrationActions } from "./registrations/useRegistrationActions";
 import { useQueryClient } from "@tanstack/react-query";
 
+interface Registration {
+  id: string;
+  arabic_name: string;
+  email: string;
+  phone: string;
+}
+
 interface RegistrationsTableProps {
-  registrations: any[];
+  registrations: Registration[];
   onDeleteRegistration: (id: string) => void;
 }
 
@@ -14,7 +21,7 @@ export const RegistrationsTable = ({
   registrations,
   onDeleteRegistration,
 }: RegistrationsTableProps) => {
-  const [localRegistrations, setLocalRegistrations] = useState(registrations);
+  const [localRegistrations, setLocalRegistrations] = useState<Registration[]>(registrations);
   const queryClient = useQueryClient();
   
   const {
@@ -22,10 +29,10 @@ export const RegistrationsTable = ({
     editingId,
     editForm,
     setEditForm,
-    handleDelete,
     handleEdit,
-    handleCancel,
     handleSave,
+    handleCancel,
+    handleDelete,
   } = useRegistrationActions(onDeleteRegistration);
 
   useEffect(() => {
@@ -39,13 +46,15 @@ export const RegistrationsTable = ({
   const handleSaveWrapper = async (id: string) => {
     try {
       const updatedRegistration = await handleSave(id);
-      setLocalRegistrations(prevRegistrations =>
-        prevRegistrations.map(reg =>
-          reg.id === id ? { ...reg, ...updatedRegistration } : reg
-        )
-      );
-      // Invalidate and refetch registrations
-      queryClient.invalidateQueries({ queryKey: ['registrations'] });
+      if (updatedRegistration) {
+        setLocalRegistrations(prevRegistrations =>
+          prevRegistrations.map(reg =>
+            reg.id === id ? { ...reg, ...updatedRegistration } : reg
+          )
+        );
+        // Invalidate and refetch registrations
+        queryClient.invalidateQueries({ queryKey: ['registrations'] });
+      }
     } catch (error) {
       console.error("Error in handleSaveWrapper:", error);
     }
