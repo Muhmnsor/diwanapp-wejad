@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ export const RegistrationTableRow = ({
             className="w-full text-right"
           />
         ) : (
-          registration.arabic_name || 'لم يتم تحديد الاسم'
+          registration.arabic_name
         )}
       </TableCell>
       <TableCell>
@@ -55,7 +54,7 @@ export const RegistrationTableRow = ({
             dir="ltr"
           />
         ) : (
-          registration.email || 'لم يتم تحديد البريد الإلكتروني'
+          registration.email
         )}
       </TableCell>
       <TableCell>
@@ -67,7 +66,7 @@ export const RegistrationTableRow = ({
             dir="ltr"
           />
         ) : (
-          registration.phone || 'لم يتم تحديد رقم الجوال'
+          registration.phone
         )}
       </TableCell>
       <TableCell>{registration.registration_number}</TableCell>
