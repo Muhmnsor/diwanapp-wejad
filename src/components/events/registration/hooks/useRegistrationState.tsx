@@ -1,7 +1,22 @@
 import { useState } from "react";
 
+export interface RegistrationFormData {
+  arabicName: string;
+  englishName: string;
+  email: string;
+  phone: string;
+  educationLevel: string;
+  birthDate: string;
+  nationalId: string;
+  gender: string;
+  workStatus: string;
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+}
+
 export const useRegistrationState = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegistrationFormData>({
     arabicName: "",
     englishName: "",
     email: "",

@@ -33,7 +33,6 @@ export const EventRegistrationForm = ({
     handleSubmit
   } = useRegistration(async () => {
     console.log('Registration successful, invalidating queries');
-    // Invalidate and refetch registrations after successful registration
     await queryClient.invalidateQueries({ queryKey: ['registrations'] });
     if (onSubmit) {
       onSubmit();
@@ -49,6 +48,13 @@ export const EventRegistrationForm = ({
 
   if (isRegistered && showConfirmation) {
     console.log('Showing confirmation dialog');
+    // Transform formData to match RegistrationConfirmation expectations
+    const confirmationFormData = {
+      name: formData.arabicName,
+      email: formData.email,
+      phone: formData.phone
+    };
+
     return (
       <RegistrationConfirmation
         open={showConfirmation}
@@ -59,7 +65,7 @@ export const EventRegistrationForm = ({
         eventDate={eventDate}
         eventTime={eventTime}
         eventLocation={eventLocation}
-        formData={formData}
+        formData={confirmationFormData}
         isProjectActivity={isProject}
         onPayment={() => {}}
       />

@@ -43,6 +43,13 @@ export const RegistrationForm = ({
     );
   }
 
+  // Transform formData to match RegistrationConfirmation expectations
+  const confirmationFormData = {
+    name: formData.arabicName,
+    email: formData.email,
+    phone: formData.phone
+  };
+
   return (
     <RegistrationConfirmation
       open={showConfirmation}
@@ -53,7 +60,7 @@ export const RegistrationForm = ({
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      formData={formData}
+      formData={confirmationFormData}
       isProjectActivity={isProject}
       onPayment={() => {}}
     />
