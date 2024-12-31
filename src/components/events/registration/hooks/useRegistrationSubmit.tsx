@@ -29,8 +29,13 @@ export const useRegistrationSubmit = ({
     console.log('Form data:', formData);
     console.log('Event/Project ID from URL:', id);
     
+    // Validate required fields
     if (!formData.arabicName || !formData.email || !formData.phone) {
-      console.error('Required fields are missing');
+      console.error('Required fields are missing:', {
+        arabicName: formData.arabicName,
+        email: formData.email,
+        phone: formData.phone
+      });
       return;
     }
     
@@ -73,12 +78,21 @@ export const useRegistrationSubmit = ({
       }
 
       console.log('Registration successful:', registrationId);
+      
+      // Update all states in sequence to ensure proper UI updates
       setRegistrationId(registrationId);
       setIsRegistered(true);
       setShowConfirmation(true);
       
+      console.log('States updated after successful registration:', {
+        registrationId,
+        isRegistered: true,
+        showConfirmation: true
+      });
+      
     } catch (error) {
       console.error('Registration failed:', error);
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
