@@ -1,7 +1,7 @@
 import { TableRow } from "@/components/ui/table";
-import { RegistrationName } from "./row/RegistrationName";
-import { RegistrationContact } from "./row/RegistrationContact";
-import { RegistrationActions } from "./row/RegistrationActions";
+import { RegistrationName } from "./RegistrationName";
+import { RegistrationContact } from "./RegistrationContact";
+import { RegistrationActions } from "./RegistrationActions";
 
 interface RegistrationTableRowProps {
   registration: {
@@ -11,6 +11,7 @@ interface RegistrationTableRowProps {
     phone: string;
   };
   isEditing: boolean;
+  loading: boolean;
   editForm: {
     name: string;
     email: string;
@@ -26,6 +27,7 @@ interface RegistrationTableRowProps {
 export const RegistrationTableRow = ({
   registration,
   isEditing,
+  loading,
   editForm,
   onEdit,
   onDelete,
@@ -33,9 +35,6 @@ export const RegistrationTableRow = ({
   onCancel,
   onEditFormChange,
 }: RegistrationTableRowProps) => {
-  console.log('Registration data:', registration);
-  console.log('Edit form data:', editForm);
-  
   return (
     <TableRow key={registration.id} className="hover:bg-gray-50">
       <RegistrationName
@@ -55,6 +54,7 @@ export const RegistrationTableRow = ({
 
       <RegistrationActions
         isEditing={isEditing}
+        loading={loading}
         onEdit={onEdit}
         onDelete={onDelete}
         onSave={onSave}
