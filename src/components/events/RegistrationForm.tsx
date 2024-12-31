@@ -27,9 +27,14 @@ export const RegistrationForm = ({
     setShowConfirmation,
     registrationId,
     isRegistered
-  } = useRegistration(onSubmit, isProject);
+  } = useRegistration(() => {
+    console.log('RegistrationForm - Registration successful, calling onSubmit');
+    if (onSubmit) {
+      onSubmit();
+    }
+  }, isProject);
 
-  console.log('EventRegistrationForm - Current state:', {
+  console.log('RegistrationForm - Current state:', {
     showConfirmation,
     isRegistered,
     registrationId,
@@ -37,7 +42,7 @@ export const RegistrationForm = ({
   });
 
   if (!isRegistered) {
-    console.log('EventRegistrationForm - Showing registration form');
+    console.log('RegistrationForm - Showing registration form');
     return (
       <RegistrationFormContainer
         eventTitle={eventTitle}
@@ -51,14 +56,14 @@ export const RegistrationForm = ({
     );
   }
 
-  // Transform formData to match confirmation expectations
+  // تحويل البيانات لتتناسب مع توقعات بطاقة التأكيد
   const confirmationFormData = {
     name: formData.arabicName,
     email: formData.email,
     phone: formData.phone
   };
 
-  console.log('EventRegistrationForm - Showing confirmation dialog with data:', {
+  console.log('RegistrationForm - Showing confirmation dialog with data:', {
     registrationId,
     eventTitle,
     confirmationFormData

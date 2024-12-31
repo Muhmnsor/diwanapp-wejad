@@ -37,6 +37,7 @@ export const useRegistration = (
       const newRegistrationId = await submitRegistration(e);
       console.log('useRegistration - Registration successful, ID:', newRegistrationId);
       
+      // تحديث الحالات بعد نجاح التسجيل
       setShowConfirmation(true);
       setIsRegistered(true);
       setRegistrationId(newRegistrationId);
@@ -50,6 +51,10 @@ export const useRegistration = (
     } catch (error) {
       console.error('useRegistration - Error in registration:', error);
       toast.error('حدث خطأ في التسجيل، يرجى المحاولة مرة أخرى');
+      // إعادة تعيين الحالات في حالة الخطأ
+      setShowConfirmation(false);
+      setIsRegistered(false);
+      setRegistrationId('');
     }
   };
 
