@@ -29,7 +29,6 @@ export const useRegistrationSubmit = ({
     console.log('Form data:', formData);
     console.log('Event/Project ID from URL:', id);
     
-    // Validate required fields
     if (!formData.arabicName || !formData.email || !formData.phone) {
       console.error('Required fields are missing:', {
         arabicName: formData.arabicName,
@@ -59,7 +58,6 @@ export const useRegistrationSubmit = ({
         registration_number: registrationNumber,
       };
 
-      // Add either event_id or project_id based on the registration type
       if (isProject) {
         Object.assign(registrationData, { project_id: id });
       } else {
@@ -79,20 +77,8 @@ export const useRegistrationSubmit = ({
 
       console.log('Registration successful:', registrationId);
       
-      // Important: Update states in sequence and wait for each update
-      await Promise.resolve()
-        .then(() => {
-          console.log('Setting registration ID:', registrationId);
-          setRegistrationId(registrationId);
-        })
-        .then(() => {
-          console.log('Setting isRegistered to true');
-          setIsRegistered(true);
-        })
-        .then(() => {
-          console.log('Setting showConfirmation to true');
-          setShowConfirmation(true);
-        });
+      setRegistrationId(registrationId);
+      setIsRegistered(true);
       
       console.log('States updated after successful registration:', {
         registrationId,

@@ -31,9 +31,9 @@ export const EventRegistrationForm = ({
     registrationId,
     isRegistered,
     handleSubmit
-  } = useRegistration(async () => {
-    console.log('Registration successful, invalidating queries');
-    await queryClient.invalidateQueries({ queryKey: ['registrations'] });
+  } = useRegistration(() => {
+    console.log('Registration successful, calling onSubmit callback');
+    queryClient.invalidateQueries({ queryKey: ['registrations'] });
     if (onSubmit) {
       onSubmit();
     }
