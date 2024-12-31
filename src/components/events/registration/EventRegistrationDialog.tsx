@@ -9,6 +9,7 @@ import { AlertCircle } from "lucide-react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { Event } from "@/store/eventStore";
 import { EventRegistrationForm } from "./EventRegistrationForm";
+import { toast } from "sonner";
 
 interface EventRegistrationDialogProps {
   open: boolean;
@@ -28,6 +29,7 @@ export const EventRegistrationDialog = ({
   if (event.is_project_activity) {
     console.log('Cannot register for project activities');
     if (open) {
+      toast.error("لا يمكن التسجيل مباشرة في نشاط المشروع. يرجى التسجيل في المشروع نفسه.");
       onOpenChange(false);
     }
     return null;

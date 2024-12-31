@@ -1,5 +1,5 @@
 import { RegistrationFormContainer } from "./RegistrationFormContainer";
-import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
+import { EventRegistrationConfirmation } from "./confirmation/EventRegistrationConfirmation";
 import { useRegistration } from "./hooks/useRegistration";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -58,7 +58,7 @@ export const EventRegistrationForm = ({
     );
   }
 
-  // Transform formData to match RegistrationConfirmation expectations
+  // Transform formData to match confirmation expectations
   const confirmationFormData = {
     name: formData.arabicName,
     email: formData.email,
@@ -72,18 +72,15 @@ export const EventRegistrationForm = ({
   });
 
   return (
-    <RegistrationConfirmation
+    <EventRegistrationConfirmation
       open={showConfirmation}
       onOpenChange={setShowConfirmation}
       registrationId={registrationId}
       eventTitle={eventTitle}
-      eventPrice={eventPrice}
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
       formData={confirmationFormData}
-      isProjectActivity={false}
-      onPayment={() => {}}
     />
   );
 };
