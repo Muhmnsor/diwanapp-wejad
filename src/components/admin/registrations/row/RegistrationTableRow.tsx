@@ -1,9 +1,6 @@
-import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { RegistrationActions } from "./RegistrationActions";
-import { WorkStatusSelect } from "./fields/WorkStatusSelect";
-import { GenderSelect } from "./fields/GenderSelect";
 
 interface RegistrationTableRowProps {
   registration: {
@@ -61,6 +58,16 @@ export const RegistrationTableRow = ({
       case 'bachelor': return 'بكالوريوس';
       case 'master': return 'ماجستير';
       case 'phd': return 'دكتوراه';
+      default: return '-';
+    }
+  };
+
+  const translateWorkStatus = (status?: string) => {
+    switch (status) {
+      case 'employed': return 'موظف';
+      case 'unemployed': return 'غير موظف';
+      case 'student': return 'طالب';
+      case 'retired': return 'متقاعد';
       default: return '-';
     }
   };
@@ -136,12 +143,17 @@ export const RegistrationTableRow = ({
           </select>
         </TableCell>
         <TableCell>
-          <input
-            type="text"
+          <select
             value={editForm.workStatus}
             onChange={(e) => onEditFormChange("workStatus", e.target.value)}
             className="w-full p-2 border rounded"
-          />
+          >
+            <option value="">اختر</option>
+            <option value="employed">موظف</option>
+            <option value="unemployed">غير موظف</option>
+            <option value="student">طالب</option>
+            <option value="retired">متقاعد</option>
+          </select>
         </TableCell>
         <TableCell>{registration.registration_number}</TableCell>
         <TableCell>{formatDate(registration.created_at)}</TableCell>
@@ -169,7 +181,7 @@ export const RegistrationTableRow = ({
       <TableCell>{registration.birth_date ? formatDate(registration.birth_date) : '-'}</TableCell>
       <TableCell>{renderCell(registration.national_id)}</TableCell>
       <TableCell>{renderCell(registration.gender === 'male' ? 'ذكر' : registration.gender === 'female' ? 'أنثى' : '')}</TableCell>
-      <TableCell>{renderCell(registration.work_status)}</TableCell>
+      <TableCell>{renderCell(translateWorkStatus(registration.work_status))}</TableCell>
       <TableCell>{renderCell(registration.registration_number)}</TableCell>
       <TableCell>{formatDate(registration.created_at)}</TableCell>
       <TableCell>
