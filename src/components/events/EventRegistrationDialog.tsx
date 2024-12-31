@@ -9,6 +9,7 @@ import { AlertCircle } from "lucide-react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { Event } from "@/store/eventStore";
 import { EventRegistrationForm } from "./registration/EventRegistrationForm";
+import { toast } from "sonner";
 
 interface EventRegistrationDialogProps {
   open: boolean;
@@ -22,7 +23,17 @@ export const EventRegistrationDialog = ({
   event,
 }: EventRegistrationDialogProps) => {
   const status = getEventStatus(event);
-  console.log('Registration status in dialog:', status);
+  console.log('Event registration status:', status);
+
+  // Don't allow registration for project activities
+  if (event.is_project_activity) {
+    console.log('Cannot register for project activities');
+    if (open) {
+      toast.error("لا يمكن التسجيل مباشرة في نشاط المشروع. يرجى التسجيل في المشروع نفسه.");
+      onOpenChange(false);
+    }
+    return null;
+  }
 
   if (status !== 'available' && open) {
     console.log('Closing dialog because registration is not allowed. Status:', status);
@@ -47,12 +58,7 @@ export const EventRegistrationDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="sm:max-w-[425px]"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
         </DialogHeader>
