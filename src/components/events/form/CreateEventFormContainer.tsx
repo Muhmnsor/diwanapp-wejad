@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventFormFields } from "../EventFormFields";
-import { EventFormActions } from "./EventFormActions";
 import { handleImageUpload } from "./EventImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -109,7 +108,7 @@ export const CreateEventFormContainer = () => {
         setFormData={setFormData}
         onImageChange={handleImageChange}
       />
-      <div className="flex justify-start gap-2 mt-6">
+      <div className="flex justify-start gap-2 mt-6 text-right" dir="rtl">
         <button
           onClick={handleSubmit}
           disabled={isLoading}
