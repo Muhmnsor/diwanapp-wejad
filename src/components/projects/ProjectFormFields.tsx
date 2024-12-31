@@ -1,12 +1,14 @@
 import { Project } from "@/types/project";
+import { Card } from "@/components/ui/card";
+import { ProjectBasicFields } from "./form/fields/ProjectBasicFields";
+import { ProjectCertificateFields } from "./form/fields/ProjectCertificateFields";
+import { ProjectPathFields } from "./form/fields/ProjectPathFields";
+import { ProjectRegistrationFieldsConfig } from "./form/fields/ProjectRegistrationFieldsConfig";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BeneficiaryType } from "@/types/event";
-import { Card } from "@/components/ui/card";
-import { ProjectPathFields } from "@/components/projects/form/fields/ProjectPathFields";
-import { ProjectRegistrationFieldsConfig } from "./form/fields/ProjectRegistrationFieldsConfig";
 
 interface ProjectFormFieldsProps {
   formData: Project;
@@ -15,61 +17,21 @@ interface ProjectFormFieldsProps {
 }
 
 export const ProjectFormFields = ({ formData, setFormData, onImageChange }: ProjectFormFieldsProps) => {
-  const handleCertificateTypeChange = (value: string) => {
-    setFormData({ 
-      ...formData, 
-      certificate_type: value,
-      event_hours: undefined 
-    });
-  };
-
-  const handleHoursChange = (value: string) => {
-    const numValue = value ? Number(value) : undefined;
-    if (!isNaN(Number(value)) || value === '') {
-      setFormData({ ...formData, event_hours: numValue });
-    }
-  };
-
   return (
     <div className="space-y-6 text-right" dir="rtl">
       {/* Basic Project Information */}
       <Card className="p-4">
         <h2 className="text-lg font-semibold mb-4">معلومات المشروع الأساسية</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium block mb-1.5">عنوان المشروع</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="text-right"
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium block mb-1.5">وصف المشروع</label>
-            <Textarea
-              value={formData.description || ''}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="text-right"
-            />
-          </div>
-
-          {onImageChange && (
-            <div>
-              <label className="text-sm font-medium block mb-1.5">صورة المشروع</label>
-              <ImageUpload
-                onChange={onImageChange}
-                value={formData.image_url}
-              />
-            </div>
-          )}
-        </div>
+        <ProjectBasicFields
+          formData={formData}
+          setFormData={setFormData}
+          onImageChange={onImageChange}
+        />
       </Card>
 
       {/* Dates and Registration */}
       <Card className="p-4">
         <h2 className="text-lg font-semibold mb-4">التواريخ والتسجيل</h2>
-        <div className="space-y-4">
           <div>
             <label className="text-sm font-medium block mb-1.5">تاريخ البداية</label>
             <Input
@@ -119,7 +81,6 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
               className="text-right"
             />
           </div>
-        </div>
       </Card>
 
       {/* Registration Fields Configuration */}
@@ -169,37 +130,10 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
             </Select>
           </div>
 
-          <div>
-            <label className="text-sm font-medium block mb-1.5">نوع الشهادة</label>
-            <Select
-              value={formData.certificate_type}
-              onValueChange={handleCertificateTypeChange}
-            >
-              <SelectTrigger className="text-right">
-                <SelectValue placeholder="اختر نوع الشهادة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">بدون شهادة</SelectItem>
-                <SelectItem value="attendance">شهادة حضور</SelectItem>
-                <SelectItem value="certified">شهادة معتمدة</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {formData.certificate_type && formData.certificate_type !== 'none' && (
-            <div>
-              <label className="text-sm font-medium block mb-1.5">عدد ساعات المشروع</label>
-              <Input
-                type="number"
-                value={formData.event_hours ?? ''}
-                onChange={(e) => handleHoursChange(e.target.value)}
-                min={0}
-                step={0.5}
-                className="text-right"
-                placeholder="أدخل عدد الساعات"
-              />
-            </div>
-          )}
+          <ProjectCertificateFields
+            formData={formData}
+            setFormData={setFormData}
+          />
 
           <div>
             <label className="text-sm font-medium block mb-1.5">السعر (اتركه فارغاً للمشاريع المجانية)</label>
