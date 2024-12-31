@@ -8,7 +8,7 @@ interface EventRegistrationFormProps {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
-  onSubmit: () => void;
+  onSubmit: (e: React.FormEvent) => void;
   isProject?: boolean;
 }
 
@@ -26,8 +26,7 @@ export const EventRegistrationForm = ({
     showConfirmation,
     setShowConfirmation,
     registrationId,
-    isRegistered,
-    handleSubmit
+    isRegistered
   } = useRegistration(onSubmit, isProject);
 
   console.log('Registration state:', {
@@ -61,7 +60,7 @@ export const EventRegistrationForm = ({
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      onSubmit={(e: React.FormEvent) => handleSubmit(e)}
+      onSubmit={onSubmit}
       isProject={isProject}
     />
   );
