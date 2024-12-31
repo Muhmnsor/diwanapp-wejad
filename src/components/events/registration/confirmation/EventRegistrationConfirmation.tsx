@@ -43,7 +43,8 @@ export const EventRegistrationConfirmation = ({
   console.log('EventRegistrationConfirmation - Rendering with:', {
     registrationId,
     eventTitle,
-    formData
+    formData,
+    open
   });
 
   const handleCloseDialog = () => {
