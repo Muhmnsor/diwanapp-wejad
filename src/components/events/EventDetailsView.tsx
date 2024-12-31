@@ -29,7 +29,6 @@ export const EventDetailsView = ({
   onEdit,
   onDelete,
   onAddToCalendar,
-  onRegister,
   id,
   children
 }: EventDetailsViewProps) => {
