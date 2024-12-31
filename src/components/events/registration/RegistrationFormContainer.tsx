@@ -1,3 +1,4 @@
+import { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,7 @@ interface RegistrationFormContainerProps {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: FormEvent) => void;
   isProject?: boolean;
 }
 
@@ -31,7 +32,6 @@ export const RegistrationFormContainer = ({
     isSubmitting,
   } = useRegistration(onSubmit, isProject);
 
-  // Fetch registration field settings
   const { data: registrationFields } = useQuery({
     queryKey: ['registration-fields', id],
     queryFn: async () => {
