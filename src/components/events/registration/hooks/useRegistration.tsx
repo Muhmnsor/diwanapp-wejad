@@ -1,3 +1,4 @@
+import { FormEvent } from "react";
 import { useRegistrationState } from "./useRegistrationState";
 import { useRegistrationSubmit } from "./useRegistrationSubmit";
 
@@ -18,7 +19,7 @@ export const useRegistration = (
     setIsRegistered,
   } = useRegistrationState();
 
-  const { handleSubmit } = useRegistrationSubmit({
+  const { handleSubmit: submitRegistration } = useRegistrationSubmit({
     formData,
     setIsSubmitting,
     setRegistrationId,
@@ -27,11 +28,11 @@ export const useRegistration = (
     isProject,
   });
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
     console.log('Form submitted with data:', formData);
     
-    await handleSubmit(e);
+    await submitRegistration(e);
     if (onSubmit) {
       onSubmit();
     }

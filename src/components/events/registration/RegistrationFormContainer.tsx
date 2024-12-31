@@ -30,7 +30,12 @@ export const RegistrationFormContainer = ({
     formData,
     setFormData,
     isSubmitting,
-  } = useRegistration(onSubmit, isProject);
+    handleSubmit
+  } = useRegistration(() => {
+    if (onSubmit) {
+      onSubmit(new Event('submit') as FormEvent);
+    }
+  }, isProject);
 
   const { data: registrationFields } = useQuery({
     queryKey: ['registration-fields', id],
@@ -75,7 +80,7 @@ export const RegistrationFormContainer = ({
   const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 mt-4">
+    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
       <RegistrationFormInputs
         formData={formData}
         setFormData={setFormData}
