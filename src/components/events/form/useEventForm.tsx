@@ -85,7 +85,7 @@ export const useEventForm = () => {
     try {
       console.log('Creating event with data:', formData);
       
-      // 1. First create the event
+      // 1. Create the event
       const { data: eventData, error: eventError } = await supabase
         .from("events")
         .insert([{
@@ -94,15 +94,15 @@ export const useEventForm = () => {
           date: formData.date,
           time: formData.time,
           location: formData.location,
-          certificate_type: formData.certificate_type,
-          event_hours: formData.event_hours,
+          certificate_type: formData.certificateType,
+          event_hours: formData.eventHours,
           price: formData.price === "free" ? null : formData.price,
           max_attendees: formData.max_attendees,
           beneficiary_type: formData.beneficiaryType,
-          event_type: formData.event_type,
+          event_type: formData.eventType,
           image_url: formData.image_url || formData.imageUrl,
-          registration_start_date: formData.registration_start_date || formData.registrationStartDate,
-          registration_end_date: formData.registration_end_date || formData.registrationEndDate,
+          registration_start_date: formData.registrationStartDate || formData.registration_start_date,
+          registration_end_date: formData.registrationEndDate || formData.registration_end_date,
           event_path: formData.event_path,
           event_category: formData.event_category,
           location_url: formData.location_url
@@ -112,26 +112,8 @@ export const useEventForm = () => {
 
       if (eventError) throw eventError;
 
-      // 2. Then update the registration fields
-      const { error: fieldsError } = await supabase
-        .from("event_registration_fields")
-        .update({
-          arabic_name: formData.registration_fields.arabic_name,
-          email: formData.registration_fields.email,
-          phone: formData.registration_fields.phone,
-          english_name: formData.registration_fields.english_name,
-          education_level: formData.registration_fields.education_level,
-          birth_date: formData.registration_fields.birth_date,
-          national_id: formData.registration_fields.national_id,
-          gender: formData.registration_fields.gender,
-          work_status: formData.registration_fields.work_status
-        })
-        .eq('event_id', eventData.id);
-
-      if (fieldsError) {
-        console.error('Error updating registration fields:', fieldsError);
-        toast.error("تم إنشاء الفعالية ولكن حدث خطأ في حفظ إعدادات التسجيل");
-      }
+      // The trigger will automatically create the registration fields record
+      // We don't need to create it manually anymore
 
       await queryClient.invalidateQueries({ queryKey: ["events"] });
 
