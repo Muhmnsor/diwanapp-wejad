@@ -33,15 +33,15 @@ export const PersonalInfoFields = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-right" dir="rtl">
       {/* Required Fields */}
       {registrationFields.arabic_name && (
         <div className="space-y-2">
-          <Label>الاسم بالعربي</Label>
+          <Label>الاسم الثلاثي بالعربية</Label>
           <Input
             value={formData.arabicName}
             onChange={(e) => handleInputChange('arabicName', e.target.value)}
-            placeholder="أدخل الاسم بالعربي"
+            placeholder="أدخل الاسم الثلاثي بالعربية"
             required
           />
         </div>
@@ -76,11 +76,11 @@ export const PersonalInfoFields = ({
       {/* Optional Fields */}
       {registrationFields.english_name && (
         <div className="space-y-2">
-          <Label>الاسم بالإنجليزي</Label>
+          <Label>الاسم الثلاثي بالإنجليزية</Label>
           <Input
             value={formData.englishName}
             onChange={(e) => handleInputChange('englishName', e.target.value)}
-            placeholder="Enter name in English"
+            placeholder="Enter full name in English"
           />
         </div>
       )}
@@ -96,6 +96,8 @@ export const PersonalInfoFields = ({
               <SelectValue placeholder="اختر المستوى التعليمي" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="primary">ابتدائي</SelectItem>
+              <SelectItem value="intermediate">متوسط</SelectItem>
               <SelectItem value="high_school">ثانوي</SelectItem>
               <SelectItem value="bachelor">بكالوريوس</SelectItem>
               <SelectItem value="master">ماجستير</SelectItem>
