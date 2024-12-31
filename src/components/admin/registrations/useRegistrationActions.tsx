@@ -5,26 +5,44 @@ import { toast } from "sonner";
 interface Registration {
   id: string;
   arabic_name: string;
+  english_name?: string;
   email: string;
   phone: string;
+  education_level?: string;
+  birth_date?: string;
+  national_id?: string;
+  gender?: string;
+  work_status?: string;
 }
 
 export const useRegistrationActions = (onRegistrationDeleted: (id: string) => void) => {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
-    name: "",
+    arabicName: "",
+    englishName: "",
     email: "",
     phone: "",
+    educationLevel: "",
+    birthDate: "",
+    nationalId: "",
+    gender: "",
+    workStatus: "",
   });
 
   const handleEdit = (registration: Registration) => {
     console.log('Editing registration:', registration);
     setEditingId(registration.id);
     setEditForm({
-      name: registration.arabic_name || "",
+      arabicName: registration.arabic_name || "",
+      englishName: registration.english_name || "",
       email: registration.email || "",
       phone: registration.phone || "",
+      educationLevel: registration.education_level || "",
+      birthDate: registration.birth_date || "",
+      nationalId: registration.national_id || "",
+      gender: registration.gender || "",
+      workStatus: registration.work_status || "",
     });
   };
 
@@ -37,9 +55,15 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
       const { error } = await supabase
         .from('registrations')
         .update({
-          arabic_name: editForm.name,
+          arabic_name: editForm.arabicName,
+          english_name: editForm.englishName,
           email: editForm.email,
           phone: editForm.phone,
+          education_level: editForm.educationLevel,
+          birth_date: editForm.birthDate,
+          national_id: editForm.nationalId,
+          gender: editForm.gender,
+          work_status: editForm.workStatus,
         })
         .eq('id', id);
 
@@ -60,9 +84,15 @@ export const useRegistrationActions = (onRegistrationDeleted: (id: string) => vo
   const handleCancel = () => {
     setEditingId(null);
     setEditForm({
-      name: "",
+      arabicName: "",
+      englishName: "",
       email: "",
       phone: "",
+      educationLevel: "",
+      birthDate: "",
+      nationalId: "",
+      gender: "",
+      workStatus: "",
     });
   };
 
