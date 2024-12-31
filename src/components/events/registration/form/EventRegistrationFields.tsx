@@ -3,14 +3,9 @@ import { Input } from "@/components/ui/input";
 
 interface EventRegistrationFieldsProps {
   formData: {
-    name: string;
+    arabicName: string;
     email: string;
     phone: string;
-    arabicName: string;
-    englishName?: string;
-    educationLevel?: string;
-    birthDate?: string;
-    nationalId?: string;
     cardNumber?: string;
     expiryDate?: string;
     cvv?: string;

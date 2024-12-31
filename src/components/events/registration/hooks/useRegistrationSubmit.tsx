@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 
 interface UseRegistrationSubmitProps {
   formData: {
-    name: string;
+    arabicName: string;
     email: string;
     phone: string;
   };
@@ -40,7 +40,7 @@ export const useRegistrationSubmit = ({
 
       const registrationData = {
         id: registrationId,
-        arabic_name: formData.name,
+        arabic_name: formData.arabicName, // تم تصحيح اسم الحقل هنا
         email: formData.email,
         phone: formData.phone,
         registration_number: registrationNumber,
