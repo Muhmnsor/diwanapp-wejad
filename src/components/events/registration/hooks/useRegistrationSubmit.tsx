@@ -36,7 +36,7 @@ export const useRegistrationSubmit = ({
         email: formData.email,
         phone: formData.phone
       });
-      return;
+      throw new Error('Required fields are missing');
     }
     
     setIsSubmitting(true);
@@ -79,10 +79,20 @@ export const useRegistrationSubmit = ({
 
       console.log('Registration successful:', registrationId);
       
-      // Update all states in sequence to ensure proper UI updates
-      setRegistrationId(registrationId);
-      setIsRegistered(true);
-      setShowConfirmation(true);
+      // Important: Update states in sequence and wait for each update
+      await Promise.resolve()
+        .then(() => {
+          console.log('Setting registration ID:', registrationId);
+          setRegistrationId(registrationId);
+        })
+        .then(() => {
+          console.log('Setting isRegistered to true');
+          setIsRegistered(true);
+        })
+        .then(() => {
+          console.log('Setting showConfirmation to true');
+          setShowConfirmation(true);
+        });
       
       console.log('States updated after successful registration:', {
         registrationId,
@@ -90,6 +100,7 @@ export const useRegistrationSubmit = ({
         showConfirmation: true
       });
       
+      return registrationId;
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;

@@ -34,8 +34,12 @@ export const useRegistration = (
     console.log('Form submitted with data:', formData);
     
     try {
-      await submitRegistration(e);
-      console.log('Registration successful, showing confirmation');
+      const newRegistrationId = await submitRegistration(e);
+      console.log('Registration successful, showing confirmation. ID:', newRegistrationId);
+      
+      // Ensure the confirmation dialog is shown
+      setShowConfirmation(true);
+      
       toast.success('تم التسجيل بنجاح');
       
       if (onSubmit) {
