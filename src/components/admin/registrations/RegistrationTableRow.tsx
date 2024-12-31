@@ -1,7 +1,7 @@
 import { TableRow } from "@/components/ui/table";
-import { RegistrationName } from "./RegistrationName";
-import { RegistrationContact } from "./RegistrationContact";
-import { RegistrationActions } from "./RegistrationActions";
+import { RegistrationName } from "./row/RegistrationName";
+import { RegistrationContact } from "./row/RegistrationContact";
+import { RegistrationActions } from "./row/RegistrationActions";
 
 interface RegistrationTableRowProps {
   registration: {
