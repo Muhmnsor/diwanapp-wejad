@@ -17,16 +17,16 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
   console.log('Form data in EventFormFields:', formData);
   
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6 text-right" dir="rtl">
       {/* Basic Event Information */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-6 text-right">معلومات الفعالية الأساسية</h2>
-        <div className="space-y-6">
+      <Card className="p-4">
+        <h2 className="text-lg font-semibold mb-4">معلومات الفعالية الأساسية</h2>
+        <div className="space-y-4">
           <BasicEventFields formData={formData} setFormData={setFormData} />
           
           {onImageChange && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium block text-right">صورة الفعالية</label>
+            <div>
+              <label className="text-sm font-medium block mb-1.5">صورة الفعالية</label>
               <ImageUpload
                 onChange={onImageChange}
                 value={formData.imageUrl || formData.image_url}
@@ -37,18 +37,18 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
       </Card>
 
       {/* Event Type and Beneficiaries */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-6 text-right">نوع الفعالية والمستفيدين</h2>
-        <div className="space-y-6">
+      <Card className="p-4">
+        <h2 className="text-lg font-semibold mb-4">نوع الفعالية والمستفيدين</h2>
+        <div className="space-y-4">
           <EventTypeFields formData={formData} setFormData={setFormData} />
           <EventPathFields formData={formData} setFormData={setFormData} />
         </div>
       </Card>
 
       {/* Certificate and Registration */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-6 text-right">الشهادة والتسجيل</h2>
-        <div className="space-y-6">
+      <Card className="p-4">
+        <h2 className="text-lg font-semibold mb-4">الشهادة والتسجيل</h2>
+        <div className="space-y-4">
           <CertificateFields formData={formData} setFormData={setFormData} />
           <RegistrationFields formData={formData} setFormData={setFormData} />
         </div>
