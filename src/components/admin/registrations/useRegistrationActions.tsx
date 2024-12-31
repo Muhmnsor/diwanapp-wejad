@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useRegistrationActions = (onDeleteRegistration: (id: string) => void) => {
   const [loading, setLoading] = useState(false);
@@ -11,32 +11,12 @@ export const useRegistrationActions = (onDeleteRegistration: (id: string) => voi
     phone: "",
   });
 
-  const handleDelete = async (id: string) => {
-    try {
-      setLoading(true);
-      const { error } = await supabase
-        .from("registrations")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      onDeleteRegistration(id);
-      toast.success("تم حذف التسجيل بنجاح");
-    } catch (error) {
-      console.error("Error deleting registration:", error);
-      toast.error("حدث خطأ أثناء حذف التسجيل");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleEdit = (registration: any) => {
     setEditingId(registration.id);
     setEditForm({
-      name: registration.name,
-      email: registration.email,
-      phone: registration.phone,
+      name: registration.arabic_name || "",
+      email: registration.email || "",
+      phone: registration.phone || "",
     });
   };
 
@@ -45,35 +25,51 @@ export const useRegistrationActions = (onDeleteRegistration: (id: string) => voi
     setEditForm({ name: "", email: "", phone: "" });
   };
 
-  const handleSave = async (id: string) => {
-    try {
+  const handleDelete = async (id: string) => {
+    if (window.confirm("هل أنت متأكد من حذف هذا التسجيل؟")) {
       setLoading(true);
-      console.log("Updating registration with data:", editForm);
-      
+      try {
+        const { error } = await supabase
+          .from("registrations")
+          .delete()
+          .eq("id", id);
+
+        if (error) throw error;
+
+        toast.success("تم حذف التسجيل بنجاح");
+        onDeleteRegistration(id);
+      } catch (error) {
+        console.error("Error deleting registration:", error);
+        toast.error("حدث خطأ أثناء حذف التسجيل");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleSave = async (id: string) => {
+    setLoading(true);
+    try {
       const { data, error } = await supabase
-        .from('registrations')
+        .from("registrations")
         .update({
-          name: editForm.name,
+          arabic_name: editForm.name,
           email: editForm.email,
           phone: editForm.phone,
-          updated_at: new Date().toISOString() // Add timestamp for update
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', id)
-        .select('*')
+        .eq("id", id)
+        .select()
         .single();
 
-      if (error) {
-        console.error("Error updating registration:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("Update response:", data);
-      toast.success('تم تحديث بيانات المسجل بنجاح');
+      toast.success("تم تحديث التسجيل بنجاح");
       setEditingId(null);
       return data;
-    } catch (error: any) {
-      console.error('Error updating registration:', error);
-      toast.error(error.message || 'حدث خطأ أثناء تحديث البيانات');
+    } catch (error) {
+      console.error("Error updating registration:", error);
+      toast.error("حدث خطأ أثناء تحديث التسجيل");
       throw error;
     } finally {
       setLoading(false);

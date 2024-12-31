@@ -31,6 +31,8 @@ export const RegistrationTableRow = ({
   onCancel,
   onEditFormChange,
 }: RegistrationTableRowProps) => {
+  console.log('Registration row data:', registration);
+  
   return (
     <TableRow key={registration.id} className="hover:bg-gray-50">
       <TableCell className="font-medium">
@@ -41,7 +43,7 @@ export const RegistrationTableRow = ({
             className="w-full text-right"
           />
         ) : (
-          registration.name
+          registration.arabic_name || 'لم يتم تحديد الاسم'
         )}
       </TableCell>
       <TableCell>
@@ -53,7 +55,7 @@ export const RegistrationTableRow = ({
             dir="ltr"
           />
         ) : (
-          registration.email
+          registration.email || 'لم يتم تحديد البريد الإلكتروني'
         )}
       </TableCell>
       <TableCell>
@@ -65,7 +67,7 @@ export const RegistrationTableRow = ({
             dir="ltr"
           />
         ) : (
-          registration.phone
+          registration.phone || 'لم يتم تحديد رقم الجوال'
         )}
       </TableCell>
       <TableCell>{registration.registration_number}</TableCell>
