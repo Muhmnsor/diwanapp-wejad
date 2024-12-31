@@ -29,7 +29,17 @@ export interface Event {
   event_path: EventPathType;
   event_category: EventCategoryType;
   is_visible?: boolean;
-  special_requirements?: string | null;
+  registration_fields?: {
+    arabic_name: boolean;
+    english_name: boolean;
+    education_level: boolean;
+    birth_date: boolean;
+    national_id: boolean;
+    email: boolean;
+    phone: boolean;
+    gender: boolean;
+    work_status: boolean;
+  };
 }
 
 interface EventStore {

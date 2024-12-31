@@ -1,5 +1,7 @@
-import { Input } from "@/components/ui/input";
 import { Event } from "@/store/eventStore";
+import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface RegistrationFieldsProps {
   formData: Event;
@@ -7,51 +9,96 @@ interface RegistrationFieldsProps {
 }
 
 export const RegistrationFields = ({ formData, setFormData }: RegistrationFieldsProps) => {
+  const handleFieldChange = (field: string, value: boolean) => {
+    setFormData({
+      ...formData,
+      registration_fields: {
+        ...formData.registration_fields,
+        [field]: value
+      }
+    });
+  };
+
+  // Initialize registration fields if they don't exist
+  if (!formData.registration_fields) {
+    formData.registration_fields = {
+      arabic_name: true, // Required fields that cannot be disabled
+      email: true,
+      phone: true,
+      english_name: false,
+      education_level: false,
+      birth_date: false,
+      national_id: false,
+      gender: false,
+      work_status: false
+    };
+  }
+
   return (
-    <>
-      <div>
-        <label className="text-sm font-medium block mb-1.5">السعر (اتركه فارغاً للفعاليات المجانية)</label>
-        <Input
-          type="number"
-          value={formData.price === "free" ? "" : formData.price}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFormData({
-              ...formData,
-              price: value === "" ? "free" : Number(value)
-            });
-          }}
-          placeholder="أدخل السعر"
-          className="text-right"
-        />
+    <Card className="p-6">
+      <h3 className="text-lg font-semibold mb-4">معلومات المستفيدين المطلوبة</h3>
+      
+      {/* Required Fields - Disabled switches */}
+      <div className="space-y-4 mb-6">
+        <div className="flex items-center justify-between">
+          <Label>الاسم بالعربي</Label>
+          <Switch checked={true} disabled />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>البريد الإلكتروني</Label>
+          <Switch checked={true} disabled />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>رقم الجوال</Label>
+          <Switch checked={true} disabled />
+        </div>
       </div>
-      <div>
-        <label className="text-sm font-medium block mb-1.5">عدد المقاعد</label>
-        <Input
-          type="number"
-          value={formData.max_attendees}
-          onChange={(e) => setFormData({ ...formData, max_attendees: Number(e.target.value) })}
-          className="text-right"
-        />
+
+      {/* Optional Fields */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label>الاسم بالإنجليزي</Label>
+          <Switch 
+            checked={formData.registration_fields.english_name}
+            onCheckedChange={(checked) => handleFieldChange('english_name', checked)}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>المستوى التعليمي</Label>
+          <Switch 
+            checked={formData.registration_fields.education_level}
+            onCheckedChange={(checked) => handleFieldChange('education_level', checked)}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>تاريخ الميلاد</Label>
+          <Switch 
+            checked={formData.registration_fields.birth_date}
+            onCheckedChange={(checked) => handleFieldChange('birth_date', checked)}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>رقم الهوية</Label>
+          <Switch 
+            checked={formData.registration_fields.national_id}
+            onCheckedChange={(checked) => handleFieldChange('national_id', checked)}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>الجنس</Label>
+          <Switch 
+            checked={formData.registration_fields.gender}
+            onCheckedChange={(checked) => handleFieldChange('gender', checked)}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>الحالة الوظيفية</Label>
+          <Switch 
+            checked={formData.registration_fields.work_status}
+            onCheckedChange={(checked) => handleFieldChange('work_status', checked)}
+          />
+        </div>
       </div>
-      <div>
-        <label className="text-sm font-medium block mb-1.5">تاريخ بدء التسجيل</label>
-        <Input
-          type="date"
-          value={formData.registrationStartDate || ''}
-          onChange={(e) => setFormData({ ...formData, registrationStartDate: e.target.value })}
-          className="text-right"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium block mb-1.5">تاريخ انتهاء التسجيل</label>
-        <Input
-          type="date"
-          value={formData.registrationEndDate || ''}
-          onChange={(e) => setFormData({ ...formData, registrationEndDate: e.target.value })}
-          className="text-right"
-        />
-      </div>
-    </>
+    </Card>
   );
 };
