@@ -1,41 +1,35 @@
-import { TableCell } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface WorkStatusSelectProps {
   value: string;
-  onChange: (value: string) => void;
   isEditing: boolean;
-  workStatus?: string;
+  workStatus: string | null;
+  onChange: (value: string) => void;
 }
 
 export const WorkStatusSelect = ({
   value,
-  onChange,
   isEditing,
-  workStatus
+  workStatus,
+  onChange,
 }: WorkStatusSelectProps) => {
-  const { translateWorkStatus } = require('../utils/translations');
-
-  if (isEditing) {
-    return (
-      <TableCell>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full p-2 border rounded"
-        >
-          <option value="">اختر</option>
-          <option value="employed">موظف</option>
-          <option value="unemployed">غير موظف</option>
-          <option value="student">طالب</option>
-          <option value="retired">متقاعد</option>
-        </select>
-      </TableCell>
-    );
+  if (!isEditing) {
+    return <td className="p-4">{workStatus || '-'}</td>;
   }
 
   return (
-    <TableCell>
-      {translateWorkStatus(workStatus)}
-    </TableCell>
+    <td className="p-4">
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="الحالة الوظيفية" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="employed">موظف</SelectItem>
+          <SelectItem value="unemployed">عاطل عن العمل</SelectItem>
+          <SelectItem value="student">طالب</SelectItem>
+          <SelectItem value="retired">متقاعد</SelectItem>
+        </SelectContent>
+      </Select>
+    </td>
   );
 };

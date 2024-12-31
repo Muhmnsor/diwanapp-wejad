@@ -75,9 +75,7 @@ export const RegistrationTableRow = ({
         isEditing={isEditing}
         educationLevel={registration.education_level}
       />
-      <TableCell>
-        {registration.birth_date ? formatDate(registration.birth_date) : '-'}
-      </TableCell>
+      <TableCell>{registration.birth_date ? formatDate(registration.birth_date) : '-'}</TableCell>
       <TextInputCell
         value={editForm.nationalId}
         onChange={(value) => onEditFormChange("nationalId", value)}
