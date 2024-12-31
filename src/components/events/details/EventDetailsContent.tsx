@@ -1,63 +1,93 @@
-import { Event } from "@/store/eventStore";
-import { EventContent } from "../EventContent";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EventDashboard } from "@/components/admin/EventDashboard";
+import { EventType } from "@/types/event";
+import { EventInfo } from "../EventInfo";
+import { EventDescription } from "../EventDescription";
+import { EventRegisterButton } from "../EventRegisterButton";
+import { getEventStatus } from "@/utils/eventUtils";
+import { useEffect, useState } from "react";
 
 interface EventDetailsContentProps {
-  event: Event;
-  isAdmin: boolean;
-  id: string;
+  event: EventType;
   onRegister: () => void;
 }
 
-export const EventDetailsContent = ({
-  event,
-  isAdmin,
-  id,
-  onRegister
-}: EventDetailsContentProps) => {
-  if (isAdmin) {
-    return (
-      <div className="bg-gray-50/50">
-        <Tabs defaultValue="details" className="w-full">
-          <div className="bg-white border-b">
-            <div className="container mx-auto">
-              <TabsList 
-                className="w-full justify-start rounded-none bg-transparent h-auto" 
-                dir="rtl"
-              >
-                <TabsTrigger 
-                  value="details" 
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-4 py-2"
-                >
-                  تفاصيل الفعالية
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="dashboard"
-                  className="data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-4 py-2"
-                >
-                  لوحة التحكم
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
+export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentProps) => {
+  const [eventStatus, setEventStatus] = useState(() => getEventStatus({
+    ...event,
+    max_attendees: event.max_attendees
+  }));
 
-          <div className="container mx-auto px-4 pb-8" dir="rtl">
-            <TabsContent value="details" className="mt-6">
-              <EventContent 
-                event={event}
-                onRegister={onRegister}
-              />
-            </TabsContent>
+  useEffect(() => {
+    console.log('Event data in details content:', {
+      title: event.title,
+      date: event.date,
+      registrationDates: {
+        start: event.registrationStartDate,
+        end: event.registrationEndDate
+      },
+      attendees: event.attendees,
+      maxAttendees: event.max_attendees,
+      eventPath: event.event_path,
+      eventCategory: event.event_category
+    });
 
-            <TabsContent value="dashboard" className="mt-6">
-              <EventDashboard eventId={id} />
-            </TabsContent>
-          </div>
-        </Tabs>
+    const newStatus = getEventStatus({
+      ...event,
+      max_attendees: event.max_attendees
+    });
+    console.log('Event status updated to:', newStatus);
+    setEventStatus(newStatus);
+  }, [
+    event.date, 
+    event.registrationStartDate, 
+    event.registrationEndDate,
+    event.attendees,
+    event.max_attendees
+  ]);
+
+  const handleRegister = () => {
+    const status = getEventStatus({
+      ...event,
+      max_attendees: event.max_attendees
+    });
+    console.log('Attempting registration with status:', status);
+    
+    if (status === 'available') {
+      console.log('Registration allowed, proceeding...');
+      onRegister();
+    } else {
+      console.log('Registration not allowed for status:', status);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-b-2xl shadow-sm">
+      <div className="px-8 py-6">
+        <EventInfo
+          date={event.date}
+          time={event.time}
+          location={event.location}
+          location_url={event.location_url}
+          attendees={event.attendees}
+          maxAttendees={event.max_attendees}
+          eventType={event.eventType}
+          price={event.price}
+          beneficiaryType={event.beneficiaryType}
+          certificateType={event.certificateType}
+          eventHours={event.eventHours}
+          eventPath={event.event_path}
+          eventCategory={event.event_category}
+          showBadges={true}
+        />
+
+        <EventDescription description={event.description} />
+
+        <div className="mt-8">
+          <EventRegisterButton 
+            status={eventStatus}
+            onRegister={handleRegister}
+          />
+        </div>
       </div>
-    );
-  }
-
-  return <EventContent event={event} onRegister={onRegister} />;
+    </div>
+  );
 };

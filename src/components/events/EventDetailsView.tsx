@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
+import { EditEventDialog } from "./EditEventDialog";
+import { EventContent } from "./EventContent";
+import { EventImage } from "./EventImage";
+import { EventTitle } from "./EventTitle";
+import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { useAuthStore } from "@/store/authStore";
+import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventUpdate } from "./details/handlers/EventUpdateHandler";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { EventDetailsHeader } from "./details/EventDetailsHeader";
-import { EventDetailsContent } from "./details/EventDetailsContent";
-import { EventDetailsDialogs } from "./details/EventDetailsDialogs";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -84,34 +87,48 @@ export const EventDetailsView = ({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <EventDetailsHeader
-        event={currentEvent}
-        isAdmin={isAdmin}
-        onEdit={() => setIsEditDialogOpen(true)}
-        onDelete={() => setIsDeleteDialogOpen(true)}
-        onAddToCalendar={onAddToCalendar}
-        onVisibilityChange={handleVisibilityChange}
+      <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
+      
+      <div className="container mx-auto px-4 -mt-10 relative z-10">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+          <EventTitle
+            title={currentEvent.title}
+            isAdmin={isAdmin}
+            onEdit={() => setIsEditDialogOpen(true)}
+            onDelete={() => setIsDeleteDialogOpen(true)}
+            onAddToCalendar={onAddToCalendar}
+            isVisible={currentEvent.is_visible}
+            onVisibilityChange={handleVisibilityChange}
+          />
+
+          {children}
+
+          {!isAdmin && (
+            <EventContent 
+              event={currentEvent}
+              onRegister={handleRegister}
+            />
+          )}
+        </div>
+      </div>
+
+      <EditEventDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+        event={currentEvent} 
+        onSave={handleUpdateEvent} 
       />
 
-      {children}
-
-      <EventDetailsContent
+      <EventRegistrationDialog
+        open={isRegistrationOpen}
+        onOpenChange={setIsRegistrationOpen}
         event={currentEvent}
-        isAdmin={isAdmin}
-        id={id}
-        onRegister={handleRegister}
       />
 
-      <EventDetailsDialogs
-        event={currentEvent}
-        isEditDialogOpen={isEditDialogOpen}
-        isRegistrationOpen={isRegistrationOpen}
-        isDeleteDialogOpen={isDeleteDialogOpen}
-        onEditDialogChange={setIsEditDialogOpen}
-        onRegistrationDialogChange={setIsRegistrationOpen}
-        onDeleteDialogChange={setIsDeleteDialogOpen}
-        onEventUpdate={handleUpdateEvent}
-        onEventDelete={handleDelete}
+      <EventDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
       />
     </div>
   );
