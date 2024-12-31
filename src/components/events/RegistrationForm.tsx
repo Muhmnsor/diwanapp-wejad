@@ -1,5 +1,5 @@
 import { RegistrationFormContainer } from "./registration/RegistrationFormContainer";
-import { RegistrationConfirmation } from "./RegistrationConfirmation";
+import { EventRegistrationConfirmation } from "./registration/confirmation/EventRegistrationConfirmation";
 import { useRegistration } from "./registration/hooks/useRegistration";
 
 interface RegistrationFormProps {
@@ -51,18 +51,15 @@ export const RegistrationForm = ({
   };
 
   return (
-    <RegistrationConfirmation
+    <EventRegistrationConfirmation
       open={showConfirmation}
       onOpenChange={setShowConfirmation}
       registrationId={registrationId}
       eventTitle={eventTitle}
-      eventPrice={eventPrice}
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
       formData={confirmationFormData}
-      isProjectActivity={isProject}
-      onPayment={() => {}}
     />
   );
 };
