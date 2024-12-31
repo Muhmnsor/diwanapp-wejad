@@ -8,8 +8,16 @@ import { useQueryClient } from "@tanstack/react-query";
 interface Registration {
   id: string;
   arabic_name: string;
+  english_name?: string;
   email: string;
   phone: string;
+  education_level?: string;
+  birth_date?: string;
+  national_id?: string;
+  gender?: string;
+  work_status?: string;
+  registration_number: string;
+  created_at: string;
   event?: any;
   project?: any;
 }
