@@ -10,6 +10,8 @@ import { useState, useEffect } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RegistrationConfirmationProps {
   open: boolean;
@@ -46,11 +48,37 @@ export const RegistrationConfirmation = ({
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch registration fields configuration
+  const { data: registrationFields } = useQuery({
+    queryKey: ['registration-fields', registrationId],
+    queryFn: async () => {
+      console.log('Fetching registration fields for:', registrationId);
+      const { data, error } = await supabase
+        .from('event_registration_fields')
+        .select('*')
+        .eq('event_id', registrationId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching registration fields:', error);
+        return null;
+      }
+
+      console.log('Fetched registration fields:', data);
+      return data || {
+        arabic_name: true,
+        email: true,
+        phone: true
+      };
+    }
+  });
+
   useEffect(() => {
     console.log('RegistrationConfirmation - Component mounted with props:', {
       open,
       registrationId,
-      formData
+      formData,
+      registrationFields
     });
     
     return () => {
@@ -70,7 +98,8 @@ export const RegistrationConfirmation = ({
       hasDownloaded,
       isClosing,
       open,
-      formData
+      formData,
+      registrationFields
     });
     
     if (!hasDownloaded) {
@@ -99,9 +128,31 @@ export const RegistrationConfirmation = ({
     toast.success('تم حفظ بطاقة التأكيد بنجاح');
   };
 
-  // Prevent closing if form data is empty
-  if (!formData.name || !formData.email || !formData.phone) {
-    console.log('Form data is incomplete:', formData);
+  // Validate only required fields based on registration fields configuration
+  const validateRequiredFields = () => {
+    if (!registrationFields) return false;
+
+    const requiredValidations = {
+      name: !registrationFields.arabic_name || (registrationFields.arabic_name && formData.name),
+      email: !registrationFields.email || (registrationFields.email && formData.email),
+      phone: !registrationFields.phone || (registrationFields.phone && formData.phone)
+    };
+
+    console.log('Validating required fields:', {
+      registrationFields,
+      formData,
+      validations: requiredValidations
+    });
+
+    return Object.values(requiredValidations).every(isValid => isValid);
+  };
+
+  // Return null if required fields are not valid
+  if (!validateRequiredFields()) {
+    console.log('Required fields validation failed:', {
+      formData,
+      registrationFields
+    });
     return null;
   }
 
