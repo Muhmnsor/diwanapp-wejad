@@ -18,7 +18,6 @@ interface EventDetailsViewProps {
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
-  onRegister?: () => void;
   id: string;
   children?: React.ReactNode;
 }
