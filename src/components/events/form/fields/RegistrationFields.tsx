@@ -41,7 +41,7 @@ export const RegistrationFields = ({ formData, setFormData }: RegistrationFields
     { id: "english_name", label: "الاسم الثلاثي بالإنجليزية" },
     { id: "national_id", label: "رقم الهوية" },
     { id: "gender", label: "الجنس" },
-    { id: "education_level", label: "المستوى التعليمي/العمل" },
+    { id: "education_level", label: "المستوى التعليمي" },
     { id: "birth_date", label: "تاريخ الميلاد" },
     { id: "work_status", label: "الحالة الوظيفية" }
   ];
