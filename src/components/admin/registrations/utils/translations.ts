@@ -1,21 +1,33 @@
 export const translateEducationLevel = (level?: string) => {
-  const educationLevels: Record<string, string> = {
-    'primary': 'ابتدائي',
-    'intermediate': 'متوسط',
-    'high_school': 'ثانوي',
-    'bachelor': 'بكالوريوس',
-    'master': 'ماجستير',
-    'phd': 'دكتوراه'
-  };
-  return level ? educationLevels[level] || level : '-';
+  switch (level) {
+    case 'primary':
+      return 'ابتدائي';
+    case 'intermediate':
+      return 'متوسط';
+    case 'high_school':
+      return 'ثانوي';
+    case 'bachelor':
+      return 'بكالوريوس';
+    case 'master':
+      return 'ماجستير';
+    case 'phd':
+      return 'دكتوراه';
+    default:
+      return '-';
+  }
 };
 
 export const translateWorkStatus = (status?: string) => {
-  const workStatuses: Record<string, string> = {
-    'employed': 'موظف',
-    'unemployed': 'غير موظف',
-    'student': 'طالب',
-    'retired': 'متقاعد'
-  };
-  return status ? workStatuses[status] || status : '-';
+  switch (status) {
+    case 'employed':
+      return 'موظف';
+    case 'unemployed':
+      return 'غير موظف';
+    case 'student':
+      return 'طالب';
+    case 'retired':
+      return 'متقاعد';
+    default:
+      return '-';
+  }
 };

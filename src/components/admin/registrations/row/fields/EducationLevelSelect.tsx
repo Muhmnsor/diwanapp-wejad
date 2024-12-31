@@ -1,4 +1,5 @@
 import { TableCell } from "@/components/ui/table";
+import { translateEducationLevel } from "../../utils/translations";
 
 interface EducationLevelSelectProps {
   value: string;
@@ -13,8 +14,6 @@ export const EducationLevelSelect = ({
   isEditing,
   educationLevel
 }: EducationLevelSelectProps) => {
-  const { translateEducationLevel } = require('../utils/translations');
-
   if (isEditing) {
     return (
       <TableCell>

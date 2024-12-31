@@ -1,4 +1,5 @@
 import { TableCell } from "@/components/ui/table";
+import { translateWorkStatus } from "../../utils/translations";
 
 interface WorkStatusSelectProps {
   value: string;
@@ -13,8 +14,6 @@ export const WorkStatusSelect = ({
   isEditing,
   workStatus
 }: WorkStatusSelectProps) => {
-  const { translateWorkStatus } = require('../utils/translations');
-
   if (isEditing) {
     return (
       <TableCell>
