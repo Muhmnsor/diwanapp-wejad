@@ -44,15 +44,38 @@ export const EventConfirmationDialog = ({
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch registration fields configuration
-  const { data: registrationFields } = useQuery({
-    queryKey: ['event-registration-fields', registrationId],
+  // First fetch the registration to get the event_id
+  const { data: registration } = useQuery({
+    queryKey: ['registration', registrationId],
     queryFn: async () => {
-      console.log('Fetching event registration fields for:', registrationId);
+      console.log('Fetching registration:', registrationId);
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('event_id')
+        .eq('registration_number', registrationId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching registration:', error);
+        return null;
+      }
+
+      console.log('Fetched registration:', data);
+      return data;
+    }
+  });
+
+  // Then fetch registration fields using the event_id
+  const { data: registrationFields } = useQuery({
+    queryKey: ['event-registration-fields', registration?.event_id],
+    queryFn: async () => {
+      if (!registration?.event_id) return null;
+
+      console.log('Fetching event registration fields for:', registration.event_id);
       const { data, error } = await supabase
         .from('event_registration_fields')
         .select('*')
-        .eq('event_id', registrationId)
+        .eq('event_id', registration.event_id)
         .maybeSingle();
 
       if (error) {
@@ -66,7 +89,8 @@ export const EventConfirmationDialog = ({
         email: true,
         phone: true
       };
-    }
+    },
+    enabled: !!registration?.event_id
   });
 
   useEffect(() => {
