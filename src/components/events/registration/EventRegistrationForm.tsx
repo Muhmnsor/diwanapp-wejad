@@ -32,6 +32,7 @@ export const EventRegistrationForm = ({
     isRegistered,
     handleSubmit
   } = useRegistration(async () => {
+    console.log('Registration successful, invalidating queries');
     // Invalidate and refetch registrations after successful registration
     await queryClient.invalidateQueries({ queryKey: ['registrations'] });
     if (onSubmit) {
@@ -47,6 +48,7 @@ export const EventRegistrationForm = ({
   });
 
   if (isRegistered && showConfirmation) {
+    console.log('Showing confirmation dialog');
     return (
       <RegistrationConfirmation
         open={showConfirmation}

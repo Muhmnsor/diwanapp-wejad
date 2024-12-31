@@ -9,6 +9,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface RegistrationConfirmationProps {
   open: boolean;
@@ -45,22 +46,40 @@ export const RegistrationConfirmation = ({
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
+  console.log('RegistrationConfirmation - Dialog state:', { open, isClosing, hasDownloaded });
+
   const handleCloseDialog = () => {
+    console.log('Attempting to close dialog. Downloaded:', hasDownloaded);
+    
     if (!hasDownloaded) {
       const shouldClose = window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ لم تقم بحفظ التأكيد بعد.");
       if (!shouldClose) {
+        console.log('Close cancelled by user');
         return;
       }
     }
+
+    console.log('Proceeding with dialog close');
     setIsClosing(true);
     onOpenChange(false);
-    navigate('/');
+    
+    // Delay navigation to ensure dialog closes smoothly
+    setTimeout(() => {
+      navigate('/');
+    }, 300);
+  };
+
+  const handleDownloadSuccess = () => {
+    console.log('Card downloaded successfully');
+    setHasDownloaded(true);
+    toast.success('تم حفظ بطاقة التأكيد بنجاح');
   };
 
   return (
     <Dialog 
       open={open} 
       onOpenChange={(newOpen) => {
+        console.log('Dialog onOpenChange triggered:', newOpen);
         if (!newOpen) {
           handleCloseDialog();
         }
@@ -68,9 +87,18 @@ export const RegistrationConfirmation = ({
     >
       <DialogContent 
         className="max-w-md mx-auto"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          console.log('Preventing outside click close');
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          console.log('Preventing escape key close');
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          console.log('Preventing interaction outside');
+          e.preventDefault();
+        }}
       >
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-center">تم التسجيل بنجاح!</DialogTitle>
@@ -89,7 +117,7 @@ export const RegistrationConfirmation = ({
           eventLocation={eventLocation}
           isProjectActivity={isProjectActivity}
           projectTitle={projectTitle}
-          onSave={() => setHasDownloaded(true)}
+          onSave={handleDownloadSuccess}
         />
 
         <Button 
