@@ -1,24 +1,20 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { EventConfirmationCard } from "./EventConfirmationCard";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectConfirmationHeader } from "../../projects/confirmation/ProjectConfirmationHeader";
+import { ProjectConfirmationCard } from "../../projects/confirmation/ProjectConfirmationCard";
+import { ProjectConfirmationActions } from "../../projects/confirmation/ProjectConfirmationActions";
 
 interface ProjectActivityConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   registrationId: string;
   eventTitle: string;
-  eventPrice: number | "free";
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
@@ -28,7 +24,6 @@ interface ProjectActivityConfirmationDialogProps {
     phone: string;
   };
   projectTitle?: string;
-  onPayment: () => void;
 }
 
 export const ProjectActivityConfirmationDialog = ({
@@ -43,10 +38,8 @@ export const ProjectActivityConfirmationDialog = ({
   projectTitle,
 }: ProjectActivityConfirmationDialogProps) => {
   const [isClosing, setIsClosing] = useState(false);
-  const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch registration fields configuration for project
   const { data: registrationFields } = useQuery({
     queryKey: ['project-registration-fields', registrationId],
     queryFn: async () => {
@@ -86,23 +79,12 @@ export const ProjectActivityConfirmationDialog = ({
 
   const handleCloseDialog = () => {
     console.log('handleCloseDialog called - Current state:', {
-      hasDownloaded,
       isClosing,
       open,
       formData,
       registrationFields
     });
     
-    if (!hasDownloaded) {
-      console.log('Showing confirmation dialog - Card not downloaded yet');
-      const shouldClose = window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ لم تقم بحفظ التأكيد بعد.");
-      if (!shouldClose) {
-        console.log('Close cancelled by user');
-        return;
-      }
-    }
-
-    console.log('Proceeding with dialog close');
     setIsClosing(true);
     onOpenChange(false);
     
@@ -123,18 +105,13 @@ export const ProjectActivityConfirmationDialog = ({
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader className="space-y-2">
-          <DialogTitle className="text-center">تم التسجيل بنجاح!</DialogTitle>
-          <div className="text-center text-sm text-muted-foreground space-y-1">
-            <div>سيتم التواصل معك قريباً</div>
-            <div className="font-medium">يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق</div>
-          </div>
-        </DialogHeader>
+        <ProjectConfirmationHeader />
         
-        <EventConfirmationCard
-          eventTitle={projectTitle || eventTitle}
+        <ProjectConfirmationCard
+          eventTitle={eventTitle}
+          projectTitle={projectTitle}
           registrationId={registrationId}
-          registrantInfo={formData}
+          formData={formData}
           eventDetails={{
             date: eventDate,
             time: eventTime,
@@ -142,14 +119,7 @@ export const ProjectActivityConfirmationDialog = ({
           }}
         />
 
-        <Button 
-          variant="outline" 
-          className="w-full mt-2"
-          onClick={handleCloseDialog}
-        >
-          <X className="w-4 h-4 mr-2" />
-          إغلاق
-        </Button>
+        <ProjectConfirmationActions onClose={handleCloseDialog} />
       </DialogContent>
     </Dialog>
   );
