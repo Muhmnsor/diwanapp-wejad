@@ -5,20 +5,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { useState, useEffect } from "react";
-import { ConfirmationCard } from "../ConfirmationCard";
-import { useNavigate } from "react-router-dom";
+import { Download, X } from "lucide-react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { EventConfirmationCard } from "./EventConfirmationCard";
+import { exportCardAsImage } from "@/utils/cardExport";
 
 interface EventConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   registrationId: string;
   eventTitle: string;
-  eventPrice: number | "free";
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
@@ -27,7 +25,6 @@ interface EventConfirmationDialogProps {
     email: string;
     phone: string;
   };
-  onPayment: () => void;
 }
 
 export const EventConfirmationDialog = ({
@@ -40,163 +37,54 @@ export const EventConfirmationDialog = ({
   eventLocation,
   formData,
 }: EventConfirmationDialogProps) => {
-  const [isClosing, setIsClosing] = useState(false);
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
-  // First fetch the registration to get the event_id
-  const { data: registration } = useQuery({
-    queryKey: ['registration', registrationId],
-    queryFn: async () => {
-      console.log('Fetching registration:', registrationId);
-      const { data, error } = await supabase
-        .from('registrations')
-        .select('event_id')
-        .eq('registration_number', registrationId)
-        .maybeSingle();
+  console.log('EventConfirmationDialog - Rendering with:', {
+    registrationId,
+    eventTitle,
+    formData,
+    open
+  });
 
-      if (error) {
-        console.error('Error fetching registration:', error);
-        return null;
-      }
+  const handleDownload = async () => {
+    console.log('Attempting to download confirmation card');
+    const success = await exportCardAsImage(
+      "confirmation-card",
+      `تأكيد-التسجيل-${eventTitle}.png`
+    );
 
-      console.log('Fetched registration:', data);
-      return data;
+    if (success) {
+      console.log('Card downloaded successfully');
+      setHasDownloaded(true);
+      toast.success('تم حفظ بطاقة التأكيد بنجاح');
+    } else {
+      console.error('Failed to download card');
+      toast.error('حدث خطأ أثناء حفظ البطاقة');
     }
-  });
+  };
 
-  // Then fetch registration fields using the event_id
-  const { data: registrationFields } = useQuery({
-    queryKey: ['event-registration-fields', registration?.event_id],
-    queryFn: async () => {
-      if (!registration?.event_id) return null;
-
-      console.log('Fetching event registration fields for:', registration.event_id);
-      const { data, error } = await supabase
-        .from('event_registration_fields')
-        .select('*')
-        .eq('event_id', registration.event_id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching event registration fields:', error);
-        return null;
-      }
-
-      console.log('Fetched event registration fields:', data);
-      return data || {
-        arabic_name: true,
-        email: true,
-        phone: true
-      };
-    },
-    enabled: !!registration?.event_id
-  });
-
-  useEffect(() => {
-    console.log('EventConfirmationDialog - Component mounted with props:', {
-      open,
-      registrationId,
-      formData,
-      registrationFields
-    });
-    
-    return () => {
-      console.log('EventConfirmationDialog - Component unmounting');
-    };
-  }, []);
-
-  const handleCloseDialog = () => {
-    console.log('handleCloseDialog called - Current state:', {
-      hasDownloaded,
-      isClosing,
-      open,
-      formData,
-      registrationFields
-    });
-    
+  const handleClose = () => {
     if (!hasDownloaded) {
-      console.log('Showing confirmation dialog - Card not downloaded yet');
-      const shouldClose = window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ لم تقم بحفظ التأكيد بعد.");
-      if (!shouldClose) {
-        console.log('Close cancelled by user');
-        return;
-      }
+      const shouldClose = window.confirm(
+        "هل أنت متأكد من إغلاق نافذة التأكيد؟ لم تقم بحفظ التأكيد بعد."
+      );
+      if (!shouldClose) return;
     }
-
-    console.log('Proceeding with dialog close');
-    setIsClosing(true);
     onOpenChange(false);
-    
-    setTimeout(() => {
-      console.log('Navigating to home page');
-      navigate('/');
-    }, 300);
+    navigate('/');
   };
-
-  const handleDownloadSuccess = () => {
-    console.log('Card downloaded successfully');
-    setHasDownloaded(true);
-    toast.success('تم حفظ بطاقة التأكيد بنجاح');
-  };
-
-  // Validate only required fields based on registration fields configuration
-  const validateRequiredFields = () => {
-    if (!registrationFields) return false;
-
-    const requiredValidations = {
-      name: !registrationFields.arabic_name || (registrationFields.arabic_name && formData.name),
-      email: !registrationFields.email || (registrationFields.email && formData.email),
-      phone: !registrationFields.phone || (registrationFields.phone && formData.phone)
-    };
-
-    console.log('Validating event required fields:', {
-      registrationFields,
-      formData,
-      validations: requiredValidations
-    });
-
-    return Object.values(requiredValidations).every(isValid => isValid);
-  };
-
-  // Return null if required fields are not valid
-  if (!validateRequiredFields()) {
-    console.log('Event required fields validation failed:', {
-      formData,
-      registrationFields
-    });
-    return null;
-  }
 
   return (
     <Dialog 
       open={open} 
-      onOpenChange={(newOpen) => {
-        console.log('Dialog onOpenChange triggered:', {
-          newOpen,
-          currentOpen: open,
-          isClosing,
-          hasDownloaded
-        });
-        if (!newOpen) {
-          handleCloseDialog();
-        }
-      }}
+      onOpenChange={handleClose}
     >
       <DialogContent 
         className="max-w-md mx-auto"
-        onPointerDownOutside={(e) => {
-          console.log('Preventing outside click close');
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          console.log('Preventing escape key close');
-          e.preventDefault();
-        }}
-        onInteractOutside={(e) => {
-          console.log('Preventing interaction outside');
-          e.preventDefault();
-        }}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-center">تم التسجيل بنجاح!</DialogTitle>
@@ -206,24 +94,37 @@ export const EventConfirmationDialog = ({
           </div>
         </DialogHeader>
         
-        <ConfirmationCard
+        <EventConfirmationCard
           eventTitle={eventTitle}
           registrationId={registrationId}
-          formData={formData}
-          eventDate={eventDate}
-          eventTime={eventTime}
-          eventLocation={eventLocation}
-          onSave={handleDownloadSuccess}
+          registrantInfo={formData}
+          eventDetails={{
+            date: eventDate,
+            time: eventTime,
+            location: eventLocation
+          }}
         />
 
-        <Button 
-          variant="outline" 
-          className="w-full mt-2"
-          onClick={handleCloseDialog}
-        >
-          <X className="w-4 h-4 mr-2" />
-          إغلاق
-        </Button>
+        <div className="space-y-2 mt-4">
+          <Button 
+            onClick={handleDownload}
+            className="w-full gap-2"
+            variant="secondary"
+            size="lg"
+          >
+            <Download className="w-5 h-5" />
+            حفظ البطاقة
+          </Button>
+
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={handleClose}
+          >
+            <X className="w-4 h-4 mr-2" />
+            إغلاق
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
