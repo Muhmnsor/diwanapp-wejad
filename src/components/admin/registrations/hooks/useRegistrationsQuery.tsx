@@ -32,14 +32,10 @@ export const useRegistrationsQuery = (eventId: string) => {
           .from('registrations')
           .select(`
             *,
-            event:events!inner(*),
-            project:projects!inner(*)
+            event:events(*),
+            project:projects(*)
           `)
-          .or(
-            isProject ? 
-            `project_id.eq.${eventId}` :
-            `event_id.eq.${eventId}`
-          );
+          .eq(isProject ? 'project_id' : 'event_id', eventId);
 
         if (registrationsError) {
           console.error('Error fetching registrations:', registrationsError);
