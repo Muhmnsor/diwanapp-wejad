@@ -29,7 +29,6 @@ export const RegistrationFormContainer = ({
     formData,
     setFormData,
     isSubmitting,
-    handleSubmit
   } = useRegistration(onSubmit, isProject);
 
   // Fetch registration field settings
@@ -76,7 +75,7 @@ export const RegistrationFormContainer = ({
   const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+    <form onSubmit={onSubmit} className="space-y-4 mt-4">
       <RegistrationFormInputs
         formData={formData}
         setFormData={setFormData}

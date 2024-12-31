@@ -26,7 +26,8 @@ export const EventRegistrationForm = ({
     showConfirmation,
     setShowConfirmation,
     registrationId,
-    isRegistered
+    isRegistered,
+    handleSubmit
   } = useRegistration(onSubmit, isProject);
 
   console.log('Registration state:', {
@@ -60,7 +61,7 @@ export const EventRegistrationForm = ({
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       isProject={isProject}
     />
   );
