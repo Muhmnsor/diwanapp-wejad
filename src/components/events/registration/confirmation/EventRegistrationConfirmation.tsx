@@ -1,4 +1,3 @@
-import { ConfirmationCard } from "../../ConfirmationCard";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +9,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { ConfirmationCardWrapper } from "./ConfirmationCardWrapper";
 
 interface EventRegistrationConfirmationProps {
   open: boolean;
@@ -116,7 +116,7 @@ export const EventRegistrationConfirmation = ({
           </div>
         </DialogHeader>
         
-        <ConfirmationCard
+        <ConfirmationCardWrapper
           eventTitle={eventTitle}
           registrationId={registrationId}
           formData={formData}
