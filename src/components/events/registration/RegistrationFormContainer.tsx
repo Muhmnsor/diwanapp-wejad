@@ -46,7 +46,7 @@ export const RegistrationFormContainer = ({
     });
   };
 
-  const { data: registrationFields } = useQuery({
+  const { data: registrationFields, isLoading } = useQuery({
     queryKey: ['registration-fields', id],
     queryFn: async () => {
       console.log('Fetching registration fields for:', id);
@@ -76,10 +76,12 @@ export const RegistrationFormContainer = ({
         work_status: false
       };
     },
+    retry: 1,
+    retryDelay: 1000
   });
 
-  if (!registrationFields) {
-    return null;
+  if (isLoading || !registrationFields) {
+    return <div>جاري تحميل نموذج التسجيل...</div>;
   }
 
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
