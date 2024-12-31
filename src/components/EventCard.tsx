@@ -78,7 +78,7 @@ export const EventCard = ({
   }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type, currentAttendees, status, is_visible]);
 
   return (
-    <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
+    <div className={`w-[600px] mx-auto relative ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <EventCardImage 
           imageUrl={image_url}
