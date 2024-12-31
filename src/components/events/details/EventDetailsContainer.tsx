@@ -6,16 +6,16 @@ import { EventContent } from "../EventContent";
 import { AdminTabs } from "./AdminTabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventDashboard } from "@/components/admin/EventDashboard";
 
 interface EventDetailsContainerProps {
   event: Event;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  onAddToCalendar: () => void;
   onRegister: () => void;
   id: string;
-  children?: React.ReactNode;
 }
 
 export const EventDetailsContainer = ({
@@ -23,14 +23,31 @@ export const EventDetailsContainer = ({
   isAdmin,
   onEdit,
   onDelete,
-  onAddToCalendar,
   onRegister,
-  id,
-  children
+  id
 }: EventDetailsContainerProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [visibility, setVisibility] = useState(event.is_visible);
+
+  const handleVisibilityChange = async (visible: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ is_visible: visible })
+        .eq('id', id);
+
+      if (error) throw error;
+      setVisibility(visible);
+      toast.success(visible ? 'تم إظهار الفعالية' : 'تم إخفاء الفعالية');
+    } catch (error) {
+      console.error('Error updating event visibility:', error);
+      toast.error('حدث خطأ أثناء تحديث حالة الظهور');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <EventImage imageUrl={event.image_url || event.imageUrl} title={event.title} />
+      <EventImage imageUrl={event.image_url} title={event.title} />
       
       <div className="container mx-auto px-4 -mt-10 relative z-10">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
@@ -38,38 +55,28 @@ export const EventDetailsContainer = ({
             title={event.title}
             isAdmin={isAdmin}
             onEdit={onEdit}
-            onDelete={onDelete}
-            onAddToCalendar={onAddToCalendar}
-            isVisible={event.is_visible}
-            onVisibilityChange={async (visible) => {
-              try {
-                const { error } = await supabase
-                  .from('events')
-                  .update({ is_visible: visible })
-                  .eq('id', id);
-
-                if (error) throw error;
-                toast.success(visible ? 'تم إظهار الفعالية' : 'تم إخفاء الفعالية');
-              } catch (error) {
-                console.error('Error updating event visibility:', error);
-                toast.error('حدث خطأ أثناء تحديث حالة الظهور');
-              }
-            }}
+            onDelete={() => setShowDeleteDialog(true)}
+            isVisible={visibility}
+            onVisibilityChange={handleVisibilityChange}
           />
 
-          {children}
-
           {isAdmin ? (
-            <AdminTabs 
-              event={event}
-              id={id}
-              onRegister={onRegister}
-            />
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+                <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
+                <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="details" className="mt-0">
+                <EventContent event={event} onRegister={onRegister} />
+              </TabsContent>
+
+              <TabsContent value="dashboard" className="mt-6 px-4 md:px-8 pb-8">
+                <EventDashboard eventId={id} />
+              </TabsContent>
+            </Tabs>
           ) : (
-            <EventContent 
-              event={event}
-              onRegister={onRegister}
-            />
+            <EventContent event={event} onRegister={onRegister} />
           )}
         </div>
       </div>
