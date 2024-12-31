@@ -58,9 +58,26 @@ export const useRegistrationSubmit = ({
         registration_number: registrationNumber,
       };
 
-      if (isProject) {
+      // Check if this is a project activity or regular event
+      const { data: eventData } = await supabase
+        .from('events')
+        .select('is_project_activity, project_id')
+        .eq('id', id)
+        .single();
+
+      console.log('Event data:', eventData);
+
+      if (eventData?.is_project_activity) {
+        // This is a project activity
+        Object.assign(registrationData, { 
+          event_id: id,
+          project_id: eventData.project_id 
+        });
+      } else if (isProject) {
+        // This is a project registration
         Object.assign(registrationData, { project_id: id });
       } else {
+        // This is a regular event registration
         Object.assign(registrationData, { event_id: id });
       }
 
@@ -79,6 +96,7 @@ export const useRegistrationSubmit = ({
       
       setRegistrationId(registrationId);
       setIsRegistered(true);
+      setShowConfirmation(true);
       
       console.log('States updated after successful registration:', {
         registrationId,
