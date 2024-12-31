@@ -24,7 +24,7 @@ export const useUsersData = () => {
     queryFn: async () => {
       console.log('Fetching users with roles...');
       
-      // استدعاء واحد فقط لجلب المستخدمين مع أدوارهم
+      // First get user roles with their role information
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -33,11 +33,6 @@ export const useUsersData = () => {
             id,
             name,
             description
-          ),
-          auth.users!user_id (
-            id,
-            email,
-            last_sign_in_at
           )
         `);
 
@@ -46,21 +41,33 @@ export const useUsersData = () => {
         throw userRolesError;
       }
 
-      console.log('User roles data:', userRolesData);
+      // Then get user information from profiles table
+      const userIds = userRolesData.map(ur => ur.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', userIds);
 
-      const transformedUsers = userRolesData.map((data: any) => ({
-        id: data.user_id,
-        username: data.auth.users.email,
-        role: data.roles?.name || 'لم يتم تعيين دور',
-        lastLogin: data.auth.users.last_sign_in_at 
-          ? new Date(data.auth.users.last_sign_in_at).toLocaleString('ar-SA') 
-          : 'لم يسجل دخول بعد'
-      }));
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      // Combine the data
+      const transformedUsers = userRolesData.map((roleData: any) => {
+        const userProfile = profilesData.find(p => p.id === roleData.user_id);
+        return {
+          id: roleData.user_id,
+          username: userProfile?.email || 'لم يتم تعيين بريد إلكتروني',
+          role: roleData.roles?.name || 'لم يتم تعيين دور',
+          lastLogin: 'غير متوفر' // Since we can't access auth.users directly
+        };
+      });
 
       console.log('Transformed users with roles:', transformedUsers);
       return transformedUsers as User[];
     },
-    staleTime: 1000 * 30, // تخزين مؤقت لمدة 30 ثانية
+    staleTime: 1000 * 30, // Cache for 30 seconds
   });
 
   return {
