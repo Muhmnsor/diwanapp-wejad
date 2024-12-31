@@ -1,6 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Event } from "@/store/eventStore";
 
 interface BasicEventFieldsProps {
@@ -66,21 +65,20 @@ export const BasicEventFields = ({ formData, setFormData }: BasicEventFieldsProp
       </div>
       <div>
         <label className="text-sm font-medium block mb-1.5">السعر</label>
-        <Select
-          value={formData.price?.toString() || "free"}
-          onValueChange={(value) => setFormData({ ...formData, price: value === "free" ? "free" : Number(value) })}
-        >
-          <SelectTrigger className="text-right">
-            <SelectValue placeholder="اختر السعر" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="free">مجاني</SelectItem>
-            <SelectItem value="50">50 ريال</SelectItem>
-            <SelectItem value="100">100 ريال</SelectItem>
-            <SelectItem value="150">150 ريال</SelectItem>
-            <SelectItem value="200">200 ريال</SelectItem>
-          </SelectContent>
-        </Select>
+        <Input
+          type="number"
+          min="0"
+          placeholder="اترك الحقل فارغاً للفعاليات المجانية"
+          value={formData.price === "free" ? "" : formData.price || ""}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFormData({ 
+              ...formData, 
+              price: value === "" ? "free" : Number(value)
+            });
+          }}
+          className="text-right"
+        />
       </div>
       <div>
         <label className="text-sm font-medium block mb-1.5">عدد المقاعد</label>
