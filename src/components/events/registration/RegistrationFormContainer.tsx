@@ -33,7 +33,8 @@ export const RegistrationFormContainer = ({
     handleSubmit
   } = useRegistration(() => {
     if (onSubmit) {
-      onSubmit(new FormEvent('submit'));
+      const syntheticEvent = { preventDefault: () => {} } as FormEvent;
+      onSubmit(syntheticEvent);
     }
   }, isProject);
 
