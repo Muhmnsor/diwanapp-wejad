@@ -6,6 +6,7 @@ import { CertificateFields } from "./form/fields/CertificateFields";
 import { RegistrationFields } from "./form/fields/RegistrationFields";
 import { EventPathFields } from "./form/fields/EventPathFields";
 import { EventPriceAndSeatsFields } from "./form/fields/EventPriceAndSeatsFields";
+import { EventRegistrationDatesFields } from "./form/fields/EventRegistrationDatesFields";
 import { Card } from "@/components/ui/card";
 
 interface EventFormFieldsProps {
@@ -51,6 +52,14 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
         <h2 className="text-lg font-semibold mb-4">السعر وعدد المقاعد</h2>
         <div className="space-y-4">
           <EventPriceAndSeatsFields formData={formData} setFormData={setFormData} />
+        </div>
+      </Card>
+
+      {/* Registration Dates */}
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">تواريخ التسجيل</h2>
+        <div className="space-y-4">
+          <EventRegistrationDatesFields formData={formData} setFormData={setFormData} />
         </div>
       </Card>
 
