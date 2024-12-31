@@ -29,7 +29,15 @@ export const RegistrationForm = ({
     isRegistered
   } = useRegistration(onSubmit, isProject);
 
+  console.log('EventRegistrationForm - Current state:', {
+    showConfirmation,
+    isRegistered,
+    registrationId,
+    formData
+  });
+
   if (!isRegistered) {
+    console.log('EventRegistrationForm - Showing registration form');
     return (
       <RegistrationFormContainer
         eventTitle={eventTitle}
@@ -43,12 +51,18 @@ export const RegistrationForm = ({
     );
   }
 
-  // Transform formData to match RegistrationConfirmation expectations
+  // Transform formData to match confirmation expectations
   const confirmationFormData = {
     name: formData.arabicName,
     email: formData.email,
     phone: formData.phone
   };
+
+  console.log('EventRegistrationForm - Showing confirmation dialog with data:', {
+    registrationId,
+    eventTitle,
+    confirmationFormData
+  });
 
   return (
     <EventRegistrationConfirmation
