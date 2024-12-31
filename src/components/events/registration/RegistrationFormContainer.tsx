@@ -38,6 +38,14 @@ export const RegistrationFormContainer = ({
     }
   }, isProject);
 
+  // Update form data to ensure name is synced with arabicName
+  const handleFormDataChange = (newData: any) => {
+    setFormData({
+      ...newData,
+      name: newData.arabicName // Keep name in sync with arabicName
+    });
+  };
+
   const { data: registrationFields } = useQuery({
     queryKey: ['registration-fields', id],
     queryFn: async () => {
@@ -84,7 +92,7 @@ export const RegistrationFormContainer = ({
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
       <RegistrationFormInputs
         formData={formData}
-        setFormData={setFormData}
+        setFormData={handleFormDataChange}
         eventPrice={eventPrice}
         showPaymentFields={isPaidEvent}
         registrationFields={registrationFields}
