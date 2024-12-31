@@ -1,13 +1,14 @@
-import { EventType } from "@/types/event";
-import { EventTitle } from "../EventTitle";
+import { Event } from "@/store/eventStore";
 import { EventImage } from "../EventImage";
+import { EventTitle } from "../EventTitle";
 
 interface EventDetailsHeaderProps {
-  event: EventType;
+  event: Event;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onAddToCalendar: () => void;
+  onVisibilityChange: (visible: boolean) => void;
 }
 
 export const EventDetailsHeader = ({
@@ -15,20 +16,28 @@ export const EventDetailsHeader = ({
   isAdmin,
   onEdit,
   onDelete,
-  onAddToCalendar
+  onAddToCalendar,
+  onVisibilityChange
 }: EventDetailsHeaderProps) => {
-  const imageUrl = event.imageUrl || event.image_url;
-
   return (
-    <div className="bg-white rounded-t-2xl overflow-hidden">
-      <EventImage imageUrl={imageUrl} title={event.title} />
-      <EventTitle
-        title={event.title}
-        isAdmin={isAdmin}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onAddToCalendar={onAddToCalendar}
+    <>
+      <EventImage 
+        imageUrl={event.image_url || event.imageUrl} 
+        title={event.title} 
       />
-    </div>
+      <div className="container mx-auto px-4 -mt-10 relative z-10">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+          <EventTitle
+            title={event.title}
+            isAdmin={isAdmin}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onAddToCalendar={onAddToCalendar}
+            isVisible={event.is_visible}
+            onVisibilityChange={onVisibilityChange}
+          />
+        </div>
+      </div>
+    </>
   );
 };
