@@ -33,7 +33,7 @@ export const RegistrationFormContainer = ({
     handleSubmit
   } = useRegistration(() => {
     if (onSubmit) {
-      onSubmit(new Event('submit') as FormEvent);
+      onSubmit(new FormEvent('submit'));
     }
   }, isProject);
 
