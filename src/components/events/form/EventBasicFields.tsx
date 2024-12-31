@@ -71,6 +71,17 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
           </SelectContent>
         </Select>
       </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">عدد المقاعد</label>
+        <Input
+          type="number"
+          min="0"
+          value={formData.max_attendees}
+          onChange={(e) => setFormData({ ...formData, max_attendees: parseInt(e.target.value) || 0 })}
+          className="text-right"
+          placeholder="أدخل عدد المقاعد المتاحة"
+        />
+      </div>
     </div>
   );
 };
