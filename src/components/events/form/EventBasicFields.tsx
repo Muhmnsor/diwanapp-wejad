@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Event } from "@/store/eventStore";
+import { BeneficiaryType } from "@/types/event";
 
 interface EventBasicFieldsProps {
   formData: Event;
@@ -65,7 +66,8 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
         <label className="text-sm font-medium block mb-1.5">نوع الفعالية</label>
         <Select
           value={formData.event_type}
-          onValueChange={(value) => setFormData({ ...formData, event_type: value, eventType: value })}
+          onValueChange={(value: "online" | "in-person") => 
+            setFormData({ ...formData, event_type: value, eventType: value })}
         >
           <SelectTrigger className="text-right">
             <SelectValue placeholder="اختر نوع الفعالية" />
@@ -80,7 +82,8 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
         <label className="text-sm font-medium block mb-1.5">نوع المستفيدين</label>
         <Select
           value={formData.beneficiaryType}
-          onValueChange={(value) => setFormData({ ...formData, beneficiaryType: value, beneficiary_type: value })}
+          onValueChange={(value: BeneficiaryType) => 
+            setFormData({ ...formData, beneficiaryType: value, beneficiary_type: value })}
         >
           <SelectTrigger className="text-right">
             <SelectValue placeholder="اختر نوع المستفيدين" />
