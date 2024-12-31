@@ -37,10 +37,10 @@ export const RegistrationFormContainer = ({
     queryKey: ['registration-fields', id],
     queryFn: async () => {
       console.log('Fetching registration fields for:', id);
-      const { data, error } = await supabase
-        .from(isProject ? 'project_registration_fields' : 'event_registration_fields')
+      const { data: eventFields, error } = await supabase
+        .from('event_registration_fields')
         .select('*')
-        .eq(isProject ? 'project_id' : 'event_id', id)
+        .eq('event_id', id)
         .single();
 
       if (error) {
@@ -48,18 +48,24 @@ export const RegistrationFormContainer = ({
         throw error;
       }
 
-      console.log('Fetched registration fields:', data);
-      return data || {
-        arabic_name: true,
-        email: true,
-        phone: true,
-        english_name: false,
-        education_level: false,
-        birth_date: false,
-        national_id: false,
-        gender: false,
-        work_status: false
-      };
+      console.log('Fetched registration fields:', eventFields);
+      
+      // إذا لم يتم العثور على إعدادات الحقول، نستخدم الإعدادات الافتراضية
+      if (!eventFields) {
+        return {
+          arabic_name: true,
+          email: true,
+          phone: true,
+          english_name: false,
+          education_level: false,
+          birth_date: false,
+          national_id: false,
+          gender: false,
+          work_status: false
+        };
+      }
+
+      return eventFields;
     },
   });
 

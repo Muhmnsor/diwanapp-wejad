@@ -23,6 +23,8 @@ export const PersonalInfoFields = ({
   setFormData,
   registrationFields
 }: PersonalInfoFieldsProps) => {
+  console.log('Registration fields in PersonalInfoFields:', registrationFields);
+  
   const handleInputChange = (field: string, value: string) => {
     setFormData({
       ...formData,
@@ -33,37 +35,43 @@ export const PersonalInfoFields = ({
   return (
     <div className="space-y-4">
       {/* Required Fields */}
-      <div className="space-y-2">
-        <Label>الاسم بالعربي</Label>
-        <Input
-          value={formData.arabicName}
-          onChange={(e) => handleInputChange('arabicName', e.target.value)}
-          placeholder="أدخل الاسم بالعربي"
-          required
-        />
-      </div>
+      {registrationFields.arabic_name && (
+        <div className="space-y-2">
+          <Label>الاسم بالعربي</Label>
+          <Input
+            value={formData.arabicName}
+            onChange={(e) => handleInputChange('arabicName', e.target.value)}
+            placeholder="أدخل الاسم بالعربي"
+            required
+          />
+        </div>
+      )}
 
-      <div className="space-y-2">
-        <Label>البريد الإلكتروني</Label>
-        <Input
-          type="email"
-          value={formData.email}
-          onChange={(e) => handleInputChange('email', e.target.value)}
-          placeholder="أدخل البريد الإلكتروني"
-          required
-        />
-      </div>
+      {registrationFields.email && (
+        <div className="space-y-2">
+          <Label>البريد الإلكتروني</Label>
+          <Input
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            placeholder="أدخل البريد الإلكتروني"
+            required
+          />
+        </div>
+      )}
 
-      <div className="space-y-2">
-        <Label>رقم الجوال</Label>
-        <Input
-          type="tel"
-          value={formData.phone}
-          onChange={(e) => handleInputChange('phone', e.target.value)}
-          placeholder="أدخل رقم الجوال"
-          required
-        />
-      </div>
+      {registrationFields.phone && (
+        <div className="space-y-2">
+          <Label>رقم الجوال</Label>
+          <Input
+            type="tel"
+            value={formData.phone}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
+            placeholder="أدخل رقم الجوال"
+            required
+          />
+        </div>
+      )}
 
       {/* Optional Fields */}
       {registrationFields.english_name && (
