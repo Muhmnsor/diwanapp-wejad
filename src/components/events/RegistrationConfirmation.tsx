@@ -34,9 +34,16 @@ export const RegistrationConfirmation = ({
   formData,
   onPayment,
 }: RegistrationConfirmationProps) => {
-  console.log('RegistrationConfirmation - isProjectActivity:', isProjectActivity);
+  console.log('RegistrationConfirmation - Rendering with props:', {
+    isProjectActivity,
+    projectTitle,
+    registrationId,
+    eventTitle,
+    formData
+  });
   
   if (isProjectActivity && projectTitle) {
+    console.log('RegistrationConfirmation - Showing project activity confirmation');
     return (
       <ProjectActivityConfirmationDialog
         open={open}
@@ -54,6 +61,7 @@ export const RegistrationConfirmation = ({
     );
   }
 
+  console.log('RegistrationConfirmation - Showing event confirmation');
   return (
     <EventConfirmationDialog
       open={open}

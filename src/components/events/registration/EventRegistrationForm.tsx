@@ -35,49 +35,55 @@ export const EventRegistrationForm = ({
     if (onSubmit) {
       onSubmit();
     }
-  }, false); // false indicates this is not a project registration
+  }, false);
 
-  console.log('Registration state:', {
+  console.log('EventRegistrationForm - Registration state:', {
     showConfirmation,
     isRegistered,
     registrationId,
     formData
   });
 
-  if (isRegistered && showConfirmation) {
-    console.log('Showing confirmation dialog');
-    // Transform formData to match RegistrationConfirmation expectations
-    const confirmationFormData = {
-      name: formData.arabicName,
-      email: formData.email,
-      phone: formData.phone
-    };
-
+  if (!isRegistered) {
+    console.log('EventRegistrationForm - Showing registration form');
     return (
-      <RegistrationConfirmation
-        open={showConfirmation}
-        onOpenChange={setShowConfirmation}
-        registrationId={registrationId}
+      <RegistrationFormContainer
         eventTitle={eventTitle}
         eventPrice={eventPrice}
         eventDate={eventDate}
         eventTime={eventTime}
         eventLocation={eventLocation}
-        formData={confirmationFormData}
-        isProjectActivity={false}
-        onPayment={() => {}}
+        onSubmit={handleSubmit}
       />
     );
   }
 
+  // Transform formData to match RegistrationConfirmation expectations
+  const confirmationFormData = {
+    name: formData.arabicName,
+    email: formData.email,
+    phone: formData.phone
+  };
+
+  console.log('EventRegistrationForm - Showing confirmation dialog with data:', {
+    registrationId,
+    eventTitle,
+    confirmationFormData
+  });
+
   return (
-    <RegistrationFormContainer
+    <RegistrationConfirmation
+      open={showConfirmation}
+      onOpenChange={setShowConfirmation}
+      registrationId={registrationId}
       eventTitle={eventTitle}
       eventPrice={eventPrice}
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      onSubmit={handleSubmit}
+      formData={confirmationFormData}
+      isProjectActivity={false}
+      onPayment={() => {}}
     />
   );
 };
