@@ -59,6 +59,11 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     registrationCounts
   ]);
 
+  const handleRegister = () => {
+    console.log('Register button clicked, calling onRegister');
+    onRegister();
+  };
+
   return (
     <div className="bg-white rounded-lg divide-y divide-gray-100" dir="rtl">
       <div className="py-8">
@@ -97,7 +102,7 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       <div className="px-8 py-6">
         <EventRegisterButton 
           status={eventStatus}
-          onRegister={onRegister}
+          onRegister={handleRegister}
         />
       </div>
     </div>
