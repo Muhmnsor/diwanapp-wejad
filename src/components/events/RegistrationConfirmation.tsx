@@ -47,8 +47,11 @@ export const RegistrationConfirmation = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('RegistrationConfirmation - Component mounted');
-    console.log('Initial state:', { open, isClosing, hasDownloaded });
+    console.log('RegistrationConfirmation - Component mounted with props:', {
+      open,
+      registrationId,
+      formData
+    });
     
     return () => {
       console.log('RegistrationConfirmation - Component unmounting');
@@ -57,13 +60,17 @@ export const RegistrationConfirmation = ({
 
   useEffect(() => {
     console.log('Dialog open state changed:', open);
+    if (!open && !isClosing) {
+      console.log('Dialog closed externally');
+    }
   }, [open]);
 
   const handleCloseDialog = () => {
     console.log('handleCloseDialog called - Current state:', {
       hasDownloaded,
       isClosing,
-      open
+      open,
+      formData
     });
     
     if (!hasDownloaded) {
@@ -91,6 +98,12 @@ export const RegistrationConfirmation = ({
     setHasDownloaded(true);
     toast.success('تم حفظ بطاقة التأكيد بنجاح');
   };
+
+  // Prevent closing if form data is empty
+  if (!formData.name || !formData.email || !formData.phone) {
+    console.log('Form data is incomplete:', formData);
+    return null;
+  }
 
   return (
     <Dialog 
