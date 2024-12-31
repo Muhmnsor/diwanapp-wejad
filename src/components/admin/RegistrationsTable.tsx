@@ -1,8 +1,9 @@
+import { useState, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { RegistrationTableHeader } from "./registrations/RegistrationTableHeader";
 import { RegistrationTableRow } from "./registrations/row/RegistrationTableRow";
-import { EmptyState } from "./registrations/components/EmptyState";
-import { useRegistrationsTable } from "./registrations/hooks/useRegistrationsTable";
+import { useRegistrationActions } from "./registrations/useRegistrationActions";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Registration {
   id: string;
@@ -30,20 +31,50 @@ export const RegistrationsTable = ({
   registrations,
   onDeleteRegistration,
 }: RegistrationsTableProps) => {
+  const [localRegistrations, setLocalRegistrations] = useState<Registration[]>(registrations);
+  const queryClient = useQueryClient();
+  
   const {
-    localRegistrations,
     loading,
     editingId,
     editForm,
-    handleEditFormChange,
+    setEditForm,
     handleEdit,
-    handleSaveWrapper,
+    handleSave,
     handleCancel,
     handleDelete,
-  } = useRegistrationsTable(registrations, onDeleteRegistration);
+  } = useRegistrationActions(onDeleteRegistration);
+
+  useEffect(() => {
+    setLocalRegistrations(registrations);
+  }, [registrations]);
+
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveWrapper = async (id: string) => {
+    try {
+      const updatedRegistration = await handleSave(id);
+      if (updatedRegistration) {
+        setLocalRegistrations(prevRegistrations =>
+          prevRegistrations.map(reg =>
+            reg.id === id ? { ...reg, ...updatedRegistration } : reg
+          )
+        );
+        queryClient.invalidateQueries({ queryKey: ['registrations'] });
+      }
+    } catch (error) {
+      console.error("Error in handleSaveWrapper:", error);
+    }
+  };
 
   if (!registrations.length) {
-    return <EmptyState />;
+    return (
+      <div className="text-center py-12 text-gray-500 bg-gray-50">
+        لا يوجد تسجيلات حتى الآن
+      </div>
+    );
   }
 
   return (
@@ -55,7 +86,7 @@ export const RegistrationsTable = ({
             <RegistrationTableRow
               key={registration.id}
               registration={registration}
-              isEditing={editingId === registration.id}
+              editingId={editingId}
               editForm={editForm}
               loading={loading}
               onEdit={() => handleEdit(registration)}
