@@ -1,4 +1,4 @@
-import { RegistrationsTable } from "../RegistrationsTable";
+import { RegistrationsTable } from "../../RegistrationsTable";
 import { ExportButton } from "../../ExportButton";
 
 interface RegistrationsContentProps {
