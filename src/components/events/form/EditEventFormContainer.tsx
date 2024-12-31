@@ -24,12 +24,24 @@ export const EditEventFormContainer = ({
     eventHours: event.event_hours || event.eventHours,
     registrationStartDate: event.registration_start_date || event.registrationStartDate,
     registrationEndDate: event.registration_end_date || event.registrationEndDate,
-    location_url: event.location_url
+    location_url: event.location_url,
+    registration_fields: event.registration_fields || {
+      arabic_name: true,
+      email: true,
+      phone: true,
+      english_name: false,
+      education_level: false,
+      birth_date: false,
+      national_id: false,
+      gender: false,
+      work_status: false
+    }
   });
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   console.log('Form data in EditEventFormContainer:', formData);
+  console.log('Registration fields in EditEventFormContainer:', formData.registration_fields);
 
   const handleSave = async () => {
     try {
@@ -69,7 +81,8 @@ export const EditEventFormContainer = ({
         registration_end_date: formData.registrationEndDate || formData.registration_end_date,
         registrationEndDate: formData.registrationEndDate || formData.registration_end_date,
         location_url: formData.location_url,
-        price: price
+        price: price,
+        registration_fields: formData.registration_fields
       };
 
       await onSave(eventToSave);

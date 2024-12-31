@@ -20,6 +20,7 @@ export const EditEventForm = ({
   isLoading
 }: EditEventFormProps) => {
   console.log('Form data in EditEventForm:', formData);
+  console.log('Registration fields in EditEventForm:', formData.registration_fields);
   
   return (
     <div className="space-y-6">

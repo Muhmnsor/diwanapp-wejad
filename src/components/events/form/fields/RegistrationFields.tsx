@@ -9,7 +9,11 @@ interface RegistrationFieldsProps {
 }
 
 export const RegistrationFields = ({ formData, setFormData }: RegistrationFieldsProps) => {
+  console.log('Registration fields in RegistrationFields:', formData.registration_fields);
+
   const handleFieldChange = (field: string, checked: boolean) => {
+    console.log('Updating registration field:', field, checked);
+    
     setFormData({
       ...formData,
       registration_fields: {
@@ -50,20 +54,25 @@ export const RegistrationFields = ({ formData, setFormData }: RegistrationFields
     <Card className="p-4">
       <h3 className="text-lg font-semibold mb-4">معلومات المستفيدين المطلوبة</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {fields.map((field) => (
-          <div key={field.id} className="flex items-center space-x-2 rtl:space-x-reverse">
-            <Checkbox
-              id={field.id}
-              checked={field.required || formData.registration_fields?.[field.id as keyof typeof formData.registration_fields]}
-              onCheckedChange={(checked) => handleFieldChange(field.id, checked as boolean)}
-              disabled={field.required}
-              className="border-2"
-            />
-            <Label htmlFor={field.id} className="text-sm">
-              {field.label} {field.required && <span className="text-red-500">*</span>}
-            </Label>
-          </div>
-        ))}
+        {fields.map((field) => {
+          const isChecked = field.required || formData.registration_fields?.[field.id as keyof typeof formData.registration_fields] || false;
+          console.log(`Field ${field.id} checked status:`, isChecked);
+          
+          return (
+            <div key={field.id} className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Checkbox
+                id={field.id}
+                checked={isChecked}
+                onCheckedChange={(checked) => handleFieldChange(field.id, checked as boolean)}
+                disabled={field.required}
+                className="border-2"
+              />
+              <Label htmlFor={field.id} className="text-sm">
+                {field.label} {field.required && <span className="text-red-500">*</span>}
+              </Label>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );
