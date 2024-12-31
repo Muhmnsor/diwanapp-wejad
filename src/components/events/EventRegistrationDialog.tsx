@@ -62,13 +62,7 @@ export const EventRegistrationDialog = ({
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={(newOpen) => {
-        console.log('Dialog onOpenChange triggered:', { newOpen, currentOpen: open });
-        onOpenChange(newOpen);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>

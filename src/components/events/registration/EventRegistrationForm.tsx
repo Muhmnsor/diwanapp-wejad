@@ -28,7 +28,9 @@ export const EventRegistrationForm = ({
     handleSubmit
   } = useRegistration(() => {
     console.log('EventRegistrationForm - Registration successful, calling onSubmit');
-    onSubmit();
+    if (onSubmit) {
+      onSubmit();
+    }
   }, false);
 
   console.log('EventRegistrationForm - Current state:', {
@@ -38,43 +40,35 @@ export const EventRegistrationForm = ({
     formData
   });
 
-  if (!isRegistered) {
-    console.log('EventRegistrationForm - Showing registration form');
+  if (showConfirmation && isRegistered) {
+    console.log('EventRegistrationForm - Showing confirmation dialog');
     return (
-      <RegistrationFormContainer
+      <EventRegistrationConfirmation
+        open={showConfirmation}
+        onOpenChange={setShowConfirmation}
+        registrationId={registrationId}
         eventTitle={eventTitle}
-        eventPrice={eventPrice}
         eventDate={eventDate}
         eventTime={eventTime}
         eventLocation={eventLocation}
-        onSubmit={handleSubmit}
+        formData={{
+          name: formData.arabicName,
+          email: formData.email,
+          phone: formData.phone
+        }}
       />
     );
   }
 
-  // Transform formData to match confirmation expectations
-  const confirmationFormData = {
-    name: formData.arabicName,
-    email: formData.email,
-    phone: formData.phone
-  };
-
-  console.log('EventRegistrationForm - Showing confirmation dialog with data:', {
-    registrationId,
-    eventTitle,
-    confirmationFormData
-  });
-
+  console.log('EventRegistrationForm - Showing registration form');
   return (
-    <EventRegistrationConfirmation
-      open={showConfirmation}
-      onOpenChange={setShowConfirmation}
-      registrationId={registrationId}
+    <RegistrationFormContainer
       eventTitle={eventTitle}
+      eventPrice={eventPrice}
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      formData={confirmationFormData}
+      onSubmit={handleSubmit}
     />
   );
 };
