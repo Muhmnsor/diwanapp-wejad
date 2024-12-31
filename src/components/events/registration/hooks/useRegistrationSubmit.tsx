@@ -1,6 +1,7 @@
 import { FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
+import { useParams } from "react-router-dom";
 
 interface UseRegistrationSubmitProps {
   formData: {
@@ -23,32 +24,40 @@ export const useRegistrationSubmit = ({
   setShowConfirmation,
   isProject,
 }: UseRegistrationSubmitProps) => {
+  const { id } = useParams();
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     console.log('Starting registration submission...');
+    console.log('Form data:', formData);
+    console.log('Event/Project ID from URL:', id);
     
     setIsSubmitting(true);
     
     try {
-      // Get the event ID from the URL
-      const eventId = window.location.pathname.split('/').pop();
-      console.log('Registering for event:', eventId);
-
       const registrationId = uuidv4();
       const registrationNumber = `REG-${registrationId.split('-')[0]}`;
 
+      const registrationData = {
+        id: registrationId,
+        arabic_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        registration_number: registrationNumber,
+      };
+
+      // Add either event_id or project_id based on the registration type
+      if (isProject) {
+        Object.assign(registrationData, { project_id: id });
+      } else {
+        Object.assign(registrationData, { event_id: id });
+      }
+
+      console.log('Submitting registration with data:', registrationData);
+
       const { error } = await supabase
         .from('registrations')
-        .insert([
-          {
-            id: registrationId,
-            event_id: eventId, // Add the event ID
-            arabic_name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            registration_number: registrationNumber,
-          }
-        ]);
+        .insert([registrationData]);
 
       if (error) {
         console.error('Registration error:', error);
