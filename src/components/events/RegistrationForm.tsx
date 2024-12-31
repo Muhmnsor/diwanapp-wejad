@@ -6,6 +6,7 @@ import { RegistrationConfirmation } from "./RegistrationConfirmation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 interface RegistrationFormProps {
   eventTitle: string;
@@ -37,11 +38,49 @@ export const RegistrationForm = ({
     cardNumber: "",
     expiryDate: "",
     cvv: "",
+    arabicName: "",
+    englishName: "",
+    educationLevel: "",
+    birthDate: "",
+    nationalId: "",
+    gender: "",
+    workStatus: "",
   });
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registrationId, setRegistrationId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+
+  // Fetch registration field settings
+  const { data: registrationFields } = useQuery({
+    queryKey: ['registration-fields', id],
+    queryFn: async () => {
+      console.log('Fetching registration fields for:', id);
+      const { data, error } = await supabase
+        .from(isProject ? 'project_registration_fields' : 'event_registration_fields')
+        .select('*')
+        .eq(isProject ? 'project_id' : 'event_id', id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching registration fields:', error);
+        throw error;
+      }
+
+      console.log('Fetched registration fields:', data);
+      return data || {
+        arabic_name: true,
+        email: true,
+        phone: true,
+        english_name: false,
+        education_level: false,
+        birth_date: false,
+        national_id: false,
+        gender: false,
+        work_status: false
+      };
+    },
+  });
 
   const checkExistingRegistration = async (email: string) => {
     console.log("Checking for existing registration...");
@@ -98,12 +137,17 @@ export const RegistrationForm = ({
 
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Create registration with the correct ID field based on type
       const registrationData = {
-        name: formData.name,
+        arabic_name: formData.arabicName,
         email: formData.email,
         phone: formData.phone,
-        registration_number: uniqueId
+        registration_number: uniqueId,
+        english_name: registrationFields?.english_name ? formData.englishName : null,
+        education_level: registrationFields?.education_level ? formData.educationLevel : null,
+        birth_date: registrationFields?.birth_date ? formData.birthDate : null,
+        national_id: registrationFields?.national_id ? formData.nationalId : null,
+        gender: registrationFields?.gender ? formData.gender : null,
+        work_status: registrationFields?.work_status ? formData.workStatus : null,
       };
 
       if (isProject) {
@@ -112,7 +156,6 @@ export const RegistrationForm = ({
         registrationData['event_id'] = id;
       }
       
-      // Create registration
       const { data: newRegistration, error: registrationError } = await supabase
         .from('registrations')
         .insert(registrationData)
@@ -124,7 +167,6 @@ export const RegistrationForm = ({
         throw registrationError;
       }
 
-      // If this is a paid event, process the payment
       if (eventPrice !== "free" && eventPrice !== null && eventPrice > 0) {
         const paymentSuccess = await processPayment(newRegistration);
         if (!paymentSuccess) {
@@ -167,6 +209,10 @@ export const RegistrationForm = ({
     return "تأكيد التسجيل";
   };
 
+  if (!registrationFields) {
+    return null;
+  }
+
   return (
     <>
       {!isRegistered && (
@@ -176,6 +222,7 @@ export const RegistrationForm = ({
             setFormData={setFormData}
             eventPrice={eventPrice}
             showPaymentFields={isPaidEvent}
+            registrationFields={registrationFields}
           />
           <Button 
             type="submit" 

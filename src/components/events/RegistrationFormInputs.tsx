@@ -9,23 +9,43 @@ interface RegistrationFormInputsProps {
     cardNumber?: string;
     expiryDate?: string;
     cvv?: string;
+    arabicName: string;
+    englishName?: string;
+    educationLevel?: string;
+    birthDate?: string;
+    nationalId?: string;
+    gender?: string;
+    workStatus?: string;
   };
   setFormData: (data: any) => void;
   eventPrice: number | "free" | null;
   showPaymentFields?: boolean;
+  registrationFields: {
+    arabic_name: boolean;
+    email: boolean;
+    phone: boolean;
+    english_name: boolean;
+    education_level: boolean;
+    birth_date: boolean;
+    national_id: boolean;
+    gender: boolean;
+    work_status: boolean;
+  };
 }
 
 export const RegistrationFormInputs = ({
   formData,
   setFormData,
   eventPrice,
-  showPaymentFields = false
+  showPaymentFields = false,
+  registrationFields
 }: RegistrationFormInputsProps) => {
   return (
     <div className="space-y-4">
       <PersonalInfoFields
         formData={formData}
         setFormData={setFormData}
+        registrationFields={registrationFields}
       />
       
       {showPaymentFields && (
