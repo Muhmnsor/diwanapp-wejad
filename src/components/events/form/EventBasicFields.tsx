@@ -17,6 +17,8 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           className="text-right"
+          placeholder="أدخل عنوان الفعالية"
+          required
         />
       </div>
       <div>
@@ -25,6 +27,8 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           className="text-right"
+          placeholder="أدخل وصف الفعالية"
+          required
         />
       </div>
       <div>
@@ -34,6 +38,7 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           className="text-right"
+          required
         />
       </div>
       <div>
@@ -43,6 +48,7 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
           value={formData.time}
           onChange={(e) => setFormData({ ...formData, time: e.target.value })}
           className="text-right"
+          required
         />
       </div>
       <div>
@@ -51,7 +57,40 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
           value={formData.location}
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
           className="text-right"
+          placeholder="أدخل موقع الفعالية"
+          required
         />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">نوع الفعالية</label>
+        <Select
+          value={formData.event_type}
+          onValueChange={(value) => setFormData({ ...formData, event_type: value, eventType: value })}
+        >
+          <SelectTrigger className="text-right">
+            <SelectValue placeholder="اختر نوع الفعالية" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="in-person">حضوري</SelectItem>
+            <SelectItem value="online">عن بعد</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">نوع المستفيدين</label>
+        <Select
+          value={formData.beneficiaryType}
+          onValueChange={(value) => setFormData({ ...formData, beneficiaryType: value, beneficiary_type: value })}
+        >
+          <SelectTrigger className="text-right">
+            <SelectValue placeholder="اختر نوع المستفيدين" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="men">رجال</SelectItem>
+            <SelectItem value="women">نساء</SelectItem>
+            <SelectItem value="both">رجال ونساء</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <label className="text-sm font-medium block mb-1.5">السعر</label>
@@ -80,6 +119,33 @@ export const EventBasicFields = ({ formData, setFormData }: EventBasicFieldsProp
           onChange={(e) => setFormData({ ...formData, max_attendees: parseInt(e.target.value) || 0 })}
           className="text-right"
           placeholder="أدخل عدد المقاعد المتاحة"
+          required
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">تاريخ بدء التسجيل</label>
+        <Input
+          type="date"
+          value={formData.registrationStartDate || formData.registration_start_date || ''}
+          onChange={(e) => setFormData({ 
+            ...formData, 
+            registrationStartDate: e.target.value,
+            registration_start_date: e.target.value 
+          })}
+          className="text-right"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium block mb-1.5">تاريخ نهاية التسجيل</label>
+        <Input
+          type="date"
+          value={formData.registrationEndDate || formData.registration_end_date || ''}
+          onChange={(e) => setFormData({ 
+            ...formData, 
+            registrationEndDate: e.target.value,
+            registration_end_date: e.target.value 
+          })}
+          className="text-right"
         />
       </div>
     </div>
