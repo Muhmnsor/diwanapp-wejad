@@ -30,6 +30,10 @@ export const useRegistrationSubmit = ({
     setIsSubmitting(true);
     
     try {
+      // Get the event ID from the URL
+      const eventId = window.location.pathname.split('/').pop();
+      console.log('Registering for event:', eventId);
+
       const registrationId = uuidv4();
       const registrationNumber = `REG-${registrationId.split('-')[0]}`;
 
@@ -38,6 +42,7 @@ export const useRegistrationSubmit = ({
         .insert([
           {
             id: registrationId,
+            event_id: eventId, // Add the event ID
             arabic_name: formData.name,
             email: formData.email,
             phone: formData.phone,
