@@ -8,11 +8,13 @@ interface ProjectPersonalInfoFieldsProps {
     englishName: string;
   };
   setFormData: (data: any) => void;
+  showEnglishName?: boolean;
 }
 
 export const ProjectPersonalInfoFields = ({
   formData,
-  setFormData
+  setFormData,
+  showEnglishName = false
 }: ProjectPersonalInfoFieldsProps) => {
   return (
     <div className="space-y-4">
@@ -26,16 +28,20 @@ export const ProjectPersonalInfoFields = ({
           required
         />
       </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">الاسم بالإنجليزية</label>
-        <Input
-          type="text"
-          value={formData.englishName}
-          onChange={(e) => setFormData(prev => ({ ...prev, englishName: e.target.value }))}
-          className="w-full"
-          required
-        />
-      </div>
+
+      {showEnglishName && (
+        <div>
+          <label className="block text-sm font-medium mb-1">الاسم بالإنجليزية</label>
+          <Input
+            type="text"
+            value={formData.englishName}
+            onChange={(e) => setFormData(prev => ({ ...prev, englishName: e.target.value }))}
+            className="w-full"
+            required
+          />
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium mb-1">البريد الإلكتروني</label>
         <Input
@@ -46,6 +52,7 @@ export const ProjectPersonalInfoFields = ({
           required
         />
       </div>
+
       <div>
         <label className="block text-sm font-medium mb-1">رقم الجوال</label>
         <Input
