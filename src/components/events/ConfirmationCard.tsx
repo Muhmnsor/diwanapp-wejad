@@ -7,6 +7,7 @@ import { ConfirmationHeader } from "./ConfirmationHeader";
 import { ConfirmationQR } from "./ConfirmationQR";
 import { ConfirmationDetails } from "./ConfirmationDetails";
 import { formatTime12Hour } from "@/utils/dateTimeUtils";
+import { useEffect } from "react";
 
 interface ConfirmationCardProps {
   eventTitle: string;
@@ -38,6 +39,19 @@ export const ConfirmationCard = ({
   const { toast } = useToast();
   const formattedTime = eventTime ? formatTime12Hour(eventTime) : undefined;
 
+  useEffect(() => {
+    console.log('ConfirmationCard - Component mounted with props:', {
+      eventTitle,
+      registrationId,
+      formData,
+      eventDate,
+      eventTime,
+      eventLocation,
+      isProjectActivity,
+      projectTitle
+    });
+  }, []);
+
   const handleSaveCard = async () => {
     console.log("Save card button clicked");
     const success = await exportCardAsImage(
@@ -51,7 +65,10 @@ export const ConfirmationCard = ({
         title: "تم حفظ البطاقة بنجاح",
         description: "تم تنزيل البطاقة على جهازك",
       });
-      if (onSave) onSave();
+      if (onSave) {
+        console.log("Calling onSave callback");
+        onSave();
+      }
     } else {
       console.log("Failed to save card");
       toast({

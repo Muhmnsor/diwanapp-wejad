@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ConfirmationCard } from "./ConfirmationCard";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -46,12 +46,28 @@ export const RegistrationConfirmation = ({
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
-  console.log('RegistrationConfirmation - Dialog state:', { open, isClosing, hasDownloaded });
+  useEffect(() => {
+    console.log('RegistrationConfirmation - Component mounted');
+    console.log('Initial state:', { open, isClosing, hasDownloaded });
+    
+    return () => {
+      console.log('RegistrationConfirmation - Component unmounting');
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log('Dialog open state changed:', open);
+  }, [open]);
 
   const handleCloseDialog = () => {
-    console.log('Attempting to close dialog. Downloaded:', hasDownloaded);
+    console.log('handleCloseDialog called - Current state:', {
+      hasDownloaded,
+      isClosing,
+      open
+    });
     
     if (!hasDownloaded) {
+      console.log('Showing confirmation dialog - Card not downloaded yet');
       const shouldClose = window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ لم تقم بحفظ التأكيد بعد.");
       if (!shouldClose) {
         console.log('Close cancelled by user');
@@ -65,6 +81,7 @@ export const RegistrationConfirmation = ({
     
     // Delay navigation to ensure dialog closes smoothly
     setTimeout(() => {
+      console.log('Navigating to home page');
       navigate('/');
     }, 300);
   };
@@ -79,7 +96,12 @@ export const RegistrationConfirmation = ({
     <Dialog 
       open={open} 
       onOpenChange={(newOpen) => {
-        console.log('Dialog onOpenChange triggered:', newOpen);
+        console.log('Dialog onOpenChange triggered:', {
+          newOpen,
+          currentOpen: open,
+          isClosing,
+          hasDownloaded
+        });
         if (!newOpen) {
           handleCloseDialog();
         }
