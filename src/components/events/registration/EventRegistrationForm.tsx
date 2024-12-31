@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,8 +34,53 @@ export const EventRegistrationForm = ({
     cardNumber: "",
     expiryDate: "",
     cvv: "",
+    arabicName: "",
+    englishName: "",
+    educationLevel: "",
+    birthDate: "",
+    nationalId: "",
+    gender: "",
+    workStatus: "",
   });
+
+  const [registrationFields, setRegistrationFields] = useState<any>({
+    arabic_name: true,
+    email: true,
+    phone: true,
+    english_name: false,
+    education_level: false,
+    birth_date: false,
+    national_id: false,
+    gender: false,
+    work_status: false
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchRegistrationFields = async () => {
+      if (!id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('event_registration_fields')
+          .select('*')
+          .eq('event_id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          console.log('Fetched registration fields:', data);
+          setRegistrationFields(data);
+        }
+      } catch (error) {
+        console.error('Error fetching registration fields:', error);
+      }
+    };
+
+    fetchRegistrationFields();
+  }, [id]);
 
   const checkExistingRegistration = async (email: string) => {
     console.log("Checking for existing registration...");
@@ -88,15 +133,23 @@ export const EventRegistrationForm = ({
 
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
+      const registrationData = {
+        event_id: id,
+        email: formData.email,
+        phone: formData.phone,
+        registration_number: uniqueId,
+        arabic_name: formData.arabicName,
+        english_name: registrationFields.english_name ? formData.englishName : null,
+        education_level: registrationFields.education_level ? formData.educationLevel : null,
+        birth_date: registrationFields.birth_date ? formData.birthDate : null,
+        national_id: registrationFields.national_id ? formData.nationalId : null,
+        gender: registrationFields.gender ? formData.gender : null,
+        work_status: registrationFields.work_status ? formData.workStatus : null
+      };
+
       const { data: newRegistration, error: registrationError } = await supabase
         .from('registrations')
-        .insert({
-          event_id: id,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          registration_number: uniqueId
-        })
+        .insert(registrationData)
         .select()
         .single();
 
@@ -145,6 +198,7 @@ export const EventRegistrationForm = ({
       <PersonalInfoFields
         formData={formData}
         setFormData={setFormData}
+        registrationFields={registrationFields}
       />
       
       {isPaidEvent && (

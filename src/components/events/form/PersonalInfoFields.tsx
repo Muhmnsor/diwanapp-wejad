@@ -1,133 +1,161 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PersonalInfoFieldsProps {
-  formData: {
-    name: string;
-    email: string;
-    phone: string;
-  };
+  formData: any;
   setFormData: (data: any) => void;
+  registrationFields: {
+    arabic_name: boolean;
+    email: boolean;
+    phone: boolean;
+    english_name: boolean;
+    education_level: boolean;
+    birth_date: boolean;
+    national_id: boolean;
+    gender: boolean;
+    work_status: boolean;
+  };
 }
 
 export const PersonalInfoFields = ({
   formData,
-  setFormData
+  setFormData,
+  registrationFields
 }: PersonalInfoFieldsProps) => {
-  const [errors, setErrors] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
-
-  const validateName = (value: string) => {
-    if (!/^[\u0600-\u06FFa-zA-Z\s]{3,50}$/.test(value)) {
-      setErrors(prev => ({ ...prev, name: "الرجاء إدخال اسم صحيح (3-50 حرف)" }));
-      return false;
-    }
-    setErrors(prev => ({ ...prev, name: "" }));
-    return true;
-  };
-
-  const validateEmail = (value: string) => {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      setErrors(prev => ({ ...prev, email: "الرجاء إدخال بريد إلكتروني صحيح" }));
-      return false;
-    }
-    setErrors(prev => ({ ...prev, email: "" }));
-    return true;
-  };
-
-  const validatePhone = (value: string) => {
-    if (!/^05\d{8}$/.test(value)) {
-      setErrors(prev => ({ ...prev, phone: "الرجاء إدخال رقم جوال صحيح يبدأ ب 05" }));
-      return false;
-    }
-    setErrors(prev => ({ ...prev, phone: "" }));
-    return true;
+  const handleInputChange = (field: string, value: string) => {
+    setFormData({
+      ...formData,
+      [field]: value
+    });
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="name" className="text-right block mb-2">الاسم</Label>
+      {/* Required Fields */}
+      <div className="space-y-2">
+        <Label>الاسم بالعربي</Label>
         <Input
-          id="name"
-          type="text"
-          value={formData.name}
-          onChange={(e) => {
-            setFormData({ ...formData, name: e.target.value });
-            validateName(e.target.value);
-          }}
-          className={`text-right ${errors.name ? 'border-red-500' : ''}`}
-          placeholder="أدخل اسمك الكامل"
+          value={formData.arabicName}
+          onChange={(e) => handleInputChange('arabicName', e.target.value)}
+          placeholder="أدخل الاسم بالعربي"
           required
-          dir="rtl"
         />
-        {errors.name && (
-          <p className="text-sm text-red-500 mt-1 text-right flex items-center justify-end gap-1">
-            <AlertCircle className="h-4 w-4" />
-            {errors.name}
-          </p>
-        )}
       </div>
 
-      <div>
-        <Label htmlFor="email" className="text-right block mb-2">البريد الإلكتروني</Label>
+      <div className="space-y-2">
+        <Label>البريد الإلكتروني</Label>
         <Input
-          id="email"
           type="email"
           value={formData.email}
-          onChange={(e) => {
-            setFormData({ ...formData, email: e.target.value });
-            validateEmail(e.target.value);
-          }}
-          className={`text-right ${errors.email ? 'border-red-500' : ''}`}
-          placeholder="example@domain.com"
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          placeholder="أدخل البريد الإلكتروني"
           required
-          dir="ltr"
         />
-        {errors.email && (
-          <p className="text-sm text-red-500 mt-1 text-right flex items-center justify-end gap-1">
-            <AlertCircle className="h-4 w-4" />
-            {errors.email}
-          </p>
-        )}
       </div>
 
-      <div>
-        <Label htmlFor="phone" className="text-right block mb-2">رقم الجوال</Label>
+      <div className="space-y-2">
+        <Label>رقم الجوال</Label>
         <Input
-          id="phone"
           type="tel"
           value={formData.phone}
-          onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-            setFormData({ ...formData, phone: value });
-            validatePhone(value);
-          }}
-          className={`text-right ${errors.phone ? 'border-red-500' : ''}`}
-          placeholder="05xxxxxxxx"
+          onChange={(e) => handleInputChange('phone', e.target.value)}
+          placeholder="أدخل رقم الجوال"
           required
-          dir="ltr"
         />
-        {errors.phone && (
-          <p className="text-sm text-red-500 mt-1 text-right flex items-center justify-end gap-1">
-            <AlertCircle className="h-4 w-4" />
-            {errors.phone}
-          </p>
-        )}
       </div>
 
-      <Alert className="bg-blue-50 text-blue-800 border-blue-200">
-        <Info className="h-4 w-4" />
-        <AlertDescription className="text-right">
-          سيتم استخدام هذه المعلومات للتواصل معك بخصوص الفعالية
-        </AlertDescription>
-      </Alert>
+      {/* Optional Fields */}
+      {registrationFields.english_name && (
+        <div className="space-y-2">
+          <Label>الاسم بالإنجليزي</Label>
+          <Input
+            value={formData.englishName}
+            onChange={(e) => handleInputChange('englishName', e.target.value)}
+            placeholder="Enter name in English"
+          />
+        </div>
+      )}
+
+      {registrationFields.education_level && (
+        <div className="space-y-2">
+          <Label>المستوى التعليمي</Label>
+          <Select
+            value={formData.educationLevel}
+            onValueChange={(value) => handleInputChange('educationLevel', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر المستوى التعليمي" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high_school">ثانوي</SelectItem>
+              <SelectItem value="bachelor">بكالوريوس</SelectItem>
+              <SelectItem value="master">ماجستير</SelectItem>
+              <SelectItem value="phd">دكتوراه</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {registrationFields.birth_date && (
+        <div className="space-y-2">
+          <Label>تاريخ الميلاد</Label>
+          <Input
+            type="date"
+            value={formData.birthDate}
+            onChange={(e) => handleInputChange('birthDate', e.target.value)}
+          />
+        </div>
+      )}
+
+      {registrationFields.national_id && (
+        <div className="space-y-2">
+          <Label>رقم الهوية</Label>
+          <Input
+            value={formData.nationalId}
+            onChange={(e) => handleInputChange('nationalId', e.target.value)}
+            placeholder="أدخل رقم الهوية"
+          />
+        </div>
+      )}
+
+      {registrationFields.gender && (
+        <div className="space-y-2">
+          <Label>الجنس</Label>
+          <Select
+            value={formData.gender}
+            onValueChange={(value) => handleInputChange('gender', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر الجنس" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="male">ذكر</SelectItem>
+              <SelectItem value="female">أنثى</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {registrationFields.work_status && (
+        <div className="space-y-2">
+          <Label>الحالة الوظيفية</Label>
+          <Select
+            value={formData.workStatus}
+            onValueChange={(value) => handleInputChange('workStatus', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر الحالة الوظيفية" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="employed">موظف</SelectItem>
+              <SelectItem value="unemployed">غير موظف</SelectItem>
+              <SelectItem value="student">طالب</SelectItem>
+              <SelectItem value="retired">متقاعد</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 };
