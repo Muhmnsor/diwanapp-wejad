@@ -10,6 +10,8 @@ interface Registration {
   arabic_name: string;
   email: string;
   phone: string;
+  event?: any;
+  project?: any;
 }
 
 interface RegistrationsTableProps {
@@ -79,9 +81,9 @@ export const RegistrationsTable = ({
               editingId={editingId}
               editForm={editForm}
               loading={loading}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onSave={handleSaveWrapper}
+              onEdit={() => handleEdit(registration)}
+              onDelete={() => handleDelete(registration.id)}
+              onSave={() => handleSaveWrapper(registration.id)}
               onCancel={handleCancel}
               onEditFormChange={handleEditFormChange}
             />

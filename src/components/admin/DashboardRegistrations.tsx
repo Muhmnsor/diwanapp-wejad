@@ -37,8 +37,16 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
         // Query registrations based on whether this is a project or event
         const { data: registrationsData, error: registrationsError } = await supabase
           .from('registrations')
-          .select('*')
-          .eq(isProject ? 'project_id' : 'event_id', eventId);
+          .select(`
+            *,
+            event:events!inner(*),
+            project:projects!inner(*)
+          `)
+          .or(
+            isProject ? 
+            `project_id.eq.${eventId}` :
+            `event_id.eq.${eventId}`
+          );
 
         if (registrationsError) {
           console.error('Error fetching registrations:', registrationsError);
@@ -63,8 +71,19 @@ export const DashboardRegistrations = ({ eventId }: { eventId: string }) => {
   }, [data]);
 
   const handleDeleteRegistration = async (id: string) => {
-    setRegistrations(prev => prev.filter(reg => reg.id !== id));
-    await refetch(); // Refresh the data after deletion
+    try {
+      const { error } = await supabase
+        .from('registrations')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setRegistrations(prev => prev.filter(reg => reg.id !== id));
+      await refetch();
+    } catch (err) {
+      console.error('Error deleting registration:', err);
+    }
   };
 
   if (isLoading) {

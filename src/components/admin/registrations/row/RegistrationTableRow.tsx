@@ -3,25 +3,21 @@ import { RegistrationName } from "./RegistrationName";
 import { RegistrationContact } from "./RegistrationContact";
 import { RegistrationActions } from "./RegistrationActions";
 
-interface Registration {
-  id: string;
-  arabic_name: string;
-  email: string;
-  phone: string;
-}
-
 interface RegistrationTableRowProps {
-  registration: Registration;
-  editingId: string | null;
-  editForm: {
-    name: string;
+  registration: {
+    id: string;
+    arabic_name: string;
     email: string;
     phone: string;
+    event?: any;
+    project?: any;
   };
+  editingId: string | null;
+  editForm: any;
   loading: boolean;
-  onEdit: (registration: Registration) => void;
-  onDelete: (id: string) => void;
-  onSave: (id: string) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onSave: () => void;
   onCancel: () => void;
   onEditFormChange: (field: string, value: string) => void;
 }
@@ -38,16 +34,15 @@ export const RegistrationTableRow = ({
   onEditFormChange,
 }: RegistrationTableRowProps) => {
   const isEditing = editingId === registration.id;
-  
+
   return (
-    <TableRow key={registration.id} className="hover:bg-gray-50">
+    <TableRow>
       <RegistrationName
         arabicName={registration.arabic_name}
         isEditing={isEditing}
         editForm={editForm}
         onEditFormChange={onEditFormChange}
       />
-      
       <RegistrationContact
         email={registration.email}
         phone={registration.phone}
@@ -55,13 +50,12 @@ export const RegistrationTableRow = ({
         editForm={editForm}
         onEditFormChange={onEditFormChange}
       />
-
       <RegistrationActions
         isEditing={isEditing}
         loading={loading}
-        onEdit={() => onEdit(registration)}
-        onDelete={() => onDelete(registration.id)}
-        onSave={() => onSave(registration.id)}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onSave={onSave}
         onCancel={onCancel}
       />
     </TableRow>
