@@ -30,7 +30,8 @@ export const RegistrationTableRow = ({
   onCancel,
   onEditFormChange,
 }: RegistrationTableRowProps) => {
-  console.log('Registration row data:', registration);
+  console.log('Registration data:', registration);
+  console.log('Edit form data:', editForm);
   
   return (
     <TableRow key={registration.id} className="hover:bg-gray-50">

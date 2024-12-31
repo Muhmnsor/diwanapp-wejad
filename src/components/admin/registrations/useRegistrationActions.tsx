@@ -15,9 +15,9 @@ export const useRegistrationActions = (onDeleteRegistration: (id: string) => voi
     console.log('Editing registration:', registration);
     setEditingId(registration.id);
     setEditForm({
-      name: registration.arabic_name,
-      email: registration.email,
-      phone: registration.phone,
+      name: registration.arabic_name || "",
+      email: registration.email || "",
+      phone: registration.phone || "",
     });
   };
 
