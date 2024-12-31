@@ -1,7 +1,7 @@
 import { Event } from "@/store/eventStore";
 import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface RegistrationFieldsProps {
   formData: Event;
@@ -9,12 +9,12 @@ interface RegistrationFieldsProps {
 }
 
 export const RegistrationFields = ({ formData, setFormData }: RegistrationFieldsProps) => {
-  const handleFieldChange = (field: string, value: boolean) => {
+  const handleFieldChange = (field: string, checked: boolean) => {
     setFormData({
       ...formData,
       registration_fields: {
         ...formData.registration_fields,
-        [field]: value
+        [field]: checked
       }
     });
   };
@@ -49,14 +49,15 @@ export const RegistrationFields = ({ formData, setFormData }: RegistrationFields
   return (
     <Card className="p-4">
       <h3 className="text-lg font-semibold mb-4">معلومات المستفيدين المطلوبة</h3>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {fields.map((field) => (
           <div key={field.id} className="flex items-center space-x-2 rtl:space-x-reverse">
-            <Switch
+            <Checkbox
               id={field.id}
               checked={field.required || formData.registration_fields?.[field.id as keyof typeof formData.registration_fields]}
-              onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
+              onCheckedChange={(checked) => handleFieldChange(field.id, checked as boolean)}
               disabled={field.required}
+              className="border-2"
             />
             <Label htmlFor={field.id} className="text-sm">
               {field.label} {field.required && <span className="text-red-500">*</span>}
