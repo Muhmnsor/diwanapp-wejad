@@ -85,7 +85,6 @@ export const useEventForm = () => {
     try {
       console.log('Creating event with data:', formData);
       
-      // 1. Create the event
       const { data: eventData, error: eventError } = await supabase
         .from("events")
         .insert([{
@@ -111,9 +110,6 @@ export const useEventForm = () => {
         .single();
 
       if (eventError) throw eventError;
-
-      // The trigger will automatically create the registration fields record
-      // We don't need to create it manually anymore
 
       await queryClient.invalidateQueries({ queryKey: ["events"] });
 
