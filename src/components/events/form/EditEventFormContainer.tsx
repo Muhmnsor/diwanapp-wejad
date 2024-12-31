@@ -4,6 +4,7 @@ import { handleImageUpload } from "./EventImageUpload";
 import { toast } from "sonner";
 import { useEventForm } from "./hooks/useEventForm";
 import { handleEventUpdate } from "./handlers/EventUpdateHandler";
+import { EditEventFormActions } from "./EditEventFormActions";
 
 interface EditEventFormContainerProps {
   eventId?: string;
@@ -60,22 +61,11 @@ export const EditEventFormContainer = ({
         setFormData={setFormData}
         onImageChange={handleImageChange}
       />
-      <div className="flex justify-start gap-2 mt-6 text-right" dir="rtl">
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
-        >
-          {isLoading ? "جاري التحديث..." : "تحديث الفعالية"}
-        </button>
-        <button
-          onClick={onCancel}
-          disabled={isLoading}
-          className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
-        >
-          إلغاء
-        </button>
-      </div>
+      <EditEventFormActions
+        onSave={handleSubmit}
+        onCancel={onCancel}
+        isLoading={isLoading}
+      />
     </div>
   );
 };

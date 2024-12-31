@@ -52,7 +52,7 @@ export const useEventForm = (eventId?: string) => {
 
         if (eventError) throw eventError;
 
-        // Fetch registration fields - Using maybeSingle() instead of single()
+        // Fetch registration fields
         const { data: fieldsData, error: fieldsError } = await supabase
           .from('event_registration_fields')
           .select('*')
