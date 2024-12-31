@@ -65,6 +65,16 @@ export const RegistrationTableRow = ({
     }
   };
 
+  const translateWorkStatus = (status?: string) => {
+    switch (status) {
+      case 'employed': return 'موظف';
+      case 'unemployed': return 'غير موظف';
+      case 'student': return 'طالب';
+      case 'retired': return 'متقاعد';
+      default: return '-';
+    }
+  };
+
   if (isEditing) {
     return (
       <TableRow>
@@ -125,22 +135,15 @@ export const RegistrationTableRow = ({
           />
         </TableCell>
         <TableCell>
-          <select
+          <GenderSelect
             value={editForm.gender}
-            onChange={(e) => onEditFormChange("gender", e.target.value)}
-            className="w-full p-2 border rounded"
-          >
-            <option value="">اختر</option>
-            <option value="male">ذكر</option>
-            <option value="female">أنثى</option>
-          </select>
+            onChange={(value) => onEditFormChange("gender", value)}
+          />
         </TableCell>
         <TableCell>
-          <input
-            type="text"
+          <WorkStatusSelect
             value={editForm.workStatus}
-            onChange={(e) => onEditFormChange("workStatus", e.target.value)}
-            className="w-full p-2 border rounded"
+            onChange={(value) => onEditFormChange("workStatus", value)}
           />
         </TableCell>
         <TableCell>{registration.registration_number}</TableCell>
@@ -169,7 +172,7 @@ export const RegistrationTableRow = ({
       <TableCell>{registration.birth_date ? formatDate(registration.birth_date) : '-'}</TableCell>
       <TableCell>{renderCell(registration.national_id)}</TableCell>
       <TableCell>{renderCell(registration.gender === 'male' ? 'ذكر' : registration.gender === 'female' ? 'أنثى' : '')}</TableCell>
-      <TableCell>{renderCell(registration.work_status)}</TableCell>
+      <TableCell>{renderCell(translateWorkStatus(registration.work_status))}</TableCell>
       <TableCell>{renderCell(registration.registration_number)}</TableCell>
       <TableCell>{formatDate(registration.created_at)}</TableCell>
       <TableCell>
