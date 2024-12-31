@@ -89,6 +89,8 @@ export const CreateEventFormContainer = () => {
 
       if (eventError) throw eventError;
 
+      console.log('Event created successfully:', eventData);
+
       // Insert registration fields
       const { error: fieldsError } = await supabase
         .from('event_registration_fields')
@@ -105,8 +107,12 @@ export const CreateEventFormContainer = () => {
           work_status: formData.registration_fields.work_status
         }]);
 
-      if (fieldsError) throw fieldsError;
+      if (fieldsError) {
+        console.error('Error inserting registration fields:', fieldsError);
+        throw fieldsError;
+      }
 
+      console.log('Registration fields saved successfully');
       toast.success("تم إنشاء الفعالية بنجاح");
       navigate(`/events/${eventData.id}`);
     } catch (error) {
