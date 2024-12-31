@@ -50,34 +50,31 @@ export const RegistrationFormContainer = ({
     queryKey: ['registration-fields', id],
     queryFn: async () => {
       console.log('Fetching registration fields for:', id);
-      const { data: eventFields, error } = await supabase
+      const { data, error } = await supabase
         .from('event_registration_fields')
         .select('*')
         .eq('event_id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching registration fields:', error);
         throw error;
       }
 
-      console.log('Fetched registration fields:', eventFields);
+      console.log('Fetched registration fields:', data);
       
-      if (!eventFields) {
-        return {
-          arabic_name: true,
-          email: true,
-          phone: true,
-          english_name: false,
-          education_level: false,
-          birth_date: false,
-          national_id: false,
-          gender: false,
-          work_status: false
-        };
-      }
-
-      return eventFields;
+      // If no fields are found, return default values
+      return data || {
+        arabic_name: true,
+        email: true,
+        phone: true,
+        english_name: false,
+        education_level: false,
+        birth_date: false,
+        national_id: false,
+        gender: false,
+        work_status: false
+      };
     },
   });
 
