@@ -86,7 +86,7 @@ export const RegistrationsTable = ({
             <RegistrationTableRow
               key={registration.id}
               registration={registration}
-              editingId={editingId}
+              isEditing={editingId === registration.id}
               editForm={editForm}
               loading={loading}
               onEdit={() => handleEdit(registration)}
