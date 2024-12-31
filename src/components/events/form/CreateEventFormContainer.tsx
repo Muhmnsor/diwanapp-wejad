@@ -18,7 +18,7 @@ export const CreateEventFormContainer = () => {
     time: "",
     location: "",
     event_type: "in-person",
-    price: "free",
+    price: null,
     max_attendees: 0,
     image_url: "",
     beneficiary_type: "both",
@@ -27,6 +27,9 @@ export const CreateEventFormContainer = () => {
     event_category: "social",
     registration_start_date: null,
     registration_end_date: null,
+    attendees: 0,
+    beneficiaryType: "both",
+    event_hours: null,
     registration_fields: {
       arabic_name: true,
       english_name: false,
@@ -70,14 +73,15 @@ export const CreateEventFormContainer = () => {
           location: formData.location,
           image_url: formData.image_url,
           event_type: formData.event_type,
-          price: formData.price === "free" ? null : formData.price,
+          price: formData.price === null ? null : formData.price,
           max_attendees: formData.max_attendees,
           beneficiary_type: formData.beneficiary_type,
           certificate_type: formData.certificate_type,
           event_path: formData.event_path,
           event_category: formData.event_category,
           registration_start_date: formData.registration_start_date,
-          registration_end_date: formData.registration_end_date
+          registration_end_date: formData.registration_end_date,
+          event_hours: formData.event_hours
         }])
         .select()
         .single();
