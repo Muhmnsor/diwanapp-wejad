@@ -39,6 +39,7 @@ export const useRegistration = (
       
       setShowConfirmation(true);
       setIsRegistered(true);
+      setRegistrationId(newRegistrationId);
       
       toast.success('تم التسجيل بنجاح');
       
