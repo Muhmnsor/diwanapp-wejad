@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventImage } from "../EventImage";
 import { EventTitle } from "../EventTitle";
 import { EventContent } from "../EventContent";
 import { AdminTabs } from "./AdminTabs";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EventDetailsContainerProps {
   event: Event;
