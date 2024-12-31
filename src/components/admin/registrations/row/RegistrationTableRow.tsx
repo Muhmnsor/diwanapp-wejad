@@ -49,6 +49,28 @@ export const RegistrationTableRow = ({
     }
   };
 
+  const translateEducationLevel = (level?: string) => {
+    const educationLevels: Record<string, string> = {
+      'primary': 'ابتدائي',
+      'intermediate': 'متوسط',
+      'high_school': 'ثانوي',
+      'bachelor': 'بكالوريوس',
+      'master': 'ماجستير',
+      'phd': 'دكتوراه'
+    };
+    return level ? educationLevels[level] || level : '-';
+  };
+
+  const translateWorkStatus = (status?: string) => {
+    const workStatuses: Record<string, string> = {
+      'employed': 'موظف',
+      'unemployed': 'غير موظف',
+      'student': 'طالب',
+      'retired': 'متقاعد'
+    };
+    return status ? workStatuses[status] || status : '-';
+  };
+
   const renderCell = (value: string | undefined) => value || '-';
 
   if (isEditing) {
@@ -87,12 +109,19 @@ export const RegistrationTableRow = ({
           />
         </TableCell>
         <TableCell>
-          <input
-            type="text"
+          <select
             value={editForm.educationLevel}
             onChange={(e) => onEditFormChange("educationLevel", e.target.value)}
             className="w-full p-2 border rounded"
-          />
+          >
+            <option value="">اختر</option>
+            <option value="primary">ابتدائي</option>
+            <option value="intermediate">متوسط</option>
+            <option value="high_school">ثانوي</option>
+            <option value="bachelor">بكالوريوس</option>
+            <option value="master">ماجستير</option>
+            <option value="phd">دكتوراه</option>
+          </select>
         </TableCell>
         <TableCell>
           <input
@@ -122,12 +151,17 @@ export const RegistrationTableRow = ({
           </select>
         </TableCell>
         <TableCell>
-          <input
-            type="text"
+          <select
             value={editForm.workStatus}
             onChange={(e) => onEditFormChange("workStatus", e.target.value)}
             className="w-full p-2 border rounded"
-          />
+          >
+            <option value="">اختر</option>
+            <option value="employed">موظف</option>
+            <option value="unemployed">غير موظف</option>
+            <option value="student">طالب</option>
+            <option value="retired">متقاعد</option>
+          </select>
         </TableCell>
         <TableCell>{registration.registration_number}</TableCell>
         <TableCell>{formatDate(registration.created_at)}</TableCell>
@@ -151,11 +185,11 @@ export const RegistrationTableRow = ({
       <TableCell>{renderCell(registration.english_name)}</TableCell>
       <TableCell>{renderCell(registration.email)}</TableCell>
       <TableCell>{renderCell(registration.phone)}</TableCell>
-      <TableCell>{renderCell(registration.education_level)}</TableCell>
+      <TableCell>{translateEducationLevel(registration.education_level)}</TableCell>
       <TableCell>{registration.birth_date ? formatDate(registration.birth_date) : '-'}</TableCell>
       <TableCell>{renderCell(registration.national_id)}</TableCell>
       <TableCell>{renderCell(registration.gender === 'male' ? 'ذكر' : registration.gender === 'female' ? 'أنثى' : '')}</TableCell>
-      <TableCell>{renderCell(registration.work_status)}</TableCell>
+      <TableCell>{translateWorkStatus(registration.work_status)}</TableCell>
       <TableCell>{renderCell(registration.registration_number)}</TableCell>
       <TableCell>{formatDate(registration.created_at)}</TableCell>
       <TableCell>
