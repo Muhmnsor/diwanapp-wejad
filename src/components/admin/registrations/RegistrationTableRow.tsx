@@ -42,7 +42,7 @@ export const RegistrationTableRow = ({
             className="w-full text-right"
           />
         ) : (
-          registration.arabic_name
+          registration.arabic_name || "لا يوجد اسم"
         )}
       </TableCell>
       <TableCell>
@@ -54,7 +54,7 @@ export const RegistrationTableRow = ({
             dir="ltr"
           />
         ) : (
-          registration.email
+          registration.email || "لا يوجد بريد إلكتروني"
         )}
       </TableCell>
       <TableCell>
@@ -66,7 +66,7 @@ export const RegistrationTableRow = ({
             dir="ltr"
           />
         ) : (
-          registration.phone
+          registration.phone || "لا يوجد رقم جوال"
         )}
       </TableCell>
       <TableCell>{registration.registration_number}</TableCell>
