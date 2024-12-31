@@ -1,21 +1,19 @@
 import { useState } from "react";
-import { RegistrationFormData } from "../types/registration";
 
 export const useRegistrationState = () => {
-  const [formData, setFormData] = useState<RegistrationFormData>({
-    name: "",
-    email: "",
-    phone: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
+  const [formData, setFormData] = useState({
     arabicName: "",
     englishName: "",
+    email: "",
+    phone: "",
     educationLevel: "",
     birthDate: "",
     nationalId: "",
     gender: "",
     workStatus: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
   });
 
   const [showConfirmation, setShowConfirmation] = useState(false);

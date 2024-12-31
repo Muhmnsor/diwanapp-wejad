@@ -6,8 +6,14 @@ import { useParams } from "react-router-dom";
 interface UseRegistrationSubmitProps {
   formData: {
     arabicName: string;
+    englishName?: string;
     email: string;
     phone: string;
+    educationLevel?: string;
+    birthDate?: string;
+    nationalId?: string;
+    gender?: string;
+    workStatus?: string;
   };
   setIsSubmitting: (value: boolean) => void;
   setRegistrationId: (value: string) => void;
@@ -40,9 +46,15 @@ export const useRegistrationSubmit = ({
 
       const registrationData = {
         id: registrationId,
-        arabic_name: formData.arabicName, // تم تصحيح اسم الحقل هنا
+        arabic_name: formData.arabicName,
+        english_name: formData.englishName,
         email: formData.email,
         phone: formData.phone,
+        education_level: formData.educationLevel,
+        birth_date: formData.birthDate,
+        national_id: formData.nationalId,
+        gender: formData.gender,
+        work_status: formData.workStatus,
         registration_number: registrationNumber,
       };
 
