@@ -37,9 +37,6 @@ export const RegistrationTableRow = ({
   onCancel,
   onEditFormChange,
 }: RegistrationTableRowProps) => {
-  console.log('Registration data:', registration);
-  console.log('Edit form data:', editForm);
-  
   const isEditing = editingId === registration.id;
   
   return (

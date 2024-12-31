@@ -4,6 +4,7 @@ import { Edit2, Trash2, X, Check } from "lucide-react";
 
 interface RegistrationActionsProps {
   isEditing: boolean;
+  loading: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onSave: () => void;
@@ -12,6 +13,7 @@ interface RegistrationActionsProps {
 
 export const RegistrationActions = ({
   isEditing,
+  loading,
   onEdit,
   onDelete,
   onSave,
@@ -27,6 +29,7 @@ export const RegistrationActions = ({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
+              disabled={loading}
             >
               <Check className="h-4 w-4" />
             </Button>
@@ -35,6 +38,7 @@ export const RegistrationActions = ({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
+              disabled={loading}
             >
               <X className="h-4 w-4" />
             </Button>

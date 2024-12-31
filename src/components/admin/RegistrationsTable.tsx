@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Table, TableBody } from "@/components/ui/table";
 import { RegistrationTableHeader } from "./registrations/RegistrationTableHeader";
-import { RegistrationTableRow } from "./registrations/RegistrationTableRow";
+import { RegistrationTableRow } from "./registrations/row/RegistrationTableRow";
 import { useRegistrationActions } from "./registrations/useRegistrationActions";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -52,7 +52,6 @@ export const RegistrationsTable = ({
             reg.id === id ? { ...reg, ...updatedRegistration } : reg
           )
         );
-        // Invalidate and refetch registrations
         queryClient.invalidateQueries({ queryKey: ['registrations'] });
       }
     } catch (error) {
