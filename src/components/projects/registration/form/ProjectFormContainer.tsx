@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
-import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
+import { ProjectActivityConfirmation } from "@/components/events/registration/confirmation/ProjectActivityConfirmation";
 
 interface ProjectFormContainerProps {
   projectTitle: string;
@@ -140,19 +140,16 @@ export const ProjectFormContainer = ({
 
   if (showConfirmation) {
     return (
-      <RegistrationConfirmation
+      <ProjectActivityConfirmation
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
         registrationId={registrationId}
         eventTitle={projectTitle}
-        eventPrice={projectPrice}
-        isProjectActivity={false}
-        projectTitle={projectTitle}
         formData={{
           ...formData,
           name: formData.arabicName
         }}
-        onPayment={() => {}}
+        projectTitle={projectTitle}
       />
     );
   }

@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { ProjectRegistrationFields } from "./form/ProjectRegistrationFields";
 import { ProjectRegistrationActions } from "./form/ProjectRegistrationActions";
-import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
+import { ProjectActivityConfirmation } from "@/components/events/registration/confirmation/ProjectActivityConfirmation";
 
 interface ProjectRegistrationFormProps {
   projectTitle: string;
@@ -142,19 +142,16 @@ export const ProjectRegistrationForm = ({
 
   if (showConfirmation) {
     return (
-      <RegistrationConfirmation
+      <ProjectActivityConfirmation
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
         registrationId={registrationId}
         eventTitle={projectTitle}
-        eventPrice={projectPrice}
-        isProjectActivity={false}
-        projectTitle={projectTitle}
         formData={{
           ...formData,
-          name: formData.arabicName // For backward compatibility with RegistrationConfirmation
+          name: formData.arabicName // For backward compatibility
         }}
-        onPayment={() => {}}
+        projectTitle={projectTitle}
       />
     );
   }

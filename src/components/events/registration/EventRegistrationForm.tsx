@@ -1,7 +1,6 @@
 import { RegistrationFormContainer } from "./RegistrationFormContainer";
 import { EventRegistrationConfirmation } from "./confirmation/EventRegistrationConfirmation";
 import { useRegistration } from "./hooks/useRegistration";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface EventRegistrationFormProps {
   eventTitle: string;
@@ -20,8 +19,6 @@ export const EventRegistrationForm = ({
   eventLocation,
   onSubmit,
 }: EventRegistrationFormProps) => {
-  const queryClient = useQueryClient();
-  
   const {
     formData,
     showConfirmation,
@@ -31,7 +28,6 @@ export const EventRegistrationForm = ({
     handleSubmit
   } = useRegistration(() => {
     console.log('Registration successful, calling onSubmit callback');
-    queryClient.invalidateQueries({ queryKey: ['registrations'] });
     if (onSubmit) {
       onSubmit();
     }
