@@ -2,6 +2,8 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { RegistrationActions } from "./RegistrationActions";
+import { WorkStatusSelect } from "./fields/WorkStatusSelect";
+import { GenderSelect } from "./fields/GenderSelect";
 
 interface RegistrationTableRowProps {
   registration: {
@@ -50,6 +52,18 @@ export const RegistrationTableRow = ({
   };
 
   const renderCell = (value: string | undefined) => value || '-';
+
+  const translateEducationLevel = (level?: string) => {
+    switch (level) {
+      case 'primary': return 'ابتدائي';
+      case 'intermediate': return 'متوسط';
+      case 'high_school': return 'ثانوي';
+      case 'bachelor': return 'بكالوريوس';
+      case 'master': return 'ماجستير';
+      case 'phd': return 'دكتوراه';
+      default: return '-';
+    }
+  };
 
   if (isEditing) {
     return (
@@ -151,7 +165,7 @@ export const RegistrationTableRow = ({
       <TableCell>{renderCell(registration.english_name)}</TableCell>
       <TableCell>{renderCell(registration.email)}</TableCell>
       <TableCell>{renderCell(registration.phone)}</TableCell>
-      <TableCell>{renderCell(registration.education_level)}</TableCell>
+      <TableCell>{renderCell(translateEducationLevel(registration.education_level))}</TableCell>
       <TableCell>{registration.birth_date ? formatDate(registration.birth_date) : '-'}</TableCell>
       <TableCell>{renderCell(registration.national_id)}</TableCell>
       <TableCell>{renderCell(registration.gender === 'male' ? 'ذكر' : registration.gender === 'female' ? 'أنثى' : '')}</TableCell>
