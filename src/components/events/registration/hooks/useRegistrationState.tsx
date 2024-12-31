@@ -9,7 +9,7 @@ export const useRegistrationState = () => {
     email: "",
     phone: "",
     educationLevel: "",
-    birthDate: "",
+    birthDate: null, // Initialize as null instead of empty string
     nationalId: "",
     gender: "",
     workStatus: "",

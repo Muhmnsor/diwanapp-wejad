@@ -8,7 +8,7 @@ export interface RegistrationFormData {
   arabicName: string;
   englishName?: string;
   educationLevel?: string;
-  birthDate?: string;
+  birthDate?: string | null;  // Making it nullable to handle empty values
   nationalId?: string;
   gender?: string;
   workStatus?: string;

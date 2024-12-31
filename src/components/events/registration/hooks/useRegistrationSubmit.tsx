@@ -2,19 +2,10 @@ import { FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { useParams } from "react-router-dom";
+import { RegistrationFormData } from "../types/registration";
 
 interface UseRegistrationSubmitProps {
-  formData: {
-    arabicName: string;
-    englishName?: string;
-    email: string;
-    phone: string;
-    educationLevel?: string;
-    birthDate?: string;
-    nationalId?: string;
-    gender?: string;
-    workStatus?: string;
-  };
+  formData: RegistrationFormData;
   setIsSubmitting: (value: boolean) => void;
   setRegistrationId: (value: string) => void;
   setIsRegistered: (value: boolean) => void;
@@ -47,14 +38,14 @@ export const useRegistrationSubmit = ({
       const registrationData = {
         id: registrationId,
         arabic_name: formData.arabicName,
-        english_name: formData.englishName,
+        english_name: formData.englishName || null,
         email: formData.email,
         phone: formData.phone,
-        education_level: formData.educationLevel,
-        birth_date: formData.birthDate,
-        national_id: formData.nationalId,
-        gender: formData.gender,
-        work_status: formData.workStatus,
+        education_level: formData.educationLevel || null,
+        birth_date: formData.birthDate || null, // Send null if empty
+        national_id: formData.nationalId || null,
+        gender: formData.gender || null,
+        work_status: formData.workStatus || null,
         registration_number: registrationNumber,
       };
 
