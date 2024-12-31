@@ -39,7 +39,7 @@ export const ProjectRegistrationFields = ({
         .from('project_registration_fields')
         .select('*')
         .eq('project_id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching registration fields:', error);
@@ -47,7 +47,18 @@ export const ProjectRegistrationFields = ({
       }
 
       console.log('Fetched registration fields:', data);
-      return data;
+      // If no fields are found, return default values
+      return data || {
+        arabic_name: true,
+        english_name: false,
+        education_level: false,
+        birth_date: false,
+        national_id: false,
+        email: true,
+        phone: true,
+        gender: false,
+        work_status: false
+      };
     },
   });
 

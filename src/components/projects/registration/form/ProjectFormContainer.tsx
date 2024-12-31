@@ -58,19 +58,22 @@ export const ProjectFormContainer = ({
 
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
+      // Prepare registration data
+      const registrationData = {
+        project_id: id,
+        arabic_name: formData.arabicName,
+        email: formData.email,
+        phone: formData.phone,
+        registration_number: uniqueId,
+        english_name: formData.englishName || null,
+        education_level: formData.educationLevel || null,
+        birth_date: formData.birthDate || null,
+        national_id: formData.nationalId || null
+      };
+
       const { data: newRegistration, error: registrationError } = await supabase
         .from('registrations')
-        .insert({
-          project_id: id,
-          arabic_name: formData.arabicName,
-          email: formData.email,
-          phone: formData.phone,
-          registration_number: uniqueId,
-          english_name: formData.englishName,
-          education_level: formData.educationLevel,
-          birth_date: formData.birthDate,
-          national_id: formData.nationalId
-        })
+        .insert([registrationData])
         .select()
         .single();
 
