@@ -30,14 +30,16 @@ export interface Event {
   event_path: EventPathType;
   event_category: EventCategoryType;
   is_visible?: boolean;
+  is_project_activity?: boolean;
+  project_id?: string;
   registration_fields?: {
     arabic_name: boolean;
+    email: boolean;
+    phone: boolean;
     english_name: boolean;
     education_level: boolean;
     birth_date: boolean;
     national_id: boolean;
-    email: boolean;
-    phone: boolean;
     gender: boolean;
     work_status: boolean;
   };
