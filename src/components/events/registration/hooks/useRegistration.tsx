@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useRegistration = (
-  onSubmit: () => void,
+  onSubmit: (e: React.FormEvent) => void,
   isProject: boolean = false
 ) => {
   const { toast } = useToast();
@@ -94,7 +94,7 @@ export const useRegistration = (
       });
 
       if (onSubmit) {
-        onSubmit();
+        onSubmit(e);
       }
     } catch (error) {
       console.error('Error in registration process:', error);

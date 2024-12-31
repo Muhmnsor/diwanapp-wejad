@@ -76,7 +76,7 @@ export const RegistrationFormContainer = ({
   const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 mt-4">
+    <form onSubmit={(e) => handleSubmit(e)} className="space-y-4 mt-4">
       <RegistrationFormInputs
         formData={formData}
         setFormData={setFormData}
