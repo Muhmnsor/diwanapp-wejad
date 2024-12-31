@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EditEventDialog } from "./EditEventDialog";
-import { EventContent } from "./EventContent";
-import { EventImage } from "./EventImage";
-import { EventTitle } from "./EventTitle";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { useAuthStore } from "@/store/authStore";
 import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventUpdate } from "./details/handlers/EventUpdateHandler";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
-import { toast } from "sonner";
+import { EventDetailsContainer } from "./details/EventDetailsContainer";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EventDetailsViewProps {
@@ -64,51 +61,20 @@ export const EventDetailsView = ({
     setIsDeleteDialogOpen(false);
   };
 
-  const handleVisibilityChange = async (visible: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('events')
-        .update({ is_visible: visible })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setCurrentEvent(prev => prev ? { ...prev, is_visible: visible } : null);
-      toast.success(visible ? 'تم إظهار الفعالية' : 'تم إخفاء الفعالية');
-    } catch (error) {
-      console.error('Error updating event visibility:', error);
-      toast.error('حدث خطأ أثناء تحديث حالة الظهور');
-    }
-  };
-
   if (!currentEvent) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <EventImage imageUrl={currentEvent.image_url || currentEvent.imageUrl} title={currentEvent.title} />
-      
-      <div className="container mx-auto px-4 -mt-10 relative z-10">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
-          <EventTitle
-            title={currentEvent.title}
-            isAdmin={isAdmin}
-            onEdit={() => setIsEditDialogOpen(true)}
-            onDelete={() => setIsDeleteDialogOpen(true)}
-            onAddToCalendar={onAddToCalendar}
-            isVisible={currentEvent.is_visible}
-            onVisibilityChange={handleVisibilityChange}
-          />
-
-          {children}
-
-          {!isAdmin && (
-            <EventContent 
-              event={currentEvent}
-              onRegister={handleRegister}
-            />
-          )}
-        </div>
-      </div>
+    <>
+      <EventDetailsContainer
+        event={currentEvent}
+        isAdmin={isAdmin}
+        onEdit={() => setIsEditDialogOpen(true)}
+        onDelete={() => setIsDeleteDialogOpen(true)}
+        onAddToCalendar={onAddToCalendar}
+        onRegister={handleRegister}
+        id={id}
+        children={children}
+      />
 
       <EditEventDialog 
         open={isEditDialogOpen} 
@@ -128,6 +94,6 @@ export const EventDetailsView = ({
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
       />
-    </div>
+    </>
   );
 };
