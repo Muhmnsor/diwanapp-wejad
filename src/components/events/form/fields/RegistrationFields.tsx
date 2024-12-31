@@ -34,72 +34,35 @@ export const RegistrationFields = ({ formData, setFormData }: RegistrationFields
     };
   }
 
-  return (
-    <Card className="space-y-4">
-      <div className="p-4">
-        <h3 className="text-lg font-semibold mb-6">معلومات المستفيدين المطلوبة</h3>
-        
-        {/* Required Fields - Disabled switches */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">الاسم بالعربي</Label>
-            <Switch checked={true} disabled />
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">البريد الإلكتروني</Label>
-            <Switch checked={true} disabled />
-          </div>
-          <div className="flex items-center justify-between py-2 border-b border-gray-100">
-            <Label className="text-sm">رقم الجوال</Label>
-            <Switch checked={true} disabled />
-          </div>
-        </div>
+  const fields = [
+    { id: "arabic_name", label: "الاسم الثلاثي بالعربية", required: true },
+    { id: "phone", label: "رقم الجوال", required: true },
+    { id: "email", label: "البريد الإلكتروني", required: true },
+    { id: "english_name", label: "الاسم الثلاثي بالإنجليزية" },
+    { id: "national_id", label: "رقم الهوية" },
+    { id: "gender", label: "الجنس" },
+    { id: "education_level", label: "المستوى التعليمي/العمل" },
+    { id: "birth_date", label: "تاريخ الميلاد" },
+    { id: "work_status", label: "الحالة الوظيفية" }
+  ];
 
-        {/* Optional Fields */}
-        <div className="space-y-2 mt-4">
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">الاسم بالإنجليزي</Label>
-            <Switch 
-              checked={formData.registration_fields.english_name}
-              onCheckedChange={(checked) => handleFieldChange('english_name', checked)}
+  return (
+    <Card className="p-4">
+      <h3 className="text-lg font-semibold mb-4">معلومات المستفيدين المطلوبة</h3>
+      <div className="space-y-4">
+        {fields.map((field) => (
+          <div key={field.id} className="flex items-center space-x-2 rtl:space-x-reverse">
+            <Switch
+              id={field.id}
+              checked={field.required || formData.registration_fields?.[field.id as keyof typeof formData.registration_fields]}
+              onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
+              disabled={field.required}
             />
+            <Label htmlFor={field.id} className="text-sm">
+              {field.label} {field.required && <span className="text-red-500">*</span>}
+            </Label>
           </div>
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">المستوى التعليمي</Label>
-            <Switch 
-              checked={formData.registration_fields.education_level}
-              onCheckedChange={(checked) => handleFieldChange('education_level', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">تاريخ الميلاد</Label>
-            <Switch 
-              checked={formData.registration_fields.birth_date}
-              onCheckedChange={(checked) => handleFieldChange('birth_date', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">رقم الهوية</Label>
-            <Switch 
-              checked={formData.registration_fields.national_id}
-              onCheckedChange={(checked) => handleFieldChange('national_id', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">الجنس</Label>
-            <Switch 
-              checked={formData.registration_fields.gender}
-              onCheckedChange={(checked) => handleFieldChange('gender', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <Label className="text-sm">الحالة الوظيفية</Label>
-            <Switch 
-              checked={formData.registration_fields.work_status}
-              onCheckedChange={(checked) => handleFieldChange('work_status', checked)}
-            />
-          </div>
-        </div>
+        ))}
       </div>
     </Card>
   );
