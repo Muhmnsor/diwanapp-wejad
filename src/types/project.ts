@@ -16,6 +16,7 @@ export interface Project {
   event_category: EventCategoryType;
   registration_start_date: string | null;
   registration_end_date: string | null;
+  is_visible?: boolean;  // Added back the is_visible property
   registration_fields?: {
     arabic_name: boolean;
     english_name: boolean;
