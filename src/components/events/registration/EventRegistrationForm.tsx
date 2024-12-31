@@ -28,9 +28,7 @@ export const EventRegistrationForm = ({
     handleSubmit
   } = useRegistration(() => {
     console.log('EventRegistrationForm - Registration successful, calling onSubmit');
-    if (onSubmit) {
-      onSubmit();
-    }
+    onSubmit(); // تم إزالة الشرط لأن onSubmit مطلوب في الواجهة
   }, false);
 
   console.log('EventRegistrationForm - Current state:', {
@@ -39,6 +37,16 @@ export const EventRegistrationForm = ({
     registrationId,
     formData
   });
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    console.log('EventRegistrationForm - Form submitted');
+    try {
+      await handleSubmit(e);
+      console.log('EventRegistrationForm - Form submission successful');
+    } catch (error) {
+      console.error('EventRegistrationForm - Form submission failed:', error);
+    }
+  };
 
   if (showConfirmation && isRegistered) {
     console.log('EventRegistrationForm - Showing confirmation dialog');
@@ -68,7 +76,7 @@ export const EventRegistrationForm = ({
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      onSubmit={handleSubmit}
+      onSubmit={handleFormSubmit}
     />
   );
 };
