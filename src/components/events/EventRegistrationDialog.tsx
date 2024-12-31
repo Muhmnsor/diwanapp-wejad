@@ -57,12 +57,18 @@ export const EventRegistrationDialog = ({
   };
 
   const handleRegistrationComplete = () => {
-    console.log('Registration completed, closing dialog');
+    console.log('Registration completed successfully, closing dialog');
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        console.log('Dialog onOpenChange triggered:', { newOpen, currentOpen: open });
+        onOpenChange(newOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
