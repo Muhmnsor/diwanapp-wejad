@@ -1,4 +1,4 @@
-import { ConfirmationCard } from "../../ConfirmationCard";
+import { EventConfirmationCard } from "../../confirmation/EventConfirmationCard";
 
 interface ConfirmationCardWrapperProps {
   eventTitle: string;
@@ -33,14 +33,15 @@ export const ConfirmationCardWrapper = ({
   });
 
   return (
-    <ConfirmationCard
+    <EventConfirmationCard
       eventTitle={eventTitle}
       registrationId={registrationId}
-      formData={formData}
-      eventDate={eventDate}
-      eventTime={eventTime}
-      eventLocation={eventLocation}
-      onSave={onSave}
+      registrantInfo={formData}
+      eventDetails={{
+        date: eventDate,
+        time: eventTime,
+        location: eventLocation
+      }}
     />
   );
 };
