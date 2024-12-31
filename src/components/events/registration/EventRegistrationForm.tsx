@@ -1,6 +1,7 @@
 import { RegistrationFormContainer } from "./RegistrationFormContainer";
 import { RegistrationConfirmation } from "@/components/events/RegistrationConfirmation";
 import { useRegistration } from "./hooks/useRegistration";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EventRegistrationFormProps {
   eventTitle: string;
@@ -21,6 +22,8 @@ export const EventRegistrationForm = ({
   onSubmit,
   isProject = false
 }: EventRegistrationFormProps) => {
+  const queryClient = useQueryClient();
+  
   const {
     formData,
     showConfirmation,
@@ -28,7 +31,13 @@ export const EventRegistrationForm = ({
     registrationId,
     isRegistered,
     handleSubmit
-  } = useRegistration(onSubmit, isProject);
+  } = useRegistration(async () => {
+    // Invalidate and refetch registrations after successful registration
+    await queryClient.invalidateQueries({ queryKey: ['registrations'] });
+    if (onSubmit) {
+      onSubmit();
+    }
+  }, isProject);
 
   console.log('Registration state:', {
     showConfirmation,

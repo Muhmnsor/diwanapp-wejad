@@ -1,6 +1,7 @@
 import { FormEvent } from "react";
 import { useRegistrationState } from "./useRegistrationState";
 import { useRegistrationSubmit } from "./useRegistrationSubmit";
+import { toast } from "sonner";
 
 export const useRegistration = (
   onSubmit: () => void,
@@ -32,9 +33,15 @@ export const useRegistration = (
     e.preventDefault();
     console.log('Form submitted with data:', formData);
     
-    await submitRegistration(e);
-    if (onSubmit) {
-      onSubmit();
+    try {
+      await submitRegistration(e);
+      toast.success('تم التسجيل بنجاح');
+      if (onSubmit) {
+        onSubmit();
+      }
+    } catch (error) {
+      console.error('Error in registration:', error);
+      toast.error('حدث خطأ في التسجيل، يرجى المحاولة مرة أخرى');
     }
   };
 
