@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RegistrationFormInputs } from "../RegistrationFormInputs";
 import { Button } from "@/components/ui/button";
 import { useRegistration } from "./hooks/useRegistration";
+import { toast } from "sonner";
 
 interface RegistrationFormContainerProps {
   eventTitle: string;
@@ -38,50 +39,64 @@ export const RegistrationFormContainer = ({
     }
   }, isProject);
 
-  // Update form data to ensure name is synced with arabicName
   const handleFormDataChange = (newData: any) => {
     setFormData({
       ...newData,
-      name: newData.arabicName // Keep name in sync with arabicName
+      name: newData.arabicName
     });
   };
 
-  const { data: registrationFields, isLoading } = useQuery({
+  const { data: registrationFields, isLoading, error } = useQuery({
     queryKey: ['registration-fields', id],
     queryFn: async () => {
       console.log('Fetching registration fields for:', id);
-      const { data, error } = await supabase
-        .from('event_registration_fields')
-        .select('*')
-        .eq('event_id', id)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('event_registration_fields')
+          .select('*')
+          .eq('event_id', id)
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching registration fields:', error);
+        if (error) {
+          console.error('Error fetching registration fields:', error);
+          throw error;
+        }
+
+        console.log('Fetched registration fields:', data);
+        
+        // Return default fields if no data is found
+        return data || {
+          arabic_name: true,
+          email: true,
+          phone: true,
+          english_name: false,
+          education_level: false,
+          birth_date: false,
+          national_id: false,
+          gender: false,
+          work_status: false
+        };
+      } catch (error) {
+        console.error('Failed to fetch registration fields:', error);
+        toast.error('حدث خطأ في تحميل نموذج التسجيل');
         throw error;
       }
-
-      console.log('Fetched registration fields:', data);
-      
-      // If no fields are found, return default values
-      return data || {
-        arabic_name: true,
-        email: true,
-        phone: true,
-        english_name: false,
-        education_level: false,
-        birth_date: false,
-        national_id: false,
-        gender: false,
-        work_status: false
-      };
     },
-    retry: 1,
+    retry: 2,
     retryDelay: 1000
   });
 
-  if (isLoading || !registrationFields) {
-    return <div>جاري تحميل نموذج التسجيل...</div>;
+  if (isLoading) {
+    return <div className="text-center py-4">جاري تحميل نموذج التسجيل...</div>;
+  }
+
+  if (error) {
+    console.error('Error in registration form:', error);
+    return (
+      <div className="text-center py-4 text-red-500">
+        حدث خطأ في تحميل نموذج التسجيل. يرجى المحاولة مرة أخرى.
+      </div>
+    );
   }
 
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
