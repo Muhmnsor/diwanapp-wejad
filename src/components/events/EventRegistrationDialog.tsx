@@ -56,6 +56,11 @@ export const EventRegistrationDialog = ({
     }
   };
 
+  const handleRegistrationComplete = () => {
+    console.log('Registration completed, closing dialog');
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -76,7 +81,7 @@ export const EventRegistrationDialog = ({
             eventDate={event.date}
             eventTime={event.time}
             eventLocation={event.location}
-            onSubmit={() => onOpenChange(false)}
+            onSubmit={handleRegistrationComplete}
           />
         )}
       </DialogContent>
