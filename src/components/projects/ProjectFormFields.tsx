@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BeneficiaryType } from "@/types/event";
 import { Card } from "@/components/ui/card";
 import { ProjectPathFields } from "@/components/projects/form/fields/ProjectPathFields";
+import { ProjectRegistrationFieldsConfig } from "./form/fields/ProjectRegistrationFieldsConfig";
 
 interface ProjectFormFieldsProps {
   formData: Project;
@@ -105,6 +106,12 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
           </div>
         </div>
       </Card>
+
+      {/* Registration Fields Configuration */}
+      <ProjectRegistrationFieldsConfig
+        formData={formData}
+        setFormData={setFormData}
+      />
 
       {/* Beneficiaries and Classification */}
       <Card className="p-4">

@@ -195,9 +195,11 @@ export type Database = {
           email: boolean | null
           english_name: boolean | null
           event_id: string | null
+          gender: boolean | null
           id: string
           national_id: boolean | null
           phone: boolean | null
+          work_status: boolean | null
         }
         Insert: {
           arabic_name?: boolean | null
@@ -207,9 +209,11 @@ export type Database = {
           email?: boolean | null
           english_name?: boolean | null
           event_id?: string | null
+          gender?: boolean | null
           id?: string
           national_id?: boolean | null
           phone?: boolean | null
+          work_status?: boolean | null
         }
         Update: {
           arabic_name?: boolean | null
@@ -219,9 +223,11 @@ export type Database = {
           email?: boolean | null
           english_name?: boolean | null
           event_id?: string | null
+          gender?: boolean | null
           id?: string
           national_id?: boolean | null
           phone?: boolean | null
+          work_status?: boolean | null
         }
         Relationships: [
           {
@@ -511,6 +517,59 @@ export type Database = {
         }
         Relationships: []
       }
+      project_registration_fields: {
+        Row: {
+          arabic_name: boolean | null
+          birth_date: boolean | null
+          created_at: string
+          education_level: boolean | null
+          email: boolean | null
+          english_name: boolean | null
+          gender: boolean | null
+          id: string
+          national_id: boolean | null
+          phone: boolean | null
+          project_id: string | null
+          work_status: boolean | null
+        }
+        Insert: {
+          arabic_name?: boolean | null
+          birth_date?: boolean | null
+          created_at?: string
+          education_level?: boolean | null
+          email?: boolean | null
+          english_name?: boolean | null
+          gender?: boolean | null
+          id?: string
+          national_id?: boolean | null
+          phone?: boolean | null
+          project_id?: string | null
+          work_status?: boolean | null
+        }
+        Update: {
+          arabic_name?: boolean | null
+          birth_date?: boolean | null
+          created_at?: string
+          education_level?: boolean | null
+          email?: boolean | null
+          english_name?: boolean | null
+          gender?: boolean | null
+          id?: string
+          national_id?: boolean | null
+          phone?: boolean | null
+          project_id?: string | null
+          work_status?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_registration_fields_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           attendance_requirement_type: string | null
@@ -589,12 +648,14 @@ export type Database = {
           email: string
           english_name: string | null
           event_id: string | null
+          gender: string | null
           id: string
           national_id: string | null
           phone: string
           project_id: string | null
           registration_number: string
           updated_at: string | null
+          work_status: string | null
         }
         Insert: {
           arabic_name: string
@@ -604,12 +665,14 @@ export type Database = {
           email: string
           english_name?: string | null
           event_id?: string | null
+          gender?: string | null
           id?: string
           national_id?: string | null
           phone: string
           project_id?: string | null
           registration_number: string
           updated_at?: string | null
+          work_status?: string | null
         }
         Update: {
           arabic_name?: string
@@ -619,12 +682,14 @@ export type Database = {
           email?: string
           english_name?: string | null
           event_id?: string | null
+          gender?: string | null
           id?: string
           national_id?: string | null
           phone?: string
           project_id?: string | null
           registration_number?: string
           updated_at?: string | null
+          work_status?: string | null
         }
         Relationships: [
           {

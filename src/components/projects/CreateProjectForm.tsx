@@ -9,7 +9,7 @@ import { toast } from "sonner";
 export const CreateProjectForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Project>({
+  const [formData, setFormData] = useState<Project & { registration_fields?: any }>({
     id: "",
     title: "",
     description: "",
@@ -24,7 +24,18 @@ export const CreateProjectForm = () => {
     event_path: "environment",
     event_category: "social",
     registration_start_date: null,
-    registration_end_date: null
+    registration_end_date: null,
+    registration_fields: {
+      arabic_name: true,
+      english_name: false,
+      education_level: false,
+      birth_date: false,
+      national_id: false,
+      email: true,
+      phone: true,
+      gender: false,
+      work_status: false,
+    }
   });
 
   const handleImageChange = async (file: File | null) => {
@@ -46,7 +57,8 @@ export const CreateProjectForm = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Insert project data
+      const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert([{
           title: formData.title,
@@ -67,10 +79,20 @@ export const CreateProjectForm = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (projectError) throw projectError;
+
+      // Insert registration fields configuration
+      const { error: fieldsError } = await supabase
+        .from('project_registration_fields')
+        .insert([{
+          project_id: projectData.id,
+          ...formData.registration_fields
+        }]);
+
+      if (fieldsError) throw fieldsError;
 
       toast.success("تم إنشاء المشروع بنجاح");
-      navigate(`/projects/${data.id}`);
+      navigate(`/projects/${projectData.id}`);
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error("حدث خطأ أثناء إنشاء المشروع");
