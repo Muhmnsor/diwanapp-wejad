@@ -9,7 +9,7 @@ import { toast } from "sonner";
 export const CreateProjectForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Project & { registration_fields?: any }>({
+  const [formData, setFormData] = useState<Project>({
     id: "",
     title: "",
     description: "",

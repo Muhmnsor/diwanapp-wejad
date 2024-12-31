@@ -1,22 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Project } from "@/types/project";
 
 interface ProjectRegistrationFieldsConfigProps {
-  formData: {
-    registration_fields?: {
-      arabic_name: boolean;
-      english_name: boolean;
-      education_level: boolean;
-      birth_date: boolean;
-      national_id: boolean;
-      email: boolean;
-      phone: boolean;
-      gender: boolean;
-      work_status: boolean;
-    };
-  };
-  setFormData: (data: any) => void;
+  formData: Project;
+  setFormData: (data: Project) => void;
 }
 
 export const ProjectRegistrationFieldsConfig = ({
