@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportTableHeader } from "./table/ReportTableHeader";
 import { ReportTableRow } from "./table/ReportTableRow";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 interface ProjectReportsListProps {
   projectId: string;
@@ -53,11 +54,17 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
         .delete()
         .eq('id', reportId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting report:', error);
+        toast.error('حدث خطأ أثناء حذف التقرير');
+        return;
+      }
       
+      toast.success('تم حذف التقرير بنجاح');
       await refetch();
     } catch (error) {
       console.error('Error deleting report:', error);
+      toast.error('حدث خطأ أثناء حذف التقرير');
     }
   };
 
@@ -72,6 +79,7 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
                 key={report.id}
                 report={report}
                 onDelete={() => handleDeleteReport(report.id)}
+                onDownload={() => {}} // ... keep existing code
               />
             ))}
           </div>

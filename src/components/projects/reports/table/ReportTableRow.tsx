@@ -9,35 +9,17 @@ import JSZip from "jszip";
 
 interface ReportTableRowProps {
   report: ProjectActivityReport;
+  onDelete: () => Promise<void>;
+  onDownload: () => void;
 }
 
-export const ReportTableRow = ({ report }: ReportTableRowProps) => {
+export const ReportTableRow = ({ report, onDelete, onDownload }: ReportTableRowProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      console.log('Deleting report:', report.id);
-
-      const { error } = await supabase
-        .from('project_activity_reports')
-        .delete()
-        .eq('id', report.id);
-
-      if (error) {
-        console.error('Error deleting report:', error);
-        toast.error('حدث خطأ أثناء حذف التقرير');
-        return;
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: ['project-activity-reports', report.project_id]
-      });
-      toast.success('تم حذف التقرير بنجاح');
-    } catch (error) {
-      console.error('Error in delete handler:', error);
-      toast.error('حدث خطأ أثناء حذف التقرير');
+      await onDelete();
     } finally {
       setIsDeleting(false);
     }
