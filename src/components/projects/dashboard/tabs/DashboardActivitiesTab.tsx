@@ -25,8 +25,7 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
   return (
     <ProjectActivitiesTab
       projectId={projectId}
-      projectActivities={projectActivities}
-      refetchActivities={refetchActivities}
+      activityId={projectActivities[0]?.id}
     />
   );
 };
