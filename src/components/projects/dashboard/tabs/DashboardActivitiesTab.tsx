@@ -1,14 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivitiesList } from "@/components/projects/activities/ActivitiesList";
 import { ActivityListHeader } from "@/components/projects/activities/list/ActivityListHeader";
+import { ProjectActivitiesList } from "@/components/projects/dashboard/ProjectActivitiesList";
+import { useActivityManagement } from "@/components/projects/activities/hooks/useActivityManagement";
 
 interface DashboardActivitiesTabProps {
   projectId: string;
 }
 
 export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProps) => {
+  console.log('DashboardActivitiesTab - projectId:', projectId);
+  
   const { data: activities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
@@ -24,11 +27,25 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
         console.error('Error fetching activities:', error);
         throw error;
       }
-
+      
       console.log('Fetched activities:', data);
       return data || [];
     },
   });
+
+  const {
+    selectedEvent,
+    isAddEventOpen,
+    setIsAddEventOpen,
+    isEditEventOpen,
+    setIsEditEventOpen,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    handleAddEvent,
+    handleEditEvent,
+    handleDeleteEvent,
+    confirmDelete,
+  } = useActivityManagement(projectId, refetchActivities);
 
   return (
     <div className="space-y-6">
@@ -38,10 +55,11 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
       />
 
       <Card className="p-6">
-        <ActivitiesList
-          activities={activities}
-          onEditActivity={() => {}}
-          onDeleteActivity={() => {}}
+        <ProjectActivitiesList
+          projectActivities={activities}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
+          onEditSuccess={refetchActivities}
         />
       </Card>
     </div>
