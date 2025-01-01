@@ -50,16 +50,10 @@ export const ReportForm = ({
         .from('events')
         .select('id')
         .eq('id', activityId)
-        .maybeSingle();
+        .single();
 
-      if (checkError) {
-        console.error('Error checking activity:', checkError);
-        toast.error('حدث خطأ أثناء التحقق من النشاط');
-        return;
-      }
-
-      if (!activityExists) {
-        console.error('Activity not found for ID:', activityId);
+      if (checkError || !activityExists) {
+        console.error('Activity not found:', checkError);
         toast.error('لم يتم العثور على النشاط المحدد');
         return;
       }
@@ -78,19 +72,18 @@ export const ReportForm = ({
           attendees_count: attendeesCount,
           activity_objectives: activityObjectives,
           impact_on_participants: impactOnParticipants,
-          photos: photos.filter(photo => photo.url),
+          photos: photos,
         });
 
       if (error) {
         console.error('Error submitting report:', error);
-        toast.error("حدث خطأ أثناء حفظ التقرير");
-        return;
+        throw error;
       }
 
       toast.success("تم إضافة التقرير بنجاح");
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error in form submission:', error);
+      console.error('Error submitting report:', error);
       toast.error("حدث خطأ أثناء إضافة التقرير");
     } finally {
       setIsSubmitting(false);
