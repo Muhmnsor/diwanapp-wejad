@@ -1,24 +1,37 @@
+import { ImageUpload } from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageUpload } from "@/components/ui/image-upload";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface PhotoWithDescription {
+  url: string;
+  description: string;
+}
+
 interface ProjectActivityReportFormFieldsProps {
-  formValues: any;
+  formValues: {
+    program_name: string;
+    report_name: string;
+    report_text: string;
+    detailed_description: string;
+    activity_duration: string;
+    attendees_count: string;
+    activity_objectives: string;
+    impact_on_participants: string;
+    photos: PhotoWithDescription[];
+  };
   setValue: (name: string, value: any) => void;
 }
 
-export const ProjectActivityReportFormFields = ({ formValues, setValue }: ProjectActivityReportFormFieldsProps) => {
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
-
+export const ProjectActivityReportFormFields = ({ 
+  formValues, 
+  setValue 
+}: ProjectActivityReportFormFieldsProps) => {
   const handlePhotoUpload = async (index: number, file: File) => {
     try {
       console.log('Uploading photo for project activity report:', { index, file });
-      setUploadingPhotos(true);
-      const photos = [...formValues.photos];
       
       const fileName = `${Date.now()}-${file.name}`;
       const { data, error } = await supabase.storage
@@ -33,6 +46,7 @@ export const ProjectActivityReportFormFields = ({ formValues, setValue }: Projec
 
       const photoUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/event-images/${fileName}`;
       
+      const photos = [...formValues.photos];
       photos[index] = {
         ...photos[index],
         url: photoUrl
@@ -43,8 +57,6 @@ export const ProjectActivityReportFormFields = ({ formValues, setValue }: Projec
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error('حدث خطأ أثناء رفع الصورة');
-    } finally {
-      setUploadingPhotos(false);
     }
   };
 
@@ -137,7 +149,7 @@ export const ProjectActivityReportFormFields = ({ formValues, setValue }: Projec
       <div>
         <Label>الصور</Label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-          {formValues.photos.map((photo: any, index: number) => (
+          {formValues.photos.map((photo: PhotoWithDescription, index: number) => (
             <div key={index} className="relative">
               <ImageUpload
                 value={photo.url}
