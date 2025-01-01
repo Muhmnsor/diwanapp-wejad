@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { EventRegistrationFields } from "./fields/EventRegistrationFields";
 import { EventRegistrationButton } from "./components/EventRegistrationButton";
 import { LoadingState, ErrorState } from "./components/RegistrationFormStates";
+import { useRegistration } from "./hooks/useRegistration";
 
 interface EventRegistrationFormProps {
   eventId: string;
@@ -25,6 +26,8 @@ export const EventRegistrationForm = ({
   eventLocation,
   onSubmit,
 }: EventRegistrationFormProps) => {
+  const { formData, setFormData, isSubmitting } = useRegistration(() => {}, false);
+
   const { data: registrationFields, isLoading, error } = useQuery({
     queryKey: ['event-registration-fields', eventId],
     queryFn: async () => {
@@ -96,10 +99,13 @@ export const EventRegistrationForm = ({
         registrationFields={registrationFields}
         eventPrice={eventPrice}
         showPaymentFields={isPaidEvent}
+        formData={formData}
+        setFormData={setFormData}
       />
       <EventRegistrationButton
         isPaidEvent={isPaidEvent}
         eventPrice={eventPrice}
+        isSubmitting={isSubmitting}
       />
     </form>
   );

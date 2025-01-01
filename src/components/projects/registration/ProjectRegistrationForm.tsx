@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ProjectRegistrationFields } from "./fields/ProjectRegistrationFields";
 import { ProjectRegistrationButton } from "./components/ProjectRegistrationButton";
 import { LoadingState, ErrorState } from "../../events/registration/components/RegistrationFormStates";
+import { useRegistration } from "../../events/registration/hooks/useRegistration";
 
 interface ProjectRegistrationFormProps {
   projectId: string;
@@ -23,6 +24,8 @@ export const ProjectRegistrationForm = ({
   endDate,
   onSubmit,
 }: ProjectRegistrationFormProps) => {
+  const { formData, setFormData, isSubmitting } = useRegistration(() => {}, true);
+
   const { data: registrationFields, isLoading, error } = useQuery({
     queryKey: ['project-registration-fields', projectId],
     queryFn: async () => {
@@ -94,10 +97,13 @@ export const ProjectRegistrationForm = ({
         registrationFields={registrationFields}
         projectPrice={projectPrice}
         showPaymentFields={isPaidProject}
+        formData={formData}
+        setFormData={setFormData}
       />
       <ProjectRegistrationButton
         isPaidProject={isPaidProject}
         projectPrice={projectPrice}
+        isSubmitting={isSubmitting}
       />
     </form>
   );

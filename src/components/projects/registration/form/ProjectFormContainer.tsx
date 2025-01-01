@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
 import { ProjectActivityConfirmation } from "@/components/events/registration/confirmation/ProjectActivityConfirmation";
+import { ProjectRegistrationFormData } from "../types/registration";
 
 interface ProjectFormContainerProps {
   projectTitle: string;
@@ -26,17 +27,17 @@ export const ProjectFormContainer = ({
   const { id } = useParams();
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProjectRegistrationFormData>({
     email: "",
     phone: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
     arabicName: "",
     englishName: "",
     educationLevel: "",
     birthDate: "",
     nationalId: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +59,6 @@ export const ProjectFormContainer = ({
 
       const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Prepare registration data
       const registrationData = {
         project_id: id,
         arabic_name: formData.arabicName,
@@ -145,19 +145,20 @@ export const ProjectFormContainer = ({
         onOpenChange={setShowConfirmation}
         registrationId={registrationId}
         eventTitle={projectTitle}
-        formData={{
-          ...formData,
-          name: formData.arabicName
-        }}
+        formData={formData}
         projectTitle={projectTitle}
       />
     );
   }
 
+  const handleFormDataChange = (newData: ProjectRegistrationFormData) => {
+    setFormData(newData);
+  };
+
   return (
     <ProjectRegistrationForm
       formData={formData}
-      setFormData={setFormData}
+      setFormData={handleFormDataChange}
       isSubmitting={isSubmitting}
       projectPrice={projectPrice}
       onSubmit={handleSubmit}
