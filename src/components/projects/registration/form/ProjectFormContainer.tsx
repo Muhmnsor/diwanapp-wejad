@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
+import { ProjectRegistrationForm } from "../ProjectRegistrationForm";
 import { ProjectActivityConfirmation } from "@/components/events/registration/confirmation/ProjectActivityConfirmation";
 import { ProjectRegistrationFormData } from "../types/registration";
 
@@ -154,12 +154,11 @@ export const ProjectFormContainer = ({
   }
 
   const handleFormDataChange = (newData: ProjectRegistrationFormData) => {
-    setFormData({ ...newData, name: newData.arabicName });
+    setFormData(newData);
   };
 
   return (
     <ProjectRegistrationForm
-      projectId={id!}
       projectTitle={projectTitle}
       projectPrice={projectPrice}
       startDate={startDate}

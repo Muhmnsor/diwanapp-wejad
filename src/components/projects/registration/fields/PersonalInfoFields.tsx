@@ -14,6 +14,24 @@ export const PersonalInfoFields = ({
   setFormData,
   registrationFields
 }: PersonalInfoFieldsProps) => {
+  console.log('PersonalInfoFields - Registration fields:', registrationFields);
+  console.log('PersonalInfoFields - Form data:', formData);
+
+  if (!registrationFields) {
+    console.log('No registration fields provided, using defaults');
+    registrationFields = {
+      arabic_name: true,
+      email: true,
+      phone: true,
+      english_name: false,
+      education_level: false,
+      birth_date: false,
+      national_id: false,
+      gender: false,
+      work_status: false
+    };
+  }
+
   const handleChange = (field: keyof ProjectRegistrationFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
   };

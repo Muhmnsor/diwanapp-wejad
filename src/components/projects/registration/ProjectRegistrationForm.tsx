@@ -8,7 +8,6 @@ import { LoadingState, ErrorState } from "../../events/registration/components/R
 import { ProjectRegistrationFormData, ProjectRegistrationFieldsConfig } from "./types/registration";
 
 interface ProjectRegistrationFormProps {
-  projectId: string;
   projectTitle: string;
   projectPrice: number | "free" | null;
   startDate: string;
@@ -20,7 +19,6 @@ interface ProjectRegistrationFormProps {
 }
 
 export const ProjectRegistrationForm = ({
-  projectId,
   projectTitle,
   projectPrice,
   startDate,
@@ -33,14 +31,13 @@ export const ProjectRegistrationForm = ({
   console.log('ProjectRegistrationForm - Current form data:', formData);
 
   const { data: registrationFields, isLoading, error } = useQuery({
-    queryKey: ['project-registration-fields', projectId],
+    queryKey: ['project-registration-fields'],
     queryFn: async () => {
-      console.log('Fetching project registration fields for:', projectId);
+      console.log('Fetching project registration fields');
       try {
         const { data: projectFields, error: projectFieldsError } = await supabase
           .from('project_registration_fields')
           .select('*')
-          .eq('project_id', projectId)
           .maybeSingle();
 
         if (projectFieldsError) {
@@ -67,7 +64,7 @@ export const ProjectRegistrationForm = ({
         return projectFields as ProjectRegistrationFieldsConfig;
       } catch (error) {
         console.error('Failed to fetch project registration fields:', error);
-        toast.error('حدث خطأ في تحميل نموذج التسجيل');
+        toast.error("لم نتمكن من تحميل نموذج التسجيل");
         throw error;
       }
     },
