@@ -12,12 +12,6 @@ export const EventRegistrationDialog = ({
   onOpenChange,
   event,
 }: EventRegistrationDialogProps) => {
-  console.log('EventRegistrationDialog - Rendering with props:', {
-    open,
-    eventTitle: event.title,
-    eventId: event.id
-  });
-
   return (
     <RegistrationDialog
       open={open}
