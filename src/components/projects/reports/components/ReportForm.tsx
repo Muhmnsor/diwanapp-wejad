@@ -44,7 +44,7 @@ export const ReportForm = ({
       return;
     }
 
-    console.log("Submitting report with data:", {
+    console.log("Verifying activity and submitting report:", {
       projectId,
       activityId,
       executorId: user.id,
@@ -54,7 +54,29 @@ export const ReportForm = ({
     setIsSubmitting(true);
 
     try {
-      const { data: report, error } = await supabase
+      // First verify that the activity exists and belongs to the project
+      const { data: activity, error: activityError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('id', activityId)
+        .eq('project_id', projectId)
+        .eq('is_project_activity', true)
+        .maybeSingle();
+
+      if (activityError) {
+        console.error('Error verifying activity:', activityError);
+        toast.error("حدث خطأ أثناء التحقق من النشاط");
+        return;
+      }
+
+      if (!activity) {
+        console.error('Activity not found or does not belong to project:', { activityId, projectId });
+        toast.error("لم يتم العثور على النشاط المحدد");
+        return;
+      }
+
+      // Now insert the report
+      const { data: report, error: insertError } = await supabase
         .from('project_activity_reports')
         .insert({
           project_id: projectId,
@@ -73,8 +95,8 @@ export const ReportForm = ({
         .select()
         .single();
 
-      if (error) {
-        console.error('Error submitting report:', error);
+      if (insertError) {
+        console.error('Error submitting report:', insertError);
         toast.error("حدث خطأ أثناء حفظ التقرير");
         return;
       }
