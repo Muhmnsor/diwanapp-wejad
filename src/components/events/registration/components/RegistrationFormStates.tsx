@@ -1,7 +1,3 @@
-interface ErrorStateProps {
-  error: Error;
-}
-
 export const LoadingState = () => {
   return (
     <div className="text-center py-4">
@@ -10,7 +6,7 @@ export const LoadingState = () => {
   );
 };
 
-export const ErrorState = ({ error }: ErrorStateProps) => {
+export const ErrorState = ({ error }: { error: Error }) => {
   console.error('Error in registration form:', error);
   return (
     <div className="text-center py-4 text-red-500">

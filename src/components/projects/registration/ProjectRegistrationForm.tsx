@@ -1,171 +1,101 @@
-import { useState } from "react";
-import { toast } from "sonner";
+import { FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
-import { ProjectRegistrationFields } from "./form/ProjectRegistrationFields";
-import { ProjectRegistrationActions } from "./form/ProjectRegistrationActions";
-import { ProjectActivityConfirmation } from "@/components/events/registration/confirmation/ProjectActivityConfirmation";
+import { toast } from "sonner";
+import { ProjectRegistrationFields } from "./fields/ProjectRegistrationFields";
+import { ProjectRegistrationButton } from "./components/ProjectRegistrationButton";
+import { LoadingState, ErrorState } from "../../events/registration/components/RegistrationFormStates";
 
 interface ProjectRegistrationFormProps {
+  projectId: string;
   projectTitle: string;
   projectPrice: number | "free" | null;
   startDate: string;
   endDate: string;
-  eventType: string;
-  onSubmit: () => void;
+  onSubmit: (e: FormEvent) => void;
 }
 
-export const ProjectRegistrationForm = ({ 
-  projectTitle, 
+export const ProjectRegistrationForm = ({
+  projectId,
+  projectTitle,
   projectPrice,
   startDate,
   endDate,
-  eventType,
   onSubmit,
 }: ProjectRegistrationFormProps) => {
-  const { id } = useParams();
-  const queryClient = useQueryClient();
-  
-  const [formData, setFormData] = useState({
-    email: "",
-    phone: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    arabicName: "",
-    englishName: "",
-    educationLevel: "",
-    birthDate: "",
-    nationalId: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [registrationId, setRegistrationId] = useState<string>("");
+  const { data: registrationFields, isLoading, error } = useQuery({
+    queryKey: ['project-registration-fields', projectId],
+    queryFn: async () => {
+      console.log('Fetching project registration fields for:', projectId);
+      try {
+        const { data: projectFields, error: projectFieldsError } = await supabase
+          .from('project_registration_fields')
+          .select('*')
+          .eq('project_id', projectId)
+          .maybeSingle();
 
-  const checkExistingRegistration = async (email: string) => {
-    console.log("Checking for existing project registration...");
-    const { data, error } = await supabase
-      .from('registrations')
-      .select('id')
-      .eq('project_id', id)
-      .eq('email', email);
-
-    if (error) {
-      console.error('Error checking registration:', error);
-      throw error;
-    }
-
-    return data && data.length > 0;
-  };
-
-  const processPayment = async (registrationData: any) => {
-    console.log("Processing payment for project...");
-    const { error: paymentError } = await supabase
-      .from('payment_transactions')
-      .insert({
-        registration_id: registrationData.id,
-        amount: projectPrice,
-        status: 'completed',
-        payment_method: 'card',
-        payment_gateway: 'local_gateway'
-      });
-
-    if (paymentError) {
-      console.error('Error processing payment:', paymentError);
-      throw paymentError;
-    }
-
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Starting project registration process...");
-    setIsSubmitting(true);
-
-    try {
-      const hasExistingRegistration = await checkExistingRegistration(formData.email);
-      
-      if (hasExistingRegistration) {
-        toast.error("لقد قمت بالتسجيل في هذا المشروع مسبقاً");
-        return;
-      }
-
-      const uniqueId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const { data: newRegistration, error: registrationError } = await supabase
-        .from('registrations')
-        .insert({
-          project_id: id,
-          arabic_name: formData.arabicName,
-          email: formData.email,
-          phone: formData.phone,
-          registration_number: uniqueId,
-          english_name: formData.englishName,
-          education_level: formData.educationLevel,
-          birth_date: formData.birthDate,
-          national_id: formData.nationalId
-        })
-        .select()
-        .single();
-
-      if (registrationError) {
-        console.error('Error submitting registration:', registrationError);
-        throw registrationError;
-      }
-
-      if (projectPrice !== "free" && projectPrice !== null && projectPrice > 0) {
-        const paymentSuccess = await processPayment(newRegistration);
-        if (!paymentSuccess) {
-          throw new Error('Payment processing failed');
+        if (projectFieldsError) {
+          console.error('Error fetching project registration fields:', projectFieldsError);
+          throw projectFieldsError;
         }
-      }
 
-      await queryClient.invalidateQueries({ 
-        queryKey: ['registrations', id] 
-      });
-      
-      setRegistrationId(uniqueId);
-      setShowConfirmation(true);
-      
-      console.log('Project registration successful:', uniqueId);
-    } catch (error) {
-      console.error('Error in registration process:', error);
-      toast.error("لم نتمكن من إكمال عملية التسجيل، يرجى المحاولة مرة أخرى");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+        if (!projectFields) {
+          console.log('No project registration fields found, using defaults');
+          return {
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false
+          };
+        }
+
+        const fields = {
+          arabic_name: Boolean(projectFields.arabic_name),
+          email: Boolean(projectFields.email),
+          phone: Boolean(projectFields.phone),
+          english_name: Boolean(projectFields.english_name),
+          education_level: Boolean(projectFields.education_level),
+          birth_date: Boolean(projectFields.birth_date),
+          national_id: Boolean(projectFields.national_id),
+          gender: Boolean(projectFields.gender),
+          work_status: Boolean(projectFields.work_status)
+        };
+
+        console.log('Using configured project registration fields:', fields);
+        return fields;
+      } catch (error) {
+        console.error('Failed to fetch project registration fields:', error);
+        toast.error('حدث خطأ في تحميل نموذج التسجيل');
+        throw error;
+      }
+    },
+    retry: 2,
+    retryDelay: 1000
+  });
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} />;
+  }
 
   const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
 
-  if (showConfirmation) {
-    return (
-      <ProjectActivityConfirmation
-        open={showConfirmation}
-        onOpenChange={setShowConfirmation}
-        registrationId={registrationId}
-        eventTitle={projectTitle}
-        formData={{
-          ...formData,
-          name: formData.arabicName // For backward compatibility
-        }}
-        projectTitle={projectTitle}
-      />
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+    <form onSubmit={onSubmit} className="space-y-4 mt-4">
       <ProjectRegistrationFields
-        formData={formData}
-        setFormData={setFormData}
+        registrationFields={registrationFields}
         projectPrice={projectPrice}
+        showPaymentFields={isPaidProject}
       />
-      
-      <ProjectRegistrationActions
-        isSubmitting={isSubmitting}
+      <ProjectRegistrationButton
         isPaidProject={isPaidProject}
         projectPrice={projectPrice}
       />

@@ -1,19 +1,23 @@
-import { useRegistration } from "./hooks/useRegistration";
-import { SessionManager } from "./session/SessionManager";
-import { RegistrationFormContainer } from "./form/RegistrationFormContainer";
-import { RegistrationConfirmation } from "./confirmation/RegistrationConfirmation";
 import { FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { EventRegistrationFields } from "./fields/EventRegistrationFields";
+import { EventRegistrationButton } from "./components/EventRegistrationButton";
+import { LoadingState, ErrorState } from "./components/RegistrationFormStates";
 
 interface EventRegistrationFormProps {
+  eventId: string;
   eventTitle: string;
   eventPrice: number | "free" | null;
   eventDate: string;
   eventTime: string;
   eventLocation: string;
-  onSubmit: () => void;
+  onSubmit: (e: FormEvent) => void;
 }
 
 export const EventRegistrationForm = ({
+  eventId,
   eventTitle,
   eventPrice,
   eventDate,
@@ -21,65 +25,82 @@ export const EventRegistrationForm = ({
   eventLocation,
   onSubmit,
 }: EventRegistrationFormProps) => {
-  const {
-    formData,
-    showConfirmation,
-    setShowConfirmation,
-    registrationId,
-    isRegistered,
-    handleSubmit: registrationSubmit
-  } = useRegistration(() => {
-    console.log('EventRegistrationForm - Registration successful, calling onSubmit');
-    onSubmit();
-  }, false);
+  const { data: registrationFields, isLoading, error } = useQuery({
+    queryKey: ['event-registration-fields', eventId],
+    queryFn: async () => {
+      console.log('Fetching event registration fields for:', eventId);
+      try {
+        const { data: eventFields, error: eventFieldsError } = await supabase
+          .from('event_registration_fields')
+          .select('*')
+          .eq('event_id', eventId)
+          .maybeSingle();
 
-  console.log('EventRegistrationForm - Current state:', {
-    showConfirmation,
-    isRegistered,
-    registrationId,
-    formData
+        if (eventFieldsError) {
+          console.error('Error fetching event registration fields:', eventFieldsError);
+          throw eventFieldsError;
+        }
+
+        if (!eventFields) {
+          console.log('No registration fields found, using defaults');
+          return {
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false
+          };
+        }
+
+        const fields = {
+          arabic_name: Boolean(eventFields.arabic_name),
+          email: Boolean(eventFields.email),
+          phone: Boolean(eventFields.phone),
+          english_name: Boolean(eventFields.english_name),
+          education_level: Boolean(eventFields.education_level),
+          birth_date: Boolean(eventFields.birth_date),
+          national_id: Boolean(eventFields.national_id),
+          gender: Boolean(eventFields.gender),
+          work_status: Boolean(eventFields.work_status)
+        };
+
+        console.log('Using configured event registration fields:', fields);
+        return fields;
+      } catch (error) {
+        console.error('Failed to fetch event registration fields:', error);
+        toast.error('حدث خطأ في تحميل نموذج التسجيل');
+        throw error;
+      }
+    },
+    retry: 2,
+    retryDelay: 1000
   });
 
-  const handleFormSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    console.log('Form submitted, calling registrationSubmit');
-    try {
-      await registrationSubmit(e);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-    }
-  };
-
-  if (showConfirmation && isRegistered) {
-    console.log('Showing confirmation dialog');
-    return (
-      <RegistrationConfirmation
-        showConfirmation={showConfirmation}
-        setShowConfirmation={setShowConfirmation}
-        registrationId={registrationId}
-        eventTitle={eventTitle}
-        eventDate={eventDate}
-        eventTime={eventTime}
-        eventLocation={eventLocation}
-        formData={{
-          name: formData.arabicName,
-          email: formData.email,
-          phone: formData.phone
-        }}
-      />
-    );
+  if (isLoading) {
+    return <LoadingState />;
   }
 
+  if (error) {
+    return <ErrorState error={error} />;
+  }
+
+  const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
+
   return (
-    <SessionManager>
-      <RegistrationFormContainer
-        eventTitle={eventTitle}
+    <form onSubmit={onSubmit} className="space-y-4 mt-4">
+      <EventRegistrationFields
+        registrationFields={registrationFields}
         eventPrice={eventPrice}
-        eventDate={eventDate}
-        eventTime={eventTime}
-        eventLocation={eventLocation}
-        onSubmit={handleFormSubmit}
+        showPaymentFields={isPaidEvent}
       />
-    </SessionManager>
+      <EventRegistrationButton
+        isPaidEvent={isPaidEvent}
+        eventPrice={eventPrice}
+      />
+    </form>
   );
 };
