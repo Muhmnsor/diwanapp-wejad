@@ -9,31 +9,31 @@ export const useRegistrationFields = (eventId?: string) => {
       console.log('🔍 Fetching registration fields for:', eventId);
       
       try {
-        // أولاً، نتحقق من نوع النموذج (فعالية أم مشروع)
+        // First check if this is a project activity
         const { data: eventData } = await supabase
           .from('events')
           .select('is_project_activity, project_id')
           .eq('id', eventId)
-          .single();
+          .maybeSingle();
 
         console.log('📊 Event data:', eventData);
 
         let fieldsQuery;
         
         if (eventData?.is_project_activity || eventData?.project_id) {
-          // إذا كان نشاط مشروع أو جزء من مشروع
+          // If it's a project activity or part of a project
           fieldsQuery = supabase
             .from('project_registration_fields')
             .select('*')
             .eq('project_id', eventData.project_id)
-            .single();
+            .maybeSingle();
         } else {
-          // إذا كان فعالية عادية
+          // If it's a regular event
           fieldsQuery = supabase
             .from('event_registration_fields')
             .select('*')
             .eq('event_id', eventId)
-            .single();
+            .maybeSingle();
         }
 
         const { data: fields, error } = await fieldsQuery;
@@ -43,7 +43,7 @@ export const useRegistrationFields = (eventId?: string) => {
           throw error;
         }
 
-        // الحقول الافتراضية - دائماً مطلوبة
+        // Default required fields that are always needed
         const defaultFields = {
           arabic_name: true,
           email: true,
@@ -56,13 +56,13 @@ export const useRegistrationFields = (eventId?: string) => {
           work_status: false
         };
 
-        // إذا لم نجد حقولاً مخصصة، نستخدم الحقول الافتراضية
+        // If no custom fields found, use defaults
         if (!fields) {
           console.log('ℹ️ No custom fields found, using defaults:', defaultFields);
           return defaultFields;
         }
 
-        // دمج الحقول المخصصة مع الحقول الإلزامية
+        // Merge custom fields with required fields
         const processedFields = {
           ...defaultFields,
           english_name: Boolean(fields.english_name),
@@ -83,6 +83,6 @@ export const useRegistrationFields = (eventId?: string) => {
     },
     retry: 2,
     retryDelay: 1000,
-    staleTime: 1000 * 60 * 5 // تخزين مؤقت لمدة 5 دقائق
+    staleTime: 1000 * 60 * 5 // Cache for 5 minutes
   });
 };
