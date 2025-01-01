@@ -58,19 +58,33 @@ export const EventRegistrationDialog = ({
 
   const handleRegistrationComplete = () => {
     console.log('Registration completed successfully, closing dialog');
+    // Force close the dialog
     onOpenChange(false);
   };
 
   return (
     <Dialog 
       open={open} 
-      onOpenChange={onOpenChange}
+      onOpenChange={(newOpen) => {
+        console.log('Dialog onOpenChange triggered:', { newOpen, currentOpen: open });
+        onOpenChange(newOpen);
+      }}
       modal={true}
     >
       <DialogContent 
         className="sm:max-w-[425px]"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          console.log('Preventing pointer down outside');
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          console.log('Preventing escape key');
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          console.log('Preventing interaction outside');
+          e.preventDefault();
+        }}
       >
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
