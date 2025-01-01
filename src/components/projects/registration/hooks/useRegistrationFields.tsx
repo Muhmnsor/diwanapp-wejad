@@ -10,6 +10,29 @@ export const useRegistrationFields = (projectId: string | undefined) => {
         throw new Error('Project ID is required');
       }
 
+      // Delete any duplicate records first
+      const { data: duplicates, error: deleteError } = await supabase
+        .from('project_registration_fields')
+        .delete()
+        .eq('project_id', projectId)
+        .neq('id', (
+          await supabase
+            .from('project_registration_fields')
+            .select('id')
+            .eq('project_id', projectId)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single()
+        ).data.id)
+        .select();
+
+      if (deleteError) {
+        console.error('Error deleting duplicate fields:', deleteError);
+      } else if (duplicates && duplicates.length > 0) {
+        console.log('Deleted duplicate registration fields:', duplicates);
+      }
+
+      // Now fetch the single record
       const { data, error } = await supabase
         .from('project_registration_fields')
         .select('*')
