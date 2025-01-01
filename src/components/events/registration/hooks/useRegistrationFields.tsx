@@ -9,20 +9,6 @@ export const useRegistrationFields = (eventId?: string) => {
       console.log('🔍 Fetching registration fields for:', eventId);
       
       try {
-        // First check if this is a project activity
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select('is_project_activity, project_id')
-          .eq('id', eventId)
-          .maybeSingle();
-
-        if (eventError) {
-          console.error('❌ Error fetching event data:', eventError);
-          throw eventError;
-        }
-
-        console.log('📊 Event data:', eventData);
-
         // Always try to get fields from event_registration_fields first
         console.log('🔍 Checking event_registration_fields');
         const { data: eventFields, error: eventFieldsError } = await supabase
@@ -36,14 +22,48 @@ export const useRegistrationFields = (eventId?: string) => {
           throw eventFieldsError;
         }
 
+        // If fields exist in database, use them
         if (eventFields) {
           console.log('✅ Found fields in event_registration_fields:', eventFields);
-          return eventFields;
+          return {
+            arabic_name: Boolean(eventFields.arabic_name),
+            email: Boolean(eventFields.email),
+            phone: Boolean(eventFields.phone),
+            english_name: Boolean(eventFields.english_name),
+            education_level: Boolean(eventFields.education_level),
+            birth_date: Boolean(eventFields.birth_date),
+            national_id: Boolean(eventFields.national_id),
+            gender: Boolean(eventFields.gender),
+            work_status: Boolean(eventFields.work_status)
+          };
         }
 
-        // If no fields found in event_registration_fields, use default fields
-        console.log('ℹ️ No fields found, using defaults');
-        const defaultFields = {
+        // If no fields found in event_registration_fields, create them with defaults
+        console.log('🔄 No fields found, creating default fields for event');
+        const { data: newFields, error: insertError } = await supabase
+          .from('event_registration_fields')
+          .insert({
+            event_id: eventId,
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('❌ Error creating default fields:', insertError);
+          throw insertError;
+        }
+
+        console.log('✅ Created default fields:', newFields);
+        return {
           arabic_name: true,
           email: true,
           phone: true,
@@ -54,9 +74,6 @@ export const useRegistrationFields = (eventId?: string) => {
           gender: false,
           work_status: false
         };
-
-        console.log('📝 Using default fields:', defaultFields);
-        return defaultFields;
 
       } catch (error) {
         console.error('❌ Failed to fetch registration fields:', error);
