@@ -4,6 +4,7 @@ import { ProjectActivityFormData } from "@/types/activity";
 import { ActivityFormFields } from "./fields/ActivityFormFields";
 import { ActivityFormActions } from "./actions/ActivityFormActions";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EditActivityFormProps {
   activity?: {
@@ -54,17 +55,47 @@ export const EditActivityForm = ({
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
     try {
+      console.log('Submitting form with data:', { ...data, projectId });
+      
       const eventData = {
         ...data,
         project_id: projectId,
         is_project_activity: true,
         event_type: 'in-person',
         image_url: '/placeholder.svg',
+        beneficiary_type: 'both',
+        certificate_type: 'none',
+        event_path: 'environment',
+        event_category: 'educational',
+        max_attendees: 0,
+        end_date: data.date, // Setting end_date same as date for single-day activities
       };
 
-      console.log('Submitting form with data:', eventData);
-      
-      toast.success(activity ? 'تم تحديث النشاط بنجاح' : 'تم إضافة النشاط بنجاح');
+      if (activity?.id) {
+        // Update existing activity
+        const { error: updateError } = await supabase
+          .from('events')
+          .update(eventData)
+          .eq('id', activity.id);
+
+        if (updateError) {
+          console.error('Error updating activity:', updateError);
+          throw updateError;
+        }
+        toast.success('تم تحديث النشاط بنجاح');
+      } else {
+        // Create new activity
+        const { error: insertError } = await supabase
+          .from('events')
+          .insert([eventData]);
+
+        if (insertError) {
+          console.error('Error creating activity:', insertError);
+          throw insertError;
+        }
+        toast.success('تم إضافة النشاط بنجاح');
+      }
+
       onSuccess?.();
     } catch (error) {
       console.error('Error saving activity:', error);
