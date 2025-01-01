@@ -19,7 +19,6 @@ export const ProjectActivityActions = ({
   onEditSuccess
 }: ProjectActivityActionsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleEditClick = () => {
     setIsEditDialogOpen(true);
@@ -37,7 +36,6 @@ export const ProjectActivityActions = ({
                 size="icon"
                 onClick={handleEditClick}
                 className="h-8 w-8 transition-colors hover:bg-secondary"
-                disabled={isLoading}
               >
                 <Edit2 className="h-4 w-4" />
               </Button>

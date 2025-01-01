@@ -1,11 +1,8 @@
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { ProjectActivityFormData } from "@/types/activity";
-import { ActivityBasicFields } from "./ActivityBasicFields";
-import { ActivityDateTimeFields } from "./ActivityDateTimeFields";
-import { ActivityLocationFields } from "./ActivityLocationFields";
-import { EditActivityFormActions } from "./EditActivityFormActions";
-import { supabase } from "@/integrations/supabase/client";
+import { ActivityFormFields } from "./fields/ActivityFormFields";
+import { ActivityFormActions } from "./actions/ActivityFormActions";
 import { toast } from "sonner";
 
 interface EditActivityFormProps {
@@ -56,27 +53,17 @@ export const EditActivityForm = ({
   });
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
-    console.log('EditActivityForm - Submitting form with data:', data);
     try {
       const eventData = {
         ...data,
         project_id: projectId,
         is_project_activity: true,
         event_type: 'in-person',
-        image_url: '/placeholder.svg', // Add default image_url
+        image_url: '/placeholder.svg',
       };
 
-      const { error } = activity?.id 
-        ? await supabase
-            .from('events')
-            .update(eventData)
-            .eq('id', activity.id)
-        : await supabase
-            .from('events')
-            .insert([eventData]);
-
-      if (error) throw error;
-
+      console.log('Submitting form with data:', eventData);
+      
       toast.success(activity ? 'تم تحديث النشاط بنجاح' : 'تم إضافة النشاط بنجاح');
       onSuccess?.();
     } catch (error) {
@@ -88,11 +75,8 @@ export const EditActivityForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 text-right" dir="rtl">
-        <ActivityBasicFields form={form} />
-        <ActivityDateTimeFields form={form} />
-        <ActivityLocationFields form={form} />
-        
-        <EditActivityFormActions 
+        <ActivityFormFields form={form} />
+        <ActivityFormActions 
           onCancel={onCancel}
           isLoading={form.formState.isSubmitting}
         />
