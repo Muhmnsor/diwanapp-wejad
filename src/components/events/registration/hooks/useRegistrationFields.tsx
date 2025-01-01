@@ -46,10 +46,9 @@ export const useRegistrationFields = (eventId?: string) => {
           throw fieldsError;
         }
 
-        // If no fields found, return default fields without creating new ones
-        // This avoids RLS policy violations for non-admin users
-        if (!fields) {
-          console.log('ℹ️ No fields found, using default fields');
+        // If no fields found, return default fields
+        if (!fields || !eventData) {
+          console.log('ℹ️ No fields or event data found, using defaults');
           return {
             arabic_name: true,
             email: true,
@@ -65,9 +64,9 @@ export const useRegistrationFields = (eventId?: string) => {
 
         // Process fields based on database settings
         const processedFields = {
-          arabic_name: true,
-          email: true,
-          phone: true,
+          arabic_name: true, // Always required
+          email: true, // Always required
+          phone: true, // Always required
           english_name: Boolean(fields.english_name),
           education_level: Boolean(fields.education_level),
           birth_date: Boolean(fields.birth_date),
