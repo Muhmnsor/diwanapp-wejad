@@ -1,5 +1,5 @@
 import { ProjectActivity } from "@/types/activity";
-import { ProjectActivityCard } from "./ProjectActivityCard";
+import { ProjectActivitiesTable } from "../activities/ProjectActivitiesTable";
 
 interface ProjectActivitiesListProps {
   projectActivities: ProjectActivity[];
@@ -16,25 +16,12 @@ export const ProjectActivitiesList = ({
 }: ProjectActivitiesListProps) => {
   console.log("ProjectActivitiesList - activities:", projectActivities);
 
-  if (!projectActivities.length) {
-    return (
-      <div className="text-center text-gray-500 py-8">
-        لا توجد أنشطة مضافة
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {projectActivities.map((activity) => (
-        <ProjectActivityCard
-          key={activity.id}
-          activity={activity}
-          onEdit={() => onEdit(activity)}
-          onDelete={() => onDelete(activity)}
-          onEditSuccess={onEditSuccess}
-        />
-      ))}
-    </div>
+    <ProjectActivitiesTable
+      activities={projectActivities}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onEditSuccess={onEditSuccess}
+    />
   );
 };
