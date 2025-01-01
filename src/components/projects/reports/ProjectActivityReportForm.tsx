@@ -1,8 +1,9 @@
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
+import { ProjectActivityReportFormFields } from "./form/ProjectActivityReportFormFields";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportFormFields } from "@/components/events/reports/form/ReportFormFields";
+import { toast } from "sonner";
 
 interface ProjectActivityReportFormProps {
   projectId: string;
@@ -74,9 +75,11 @@ export const ProjectActivityReportForm = ({
 
       if (error) throw error;
 
+      toast.success('تم إضافة التقرير بنجاح');
       onSuccess?.();
     } catch (error) {
       console.error('Error submitting report:', error);
+      toast.error('حدث خطأ أثناء إرسال التقرير');
       throw error;
     }
   };
@@ -85,7 +88,7 @@ export const ProjectActivityReportForm = ({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <h2 className="text-xl font-semibold mb-6">إضافة تقرير جديد</h2>
       
-      <ReportFormFields 
+      <ProjectActivityReportFormFields 
         formValues={formValues}
         setValue={setValue}
       />
