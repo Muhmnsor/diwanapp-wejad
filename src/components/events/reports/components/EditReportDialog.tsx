@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Report } from "@/types/report";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditReportFormFields } from "../form/EditReportFormFields";
