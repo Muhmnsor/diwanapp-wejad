@@ -26,7 +26,13 @@ export const EventRegistrationFields = ({
   formData,
   setFormData
 }: EventRegistrationFieldsProps) => {
-  console.log('Event registration fields:', registrationFields);
+  console.log('EventRegistrationFields - Registration fields:', registrationFields);
+  console.log('EventRegistrationFields - Form data:', formData);
+
+  if (!registrationFields) {
+    console.error('Registration fields are undefined');
+    return null;
+  }
 
   return (
     <div className="space-y-4">

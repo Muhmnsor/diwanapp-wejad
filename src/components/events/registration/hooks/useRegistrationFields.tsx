@@ -6,24 +6,32 @@ export const useRegistrationFields = (eventId: string | undefined) => {
   return useQuery({
     queryKey: ['registration-fields', eventId],
     queryFn: async () => {
-      console.log('Fetching registration fields for:', eventId);
+      console.log('Fetching registration fields for event:', eventId);
+      
+      if (!eventId) {
+        console.error('No event ID provided');
+        return null;
+      }
+
       try {
-        const { data: eventFields, error: eventFieldsError } = await supabase
+        const { data: eventFields, error } = await supabase
           .from('event_registration_fields')
           .select('*')
           .eq('event_id', eventId)
           .maybeSingle();
 
-        if (eventFieldsError) {
-          console.error('Error fetching registration fields:', eventFieldsError);
-          throw eventFieldsError;
+        if (error) {
+          console.error('Error fetching registration fields:', error);
+          toast.error('حدث خطأ في تحميل نموذج التسجيل');
+          throw error;
         }
 
         console.log('Raw registration fields from database:', eventFields);
-        
-        // If no fields are found, use default fields
+
+        // إذا لم نجد حقول مخصصة، نستخدم القيم الافتراضية
         if (!eventFields) {
-          const defaultFields = {
+          console.log('No registration fields found, using defaults');
+          return {
             arabic_name: true,
             email: true,
             phone: true,
@@ -34,11 +42,9 @@ export const useRegistrationFields = (eventId: string | undefined) => {
             gender: false,
             work_status: false
           };
-          console.log('No registration fields found, using defaults:', defaultFields);
-          return defaultFields;
         }
 
-        // Convert database boolean values to actual booleans
+        // تحويل القيم من قاعدة البيانات إلى قيم منطقية
         const fields = {
           arabic_name: Boolean(eventFields.arabic_name),
           email: Boolean(eventFields.email),
@@ -51,7 +57,7 @@ export const useRegistrationFields = (eventId: string | undefined) => {
           work_status: Boolean(eventFields.work_status)
         };
 
-        console.log('Using configured registration fields:', fields);
+        console.log('Processed registration fields:', fields);
         return fields;
 
       } catch (error) {
@@ -62,6 +68,10 @@ export const useRegistrationFields = (eventId: string | undefined) => {
     },
     retry: 2,
     retryDelay: 1000,
-    staleTime: 1000 * 60 * 5 // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    onError: (error) => {
+      console.error('Error in useRegistrationFields hook:', error);
+      toast.error('حدث خطأ في تحميل نموذج التسجيل');
+    }
   });
 };
