@@ -1,22 +1,23 @@
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { PaymentFields } from "./PaymentFields";
+import { RegistrationFormData } from "../../types/registration";
 
 interface EventRegistrationFieldsProps {
   registrationFields: {
     arabic_name: boolean;
-    email: boolean;
-    phone: boolean;
     english_name: boolean;
     education_level: boolean;
     birth_date: boolean;
     national_id: boolean;
+    email: boolean;
+    phone: boolean;
     gender: boolean;
     work_status: boolean;
   };
   eventPrice: number | "free" | null;
   showPaymentFields: boolean;
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: RegistrationFormData;
+  setFormData: React.Dispatch<React.SetStateAction<RegistrationFormData>>;
 }
 
 export const EventRegistrationFields = ({
@@ -26,11 +27,11 @@ export const EventRegistrationFields = ({
   formData,
   setFormData
 }: EventRegistrationFieldsProps) => {
-  console.log('EventRegistrationFields - Registration fields:', registrationFields);
-  console.log('EventRegistrationFields - Form data:', formData);
+  console.log('🔄 EventRegistrationFields - Current fields config:', registrationFields);
+  console.log('📝 EventRegistrationFields - Current form data:', formData);
 
   if (!registrationFields) {
-    console.error('Registration fields are undefined');
+    console.error('❌ Registration fields are undefined');
     return null;
   }
 

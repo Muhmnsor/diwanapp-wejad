@@ -6,10 +6,10 @@ export const useRegistrationFields = (eventId: string | undefined) => {
   return useQuery({
     queryKey: ['registration-fields', eventId],
     queryFn: async () => {
-      console.log('Fetching registration fields for event:', eventId);
+      console.log('🔍 Fetching registration fields for event:', eventId);
       
       if (!eventId) {
-        console.error('No event ID provided');
+        console.error('❌ No event ID provided');
         return null;
       }
 
@@ -18,19 +18,18 @@ export const useRegistrationFields = (eventId: string | undefined) => {
           .from('event_registration_fields')
           .select('*')
           .eq('event_id', eventId)
-          .maybeSingle();
+          .single();
 
         if (error) {
-          console.error('Error fetching registration fields:', error);
-          toast.error('حدث خطأ في تحميل نموذج التسجيل');
+          console.error('❌ Error fetching registration fields:', error);
           throw error;
         }
 
-        console.log('Raw registration fields from database:', eventFields);
+        console.log('📝 Raw registration fields from database:', eventFields);
 
         // إذا لم نجد حقول مخصصة، نستخدم القيم الافتراضية
         if (!eventFields) {
-          console.log('No registration fields found, using defaults');
+          console.log('ℹ️ No custom fields found, using defaults');
           return {
             arabic_name: true,
             email: true,
@@ -57,11 +56,11 @@ export const useRegistrationFields = (eventId: string | undefined) => {
           work_status: Boolean(eventFields.work_status)
         };
 
-        console.log('Processed registration fields:', fields);
+        console.log('✅ Processed registration fields:', fields);
         return fields;
 
       } catch (error) {
-        console.error('Failed to fetch registration fields:', error);
+        console.error('❌ Failed to fetch registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
         throw error;
       }
@@ -69,9 +68,8 @@ export const useRegistrationFields = (eventId: string | undefined) => {
     retry: 2,
     retryDelay: 1000,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    onError: (error) => {
-      console.error('Error in useRegistrationFields hook:', error);
-      toast.error('حدث خطأ في تحميل نموذج التسجيل');
+    meta: {
+      errorMessage: 'حدث خطأ في تحميل نموذج التسجيل'
     }
   });
 };

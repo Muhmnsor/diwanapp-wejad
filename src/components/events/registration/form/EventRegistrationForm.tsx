@@ -31,21 +31,21 @@ export const EventRegistrationForm = ({
   const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
   const { formData, setFormData } = useRegistration(() => {}, false);
 
-  console.log('EventRegistrationForm - Registration Fields:', registrationFields);
-  console.log('EventRegistrationForm - Form Data:', formData);
+  console.log('📋 EventRegistrationForm - Registration Fields:', registrationFields);
+  console.log('📝 EventRegistrationForm - Form Data:', formData);
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
   if (error) {
-    console.error('Error loading registration fields:', error);
+    console.error('❌ Error loading registration fields:', error);
     toast.error('حدث خطأ في تحميل نموذج التسجيل');
     return <ErrorState error={error} />;
   }
 
   if (!registrationFields) {
-    console.error('No registration fields available');
+    console.error('❌ No registration fields available');
     toast.error('حدث خطأ في تحميل نموذج التسجيل');
     return <ErrorState error={new Error('No registration fields available')} />;
   }
