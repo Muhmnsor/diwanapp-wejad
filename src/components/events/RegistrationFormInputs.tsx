@@ -40,6 +40,9 @@ export const RegistrationFormInputs = ({
   showPaymentFields = false,
   registrationFields
 }: RegistrationFormInputsProps) => {
+  console.log('🔄 RegistrationFormInputs - Registration Fields:', registrationFields);
+  console.log('📝 RegistrationFormInputs - Form Data:', formData);
+
   return (
     <div className="space-y-4">
       <PersonalInfoFields
