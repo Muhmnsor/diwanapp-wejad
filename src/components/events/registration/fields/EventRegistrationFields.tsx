@@ -1,6 +1,6 @@
 import { PersonalInfoFields } from "./PersonalInfoFields";
 import { PaymentFields } from "./PaymentFields";
-import { RegistrationFormData } from "../../types/registration";
+import { RegistrationFormData } from "../types/registration";
 
 interface EventRegistrationFieldsProps {
   registrationFields: {
