@@ -11,8 +11,8 @@ export const PhoneField = ({ value, onChange }: PhoneFieldProps) => {
   const [error, setError] = useState("");
 
   const handleChange = (newValue: string) => {
-    // Only allow numbers
-    if (!/^\d*$/.test(newValue)) {
+    // Only allow numbers and limit to 10 digits
+    if (!/^\d*$/.test(newValue) || newValue.length > 10) {
       return;
     }
 
