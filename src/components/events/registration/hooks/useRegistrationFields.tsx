@@ -27,17 +27,19 @@ export const useRegistrationFields = (eventId?: string) => {
         console.log('🔄 Is project activity?', isProjectActivity);
 
         // Fetch fields from appropriate table
-        let { data: fields, error: fieldsError } = isProjectActivity
-          ? await supabase
+        const fieldsQuery = isProjectActivity
+          ? supabase
               .from('project_registration_fields')
               .select('*')
               .eq('project_id', eventData?.project_id)
               .maybeSingle()
-          : await supabase
+          : supabase
               .from('event_registration_fields')
               .select('*')
               .eq('event_id', eventId)
               .maybeSingle();
+
+        const { data: fields, error: fieldsError } = await fieldsQuery;
 
         if (fieldsError) {
           console.error('❌ Error fetching registration fields:', fieldsError);
@@ -48,8 +50,8 @@ export const useRegistrationFields = (eventId?: string) => {
         if (!fields) {
           console.log('ℹ️ No fields found, creating default fields');
           
-          const { data: newFields, error: insertError } = isProjectActivity
-            ? await supabase
+          const insertQuery = isProjectActivity
+            ? supabase
                 .from('project_registration_fields')
                 .insert({
                   project_id: eventData?.project_id,
@@ -59,7 +61,7 @@ export const useRegistrationFields = (eventId?: string) => {
                 })
                 .select()
                 .single()
-            : await supabase
+            : supabase
                 .from('event_registration_fields')
                 .insert({
                   event_id: eventId,
@@ -70,19 +72,32 @@ export const useRegistrationFields = (eventId?: string) => {
                 .select()
                 .single();
 
+          const { data: newFields, error: insertError } = await insertQuery;
+
           if (insertError) {
             console.error('❌ Error creating default fields:', insertError);
             throw insertError;
           }
 
-          fields = newFields;
+          console.log('✅ Created default fields:', newFields);
+          return {
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false
+          };
         }
 
         // Process fields based on database settings
         const processedFields = {
-          arabic_name: true,  // Always required
-          email: true,       // Always required
-          phone: true,       // Always required
+          arabic_name: true,
+          email: true,
+          phone: true,
           english_name: Boolean(fields.english_name),
           education_level: Boolean(fields.education_level),
           birth_date: Boolean(fields.birth_date),
@@ -100,8 +115,7 @@ export const useRegistrationFields = (eventId?: string) => {
         throw error;
       }
     },
-    retry: 2,
-    retryDelay: 1000,
+    retry: 1,
     staleTime: 1000 * 60 * 5 // Cache for 5 minutes
   });
 };
