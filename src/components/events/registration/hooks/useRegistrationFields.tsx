@@ -38,31 +38,9 @@ export const useRegistrationFields = (eventId?: string) => {
           };
         }
 
-        // If no fields found in event_registration_fields, create them with defaults
-        console.log('🔄 No fields found, creating default fields for event');
-        const { data: newFields, error: insertError } = await supabase
-          .from('event_registration_fields')
-          .insert({
-            event_id: eventId,
-            arabic_name: true,
-            email: true,
-            phone: true,
-            english_name: false,
-            education_level: false,
-            birth_date: false,
-            national_id: false,
-            gender: false,
-            work_status: false
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('❌ Error creating default fields:', insertError);
-          throw insertError;
-        }
-
-        console.log('✅ Created default fields:', newFields);
+        // If no fields found, return default fields without creating new ones
+        // This avoids RLS issues for non-admin users
+        console.log('ℹ️ No fields found, using defaults');
         return {
           arabic_name: true,
           email: true,
@@ -77,8 +55,18 @@ export const useRegistrationFields = (eventId?: string) => {
 
       } catch (error) {
         console.error('❌ Failed to fetch registration fields:', error);
-        toast.error('حدث خطأ في تحميل نموذج التسجيل');
-        throw error;
+        // Return default fields on error
+        return {
+          arabic_name: true,
+          email: true,
+          phone: true,
+          english_name: false,
+          education_level: false,
+          birth_date: false,
+          national_id: false,
+          gender: false,
+          work_status: false
+        };
       }
     },
     retry: 1,
