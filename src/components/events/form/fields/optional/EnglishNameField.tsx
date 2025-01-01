@@ -1,6 +1,5 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
 
 interface EnglishNameFieldProps {
   value: string;
@@ -8,34 +7,14 @@ interface EnglishNameFieldProps {
 }
 
 export const EnglishNameField = ({ value, onChange }: EnglishNameFieldProps) => {
-  const [error, setError] = useState<string>("");
-
-  const validateEnglishName = (value: string) => {
-    const englishRegex = /^[A-Za-z\s]+$/;
-    if (!englishRegex.test(value)) {
-      setError("يرجى إدخال الاسم باللغة الإنجليزية فقط");
-      return false;
-    }
-    setError("");
-    return true;
-  };
-
-  const handleChange = (value: string) => {
-    if (validateEnglishName(value)) {
-      onChange(value);
-    }
-  };
-
   return (
     <div className="space-y-2">
       <Label>الاسم الثلاثي بالإنجليزية</Label>
       <Input
         value={value}
-        onChange={(e) => handleChange(e.target.value)}
-        placeholder="Enter full name in English"
-        className={error ? "border-red-500" : ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="أدخل الاسم الثلاثي بالإنجليزية"
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 };

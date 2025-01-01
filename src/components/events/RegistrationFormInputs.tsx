@@ -1,5 +1,6 @@
 import { PersonalInfoFields } from "./form/PersonalInfoFields";
 import { PaymentFields } from "./form/PaymentFields";
+import { OptionalRegistrationFields } from "./form/fields/OptionalRegistrationFields";
 import { RegistrationFormData } from "./registration/types/registration";
 
 interface RegistrationFormInputsProps {
@@ -35,6 +36,12 @@ export const RegistrationFormInputs = ({
       <PersonalInfoFields
         formData={formData}
         setFormData={setFormData}
+        registrationFields={registrationFields}
+      />
+      
+      <OptionalRegistrationFields
+        formData={formData}
+        handleInputChange={(field, value) => setFormData({ ...formData, [field]: value })}
         registrationFields={registrationFields}
       />
       

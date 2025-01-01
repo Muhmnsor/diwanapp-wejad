@@ -23,6 +23,9 @@ export const OptionalRegistrationFields = ({
   handleInputChange,
   registrationFields
 }: OptionalFieldsProps) => {
+  console.log('🔄 OptionalRegistrationFields - Registration Fields:', registrationFields);
+  console.log('📝 OptionalRegistrationFields - Form Data:', formData);
+
   return (
     <>
       {registrationFields.english_name && (
