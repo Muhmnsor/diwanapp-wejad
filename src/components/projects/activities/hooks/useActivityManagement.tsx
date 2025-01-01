@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProjectActivity } from "@/types/activity";
 
-export const useActivityManagement = (projectId: string, refetchActivities: () => void) => {
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+export const useActivityManagement = (projectId: string, refetchActivities: () => Promise<void>) => {
+  const [selectedEvent, setSelectedEvent] = useState<ProjectActivity | null>(null);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isEditEventOpen, setIsEditEventOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -13,13 +13,13 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
     setIsAddEventOpen(true);
   };
 
-  const handleEditEvent = (projectEvent: any) => {
+  const handleEditEvent = (projectEvent: ProjectActivity) => {
     console.log("Editing project event:", projectEvent);
     setSelectedEvent(projectEvent);
     setIsEditEventOpen(true);
   };
 
-  const handleDeleteEvent = (event: any) => {
+  const handleDeleteEvent = (event: ProjectActivity) => {
     console.log("Handling delete for event:", event);
     setSelectedEvent(event);
     setIsDeleteDialogOpen(true);
@@ -29,7 +29,10 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
     try {
       console.log("Starting delete process for event:", selectedEvent);
 
-      // Delete the event directly since it's a project activity
+      if (!selectedEvent) {
+        throw new Error("No event selected for deletion");
+      }
+
       const { error: eventError } = await supabase
         .from('events')
         .delete()

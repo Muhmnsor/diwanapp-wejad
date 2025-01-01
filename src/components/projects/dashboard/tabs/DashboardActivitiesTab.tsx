@@ -1,23 +1,16 @@
+import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { ActivitiesList } from "@/components/projects/activities/ActivitiesList";
-import { EditActivityDialog } from "@/components/projects/activities/dialogs/EditActivityDialog";
-import { DeleteActivityDialog } from "@/components/projects/activities/dialogs/DeleteActivityDialog";
-import { AddActivityDialog } from "@/components/projects/activities/dialogs/AddActivityDialog";
 import { ActivityListHeader } from "@/components/projects/activities/list/ActivityListHeader";
-import { toast } from "sonner";
+import { ActivityDialogsContainer } from "@/components/projects/activities/containers/ActivityDialogsContainer";
+import { useActivityManagement } from "@/components/projects/activities/hooks/useActivityManagement";
 
 interface DashboardActivitiesTabProps {
   projectId: string;
 }
 
 export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProps) => {
-  const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
-  const [selectedActivity, setSelectedActivity] = useState<any>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
   const { data: activities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
@@ -39,69 +32,53 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
     },
   });
 
-  const handleEditActivity = (activity: any) => {
-    setSelectedActivity(activity);
-    setIsAddActivityOpen(true);
-  };
+  const {
+    selectedEvent,
+    isAddEventOpen,
+    setIsAddEventOpen,
+    isEditEventOpen,
+    setIsEditEventOpen,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    handleAddEvent,
+    handleEditEvent,
+    handleDeleteEvent,
+    confirmDelete,
+  } = useActivityManagement(projectId, async () => {
+    await refetchActivities();
+  });
 
-  const handleDeleteActivity = (activity: any) => {
-    setSelectedActivity(activity);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedActivity) return;
-
-    try {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', selectedActivity.id);
-
-      if (error) throw error;
-
-      toast.success('تم حذف النشاط بنجاح');
-      await refetchActivities();
-    } catch (error) {
-      console.error('Error deleting activity:', error);
-      toast.error('حدث خطأ أثناء حذف النشاط');
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setSelectedActivity(null);
-    }
+  const project = {
+    event_path: 'environment',
+    event_category: 'social'
   };
 
   return (
     <div className="space-y-6">
-      <ActivityListHeader onAddActivity={() => setIsAddActivityOpen(true)} />
+      <ActivityListHeader onAddActivity={handleAddEvent} />
 
       <Card className="p-6">
         <ActivitiesList
           activities={activities}
-          onEditActivity={handleEditActivity}
-          onDeleteActivity={handleDeleteActivity}
+          onEditActivity={handleEditEvent}
+          onDeleteActivity={handleDeleteEvent}
         />
       </Card>
 
-      <AddActivityDialog
-        open={isAddActivityOpen && !selectedActivity}
-        onOpenChange={setIsAddActivityOpen}
-        onSave={refetchActivities}
+      <ActivityDialogsContainer
         projectId={projectId}
-      />
-
-      <EditActivityDialog
-        activity={selectedActivity}
-        open={isAddActivityOpen && !!selectedActivity}
-        onOpenChange={setIsAddActivityOpen}
-        onSave={refetchActivities}
-        projectId={projectId}
-      />
-
-      <DeleteActivityDialog
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
+        selectedEvent={selectedEvent}
+        isAddEventOpen={isAddEventOpen}
+        isEditEventOpen={isEditEventOpen}
+        isDeleteDialogOpen={isDeleteDialogOpen}
+        setIsAddEventOpen={setIsAddEventOpen}
+        setIsEditEventOpen={setIsEditEventOpen}
+        setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+        refetchActivities={async () => {
+          await refetchActivities();
+        }}
+        confirmDelete={confirmDelete}
+        project={project}
       />
     </div>
   );

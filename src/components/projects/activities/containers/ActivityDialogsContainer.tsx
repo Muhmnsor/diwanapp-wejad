@@ -1,18 +1,19 @@
 import { AddProjectEventDialog } from "../../events/AddProjectEventDialog";
 import { EditProjectEventDialog } from "../../events/EditProjectEventDialog";
 import { DeleteActivityDialog } from "../dialogs/DeleteActivityDialog";
+import { ProjectActivity } from "@/types/activity";
 
 interface ActivityDialogsContainerProps {
   projectId: string;
-  selectedEvent: any;
+  selectedEvent: ProjectActivity | null;
   isAddEventOpen: boolean;
   isEditEventOpen: boolean;
   isDeleteDialogOpen: boolean;
   setIsAddEventOpen: (open: boolean) => void;
   setIsEditEventOpen: (open: boolean) => void;
   setIsDeleteDialogOpen: (open: boolean) => void;
-  refetchActivities: () => void;
-  confirmDelete: () => void;
+  refetchActivities: () => Promise<void>;
+  confirmDelete: () => Promise<void>;
   project: {
     event_path: string;
     event_category: string;
