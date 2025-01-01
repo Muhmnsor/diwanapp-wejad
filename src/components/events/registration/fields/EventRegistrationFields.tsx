@@ -15,23 +15,32 @@ interface EventRegistrationFieldsProps {
   };
   eventPrice: number | "free" | null;
   showPaymentFields: boolean;
+  formData: any;
+  setFormData: (data: any) => void;
 }
 
 export const EventRegistrationFields = ({
   registrationFields,
   eventPrice,
-  showPaymentFields
+  showPaymentFields,
+  formData,
+  setFormData
 }: EventRegistrationFieldsProps) => {
   console.log('Event registration fields:', registrationFields);
 
   return (
     <div className="space-y-4">
       <PersonalInfoFields
+        formData={formData}
+        setFormData={setFormData}
         registrationFields={registrationFields}
       />
+      
       {showPaymentFields && (
         <PaymentFields
-          price={eventPrice}
+          formData={formData}
+          setFormData={setFormData}
+          eventPrice={eventPrice}
         />
       )}
     </div>

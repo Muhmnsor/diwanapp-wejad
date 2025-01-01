@@ -1,10 +1,11 @@
 import { FormEvent } from "react";
 import { useRegistrationFields } from "../hooks/useRegistrationFields";
 import { useParams } from "react-router-dom";
-import { EventRegistrationFields } from "./EventRegistrationFields";
-import { Button } from "@/components/ui/button";
+import { EventRegistrationFields } from "../fields/EventRegistrationFields";
+import { EventRegistrationButton } from "../components/EventRegistrationButton";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ErrorState } from "../components/ErrorState";
+import { useRegistration } from "../hooks/useRegistration";
 
 interface EventRegistrationFormProps {
   eventTitle: string;
@@ -27,6 +28,7 @@ export const EventRegistrationForm = ({
 }: EventRegistrationFormProps) => {
   const { id } = useParams();
   const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
+  const { formData, setFormData } = useRegistration(() => {}, false);
 
   console.log('EventRegistrationForm - Fields:', registrationFields);
 
@@ -46,19 +48,14 @@ export const EventRegistrationForm = ({
         registrationFields={registrationFields}
         eventPrice={eventPrice}
         showPaymentFields={isPaidEvent}
+        formData={formData}
+        setFormData={setFormData}
       />
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={isSubmitting}
-      >
-        {isSubmitting 
-          ? "جاري المعالجة..." 
-          : isPaidEvent 
-            ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` 
-            : "تأكيد التسجيل"
-        }
-      </Button>
+      <EventRegistrationButton 
+        isSubmitting={isSubmitting}
+        isPaidEvent={isPaidEvent}
+        eventPrice={eventPrice}
+      />
     </form>
   );
 };

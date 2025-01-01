@@ -3,6 +3,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PersonalInfoFieldsProps {
+  formData: any;
+  setFormData: (data: any) => void;
   registrationFields: {
     arabic_name: boolean;
     email: boolean;
@@ -17,9 +19,16 @@ interface PersonalInfoFieldsProps {
 }
 
 export const PersonalInfoFields = ({
+  formData,
+  setFormData,
   registrationFields
 }: PersonalInfoFieldsProps) => {
-  console.log('Registration fields in PersonalInfoFields:', registrationFields);
+  const handleChange = (field: string, value: string) => {
+    setFormData({
+      ...formData,
+      [field]: value
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -28,6 +37,8 @@ export const PersonalInfoFields = ({
           <Label htmlFor="arabicName">الاسم الثلاثي بالعربية</Label>
           <Input
             id="arabicName"
+            value={formData.arabicName || ""}
+            onChange={(e) => handleChange("arabicName", e.target.value)}
             placeholder="أدخل الاسم الثلاثي بالعربية"
             required
           />
@@ -39,6 +50,8 @@ export const PersonalInfoFields = ({
           <Label htmlFor="englishName">الاسم الثلاثي بالإنجليزية</Label>
           <Input
             id="englishName"
+            value={formData.englishName || ""}
+            onChange={(e) => handleChange("englishName", e.target.value)}
             placeholder="أدخل الاسم الثلاثي بالإنجليزية"
           />
         </div>
@@ -50,6 +63,8 @@ export const PersonalInfoFields = ({
           <Input
             id="email"
             type="email"
+            value={formData.email || ""}
+            onChange={(e) => handleChange("email", e.target.value)}
             placeholder="أدخل البريد الإلكتروني"
             required
           />
@@ -62,6 +77,8 @@ export const PersonalInfoFields = ({
           <Input
             id="phone"
             type="tel"
+            value={formData.phone || ""}
+            onChange={(e) => handleChange("phone", e.target.value)}
             placeholder="أدخل رقم الجوال"
             required
           />
@@ -73,6 +90,8 @@ export const PersonalInfoFields = ({
           <Label htmlFor="nationalId">رقم الهوية</Label>
           <Input
             id="nationalId"
+            value={formData.nationalId || ""}
+            onChange={(e) => handleChange("nationalId", e.target.value)}
             placeholder="أدخل رقم الهوية"
           />
         </div>
@@ -84,6 +103,8 @@ export const PersonalInfoFields = ({
           <Input
             id="birthDate"
             type="date"
+            value={formData.birthDate || ""}
+            onChange={(e) => handleChange("birthDate", e.target.value)}
           />
         </div>
       )}
@@ -91,7 +112,7 @@ export const PersonalInfoFields = ({
       {registrationFields.gender && (
         <div>
           <Label htmlFor="gender">الجنس</Label>
-          <Select>
+          <Select value={formData.gender || ""} onValueChange={(value) => handleChange("gender", value)}>
             <SelectTrigger>
               <SelectValue placeholder="اختر الجنس" />
             </SelectTrigger>
@@ -106,7 +127,10 @@ export const PersonalInfoFields = ({
       {registrationFields.education_level && (
         <div>
           <Label htmlFor="educationLevel">المستوى التعليمي</Label>
-          <Select>
+          <Select 
+            value={formData.educationLevel || ""} 
+            onValueChange={(value) => handleChange("educationLevel", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="اختر المستوى التعليمي" />
             </SelectTrigger>
@@ -123,7 +147,10 @@ export const PersonalInfoFields = ({
       {registrationFields.work_status && (
         <div>
           <Label htmlFor="workStatus">الحالة الوظيفية</Label>
-          <Select>
+          <Select 
+            value={formData.workStatus || ""} 
+            onValueChange={(value) => handleChange("workStatus", value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="اختر الحالة الوظيفية" />
             </SelectTrigger>
