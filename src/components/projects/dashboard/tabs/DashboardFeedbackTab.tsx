@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivityFeedbackCard } from "./feedback/ActivityFeedbackCard";
+import { ActivityFeedbackDisplay } from "@/components/feedback/activities/ActivityFeedbackDisplay";
 
 interface ActivityFeedback {
   id: string;
@@ -77,7 +77,7 @@ export const DashboardFeedbackTab = ({ projectId }: { projectId: string }) => {
       <h2 className="text-2xl font-bold">تقييم الأنشطة</h2>
       <div className="space-y-6">
         {activitiesFeedback.map((activity) => (
-          <ActivityFeedbackCard
+          <ActivityFeedbackDisplay
             key={activity.id}
             id={activity.id}
             title={activity.title}
