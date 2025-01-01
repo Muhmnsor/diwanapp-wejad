@@ -1,32 +1,24 @@
 import { FormEvent } from "react";
-import { ProjectRegistrationForm } from "./ProjectRegistrationForm";
+import { ProjectRegistrationForm } from "../ProjectRegistrationForm";
 import { useRegistrationFields } from "../hooks/useRegistrationFields";
 import { LoadingState, ErrorState } from "@/components/events/registration/components/RegistrationFormStates";
 
 interface ProjectFormContainerProps {
-  projectId: string;
   projectTitle: string;
   projectPrice: number | "free" | null;
   startDate: string;
   endDate: string;
-  formData: any;
-  setFormData: (data: any) => void;
-  isSubmitting: boolean;
   onSubmit: (e: FormEvent) => void;
 }
 
 export const ProjectFormContainer = ({
-  projectId,
   projectTitle,
   projectPrice,
   startDate,
   endDate,
-  formData,
-  setFormData,
-  isSubmitting,
   onSubmit
 }: ProjectFormContainerProps) => {
-  const { data: registrationFields, isLoading, error } = useRegistrationFields(projectId);
+  const { data: registrationFields, isLoading, error } = useRegistrationFields();
 
   if (isLoading) {
     return <LoadingState />;
@@ -43,10 +35,10 @@ export const ProjectFormContainer = ({
 
   return (
     <ProjectRegistrationForm
-      formData={formData}
-      setFormData={setFormData}
-      isSubmitting={isSubmitting}
+      projectTitle={projectTitle}
       projectPrice={projectPrice}
+      startDate={startDate}
+      endDate={endDate}
       registrationFields={registrationFields}
       onSubmit={onSubmit}
     />

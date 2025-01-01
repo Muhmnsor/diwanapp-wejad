@@ -29,7 +29,6 @@ export const ProjectRegistrationDialog = ({
           projectPrice={project.price}
           startDate={project.start_date}
           endDate={project.end_date}
-          eventType={project.event_type}
           onSubmit={() => onOpenChange(false)}
         />
       </DialogContent>
