@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 interface ProjectInfoProps {
   startDate: string;
   endDate: string;
-  attendees: number;
   maxAttendees: number;
   eventType: "online" | "in-person";
   price: number | null;
@@ -47,8 +46,12 @@ export const ProjectInfo = ({
   const { data: registrations = [] } = useQuery({
     queryKey: ['project-registrations', projectId],
     queryFn: async () => {
-      if (!projectId) return [];
+      if (!projectId) {
+        console.error('No projectId provided to ProjectInfo');
+        return [];
+      }
       
+      console.log('Fetching registrations for project:', projectId);
       const { data, error } = await supabase
         .from('registrations')
         .select('*')
@@ -62,10 +65,11 @@ export const ProjectInfo = ({
       console.log('Fetched registrations:', data);
       return data || [];
     },
-    enabled: !!projectId
+    enabled: Boolean(projectId) // Only run query if projectId exists and is not undefined
   });
 
-  const actualAttendees = registrations.length;
+  const actualAttendees = registrations?.length || 0;
+  console.log('Actual attendees count:', actualAttendees);
 
   const formatEventPath = (path?: string) => {
     if (!path) return '';
