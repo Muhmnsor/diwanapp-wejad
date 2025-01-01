@@ -15,7 +15,7 @@ export const ProjectActivityReportsList = ({
   projectId,
   activityId,
 }: ProjectActivityReportsListProps) => {
-  const { data: reports, isLoading, error } = useQuery({
+  const { data: reports, isLoading } = useQuery({
     queryKey: ['project-activity-reports', projectId, activityId],
     queryFn: async () => {
       console.log("Fetching reports for activity:", activityId);
@@ -24,7 +24,6 @@ export const ProjectActivityReportsList = ({
         .select(`
           *,
           profiles:executor_id (
-            id,
             email
           )
         `)
@@ -32,11 +31,7 @@ export const ProjectActivityReportsList = ({
         .eq('activity_id', activityId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching reports:", error);
-        throw error;
-      }
-      
+      if (error) throw error;
       console.log("Fetched reports:", data);
       return data as ProjectActivityReport[];
     },
@@ -45,11 +40,6 @@ export const ProjectActivityReportsList = ({
 
   if (isLoading) {
     return <div className="text-center py-4">جاري تحميل التقارير...</div>;
-  }
-
-  if (error) {
-    console.error("Error in ProjectActivityReportsList:", error);
-    return <div className="text-red-500 text-center py-4">حدث خطأ في تحميل التقارير</div>;
   }
 
   if (!reports?.length) {
@@ -69,7 +59,6 @@ export const ProjectActivityReportsList = ({
                 report={{
                   ...report,
                   profiles: {
-                    id: report.executor_id,
                     email: report.profiles?.email || 'غير معروف'
                   }
                 }}
