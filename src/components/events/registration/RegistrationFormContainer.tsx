@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
 import { Button } from "@/components/ui/button";
-import { useRegistration } from "./hooks/useRegistration";
+import { useRegistration } from "../hooks/useRegistration";
 import { toast } from "sonner";
 
 interface RegistrationFormContainerProps {
@@ -40,7 +40,6 @@ export const RegistrationFormContainer = ({
   }, isProject);
 
   const handleFormDataChange = (newData: any) => {
-    console.log('Form data changed:', newData);
     setFormData({
       ...newData,
       name: newData.arabicName
@@ -56,7 +55,7 @@ export const RegistrationFormContainer = ({
           .from('event_registration_fields')
           .select('*')
           .eq('event_id', id)
-          .single();
+          .maybeSingle();
 
         if (eventFieldsError) {
           console.error('Error fetching registration fields:', eventFieldsError);
@@ -65,7 +64,7 @@ export const RegistrationFormContainer = ({
 
         console.log('Raw registration fields from database:', eventFields);
         
-        // Always use the fields from the database if they exist
+        // Use default fields if no specific fields are found
         const fields = eventFields || {
           arabic_name: true,
           email: true,
