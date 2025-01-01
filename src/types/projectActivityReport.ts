@@ -17,8 +17,4 @@ export interface ProjectActivityReport {
     id: string;
     email: string;
   };
-  // Adding fields to match Report type for compatibility
-  event_id?: string;
-  event_duration?: string;
-  event_objectives?: string;
 }

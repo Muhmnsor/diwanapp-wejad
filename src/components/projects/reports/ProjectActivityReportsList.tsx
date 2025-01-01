@@ -55,16 +55,29 @@ export const ProjectActivityReportsList = ({
           <ReportListHeader title="تقارير النشاط" />
           <TableBody>
             {reports.map((report) => {
-              // Map ProjectActivityReport to Report type for compatibility
               const mappedReport: Report = {
-                ...report,
-                event_id: report.activity_id, // Use activity_id as event_id
-                event_duration: report.activity_duration,
-                event_objectives: report.activity_objectives,
+                id: report.id,
+                event_id: report.activity_id,
+                executor_id: report.executor_id,
+                report_text: report.report_text,
+                photos: report.photos || [],
+                created_at: report.created_at,
+                report_name: report.report_name,
+                program_name: report.program_name,
+                detailed_description: report.detailed_description || '',
+                event_duration: report.activity_duration || '',
+                attendees_count: report.attendees_count || '',
+                event_objectives: report.activity_objectives || '',
+                impact_on_participants: report.impact_on_participants || '',
                 profiles: {
                   id: report.executor_id,
                   email: report.profiles?.email || 'غير معروف'
-                }
+                },
+                video_links: [],
+                additional_links: [],
+                satisfaction_level: null,
+                files: [],
+                comments: []
               };
               
               return (
