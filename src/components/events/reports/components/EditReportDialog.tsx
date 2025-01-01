@@ -47,6 +47,21 @@ export const EditReportDialog = ({
     }) : [],
   });
 
+  // Fetch activities for the report's event
+  const { data: activities = [] } = useQuery({
+    queryKey: ['project-activities', report.event_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('project_id', report.event_id)
+        .eq('is_project_activity', true);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -89,6 +104,7 @@ export const EditReportDialog = ({
             <EditReportFormFields 
               formValues={formData}
               setValue={setValue}
+              activities={activities}
             />
 
             <div className="flex justify-end gap-2 pt-4">

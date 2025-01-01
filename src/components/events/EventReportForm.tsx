@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { ReportFormFields } from "./reports/form/ReportFormFields";
 import { submitReport } from "./reports/form/ReportFormSubmitHandler";
+import { ProjectActivity } from "@/types/activity";
 
 interface EventReportFormProps {
   eventId: string;
@@ -38,6 +39,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   });
 
   const formValues = watch();
+  const activities: ProjectActivity[] = [];
 
   const onSubmit = async (data: ReportFormData) => {
     try {
@@ -54,6 +56,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
       <ReportFormFields 
         formValues={formValues}
         setValue={setValue}
+        activities={activities}
       />
 
       <Button type="submit" disabled={isSubmitting} className="w-full">

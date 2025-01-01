@@ -1,13 +1,11 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { ProjectActivity } from "@/types/activity";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditActivityDialog } from "../activities/dialogs/EditActivityDialog";
 import { DeleteActivityDialog } from "../activities/dialogs/DeleteActivityDialog";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { ActivityCardHeader } from "../activities/card/ActivityCardHeader";
+import { ActivityCardContent } from "../activities/card/ActivityCardContent";
+import { handleActivityDelete } from "../activities/card/ActivityDeleteHandler";
 
 interface ProjectActivityCardProps {
   activity: ProjectActivity;
@@ -39,145 +37,26 @@ export const ProjectActivityCard = ({
   };
 
   const handleConfirmDelete = async () => {
-    console.log("Confirming deletion for activity:", activity.id);
     setIsLoading(true);
-    try {
-      // First delete feedback records
-      console.log('Deleting feedback records...');
-      const { error: feedbackError } = await supabase
-        .from('event_feedback')
-        .delete()
-        .eq('event_id', activity.id);
-
-      if (feedbackError) {
-        console.error('Error deleting feedback:', feedbackError);
-        throw feedbackError;
-      }
-
-      // Delete attendance records
-      console.log('Deleting attendance records...');
-      const { error: attendanceError } = await supabase
-        .from('attendance_records')
-        .delete()
-        .eq('activity_id', activity.id);
-
-      if (attendanceError) {
-        console.error('Error deleting attendance records:', attendanceError);
-        throw attendanceError;
-      }
-
-      // Delete activity reports
-      console.log('Deleting activity reports...');
-      const { error: reportsError } = await supabase
-        .from('project_activity_reports')
-        .delete()
-        .eq('activity_id', activity.id);
-
-      if (reportsError) {
-        console.error('Error deleting activity reports:', reportsError);
-        throw reportsError;
-      }
-
-      // Finally delete the activity
-      console.log('Deleting activity...');
-      const { error: deleteError } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', activity.id)
-        .eq('is_project_activity', true);
-
-      if (deleteError) {
-        console.error('Error deleting activity:', deleteError);
-        throw deleteError;
-      }
-
-      console.log('Activity deleted successfully');
-      toast.success('تم حذف النشاط بنجاح');
+    const success = await handleActivityDelete(activity.id);
+    if (success) {
       onDelete();
       setIsDeleteDialogOpen(false);
-    } catch (error) {
-      console.error("Error in delete process:", error);
-      toast.error('حدث خطأ أثناء حذف النشاط');
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return (
     <>
       <Card className="p-4">
         <div className="space-y-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <h4 className="font-medium">{activity.title}</h4>
-              <p className="text-sm text-muted-foreground">
-                {activity.date} - {activity.time}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleEditClick}
-                      className="h-8 w-8 transition-colors hover:bg-secondary"
-                      disabled={isLoading}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>تعديل النشاط</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleDeleteClick}
-                      className="h-8 w-8 transition-colors hover:bg-secondary"
-                      disabled={isLoading}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>حذف النشاط</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {activity.location}
-          </div>
-          {activity.description && (
-            <p className="text-sm text-gray-600">
-              {activity.description}
-            </p>
-          )}
-          {activity.special_requirements && (
-            <div className="text-sm">
-              <span className="font-medium">احتياجات خاصة: </span>
-              {activity.special_requirements}
-            </div>
-          )}
-          {activity.location_url && (
-            <a
-              href={activity.location_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline"
-            >
-              رابط الموقع
-            </a>
-          )}
+          <ActivityCardHeader
+            activity={activity}
+            isLoading={isLoading}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+          />
+          <ActivityCardContent activity={activity} />
         </div>
       </Card>
 
