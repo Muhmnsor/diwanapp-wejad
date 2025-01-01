@@ -59,20 +59,8 @@ export const EventRegistrationForm = ({
           };
         }
 
-        const fields = {
-          arabic_name: Boolean(eventFields.arabic_name),
-          email: Boolean(eventFields.email),
-          phone: Boolean(eventFields.phone),
-          english_name: Boolean(eventFields.english_name),
-          education_level: Boolean(eventFields.education_level),
-          birth_date: Boolean(eventFields.birth_date),
-          national_id: Boolean(eventFields.national_id),
-          gender: Boolean(eventFields.gender),
-          work_status: Boolean(eventFields.work_status)
-        };
-
-        console.log('Using configured event registration fields:', fields);
-        return fields;
+        console.log('Retrieved registration fields:', eventFields);
+        return eventFields;
       } catch (error) {
         console.error('Failed to fetch event registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
