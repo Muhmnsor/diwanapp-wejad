@@ -37,7 +37,6 @@ export const EventRegistrationConfirmation = ({
   formData,
 }: EventRegistrationConfirmationProps) => {
   const [isClosing, setIsClosing] = useState(false);
-  const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
   console.log('EventRegistrationConfirmation - Rendering with:', {
@@ -48,21 +47,7 @@ export const EventRegistrationConfirmation = ({
   });
 
   const handleCloseDialog = () => {
-    console.log('handleCloseDialog called - Current state:', {
-      hasDownloaded,
-      isClosing
-    });
-    
-    if (!hasDownloaded) {
-      console.log('Showing confirmation dialog - Card not downloaded yet');
-      const shouldClose = window.confirm("هل أنت متأكد من إغلاق نافذة التأكيد؟ لم تقم بحفظ التأكيد بعد.");
-      if (!shouldClose) {
-        console.log('Close cancelled by user');
-        return;
-      }
-    }
-
-    console.log('Proceeding with dialog close');
+    console.log('handleCloseDialog called');
     setIsClosing(true);
     onOpenChange(false);
     
@@ -72,12 +57,6 @@ export const EventRegistrationConfirmation = ({
     }, 300);
   };
 
-  const handleDownloadSuccess = () => {
-    console.log('Card downloaded successfully');
-    setHasDownloaded(true);
-    toast.success('تم حفظ بطاقة التأكيد بنجاح');
-  };
-
   return (
     <Dialog 
       open={open} 
@@ -85,8 +64,7 @@ export const EventRegistrationConfirmation = ({
         console.log('Dialog onOpenChange triggered:', {
           newOpen,
           currentOpen: open,
-          isClosing,
-          hasDownloaded
+          isClosing
         });
         if (!newOpen) {
           handleCloseDialog();
@@ -123,7 +101,6 @@ export const EventRegistrationConfirmation = ({
           eventDate={eventDate}
           eventTime={eventTime}
           eventLocation={eventLocation}
-          onSave={handleDownloadSuccess}
         />
 
         <Button 

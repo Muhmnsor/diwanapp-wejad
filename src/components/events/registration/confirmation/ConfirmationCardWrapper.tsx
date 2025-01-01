@@ -11,7 +11,6 @@ interface ConfirmationCardWrapperProps {
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
-  onSave?: () => void;
 }
 
 export const ConfirmationCardWrapper = ({
@@ -21,7 +20,6 @@ export const ConfirmationCardWrapper = ({
   eventDate,
   eventTime,
   eventLocation,
-  onSave
 }: ConfirmationCardWrapperProps) => {
   console.log('ConfirmationCardWrapper - Rendering with props:', {
     eventTitle,
