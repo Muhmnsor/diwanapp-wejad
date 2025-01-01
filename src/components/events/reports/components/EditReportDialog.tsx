@@ -33,9 +33,9 @@ export const EditReportDialog = ({
     report_name: report.report_name,
     report_text: report.report_text,
     detailed_description: report.detailed_description || '',
-    event_duration: report.event_duration || '',
+    event_duration: isProjectActivity ? report.activity_duration : report.event_duration || '',
     attendees_count: report.attendees_count || '',
-    event_objectives: report.event_objectives || '',
+    event_objectives: isProjectActivity ? report.activity_objectives : report.event_objectives || '',
     impact_on_participants: report.impact_on_participants || '',
     photos: report.photos ? report.photos.map(photo => {
       if (typeof photo === 'string') {
@@ -60,19 +60,31 @@ export const EditReportDialog = ({
       const tableName = isProjectActivity ? 'project_activity_reports' : 'event_reports';
       console.log('Using table:', tableName);
 
+      const updateData = isProjectActivity ? {
+        program_name: formData.program_name,
+        report_name: formData.report_name,
+        report_text: formData.report_text,
+        detailed_description: formData.detailed_description,
+        activity_duration: formData.event_duration,
+        attendees_count: formData.attendees_count,
+        activity_objectives: formData.event_objectives,
+        impact_on_participants: formData.impact_on_participants,
+        photos: formData.photos
+      } : {
+        program_name: formData.program_name,
+        report_name: formData.report_name,
+        report_text: formData.report_text,
+        detailed_description: formData.detailed_description,
+        event_duration: formData.event_duration,
+        attendees_count: formData.attendees_count,
+        event_objectives: formData.event_objectives,
+        impact_on_participants: formData.impact_on_participants,
+        photos: formData.photos
+      };
+
       const { error } = await supabase
         .from(tableName)
-        .update({
-          program_name: formData.program_name,
-          report_name: formData.report_name,
-          report_text: formData.report_text,
-          detailed_description: formData.detailed_description,
-          activity_duration: formData.event_duration,
-          attendees_count: formData.attendees_count,
-          activity_objectives: formData.event_objectives,
-          impact_on_participants: formData.impact_on_participants,
-          photos: formData.photos
-        })
+        .update(updateData)
         .eq('id', report.id);
 
       if (error) throw error;
