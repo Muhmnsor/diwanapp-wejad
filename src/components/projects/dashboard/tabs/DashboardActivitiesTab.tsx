@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivitiesList } from "@/components/projects/activities/ActivitiesList";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { ActivitiesList } from "@/components/projects/activities/ActivitiesList";
 import { EditActivityDialog } from "@/components/projects/activities/dialogs/EditActivityDialog";
 import { DeleteActivityDialog } from "@/components/projects/activities/dialogs/DeleteActivityDialog";
-import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 interface DashboardActivitiesTabProps {
   projectId: string;
@@ -48,6 +49,28 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
     setIsDeleteDialogOpen(true);
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!selectedActivity) return;
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', selectedActivity.id);
+
+      if (error) throw error;
+
+      toast.success('تم حذف النشاط بنجاح');
+      await refetchActivities();
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      toast.error('حدث خطأ أثناء حذف النشاط');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedActivity(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -67,24 +90,20 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
       </Card>
 
       <EditActivityDialog
+        activity={selectedActivity}
         open={isAddActivityOpen}
         onOpenChange={setIsAddActivityOpen}
-        activity={selectedActivity}
-        projectId={projectId}
-        onSuccess={() => {
-          refetchActivities();
+        onSave={async () => {
+          await refetchActivities();
           setSelectedActivity(null);
         }}
+        projectId={projectId}
       />
 
       <DeleteActivityDialog
-        open={isDeleteDialogOpen}
+        isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        activity={selectedActivity}
-        onSuccess={() => {
-          refetchActivities();
-          setSelectedActivity(null);
-        }}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   );

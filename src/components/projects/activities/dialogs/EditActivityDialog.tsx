@@ -2,7 +2,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
+import { ProjectActivity } from "@/types/activity";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditProjectEventHeader } from "../../events/EditProjectEventHeader";
 import { EditActivityForm } from "../form/EditActivityForm";
@@ -13,14 +13,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 
 interface EditActivityDialogProps {
-  activity: {
-    id: string;
-    project_id: string;
-    event: ProjectActivity;
-  };
+  activity: ProjectActivity | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: () => void;
+  onSave: () => Promise<void>;
   projectId: string;
 }
 
@@ -35,41 +31,58 @@ export const EditActivityDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   
-  const formData = {
-    id: activity.event.id,
-    title: activity.event.title,
-    description: activity.event.description,
-    date: activity.event.date,
-    time: activity.event.time,
-    location: activity.event.location,
-    location_url: activity.event.location_url,
-    special_requirements: activity.event.special_requirements,
-    event_hours: activity.event.event_hours
-  };
+  const formData = activity ? {
+    id: activity.id,
+    title: activity.title,
+    description: activity.description,
+    date: activity.date,
+    time: activity.time,
+    location: activity.location,
+    location_url: activity.location_url,
+    special_requirements: activity.special_requirements,
+    event_hours: activity.event_hours
+  } : null;
 
-  const handleSubmit = async (data: ProjectActivityFormData) => {
+  const handleSubmit = async (data: any) => {
     console.log('EditActivityDialog - Starting submission with data:', data);
     setIsLoading(true);
     
     try {
-      console.log('EditActivityDialog - Updating Supabase');
-      const { error } = await supabase
-        .from('events')
-        .update({
-          title: data.title,
-          description: data.description,
-          date: data.date,
-          time: data.time,
-          location: data.location,
-          location_url: data.location_url,
-          special_requirements: data.special_requirements,
-          event_hours: data.event_hours
-        })
-        .eq('id', activity.event.id);
+      if (activity) {
+        // Update existing activity
+        console.log('EditActivityDialog - Updating Supabase');
+        const { error } = await supabase
+          .from('events')
+          .update({
+            title: data.title,
+            description: data.description,
+            date: data.date,
+            time: data.time,
+            location: data.location,
+            location_url: data.location_url,
+            special_requirements: data.special_requirements,
+            event_hours: data.event_hours
+          })
+          .eq('id', activity.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new activity
+        console.log('EditActivityDialog - Creating new activity');
+        const { error } = await supabase
+          .from('events')
+          .insert([{
+            ...data,
+            project_id: projectId,
+            is_project_activity: true,
+            event_type: 'in-person',
+            image_url: '/placeholder.svg'
+          }]);
 
-      console.log('EditActivityDialog - Supabase update successful');
+        if (error) throw error;
+      }
+
+      console.log('EditActivityDialog - Supabase operation successful');
       
       await queryClient.invalidateQueries({ 
         queryKey: ['project-activities', projectId]
@@ -77,12 +90,12 @@ export const EditActivityDialog = ({
       
       await onSave();
       
-      toast.success('تم تحديث النشاط بنجاح');
+      toast.success(activity ? 'تم تحديث النشاط بنجاح' : 'تم إضافة النشاط بنجاح');
       onOpenChange(false);
       
     } catch (error) {
-      console.error('Error updating activity:', error);
-      toast.error('حدث خطأ أثناء تحديث النشاط');
+      console.error('Error in activity operation:', error);
+      toast.error(activity ? 'حدث خطأ أثناء تحديث النشاط' : 'حدث خطأ أثناء إضافة النشاط');
     } finally {
       setIsLoading(false);
     }
