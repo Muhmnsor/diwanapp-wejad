@@ -21,40 +21,39 @@ export const useRegistrationFields = (eventId: string | undefined) => {
 
         console.log('Raw registration fields from database:', eventFields);
         
-        // Always return default fields if no specific fields are found
-        const defaultFields = {
-          arabic_name: true,
-          email: true,
-          phone: true,
-          english_name: false,
-          education_level: false,
-          birth_date: false,
-          national_id: false,
-          gender: false,
-          work_status: false
-        };
-
         // If no fields are found, use default fields
         if (!eventFields) {
+          const defaultFields = {
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false
+          };
           console.log('No registration fields found, using defaults:', defaultFields);
           return defaultFields;
         }
 
-        // Process the fields to ensure boolean values
-        const processedFields = {
-          arabic_name: eventFields.arabic_name === true || eventFields.arabic_name === 't',
-          email: eventFields.email === true || eventFields.email === 't',
-          phone: eventFields.phone === true || eventFields.phone === 't',
-          english_name: eventFields.english_name === true || eventFields.english_name === 't',
-          education_level: eventFields.education_level === true || eventFields.education_level === 't',
-          birth_date: eventFields.birth_date === true || eventFields.birth_date === 't',
-          national_id: eventFields.national_id === true || eventFields.national_id === 't',
-          gender: eventFields.gender === true || eventFields.gender === 't',
-          work_status: eventFields.work_status === true || eventFields.work_status === 't'
+        // Use the fields exactly as configured in the database
+        const fields = {
+          arabic_name: eventFields.arabic_name,
+          email: eventFields.email,
+          phone: eventFields.phone,
+          english_name: eventFields.english_name,
+          education_level: eventFields.education_level,
+          birth_date: eventFields.birth_date,
+          national_id: eventFields.national_id,
+          gender: eventFields.gender,
+          work_status: eventFields.work_status
         };
 
-        console.log('Processed registration fields:', processedFields);
-        return processedFields;
+        console.log('Using configured registration fields:', fields);
+        return fields;
+
       } catch (error) {
         console.error('Failed to fetch registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
