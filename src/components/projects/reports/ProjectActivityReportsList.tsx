@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
+import { Table, TableBody } from "@/components/ui/table";
+import { ReportListHeader } from "@/components/events/reports/ReportListHeader";
+import { ReportListItem } from "@/components/events/reports/ReportListItem";
 
 interface ProjectActivityReportsListProps {
   projectId: string;
@@ -46,22 +49,24 @@ export const ProjectActivityReportsList = ({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">التقارير السابقة</h3>
-      {reports.map((report) => (
-        <Card key={report.id}>
-          <CardHeader>
-            <CardTitle className="text-lg">{report.report_name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="text-gray-600">{report.report_text}</p>
-              <div className="text-sm text-gray-500">
-                <p>تاريخ التقرير: {new Date(report.created_at).toLocaleDateString('ar-SA')}</p>
-                <p>بواسطة: {report.profiles?.email}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      <div className="rounded-md border">
+        <Table>
+          <ReportListHeader title="تقارير النشاط" />
+          <TableBody>
+            {reports.map((report) => (
+              <ReportListItem 
+                key={report.id} 
+                report={{
+                  ...report,
+                  profiles: {
+                    email: report.profiles?.email || 'غير معروف'
+                  }
+                }}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
