@@ -11,6 +11,7 @@ export interface ProjectRegistrationFormData {
   cardNumber?: string;
   expiryDate?: string;
   cvv?: string;
+  name?: string; // Added for compatibility with confirmation dialog
 }
 
 export interface ProjectRegistrationFieldsConfig {

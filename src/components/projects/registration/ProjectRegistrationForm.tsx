@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ProjectRegistrationFields } from "./fields/ProjectRegistrationFields";
 import { ProjectRegistrationButton } from "./components/ProjectRegistrationButton";
 import { LoadingState, ErrorState } from "../../events/registration/components/RegistrationFormStates";
-import { useRegistration } from "../../events/registration/hooks/useRegistration";
+import { ProjectRegistrationFormData, ProjectRegistrationFieldsConfig } from "./types/registration";
 
 interface ProjectRegistrationFormProps {
   projectId: string;
@@ -13,6 +13,9 @@ interface ProjectRegistrationFormProps {
   projectPrice: number | "free" | null;
   startDate: string;
   endDate: string;
+  formData: ProjectRegistrationFormData;
+  setFormData: (data: ProjectRegistrationFormData) => void;
+  isSubmitting: boolean;
   onSubmit: (e: FormEvent) => void;
 }
 
@@ -22,9 +25,12 @@ export const ProjectRegistrationForm = ({
   projectPrice,
   startDate,
   endDate,
+  formData,
+  setFormData,
+  isSubmitting,
   onSubmit,
 }: ProjectRegistrationFormProps) => {
-  const { formData, setFormData, isSubmitting } = useRegistration(() => {}, true);
+  console.log('ProjectRegistrationForm - Current form data:', formData);
 
   const { data: registrationFields, isLoading, error } = useQuery({
     queryKey: ['project-registration-fields', projectId],
@@ -54,31 +60,17 @@ export const ProjectRegistrationForm = ({
             national_id: false,
             gender: false,
             work_status: false
-          };
+          } as ProjectRegistrationFieldsConfig;
         }
 
-        const fields = {
-          arabic_name: Boolean(projectFields.arabic_name),
-          email: Boolean(projectFields.email),
-          phone: Boolean(projectFields.phone),
-          english_name: Boolean(projectFields.english_name),
-          education_level: Boolean(projectFields.education_level),
-          birth_date: Boolean(projectFields.birth_date),
-          national_id: Boolean(projectFields.national_id),
-          gender: Boolean(projectFields.gender),
-          work_status: Boolean(projectFields.work_status)
-        };
-
-        console.log('Using configured project registration fields:', fields);
-        return fields;
+        console.log('Using configured project registration fields:', projectFields);
+        return projectFields as ProjectRegistrationFieldsConfig;
       } catch (error) {
         console.error('Failed to fetch project registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
         throw error;
       }
     },
-    retry: 2,
-    retryDelay: 1000
   });
 
   if (isLoading) {
@@ -92,14 +84,15 @@ export const ProjectRegistrationForm = ({
   const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 mt-4">
+    <form onSubmit={onSubmit} className="space-y-6">
       <ProjectRegistrationFields
-        registrationFields={registrationFields}
+        registrationFields={registrationFields!}
         projectPrice={projectPrice}
         showPaymentFields={isPaidProject}
         formData={formData}
         setFormData={setFormData}
       />
+      
       <ProjectRegistrationButton
         isPaidProject={isPaidProject}
         projectPrice={projectPrice}

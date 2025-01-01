@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,16 +35,14 @@ export const ProjectFormContainer = ({
     educationLevel: "",
     birthDate: "",
     nationalId: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
+    name: "", // Added for compatibility
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registrationId, setRegistrationId] = useState<string>("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     console.log("Starting project registration process...");
     setIsSubmitting(true);
@@ -145,22 +143,30 @@ export const ProjectFormContainer = ({
         onOpenChange={setShowConfirmation}
         registrationId={registrationId}
         eventTitle={projectTitle}
-        formData={formData}
+        formData={{
+          name: formData.arabicName,
+          email: formData.email,
+          phone: formData.phone
+        }}
         projectTitle={projectTitle}
       />
     );
   }
 
   const handleFormDataChange = (newData: ProjectRegistrationFormData) => {
-    setFormData(newData);
+    setFormData({ ...newData, name: newData.arabicName });
   };
 
   return (
     <ProjectRegistrationForm
+      projectId={id!}
+      projectTitle={projectTitle}
+      projectPrice={projectPrice}
+      startDate={startDate}
+      endDate={endDate}
       formData={formData}
       setFormData={handleFormDataChange}
       isSubmitting={isSubmitting}
-      projectPrice={projectPrice}
       onSubmit={handleSubmit}
     />
   );
