@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { Table, TableBody } from "@/components/ui/table";
 import { ReportListHeader } from "@/components/events/reports/ReportListHeader";
 import { ReportListItem } from "@/components/events/reports/ReportListItem";
+import { ProjectActivityReport } from "@/types/projectActivityReport";
+import { Report } from "@/types/report";
 
 interface ProjectActivityReportsListProps {
   projectId: string;
@@ -24,6 +24,7 @@ export const ProjectActivityReportsList = ({
         .select(`
           *,
           profiles:executor_id (
+            id,
             email
           )
         `)
@@ -53,17 +54,26 @@ export const ProjectActivityReportsList = ({
         <Table>
           <ReportListHeader title="تقارير النشاط" />
           <TableBody>
-            {reports.map((report) => (
-              <ReportListItem 
-                key={report.id} 
-                report={{
-                  ...report,
-                  profiles: {
-                    email: report.profiles?.email || 'غير معروف'
-                  }
-                }}
-              />
-            ))}
+            {reports.map((report) => {
+              // Map ProjectActivityReport to Report type for compatibility
+              const mappedReport: Report = {
+                ...report,
+                event_id: report.activity_id, // Use activity_id as event_id
+                event_duration: report.activity_duration,
+                event_objectives: report.activity_objectives,
+                profiles: {
+                  id: report.executor_id,
+                  email: report.profiles?.email || 'غير معروف'
+                }
+              };
+              
+              return (
+                <ReportListItem 
+                  key={report.id} 
+                  report={mappedReport}
+                />
+              );
+            })}
           </TableBody>
         </Table>
       </div>
