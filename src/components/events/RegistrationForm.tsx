@@ -1,5 +1,4 @@
 import { RegistrationFormContainer } from "./registration/RegistrationFormContainer";
-import { EventRegistrationConfirmation } from "./registration/confirmation/EventRegistrationConfirmation";
 import { useRegistration } from "./registration/hooks/useRegistration";
 
 interface RegistrationFormProps {
@@ -8,7 +7,7 @@ interface RegistrationFormProps {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
-  onSubmit: () => void;
+  onSubmit: (data: { registrationId: string; formData: any }) => void;
   isProject?: boolean;
 }
 
@@ -23,50 +22,23 @@ export const RegistrationForm = ({
 }: RegistrationFormProps) => {
   const {
     formData,
-    showConfirmation,
-    setShowConfirmation,
+    isSubmitting,
+    handleSubmit,
     registrationId,
     isRegistered
-  } = useRegistration(() => {
-    console.log('RegistrationForm - Registration successful, calling onSubmit');
+  } = useRegistration((id: string, data: any) => {
+    console.log('RegistrationForm - Registration successful:', { id, data });
     if (onSubmit) {
-      onSubmit();
+      onSubmit({ registrationId: id, formData: data });
     }
   }, isProject);
 
   console.log('RegistrationForm - Current state:', {
-    showConfirmation,
     isRegistered,
     registrationId,
     formData
   });
 
-  if (isRegistered && showConfirmation) {
-    console.log('RegistrationForm - Showing confirmation dialog with data:', {
-      registrationId,
-      eventTitle,
-      formData
-    });
-
-    return (
-      <EventRegistrationConfirmation
-        open={showConfirmation}
-        onOpenChange={setShowConfirmation}
-        registrationId={registrationId}
-        eventTitle={eventTitle}
-        eventDate={eventDate}
-        eventTime={eventTime}
-        eventLocation={eventLocation}
-        formData={{
-          name: formData.arabicName,
-          email: formData.email,
-          phone: formData.phone
-        }}
-      />
-    );
-  }
-
-  console.log('RegistrationForm - Showing registration form');
   return (
     <RegistrationFormContainer
       eventTitle={eventTitle}
@@ -74,7 +46,9 @@ export const RegistrationForm = ({
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      onSubmit={onSubmit}
+      formData={formData}
+      isSubmitting={isSubmitting}
+      onSubmit={handleSubmit}
       isProject={isProject}
     />
   );
