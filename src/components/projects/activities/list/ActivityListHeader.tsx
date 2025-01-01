@@ -5,7 +5,6 @@ import { useState } from "react";
 import { EditActivityForm } from "../form/EditActivityForm";
 
 interface ActivityListHeaderProps {
-  onAddActivity?: () => void;
   projectId: string;
   onSuccess?: () => void;
 }
@@ -41,6 +40,7 @@ export const ActivityListHeader = ({ projectId, onSuccess }: ActivityListHeaderP
               setIsOpen(false);
               onSuccess?.();
             }}
+            onCancel={() => setIsOpen(false)}
           />
         </div>
       </CollapsibleContent>
