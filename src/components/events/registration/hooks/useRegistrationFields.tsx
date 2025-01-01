@@ -9,15 +9,6 @@ export const useRegistrationFields = (eventId?: string) => {
       console.log('🔍 Fetching registration fields for:', eventId);
       
       try {
-        // First check if this is a project activity
-        const { data: eventData } = await supabase
-          .from('events')
-          .select('is_project_activity, project_id')
-          .eq('id', eventId)
-          .maybeSingle();
-
-        console.log('📊 Event data:', eventData);
-
         // Default required fields that are always needed
         const defaultFields = {
           arabic_name: true,
@@ -30,6 +21,20 @@ export const useRegistrationFields = (eventId?: string) => {
           gender: false,
           work_status: false
         };
+
+        if (!eventId) {
+          console.log('ℹ️ No event ID provided, using defaults:', defaultFields);
+          return defaultFields;
+        }
+
+        // First check if this is a project activity
+        const { data: eventData } = await supabase
+          .from('events')
+          .select('is_project_activity, project_id')
+          .eq('id', eventId)
+          .maybeSingle();
+
+        console.log('📊 Event data:', eventData);
 
         // If no event data found, return default fields
         if (!eventData) {
