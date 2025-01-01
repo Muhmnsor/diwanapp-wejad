@@ -56,7 +56,7 @@ export const RegistrationFormContainer = ({
           .from('event_registration_fields')
           .select('*')
           .eq('event_id', id)
-          .maybeSingle();
+          .single();
 
         if (eventFieldsError) {
           console.error('Error fetching registration fields:', eventFieldsError);
@@ -65,7 +65,7 @@ export const RegistrationFormContainer = ({
 
         console.log('Raw registration fields from database:', eventFields);
         
-        // If no specific fields are set for this event, use default required fields
+        // Always use the fields from the database if they exist
         const fields = eventFields || {
           arabic_name: true,
           email: true,
@@ -80,18 +80,21 @@ export const RegistrationFormContainer = ({
 
         console.log('Processed registration fields:', fields);
 
-        // Return the fields with explicit boolean values
-        return {
-          arabic_name: Boolean(fields.arabic_name),
-          email: Boolean(fields.email),
-          phone: Boolean(fields.phone),
-          english_name: Boolean(fields.english_name),
-          education_level: Boolean(fields.education_level),
-          birth_date: Boolean(fields.birth_date),
-          national_id: Boolean(fields.national_id),
-          gender: Boolean(fields.gender),
-          work_status: Boolean(fields.work_status)
+        // Ensure all fields are explicitly set as boolean values
+        const processedFields = {
+          arabic_name: fields.arabic_name === true || fields.arabic_name === 't',
+          email: fields.email === true || fields.email === 't',
+          phone: fields.phone === true || fields.phone === 't',
+          english_name: fields.english_name === true || fields.english_name === 't',
+          education_level: fields.education_level === true || fields.education_level === 't',
+          birth_date: fields.birth_date === true || fields.birth_date === 't',
+          national_id: fields.national_id === true || fields.national_id === 't',
+          gender: fields.gender === true || fields.gender === 't',
+          work_status: fields.work_status === true || fields.work_status === 't'
         };
+
+        console.log('Final processed registration fields:', processedFields);
+        return processedFields;
       } catch (error) {
         console.error('Failed to fetch registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
