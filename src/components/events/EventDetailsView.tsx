@@ -58,11 +58,6 @@ export const EventDetailsView = ({
     setIsDeleteDialogOpen(false);
   };
 
-  const handleRegistrationComplete = () => {
-    console.log('Registration completed, closing dialog');
-    setIsRegistrationOpen(false);
-  };
-
   if (!currentEvent) return null;
 
   return (
@@ -88,7 +83,6 @@ export const EventDetailsView = ({
         open={isRegistrationOpen}
         onOpenChange={setIsRegistrationOpen}
         event={currentEvent}
-        onComplete={handleRegistrationComplete}
       />
 
       <EventDeleteDialog
