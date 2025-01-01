@@ -3,8 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivitiesList } from "@/components/projects/activities/ActivitiesList";
 import { ActivityListHeader } from "@/components/projects/activities/list/ActivityListHeader";
-import { ActivityDialogsContainer } from "@/components/projects/activities/containers/ActivityDialogsContainer";
-import { useActivityManagement } from "@/components/projects/activities/hooks/useActivityManagement";
 
 interface DashboardActivitiesTabProps {
   projectId: string;
@@ -32,54 +30,20 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
     },
   });
 
-  const {
-    selectedEvent,
-    isAddEventOpen,
-    setIsAddEventOpen,
-    isEditEventOpen,
-    setIsEditEventOpen,
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    handleAddEvent,
-    handleEditEvent,
-    handleDeleteEvent,
-    confirmDelete,
-  } = useActivityManagement(projectId, async () => {
-    await refetchActivities();
-  });
-
-  const project = {
-    event_path: 'environment',
-    event_category: 'social'
-  };
-
   return (
     <div className="space-y-6">
-      <ActivityListHeader onAddActivity={handleAddEvent} />
+      <ActivityListHeader 
+        projectId={projectId}
+        onSuccess={refetchActivities}
+      />
 
       <Card className="p-6">
         <ActivitiesList
           activities={activities}
-          onEditActivity={handleEditEvent}
-          onDeleteActivity={handleDeleteEvent}
+          onEditActivity={() => {}}
+          onDeleteActivity={() => {}}
         />
       </Card>
-
-      <ActivityDialogsContainer
-        projectId={projectId}
-        selectedEvent={selectedEvent}
-        isAddEventOpen={isAddEventOpen}
-        isEditEventOpen={isEditEventOpen}
-        isDeleteDialogOpen={isDeleteDialogOpen}
-        setIsAddEventOpen={setIsAddEventOpen}
-        setIsEditEventOpen={setIsEditEventOpen}
-        setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-        refetchActivities={async () => {
-          await refetchActivities();
-        }}
-        confirmDelete={confirmDelete}
-        project={project}
-      />
     </div>
   );
 };
