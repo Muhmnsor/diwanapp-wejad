@@ -13,14 +13,12 @@ interface ReportFormProps {
   projectId: string;
   activityId: string;
   onSuccess?: () => void;
-  onCancel?: () => void;
 }
 
 export const ReportForm = ({
   projectId,
   activityId,
   onSuccess,
-  onCancel
 }: ReportFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportName, setReportName] = useState("");
@@ -108,16 +106,7 @@ export const ReportForm = ({
         onPhotosChange={setPhotos}
       />
 
-      <div className="flex justify-end gap-4">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-          >
-            إلغاء
-          </Button>
-        )}
+      <div className="flex justify-end">
         <Button
           type="submit"
           disabled={isSubmitting}
