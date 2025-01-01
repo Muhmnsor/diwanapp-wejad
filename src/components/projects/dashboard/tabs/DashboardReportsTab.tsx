@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ChevronUp, ChevronDown } from "lucide-react";
 import { ProjectReportDialog } from "../../reports/ProjectReportDialog";
 import { ProjectReportsList } from "../../reports/ProjectReportsList";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectReportForm } from "../../reports/ProjectReportForm";
 
 interface DashboardReportsTabProps {
   projectId: string;
@@ -17,6 +18,7 @@ export const DashboardReportsTab = ({
   activityId
 }: DashboardReportsTabProps) => {
   const [isAddReportOpen, setIsAddReportOpen] = useState(false);
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   // Fetch project activities to ensure we have valid activities
   const { data: activities } = useQuery({
@@ -43,15 +45,34 @@ export const DashboardReportsTab = ({
   // Get the first activity ID if none is selected
   const effectiveActivityId = activityId || (activities && activities[0]?.id);
 
+  const handleFormSuccess = () => {
+    setIsFormExpanded(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">تقارير النشاط</h2>
-        <Button onClick={() => setIsAddReportOpen(true)}>
-          <Plus className="h-4 w-4 ml-2" />
+        <Button 
+          onClick={() => setIsFormExpanded(!isFormExpanded)}
+          variant="outline"
+          className="gap-2"
+        >
+          {isFormExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           إضافة تقرير
         </Button>
       </div>
+
+      {isFormExpanded && (
+        <Card className="p-6">
+          <ProjectReportForm
+            projectId={projectId}
+            activityId={effectiveActivityId}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setIsFormExpanded(false)}
+          />
+        </Card>
+      )}
 
       <Card>
         <ProjectReportsList
