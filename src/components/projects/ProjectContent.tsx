@@ -55,7 +55,6 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
         <ProjectInfo
           startDate={project.start_date}
           endDate={project.end_date}
-          attendees={0}
           maxAttendees={project.max_attendees}
           eventType={project.event_type}
           price={project.price}
@@ -64,6 +63,7 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
           eventPath={project.event_path}
           eventCategory={project.event_category}
           showBadges={false}
+          projectId={project.id}
         />
       </div>
 
