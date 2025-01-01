@@ -8,7 +8,7 @@ interface EnglishNameFieldProps {
 
 export const EnglishNameField = ({ value, onChange }: EnglishNameFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="englishName">الاسم الثلاثي بالإنجليزية</Label>
       <Input
         id="englishName"

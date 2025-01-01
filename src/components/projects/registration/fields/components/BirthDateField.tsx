@@ -8,7 +8,7 @@ interface BirthDateFieldProps {
 
 export const BirthDateField = ({ value, onChange }: BirthDateFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="birthDate">تاريخ الميلاد</Label>
       <Input
         id="birthDate"

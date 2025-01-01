@@ -8,7 +8,7 @@ interface NationalIdFieldProps {
 
 export const NationalIdField = ({ value, onChange }: NationalIdFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="nationalId">رقم الهوية</Label>
       <Input
         id="nationalId"

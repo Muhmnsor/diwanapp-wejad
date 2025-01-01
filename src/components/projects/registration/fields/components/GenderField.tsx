@@ -8,7 +8,7 @@ interface GenderFieldProps {
 
 export const GenderField = ({ value, onChange }: GenderFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="gender">الجنس</Label>
       <Select value={value || ""} onValueChange={onChange}>
         <SelectTrigger>

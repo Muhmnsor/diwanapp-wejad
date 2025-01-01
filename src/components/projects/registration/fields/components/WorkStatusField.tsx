@@ -8,7 +8,7 @@ interface WorkStatusFieldProps {
 
 export const WorkStatusField = ({ value, onChange }: WorkStatusFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="workStatus">الحالة الوظيفية</Label>
       <Select value={value || ""} onValueChange={onChange}>
         <SelectTrigger>

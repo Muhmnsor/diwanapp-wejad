@@ -8,7 +8,7 @@ interface ArabicNameFieldProps {
 
 export const ArabicNameField = ({ value, onChange }: ArabicNameFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="arabicName">الاسم الثلاثي بالعربية</Label>
       <Input
         id="arabicName"

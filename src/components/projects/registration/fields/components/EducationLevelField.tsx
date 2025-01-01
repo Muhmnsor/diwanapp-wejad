@@ -8,7 +8,7 @@ interface EducationLevelFieldProps {
 
 export const EducationLevelField = ({ value, onChange }: EducationLevelFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="educationLevel">المستوى التعليمي</Label>
       <Select value={value || ""} onValueChange={onChange}>
         <SelectTrigger>

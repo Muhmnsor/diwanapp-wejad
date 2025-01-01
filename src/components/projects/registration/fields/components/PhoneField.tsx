@@ -8,7 +8,7 @@ interface PhoneFieldProps {
 
 export const PhoneField = ({ value, onChange }: PhoneFieldProps) => {
   return (
-    <div>
+    <div className="space-y-2 text-right">
       <Label htmlFor="phone">رقم الجوال</Label>
       <Input
         id="phone"
