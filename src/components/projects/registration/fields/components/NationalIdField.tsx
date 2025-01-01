@@ -11,7 +11,12 @@ export const NationalIdField = ({ value, onChange }: NationalIdFieldProps) => {
   const [error, setError] = useState("");
 
   const handleChange = (newValue: string) => {
-    // Always update the value
+    // Only allow numbers
+    if (!/^\d*$/.test(newValue)) {
+      return;
+    }
+
+    // Always update the value if it's numbers only
     onChange(newValue);
     
     // Validate only if there's a value
