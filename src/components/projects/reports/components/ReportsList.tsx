@@ -1,10 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ProjectActivityReport } from "@/types/projectActivityReport";
-import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Table, TableBody } from "@/components/ui/table";
+import { ReportListContainer } from "@/components/events/reports/ReportListContainer";
+import { ReportListHeader } from "@/components/events/reports/ReportListHeader";
+import { TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { ReportDeleteDialog } from "@/components/events/reports/components/ReportDeleteDialog";
+import { downloadReportWithImages } from "@/components/events/reports/utils/downloadUtils";
 
 interface ReportsListProps {
   projectId: string;
@@ -15,7 +20,12 @@ export const ReportsList = ({
   projectId,
   activityId
 }: ReportsListProps) => {
-  const { data: reports = [], refetch } = useQuery({
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const queryClient = useQueryClient();
+
+  const { data: reports, isLoading, error } = useQuery({
     queryKey: ['project-activity-reports', projectId, activityId],
     queryFn: async () => {
       console.log('Fetching reports for activity:', activityId);
@@ -33,81 +43,106 @@ export const ReportsList = ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as ProjectActivityReport[];
+      return data;
     }
   });
 
-  const handleDelete = async (reportId: string) => {
+  const handleDelete = async () => {
+    if (!selectedReport) return;
+    
     try {
+      setIsDeleting(true);
+      console.log('Attempting to delete report:', selectedReport.id);
+      
       const { error } = await supabase
         .from('project_activity_reports')
         .delete()
-        .eq('id', reportId);
+        .eq('id', selectedReport.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting report:', error);
+        toast.error('حدث خطأ أثناء حذف التقرير');
+        return;
+      }
 
+      console.log('Report deleted successfully');
+      await queryClient.invalidateQueries({
+        queryKey: ['project-activity-reports', projectId, activityId]
+      });
       toast.success('تم حذف التقرير بنجاح');
-      refetch();
     } catch (error) {
-      console.error('Error deleting report:', error);
+      console.error('Error in delete handler:', error);
       toast.error('حدث خطأ أثناء حذف التقرير');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setSelectedReport(null);
     }
   };
 
-  if (!reports.length) {
-    return (
-      <div className="text-center text-gray-500 py-8">
-        لا يوجد تقارير لهذا النشاط
-      </div>
-    );
-  }
+  const handleDownload = async (report: any) => {
+    try {
+      toast.info('جاري تحضير الملف...');
+      const success = await downloadReportWithImages(report);
+      if (success) {
+        toast.success('تم تحميل التقرير بنجاح');
+      } else {
+        toast.error('حدث خطأ أثناء تحميل التقرير');
+      }
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      toast.error('حدث خطأ أثناء تحميل التقرير');
+    }
+  };
+
+  const reportRows = reports?.map((report) => (
+    <TableRow key={report.id} dir="rtl">
+      <td className="text-right px-6 py-4">{report.report_name}</td>
+      <td className="text-right px-6 py-4">{report.profiles?.email || 'غير معروف'}</td>
+      <td className="text-right px-6 py-4">
+        {new Date(report.created_at).toLocaleDateString('ar')}
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleDownload(report)}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setSelectedReport(report);
+              setShowDeleteDialog(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </td>
+    </TableRow>
+  ));
 
   return (
-    <div className="space-y-4">
-      {reports.map((report) => (
-        <Card key={report.id}>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold">{report.report_name}</h3>
-                <p className="text-sm text-gray-500">
-                  {new Date(report.created_at).toLocaleDateString('ar')}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(report.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4">
-              <p className="text-gray-700">{report.report_text}</p>
-            </div>
-            {report.photos && report.photos.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                {report.photos.map((photo, index) => (
-                  <img
-                    key={index}
-                    src={photo.url}
-                    alt={photo.description || `صورة ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <>
+      <ReportListContainer 
+        isLoading={isLoading} 
+        error={error}
+      >
+        {{
+          header: <ReportListHeader title="تقارير النشاط" />,
+          rows: reportRows
+        }}
+      </ReportListContainer>
+
+      <ReportDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDelete}
+      />
+    </>
   );
 };
