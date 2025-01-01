@@ -24,21 +24,21 @@ export const EventRegistrationDialog = ({
   console.log('EventRegistrationDialog - State:', {
     showConfirmation,
     registrationId,
-    registrationData
+    registrationData,
+    open
   });
 
-  const handleRegistrationSuccess = (id: string, data: any) => {
-    console.log('Registration successful:', { id, data });
-    setRegistrationId(id);
-    setRegistrationData(data);
+  const handleRegistrationSuccess = (data: { registrationId: string; formData: any }) => {
+    console.log('Registration successful:', data);
+    setRegistrationId(data.registrationId);
+    setRegistrationData(data.formData);
     setShowConfirmation(true);
-    onOpenChange(false); // إغلاق نموذج التسجيل
+    onOpenChange(false); // إغلاق نافذة التسجيل
   };
 
   const handleConfirmationClose = () => {
     console.log('Confirmation dialog closed');
     setShowConfirmation(false);
-    onOpenChange(false);
     if (onComplete) {
       onComplete();
     }
@@ -71,7 +71,7 @@ export const EventRegistrationDialog = ({
           eventDate={event.date}
           eventTime={event.time}
           eventLocation={event.location}
-          onSubmit={(data) => handleRegistrationSuccess(data.registrationId, data.formData)}
+          onSubmit={handleRegistrationSuccess}
         />
       </DialogContent>
     </Dialog>
