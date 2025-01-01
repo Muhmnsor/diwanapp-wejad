@@ -13,9 +13,9 @@ export const ReportListItemContent = ({
 }: ReportListItemContentProps) => {
   return (
     <>
-      <TableCell className="text-right pr-8">{reportName}</TableCell>
-      <TableCell className="text-right pr-8">{authorEmail}</TableCell>
-      <TableCell className="text-right pr-8">
+      <TableCell className="text-right w-1/3">{reportName}</TableCell>
+      <TableCell className="text-right w-1/3">{authorEmail}</TableCell>
+      <TableCell className="text-right w-1/3">
         {new Date(createdAt).toLocaleDateString('ar')}
       </TableCell>
     </>
