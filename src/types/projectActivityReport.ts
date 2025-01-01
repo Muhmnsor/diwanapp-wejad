@@ -14,6 +14,7 @@ export interface ProjectActivityReport {
   photos?: { url: string; description: string; }[];
   created_at: string;
   profiles?: {
+    id: string;
     email: string;
   };
 }
