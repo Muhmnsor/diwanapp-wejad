@@ -8,10 +8,13 @@ import { EventMetadataFields } from "@/components/events/reports/form/EventMetad
 import { EventObjectivesField } from "@/components/events/reports/form/EventObjectivesField";
 import { ImpactField } from "@/components/events/reports/form/ImpactField";
 import { PhotosField } from "@/components/events/reports/form/PhotosField";
+import { ProjectActivity } from "@/types/activity";
 
 interface ProjectReportFormProps {
   projectId: string;
   activityId: string;
+  projectTitle: string;
+  activities: ProjectActivity[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -19,12 +22,16 @@ interface ProjectReportFormProps {
 export const ProjectReportForm = ({
   projectId,
   activityId,
+  projectTitle,
+  activities,
   onSuccess,
   onCancel
 }: ProjectReportFormProps) => {
+  console.log("ProjectReportForm - activities:", activities);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportName, setReportName] = useState("");
-  const [programName, setProgramName] = useState("");
+  const [programName, setProgramName] = useState(projectTitle);
   const [reportText, setReportText] = useState("");
   const [detailedDescription, setDetailedDescription] = useState("");
   const [activityDuration, setActivityDuration] = useState("");
@@ -77,6 +84,7 @@ export const ProjectReportForm = ({
       <ReportNameField
         value={reportName}
         programName={programName}
+        activities={activities}
         onChange={setReportName}
         onProgramNameChange={setProgramName}
       />
