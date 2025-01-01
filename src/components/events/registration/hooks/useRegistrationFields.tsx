@@ -21,6 +21,7 @@ export const useRegistrationFields = (eventId: string | undefined) => {
 
         console.log('Raw registration fields from database:', eventFields);
         
+        // Always return default fields if no specific fields are found
         const defaultFields = {
           arabic_name: true,
           email: true,
@@ -33,11 +34,13 @@ export const useRegistrationFields = (eventId: string | undefined) => {
           work_status: false
         };
 
+        // If no fields are found, use default fields
         if (!eventFields) {
           console.log('No registration fields found, using defaults:', defaultFields);
           return defaultFields;
         }
 
+        // Process the fields to ensure boolean values
         const processedFields = {
           arabic_name: eventFields.arabic_name === true || eventFields.arabic_name === 't',
           email: eventFields.email === true || eventFields.email === 't',

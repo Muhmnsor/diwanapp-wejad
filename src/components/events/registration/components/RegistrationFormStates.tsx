@@ -1,20 +1,14 @@
-import { toast } from "sonner";
-
-interface LoadingStateProps {
-  message?: string;
+interface ErrorStateProps {
+  error: Error;
 }
 
-export const LoadingState = ({ message = "جاري تحميل نموذج التسجيل..." }: LoadingStateProps) => {
+export const LoadingState = () => {
   return (
     <div className="text-center py-4">
-      {message}
+      جاري تحميل نموذج التسجيل...
     </div>
   );
 };
-
-interface ErrorStateProps {
-  error: unknown;
-}
 
 export const ErrorState = ({ error }: ErrorStateProps) => {
   console.error('Error in registration form:', error);
