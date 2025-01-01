@@ -52,6 +52,7 @@ export const RegistrationFormContainer = ({
   }
 
   if (error) {
+    console.error('Error in registration form:', error);
     return <ErrorState error={error} />;
   }
 
