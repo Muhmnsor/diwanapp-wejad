@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AuthError } from "@supabase/supabase-js";
 
 interface EventRegistrationFormProps {
   eventTitle: string;
@@ -27,24 +28,31 @@ export const EventRegistrationForm = ({
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Session check error:', error);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          toast.error("حدث خطأ في التحقق من الجلسة");
+          navigate('/login');
+          return;
+        }
+        if (!session) {
+          console.log('No active session found, redirecting to login');
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Session check failed:', error);
         toast.error("حدث خطأ في التحقق من الجلسة");
-        navigate('/login');
-        return;
-      }
-      if (!session) {
-        console.log('No active session found, redirecting to login');
         navigate('/login');
       }
     };
 
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log('Auth state changed:', event);
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out, redirecting to login');
         navigate('/login');
       }
     });
@@ -76,7 +84,11 @@ export const EventRegistrationForm = ({
   const handleFormSubmit = async (e: React.FormEvent) => {
     console.log('EventRegistrationForm - Form submitted');
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        throw error;
+      }
+      
       if (!session) {
         console.log('No active session, redirecting to login');
         toast.error("يرجى تسجيل الدخول للمتابعة");
@@ -88,11 +100,15 @@ export const EventRegistrationForm = ({
       console.log('EventRegistrationForm - Form submission successful');
     } catch (error) {
       console.error('EventRegistrationForm - Form submission failed:', error);
-      if (error.message?.includes('refresh_token_not_found')) {
+      
+      const authError = error as AuthError;
+      if (authError.message?.includes('refresh_token_not_found') || 
+          authError.message?.includes('JWT expired')) {
         toast.error("انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى");
         navigate('/login');
         return;
       }
+      
       toast.error("حدث خطأ أثناء التسجيل");
     }
   };
