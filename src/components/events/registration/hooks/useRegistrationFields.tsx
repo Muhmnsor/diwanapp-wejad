@@ -18,31 +18,6 @@ export const useRegistrationFields = (eventId?: string) => {
 
         console.log('📊 Event data:', eventData);
 
-        let fieldsQuery;
-        
-        if (eventData?.is_project_activity || eventData?.project_id) {
-          // If it's a project activity or part of a project
-          fieldsQuery = supabase
-            .from('project_registration_fields')
-            .select('*')
-            .eq('project_id', eventData.project_id)
-            .maybeSingle();
-        } else {
-          // If it's a regular event
-          fieldsQuery = supabase
-            .from('event_registration_fields')
-            .select('*')
-            .eq('event_id', eventId)
-            .maybeSingle();
-        }
-
-        const { data: fields, error } = await fieldsQuery;
-
-        if (error) {
-          console.error('❌ Error fetching registration fields:', error);
-          throw error;
-        }
-
         // Default required fields that are always needed
         const defaultFields = {
           arabic_name: true,
@@ -56,15 +31,41 @@ export const useRegistrationFields = (eventId?: string) => {
           work_status: false
         };
 
+        // If no event data found, return default fields
+        if (!eventData) {
+          console.log('ℹ️ No event data found, using defaults:', defaultFields);
+          return defaultFields;
+        }
+
+        let { data: fields, error } = eventData.is_project_activity || eventData.project_id
+          ? await supabase
+              .from('project_registration_fields')
+              .select('*')
+              .eq('project_id', eventData.project_id)
+              .maybeSingle()
+          : await supabase
+              .from('event_registration_fields')
+              .select('*')
+              .eq('event_id', eventId)
+              .maybeSingle();
+
+        if (error) {
+          console.error('❌ Error fetching registration fields:', error);
+          throw error;
+        }
+
         // If no custom fields found, use defaults
         if (!fields) {
           console.log('ℹ️ No custom fields found, using defaults:', defaultFields);
           return defaultFields;
         }
 
-        // Merge custom fields with required fields
+        // Merge custom fields with required fields, ensuring required fields stay required
         const processedFields = {
           ...defaultFields,
+          arabic_name: true, // Always required
+          email: true,      // Always required
+          phone: true,      // Always required
           english_name: Boolean(fields.english_name),
           education_level: Boolean(fields.education_level),
           birth_date: Boolean(fields.birth_date),

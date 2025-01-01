@@ -1,12 +1,10 @@
 import { FormEvent } from "react";
-import { useRegistrationFields } from "../hooks/useRegistrationFields";
 import { useParams } from "react-router-dom";
-import { EventRegistrationFields } from "../fields/EventRegistrationFields";
-import { EventRegistrationButton } from "../components/EventRegistrationButton";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { ErrorState } from "../components/ErrorState";
+import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
+import { Button } from "@/components/ui/button";
 import { useRegistration } from "../hooks/useRegistration";
-import { toast } from "sonner";
+import { useRegistrationFields } from "../hooks/useRegistrationFields";
+import { LoadingState, ErrorState } from "../components/RegistrationFormStates";
 
 interface EventRegistrationFormProps {
   eventTitle: string;
@@ -35,37 +33,42 @@ export const EventRegistrationForm = ({
   console.log('📝 EventRegistrationForm - Form Data:', formData);
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <LoadingState />;
   }
 
   if (error) {
     console.error('❌ Error loading registration fields:', error);
-    toast.error('حدث خطأ في تحميل نموذج التسجيل');
     return <ErrorState error={error} />;
   }
 
   if (!registrationFields) {
     console.error('❌ No registration fields available');
-    toast.error('حدث خطأ في تحميل نموذج التسجيل');
     return <ErrorState error={new Error('No registration fields available')} />;
   }
 
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
+  const buttonText = isSubmitting 
+    ? "جاري المعالجة..." 
+    : isPaidEvent 
+      ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` 
+      : "تأكيد التسجيل";
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 mt-4">
-      <EventRegistrationFields
+      <RegistrationFormInputs
         registrationFields={registrationFields}
         eventPrice={eventPrice}
         showPaymentFields={isPaidEvent}
         formData={formData}
         setFormData={setFormData}
       />
-      <EventRegistrationButton 
-        isSubmitting={isSubmitting}
-        isPaidEvent={isPaidEvent}
-        eventPrice={eventPrice}
-      />
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isSubmitting}
+      >
+        {buttonText}
+      </Button>
     </form>
   );
 };
