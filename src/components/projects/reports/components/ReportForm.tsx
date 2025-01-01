@@ -44,30 +44,17 @@ export const ReportForm = ({
       return;
     }
 
-    console.log("Submitting report with activity_id:", activityId);
+    console.log("Submitting report with data:", {
+      projectId,
+      activityId,
+      executorId: user.id,
+      ...formData
+    });
+    
     setIsSubmitting(true);
 
     try {
-      // First verify that the activity exists
-      const { data: activityExists, error: checkError } = await supabase
-        .from('events')
-        .select('id')
-        .eq('id', activityId)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking activity:', checkError);
-        toast.error('حدث خطأ أثناء التحقق من النشاط');
-        return;
-      }
-
-      if (!activityExists) {
-        console.error('Activity not found for ID:', activityId);
-        toast.error('لم يتم العثور على النشاط المحدد');
-        return;
-      }
-
-      const { error } = await supabase
+      const { data: report, error } = await supabase
         .from('project_activity_reports')
         .insert({
           project_id: projectId,
@@ -82,7 +69,9 @@ export const ReportForm = ({
           activity_objectives: formData.activityObjectives,
           impact_on_participants: formData.impactOnParticipants,
           photos: formData.photos.filter(photo => photo.url),
-        });
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Error submitting report:', error);
@@ -90,6 +79,7 @@ export const ReportForm = ({
         return;
       }
 
+      console.log('Report submitted successfully:', report);
       toast.success("تم إضافة التقرير بنجاح");
       if (onSuccess) onSuccess();
     } catch (error) {
