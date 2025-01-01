@@ -58,7 +58,10 @@ export const EventRegistrationDialog = ({
 
   const handleRegistrationComplete = () => {
     console.log('Registration completed successfully, closing dialog');
-    onOpenChange(false);
+    // Ensure we're actually closing the dialog
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 0);
   };
 
   return (

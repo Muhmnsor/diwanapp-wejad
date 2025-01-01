@@ -30,8 +30,11 @@ export const EventRegistrationForm = ({
     handleSubmit: registrationSubmit
   } = useRegistration(() => {
     console.log('EventRegistrationForm - Registration successful, calling onSubmit');
+    // Ensure we call onSubmit after a successful registration
     if (onSubmit) {
-      onSubmit();
+      setTimeout(() => {
+        onSubmit();
+      }, 0);
     }
   }, false);
 
@@ -44,6 +47,7 @@ export const EventRegistrationForm = ({
 
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted, calling registrationSubmit');
     await registrationSubmit(e);
   };
 
