@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
 import { Button } from "@/components/ui/button";
-import { useRegistration } from "../hooks/useRegistration";
+import { useRegistration } from "./hooks/useRegistration";
 import { toast } from "sonner";
 
 interface RegistrationFormContainerProps {
@@ -65,7 +65,7 @@ export const RegistrationFormContainer = ({
         console.log('Raw registration fields from database:', eventFields);
         
         // Use default fields if no specific fields are found
-        const fields = eventFields || {
+        const defaultFields = {
           arabic_name: true,
           email: true,
           phone: true,
@@ -77,22 +77,26 @@ export const RegistrationFormContainer = ({
           work_status: false
         };
 
-        console.log('Processed registration fields:', fields);
+        // If no fields were found, use default fields
+        if (!eventFields) {
+          console.log('No registration fields found, using defaults:', defaultFields);
+          return defaultFields;
+        }
 
-        // Ensure all fields are explicitly set as boolean values
+        // Process the fields from the database
         const processedFields = {
-          arabic_name: fields.arabic_name === true || fields.arabic_name === 't',
-          email: fields.email === true || fields.email === 't',
-          phone: fields.phone === true || fields.phone === 't',
-          english_name: fields.english_name === true || fields.english_name === 't',
-          education_level: fields.education_level === true || fields.education_level === 't',
-          birth_date: fields.birth_date === true || fields.birth_date === 't',
-          national_id: fields.national_id === true || fields.national_id === 't',
-          gender: fields.gender === true || fields.gender === 't',
-          work_status: fields.work_status === true || fields.work_status === 't'
+          arabic_name: eventFields.arabic_name === true || eventFields.arabic_name === 't',
+          email: eventFields.email === true || eventFields.email === 't',
+          phone: eventFields.phone === true || eventFields.phone === 't',
+          english_name: eventFields.english_name === true || eventFields.english_name === 't',
+          education_level: eventFields.education_level === true || eventFields.education_level === 't',
+          birth_date: eventFields.birth_date === true || eventFields.birth_date === 't',
+          national_id: eventFields.national_id === true || eventFields.national_id === 't',
+          gender: eventFields.gender === true || eventFields.gender === 't',
+          work_status: eventFields.work_status === true || eventFields.work_status === 't'
         };
 
-        console.log('Final processed registration fields:', processedFields);
+        console.log('Processed registration fields:', processedFields);
         return processedFields;
       } catch (error) {
         console.error('Failed to fetch registration fields:', error);
@@ -119,7 +123,11 @@ export const RegistrationFormContainer = ({
   }
 
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
-  const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
+  const buttonText = isSubmitting 
+    ? "جاري المعالجة..." 
+    : isPaidEvent 
+      ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` 
+      : "تأكيد التسجيل";
 
   console.log('Registration fields being passed to form:', registrationFields);
 
