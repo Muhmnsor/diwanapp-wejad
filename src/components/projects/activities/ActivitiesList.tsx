@@ -1,9 +1,10 @@
 import { ActivityCard } from "./ActivityCard";
+import { ProjectActivity } from "@/types/activity";
 
 interface ActivitiesListProps {
-  activities: any[];
-  onEditActivity: (activity: any) => void;
-  onDeleteActivity: (activity: any) => void;
+  activities: ProjectActivity[];
+  onEditActivity: (activity: ProjectActivity) => void;
+  onDeleteActivity: (activity: ProjectActivity) => void;
 }
 
 export const ActivitiesList = ({ 
@@ -21,7 +22,7 @@ export const ActivitiesList = ({
 
   return (
     <div className="space-y-4">
-      {activities.map((activity: any) => (
+      {activities.map((activity) => (
         <ActivityCard
           key={activity.id}
           activity={activity}

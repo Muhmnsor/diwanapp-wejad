@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ActivitiesList } from "@/components/projects/activities/ActivitiesList";
 import { EditActivityDialog } from "@/components/projects/activities/dialogs/EditActivityDialog";
 import { DeleteActivityDialog } from "@/components/projects/activities/dialogs/DeleteActivityDialog";
+import { AddActivityDialog } from "@/components/projects/activities/dialogs/AddActivityDialog";
+import { ActivityListHeader } from "@/components/projects/activities/list/ActivityListHeader";
 import { toast } from "sonner";
 
 interface DashboardActivitiesTabProps {
@@ -73,13 +73,7 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">أنشطة المشروع</h2>
-        <Button onClick={() => setIsAddActivityOpen(true)}>
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة نشاط
-        </Button>
-      </div>
+      <ActivityListHeader onAddActivity={() => setIsAddActivityOpen(true)} />
 
       <Card className="p-6">
         <ActivitiesList
@@ -89,14 +83,18 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
         />
       </Card>
 
+      <AddActivityDialog
+        open={isAddActivityOpen && !selectedActivity}
+        onOpenChange={setIsAddActivityOpen}
+        onSave={refetchActivities}
+        projectId={projectId}
+      />
+
       <EditActivityDialog
         activity={selectedActivity}
-        open={isAddActivityOpen}
+        open={isAddActivityOpen && !!selectedActivity}
         onOpenChange={setIsAddActivityOpen}
-        onSave={async () => {
-          await refetchActivities();
-          setSelectedActivity(null);
-        }}
+        onSave={refetchActivities}
         projectId={projectId}
       />
 

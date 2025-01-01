@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit2, Trash2 } from "lucide-react";
+import { ProjectActivity } from "@/types/activity";
 
 interface ActivityCardProps {
-  activity: any;
+  activity: ProjectActivity;
   onEdit: () => void;
   onDelete: () => void;
 }
