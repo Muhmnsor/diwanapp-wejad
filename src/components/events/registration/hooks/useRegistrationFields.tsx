@@ -46,20 +46,37 @@ export const useRegistrationFields = (eventId?: string) => {
           throw fieldsError;
         }
 
-        // If no fields found, return default fields
+        // If no fields found, try to get them from event_registration_fields
         if (!fields || !eventData) {
-          console.log('ℹ️ No fields or event data found, using defaults');
-          return {
-            arabic_name: true,
-            email: true,
-            phone: true,
-            english_name: false,
-            education_level: false,
-            birth_date: false,
-            national_id: false,
-            gender: false,
-            work_status: false
-          };
+          console.log('🔍 No fields found, checking event_registration_fields');
+          const { data: eventFields, error: eventFieldsError } = await supabase
+            .from('event_registration_fields')
+            .select('*')
+            .eq('event_id', eventId)
+            .maybeSingle();
+
+          if (eventFieldsError) {
+            console.error('❌ Error fetching event registration fields:', eventFieldsError);
+            throw eventFieldsError;
+          }
+
+          if (!eventFields) {
+            console.log('ℹ️ No fields found, using defaults');
+            return {
+              arabic_name: true,
+              email: true,
+              phone: true,
+              english_name: false,
+              education_level: false,
+              birth_date: false,
+              national_id: false,
+              gender: false,
+              work_status: false
+            };
+          }
+
+          console.log('✅ Found fields in event_registration_fields:', eventFields);
+          return eventFields;
         }
 
         // Process fields based on database settings
