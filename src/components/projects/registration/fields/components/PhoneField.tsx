@@ -11,15 +11,20 @@ export const PhoneField = ({ value, onChange }: PhoneFieldProps) => {
   const [error, setError] = useState("");
 
   const handleChange = (newValue: string) => {
-    const phoneRegex = /^05\d{8}$/;
-    
-    if (newValue && !phoneRegex.test(newValue)) {
-      setError("يجب أن يبدأ رقم الجوال ب 05 ويتكون من 10 أرقام");
-      return;
-    }
-    
-    setError("");
+    // Always update the value
     onChange(newValue);
+    
+    // Validate only if there's a value
+    if (newValue) {
+      const phoneRegex = /^05\d{8}$/;
+      if (!phoneRegex.test(newValue)) {
+        setError("يجب أن يبدأ رقم الجوال ب 05 ويتكون من 10 أرقام");
+      } else {
+        setError("");
+      }
+    } else {
+      setError("");
+    }
   };
 
   return (

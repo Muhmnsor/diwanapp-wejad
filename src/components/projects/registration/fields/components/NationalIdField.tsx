@@ -11,15 +11,20 @@ export const NationalIdField = ({ value, onChange }: NationalIdFieldProps) => {
   const [error, setError] = useState("");
 
   const handleChange = (newValue: string) => {
-    const idRegex = /^\d{10}$/;
-    
-    if (newValue && !idRegex.test(newValue)) {
-      setError("يجب أن يتكون رقم الهوية من 10 أرقام فقط");
-      return;
-    }
-    
-    setError("");
+    // Always update the value
     onChange(newValue);
+    
+    // Validate only if there's a value
+    if (newValue) {
+      const idRegex = /^\d{10}$/;
+      if (!idRegex.test(newValue)) {
+        setError("يجب أن يتكون رقم الهوية من 10 أرقام فقط");
+      } else {
+        setError("");
+      }
+    } else {
+      setError("");
+    }
   };
 
   return (
