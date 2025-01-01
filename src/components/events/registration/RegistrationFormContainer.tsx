@@ -40,6 +40,7 @@ export const RegistrationFormContainer = ({
   }, isProject);
 
   const handleFormDataChange = (newData: any) => {
+    console.log('Form data changed:', newData);
     setFormData({
       ...newData,
       name: newData.arabicName
@@ -62,34 +63,34 @@ export const RegistrationFormContainer = ({
           throw eventFieldsError;
         }
 
-        console.log('Fetched registration fields:', eventFields);
+        console.log('Raw registration fields from database:', eventFields);
         
         // If no specific fields are set for this event, use default required fields
-        if (!eventFields) {
-          return {
-            arabic_name: true,
-            email: true,
-            phone: true,
-            english_name: false,
-            education_level: false,
-            birth_date: false,
-            national_id: false,
-            gender: false,
-            work_status: false
-          };
-        }
+        const fields = eventFields || {
+          arabic_name: true,
+          email: true,
+          phone: true,
+          english_name: false,
+          education_level: false,
+          birth_date: false,
+          national_id: false,
+          gender: false,
+          work_status: false
+        };
 
-        // Return the event-specific fields
+        console.log('Processed registration fields:', fields);
+
+        // Return the fields with explicit boolean values
         return {
-          arabic_name: eventFields.arabic_name ?? true,
-          email: eventFields.email ?? true,
-          phone: eventFields.phone ?? true,
-          english_name: eventFields.english_name ?? false,
-          education_level: eventFields.education_level ?? false,
-          birth_date: eventFields.birth_date ?? false,
-          national_id: eventFields.national_id ?? false,
-          gender: eventFields.gender ?? false,
-          work_status: eventFields.work_status ?? false
+          arabic_name: Boolean(fields.arabic_name),
+          email: Boolean(fields.email),
+          phone: Boolean(fields.phone),
+          english_name: Boolean(fields.english_name),
+          education_level: Boolean(fields.education_level),
+          birth_date: Boolean(fields.birth_date),
+          national_id: Boolean(fields.national_id),
+          gender: Boolean(fields.gender),
+          work_status: Boolean(fields.work_status)
         };
       } catch (error) {
         console.error('Failed to fetch registration fields:', error);
