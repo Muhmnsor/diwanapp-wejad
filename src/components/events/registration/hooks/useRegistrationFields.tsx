@@ -38,17 +38,17 @@ export const useRegistrationFields = (eventId: string | undefined) => {
           return defaultFields;
         }
 
-        // Use the fields exactly as configured in the database
+        // Convert database boolean values to actual booleans
         const fields = {
-          arabic_name: eventFields.arabic_name,
-          email: eventFields.email,
-          phone: eventFields.phone,
-          english_name: eventFields.english_name,
-          education_level: eventFields.education_level,
-          birth_date: eventFields.birth_date,
-          national_id: eventFields.national_id,
-          gender: eventFields.gender,
-          work_status: eventFields.work_status
+          arabic_name: Boolean(eventFields.arabic_name),
+          email: Boolean(eventFields.email),
+          phone: Boolean(eventFields.phone),
+          english_name: Boolean(eventFields.english_name),
+          education_level: Boolean(eventFields.education_level),
+          birth_date: Boolean(eventFields.birth_date),
+          national_id: Boolean(eventFields.national_id),
+          gender: Boolean(eventFields.gender),
+          work_status: Boolean(eventFields.work_status)
         };
 
         console.log('Using configured registration fields:', fields);
