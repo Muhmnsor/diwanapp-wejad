@@ -33,15 +33,47 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
         throw new Error("No event selected for deletion");
       }
 
+      // Delete the event from the events table
       const { error: eventError } = await supabase
         .from('events')
         .delete()
         .eq('id', selectedEvent.id)
-        .eq('project_id', projectId);
+        .eq('project_id', projectId)
+        .eq('is_project_activity', true);
 
       if (eventError) {
         console.error('Error deleting event:', eventError);
         throw eventError;
+      }
+
+      // Delete related records from event_registration_fields
+      const { error: fieldsError } = await supabase
+        .from('event_registration_fields')
+        .delete()
+        .eq('event_id', selectedEvent.id);
+
+      if (fieldsError) {
+        console.error('Error deleting registration fields:', fieldsError);
+      }
+
+      // Delete related records from attendance_records
+      const { error: attendanceError } = await supabase
+        .from('attendance_records')
+        .delete()
+        .eq('activity_id', selectedEvent.id);
+
+      if (attendanceError) {
+        console.error('Error deleting attendance records:', attendanceError);
+      }
+
+      // Delete related records from project_activity_reports
+      const { error: reportsError } = await supabase
+        .from('project_activity_reports')
+        .delete()
+        .eq('activity_id', selectedEvent.id);
+
+      if (reportsError) {
+        console.error('Error deleting activity reports:', reportsError);
       }
 
       toast.success('تم حذف النشاط بنجاح');
