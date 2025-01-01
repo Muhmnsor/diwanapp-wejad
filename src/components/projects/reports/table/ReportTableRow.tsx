@@ -20,10 +20,7 @@ export const ReportTableRow = ({ report, onDelete }: ReportTableRowProps) => {
         {new Date(report.created_at).toLocaleDateString('ar')}
       </TableCell>
       <TableCell className="text-center">
-        <ReportTableActions 
-          report={report}
-          onDelete={() => onDelete(report.id)} 
-        />
+        <ReportTableActions onDelete={() => onDelete(report.id)} />
       </TableCell>
     </TableRow>
   );
