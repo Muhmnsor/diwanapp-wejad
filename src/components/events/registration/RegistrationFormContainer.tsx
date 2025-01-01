@@ -1,6 +1,6 @@
 import { FormEvent } from "react";
 import { useParams } from "react-router-dom";
-import { RegistrationFormInputs } from "../../RegistrationFormInputs";
+import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
 import { Button } from "@/components/ui/button";
 import { useRegistration } from "./hooks/useRegistration";
 import { useRegistrationFields } from "./hooks/useRegistrationFields";
