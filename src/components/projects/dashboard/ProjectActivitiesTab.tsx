@@ -1,76 +1,44 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { ProjectDashboardHeader } from "./ProjectDashboardHeader";
-import { ProjectActivitiesList } from "./ProjectActivitiesList";
-import { ActivityDialogsContainer } from "../activities/containers/ActivityDialogsContainer";
-import { useActivityManagement } from "../activities/hooks/useActivityManagement";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { ProjectReportDialog } from "../reports/ProjectReportDialog";
+import { ProjectReportsList } from "../reports/ProjectReportsList";
+import { Card } from "@/components/ui/card";
 
 interface ProjectActivitiesTabProps {
-  project: {
-    id: string;
-    event_path: string;
-    event_category: string;
-  };
-  projectActivities: any[];
-  refetchActivities: () => void;
+  projectId: string;
+  activityId: string;
 }
 
-export const ProjectActivitiesTab = ({ 
-  project,
-  projectActivities,
-  refetchActivities
+export const ProjectActivitiesTab = ({
+  projectId,
+  activityId
 }: ProjectActivitiesTabProps) => {
-  console.log("ProjectActivitiesTab - Initial render with activities:", projectActivities);
-  const queryClient = useQueryClient();
-
-  const {
-    selectedEvent,
-    isAddEventOpen,
-    setIsAddEventOpen,
-    isEditEventOpen,
-    setIsEditEventOpen,
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    handleAddEvent,
-    handleEditEvent,
-    handleDeleteEvent,
-    confirmDelete,
-  } = useActivityManagement(project.id, refetchActivities);
-
-  const handleEditSuccess = async () => {
-    console.log("ProjectActivitiesTab - Handling edit success");
-    await refetchActivities();
-    await queryClient.invalidateQueries({ 
-      queryKey: ['project-activities', project.id] 
-    });
-    console.log("ProjectActivitiesTab - Queries invalidated and activities refetched");
-  };
+  const [isAddReportOpen, setIsAddReportOpen] = useState(false);
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <ProjectDashboardHeader onAddEvent={handleAddEvent} />
-        <ProjectActivitiesList
-          projectActivities={projectActivities}
-          onEdit={handleEditEvent}
-          onDelete={handleDeleteEvent}
-          onEditSuccess={handleEditSuccess}
-        />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">تقارير النشاط</h2>
+        <Button onClick={() => setIsAddReportOpen(true)}>
+          <Plus className="h-4 w-4 ml-2" />
+          إضافة تقرير
+        </Button>
+      </div>
 
-        <ActivityDialogsContainer
-          projectId={project.id}
-          selectedEvent={selectedEvent}
-          isAddEventOpen={isAddEventOpen}
-          setIsAddEventOpen={setIsAddEventOpen}
-          isEditEventOpen={isEditEventOpen}
-          setIsEditEventOpen={setIsEditEventOpen}
-          isDeleteDialogOpen={isDeleteDialogOpen}
-          setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-          refetchActivities={handleEditSuccess}
-          confirmDelete={confirmDelete}
-          project={project}
+      <Card>
+        <ProjectReportsList
+          projectId={projectId}
+          activityId={activityId}
         />
-      </CardContent>
-    </Card>
+      </Card>
+
+      <ProjectReportDialog
+        open={isAddReportOpen}
+        onOpenChange={setIsAddReportOpen}
+        projectId={projectId}
+        activityId={activityId}
+      />
+    </div>
   );
 };

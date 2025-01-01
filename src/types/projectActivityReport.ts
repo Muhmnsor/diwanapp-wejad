@@ -13,4 +13,8 @@ export interface ProjectActivityReport {
   impact_on_participants?: string;
   photos?: { url: string; description: string; }[];
   created_at: string;
+  profiles?: {
+    id: string;
+    email: string;
+  } | null;
 }
