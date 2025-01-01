@@ -7,8 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ProjectActivityReportForm } from "./ProjectActivityReportForm";
-import { ProjectActivityReportsList } from "./ProjectActivityReportsList";
+import { ReportForm } from "./components/ReportForm";
+import { ReportsList } from "./components/ReportsList";
 
 interface ProjectActivityReportsTabProps {
   projectId: string;
@@ -31,7 +31,7 @@ export const ProjectActivityReportsTab = ({
         </Button>
       </div>
 
-      <ProjectActivityReportsList
+      <ReportsList
         projectId={projectId}
         activityId={activityId}
       />
@@ -41,7 +41,7 @@ export const ProjectActivityReportsTab = ({
           <DialogHeader>
             <DialogTitle>إضافة تقرير جديد</DialogTitle>
           </DialogHeader>
-          <ProjectActivityReportForm
+          <ReportForm
             projectId={projectId}
             activityId={activityId}
             onSuccess={() => setIsAddReportOpen(false)}
