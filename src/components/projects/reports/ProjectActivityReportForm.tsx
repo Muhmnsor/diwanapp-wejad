@@ -8,6 +8,7 @@ import { ReportTextField } from "@/components/events/reports/form/ReportTextFiel
 import { EventMetadataFields } from "@/components/events/reports/form/EventMetadataFields";
 import { EventObjectivesField } from "@/components/events/reports/form/EventObjectivesField";
 import { ImpactField } from "@/components/events/reports/form/ImpactField";
+import { useAuthStore } from "@/store/authStore";
 
 interface ProjectActivityReportFormProps {
   projectId: string;
@@ -22,6 +23,7 @@ export const ProjectActivityReportForm = ({
   onSuccess,
   onCancel
 }: ProjectActivityReportFormProps) => {
+  const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportName, setReportName] = useState("");
   const [programName, setProgramName] = useState("");
@@ -41,14 +43,28 @@ export const ProjectActivityReportForm = ({
       return;
     }
 
+    if (!user?.id) {
+      toast.error("يجب تسجيل الدخول لإضافة تقرير");
+      return;
+    }
+
+    console.log("Submitting report:", {
+      projectId,
+      activityId,
+      executorId: user.id,
+      reportName,
+      reportText
+    });
+    
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('project_activity_reports')
         .insert({
           project_id: projectId,
           activity_id: activityId,
+          executor_id: user.id,
           program_name: programName,
           report_name: reportName,
           report_text: reportText,
@@ -57,12 +73,27 @@ export const ProjectActivityReportForm = ({
           attendees_count: attendeesCount,
           activity_objectives: activityObjectives,
           impact_on_participants: impactOnParticipants,
-          photos: photos,
-        });
+          photos: photos.filter(photo => photo.url),
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
+      console.log('Report submitted successfully:', data);
       toast.success("تم إضافة التقرير بنجاح");
+      
+      // Reset form
+      setReportName("");
+      setProgramName("");
+      setReportText("");
+      setDetailedDescription("");
+      setActivityDuration("");
+      setAttendeesCount("");
+      setActivityObjectives("");
+      setImpactOnParticipants("");
+      setPhotos([]);
+      
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error('Error submitting report:', error);
