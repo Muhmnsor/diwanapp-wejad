@@ -2,34 +2,27 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useRegistrationFields = (eventId: string | undefined) => {
+export const useRegistrationFields = (eventId?: string) => {
   return useQuery({
     queryKey: ['registration-fields', eventId],
     queryFn: async () => {
-      console.log('🔍 Fetching registration fields for event:', eventId);
+      console.log('Fetching registration fields for:', eventId);
       
-      if (!eventId) {
-        console.error('❌ No event ID provided');
-        return null;
-      }
-
       try {
-        const { data: eventFields, error } = await supabase
+        const { data: fields, error } = await supabase
           .from('event_registration_fields')
           .select('*')
           .eq('event_id', eventId)
           .maybeSingle();
 
         if (error) {
-          console.error('❌ Error fetching registration fields:', error);
+          console.error('Error fetching registration fields:', error);
           throw error;
         }
 
-        console.log('📝 Raw registration fields from database:', eventFields);
-
-        // إذا لم نجد حقول مخصصة، نستخدم القيم الافتراضية
-        if (!eventFields) {
-          console.log('ℹ️ No custom fields found, using defaults');
+        // إذا لم يتم العثور على حقول مخصصة، نستخدم الحقول الافتراضية
+        if (!fields) {
+          console.log('No custom fields found, using defaults');
           return {
             arabic_name: true,
             email: true,
@@ -43,33 +36,15 @@ export const useRegistrationFields = (eventId: string | undefined) => {
           };
         }
 
-        // تحويل القيم من قاعدة البيانات إلى قيم منطقية
-        const fields = {
-          arabic_name: Boolean(eventFields.arabic_name),
-          email: Boolean(eventFields.email),
-          phone: Boolean(eventFields.phone),
-          english_name: Boolean(eventFields.english_name),
-          education_level: Boolean(eventFields.education_level),
-          birth_date: Boolean(eventFields.birth_date),
-          national_id: Boolean(eventFields.national_id),
-          gender: Boolean(eventFields.gender),
-          work_status: Boolean(eventFields.work_status)
-        };
-
-        console.log('✅ Processed registration fields:', fields);
+        console.log('Retrieved registration fields:', fields);
         return fields;
-
       } catch (error) {
-        console.error('❌ Failed to fetch registration fields:', error);
+        console.error('Failed to fetch registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
         throw error;
       }
     },
     retry: 2,
-    retryDelay: 1000,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    meta: {
-      errorMessage: 'حدث خطأ في تحميل نموذج التسجيل'
-    }
+    retryDelay: 1000
   });
 };

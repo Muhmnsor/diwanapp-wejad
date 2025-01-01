@@ -26,6 +26,8 @@ export const RegistrationFormContainer = ({
   isProject = false
 }: RegistrationFormContainerProps) => {
   const { id } = useParams();
+  console.log('RegistrationFormContainer - Rendering with ID:', id);
+
   const {
     formData,
     setFormData,

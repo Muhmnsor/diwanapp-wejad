@@ -18,6 +18,8 @@ export const EventRegistrationDialog = ({
   onOpenChange,
   event,
 }: EventRegistrationDialogProps) => {
+  console.log('EventRegistrationDialog - Rendering with event:', event);
+
   return (
     <Dialog 
       open={open} 
