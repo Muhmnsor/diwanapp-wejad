@@ -40,8 +40,9 @@ export const EventRegistrationForm = ({
     formData
   });
 
-  const handleFormSubmit = (e: FormEvent) => {
-    registrationSubmit(e);
+  const handleFormSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    await registrationSubmit(e);
   };
 
   return (
