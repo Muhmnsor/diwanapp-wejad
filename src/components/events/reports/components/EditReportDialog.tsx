@@ -17,14 +17,12 @@ interface EditReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   report: Report;
-  isProjectActivity?: boolean;
 }
 
 export const EditReportDialog = ({
   open,
   onOpenChange,
   report,
-  isProjectActivity = false,
 }: EditReportDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,9 +31,9 @@ export const EditReportDialog = ({
     report_name: report.report_name,
     report_text: report.report_text,
     detailed_description: report.detailed_description || '',
-    event_duration: isProjectActivity ? report.activity_duration : report.event_duration || '',
+    event_duration: report.event_duration || '',
     attendees_count: report.attendees_count || '',
-    event_objectives: isProjectActivity ? report.activity_objectives : report.event_objectives || '',
+    event_objectives: report.event_objectives || '',
     impact_on_participants: report.impact_on_participants || '',
     photos: report.photos ? report.photos.map(photo => {
       if (typeof photo === 'string') {
@@ -55,44 +53,15 @@ export const EditReportDialog = ({
 
     try {
       console.log('Updating report with data:', formData);
-      console.log('Is project activity:', isProjectActivity);
-      
-      const tableName = isProjectActivity ? 'project_activity_reports' : 'event_reports';
-      console.log('Using table:', tableName);
-
-      const updateData = isProjectActivity ? {
-        program_name: formData.program_name,
-        report_name: formData.report_name,
-        report_text: formData.report_text,
-        detailed_description: formData.detailed_description,
-        activity_duration: formData.event_duration,
-        attendees_count: formData.attendees_count,
-        activity_objectives: formData.event_objectives,
-        impact_on_participants: formData.impact_on_participants,
-        photos: formData.photos
-      } : {
-        program_name: formData.program_name,
-        report_name: formData.report_name,
-        report_text: formData.report_text,
-        detailed_description: formData.detailed_description,
-        event_duration: formData.event_duration,
-        attendees_count: formData.attendees_count,
-        event_objectives: formData.event_objectives,
-        impact_on_participants: formData.impact_on_participants,
-        photos: formData.photos
-      };
-
       const { error } = await supabase
-        .from(tableName)
-        .update(updateData)
+        .from('event_reports')
+        .update(formData)
         .eq('id', report.id);
 
       if (error) throw error;
 
       await queryClient.invalidateQueries({
-        queryKey: isProjectActivity 
-          ? ['project-activity-reports', report.event_id]
-          : ['event-reports', report.event_id]
+        queryKey: ['event-reports', report.event_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { Table, TableBody } from "@/components/ui/table";
 import { ReportListHeader } from "@/components/events/reports/ReportListHeader";
 import { ReportListItem } from "@/components/events/reports/ReportListItem";
-import { ProjectActivityReport } from "@/types/projectActivityReport";
-import { Report } from "@/types/report";
 
 interface ProjectActivityReportsListProps {
   projectId: string;
@@ -24,7 +24,6 @@ export const ProjectActivityReportsList = ({
         .select(`
           *,
           profiles:executor_id (
-            id,
             email
           )
         `)
@@ -54,39 +53,17 @@ export const ProjectActivityReportsList = ({
         <Table>
           <ReportListHeader title="تقارير النشاط" />
           <TableBody>
-            {reports.map((report) => {
-              const mappedReport: Report = {
-                id: report.id,
-                event_id: report.activity_id,
-                report_text: report.report_text,
-                photos: report.photos || [],
-                created_at: report.created_at,
-                report_name: report.report_name,
-                program_name: report.program_name,
-                detailed_description: report.detailed_description || '',
-                event_duration: report.activity_duration || '',
-                attendees_count: report.attendees_count || '',
-                event_objectives: report.activity_objectives || '',
-                impact_on_participants: report.impact_on_participants || '',
-                profiles: {
-                  id: report.executor_id,
-                  email: report.profiles?.email || 'غير معروف'
-                },
-                video_links: [],
-                additional_links: [],
-                satisfaction_level: null,
-                files: [],
-                comments: []
-              };
-              
-              return (
-                <ReportListItem 
-                  key={report.id} 
-                  report={mappedReport}
-                  isProjectActivity={true}
-                />
-              );
-            })}
+            {reports.map((report) => (
+              <ReportListItem 
+                key={report.id} 
+                report={{
+                  ...report,
+                  profiles: {
+                    email: report.profiles?.email || 'غير معروف'
+                  }
+                }}
+              />
+            ))}
           </TableBody>
         </Table>
       </div>

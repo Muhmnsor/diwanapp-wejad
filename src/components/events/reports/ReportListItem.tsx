@@ -12,13 +12,11 @@ import { Report } from "@/types/report";
 interface ReportListItemProps {
   report: Report;
   eventTitle?: string;
-  isProjectActivity?: boolean;
 }
 
 export const ReportListItem = ({
   report,
   eventTitle,
-  isProjectActivity = false,
 }: ReportListItemProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -30,7 +28,7 @@ export const ReportListItem = ({
       console.log('Attempting to delete report:', report.id);
       
       const { error } = await supabase
-        .from(isProjectActivity ? 'project_activity_reports' : 'event_reports')
+        .from('event_reports')
         .delete()
         .eq('id', report.id);
 
@@ -42,9 +40,7 @@ export const ReportListItem = ({
 
       console.log('Report deleted successfully');
       await queryClient.invalidateQueries({
-        queryKey: isProjectActivity 
-          ? ['project-activity-reports', report.event_id]
-          : ['event-reports', report.event_id]
+        queryKey: ['event-reports', report.event_id]
       });
       toast.success('تم حذف التقرير بنجاح');
     } catch (error) {

@@ -19,8 +19,6 @@ interface ReportTableRowProps {
   eventTitle?: string;
   onDownload: () => void;
   onDelete: () => void;
-  onEdit: () => void;
-  isProjectActivity?: boolean;
 }
 
 export const ReportTableRow = ({
@@ -30,8 +28,6 @@ export const ReportTableRow = ({
   eventTitle,
   onDownload,
   onDelete,
-  onEdit,
-  isProjectActivity = false,
 }: ReportTableRowProps) => {
   return (
     <TableRow className="hover:bg-muted/0">
@@ -57,7 +53,6 @@ export const ReportTableRow = ({
                   createdAt={report.created_at}
                   onDownload={onDownload}
                   onDelete={onDelete}
-                  onEdit={onEdit}
                   eventTitle={eventTitle}
                 />
               </div>
@@ -68,13 +63,13 @@ export const ReportTableRow = ({
                 <ReportContent
                   report_text={report.report_text}
                   detailed_description={report.detailed_description}
-                  event_duration={isProjectActivity ? report.activity_duration : report.event_duration}
+                  event_duration={report.event_duration}
                   attendees_count={report.attendees_count}
-                  event_objectives={isProjectActivity ? report.activity_objectives : report.event_objectives}
+                  event_objectives={report.event_objectives}
                   impact_on_participants={report.impact_on_participants}
                   created_at={report.created_at}
                   photos={report.photos}
-                  isProjectActivity={isProjectActivity}
+                  event_id={report.event_id}
                 />
                 <Separator />
                 <ReportPhotos photos={report.photos} />

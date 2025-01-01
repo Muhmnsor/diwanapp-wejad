@@ -1,45 +1,41 @@
 import { TableCell } from "@/components/ui/table";
+import { Report } from "@/types/report";
 
-export interface ReportContentProps {
-  report_text: string;
-  detailed_description: string;
-  event_duration?: string;
-  activity_duration?: string;
-  attendees_count: string;
-  event_objectives?: string;
-  activity_objectives?: string;
-  impact_on_participants: string;
-  created_at: string;
-  photos: any[];
-  isProjectActivity?: boolean;
-}
+type ReportContentProps = Pick<
+  Report,
+  | "report_text"
+  | "detailed_description"
+  | "event_duration"
+  | "attendees_count"
+  | "event_objectives"
+  | "impact_on_participants"
+  | "created_at"
+  | "photos"
+  | "event_id"
+>;
 
 export const ReportContent = ({
   report_text,
   detailed_description,
   event_duration,
-  activity_duration,
   attendees_count,
   event_objectives,
-  activity_objectives,
   impact_on_participants,
   created_at,
   photos,
-  isProjectActivity,
+  event_id,
 }: ReportContentProps) => {
-  const duration = isProjectActivity ? activity_duration : event_duration;
-  const objectives = isProjectActivity ? activity_objectives : event_objectives;
-  
   return (
     <>
       <TableCell className="font-medium">{report_text}</TableCell>
       <TableCell>{detailed_description}</TableCell>
-      <TableCell>{duration}</TableCell>
+      <TableCell>{event_duration}</TableCell>
       <TableCell>{attendees_count}</TableCell>
-      <TableCell>{objectives}</TableCell>
+      <TableCell>{event_objectives}</TableCell>
       <TableCell>{impact_on_participants}</TableCell>
-      <TableCell>{new Date(created_at).toLocaleDateString('ar')}</TableCell>
-      <TableCell>{photos?.length || 0} صور</TableCell>
+      <TableCell>{created_at}</TableCell>
+      <TableCell>{photos.length} صور</TableCell>
+      <TableCell>{event_id}</TableCell>
     </>
   );
 };
