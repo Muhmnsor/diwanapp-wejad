@@ -1,10 +1,10 @@
 import { FormEvent } from "react";
 import { useParams } from "react-router-dom";
-import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
+import { RegistrationFormInputs } from "../../RegistrationFormInputs";
+import { Button } from "@/components/ui/button";
 import { useRegistration } from "./hooks/useRegistration";
 import { useRegistrationFields } from "./hooks/useRegistrationFields";
 import { LoadingState, ErrorState } from "./components/RegistrationFormStates";
-import { RegistrationFormButton } from "./components/RegistrationFormButton";
 
 interface RegistrationFormContainerProps {
   eventTitle: string;
@@ -33,7 +33,7 @@ export const RegistrationFormContainer = ({
     handleSubmit
   } = useRegistration(() => {
     if (onSubmit) {
-      const syntheticEvent = { preventDefault: () => {} } as FormEvent;
+      const syntheticEvent = { preventDefault: () => {} } as FormEvent<Element>;
       onSubmit(syntheticEvent);
     }
   }, isProject);
@@ -56,9 +56,13 @@ export const RegistrationFormContainer = ({
     return <ErrorState error={error} />;
   }
 
-  const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
+  if (!registrationFields) {
+    console.error('No registration fields available');
+    return <ErrorState error={new Error('No registration fields available')} />;
+  }
 
-  console.log('Registration fields being passed to form:', registrationFields);
+  const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
+  const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -69,11 +73,13 @@ export const RegistrationFormContainer = ({
         showPaymentFields={isPaidEvent}
         registrationFields={registrationFields}
       />
-      <RegistrationFormButton
-        isSubmitting={isSubmitting}
-        isPaidEvent={isPaidEvent}
-        eventPrice={eventPrice}
-      />
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={isSubmitting}
+      >
+        {buttonText}
+      </Button>
     </form>
   );
 };

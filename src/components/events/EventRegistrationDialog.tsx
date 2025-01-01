@@ -1,5 +1,11 @@
-import { RegistrationDialog } from "./registration/dialogs/RegistrationDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Event } from "@/store/eventStore";
+import { RegistrationForm } from "./RegistrationForm";
 
 interface EventRegistrationDialogProps {
   open: boolean;
@@ -13,10 +19,32 @@ export const EventRegistrationDialog = ({
   event,
 }: EventRegistrationDialogProps) => {
   return (
-    <RegistrationDialog
-      open={open}
+    <Dialog 
+      open={open} 
       onOpenChange={onOpenChange}
-      event={event}
-    />
+      modal={true}
+    >
+      <DialogContent 
+        className="sm:max-w-[425px]"
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
+        </DialogHeader>
+        <RegistrationForm
+          eventTitle={event.title}
+          eventPrice={event.price}
+          eventDate={event.date}
+          eventTime={event.time}
+          eventLocation={event.location}
+          onSubmit={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };
