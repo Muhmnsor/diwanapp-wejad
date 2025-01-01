@@ -1,7 +1,8 @@
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { ProjectRegistrationForm } from "../ProjectRegistrationForm";
 import { useRegistrationFields } from "../hooks/useRegistrationFields";
 import { LoadingState, ErrorState } from "@/components/events/registration/components/RegistrationFormStates";
+import { ProjectRegistrationFormData } from "../types/registration";
 
 interface ProjectFormContainerProps {
   projectTitle: string;
@@ -18,7 +19,17 @@ export const ProjectFormContainer = ({
   endDate,
   onSubmit
 }: ProjectFormContainerProps) => {
-  const { data: registrationFields, isLoading, error } = useRegistrationFields();
+  const [formData, setFormData] = useState<ProjectRegistrationFormData>({
+    arabicName: "",
+    englishName: "",
+    email: "",
+    phone: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Extract project ID from URL or pass it as prop if needed
+  const projectId = window.location.pathname.split('/').pop();
+  const { data: registrationFields, isLoading, error } = useRegistrationFields(projectId);
 
   if (isLoading) {
     return <LoadingState />;
@@ -33,14 +44,26 @@ export const ProjectFormContainer = ({
     return <ErrorState error={new Error('No registration fields configuration found')} />;
   }
 
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await onSubmit(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <ProjectRegistrationForm
       projectTitle={projectTitle}
       projectPrice={projectPrice}
       startDate={startDate}
       endDate={endDate}
-      registrationFields={registrationFields}
-      onSubmit={onSubmit}
+      formData={formData}
+      setFormData={setFormData}
+      isSubmitting={isSubmitting}
+      onSubmit={handleSubmit}
     />
   );
 };
