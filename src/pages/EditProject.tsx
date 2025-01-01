@@ -55,7 +55,8 @@ const EditProject = () => {
     
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      // Update project details
+      const { error: projectError } = await supabase
         .from('projects')
         .update({
           title: project.title,
@@ -75,7 +76,25 @@ const EditProject = () => {
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (projectError) throw projectError;
+
+      // Update registration fields
+      const { error: fieldsError } = await supabase
+        .from('project_registration_fields')
+        .upsert({
+          project_id: id,
+          arabic_name: project.registration_fields?.arabic_name ?? true,
+          email: project.registration_fields?.email ?? true,
+          phone: project.registration_fields?.phone ?? true,
+          english_name: project.registration_fields?.english_name ?? false,
+          education_level: project.registration_fields?.education_level ?? false,
+          birth_date: project.registration_fields?.birth_date ?? false,
+          national_id: project.registration_fields?.national_id ?? false,
+          gender: project.registration_fields?.gender ?? false,
+          work_status: project.registration_fields?.work_status ?? false
+        });
+
+      if (fieldsError) throw fieldsError;
 
       toast.success("تم تحديث المشروع بنجاح");
       navigate(`/projects/${id}`);

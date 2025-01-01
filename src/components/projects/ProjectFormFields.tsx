@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BeneficiaryType } from "@/types/event";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectFormFieldsProps {
   formData: Project;
@@ -17,6 +19,43 @@ interface ProjectFormFieldsProps {
 }
 
 export const ProjectFormFields = ({ formData, setFormData, onImageChange }: ProjectFormFieldsProps) => {
+  // Fetch existing registration fields when component mounts
+  useEffect(() => {
+    const fetchRegistrationFields = async () => {
+      if (!formData.id) return;
+
+      const { data, error } = await supabase
+        .from('project_registration_fields')
+        .select('*')
+        .eq('project_id', formData.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching registration fields:', error);
+        return;
+      }
+
+      if (data) {
+        setFormData({
+          ...formData,
+          registration_fields: {
+            arabic_name: data.arabic_name || true,
+            email: data.email || true,
+            phone: data.phone || true,
+            english_name: data.english_name || false,
+            education_level: data.education_level || false,
+            birth_date: data.birth_date || false,
+            national_id: data.national_id || false,
+            gender: data.gender || false,
+            work_status: data.work_status || false,
+          }
+        });
+      }
+    };
+
+    fetchRegistrationFields();
+  }, [formData.id]);
+
   return (
     <div className="space-y-6 text-right" dir="rtl">
       {/* Basic Project Information */}
@@ -32,6 +71,7 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
       {/* Dates and Registration */}
       <Card className="p-4">
         <h2 className="text-lg font-semibold mb-4">التواريخ والتسجيل</h2>
+        <div className="space-y-4">
           <div>
             <label className="text-sm font-medium block mb-1.5">تاريخ البداية</label>
             <Input
@@ -81,6 +121,7 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
               className="text-right"
             />
           </div>
+        </div>
       </Card>
 
       {/* Registration Fields Configuration */}
