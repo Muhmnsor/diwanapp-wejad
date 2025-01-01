@@ -2,6 +2,7 @@ import { useRegistration } from "./hooks/useRegistration";
 import { SessionManager } from "./session/SessionManager";
 import { RegistrationFormContainer } from "./form/RegistrationFormContainer";
 import { RegistrationConfirmation } from "./confirmation/RegistrationConfirmation";
+import { FormEvent } from "react";
 
 interface EventRegistrationFormProps {
   eventTitle: string;
@@ -26,7 +27,7 @@ export const EventRegistrationForm = ({
     setShowConfirmation,
     registrationId,
     isRegistered,
-    handleSubmit
+    handleSubmit: registrationSubmit
   } = useRegistration(() => {
     console.log('EventRegistrationForm - Registration successful, calling onSubmit');
     onSubmit();
@@ -38,6 +39,10 @@ export const EventRegistrationForm = ({
     registrationId,
     formData
   });
+
+  const handleFormSubmit = (e: FormEvent) => {
+    registrationSubmit(e);
+  };
 
   return (
     <SessionManager>
@@ -63,7 +68,7 @@ export const EventRegistrationForm = ({
           eventDate={eventDate}
           eventTime={eventTime}
           eventLocation={eventLocation}
-          onSubmit={handleSubmit}
+          onSubmit={handleFormSubmit}
         />
       )}
     </SessionManager>
