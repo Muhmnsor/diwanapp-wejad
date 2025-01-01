@@ -62,6 +62,8 @@ export const EditActivityForm = ({
         ...data,
         project_id: projectId,
         is_project_activity: true,
+        event_type: 'in-person',
+        image_url: '/placeholder.svg', // Add default image_url
       };
 
       const { error } = activity 
