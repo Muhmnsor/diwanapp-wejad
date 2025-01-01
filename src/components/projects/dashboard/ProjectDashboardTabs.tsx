@@ -2,9 +2,9 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
 import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
 import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
-import { ProjectTabsList } from "./tabs/ProjectTabsList";
+import { ProjectTabsList } from "@/components/projects/dashboard/tabs/ProjectTabsList";
 import { DashboardOverviewTab } from "@/components/admin/dashboard/tabs/DashboardOverviewTab";
-import { DashboardActivitiesTab } from "./tabs/DashboardActivitiesTab";
+import { DashboardActivitiesTab } from "@/components/projects/dashboard/tabs/DashboardActivitiesTab";
 import { DashboardFeedbackTab } from "@/components/admin/dashboard/tabs/DashboardFeedbackTab";
 import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 

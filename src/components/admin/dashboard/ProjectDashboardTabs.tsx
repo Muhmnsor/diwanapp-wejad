@@ -2,10 +2,10 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
 import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
 import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
-import { ProjectTabsList } from "./tabs/ProjectTabsList";
-import { DashboardOverviewTab } from "./tabs/DashboardOverviewTab";
-import { DashboardActivitiesTab } from "./tabs/DashboardActivitiesTab";
-import { DashboardFeedbackTab } from "./tabs/DashboardFeedbackTab";
+import { ProjectTabsList } from "@/components/admin/dashboard/tabs/ProjectTabsList";
+import { DashboardOverviewTab } from "@/components/admin/dashboard/tabs/DashboardOverviewTab";
+import { DashboardActivitiesTab } from "@/components/admin/dashboard/tabs/DashboardActivitiesTab";
+import { DashboardFeedbackTab } from "@/components/admin/dashboard/tabs/DashboardFeedbackTab";
 import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 interface ProjectDashboardTabsProps {
