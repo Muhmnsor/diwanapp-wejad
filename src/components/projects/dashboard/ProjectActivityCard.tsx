@@ -6,6 +6,8 @@ import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditActivityDialog } from "../activities/dialogs/EditActivityDialog";
 import { DeleteActivityDialog } from "../activities/dialogs/DeleteActivityDialog";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectActivityCardProps {
   activity: ProjectActivity;
@@ -40,10 +42,46 @@ export const ProjectActivityCard = ({
     console.log("Confirming deletion for activity:", activity.id);
     setIsLoading(true);
     try {
-      await onDelete();
+      // Delete attendance records first
+      const { error: attendanceError } = await supabase
+        .from('attendance_records')
+        .delete()
+        .eq('activity_id', activity.id);
+
+      if (attendanceError) {
+        console.error('Error deleting attendance records:', attendanceError);
+        throw attendanceError;
+      }
+
+      // Delete activity reports
+      const { error: reportsError } = await supabase
+        .from('project_activity_reports')
+        .delete()
+        .eq('activity_id', activity.id);
+
+      if (reportsError) {
+        console.error('Error deleting activity reports:', reportsError);
+        throw reportsError;
+      }
+
+      // Finally delete the activity
+      const { error: deleteError } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', activity.id)
+        .eq('is_project_activity', true);
+
+      if (deleteError) {
+        console.error('Error deleting activity:', deleteError);
+        throw deleteError;
+      }
+
+      toast.success('تم حذف النشاط بنجاح');
+      onDelete();
       setIsDeleteDialogOpen(false);
     } catch (error) {
-      console.error("Error deleting activity:", error);
+      console.error("Error in delete process:", error);
+      toast.error('حدث خطأ أثناء حذف النشاط');
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +89,7 @@ export const ProjectActivityCard = ({
 
   return (
     <>
-      <Card key={activity.id} className="p-4">
+      <Card className="p-4">
         <div className="space-y-2">
           <div className="flex justify-between items-start">
             <div>
