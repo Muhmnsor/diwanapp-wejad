@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { Table, TableBody } from "@/components/ui/table";
 import { toast } from "sonner";
 import { ReportTableHeader } from "./table/ReportTableHeader";
@@ -8,7 +7,7 @@ import { ReportTableRow } from "./table/ReportTableRow";
 
 interface ProjectReportsListProps {
   projectId: string;
-  activityId: string;
+  activityId?: string;
 }
 
 export const ProjectReportsList = ({
@@ -18,8 +17,9 @@ export const ProjectReportsList = ({
   const { data: reports = [], refetch } = useQuery({
     queryKey: ['project-activity-reports', projectId, activityId],
     queryFn: async () => {
-      console.log('Fetching reports for activity:', activityId);
-      const { data, error } = await supabase
+      console.log('Fetching reports with params:', { projectId, activityId });
+      
+      let query = supabase
         .from('project_activity_reports')
         .select(`
           *,
@@ -29,30 +29,26 @@ export const ProjectReportsList = ({
           )
         `)
         .eq('project_id', projectId)
-        .eq('activity_id', activityId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data as ProjectActivityReport[];
-    }
+      // Only add activity_id filter if it's provided and valid
+      if (activityId) {
+        query = query.eq('activity_id', activityId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching reports:', error);
+        toast.error('حدث خطأ أثناء جلب التقارير');
+        return [];
+      }
+
+      console.log('Fetched reports:', data);
+      return data;
+    },
+    enabled: !!projectId // Only run query if projectId is provided
   });
-
-  const handleDelete = async (reportId: string) => {
-    try {
-      const { error } = await supabase
-        .from('project_activity_reports')
-        .delete()
-        .eq('id', reportId);
-
-      if (error) throw error;
-
-      toast.success('تم حذف التقرير بنجاح');
-      refetch();
-    } catch (error) {
-      console.error('Error deleting report:', error);
-      toast.error('حدث خطأ أثناء حذف التقرير');
-    }
-  };
 
   if (!reports.length) {
     return (
@@ -71,7 +67,7 @@ export const ProjectReportsList = ({
             <ReportTableRow
               key={report.id}
               report={report}
-              onDelete={handleDelete}
+              onDelete={refetch}
             />
           ))}
         </TableBody>
