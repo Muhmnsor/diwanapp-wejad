@@ -8,6 +8,7 @@ import { ReportTextField } from "@/components/events/reports/form/ReportTextFiel
 import { EventMetadataFields } from "@/components/events/reports/form/EventMetadataFields";
 import { EventObjectivesField } from "@/components/events/reports/form/EventObjectivesField";
 import { ImpactField } from "@/components/events/reports/form/ImpactField";
+import { useAuthStore } from "@/store/authStore";
 
 interface ReportFormProps {
   projectId: string;
@@ -20,6 +21,7 @@ export const ReportForm = ({
   activityId,
   onSuccess,
 }: ReportFormProps) => {
+  const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportName, setReportName] = useState("");
   const [programName, setProgramName] = useState("");
@@ -43,11 +45,25 @@ export const ReportForm = ({
     setIsSubmitting(true);
 
     try {
+      // First verify that the activity exists
+      const { data: activityExists, error: checkError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('id', activityId)
+        .single();
+
+      if (checkError || !activityExists) {
+        console.error('Activity not found:', checkError);
+        toast.error('لم يتم العثور على النشاط المحدد');
+        return;
+      }
+
       const { error } = await supabase
         .from('project_activity_reports')
         .insert({
           project_id: projectId,
           activity_id: activityId,
+          executor_id: user?.id,
           program_name: programName,
           report_name: reportName,
           report_text: reportText,
