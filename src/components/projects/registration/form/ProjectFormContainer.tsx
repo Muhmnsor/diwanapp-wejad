@@ -64,6 +64,7 @@ export const ProjectFormContainer = ({
       setFormData={setFormData}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
+      registrationFields={registrationFields}
     />
   );
 };
