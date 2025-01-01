@@ -6,6 +6,7 @@ import { ProjectDatesFields } from "./form/fields/ProjectDatesFields";
 import { ProjectTypeFields } from "./form/fields/ProjectTypeFields";
 import { ProjectRegistrationFieldsConfig } from "./form/fields/ProjectRegistrationFieldsConfig";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 interface ProjectFormFieldsProps {
   formData: Project;
@@ -30,6 +31,7 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
 
         if (error) {
           console.error('Error fetching registration fields:', error);
+          toast.error("حدث خطأ في تحميل إعدادات حقول التسجيل");
           return;
         }
 
@@ -54,11 +56,40 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
         });
       } catch (error) {
         console.error('Error in fetchRegistrationFields:', error);
+        toast.error("حدث خطأ في تحميل إعدادات حقول التسجيل");
       }
     };
 
     fetchRegistrationFields();
   }, [formData.id]);
+
+  // Update registration fields in database when they change
+  useEffect(() => {
+    const updateRegistrationFields = async () => {
+      if (!formData.id || !formData.registration_fields) return;
+
+      console.log('Updating registration fields in database:', formData.registration_fields);
+
+      try {
+        const { error } = await supabase
+          .from('project_registration_fields')
+          .upsert({
+            project_id: formData.id,
+            ...formData.registration_fields
+          });
+
+        if (error) {
+          console.error('Error updating registration fields:', error);
+          toast.error("حدث خطأ في حفظ إعدادات حقول التسجيل");
+        }
+      } catch (error) {
+        console.error('Error in updateRegistrationFields:', error);
+        toast.error("حدث خطأ في حفظ إعدادات حقول التسجيل");
+      }
+    };
+
+    updateRegistrationFields();
+  }, [formData.registration_fields]);
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
