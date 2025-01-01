@@ -26,7 +26,7 @@ export const RegistrationFormContainer = ({
   isProject = false
 }: RegistrationFormContainerProps) => {
   const { id } = useParams();
-  console.log('RegistrationFormContainer - Rendering with ID:', id);
+  console.log('RegistrationFormContainer - Event ID:', id);
 
   const {
     formData,
@@ -40,14 +40,10 @@ export const RegistrationFormContainer = ({
     }
   }, isProject);
 
-  const handleFormDataChange = (newData: any) => {
-    setFormData({
-      ...newData,
-      name: newData.arabicName
-    });
-  };
-
   const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
+
+  console.log('RegistrationFormContainer - Form Data:', formData);
+  console.log('RegistrationFormContainer - Registration Fields:', registrationFields);
 
   if (isLoading) {
     return <LoadingState />;
@@ -70,7 +66,7 @@ export const RegistrationFormContainer = ({
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
       <RegistrationFormInputs
         formData={formData}
-        setFormData={handleFormDataChange}
+        setFormData={setFormData}
         eventPrice={eventPrice}
         showPaymentFields={isPaidEvent}
         registrationFields={registrationFields}

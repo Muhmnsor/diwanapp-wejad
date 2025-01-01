@@ -31,8 +31,8 @@ export const EventDetailsView = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
 
+  console.log('EventDetailsView - Event:', event);
   console.log('EventDetailsView - User:', user);
-  console.log('EventDetailsView - isAdmin:', isAdmin);
 
   useEffect(() => {
     setCurrentEvent(event);

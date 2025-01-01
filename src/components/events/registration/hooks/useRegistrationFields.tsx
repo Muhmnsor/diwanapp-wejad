@@ -6,7 +6,7 @@ export const useRegistrationFields = (eventId?: string) => {
   return useQuery({
     queryKey: ['registration-fields', eventId],
     queryFn: async () => {
-      console.log('Fetching registration fields for:', eventId);
+      console.log('Fetching registration fields for event:', eventId);
       
       try {
         const { data: fields, error } = await supabase
@@ -20,7 +20,7 @@ export const useRegistrationFields = (eventId?: string) => {
           throw error;
         }
 
-        // إذا لم يتم العثور على حقول مخصصة، نستخدم الحقول الافتراضية
+        // Return default fields if no custom fields are found
         if (!fields) {
           console.log('No custom fields found, using defaults');
           return {
@@ -36,8 +36,21 @@ export const useRegistrationFields = (eventId?: string) => {
           };
         }
 
-        console.log('Retrieved registration fields:', fields);
-        return fields;
+        // Convert database values to boolean
+        const processedFields = {
+          arabic_name: true, // Always required
+          email: true,      // Always required
+          phone: true,      // Always required
+          english_name: Boolean(fields.english_name),
+          education_level: Boolean(fields.education_level),
+          birth_date: Boolean(fields.birth_date),
+          national_id: Boolean(fields.national_id),
+          gender: Boolean(fields.gender),
+          work_status: Boolean(fields.work_status)
+        };
+
+        console.log('Retrieved registration fields:', processedFields);
+        return processedFields;
       } catch (error) {
         console.error('Failed to fetch registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
@@ -45,6 +58,7 @@ export const useRegistrationFields = (eventId?: string) => {
       }
     },
     retry: 2,
-    retryDelay: 1000
+    retryDelay: 1000,
+    staleTime: 1000 * 60 * 5 // Cache for 5 minutes
   });
 };
