@@ -28,11 +28,16 @@ export const useRegistrationFields = (eventId?: string) => {
         }
 
         // First check if this is a project activity
-        const { data: eventData } = await supabase
+        const { data: eventData, error: eventError } = await supabase
           .from('events')
           .select('is_project_activity, project_id')
           .eq('id', eventId)
           .maybeSingle();
+
+        if (eventError) {
+          console.error('❌ Error fetching event data:', eventError);
+          throw eventError;
+        }
 
         console.log('📊 Event data:', eventData);
 
@@ -42,7 +47,11 @@ export const useRegistrationFields = (eventId?: string) => {
           return defaultFields;
         }
 
-        let { data: fields, error } = eventData.is_project_activity || eventData.project_id
+        // Determine which table to query based on event type
+        const isProjectActivity = eventData.is_project_activity || eventData.project_id;
+        console.log('🔄 Is project activity?', isProjectActivity);
+
+        let { data: fields, error: fieldsError } = isProjectActivity
           ? await supabase
               .from('project_registration_fields')
               .select('*')
@@ -54,9 +63,9 @@ export const useRegistrationFields = (eventId?: string) => {
               .eq('event_id', eventId)
               .maybeSingle();
 
-        if (error) {
-          console.error('❌ Error fetching registration fields:', error);
-          throw error;
+        if (fieldsError) {
+          console.error('❌ Error fetching registration fields:', fieldsError);
+          throw fieldsError;
         }
 
         // If no custom fields found, use defaults
