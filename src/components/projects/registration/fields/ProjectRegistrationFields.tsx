@@ -1,37 +1,38 @@
-import { PersonalInfoFields } from "../../../events/registration/fields/PersonalInfoFields";
-import { PaymentFields } from "../../../events/registration/fields/PaymentFields";
+import { PersonalInfoFields } from "./PersonalInfoFields";
+import { PaymentFields } from "./PaymentFields";
+import { ProjectRegistrationFormData, ProjectRegistrationFieldsConfig } from "../types/registration";
 
 interface ProjectRegistrationFieldsProps {
-  registrationFields: {
-    arabic_name: boolean;
-    email: boolean;
-    phone: boolean;
-    english_name: boolean;
-    education_level: boolean;
-    birth_date: boolean;
-    national_id: boolean;
-    gender: boolean;
-    work_status: boolean;
-  };
+  formData: ProjectRegistrationFormData;
+  setFormData: (data: ProjectRegistrationFormData) => void;
+  registrationFields: ProjectRegistrationFieldsConfig;
   projectPrice: number | "free" | null;
   showPaymentFields: boolean;
 }
 
 export const ProjectRegistrationFields = ({
+  formData,
+  setFormData,
   registrationFields,
   projectPrice,
   showPaymentFields
 }: ProjectRegistrationFieldsProps) => {
   console.log('Project registration fields:', registrationFields);
+  console.log('Form data:', formData);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <PersonalInfoFields
+        formData={formData}
+        setFormData={setFormData}
         registrationFields={registrationFields}
       />
+      
       {showPaymentFields && (
         <PaymentFields
-          price={projectPrice}
+          formData={formData}
+          setFormData={setFormData}
+          projectPrice={projectPrice}
         />
       )}
     </div>
