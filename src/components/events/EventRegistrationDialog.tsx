@@ -32,6 +32,7 @@ export const EventRegistrationDialog = ({
     setRegistrationId(id);
     setRegistrationData(data);
     setShowConfirmation(true);
+    onOpenChange(false); // إغلاق نموذج التسجيل
   };
 
   const handleConfirmationClose = () => {
