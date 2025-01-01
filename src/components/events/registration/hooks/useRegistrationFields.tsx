@@ -46,40 +46,10 @@ export const useRegistrationFields = (eventId?: string) => {
           throw fieldsError;
         }
 
-        // If no fields found, create default fields in database
+        // If no fields found, return default fields without creating new ones
+        // This avoids RLS policy violations for non-admin users
         if (!fields) {
-          console.log('ℹ️ No fields found, creating default fields');
-          
-          const insertQuery = isProjectActivity
-            ? supabase
-                .from('project_registration_fields')
-                .insert({
-                  project_id: eventData?.project_id,
-                  arabic_name: true,
-                  email: true,
-                  phone: true
-                })
-                .select()
-                .single()
-            : supabase
-                .from('event_registration_fields')
-                .insert({
-                  event_id: eventId,
-                  arabic_name: true,
-                  email: true,
-                  phone: true
-                })
-                .select()
-                .single();
-
-          const { data: newFields, error: insertError } = await insertQuery;
-
-          if (insertError) {
-            console.error('❌ Error creating default fields:', insertError);
-            throw insertError;
-          }
-
-          console.log('✅ Created default fields:', newFields);
+          console.log('ℹ️ No fields found, using default fields');
           return {
             arabic_name: true,
             email: true,
