@@ -1,46 +1,80 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ActivityFeedbackDisplay } from "@/components/feedback/activities/ActivityFeedbackDisplay";
 
 interface DashboardFeedbackTabProps {
   projectId: string;
 }
 
 export const DashboardFeedbackTab = ({ projectId }: DashboardFeedbackTabProps) => {
-  const { data: feedback = [] } = useQuery({
-    queryKey: ['project-feedback', projectId],
+  console.log('DashboardFeedbackTab - Initializing with projectId:', projectId);
+  
+  const { data: activitiesFeedback, isLoading } = useQuery({
+    queryKey: ['project-activities-feedback', projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('event_feedback')
-        .select('*')
-        .eq('event_id', projectId);
+      console.log('Fetching activities feedback for project:', projectId);
+      
+      const { data: activities, error } = await supabase
+        .from('events')
+        .select(`
+          id,
+          title,
+          date,
+          event_feedback (
+            overall_rating,
+            content_rating,
+            organization_rating,
+            presenter_rating,
+            feedback_text,
+            name,
+            phone
+          )
+        `)
+        .eq('project_id', projectId)
+        .eq('is_project_activity', true);
 
-      if (error) throw error;
-      return data || [];
-    },
+      if (error) {
+        console.error('Error fetching activities feedback:', error);
+        throw error;
+      }
+      
+      console.log('Fetched activities with feedback:', activities);
+      
+      return activities?.map(activity => ({
+        id: activity.id,
+        title: activity.title,
+        date: activity.date,
+        feedback: activity.event_feedback || []
+      })) || [];
+    }
   });
+
+  if (isLoading) {
+    return <div className="text-center p-4">جاري تحميل التقييمات...</div>;
+  }
+
+  if (!activitiesFeedback || activitiesFeedback.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground">
+        لا توجد أنشطة لعرض تقييماتها
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">تقييمات المشروع</h2>
-      {feedback.length === 0 ? (
-        <p className="text-muted-foreground">لا يوجد تقييمات حتى الآن</p>
-      ) : (
-        <div className="grid gap-4">
-          {feedback.map((item) => (
-            <div key={item.id} className="bg-card p-4 rounded-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-muted-foreground">{item.feedback_text}</p>
-                </div>
-                <div className="text-sm">
-                  التقييم: {item.overall_rating}/5
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <h2 className="text-2xl font-bold">تقييم الأنشطة</h2>
+      <div className="space-y-6">
+        {activitiesFeedback.map((activity) => (
+          <ActivityFeedbackDisplay
+            key={activity.id}
+            id={activity.id}
+            title={activity.title}
+            date={activity.date}
+            feedback={activity.feedback}
+          />
+        ))}
+      </div>
     </div>
   );
 };
