@@ -4,11 +4,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { Event } from "@/store/eventStore";
-import { RegistrationForm } from "../RegistrationForm";
+import { RegistrationForm } from "../../RegistrationForm";
+import { RegistrationStatusAlert } from "./RegistrationStatusAlert";
 import { toast } from "sonner";
 
 interface RegistrationDialogProps {
