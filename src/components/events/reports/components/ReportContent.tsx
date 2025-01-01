@@ -27,16 +27,19 @@ export const ReportContent = ({
   photos,
   isProjectActivity,
 }: ReportContentProps) => {
+  const duration = isProjectActivity ? activity_duration : event_duration;
+  const objectives = isProjectActivity ? activity_objectives : event_objectives;
+  
   return (
     <>
       <TableCell className="font-medium">{report_text}</TableCell>
       <TableCell>{detailed_description}</TableCell>
-      <TableCell>{isProjectActivity ? activity_duration : event_duration}</TableCell>
+      <TableCell>{duration}</TableCell>
       <TableCell>{attendees_count}</TableCell>
-      <TableCell>{isProjectActivity ? activity_objectives : event_objectives}</TableCell>
+      <TableCell>{objectives}</TableCell>
       <TableCell>{impact_on_participants}</TableCell>
-      <TableCell>{created_at}</TableCell>
-      <TableCell>{photos.length} صور</TableCell>
+      <TableCell>{new Date(created_at).toLocaleDateString('ar')}</TableCell>
+      <TableCell>{photos?.length || 0} صور</TableCell>
     </>
   );
 };
