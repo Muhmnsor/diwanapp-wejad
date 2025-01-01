@@ -1,7 +1,7 @@
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
+import { toast } from "sonner";
 import { useRegistrationState } from "./useRegistrationState";
 import { useRegistrationSubmit } from "./useRegistrationSubmit";
-import { toast } from "sonner";
 
 export const useRegistration = (
   onSubmit: () => void,
@@ -29,7 +29,7 @@ export const useRegistration = (
     isProject,
   });
 
-  const handleFormSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     console.log('useRegistration - Form submitted with data:', formData);
     
@@ -37,7 +37,6 @@ export const useRegistration = (
       const newRegistrationId = await submitRegistration(e);
       console.log('useRegistration - Registration successful, ID:', newRegistrationId);
       
-      // تحديث الحالات بعد نجاح التسجيل
       setShowConfirmation(true);
       setIsRegistered(true);
       setRegistrationId(newRegistrationId);
@@ -57,10 +56,6 @@ export const useRegistration = (
     } catch (error) {
       console.error('useRegistration - Error in registration:', error);
       toast.error('حدث خطأ في التسجيل، يرجى المحاولة مرة أخرى');
-      // إعادة تعيين الحالات في حالة الخطأ
-      setShowConfirmation(false);
-      setIsRegistered(false);
-      setRegistrationId('');
     }
   };
 
@@ -72,6 +67,6 @@ export const useRegistration = (
     registrationId,
     isSubmitting,
     isRegistered,
-    handleSubmit: handleFormSubmit
+    handleSubmit
   };
 };

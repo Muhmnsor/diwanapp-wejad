@@ -65,8 +65,13 @@ export const EventRegistrationDialog = ({
     <Dialog 
       open={open} 
       onOpenChange={onOpenChange}
+      modal={true}
     >
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="sm:max-w-[425px]"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
         </DialogHeader>

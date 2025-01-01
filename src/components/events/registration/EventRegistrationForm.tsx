@@ -45,36 +45,42 @@ export const EventRegistrationForm = ({
   const handleFormSubmit = async (e: FormEvent) => {
     e.preventDefault();
     console.log('Form submitted, calling registrationSubmit');
-    await registrationSubmit(e);
+    try {
+      await registrationSubmit(e);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
   };
+
+  if (showConfirmation && isRegistered) {
+    return (
+      <RegistrationConfirmation
+        showConfirmation={showConfirmation}
+        setShowConfirmation={setShowConfirmation}
+        registrationId={registrationId}
+        eventTitle={eventTitle}
+        eventDate={eventDate}
+        eventTime={eventTime}
+        eventLocation={eventLocation}
+        formData={{
+          name: formData.arabicName,
+          email: formData.email,
+          phone: formData.phone
+        }}
+      />
+    );
+  }
 
   return (
     <SessionManager>
-      {showConfirmation && isRegistered ? (
-        <RegistrationConfirmation
-          showConfirmation={showConfirmation}
-          setShowConfirmation={setShowConfirmation}
-          registrationId={registrationId}
-          eventTitle={eventTitle}
-          eventDate={eventDate}
-          eventTime={eventTime}
-          eventLocation={eventLocation}
-          formData={{
-            name: formData.arabicName,
-            email: formData.email,
-            phone: formData.phone
-          }}
-        />
-      ) : (
-        <RegistrationFormContainer
-          eventTitle={eventTitle}
-          eventPrice={eventPrice}
-          eventDate={eventDate}
-          eventTime={eventTime}
-          eventLocation={eventLocation}
-          onSubmit={handleFormSubmit}
-        />
-      )}
+      <RegistrationFormContainer
+        eventTitle={eventTitle}
+        eventPrice={eventPrice}
+        eventDate={eventDate}
+        eventTime={eventTime}
+        eventLocation={eventLocation}
+        onSubmit={handleFormSubmit}
+      />
     </SessionManager>
   );
 };
