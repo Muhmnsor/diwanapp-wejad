@@ -9,17 +9,17 @@ export const useRegistrationFields = (eventId?: string) => {
       console.log('🔍 Fetching registration fields for:', eventId);
       
       try {
-        // Default required fields that are always needed
+        // Default fields - all set to true
         const defaultFields = {
           arabic_name: true,
           email: true,
           phone: true,
-          english_name: false,
-          education_level: false,
-          birth_date: false,
-          national_id: false,
-          gender: false,
-          work_status: false
+          english_name: true,
+          education_level: true,
+          birth_date: true,
+          national_id: true,
+          gender: true,
+          work_status: true
         };
 
         if (!eventId) {
@@ -74,18 +74,18 @@ export const useRegistrationFields = (eventId?: string) => {
           return defaultFields;
         }
 
-        // Always ensure required fields are included
+        // Always ensure all fields are included and set to true
         const processedFields = {
           ...defaultFields,
-          arabic_name: true, // Always required
-          email: true,      // Always required
-          phone: true,      // Always required
-          english_name: Boolean(fields.english_name),
-          education_level: Boolean(fields.education_level),
-          birth_date: Boolean(fields.birth_date),
-          national_id: Boolean(fields.national_id),
-          gender: Boolean(fields.gender),
-          work_status: Boolean(fields.work_status)
+          arabic_name: true,      // Always required
+          email: true,           // Always required
+          phone: true,           // Always required
+          english_name: true,    // Now always true
+          education_level: true, // Now always true
+          birth_date: true,     // Now always true
+          national_id: true,    // Now always true
+          gender: true,         // Now always true
+          work_status: true     // Now always true
         };
 
         console.log('✅ Final registration fields:', processedFields);
