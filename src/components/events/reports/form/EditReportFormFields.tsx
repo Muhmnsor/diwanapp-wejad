@@ -8,6 +8,7 @@ import { PhotosGallery } from "../PhotosGallery";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectActivity } from "@/types/activity";
 
 interface EditReportFormFieldsProps {
   formValues: {
@@ -21,10 +22,11 @@ interface EditReportFormFieldsProps {
     impact_on_participants: string;
     photos: { url: string; description: string; }[];
   };
+  activities: ProjectActivity[];
   setValue: (field: string, value: any) => void;
 }
 
-export const EditReportFormFields = ({ formValues, setValue }: EditReportFormFieldsProps) => {
+export const EditReportFormFields = ({ formValues, activities = [], setValue }: EditReportFormFieldsProps) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handlePhotoUpload = async (file: File) => {
@@ -79,6 +81,7 @@ export const EditReportFormFields = ({ formValues, setValue }: EditReportFormFie
       <ReportNameField
         value={formValues.report_name}
         programName={formValues.program_name}
+        activities={activities}
         onChange={(value) => setValue('report_name', value)}
         onProgramNameChange={(value) => setValue('program_name', value)}
       />

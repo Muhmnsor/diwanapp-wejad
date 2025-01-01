@@ -5,12 +5,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ProjectReportForm } from "./ProjectReportForm";
+import { ProjectActivity } from "@/types/activity";
 
 interface ProjectReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
   activityId: string;
+  projectTitle: string;
+  activities: ProjectActivity[];
 }
 
 export const ProjectReportDialog = ({
@@ -18,6 +21,8 @@ export const ProjectReportDialog = ({
   onOpenChange,
   projectId,
   activityId,
+  projectTitle,
+  activities,
 }: ProjectReportDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -28,6 +33,8 @@ export const ProjectReportDialog = ({
         <ProjectReportForm
           projectId={projectId}
           activityId={activityId}
+          projectTitle={projectTitle}
+          activities={activities}
           onSuccess={() => onOpenChange(false)}
           onCancel={() => onOpenChange(false)}
         />

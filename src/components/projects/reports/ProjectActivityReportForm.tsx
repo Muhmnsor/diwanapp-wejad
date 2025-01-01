@@ -8,6 +8,7 @@ import { ReportTextField } from "@/components/events/reports/form/ReportTextFiel
 import { EventMetadataFields } from "@/components/events/reports/form/EventMetadataFields";
 import { EventObjectivesField } from "@/components/events/reports/form/EventObjectivesField";
 import { ImpactField } from "@/components/events/reports/form/ImpactField";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProjectActivityReportFormProps {
   projectId: string;
@@ -32,6 +33,22 @@ export const ProjectActivityReportForm = ({
   const [activityObjectives, setActivityObjectives] = useState("");
   const [impactOnParticipants, setImpactOnParticipants] = useState("");
   const [photos, setPhotos] = useState<{ url: string; description: string; }[]>([]);
+
+  // Fetch project activities
+  const { data: activities = [] } = useQuery({
+    queryKey: ['project-activities', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('is_project_activity', true)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +94,7 @@ export const ProjectActivityReportForm = ({
       <ReportNameField
         value={reportName}
         programName={programName}
+        activities={activities}
         onChange={setReportName}
         onProgramNameChange={setProgramName}
       />

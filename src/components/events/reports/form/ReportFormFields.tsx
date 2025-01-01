@@ -4,6 +4,7 @@ import { EventMetadataFields } from "./EventMetadataFields";
 import { EventObjectivesField } from "./EventObjectivesField";
 import { ImpactField } from "./ImpactField";
 import { PhotosField } from "./PhotosField";
+import { ProjectActivity } from "@/types/activity";
 
 interface PhotoWithDescription {
   url: string;
@@ -22,15 +23,17 @@ interface ReportFormFieldsProps {
     impact_on_participants: string;
     photos: PhotoWithDescription[];
   };
+  activities: ProjectActivity[];
   setValue: (field: string, value: any) => void;
 }
 
-export const ReportFormFields = ({ formValues, setValue }: ReportFormFieldsProps) => {
+export const ReportFormFields = ({ formValues, activities = [], setValue }: ReportFormFieldsProps) => {
   return (
     <>
       <ReportNameField
         value={formValues.report_name}
         programName={formValues.program_name}
+        activities={activities}
         onChange={(value) => setValue('report_name', value)}
         onProgramNameChange={(value) => setValue('program_name', value)}
       />

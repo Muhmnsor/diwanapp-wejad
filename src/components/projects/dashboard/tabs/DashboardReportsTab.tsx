@@ -20,11 +20,25 @@ export const DashboardReportsTab = ({
   const [isAddReportOpen, setIsAddReportOpen] = useState(false);
   const [isFormExpanded, setIsFormExpanded] = useState(false);
 
-  // Fetch project activities to ensure we have valid activities
-  const { data: activities } = useQuery({
+  // Fetch project details to get the title
+  const { data: project } = useQuery({
+    queryKey: ['project-details', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch project activities
+  const { data: activities = [] } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
-      console.log('Fetching project activities for reports:', projectId);
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -32,18 +46,10 @@ export const DashboardReportsTab = ({
         .eq('is_project_activity', true)
         .order('date', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching activities:', error);
-        throw error;
-      }
-
-      console.log('Fetched activities:', data);
+      if (error) throw error;
       return data || [];
     },
   });
-
-  // Get the first activity ID if none is selected
-  const effectiveActivityId = activityId || (activities && activities[0]?.id);
 
   const handleFormSuccess = () => {
     setIsFormExpanded(false);
@@ -63,11 +69,13 @@ export const DashboardReportsTab = ({
         </Button>
       </div>
 
-      {isFormExpanded && (
+      {isFormExpanded && project && (
         <Card className="p-6">
           <ProjectReportForm
             projectId={projectId}
-            activityId={effectiveActivityId}
+            activityId={activityId}
+            projectTitle={project.title}
+            activities={activities}
             onSuccess={handleFormSuccess}
             onCancel={() => setIsFormExpanded(false)}
           />
@@ -77,7 +85,7 @@ export const DashboardReportsTab = ({
       <Card>
         <ProjectReportsList
           projectId={projectId}
-          activityId={effectiveActivityId}
+          activityId={activityId}
         />
       </Card>
 
@@ -85,7 +93,9 @@ export const DashboardReportsTab = ({
         open={isAddReportOpen}
         onOpenChange={setIsAddReportOpen}
         projectId={projectId}
-        activityId={effectiveActivityId}
+        activityId={activityId}
+        projectTitle={project?.title || ''}
+        activities={activities}
       />
     </div>
   );
