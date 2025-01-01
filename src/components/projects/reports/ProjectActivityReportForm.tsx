@@ -39,6 +39,12 @@ export const ProjectActivityReportForm = ({
     defaultValues: {
       program_name: '',
       report_name: '',
+      report_text: '',
+      detailed_description: '',
+      activity_duration: '',
+      attendees_count: '',
+      activity_objectives: '',
+      impact_on_participants: '',
       photos: Array(6).fill({ url: '', description: '' })
     }
   });
