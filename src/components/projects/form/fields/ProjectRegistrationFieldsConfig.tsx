@@ -14,6 +14,7 @@ export const ProjectRegistrationFieldsConfig = ({
 }: ProjectRegistrationFieldsConfigProps) => {
   const updateField = (field: string, value: boolean) => {
     console.log('Updating registration field:', field, value);
+    console.log('Current registration fields:', formData.registration_fields);
     
     setFormData({
       ...formData,
@@ -35,6 +36,8 @@ export const ProjectRegistrationFieldsConfig = ({
     { id: "birth_date", label: "تاريخ الميلاد" },
     { id: "work_status", label: "الحالة الوظيفية" },
   ];
+
+  console.log('Rendering ProjectRegistrationFieldsConfig with formData:', formData);
 
   return (
     <Card className="p-4">
