@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent } from "react";
 import { toast } from "sonner";
 import { useRegistrationState } from "./useRegistrationState";
 import { useRegistrationSubmit } from "./useRegistrationSubmit";

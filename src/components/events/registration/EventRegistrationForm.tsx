@@ -28,12 +28,7 @@ export const EventRegistrationForm = ({
     registrationId,
     isRegistered,
     handleSubmit: registrationSubmit
-  } = useRegistration(() => {
-    console.log('EventRegistrationForm - Registration successful, calling onSubmit');
-    if (onSubmit) {
-      onSubmit();
-    }
-  }, false);
+  } = useRegistration(onSubmit, false);
 
   console.log('EventRegistrationForm - Current state:', {
     showConfirmation,
@@ -53,6 +48,7 @@ export const EventRegistrationForm = ({
   };
 
   if (showConfirmation && isRegistered) {
+    console.log('Showing confirmation dialog');
     return (
       <RegistrationConfirmation
         showConfirmation={showConfirmation}
