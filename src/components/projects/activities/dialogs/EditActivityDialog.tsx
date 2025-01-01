@@ -46,10 +46,7 @@ export const EditActivityDialog = ({
           <EditActivityForm
             activity={formData}
             projectId={projectId}
-            onSuccess={() => {
-              onSuccess();
-              onOpenChange(false);
-            }}
+            onSuccess={onSuccess}
             onCancel={() => onOpenChange(false)}
           />
         </ScrollArea>

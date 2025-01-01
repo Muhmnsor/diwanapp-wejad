@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 interface EditActivityFormProps {
   activity?: {
-    id: string;
+    id?: string;
     title: string;
     description: string;
     date: string;
@@ -19,7 +19,7 @@ interface EditActivityFormProps {
     location_url?: string;
     special_requirements?: string;
     event_hours: number;
-  };
+  } | null;
   onSuccess?: () => void;
   onCancel?: () => void;
   projectId: string;
@@ -66,7 +66,7 @@ export const EditActivityForm = ({
         image_url: '/placeholder.svg', // Add default image_url
       };
 
-      const { error } = activity 
+      const { error } = activity?.id 
         ? await supabase
             .from('events')
             .update(eventData)

@@ -22,6 +22,7 @@ export const ProjectActivityActions = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEditClick = () => {
+    setIsEditDialogOpen(true);
     onEdit();
   };
 
@@ -71,7 +72,7 @@ export const ProjectActivityActions = ({
           activity={activity}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          onSave={onEditSuccess}
+          onSuccess={onEditSuccess}
           projectId={activity.project_id}
         />
       )}
