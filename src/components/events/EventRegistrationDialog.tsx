@@ -58,8 +58,12 @@ export const EventRegistrationDialog = ({
 
   const handleRegistrationComplete = () => {
     console.log('Registration completed successfully, closing dialog');
-    // Force close the dialog
+    // إغلاق النافذة مباشرة
     onOpenChange(false);
+    // إضافة تأخير قصير قبل إظهار رسالة النجاح
+    setTimeout(() => {
+      toast.success('تم التسجيل بنجاح');
+    }, 100);
   };
 
   return (
@@ -67,7 +71,12 @@ export const EventRegistrationDialog = ({
       open={open} 
       onOpenChange={(newOpen) => {
         console.log('Dialog onOpenChange triggered:', { newOpen, currentOpen: open });
-        onOpenChange(newOpen);
+        if (!newOpen) {
+          console.log('Closing dialog');
+          onOpenChange(false);
+        } else {
+          onOpenChange(newOpen);
+        }
       }}
       modal={true}
     >
