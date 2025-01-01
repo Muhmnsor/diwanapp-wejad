@@ -9,6 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activity_feedback: {
+        Row: {
+          activity_id: string | null
+          content_rating: number | null
+          created_at: string
+          feedback_text: string | null
+          id: string
+          name: string | null
+          organization_rating: number | null
+          overall_rating: number | null
+          phone: string | null
+          presenter_rating: number | null
+        }
+        Insert: {
+          activity_id?: string | null
+          content_rating?: number | null
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          name?: string | null
+          organization_rating?: number | null
+          overall_rating?: number | null
+          phone?: string | null
+          presenter_rating?: number | null
+        }
+        Update: {
+          activity_id?: string | null
+          content_rating?: number | null
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          name?: string | null
+          organization_rating?: number | null
+          overall_rating?: number | null
+          phone?: string | null
+          presenter_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_feedback_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_records: {
         Row: {
           activity_id: string | null
