@@ -18,7 +18,7 @@ export const useRegistrationFields = (eventId: string | undefined) => {
           .from('event_registration_fields')
           .select('*')
           .eq('event_id', eventId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('❌ Error fetching registration fields:', error);
