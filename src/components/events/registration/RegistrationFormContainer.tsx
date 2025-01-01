@@ -26,7 +26,7 @@ export const RegistrationFormContainer = ({
   isProject = false
 }: RegistrationFormContainerProps) => {
   const { id } = useParams();
-  console.log('RegistrationFormContainer - Event ID:', id);
+  console.log('🎯 RegistrationFormContainer - Event/Project ID:', id);
 
   const {
     formData,
@@ -42,20 +42,20 @@ export const RegistrationFormContainer = ({
 
   const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
 
-  console.log('RegistrationFormContainer - Form Data:', formData);
-  console.log('RegistrationFormContainer - Registration Fields:', registrationFields);
+  console.log('📝 Form Data:', formData);
+  console.log('🔧 Registration Fields Config:', registrationFields);
 
   if (isLoading) {
     return <LoadingState />;
   }
 
   if (error) {
-    console.error('Error in registration form:', error);
+    console.error('❌ Error in registration form:', error);
     return <ErrorState error={error} />;
   }
 
   if (!registrationFields) {
-    console.error('No registration fields available');
+    console.error('❌ No registration fields available');
     return <ErrorState error={new Error('No registration fields available')} />;
   }
 

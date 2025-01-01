@@ -18,7 +18,7 @@ export const EventRegistrationDialog = ({
   onOpenChange,
   event,
 }: EventRegistrationDialogProps) => {
-  console.log('EventRegistrationDialog - Event:', event);
+  console.log('📋 EventRegistrationDialog - Event:', event);
 
   return (
     <Dialog 
