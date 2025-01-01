@@ -1,17 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Download, Trash2 } from "lucide-react";
+import { Table, TableBody } from "@/components/ui/table";
 import { toast } from "sonner";
+import { ReportTableHeader } from "./table/ReportTableHeader";
+import { ReportTableRow } from "./table/ReportTableRow";
 
 interface ProjectReportsListProps {
   projectId: string;
@@ -72,44 +65,14 @@ export const ProjectReportsList = ({
   return (
     <div className="w-full">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-right">اسم التقرير</TableHead>
-            <TableHead className="text-right">معد التقرير</TableHead>
-            <TableHead className="text-right">تاريخ الإضافة</TableHead>
-            <TableHead className="text-center">إجراءات</TableHead>
-          </TableRow>
-        </TableHeader>
+        <ReportTableHeader />
         <TableBody>
           {reports.map((report) => (
-            <TableRow key={report.id}>
-              <TableCell className="text-right font-medium">
-                {report.report_name}
-              </TableCell>
-              <TableCell className="text-right">
-                {report.profiles?.email || 'غير معروف'}
-              </TableCell>
-              <TableCell className="text-right">
-                {new Date(report.created_at).toLocaleDateString('ar')}
-              </TableCell>
-              <TableCell className="text-center">
-                <div className="flex items-center justify-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(report.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
+            <ReportTableRow
+              key={report.id}
+              report={report}
+              onDelete={handleDelete}
+            />
           ))}
         </TableBody>
       </Table>
