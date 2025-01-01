@@ -96,7 +96,9 @@ export const EditActivityForm = ({
         toast.success('تم إضافة النشاط بنجاح');
       }
 
+      // Call onSuccess and onCancel to close the dialog
       onSuccess?.();
+      onCancel?.();
     } catch (error) {
       console.error('Error saving activity:', error);
       toast.error('حدث خطأ أثناء حفظ النشاط');
