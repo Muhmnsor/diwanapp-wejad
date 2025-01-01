@@ -58,7 +58,6 @@ export const ProjectActivityReportsList = ({
               const mappedReport: Report = {
                 id: report.id,
                 event_id: report.activity_id,
-                executor_id: report.executor_id,
                 report_text: report.report_text,
                 photos: report.photos || [],
                 created_at: report.created_at,
@@ -84,6 +83,7 @@ export const ProjectActivityReportsList = ({
                 <ReportListItem 
                   key={report.id} 
                   report={mappedReport}
+                  isProjectActivity={true}
                 />
               );
             })}
