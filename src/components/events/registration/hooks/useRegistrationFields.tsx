@@ -9,24 +9,6 @@ export const useRegistrationFields = (eventId?: string) => {
       console.log('🔍 Fetching registration fields for:', eventId);
       
       try {
-        // Default fields configuration
-        const defaultFields = {
-          arabic_name: true,  // Always required
-          email: true,       // Always required
-          phone: true,       // Always required
-          english_name: false,
-          education_level: false,
-          birth_date: false,
-          national_id: false,
-          gender: false,
-          work_status: false
-        };
-
-        if (!eventId) {
-          console.log('ℹ️ No event ID provided, using defaults:', defaultFields);
-          return defaultFields;
-        }
-
         // First check if this is a project activity
         const { data: eventData, error: eventError } = await supabase
           .from('events')
@@ -41,21 +23,15 @@ export const useRegistrationFields = (eventId?: string) => {
 
         console.log('📊 Event data:', eventData);
 
-        // If no event data found, return default fields
-        if (!eventData) {
-          console.log('ℹ️ No event data found, using defaults:', defaultFields);
-          return defaultFields;
-        }
-
-        // Determine which table to query based on event type
-        const isProjectActivity = eventData.is_project_activity || eventData.project_id;
+        const isProjectActivity = eventData?.is_project_activity || eventData?.project_id;
         console.log('🔄 Is project activity?', isProjectActivity);
 
+        // Fetch fields from appropriate table
         let { data: fields, error: fieldsError } = isProjectActivity
           ? await supabase
               .from('project_registration_fields')
               .select('*')
-              .eq('project_id', eventData.project_id)
+              .eq('project_id', eventData?.project_id)
               .maybeSingle()
           : await supabase
               .from('event_registration_fields')
@@ -68,15 +44,42 @@ export const useRegistrationFields = (eventId?: string) => {
           throw fieldsError;
         }
 
-        // If no custom fields found, use defaults
+        // If no fields found, create default fields in database
         if (!fields) {
-          console.log('ℹ️ No custom fields found, using defaults:', defaultFields);
-          return defaultFields;
+          console.log('ℹ️ No fields found, creating default fields');
+          
+          const { data: newFields, error: insertError } = isProjectActivity
+            ? await supabase
+                .from('project_registration_fields')
+                .insert({
+                  project_id: eventData?.project_id,
+                  arabic_name: true,
+                  email: true,
+                  phone: true
+                })
+                .select()
+                .single()
+            : await supabase
+                .from('event_registration_fields')
+                .insert({
+                  event_id: eventId,
+                  arabic_name: true,
+                  email: true,
+                  phone: true
+                })
+                .select()
+                .single();
+
+          if (insertError) {
+            console.error('❌ Error creating default fields:', insertError);
+            throw insertError;
+          }
+
+          fields = newFields;
         }
 
         // Process fields based on database settings
         const processedFields = {
-          ...defaultFields,
           arabic_name: true,  // Always required
           email: true,       // Always required
           phone: true,       // Always required
@@ -90,6 +93,7 @@ export const useRegistrationFields = (eventId?: string) => {
 
         console.log('✅ Final registration fields:', processedFields);
         return processedFields;
+
       } catch (error) {
         console.error('❌ Failed to fetch registration fields:', error);
         toast.error('حدث خطأ في تحميل نموذج التسجيل');
