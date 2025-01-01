@@ -40,7 +40,7 @@ export const PhoneField = ({ value, onChange }: PhoneFieldProps) => {
         type="tel"
         value={value || ""}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="أدخل رقم الجوال"
+        placeholder="05xxxxxxxx"
         className={error ? "border-red-500" : ""}
         required
       />
