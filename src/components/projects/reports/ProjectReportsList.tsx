@@ -1,24 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody } from "@/components/ui/table";
-import { toast } from "sonner";
 import { ReportTableHeader } from "./table/ReportTableHeader";
 import { ReportTableRow } from "./table/ReportTableRow";
+import { Card } from "@/components/ui/card";
 
 interface ProjectReportsListProps {
   projectId: string;
   activityId?: string;
 }
 
-export const ProjectReportsList = ({
-  projectId,
-  activityId
-}: ProjectReportsListProps) => {
+export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsListProps) => {
+  console.log('Fetching project activities for reports:', projectId);
+  
   const { data: reports = [], refetch } = useQuery({
     queryKey: ['project-activity-reports', projectId, activityId],
     queryFn: async () => {
-      console.log('Fetching reports with params:', { projectId, activityId });
-      
       let query = supabase
         .from('project_activity_reports')
         .select(`
@@ -31,7 +27,6 @@ export const ProjectReportsList = ({
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
-      // Only add activity_id filter if it's provided and valid
       if (activityId) {
         query = query.eq('activity_id', activityId);
       }
@@ -40,38 +35,45 @@ export const ProjectReportsList = ({
 
       if (error) {
         console.error('Error fetching reports:', error);
-        toast.error('حدث خطأ أثناء جلب التقارير');
-        return [];
+        throw error;
       }
 
       console.log('Fetched reports:', data);
-      return data;
+      return data || [];
     },
-    enabled: !!projectId // Only run query if projectId is provided
   });
 
-  if (!reports.length) {
-    return (
-      <div className="text-center text-gray-500 py-8">
-        لا يوجد تقارير لهذا النشاط
-      </div>
-    );
-  }
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      const { error } = await supabase
+        .from('project_activity_reports')
+        .delete()
+        .eq('id', reportId);
+
+      if (error) throw error;
+      
+      await refetch();
+    } catch (error) {
+      console.error('Error deleting report:', error);
+    }
+  };
 
   return (
-    <div className="w-full">
-      <Table>
-        <ReportTableHeader />
-        <TableBody>
-          {reports.map((report) => (
-            <ReportTableRow
-              key={report.id}
-              report={report}
-              onDelete={refetch}
-            />
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <Card className="p-6">
+      <div className="rounded-md border">
+        <div className="w-full">
+          <ReportTableHeader />
+          <div className="divide-y">
+            {reports.map((report: any) => (
+              <ReportTableRow
+                key={report.id}
+                report={report}
+                onDelete={() => handleDeleteReport(report.id)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 };

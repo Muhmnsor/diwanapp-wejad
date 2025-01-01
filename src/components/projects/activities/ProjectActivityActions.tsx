@@ -68,11 +68,7 @@ export const ProjectActivityActions = ({
 
       {isEditDialogOpen && (
         <EditActivityDialog
-          activity={{
-            id: activity.id,
-            project_id: activity.project_id,
-            event: activity
-          }}
+          activity={activity}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           onSave={onEditSuccess}
