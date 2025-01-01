@@ -17,11 +17,11 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
     queryFn: async () => {
       console.log('Fetching project activities:', projectId);
       const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true)
-        .order('date', { ascending: true });
+        .from("events")
+        .select("*")
+        .eq("project_id", projectId)
+        .eq("is_project_activity", true)
+        .order("date", { ascending: true });
 
       if (error) {
         console.error('Error fetching activities:', error);
@@ -32,6 +32,10 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
       return data || [];
     },
   });
+
+  const handleRefetch = async () => {
+    await refetchActivities();
+  };
 
   const {
     selectedEvent,
@@ -45,13 +49,13 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
     handleEditEvent,
     handleDeleteEvent,
     confirmDelete,
-  } = useActivityManagement(projectId, refetchActivities);
+  } = useActivityManagement(projectId, handleRefetch);
 
   return (
     <div className="space-y-6">
       <ActivityListHeader 
         projectId={projectId}
-        onSuccess={refetchActivities}
+        onSuccess={handleRefetch}
       />
 
       <Card className="p-6">
@@ -59,7 +63,7 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
           projectActivities={activities}
           onEdit={handleEditEvent}
           onDelete={handleDeleteEvent}
-          onEditSuccess={refetchActivities}
+          onEditSuccess={handleRefetch}
         />
       </Card>
     </div>
