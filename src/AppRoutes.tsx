@@ -7,6 +7,7 @@ import Users from "./pages/Users";
 import EventDetails from "./pages/EventDetails";
 import CreateEvent from "./pages/CreateEvent";
 import EventFeedback from "./pages/EventFeedback";
+import ActivityFeedback from "./pages/ActivityFeedback";
 import ProjectDetails from "./pages/ProjectDetails";
 import CreateProject from "./pages/CreateProject";
 import EditProject from "./pages/EditProject";
@@ -20,7 +21,7 @@ const AppRoutes = () => {
       <Route path="/events/:id" element={<EventDetails />} />
       <Route path="/projects/:id" element={<ProjectDetails />} />
       <Route path="/events/:id/feedback" element={<EventFeedback />} />
-      <Route path="/activity/:id/feedback" element={<EventFeedback />} />
+      <Route path="/activity/:id/feedback" element={<ActivityFeedback />} />
       <Route
         path="/dashboard"
         element={
