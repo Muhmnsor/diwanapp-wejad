@@ -2,7 +2,7 @@ import { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { RegistrationFormInputs } from "../RegistrationFormInputs";
+import { RegistrationFormInputs } from "../../RegistrationFormInputs";
 import { Button } from "@/components/ui/button";
 import { useRegistration } from "./hooks/useRegistration";
 import { toast } from "sonner";
@@ -51,30 +51,45 @@ export const RegistrationFormContainer = ({
     queryFn: async () => {
       console.log('Fetching registration fields for:', id);
       try {
-        const { data, error } = await supabase
+        const { data: eventFields, error: eventFieldsError } = await supabase
           .from('event_registration_fields')
           .select('*')
           .eq('event_id', id)
           .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching registration fields:', error);
-          throw error;
+        if (eventFieldsError) {
+          console.error('Error fetching registration fields:', eventFieldsError);
+          throw eventFieldsError;
         }
 
-        console.log('Fetched registration fields:', data);
+        console.log('Fetched registration fields:', eventFields);
         
-        // Return default fields if no data is found
-        return data || {
-          arabic_name: true,
-          email: true,
-          phone: true,
-          english_name: false,
-          education_level: false,
-          birth_date: false,
-          national_id: false,
-          gender: false,
-          work_status: false
+        // If no specific fields are set for this event, use default required fields
+        if (!eventFields) {
+          return {
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false
+          };
+        }
+
+        // Return the event-specific fields
+        return {
+          arabic_name: eventFields.arabic_name ?? true,
+          email: eventFields.email ?? true,
+          phone: eventFields.phone ?? true,
+          english_name: eventFields.english_name ?? false,
+          education_level: eventFields.education_level ?? false,
+          birth_date: eventFields.birth_date ?? false,
+          national_id: eventFields.national_id ?? false,
+          gender: eventFields.gender ?? false,
+          work_status: eventFields.work_status ?? false
         };
       } catch (error) {
         console.error('Failed to fetch registration fields:', error);
@@ -102,6 +117,8 @@ export const RegistrationFormContainer = ({
 
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
   const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
+
+  console.log('Registration fields being passed to form:', registrationFields);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
