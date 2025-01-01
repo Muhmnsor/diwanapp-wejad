@@ -17,10 +17,7 @@ export const useFeedbackQuery = (projectId: string) => {
             overall_rating,
             content_rating,
             organization_rating,
-            presenter_rating,
-            feedback_text,
-            name,
-            phone
+            presenter_rating
           )
         `)
         .eq('project_id', projectId)
