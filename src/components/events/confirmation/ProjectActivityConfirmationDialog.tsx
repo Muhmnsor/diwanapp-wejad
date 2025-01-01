@@ -87,11 +87,6 @@ export const ProjectActivityConfirmationDialog = ({
     
     setIsClosing(true);
     onOpenChange(false);
-    
-    setTimeout(() => {
-      console.log('Navigating to home page');
-      navigate('/');
-    }, 300);
   };
 
   return (
