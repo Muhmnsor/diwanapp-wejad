@@ -24,7 +24,8 @@ export const ProjectActivityCard = ({
 
   console.log("ProjectActivityCard - activity:", activity);
 
-  const handleEditClick = async () => {
+  const handleEditClick = () => {
+    setIsEditDialogOpen(true);
     onEdit();
   };
 
@@ -110,7 +111,7 @@ export const ProjectActivityCard = ({
           activity={activity}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          onSave={onEditSuccess}
+          onSuccess={onEditSuccess}
           projectId={activity.project_id}
         />
       )}
