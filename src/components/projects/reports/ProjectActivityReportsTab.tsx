@@ -1,14 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ProjectActivityReportForm } from "./ProjectActivityReportForm";
-import { ProjectActivityReportsList } from "./ProjectActivityReportsList";
+import { ProjectReportDialog } from "./ProjectReportDialog";
+import { ProjectReportsList } from "./ProjectReportsList";
+import { Card } from "@/components/ui/card";
 
 interface ProjectActivityReportsTabProps {
   projectId: string;
@@ -31,24 +26,19 @@ export const ProjectActivityReportsTab = ({
         </Button>
       </div>
 
-      <ProjectActivityReportsList
+      <Card>
+        <ProjectReportsList
+          projectId={projectId}
+          activityId={activityId}
+        />
+      </Card>
+
+      <ProjectReportDialog
+        open={isAddReportOpen}
+        onOpenChange={setIsAddReportOpen}
         projectId={projectId}
         activityId={activityId}
       />
-
-      <Dialog open={isAddReportOpen} onOpenChange={setIsAddReportOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>إضافة تقرير جديد</DialogTitle>
-          </DialogHeader>
-          <ProjectActivityReportForm
-            projectId={projectId}
-            activityId={activityId}
-            onSuccess={() => setIsAddReportOpen(false)}
-            onCancel={() => setIsAddReportOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

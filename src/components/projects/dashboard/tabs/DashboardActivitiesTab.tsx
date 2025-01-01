@@ -3,21 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProjectActivitiesTab } from "@/components/projects/dashboard/ProjectActivitiesTab";
 
 interface DashboardActivitiesTabProps {
-  project: {
-    id: string;
-    event_path: string;
-    event_category: string;
-  };
+  projectId: string;
 }
 
-export const DashboardActivitiesTab = ({ project }: DashboardActivitiesTabProps) => {
+export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProps) => {
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
-    queryKey: ['project-activities', project.id],
+    queryKey: ['project-activities', projectId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .eq('project_id', project.id)
+        .eq('project_id', projectId)
         .eq('is_project_activity', true)
         .order('created_at', { ascending: true });
 
@@ -28,7 +24,7 @@ export const DashboardActivitiesTab = ({ project }: DashboardActivitiesTabProps)
 
   return (
     <ProjectActivitiesTab
-      project={project}
+      projectId={projectId}
       projectActivities={projectActivities}
       refetchActivities={refetchActivities}
     />
