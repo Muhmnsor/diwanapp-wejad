@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RatingInput } from "@/components/events/feedback/RatingInput";
-import { PersonalInfoSection } from "@/components/events/feedback/PersonalInfoSection";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 interface ActivityFeedbackFormProps {
@@ -12,9 +10,6 @@ interface ActivityFeedbackFormProps {
     contentRating: number | null;
     organizationRating: number | null;
     presenterRating: number | null;
-    feedbackText?: string;
-    name?: string;
-    phone?: string;
   }) => void;
 }
 
@@ -26,9 +21,6 @@ export const ActivityFeedbackForm = ({
   const [contentRating, setContentRating] = useState<number | null>(null);
   const [organizationRating, setOrganizationRating] = useState<number | null>(null);
   const [presenterRating, setPresenterRating] = useState<number | null>(null);
-  const [feedbackText, setFeedbackText] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +34,7 @@ export const ActivityFeedbackForm = ({
       overallRating,
       contentRating,
       organizationRating,
-      presenterRating,
-      feedbackText,
-      name,
-      phone
+      presenterRating
     });
   };
 
@@ -80,23 +69,6 @@ export const ActivityFeedbackForm = ({
           />
         </div>
       </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-sm space-y-4">
-        <h3 className="font-semibold text-lg">ملاحظات إضافية</h3>
-        <Textarea
-          value={feedbackText}
-          onChange={(e) => setFeedbackText(e.target.value)}
-          placeholder="اكتب ملاحظاتك هنا..."
-          className="h-32"
-        />
-      </div>
-
-      <PersonalInfoSection
-        name={name}
-        phone={phone}
-        onNameChange={setName}
-        onPhoneChange={setPhone}
-      />
 
       <Button 
         type="submit" 

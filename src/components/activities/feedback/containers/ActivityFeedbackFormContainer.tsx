@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ActivityFeedbackForm } from "../ActivityFeedbackForm";
 
 export const ActivityFeedbackFormContainer = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (formData: {
@@ -13,9 +14,6 @@ export const ActivityFeedbackFormContainer = () => {
     contentRating: number | null;
     organizationRating: number | null;
     presenterRating: number | null;
-    feedbackText?: string;
-    name?: string;
-    phone?: string;
   }) => {
     console.log('Submitting activity feedback:', formData);
     
@@ -32,15 +30,18 @@ export const ActivityFeedbackFormContainer = () => {
         overall_rating: formData.overallRating,
         content_rating: formData.contentRating,
         organization_rating: formData.organizationRating,
-        presenter_rating: formData.presenterRating,
-        feedback_text: formData.feedbackText,
-        name: formData.name,
-        phone: formData.phone
+        presenter_rating: formData.presenterRating
       });
 
       if (error) throw error;
 
       toast.success('تم إرسال التقييم بنجاح');
+      
+      // Wait for toast to be visible before redirecting
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+      
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error('حدث خطأ أثناء إرسال التقييم');
