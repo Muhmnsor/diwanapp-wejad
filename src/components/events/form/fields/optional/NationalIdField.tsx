@@ -21,8 +21,11 @@ export const NationalIdField = ({ value, onChange }: NationalIdFieldProps) => {
   };
 
   const handleChange = (value: string) => {
-    if (validateNationalId(value)) {
-      onChange(value);
+    // Only allow numbers
+    const numericValue = value.replace(/[^\d]/g, '');
+    
+    if (validateNationalId(numericValue)) {
+      onChange(numericValue);
     }
   };
 
@@ -34,6 +37,7 @@ export const NationalIdField = ({ value, onChange }: NationalIdFieldProps) => {
         onChange={(e) => handleChange(e.target.value)}
         placeholder="أدخل رقم الهوية"
         className={error ? "border-red-500" : ""}
+        maxLength={10}
       />
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>

@@ -29,6 +29,16 @@ export const RequiredRegistrationFields = ({
     return true;
   };
 
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(value)) {
+      setErrors(prev => ({ ...prev, email: "يرجى إدخال بريد إلكتروني صحيح باللغة الإنجليزية" }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, email: "" }));
+    return true;
+  };
+
   const validatePhone = (value: string) => {
     const phoneRegex = /^05\d{8}$/;
     if (!phoneRegex.test(value)) {
@@ -44,6 +54,8 @@ export const RequiredRegistrationFields = ({
 
     if (field === 'arabicName') {
       isValid = validateArabicName(value);
+    } else if (field === 'email') {
+      isValid = validateEmail(value);
     } else if (field === 'phone') {
       isValid = validatePhone(value);
     }
@@ -77,10 +89,14 @@ export const RequiredRegistrationFields = ({
           <Input
             type="email"
             value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
+            onChange={(e) => handleChange('email', e.target.value)}
             placeholder="أدخل البريد الإلكتروني"
+            className={errors.email ? "border-red-500" : ""}
             required
           />
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email}</p>
+          )}
         </div>
       )}
 
