@@ -22,6 +22,9 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
           profiles:executor_id (
             id,
             email
+          ),
+          events:activity_id (
+            title
           )
         `)
         .eq('project_id', projectId)
