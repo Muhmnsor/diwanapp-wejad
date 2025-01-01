@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ProjectActivity } from "@/types/activity";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { EditActivityDialog } from "../activities/dialogs/EditActivityDialog";
+import { DeleteActivityDialog } from "../activities/dialogs/DeleteActivityDialog";
 
 interface ProjectActivityCardProps {
   activity: ProjectActivity;
@@ -20,6 +21,7 @@ export const ProjectActivityCard = ({
   onEditSuccess
 }: ProjectActivityCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   console.log("ProjectActivityCard - activity:", activity);
@@ -27,6 +29,24 @@ export const ProjectActivityCard = ({
   const handleEditClick = () => {
     setIsEditDialogOpen(true);
     onEdit();
+  };
+
+  const handleDeleteClick = () => {
+    console.log("Opening delete dialog for activity:", activity.id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    console.log("Confirming deletion for activity:", activity.id);
+    setIsLoading(true);
+    try {
+      await onDelete();
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting activity:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,8 +86,9 @@ export const ProjectActivityCard = ({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={onDelete}
+                      onClick={handleDeleteClick}
                       className="h-8 w-8 transition-colors hover:bg-secondary"
+                      disabled={isLoading}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -115,6 +136,12 @@ export const ProjectActivityCard = ({
           projectId={activity.project_id}
         />
       )}
+
+      <DeleteActivityDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 };

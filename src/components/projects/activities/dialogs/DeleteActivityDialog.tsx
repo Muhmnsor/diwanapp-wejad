@@ -20,6 +20,13 @@ export const DeleteActivityDialog = ({
   onOpenChange,
   onConfirm,
 }: DeleteActivityDialogProps) => {
+  console.log("DeleteActivityDialog - isOpen:", isOpen);
+  
+  const handleConfirm = () => {
+    console.log("Delete confirmation clicked");
+    onConfirm();
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -31,7 +38,7 @@ export const DeleteActivityDialog = ({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>إلغاء</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>حذف</AlertDialogAction>
+          <AlertDialogAction onClick={handleConfirm}>حذف</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
