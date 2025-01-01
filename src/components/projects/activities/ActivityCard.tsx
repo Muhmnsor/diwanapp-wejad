@@ -14,13 +14,13 @@ export const ActivityCard = ({
   onDelete
 }: ActivityCardProps) => {
   return (
-    <Card key={activity.id} className="p-4">
+    <Card className="p-4">
       <div className="space-y-2">
         <div className="flex justify-between items-start">
           <div>
-            <h4 className="font-medium">{activity.event?.title}</h4>
+            <h4 className="font-medium">{activity.title}</h4>
             <p className="text-sm text-muted-foreground">
-              {activity.event?.date} - {activity.event?.time}
+              {activity.date} - {activity.time}
             </p>
           </div>
           <div className="flex gap-2">
@@ -43,22 +43,22 @@ export const ActivityCard = ({
           </div>
         </div>
         <div className="text-sm text-muted-foreground">
-          {activity.event?.location}
+          {activity.location}
         </div>
-        {activity.event?.description && (
+        {activity.description && (
           <p className="text-sm text-gray-600">
-            {activity.event.description}
+            {activity.description}
           </p>
         )}
-        {activity.event?.special_requirements && (
+        {activity.special_requirements && (
           <div className="text-sm">
             <span className="font-medium">احتياجات خاصة: </span>
-            {activity.event.special_requirements}
+            {activity.special_requirements}
           </div>
         )}
-        {activity.event?.location_url && (
+        {activity.location_url && (
           <a
-            href={activity.event.location_url}
+            href={activity.location_url}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-primary hover:underline"
