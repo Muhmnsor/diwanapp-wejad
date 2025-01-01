@@ -42,7 +42,20 @@ export const ProjectActivityCard = ({
     console.log("Confirming deletion for activity:", activity.id);
     setIsLoading(true);
     try {
-      // Delete attendance records first
+      // First delete feedback records
+      console.log('Deleting feedback records...');
+      const { error: feedbackError } = await supabase
+        .from('event_feedback')
+        .delete()
+        .eq('event_id', activity.id);
+
+      if (feedbackError) {
+        console.error('Error deleting feedback:', feedbackError);
+        throw feedbackError;
+      }
+
+      // Delete attendance records
+      console.log('Deleting attendance records...');
       const { error: attendanceError } = await supabase
         .from('attendance_records')
         .delete()
@@ -54,6 +67,7 @@ export const ProjectActivityCard = ({
       }
 
       // Delete activity reports
+      console.log('Deleting activity reports...');
       const { error: reportsError } = await supabase
         .from('project_activity_reports')
         .delete()
@@ -65,6 +79,7 @@ export const ProjectActivityCard = ({
       }
 
       // Finally delete the activity
+      console.log('Deleting activity...');
       const { error: deleteError } = await supabase
         .from('events')
         .delete()
@@ -76,6 +91,7 @@ export const ProjectActivityCard = ({
         throw deleteError;
       }
 
+      console.log('Activity deleted successfully');
       toast.success('تم حذف النشاط بنجاح');
       onDelete();
       setIsDeleteDialogOpen(false);
