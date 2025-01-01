@@ -19,32 +19,41 @@ export const ProjectFormFields = ({ formData, setFormData, onImageChange }: Proj
     const fetchRegistrationFields = async () => {
       if (!formData.id) return;
 
-      const { data, error } = await supabase
-        .from('project_registration_fields')
-        .select('*')
-        .eq('project_id', formData.id)
-        .maybeSingle();
+      console.log('Fetching registration fields for project:', formData.id);
 
-      if (error) {
-        console.error('Error fetching registration fields:', error);
-        return;
-      }
+      try {
+        const { data, error } = await supabase
+          .from('project_registration_fields')
+          .select('*')
+          .eq('project_id', formData.id)
+          .maybeSingle();
 
-      if (data) {
+        if (error) {
+          console.error('Error fetching registration fields:', error);
+          return;
+        }
+
+        // If no data found, use default values
+        const registrationFields = data || {
+          arabic_name: true,
+          email: true,
+          phone: true,
+          english_name: false,
+          education_level: false,
+          birth_date: false,
+          national_id: false,
+          gender: false,
+          work_status: false,
+        };
+
+        console.log('Retrieved registration fields:', registrationFields);
+
         setFormData({
           ...formData,
-          registration_fields: {
-            arabic_name: data.arabic_name || true,
-            email: data.email || true,
-            phone: data.phone || true,
-            english_name: data.english_name || false,
-            education_level: data.education_level || false,
-            birth_date: data.birth_date || false,
-            national_id: data.national_id || false,
-            gender: data.gender || false,
-            work_status: data.work_status || false,
-          }
+          registration_fields: registrationFields
         });
+      } catch (error) {
+        console.error('Error in fetchRegistrationFields:', error);
       }
     };
 
