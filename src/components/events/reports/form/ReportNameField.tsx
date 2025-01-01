@@ -28,12 +28,12 @@ export const ReportNameField = ({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="report_name">اسم الفعالية</Label>
+        <Label htmlFor="report_name">اسم النشاط</Label>
         <Input
           id="report_name"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="أدخل اسم الفعالية..."
+          placeholder="أدخل اسم النشاط..."
           className="text-right"
           required
         />
