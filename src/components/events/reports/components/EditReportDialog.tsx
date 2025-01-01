@@ -17,12 +17,14 @@ interface EditReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   report: Report;
+  isProjectActivity?: boolean;
 }
 
 export const EditReportDialog = ({
   open,
   onOpenChange,
   report,
+  isProjectActivity = false,
 }: EditReportDialogProps) => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,15 +55,32 @@ export const EditReportDialog = ({
 
     try {
       console.log('Updating report with data:', formData);
+      console.log('Is project activity:', isProjectActivity);
+      
+      const tableName = isProjectActivity ? 'project_activity_reports' : 'event_reports';
+      console.log('Using table:', tableName);
+
       const { error } = await supabase
-        .from('event_reports')
-        .update(formData)
+        .from(tableName)
+        .update({
+          program_name: formData.program_name,
+          report_name: formData.report_name,
+          report_text: formData.report_text,
+          detailed_description: formData.detailed_description,
+          activity_duration: formData.event_duration,
+          attendees_count: formData.attendees_count,
+          activity_objectives: formData.event_objectives,
+          impact_on_participants: formData.impact_on_participants,
+          photos: formData.photos
+        })
         .eq('id', report.id);
 
       if (error) throw error;
 
       await queryClient.invalidateQueries({
-        queryKey: ['event-reports', report.event_id]
+        queryKey: isProjectActivity 
+          ? ['project-activity-reports', report.event_id]
+          : ['event-reports', report.event_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');
