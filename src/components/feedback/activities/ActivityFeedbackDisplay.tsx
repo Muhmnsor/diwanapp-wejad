@@ -1,12 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackLink } from "@/components/events/feedback/FeedbackLink";
-import { FeedbackTable } from "../shared/FeedbackTable";
+import { RatingsDisplay } from "../shared/RatingsDisplay";
 
 interface ActivityFeedback {
   overall_rating: number;
   content_rating: number;
   organization_rating: number;
   presenter_rating: number;
+  feedback_text?: string;
+  name?: string;
+  phone?: string;
 }
 
 interface ActivityFeedbackDisplayProps {
@@ -62,7 +65,27 @@ export const ActivityFeedbackDisplay = ({
               </div>
             </div>
 
-            <FeedbackTable ratings={averages} />
+            <RatingsDisplay ratings={averages} />
+
+            {feedback.some(f => f.feedback_text) && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">التعليقات</h4>
+                {feedback
+                  .filter(f => f.feedback_text)
+                  .map((item, index) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                      <p className="text-gray-700">{item.feedback_text}</p>
+                      {(item.name || item.phone) && (
+                        <div className="text-sm text-gray-500 flex gap-2 mt-2 border-t pt-2">
+                          {item.name && <span>الاسم: {item.name}</span>}
+                          {item.name && item.phone && <span>•</span>}
+                          {item.phone && <span>الجوال: {item.phone}</span>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-muted-foreground text-center py-4">
