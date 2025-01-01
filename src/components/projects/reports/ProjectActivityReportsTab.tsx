@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { ActivitySelector } from "@/components/admin/dashboard/preparation/ActivitySelector";
-import { ProjectActivityReportForm } from "./ProjectActivityReportForm";
-import { ProjectActivityReportsList } from "./ProjectActivityReportsList";
+import { ReportForm } from "./components/ReportForm";
+import { ReportsList } from "./components/ReportsList";
 
 interface ProjectActivityReportsTabProps {
   projectId: string;
@@ -33,38 +31,38 @@ export const ProjectActivityReportsTab = ({
     },
   });
 
-  const handleActivityChange = (value: string) => {
-    console.log("Selected activity:", value);
-    setSelectedActivityId(value);
-  };
-
   return (
-    <Card>
-      <CardContent className="pt-6 space-y-6">
-        <div className="space-y-4">
-          <ActivitySelector
-            activities={activities || []}
-            selectedActivity={selectedActivityId}
-            onActivityChange={handleActivityChange}
-          />
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <select
+          className="w-full p-2 border rounded-md"
+          value={selectedActivityId || ""}
+          onChange={(e) => setSelectedActivityId(e.target.value || null)}
+        >
+          <option value="">اختر النشاط</option>
+          {activities?.map((activity) => (
+            <option key={activity.id} value={activity.id}>
+              {activity.title}
+            </option>
+          ))}
+        </select>
 
-          {selectedActivityId && (
-            <>
-              <ProjectActivityReportForm
-                projectId={projectId}
-                activityId={selectedActivityId}
-                onSuccess={() => {
-                  console.log("Report submitted successfully");
-                }}
-              />
-              <ProjectActivityReportsList
-                projectId={projectId}
-                activityId={selectedActivityId}
-              />
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {selectedActivityId && (
+          <>
+            <ReportForm
+              projectId={projectId}
+              activityId={selectedActivityId}
+              onSuccess={() => {
+                console.log("Report submitted successfully");
+              }}
+            />
+            <ReportsList
+              projectId={projectId}
+              activityId={selectedActivityId}
+            />
+          </>
+        )}
+      </div>
+    </div>
   );
 };
