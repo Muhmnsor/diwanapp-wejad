@@ -2,7 +2,7 @@ import { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { RegistrationFormInputs } from "../../RegistrationFormInputs";
+import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
 import { Button } from "@/components/ui/button";
 import { useRegistration } from "./hooks/useRegistration";
 import { toast } from "sonner";
