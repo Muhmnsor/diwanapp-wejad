@@ -1,17 +1,15 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Report } from "@/types/report";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { EditReportFormFields } from "../form/EditReportFormFields";
+import { EditReportDialogHeader } from "./dialog/EditReportDialogHeader";
+import { EditReportDialogContent } from "./dialog/EditReportDialogContent";
+import { EditReportDialogActions } from "./dialog/EditReportDialogActions";
 
 interface EditReportDialogProps {
   open: boolean;
@@ -24,30 +22,20 @@ export const EditReportDialog = ({
   onOpenChange,
   report,
 }: EditReportDialogProps) => {
-  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    program_name: report.program_name || '',
+  const queryClient = useQueryClient();
+  const [formValues, setFormValues] = useState({
     report_name: report.report_name,
+    program_name: report.program_name,
     report_text: report.report_text,
-    detailed_description: report.detailed_description || '',
-    event_duration: report.event_duration || '',
-    attendees_count: report.attendees_count || '',
-    event_objectives: report.event_objectives || '',
-    impact_on_participants: report.impact_on_participants || '',
-    photos: report.photos ? report.photos.map(photo => {
-      if (typeof photo === 'string') {
-        try {
-          return JSON.parse(photo);
-        } catch {
-          return { url: photo, description: '' };
-        }
-      }
-      return photo;
-    }) : [],
+    detailed_description: report.detailed_description,
+    event_duration: report.event_duration,
+    attendees_count: report.attendees_count,
+    event_objectives: report.event_objectives,
+    impact_on_participants: report.impact_on_participants,
+    photos: report.photos || [],
   });
 
-  // Fetch activities for the report's event
   const { data: activities = [] } = useQuery({
     queryKey: ['project-activities', report.event_id],
     queryFn: async () => {
@@ -55,22 +43,32 @@ export const EditReportDialog = ({
         .from('events')
         .select('*')
         .eq('project_id', report.event_id)
-        .eq('is_project_activity', true);
+        .eq('is_project_activity', true)
+        .order('date', { ascending: true });
 
       if (error) throw error;
       return data || [];
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
+  const handleSubmit = async () => {
     try {
-      console.log('Updating report with data:', formData);
+      setIsSubmitting(true);
+      console.log('Submitting updated report:', formValues);
+
       const { error } = await supabase
         .from('event_reports')
-        .update(formData)
+        .update({
+          report_name: formValues.report_name,
+          program_name: formValues.program_name,
+          report_text: formValues.report_text,
+          detailed_description: formValues.detailed_description,
+          event_duration: formValues.event_duration,
+          attendees_count: formValues.attendees_count,
+          event_objectives: formValues.event_objectives,
+          impact_on_participants: formValues.impact_on_participants,
+          photos: formValues.photos,
+        })
         .eq('id', report.id);
 
       if (error) throw error;
@@ -89,38 +87,19 @@ export const EditReportDialog = ({
     }
   };
 
-  const setValue = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-right">تعديل التقرير</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[calc(90vh-200px)] pr-4">
-          <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
-            <EditReportFormFields 
-              formValues={formData}
-              setValue={setValue}
-              activities={activities}
-            />
-
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                إلغاء
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-              </Button>
-            </div>
-          </form>
-        </ScrollArea>
+      <DialogContent className="max-w-3xl">
+        <EditReportDialogHeader />
+        <EditReportDialogContent
+          formValues={formValues}
+          setFormValues={setFormValues}
+          activities={activities}
+        />
+        <EditReportDialogActions
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+        />
       </DialogContent>
     </Dialog>
   );
