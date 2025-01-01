@@ -41,6 +41,11 @@ export const ReportForm = ({
       return;
     }
 
+    if (!user?.id) {
+      toast.error("يجب تسجيل الدخول لإضافة تقرير");
+      return;
+    }
+
     console.log("Submitting report with activity_id:", activityId);
     setIsSubmitting(true);
 
@@ -69,7 +74,7 @@ export const ReportForm = ({
         .insert({
           project_id: projectId,
           activity_id: activityId,
-          executor_id: user?.id,
+          executor_id: user.id,
           program_name: programName,
           report_name: reportName,
           report_text: reportText,
