@@ -54,15 +54,34 @@ export const ReportListItem = ({
     }
   };
 
+  const handleDownload = () => {
+    // Implement download functionality here
+  };
+
   return (
     <>
       <div className="space-y-4 border rounded-lg p-4">
         <ReportHeader
-          report={report}
+          createdAt={report.created_at}
           onEdit={() => setShowEditDialog(true)}
           onDelete={() => setShowDeleteDialog(true)}
+          onDownload={handleDownload}
+          isDeleting={isDeleting}
+          eventTitle={eventTitle}
         />
-        <ReportContent report={report} eventTitle={eventTitle} />
+        <ReportContent
+          report_text={report.report_text}
+          detailed_description={report.detailed_description}
+          event_duration={report.event_duration}
+          activity_duration={isProjectActivity ? report.event_duration : undefined}
+          attendees_count={report.attendees_count}
+          event_objectives={report.event_objectives}
+          activity_objectives={isProjectActivity ? report.event_objectives : undefined}
+          impact_on_participants={report.impact_on_participants}
+          created_at={report.created_at}
+          photos={report.photos}
+          isProjectActivity={isProjectActivity}
+        />
       </div>
 
       <ReportDeleteDialog

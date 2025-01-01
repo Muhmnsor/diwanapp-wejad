@@ -13,12 +13,14 @@ interface ReportDeleteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  isLoading?: boolean;
 }
 
 export const ReportDeleteDialog = ({
   open,
   onOpenChange,
   onConfirm,
+  isLoading,
 }: ReportDeleteDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -31,8 +33,12 @@ export const ReportDeleteDialog = ({
         </AlertDialogHeader>
         <AlertDialogFooter className="flex gap-2">
           <AlertDialogCancel>إلغاء</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            حذف
+          <AlertDialogAction 
+            onClick={onConfirm} 
+            disabled={isLoading}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isLoading ? "جاري الحذف..." : "حذف"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
