@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { RatingInput } from "@/components/events/feedback/RatingInput";
 import { PersonalInfoSection } from "@/components/events/feedback/PersonalInfoSection";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 interface ActivityFeedbackFormProps {
   isSubmitting: boolean;
