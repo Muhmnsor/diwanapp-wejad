@@ -1,24 +1,35 @@
 import { Button } from "@/components/ui/button";
+import { EventStatus } from "@/types/eventStatus";
+import { getStatusConfig } from "@/utils/eventStatusConfig";
 
 interface EventRegistrationButtonProps {
-  isPaidEvent: boolean;
-  eventPrice: number | "free" | null;
+  status: EventStatus;
+  onRegister: () => void;
 }
 
-export const EventRegistrationButton = ({
-  isPaidEvent,
-  eventPrice
+export const EventRegistrationButton = ({ 
+  status, 
+  onRegister 
 }: EventRegistrationButtonProps) => {
-  const buttonText = isPaidEvent 
-    ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)`
-    : "تأكيد التسجيل";
+  console.log('EventRegistrationButton status:', status);
+  
+  const config = getStatusConfig(status);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Register button clicked');
+    onRegister();
+  };
 
   return (
     <Button 
-      type="submit"
-      className="w-full"
+      size="lg" 
+      className={`w-full rounded-2xl h-14 text-lg ${config.className}`}
+      onClick={handleClick}
+      disabled={config.disabled}
+      variant={status === 'available' ? 'default' : 'secondary'}
     >
-      {buttonText}
+      {config.text}
     </Button>
   );
 };
