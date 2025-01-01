@@ -1,10 +1,10 @@
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { ProjectRegistrationFields } from "./fields/ProjectRegistrationFields";
 import { ProjectRegistrationButton } from "./components/ProjectRegistrationButton";
 import { ProjectRegistrationFormData, ProjectRegistrationFieldsConfig } from "./types/registration";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { ProjectActivityConfirmationDialog } from "@/components/events/confirmation/ProjectActivityConfirmationDialog";
 
 interface ProjectRegistrationFormProps {
   projectTitle: string;
@@ -30,7 +30,9 @@ export const ProjectRegistrationForm = ({
   registrationFields,
 }: ProjectRegistrationFormProps) => {
   console.log('ProjectRegistrationForm - Current form data:', formData);
-  const navigate = useNavigate();
+  
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [registrationId, setRegistrationId] = useState("");
   
   const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
 
@@ -72,14 +74,13 @@ export const ProjectRegistrationForm = ({
       }
 
       console.log('Registration submitted successfully:', data);
-      toast.success('تم التسجيل بنجاح!');
+      
+      // Set registration ID and show confirmation
+      setRegistrationId(registrationNumber);
+      setShowConfirmation(true);
       
       // Call the original onSubmit handler
       onSubmit(e);
-      
-      // Navigate to success page or show confirmation
-      // You can customize this based on your needs
-      navigate(`/projects/${projectId}/registration/success`);
       
     } catch (error) {
       console.error('Error in form submission:', error);
@@ -88,20 +89,36 @@ export const ProjectRegistrationForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <ProjectRegistrationFields
-        formData={formData}
-        setFormData={setFormData}
-        projectPrice={projectPrice}
-        showPaymentFields={isPaidProject}
-        registrationFields={registrationFields}
-      />
-      
-      <ProjectRegistrationButton
-        isSubmitting={isSubmitting}
-        isPaidProject={isPaidProject}
-        projectPrice={projectPrice}
-      />
-    </form>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <ProjectRegistrationFields
+          formData={formData}
+          setFormData={setFormData}
+          registrationFields={registrationFields}
+          projectPrice={projectPrice}
+          showPaymentFields={isPaidProject}
+        />
+        
+        <ProjectRegistrationButton
+          isSubmitting={isSubmitting}
+          isPaidProject={isPaidProject}
+          projectPrice={projectPrice}
+        />
+      </form>
+
+      {showConfirmation && (
+        <ProjectActivityConfirmationDialog
+          open={showConfirmation}
+          onOpenChange={setShowConfirmation}
+          registrationId={registrationId}
+          eventTitle={projectTitle}
+          formData={{
+            name: formData.arabicName,
+            email: formData.email,
+            phone: formData.phone
+          }}
+        />
+      )}
+    </>
   );
 };
