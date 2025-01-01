@@ -42,6 +42,12 @@ export const useRegistration = (
       setIsRegistered(true);
       setRegistrationId(newRegistrationId);
       
+      console.log('States updated after successful registration:', {
+        registrationId: newRegistrationId,
+        isRegistered: true,
+        showConfirmation: true
+      });
+      
       toast.success('تم التسجيل بنجاح');
       
       if (onSubmit) {
