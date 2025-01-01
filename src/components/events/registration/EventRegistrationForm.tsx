@@ -28,7 +28,10 @@ export const EventRegistrationForm = ({
     registrationId,
     isRegistered,
     handleSubmit: registrationSubmit
-  } = useRegistration(onSubmit, false);
+  } = useRegistration(() => {
+    console.log('EventRegistrationForm - Registration successful, calling onSubmit');
+    onSubmit();
+  }, false);
 
   console.log('EventRegistrationForm - Current state:', {
     showConfirmation,
