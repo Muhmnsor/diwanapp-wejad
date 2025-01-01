@@ -1,6 +1,17 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ProjectActivity } from "@/types/activity";
-import { ProjectActivityActions } from "./ProjectActivityActions";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Edit, FileText, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProjectActivityReportsTab } from "../reports/ProjectActivityReportsTab";
 
 interface ProjectActivitiesTableProps {
   activities: ProjectActivity[];
@@ -15,62 +26,79 @@ export const ProjectActivitiesTable = ({
   onDelete,
   onEditSuccess
 }: ProjectActivitiesTableProps) => {
-  console.log("ProjectActivitiesTable - Rendering with activities:", activities);
+  const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
 
-  if (!activities || activities.length === 0) {
+  if (!activities.length) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        لا توجد أنشطة مضافة لهذا المشروع
+      <div className="text-center text-gray-500 py-8">
+        لا توجد أنشطة مضافة
       </div>
     );
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>العنوان</TableHead>
-          <TableHead>التاريخ والوقت</TableHead>
-          <TableHead>الموقع</TableHead>
-          <TableHead>الوصف</TableHead>
-          <TableHead>متطلبات خاصة</TableHead>
-          <TableHead>رابط الموقع</TableHead>
-          <TableHead>الإجراءات</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {activities.map((activity) => (
-          <TableRow key={activity.id}>
-            <TableCell>{activity.title}</TableCell>
-            <TableCell>{activity.date} - {activity.time}</TableCell>
-            <TableCell>{activity.location}</TableCell>
-            <TableCell>{activity.description || '-'}</TableCell>
-            <TableCell>{activity.special_requirements || '-'}</TableCell>
-            <TableCell>
-              {activity.location_url ? (
-                <a
-                  href={activity.location_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  رابط الموقع
-                </a>
-              ) : (
-                '-'
-              )}
-            </TableCell>
-            <TableCell>
-              <ProjectActivityActions
-                activity={activity}
-                onEdit={() => onEdit(activity)}
-                onDelete={() => onDelete(activity)}
-                onEditSuccess={onEditSuccess}
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="space-y-4">
+      {selectedActivity ? (
+        <div className="space-y-4">
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedActivity(null)}
+          >
+            العودة إلى قائمة الأنشطة
+          </Button>
+          <ProjectActivityReportsTab
+            projectId={activities[0].project_id}
+            activityId={selectedActivity}
+          />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-right">عنوان النشاط</TableHead>
+              <TableHead className="text-right">التاريخ</TableHead>
+              <TableHead className="text-right">الوقت</TableHead>
+              <TableHead className="text-right">المكان</TableHead>
+              <TableHead className="text-center">الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {activities.map((activity) => (
+              <TableRow key={activity.id}>
+                <TableCell className="font-medium">{activity.title}</TableCell>
+                <TableCell>{activity.date}</TableCell>
+                <TableCell>{activity.time}</TableCell>
+                <TableCell>{activity.location}</TableCell>
+                <TableCell>
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSelectedActivity(activity.id)}
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(activity)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(activity)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
   );
 };
