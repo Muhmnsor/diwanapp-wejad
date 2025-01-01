@@ -1,11 +1,10 @@
 import { FormEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { RegistrationFormInputs } from "../../RegistrationFormInputs";
+import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
 import { Button } from "@/components/ui/button";
 import { useRegistration } from "../hooks/useRegistration";
-import { toast } from "sonner";
+import { useRegistrationFields } from "../hooks/useRegistrationFields";
+import { LoadingState, ErrorState } from "../components/RegistrationFormStates";
 
 interface RegistrationFormContainerProps {
   eventTitle: string;
@@ -27,6 +26,8 @@ export const RegistrationFormContainer = ({
   isProject = false
 }: RegistrationFormContainerProps) => {
   const { id } = useParams();
+  console.log('🎯 RegistrationFormContainer - Event/Project ID:', id);
+
   const {
     formData,
     setFormData,
@@ -39,64 +40,23 @@ export const RegistrationFormContainer = ({
     }
   }, isProject);
 
-  const handleFormDataChange = (newData: any) => {
-    setFormData({
-      ...newData,
-      name: newData.arabicName
-    });
-  };
+  const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
 
-  const { data: registrationFields, isLoading, error } = useQuery({
-    queryKey: ['registration-fields', id],
-    queryFn: async () => {
-      console.log('Fetching registration fields for:', id);
-      try {
-        const { data, error } = await supabase
-          .from('event_registration_fields')
-          .select('*')
-          .eq('event_id', id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching registration fields:', error);
-          throw error;
-        }
-
-        console.log('Fetched registration fields:', data);
-        
-        // Return default fields if no data is found
-        return data || {
-          arabic_name: true,
-          email: true,
-          phone: true,
-          english_name: false,
-          education_level: false,
-          birth_date: false,
-          national_id: false,
-          gender: false,
-          work_status: false
-        };
-      } catch (error) {
-        console.error('Failed to fetch registration fields:', error);
-        toast.error('حدث خطأ في تحميل نموذج التسجيل');
-        throw error;
-      }
-    },
-    retry: 2,
-    retryDelay: 1000
-  });
+  console.log('📝 Form Data:', formData);
+  console.log('🔧 Registration Fields Config:', registrationFields);
 
   if (isLoading) {
-    return <div className="text-center py-4">جاري تحميل نموذج التسجيل...</div>;
+    return <LoadingState />;
   }
 
   if (error) {
-    console.error('Error in registration form:', error);
-    return (
-      <div className="text-center py-4 text-red-500">
-        حدث خطأ في تحميل نموذج التسجيل. يرجى المحاولة مرة أخرى.
-      </div>
-    );
+    console.error('❌ Error in registration form:', error);
+    return <ErrorState error={error} />;
+  }
+
+  if (!registrationFields) {
+    console.error('❌ No registration fields available');
+    return <ErrorState error={new Error('No registration fields available')} />;
   }
 
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
@@ -106,7 +66,7 @@ export const RegistrationFormContainer = ({
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
       <RegistrationFormInputs
         formData={formData}
-        setFormData={handleFormDataChange}
+        setFormData={setFormData}
         eventPrice={eventPrice}
         showPaymentFields={isPaidEvent}
         registrationFields={registrationFields}

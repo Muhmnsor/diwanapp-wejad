@@ -60,7 +60,7 @@ export const useRegistrationFields = (eventId?: string) => {
           return defaultFields;
         }
 
-        // Merge custom fields with required fields, ensuring required fields stay required
+        // Always ensure required fields are included
         const processedFields = {
           ...defaultFields,
           arabic_name: true, // Always required
