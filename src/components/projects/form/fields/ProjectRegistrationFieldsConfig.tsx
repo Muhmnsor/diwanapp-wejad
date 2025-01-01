@@ -13,6 +13,8 @@ export const ProjectRegistrationFieldsConfig = ({
   setFormData,
 }: ProjectRegistrationFieldsConfigProps) => {
   const updateField = (field: string, value: boolean) => {
+    console.log('Updating registration field:', field, value);
+    
     setFormData({
       ...formData,
       registration_fields: {
