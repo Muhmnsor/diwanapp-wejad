@@ -15,6 +15,8 @@ export const EducationLevelField = ({ value, onChange }: EducationLevelFieldProp
           <SelectValue placeholder="اختر المستوى التعليمي" />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="primary">ابتدائي</SelectItem>
+          <SelectItem value="middle">متوسط</SelectItem>
           <SelectItem value="high_school">ثانوي</SelectItem>
           <SelectItem value="bachelor">بكالوريوس</SelectItem>
           <SelectItem value="master">ماجستير</SelectItem>
