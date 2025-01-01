@@ -39,7 +39,8 @@ export const ProjectInfo = ({
     beneficiaryType,
     eventPath,
     eventCategory,
-    projectId
+    projectId,
+    maxAttendees
   });
 
   // Fetch actual registration count
