@@ -47,8 +47,6 @@ export const useRegistration = (
         showConfirmation: true
       });
       
-      toast.success('تم التسجيل بنجاح');
-      
       if (onSubmit) {
         console.log('useRegistration - Calling onSubmit callback');
         onSubmit();

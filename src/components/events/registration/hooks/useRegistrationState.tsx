@@ -9,13 +9,13 @@ export const useRegistrationState = () => {
     email: "",
     phone: "",
     educationLevel: "",
-    birthDate: null, // Initialize as null instead of empty string
+    birthDate: null,
     nationalId: "",
     gender: "",
     workStatus: "",
     cardNumber: "",
     expiryDate: "",
-    cvv: "",
+    cvv: ""
   });
 
   const [showConfirmation, setShowConfirmation] = useState(false);

@@ -41,44 +41,41 @@ export const RegistrationForm = ({
     formData
   });
 
-  if (!isRegistered) {
-    console.log('RegistrationForm - Showing registration form');
+  if (isRegistered && showConfirmation) {
+    console.log('RegistrationForm - Showing confirmation dialog with data:', {
+      registrationId,
+      eventTitle,
+      formData
+    });
+
     return (
-      <RegistrationFormContainer
+      <EventRegistrationConfirmation
+        open={showConfirmation}
+        onOpenChange={setShowConfirmation}
+        registrationId={registrationId}
         eventTitle={eventTitle}
-        eventPrice={eventPrice}
         eventDate={eventDate}
         eventTime={eventTime}
         eventLocation={eventLocation}
-        onSubmit={onSubmit}
-        isProject={isProject}
+        formData={{
+          name: formData.arabicName,
+          email: formData.email,
+          phone: formData.phone
+        }}
       />
     );
   }
 
-  // تحويل البيانات لتتناسب مع توقعات بطاقة التأكيد
-  const confirmationFormData = {
-    name: formData.arabicName,
-    email: formData.email,
-    phone: formData.phone
-  };
-
-  console.log('RegistrationForm - Showing confirmation dialog with data:', {
-    registrationId,
-    eventTitle,
-    confirmationFormData
-  });
-
+  console.log('RegistrationForm - Showing registration form');
   return (
-    <EventRegistrationConfirmation
-      open={showConfirmation}
-      onOpenChange={setShowConfirmation}
-      registrationId={registrationId}
+    <RegistrationFormContainer
       eventTitle={eventTitle}
+      eventPrice={eventPrice}
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      formData={confirmationFormData}
+      onSubmit={onSubmit}
+      isProject={isProject}
     />
   );
 };
