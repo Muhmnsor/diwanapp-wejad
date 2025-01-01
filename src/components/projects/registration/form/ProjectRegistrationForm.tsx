@@ -2,6 +2,8 @@ import { FormEvent } from "react";
 import { ProjectRegistrationFields } from "../fields/ProjectRegistrationFields";
 import { ProjectRegistrationButton } from "../components/ProjectRegistrationButton";
 import { ProjectRegistrationFormData } from "../types/registration";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectRegistrationFormProps {
   formData: ProjectRegistrationFormData;
@@ -30,6 +32,8 @@ export const ProjectRegistrationForm = ({
   registrationFields,
   onSubmit
 }: ProjectRegistrationFormProps) => {
+  console.log('ProjectRegistrationForm - Current form data:', formData);
+  
   const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
 
   return (
