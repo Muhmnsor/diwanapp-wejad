@@ -39,6 +39,7 @@ export const ReportForm = ({
       return;
     }
 
+    console.log("Submitting report with activity_id:", activityId);
     setIsSubmitting(true);
 
     try {
@@ -58,7 +59,10 @@ export const ReportForm = ({
           photos: photos,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error submitting report:', error);
+        throw error;
+      }
 
       toast.success("تم إضافة التقرير بنجاح");
       if (onSuccess) onSuccess();
