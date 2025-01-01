@@ -51,6 +51,13 @@ export const getEventStatus = (event: Event): EventStatus => {
     today: today.toISOString()
   });
 
+  // التحقق من اكتمال العدد أولاً
+  const currentAttendees = typeof event.attendees === 'number' ? event.attendees : 0;
+  if (event.max_attendees && currentAttendees >= event.max_attendees) {
+    console.log('Event is full - no more seats available');
+    return 'full';
+  }
+
   // التحقق من بدء موعد التسجيل
   if (registrationStartDate) {
     const startDate = new Date(
@@ -84,13 +91,6 @@ export const getEventStatus = (event: Event): EventStatus => {
   if (now >= eventDateTime) {
     console.log('Event has already started or ended');
     return 'eventStarted';
-  }
-
-  // التحقق من اكتمال العدد
-  const currentAttendees = typeof event.attendees === 'number' ? event.attendees : 0;
-  if (event.max_attendees && currentAttendees >= event.max_attendees) {
-    console.log('Event is full - no more seats available');
-    return 'full';
   }
 
   console.log('Registration is available');

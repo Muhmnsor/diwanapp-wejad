@@ -7,6 +7,8 @@ import { ProjectRegistrationDialog } from "./registration/ProjectRegistrationDia
 import { useState } from "react";
 import { getEventStatus } from "@/utils/eventUtils";
 import { EventPathType, EventCategoryType } from "@/types/event";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectContentProps {
   project: Project;
@@ -14,6 +16,20 @@ interface ProjectContentProps {
 
 export const ProjectContent = ({ project }: ProjectContentProps) => {
   const [showRegistrationDialog, setShowRegistrationDialog] = useState(false);
+
+  // Fetch current registrations count
+  const { data: registrations = [] } = useQuery({
+    queryKey: ['project-registrations', project.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('project_id', project.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   // Convert project dates to event format for status check
   const eventFormatData = {
@@ -31,7 +47,7 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
     beneficiaryType: project.beneficiary_type,
     certificate_type: project.certificate_type || "none",
     event_hours: 0,
-    attendees: 0,
+    attendees: registrations.length,
     imageUrl: project.image_url,
     event_path: project.event_path as EventPathType,
     event_category: project.event_category as EventCategoryType
