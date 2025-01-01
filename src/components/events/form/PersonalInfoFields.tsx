@@ -4,7 +4,7 @@ import { useState } from "react";
 
 interface PersonalInfoFieldsProps {
   formData: any;
-  handleInputChange: (field: string, value: string) => void;
+  setFormData: (data: any) => void;
   registrationFields: {
     arabic_name: boolean;
     email: boolean;
@@ -20,7 +20,7 @@ interface PersonalInfoFieldsProps {
 
 export const PersonalInfoFields = ({
   formData,
-  handleInputChange,
+  setFormData,
   registrationFields
 }: PersonalInfoFieldsProps) => {
   console.log('🔍 PersonalInfoFields - Registration fields:', registrationFields);
@@ -74,7 +74,7 @@ export const PersonalInfoFields = ({
     }
 
     if (isValid) {
-      handleInputChange(field, value);
+      setFormData({ ...formData, [field]: value });
     }
   };
 
