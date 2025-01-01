@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { PhotosField } from "@/components/events/reports/form/PhotosField";
+import { ReportNameField } from "@/components/events/reports/form/ReportNameField";
+import { ReportTextField } from "@/components/events/reports/form/ReportTextField";
+import { EventMetadataFields } from "@/components/events/reports/form/EventMetadataFields";
+import { EventObjectivesField } from "@/components/events/reports/form/EventObjectivesField";
+import { ImpactField } from "@/components/events/reports/form/ImpactField";
 import { useAuthStore } from "@/store/authStore";
-import { ReportFormFields } from "./form/ReportFormFields";
-import { ReportFormActions } from "./form/ReportFormActions";
-import { ReportFormData } from "../types/reportTypes";
 
 interface ReportFormProps {
   projectId: string;
@@ -19,28 +23,21 @@ export const ReportForm = ({
 }: ReportFormProps) => {
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<ReportFormData>({
-    reportName: "",
-    programName: "",
-    reportText: "",
-    detailedDescription: "",
-    activityDuration: "",
-    attendeesCount: "",
-    activityObjectives: "",
-    impactOnParticipants: "",
-    photos: []
-  });
+  const [reportName, setReportName] = useState("");
+  const [programName, setProgramName] = useState("");
+  const [reportText, setReportText] = useState("");
+  const [detailedDescription, setDetailedDescription] = useState("");
+  const [activityDuration, setActivityDuration] = useState("");
+  const [attendeesCount, setAttendeesCount] = useState("");
+  const [activityObjectives, setActivityObjectives] = useState("");
+  const [impactOnParticipants, setImpactOnParticipants] = useState("");
+  const [photos, setPhotos] = useState<{ url: string; description: string; }[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.reportName || !formData.reportText) {
+    if (!reportName || !reportText) {
       toast.error("الرجاء تعبئة الحقول المطلوبة");
-      return;
-    }
-
-    if (!user?.id) {
-      toast.error("يجب تسجيل الدخول لإضافة تقرير");
       return;
     }
 
@@ -72,16 +69,16 @@ export const ReportForm = ({
         .insert({
           project_id: projectId,
           activity_id: activityId,
-          executor_id: user.id,
-          program_name: formData.programName,
-          report_name: formData.reportName,
-          report_text: formData.reportText,
-          detailed_description: formData.detailedDescription,
-          activity_duration: formData.activityDuration,
-          attendees_count: formData.attendeesCount,
-          activity_objectives: formData.activityObjectives,
-          impact_on_participants: formData.impactOnParticipants,
-          photos: formData.photos.filter(photo => photo.url),
+          executor_id: user?.id,
+          program_name: programName,
+          report_name: reportName,
+          report_text: reportText,
+          detailed_description: detailedDescription,
+          activity_duration: activityDuration,
+          attendees_count: attendeesCount,
+          activity_objectives: activityObjectives,
+          impact_on_participants: impactOnParticipants,
+          photos: photos.filter(photo => photo.url),
         });
 
       if (error) {
@@ -102,13 +99,48 @@ export const ReportForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <ReportFormFields
-        formData={formData}
-        onChange={setFormData}
+      <ReportNameField
+        value={reportName}
+        programName={programName}
+        onChange={setReportName}
+        onProgramNameChange={setProgramName}
       />
-      <ReportFormActions
-        isSubmitting={isSubmitting}
+
+      <ReportTextField
+        value={reportText}
+        onChange={setReportText}
       />
+
+      <EventMetadataFields
+        duration={activityDuration}
+        attendeesCount={attendeesCount}
+        onDurationChange={setActivityDuration}
+        onAttendeesCountChange={setAttendeesCount}
+      />
+
+      <EventObjectivesField
+        value={activityObjectives}
+        onChange={setActivityObjectives}
+      />
+
+      <ImpactField
+        value={impactOnParticipants}
+        onChange={setImpactOnParticipants}
+      />
+
+      <PhotosField
+        photos={photos}
+        onPhotosChange={setPhotos}
+      />
+
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "جاري الحفظ..." : "حفظ التقرير"}
+        </Button>
+      </div>
     </form>
   );
 };
