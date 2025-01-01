@@ -26,10 +26,10 @@ export const RegistrationForm = ({
     handleSubmit,
     registrationId,
     isRegistered
-  } = useRegistration((id: string, data: any) => {
-    console.log('RegistrationForm - Registration successful:', { id, data });
-    if (onSubmit) {
-      onSubmit({ registrationId: id, formData: data });
+  } = useRegistration(() => {
+    if (registrationId && formData) {
+      console.log('RegistrationForm - Registration successful:', { registrationId, formData });
+      onSubmit({ registrationId, formData });
     }
   }, isProject);
 
@@ -46,8 +46,6 @@ export const RegistrationForm = ({
       eventDate={eventDate}
       eventTime={eventTime}
       eventLocation={eventLocation}
-      formData={formData}
-      isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
       isProject={isProject}
     />
