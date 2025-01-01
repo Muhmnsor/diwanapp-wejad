@@ -1,23 +1,10 @@
 import { PersonalInfoFields } from "./form/PersonalInfoFields";
 import { PaymentFields } from "./form/PaymentFields";
+import { RegistrationFormData } from "./registration/types/registration";
 
 interface RegistrationFormInputsProps {
-  formData: {
-    name: string;
-    email: string;
-    phone: string;
-    cardNumber?: string;
-    expiryDate?: string;
-    cvv?: string;
-    arabicName: string;
-    englishName?: string;
-    educationLevel?: string;
-    birthDate?: string;
-    nationalId?: string;
-    gender?: string;
-    workStatus?: string;
-  };
-  setFormData: (data: any) => void;
+  formData: RegistrationFormData;
+  setFormData: (data: RegistrationFormData) => void;
   eventPrice: number | "free" | null;
   showPaymentFields?: boolean;
   registrationFields: {
@@ -40,8 +27,8 @@ export const RegistrationFormInputs = ({
   showPaymentFields = false,
   registrationFields
 }: RegistrationFormInputsProps) => {
-  console.log('🔄 RegistrationFormInputs - Registration Fields:', registrationFields);
   console.log('📝 RegistrationFormInputs - Form Data:', formData);
+  console.log('🔄 RegistrationFormInputs - Registration Fields:', registrationFields);
 
   return (
     <div className="space-y-4">

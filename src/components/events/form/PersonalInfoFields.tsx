@@ -1,10 +1,11 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { RegistrationFormData } from "../registration/types/registration";
 
 interface PersonalInfoFieldsProps {
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: RegistrationFormData;
+  setFormData: (data: RegistrationFormData) => void;
   registrationFields: {
     arabic_name: boolean;
     email: boolean;
@@ -62,7 +63,6 @@ export const PersonalInfoFields = ({
   };
 
   const handleChange = (field: string, value: string) => {
-    console.log(`🔄 Field change - ${field}:`, value);
     let isValid = true;
 
     if (field === 'arabicName') {
