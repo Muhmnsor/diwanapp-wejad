@@ -12,7 +12,7 @@ interface DashboardActivitiesTabProps {
 export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProps) => {
   console.log('DashboardActivitiesTab - projectId:', projectId);
   
-  const { data: activities = [], refetch: refetchActivities, isLoading } = useQuery({
+  const { data: activities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
       console.log('Fetching project activities:', projectId);
@@ -31,7 +31,6 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
       console.log('Fetched activities:', data);
       return data || [];
     },
-    enabled: !!projectId, // Only run query when projectId exists
   });
 
   const handleRefetch = async () => {
@@ -51,20 +50,6 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
     handleDeleteEvent,
     confirmDelete,
   } = useActivityManagement(projectId, handleRefetch);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <ActivityListHeader 
-          projectId={projectId}
-          onSuccess={handleRefetch}
-        />
-        <Card className="p-6">
-          <div className="text-center py-4">جاري التحميل...</div>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
