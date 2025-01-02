@@ -5,17 +5,21 @@ import { Button } from "@/components/ui/button";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
+import { UseFormReturn } from "react-hook-form";
+import { ActivityReportFormData } from "../fields/ActivityReportFormFields";
 
 interface ReportPhotosSectionProps {
   photos: { url: string; description: string; }[];
   onChange: (photos: { url: string; description: string; }[]) => void;
   photoPlaceholders?: string[];
+  form: UseFormReturn<ActivityReportFormData>;
 }
 
 export const ReportPhotosSection = ({ 
   photos = [],
   onChange,
-  photoPlaceholders = []
+  photoPlaceholders = [],
+  form
 }: ReportPhotosSectionProps) => {
   console.log("ReportPhotosSection - Initial photos:", photos);
 
