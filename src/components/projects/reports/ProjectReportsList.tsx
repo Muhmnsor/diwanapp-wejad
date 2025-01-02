@@ -67,6 +67,7 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
     if (!reportToDelete) return;
 
     try {
+      console.log('Deleting report:', reportToDelete);
       const { error } = await supabase
         .from('project_activity_reports')
         .delete()
