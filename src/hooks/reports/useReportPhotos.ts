@@ -1,28 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ReportPhoto } from '@/types/projectReport';
 
-export const useReportPhotos = (initialReport?: any) => {
-  const [photos, setPhotos] = useState<ReportPhoto[]>(Array(6).fill(null));
-
-  useEffect(() => {
-    if (initialReport?.photos && Array.isArray(initialReport.photos)) {
-      const initialPhotos = Array(6).fill(null);
-      
-      initialReport.photos.forEach((photoStr: string, index: number) => {
-        try {
-          const photo = JSON.parse(photoStr);
-          if (photo && photo.url) {
-            initialPhotos[index] = photo;
-          }
-        } catch (e) {
-          console.error('Error parsing photo:', e);
-        }
-      });
-
-      console.log('useReportPhotos - Initialized photos array:', initialPhotos);
-      setPhotos(initialPhotos);
-    }
-  }, [initialReport]);
+export const useReportPhotos = (initialPhotos?: any) => {
+  const [photos, setPhotos] = useState<ReportPhoto[]>(
+    initialPhotos ? parseInitialPhotos(initialPhotos) : Array(6).fill(null)
+  );
 
   const preparePhotosForSubmission = () => {
     return photos
@@ -40,4 +22,23 @@ export const useReportPhotos = (initialReport?: any) => {
     setPhotos,
     preparePhotosForSubmission
   };
+};
+
+const parseInitialPhotos = (report: any) => {
+  const initialPhotos = Array(6).fill(null);
+  
+  if (report.photos && Array.isArray(report.photos)) {
+    report.photos.forEach((photoStr: string, index: number) => {
+      try {
+        const photo = JSON.parse(photoStr);
+        if (photo && photo.url) {
+          initialPhotos[index] = photo;
+        }
+      } catch (e) {
+        console.error('Error parsing photo:', e);
+      }
+    });
+  }
+
+  return initialPhotos;
 };

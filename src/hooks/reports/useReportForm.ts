@@ -34,7 +34,6 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('ReportForm - Handling submit. Is update?:', !!report);
     
     if (!selectedActivity) {
       toast.error("الرجاء اختيار النشاط");
@@ -48,7 +47,6 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
 
     try {
       const validPhotos = preparePhotosForSubmission();
-      console.log('ReportForm - Preparing photos for submission:', validPhotos);
 
       const reportData = {
         project_id: projectId,
@@ -63,12 +61,9 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
         photos: validPhotos,
       };
 
-      console.log('ReportForm - Submitting data:', reportData);
-
       let error;
 
       if (report?.id) {
-        console.log('ReportForm - Updating existing report:', report.id);
         const { error: updateError } = await supabase
           .from('project_activity_reports')
           .update(reportData)
@@ -77,12 +72,10 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
         error = updateError;
         
         if (!error) {
-          console.log('ReportForm - Update successful');
           toast.success("تم تحديث التقرير بنجاح");
           onSuccess?.();
         }
       } else {
-        console.log('ReportForm - Creating new report');
         const { error: insertError } = await supabase
           .from('project_activity_reports')
           .insert(reportData);
@@ -90,7 +83,6 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
         error = insertError;
         
         if (!error) {
-          console.log('ReportForm - Insert successful');
           toast.success("تم إضافة التقرير بنجاح");
           onSuccess?.();
           
@@ -102,7 +94,6 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
       }
 
       if (error) {
-        console.error('Error saving report:', error);
         throw error;
       }
     } catch (error) {

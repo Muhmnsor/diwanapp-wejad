@@ -35,5 +35,5 @@ export interface ProjectReportFormData {
 export interface ReportPhoto {
   url: string;
   description: string;
-  index?: number;  // Added the index property as optional
+  index?: number;
 }
