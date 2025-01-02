@@ -4,14 +4,14 @@ import { ReportPhoto } from '../types';
 
 interface BaseReport {
   report_name: string;
-  program_name?: string;
+  program_name?: string | null;
   report_text: string;
   activity_duration?: string;
-  attendees_count?: string;
+  attendees_count?: string | null;
   activity_objectives?: string;
-  impact_on_participants?: string;
+  impact_on_participants?: string | null;
   photos?: ReportPhoto[];
-  satisfaction_level?: number;
+  satisfaction_level?: number | null;
 }
 
 export const downloadReportWithImages = async (report: BaseReport, eventTitle?: string): Promise<boolean> => {
@@ -72,8 +72,8 @@ const generateReportContent = (report: BaseReport): string => {
   ];
 
   return sections
-    .map(section => `${section.title}:\n${section.value}\n`)
-    .join('\n');
+    .map(section => `${section.title}:\n${section.value}`)
+    .join('\n\n');
 };
 
 const getFileExtension = (url: string): string => {
