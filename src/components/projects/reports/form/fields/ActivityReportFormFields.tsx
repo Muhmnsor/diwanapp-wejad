@@ -170,7 +170,6 @@ export const ActivityReportFormFields = ({ form }: ActivityReportFormFieldsProps
             <ReportPhotosSection
               photos={field.value || []}
               onChange={field.onChange}
-              form={form}
               photoPlaceholders={[
                 "صورة تظهر تفاعل المستفيدين والجمهور مع المحتوى",
                 "صورة توضح مكان إقامة النشاط",

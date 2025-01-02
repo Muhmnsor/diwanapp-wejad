@@ -11,19 +11,18 @@ interface ReportPhotosSectionProps {
   photos: { url: string; description: string; }[];
   onChange: (photos: { url: string; description: string; }[]) => void;
   photoPlaceholders?: string[];
-  form: UseFormReturn<any>;
 }
 
 export const ReportPhotosSection = ({ 
   photos = [],
   onChange,
-  photoPlaceholders = [],
-  form
+  photoPlaceholders = []
 }: ReportPhotosSectionProps) => {
   console.log("ReportPhotosSection - Initial photos:", photos);
 
   const handlePhotoUpload = async (file: File, index: number) => {
     try {
+      console.log('Uploading photo at index:', index);
       const { publicUrl, error } = await handleImageUpload(file, 'project');
       if (error) throw error;
       
@@ -42,6 +41,7 @@ export const ReportPhotosSection = ({
   };
 
   const handleDescriptionChange = (index: number, description: string) => {
+    console.log('Updating description at index:', index, description);
     const currentPhotos = [...photos];
     currentPhotos[index] = { 
       ...currentPhotos[index], 
@@ -51,13 +51,15 @@ export const ReportPhotosSection = ({
   };
 
   const handleDeletePhoto = (index: number) => {
+    console.log('Deleting photo at index:', index);
     const currentPhotos = [...photos];
     currentPhotos.splice(index, 1);
     onChange(currentPhotos);
+    toast.success('تم حذف الصورة بنجاح');
   };
 
   // Initialize array with 6 slots if needed
-  const displayPhotos = [...(Array.isArray(photos) ? photos : [])];
+  const displayPhotos = [...photos];
   while (displayPhotos.length < 6) {
     displayPhotos.push({ url: '', description: '' });
   }
