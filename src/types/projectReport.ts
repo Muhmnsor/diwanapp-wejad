@@ -4,8 +4,8 @@ export interface ProjectReport extends BaseReport {
   project_id: string | null;
   activity_id: string | null;
   executor_id: string | null;
-  duration: string;
-  objectives: string;
+  activity_duration: string;
+  activity_objectives: string;
   profiles?: {
     id: string;
     email: string;
@@ -20,9 +20,9 @@ export interface ProjectReportFormData {
   report_name: string;
   report_text: string;
   detailed_description: string;
-  duration: string;
+  activity_duration: string;
   attendees_count: string;
-  objectives: string;
+  activity_objectives: string;
   impact_on_participants: string;
   photos: { url: string; description: string; }[];
 }
