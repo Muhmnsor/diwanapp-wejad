@@ -577,6 +577,7 @@ export type Database = {
         Row: {
           activity_duration: string | null
           activity_id: string | null
+          activity_objectives: string | null
           additional_links: string[] | null
           attendees_count: string | null
           comments: string[] | null
@@ -598,6 +599,7 @@ export type Database = {
         Insert: {
           activity_duration?: string | null
           activity_id?: string | null
+          activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
           comments?: string[] | null
@@ -619,6 +621,7 @@ export type Database = {
         Update: {
           activity_duration?: string | null
           activity_id?: string | null
+          activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
           comments?: string[] | null

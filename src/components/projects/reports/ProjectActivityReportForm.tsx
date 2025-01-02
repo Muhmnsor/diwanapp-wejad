@@ -53,6 +53,8 @@ export const ProjectActivityReportForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      console.log("Submitting project activity report:", { values, projectId, activityId });
+      
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -76,16 +78,25 @@ export const ProjectActivityReportForm = ({
               executor_id: user.id,
             });
 
-      const { error } = await operation;
+      const { error, data } = await operation;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving report:", error);
+        toast.error("حدث خطأ أثناء حفظ التقرير");
+        return;
+      }
 
-      toast.success(initialData ? "تم تحديث التقرير بنجاح" : "تم إنشاء التقرير بنجاح");
+      console.log("Report saved successfully:", data);
+      
       await queryClient.invalidateQueries({
         queryKey: ["project-activity-reports", projectId],
       });
+
+      toast.success(initialData ? "تم تحديث التقرير بنجاح" : "تم إنشاء التقرير بنجاح");
       
-      if (onSuccess) onSuccess();
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error("Error saving report:", error);
       toast.error("حدث خطأ أثناء حفظ التقرير");
@@ -183,8 +194,13 @@ export const ProjectActivityReportForm = ({
             </FormItem>
           )}
         />
-        <Button type="submit">
-          {initialData ? "تحديث التقرير" : "إنشاء التقرير"}
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting 
+            ? "جاري الحفظ..." 
+            : initialData 
+              ? "تحديث التقرير" 
+              : "إنشاء التقرير"
+          }
         </Button>
       </form>
     </Form>
