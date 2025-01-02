@@ -25,18 +25,22 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
         impact: report.impact_on_participants || "",
       });
       
-      const parsedPhotos = report.photos
-        ?.map((p: string) => {
+      // Parse and maintain photo order
+      const parsedPhotos = Array(6).fill(null);
+      if (report.photos) {
+        report.photos.forEach((photoStr: string, index: number) => {
           try {
-            return JSON.parse(p);
+            const photo = JSON.parse(photoStr);
+            if (photo && photo.url) {
+              parsedPhotos[index] = photo;
+            }
           } catch (e) {
             console.error('Error parsing photo:', e);
-            return null;
           }
-        })
-        .filter((p: ReportPhoto | null): p is ReportPhoto => p !== null) || [];
+        });
+      }
       
-      console.log('ReportForm - Parsed photos:', parsedPhotos);
+      console.log('ReportForm - Parsed photos with maintained order:', parsedPhotos);
       setPhotos(parsedPhotos);
     }
   }, [report]);
@@ -101,7 +105,11 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
     }
 
     try {
-      const validPhotos = photos.filter(photo => photo && photo.url);
+      // Filter out null values while maintaining photo order
+      const validPhotos = photos.map(photo => 
+        photo && photo.url ? JSON.stringify(photo) : null
+      ).filter(Boolean);
+
       console.log('ReportForm - Valid photos for submission:', validPhotos);
 
       const reportData = {
@@ -114,7 +122,7 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
         impact_on_participants: formData.impact,
         attendees_count: attendanceCount.toString(),
         activity_duration: selectedActivityDetails?.event_hours?.toString(),
-        photos: validPhotos.map(photo => JSON.stringify(photo)),
+        photos: validPhotos,
       };
 
       console.log('ReportForm - Submitting data:', reportData);

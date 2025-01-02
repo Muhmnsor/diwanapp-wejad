@@ -23,6 +23,8 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
     handleSubmit,
   } = useReportForm(projectId, report, onSuccess);
 
+  console.log('ReportForm - Current photos:', photos);
+
   return (
     <Card className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
