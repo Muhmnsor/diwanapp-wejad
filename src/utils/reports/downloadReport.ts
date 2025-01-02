@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { ProjectReport } from '@/types/projectReport';
+import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import { supabase } from '@/integrations/supabase/client';
 
 const calculateAverageRatings = async (activityId: string) => {
@@ -58,32 +58,38 @@ ${ratings ? `
 
 الصور المرفقة
 ============
-${report.photos?.map((photoStr, index) => {
-  try {
-    const photo = JSON.parse(photoStr);
-    return `${index + 1}. ${photo.description || 'بدون وصف'}`;
-  } catch (e) {
-    return `${index + 1}. صورة ${index + 1}`;
-  }
-}).join('\n') || 'لا توجد صور مرفقة'}`;
+${report.photos && Array.isArray(report.photos) ? 
+  report.photos.map((photoStr, index) => {
+    try {
+      const photo = typeof photoStr === 'string' ? JSON.parse(photoStr) : photoStr;
+      return `${index + 1}. ${photo.description || 'بدون وصف'}`;
+    } catch (e) {
+      console.error('Error parsing photo:', e);
+      return `${index + 1}. صورة ${index + 1}`;
+    }
+  }).join('\n') 
+  : 'لا توجد صور مرفقة'}`;
 
     // Add report text content
     zip.file('تقرير-النشاط.txt', reportContent);
 
     // Download and add images if they exist
-    if (report.photos && report.photos.length > 0) {
+    if (report.photos && Array.isArray(report.photos)) {
       console.log('Processing', report.photos.length, 'photos');
       const photosFolder = zip.folder('الصور');
       
       for (let i = 0; i < report.photos.length; i++) {
         try {
-          const photo = JSON.parse(report.photos[i]);
-          if (!photo?.url) continue;
+          const photoData = typeof report.photos[i] === 'string' 
+            ? JSON.parse(report.photos[i]) 
+            : report.photos[i];
 
-          const response = await fetch(photo.url);
+          if (!photoData?.url) continue;
+
+          const response = await fetch(photoData.url);
           const blob = await response.blob();
-          const extension = photo.url.split('.').pop()?.toLowerCase() || 'jpg';
-          const fileName = `صورة_${i + 1}${photo.description ? ` - ${photo.description}` : ''}.${extension}`;
+          const extension = photoData.url.split('.').pop()?.toLowerCase() || 'jpg';
+          const fileName = `صورة_${i + 1}${photoData.description ? ` - ${photoData.description}` : ''}.${extension}`;
           photosFolder?.file(fileName, blob);
         } catch (error) {
           console.error(`Error downloading photo ${i + 1}:`, error);
