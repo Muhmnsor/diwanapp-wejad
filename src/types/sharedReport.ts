@@ -5,8 +5,10 @@ export interface BaseReport {
   report_text: string;
   detailed_description?: string | null;
   duration?: string | null;
+  activity_duration?: string | null;
   attendees_count?: string | null;
   objectives?: string | null;
+  activity_objectives?: string | null;
   impact_on_participants?: string | null;
   photos?: { url: string; description: string; }[] | null;
   created_at: string;

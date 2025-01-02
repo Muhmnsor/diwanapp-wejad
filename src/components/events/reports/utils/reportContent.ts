@@ -20,11 +20,11 @@ ${report.report_text}
 ${report.detailed_description || ''}
 
 معلومات الفعالية:
-- المدة: ${report.activity_duration || 'غير محدد'}
+- المدة: ${report.duration || report.activity_duration || 'غير محدد'}
 - عدد المشاركين: ${report.attendees_count || 'غير محدد'}
 
 الأهداف:
-${report.activity_objectives || 'غير محدد'}
+${report.objectives || report.activity_objectives || 'غير محدد'}
 
 الأثر على المشاركين:
 ${report.impact_on_participants || 'غير محدد'}
