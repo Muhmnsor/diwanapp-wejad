@@ -25,20 +25,33 @@ export const ActivityPhotosSection = ({
   onPhotoDescriptionChange,
   maxPhotos = 6
 }: ActivityPhotosSectionProps) => {
+  console.log('ActivityPhotosSection - Current photos:', photos);
+
   // Create empty slots array to represent all available photo slots
   const photoSlots = Array(maxPhotos).fill(null).map((_, index) => {
     return photos[index] || { url: '', description: photoPlaceholders[index] };
   });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    console.log('Handling file change for slot:', index);
+    console.log('Starting file upload process for slot:', index);
     const file = e.target.files?.[0];
+    
     if (file) {
+      console.log('Selected file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+      
       try {
+        console.log('Attempting to upload file...');
         await onPhotoUpload(file, index);
+        console.log('File upload completed successfully');
       } catch (error) {
         console.error('Error uploading photo:', error);
       }
+    } else {
+      console.log('No file selected');
     }
   };
 

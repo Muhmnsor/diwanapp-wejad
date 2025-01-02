@@ -7,12 +7,19 @@ interface PhotoUploadButtonProps {
 }
 
 export const PhotoUploadButton = ({ onFileChange, placeholder }: PhotoUploadButtonProps) => {
-  console.log('Rendering PhotoUploadButton with placeholder:', placeholder);
+  console.log('Rendering PhotoUploadButton for placeholder:', placeholder);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File selected:', e.target.files?.[0]);
+    console.log('File input change detected');
     if (e.target.files && e.target.files.length > 0) {
+      console.log('File selected:', {
+        name: e.target.files[0].name,
+        type: e.target.files[0].type,
+        size: e.target.files[0].size
+      });
       onFileChange(e);
+    } else {
+      console.log('No file selected in input change handler');
     }
   };
 
@@ -31,6 +38,7 @@ export const PhotoUploadButton = ({ onFileChange, placeholder }: PhotoUploadButt
           variant="outline"
           className="w-full h-32 flex flex-col items-center justify-center gap-2 cursor-pointer"
           onClick={() => {
+            console.log('Upload button clicked');
             const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
             fileInput?.click();
           }}
