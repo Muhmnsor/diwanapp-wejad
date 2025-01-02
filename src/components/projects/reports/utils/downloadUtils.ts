@@ -1,8 +1,8 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { ProjectActivityReport } from '@/types/projectActivityReport';
+import { ProjectReport } from '@/types/projectReport';
 
-export const downloadReportWithImages = async (report: ProjectActivityReport, eventTitle?: string): Promise<boolean> => {
+export const downloadReportWithImages = async (report: ProjectReport, eventTitle?: string): Promise<boolean> => {
   try {
     console.log('Starting report download process for:', report.id);
     const zip = new JSZip();
@@ -65,7 +65,7 @@ export const downloadReportWithImages = async (report: ProjectActivityReport, ev
   }
 };
 
-const generateReportContent = (report: ProjectActivityReport): string => {
+const generateReportContent = (report: ProjectReport): string => {
   return `
 اسم التقرير: ${report.report_name}
 اسم البرنامج: ${report.program_name || 'غير محدد'}
@@ -73,7 +73,7 @@ const generateReportContent = (report: ProjectActivityReport): string => {
 الوصف التفصيلي:
 ${report.detailed_description || 'لا يوجد وصف تفصيلي'}
 
-مدة النشاط: ${report.duration || 'غير محدد'}
+مدة النشاط: ${report.activity_duration || 'غير محدد'}
 عدد الحضور: ${report.attendees_count || 'غير محدد'}
 
 أهداف النشاط:
