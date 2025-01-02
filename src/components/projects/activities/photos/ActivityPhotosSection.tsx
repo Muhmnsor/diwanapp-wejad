@@ -3,7 +3,7 @@ import { PhotoGrid } from "./PhotoGrid";
 
 interface ActivityPhotosSectionProps {
   photos: { url: string; description: string; }[];
-  onPhotoUpload: (file: File) => Promise<void>;
+  onPhotoUpload: (file: File, index: number) => Promise<void>;
   onPhotoDelete: (index: number) => void;
   onPhotoDescriptionChange: (index: number, description: string) => void;
   maxPhotos?: number;
@@ -34,24 +34,11 @@ export const ActivityPhotosSection = ({
     console.log('Handling file change for slot:', index);
     const file = e.target.files?.[0];
     if (file) {
-      // Create a copy of the photos array
-      const updatedPhotos = [...photos];
-      // Create temporary URL for immediate preview
-      const tempUrl = URL.createObjectURL(file);
-      // Update the specific slot with the temporary URL
-      updatedPhotos[index] = { url: tempUrl, description: photoPlaceholders[index] };
-      onPhotosChange(updatedPhotos);
-      
       try {
         // Wait for the actual upload to complete
-        await onPhotoUpload(file);
-        // The URL will be updated by the parent component after successful upload
+        await onPhotoUpload(file, index);
       } catch (error) {
         console.error('Error uploading photo:', error);
-        // Remove the temporary preview on error
-        const revertedPhotos = [...photos];
-        revertedPhotos[index] = { url: '', description: photoPlaceholders[index] };
-        onPhotosChange(revertedPhotos);
       }
     }
   };
