@@ -1,8 +1,8 @@
-import { Report } from "@/types/report";
+import { EventReport } from "@/types/eventReport";
 import { FeedbackSummary } from "./types";
 
 export const generateReportContent = (
-  report: Report,
+  report: EventReport,
   eventTitle: string | undefined,
   feedbackSummary: FeedbackSummary,
   photos: { url: string; description: string; }[]
@@ -20,11 +20,11 @@ ${report.report_text}
 ${report.detailed_description || ''}
 
 معلومات الفعالية:
-- المدة: ${report.event_duration || 'غير محدد'}
+- المدة: ${report.activity_duration || 'غير محدد'}
 - عدد المشاركين: ${report.attendees_count || 'غير محدد'}
 
 الأهداف:
-${report.event_objectives || 'غير محدد'}
+${report.activity_objectives || 'غير محدد'}
 
 الأثر على المشاركين:
 ${report.impact_on_participants || 'غير محدد'}
