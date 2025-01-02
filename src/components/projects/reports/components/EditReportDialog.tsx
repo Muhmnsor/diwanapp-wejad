@@ -6,7 +6,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Report } from "@/types/report";
+import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { EditReportDialogHeader } from "./dialog/EditReportDialogHeader";
 import { EditReportDialogContent } from "./dialog/EditReportDialogContent";
 import { EditReportDialogActions } from "./dialog/EditReportDialogActions";
@@ -14,7 +14,7 @@ import { EditReportDialogActions } from "./dialog/EditReportDialogActions";
 interface EditReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  report: Report;
+  report: ProjectActivityReport;
 }
 
 export const EditReportDialog = ({
@@ -45,20 +45,20 @@ export const EditReportDialog = ({
     program_name: report.program_name,
     report_text: report.report_text,
     detailed_description: report.detailed_description,
-    event_duration: report.event_duration,
-    attendees_count: report.attendees_count,
-    event_objectives: report.event_objectives,
-    impact_on_participants: report.impact_on_participants,
+    event_duration: report.activity_duration || '',
+    attendees_count: report.attendees_count || '',
+    event_objectives: report.activity_objectives || '',
+    impact_on_participants: report.impact_on_participants || '',
     photos: parsePhotos(report.photos || []),
   });
 
   const { data: activities = [] } = useQuery({
-    queryKey: ['project-activities', report.event_id],
+    queryKey: ['project-activities', report.activity_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .eq('project_id', report.event_id)
+        .eq('project_id', report.activity_id)
         .eq('is_project_activity', true)
         .order('date', { ascending: true });
 
@@ -101,7 +101,7 @@ export const EditReportDialog = ({
       }
 
       await queryClient.invalidateQueries({
-        queryKey: ['project-activity-reports', report.event_id]
+        queryKey: ['project-activity-reports', report.activity_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');
