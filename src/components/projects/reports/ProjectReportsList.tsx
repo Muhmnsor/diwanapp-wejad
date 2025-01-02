@@ -28,7 +28,6 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
   const { data: reports = [], refetch } = useQuery({
     queryKey: ['project-activity-reports', projectId, activityId],
     queryFn: async () => {
-      // Update the query to properly join with profiles
       let query = supabase
         .from('project_activity_reports')
         .select(`
@@ -101,7 +100,6 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
                   key={report.id}
                   report={report}
                   onDelete={() => handleDeleteReport(report.id)}
-                  onDownload={() => {}} // ... keep existing code
                 />
               ))}
             </div>

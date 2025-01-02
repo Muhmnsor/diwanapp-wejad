@@ -9,9 +9,10 @@ import { ar } from "date-fns/locale";
 interface ReportTableRowProps {
   report: ProjectActivityReport;
   onDelete: (report: ProjectActivityReport) => void;
+  onDownload?: () => void; // Added onDownload as optional prop
 }
 
-export const ReportTableRow = ({ report, onDelete }: ReportTableRowProps) => {
+export const ReportTableRow = ({ report, onDelete, onDownload }: ReportTableRowProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
 
   const handleEdit = () => {
