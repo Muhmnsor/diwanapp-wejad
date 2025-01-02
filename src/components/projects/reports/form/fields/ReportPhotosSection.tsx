@@ -1,3 +1,4 @@
+import { UseFormReturn } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -5,18 +6,20 @@ import { Button } from "@/components/ui/button";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
-import { ReportPhoto } from "@/types/report";
+import { ActivityReportFormData } from "@/types/activityReport";
 
 interface ReportPhotosSectionProps {
-  photos: ReportPhoto[];
-  onChange: (photos: ReportPhoto[]) => void;
+  photos: { url: string; description: string; }[];
+  onChange: (photos: { url: string; description: string; }[]) => void;
   photoPlaceholders?: string[];
+  form: UseFormReturn<ActivityReportFormData>;
 }
 
 export const ReportPhotosSection = ({ 
   photos = [],
   onChange,
-  photoPlaceholders = []
+  photoPlaceholders = [],
+  form
 }: ReportPhotosSectionProps) => {
   console.log("ReportPhotosSection - Initial photos:", photos);
 
