@@ -1,114 +1,109 @@
-import { useState } from "react";
+import { ActivitySelector } from "@/components/admin/dashboard/preparation/ActivitySelector";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { ReportPhotoUpload } from "@/components/reports/shared/components/ReportPhotoUpload";
 import { ReportPhoto } from "@/types/projectReport";
-import { ActivityPhotosSection } from "../../activities/photos/ActivityPhotosSection";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ReportFormFieldsProps {
+  project: any;
+  activities: any[];
+  selectedActivity: string | null;
+  setSelectedActivity: (value: string | null) => void;
   formData: {
     reportText: string;
     objectives: string;
     impact: string;
   };
-  setFormData: (data: any) => void;
+  setFormData: (value: any) => void;
+  attendanceCount: number;
+  selectedActivityDetails: any;
   photos: ReportPhoto[];
   setPhotos: (photos: ReportPhoto[]) => void;
 }
 
 export const ReportFormFields = ({
+  project,
+  activities,
+  selectedActivity,
+  setSelectedActivity,
   formData,
   setFormData,
+  attendanceCount,
+  selectedActivityDetails,
   photos,
-  setPhotos
+  setPhotos,
 }: ReportFormFieldsProps) => {
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handlePhotoUpload = async (file: File) => {
-    try {
-      setIsUploading(true);
-      console.log('Starting image upload process');
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `project-reports/${fileName}`;
-
-      const { error: uploadError, data } = await supabase.storage
-        .from('event-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(filePath);
-
-      console.log('Image uploaded successfully:', publicUrl);
-
-      setPhotos([...photos, { url: publicUrl, description: '' }]);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handlePhotoDelete = (index: number) => {
-    const newPhotos = [...photos];
-    newPhotos.splice(index, 1);
-    setPhotos(newPhotos);
-  };
-
-  const handlePhotoDescriptionChange = (index: number, description: string) => {
-    const newPhotos = [...photos];
-    newPhotos[index].description = description;
-    setPhotos(newPhotos);
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <Label>نص التقرير</Label>
-        <Textarea
-          value={formData.reportText}
-          onChange={(e) => setFormData({ ...formData, reportText: e.target.value })}
-          className="h-32"
-          dir="rtl"
-        />
+        <label className="block text-sm font-medium mb-2">اسم البرنامج/المشروع</label>
+        <Input value={project?.title} disabled />
       </div>
 
       <div>
-        <Label>أهداف النشاط</Label>
-        <Textarea
-          value={formData.objectives}
-          onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
-          className="h-32"
-          dir="rtl"
+        <label className="block text-sm font-medium mb-2">النشاط</label>
+        <ActivitySelector
+          activities={activities}
+          selectedActivity={selectedActivity}
+          onActivityChange={(value) => setSelectedActivity(value)}
         />
       </div>
 
-      <div>
-        <Label>الأثر على المستفيدين</Label>
-        <Textarea
-          value={formData.impact}
-          onChange={(e) => setFormData({ ...formData, impact: e.target.value })}
-          className="h-32"
-          dir="rtl"
-        />
-      </div>
+      {selectedActivity && (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-2">تقرير النشاط</label>
+            <Textarea
+              value={formData.reportText}
+              onChange={(e) => setFormData({ ...formData, reportText: e.target.value })}
+              placeholder="وصف النشاط"
+              className="min-h-[100px]"
+            />
+          </div>
 
-      <div>
-        <Label>صور النشاط</Label>
-        <ActivityPhotosSection
-          photos={photos}
-          onPhotoUpload={handlePhotoUpload}
-          onPhotoDelete={handlePhotoDelete}
-          onPhotoDescriptionChange={handlePhotoDescriptionChange}
-          maxPhotos={6}
-        />
-      </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">عدد الحضور</label>
+              <Input value={attendanceCount} disabled />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">مدة النشاط (ساعات)</label>
+              <Input value={selectedActivityDetails?.event_hours || ''} disabled />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">أهداف النشاط</label>
+            <Textarea
+              value={formData.objectives}
+              onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
+              placeholder="أهداف النشاط"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">آثار النشاط</label>
+            <Textarea
+              value={formData.impact}
+              onChange={(e) => setFormData({ ...formData, impact: e.target.value })}
+              placeholder="آثار النشاط على المشاركين"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">صور النشاط</label>
+            <ReportPhotoUpload
+              photos={photos}
+              onPhotosChange={setPhotos}
+              maxPhotos={6}
+            />
+          </div>
+
+          <Button type="submit" className="w-full">حفظ التقرير</Button>
+        </>
+      )}
     </div>
   );
 };

@@ -79,19 +79,20 @@ export const ReportForm = ({ projectId }: ReportFormProps) => {
           project_id: projectId,
           activity_id: selectedActivity,
           program_name: project?.title,
-          report_name: selectedActivityDetails?.title,
           report_text: formData.reportText,
           activity_objectives: formData.objectives,
           impact_on_participants: formData.impact,
+          attendees_count: attendanceCount.toString(),
+          activity_duration: selectedActivityDetails?.event_hours?.toString(),
           photos: photos,
         });
 
       if (error) throw error;
 
       toast.success("تم إضافة التقرير بنجاح");
+      setSelectedActivity(null);
       setFormData({ reportText: "", objectives: "", impact: "" });
       setPhotos([]);
-      setSelectedActivity(null);
     } catch (error) {
       console.error('Error submitting report:', error);
       toast.error("حدث خطأ أثناء إضافة التقرير");
@@ -102,16 +103,17 @@ export const ReportForm = ({ projectId }: ReportFormProps) => {
     <Card className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         <ReportFormFields
+          project={project}
+          activities={activities}
+          selectedActivity={selectedActivity}
+          setSelectedActivity={setSelectedActivity}
           formData={formData}
           setFormData={setFormData}
+          attendanceCount={attendanceCount}
+          selectedActivityDetails={selectedActivityDetails}
           photos={photos}
           setPhotos={setPhotos}
         />
-        <div className="flex justify-end">
-          <Button type="submit" className="w-full sm:w-auto">
-            إضافة التقرير
-          </Button>
-        </div>
       </form>
     </Card>
   );
