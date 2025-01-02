@@ -1,8 +1,8 @@
+import { PhotoCard } from "./PhotoCard";
 import { PhotoUploadButton } from "./PhotoUploadButton";
-import { PhotoGrid } from "./PhotoGrid";
 
 interface ActivityPhotosSectionProps {
-  photos: { url: string; description: string; }[];
+  photos: { url: string; description: string }[];
   onPhotoUpload: (file: File, index: number) => Promise<void>;
   onPhotoDelete: (index: number) => void;
   onPhotoDescriptionChange: (index: number, description: string) => void;
@@ -35,7 +35,6 @@ export const ActivityPhotosSection = ({
     const file = e.target.files?.[0];
     if (file) {
       try {
-        // Wait for the actual upload to complete
         await onPhotoUpload(file, index);
       } catch (error) {
         console.error('Error uploading photo:', error);
@@ -52,11 +51,12 @@ export const ActivityPhotosSection = ({
               {photoPlaceholders[index]}
             </div>
             {photo.url ? (
-              <PhotoGrid
-                photos={[{ url: photo.url, description: '' }]}
-                onPhotoDelete={() => onPhotoDelete(index)}
-                onPhotoDescriptionChange={(_, description) => onPhotoDescriptionChange(index, description)}
-                placeholders={[]}
+              <PhotoCard
+                photo={photo}
+                index={index}
+                onDelete={() => onPhotoDelete(index)}
+                onDescriptionChange={(description) => onPhotoDescriptionChange(index, description)}
+                placeholder={photoPlaceholders[index]}
               />
             ) : (
               <PhotoUploadButton
