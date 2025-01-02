@@ -33,6 +33,10 @@ export const EventReportsList = ({ eventId }: EventReportsListProps) => {
       console.log('Reports fetched:', data);
       return data;
     },
+    // Enable real-time updates
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0
   });
 
   const reportRows = reports?.map((report) => (
