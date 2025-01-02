@@ -1,4 +1,3 @@
-import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import { saveAs } from "file-saver";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
@@ -11,7 +10,7 @@ async function fetchFont(url: string) {
   return fontBytes;
 }
 
-export const downloadReport = async (report: ProjectReport): Promise<void> => {
+export const downloadEventReport = async (report: any): Promise<void> => {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
   
@@ -41,8 +40,8 @@ export const downloadReport = async (report: ProjectReport): Promise<void> => {
   content += `تاريخ النشاط: ${report.created_at}\n`;
   content += `تقرير النشاط: ${report.report_text}\n`;
   content += `عدد الحضور: ${report.attendees_count}\n`;
-  content += `مدة النشاط: ${report.activity_duration}\n`;
-  content += `أهداف النشاط: ${report.activity_objectives}\n`;
+  content += `مدة النشاط: ${report.duration}\n`;
+  content += `أهداف النشاط: ${report.objectives}\n`;
   content += `آثار النشاط: ${report.impact_on_participants || ''}\n`;
 
   const lines = content.split('\n');
@@ -54,11 +53,11 @@ export const downloadReport = async (report: ProjectReport): Promise<void> => {
     content += '\n\nصور النشاط:\n';
     for (let i = 0; i < report.photos.length; i++) {
       try {
-        let photoData: ReportPhoto;
+        let photoData;
         if (typeof report.photos[i] === 'string') {
-          photoData = JSON.parse(report.photos[i] as string) as ReportPhoto;
+          photoData = JSON.parse(report.photos[i]);
         } else {
-          photoData = report.photos[i] as ReportPhoto;
+          photoData = report.photos[i];
         }
 
         if (!photoData?.url) continue;
