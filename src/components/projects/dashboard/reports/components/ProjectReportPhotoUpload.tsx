@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
 import { ReportPhoto } from "@/types/projectReport";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProjectReportPhotoUploadProps {
   photos: ReportPhoto[];
@@ -18,32 +20,39 @@ export const ProjectReportPhotoUpload = ({
     if (!file) return;
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const { data, error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file);
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (uploadError) {
+        throw uploadError;
+      }
 
-      const data = await response.json();
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(filePath);
+
       const newPhotos = [...photos];
       newPhotos[index] = {
-        url: data.url,
+        url: publicUrl,
         description: '',
       };
       onPhotosChange(newPhotos);
+      toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
+      toast.error('حدث خطأ أثناء رفع الصورة');
     }
   };
 
   const handleRemovePhoto = (index: number) => {
     const newPhotos = [...photos];
     newPhotos[index] = null;
-    onPhotosChange(newPhotos);
+    onPhotosChange(newPhotos.filter(Boolean));
   };
 
   return (
