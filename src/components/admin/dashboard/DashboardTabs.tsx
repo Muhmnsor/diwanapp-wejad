@@ -2,7 +2,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardOverview } from "../DashboardOverview";
 import { DashboardRegistrations } from "../DashboardRegistrations";
 import { DashboardPreparation } from "./DashboardPreparation";
-import { ReportsTab } from "./ReportsTab";
 import { FeedbackTab } from "./FeedbackTab";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,13 +20,11 @@ interface DashboardTabsProps {
 }
 
 export const DashboardTabs = ({ event }: DashboardTabsProps) => {
-  // Fetch event stats including registrations and ratings
   const { data: eventStats } = useQuery({
     queryKey: ['eventStats', event.id],
     queryFn: async () => {
       console.log('Fetching event stats for:', event.id);
       
-      // Get registrations count
       const { data: registrations, error: regError } = await supabase
         .from('registrations')
         .select('*', { count: 'exact' })
@@ -38,7 +35,6 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
         throw regError;
       }
 
-      // Get average rating
       const { data: feedback, error: feedbackError } = await supabase
         .from('event_feedback')
         .select('overall_rating')
@@ -53,7 +49,6 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
       const remainingSeats = event.max_attendees - registrationCount;
       const occupancyRate = (registrationCount / event.max_attendees) * 100;
 
-      // Calculate average rating
       const averageRating = feedback?.length 
         ? feedback.reduce((acc, curr) => acc + (curr.overall_rating || 0), 0) / feedback.length 
         : undefined;
@@ -86,7 +81,7 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
   return (
     <Tabs defaultValue="overview" className="w-full space-y-6" dir="rtl">
-      <TabsList className="grid grid-cols-5 bg-secondary/20 p-1 rounded-xl">
+      <TabsList className="grid grid-cols-4 bg-secondary/20 p-1 rounded-xl">
         <TabsTrigger 
           value="overview" 
           className="data-[state=active]:bg-white"
@@ -104,12 +99,6 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
           className="data-[state=active]:bg-white"
         >
           التحضير
-        </TabsTrigger>
-        <TabsTrigger 
-          value="reports" 
-          className="data-[state=active]:bg-white"
-        >
-          التقارير
         </TabsTrigger>
         <TabsTrigger 
           value="feedback" 
@@ -135,10 +124,6 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
       <TabsContent value="preparation" className="mt-6">
         <DashboardPreparation eventId={event.id} />
-      </TabsContent>
-
-      <TabsContent value="reports" className="mt-6">
-        <ReportsTab eventId={event.id} />
       </TabsContent>
 
       <TabsContent value="feedback" className="mt-6">
