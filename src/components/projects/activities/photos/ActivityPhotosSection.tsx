@@ -29,29 +29,31 @@ export const ActivityPhotosSection = ({
 
   // Create empty slots array to represent all available photo slots
   const photoSlots = Array(maxPhotos).fill(null).map((_, index) => {
-    return photos[index] || { url: '', description: photoPlaceholders[index] };
+    return photos[index] || null;
   });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     console.log('Starting file upload process for slot:', index);
+    console.log('Current photo slots state:', photoSlots);
+    
     const file = e.target.files?.[0];
     
     if (file) {
-      console.log('Selected file:', {
+      console.log('Selected file for slot', index, ':', {
         name: file.name,
         type: file.type,
         size: file.size
       });
       
       try {
-        console.log('Attempting to upload file...');
+        console.log('Attempting to upload file to slot:', index);
         await onPhotoUpload(file, index);
-        console.log('File upload completed successfully');
+        console.log('File upload completed successfully for slot:', index);
       } catch (error) {
-        console.error('Error uploading photo:', error);
+        console.error('Error uploading photo to slot', index, ':', error);
       }
     } else {
-      console.log('No file selected');
+      console.log('No file selected for slot:', index);
     }
   };
 
@@ -63,7 +65,7 @@ export const ActivityPhotosSection = ({
             <div className="text-sm text-muted-foreground mb-2">
               {photoPlaceholders[index]}
             </div>
-            {photo.url ? (
+            {photo ? (
               <PhotoCard
                 photo={photo}
                 index={index}
