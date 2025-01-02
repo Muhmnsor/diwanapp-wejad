@@ -1,4 +1,4 @@
-import { ProjectReport, ReportPhoto } from '@/types/projectReport';
+import { ProjectReport } from '@/types/projectReport';
 
 const formatValue = (value: string | null | undefined): string => {
   if (!value || value.trim() === '') return 'لا يوجد';

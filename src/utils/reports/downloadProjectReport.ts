@@ -1,104 +1,46 @@
-import { saveAs } from "file-saver";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
-import { ProjectReport } from "@/types/projectReport";
-
-// Use a base64 encoded version of the font to avoid path issues
-const ARABIC_FONT_BASE64 = 'AAEAAAATAQAABAAwRFNJR54SRB0AAj7oAAAAKEdQT1POGlbkAAJKVAAAhrhHU1VCeolvLwACwIwAAAA0T1MvMqCXsY8AAAFoAAAAYGNtYXABQQH7AAASxAAAAGhnbHlmfQhJawAAARwAAHN8aGVhZBNc+9EAAADsAAAANmhoZWEFrv/IAAABJAAAACRobXR4Av4DDQAAAbgAAAGYbG9jYQCxM0wAAAD0AAAA0G1heHABMAB6AAABCAAAACBuYW1lL+JOQgACAjAAAAJocG9zdP9tAGQAAgRwAAAAIAABAAAAAQAA3XYvt18PPPUAAwPoAAAAANx4EhMA....';
-
-async function loadArabicFont() {
-  try {
-    const fontBytes = Uint8Array.from(atob(ARABIC_FONT_BASE64), c => c.charCodeAt(0));
-    return fontBytes;
-  } catch (error) {
-    console.error('Error loading Arabic font:', error);
-    throw new Error('Failed to load Arabic font');
-  }
-}
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { ProjectReport } from '@/types/projectReport';
+import { generateReportContent } from './formatReportContent';
 
 export const downloadProjectReport = async (report: ProjectReport): Promise<void> => {
   try {
-    const pdfDoc = await PDFDocument.create();
-    pdfDoc.registerFontkit(fontkit);
-    
-    const fontBytes = await loadArabicFont();
-    const arabicFont = await pdfDoc.embedFont(fontBytes);
-    
-    const page = pdfDoc.addPage();
-    const { width, height } = page.getSize();
-    
-    const fontSize = 12;
-    const lineHeight = fontSize * 1.5;
-    let currentY = height - 50;
-    
-    const drawText = (text: string, y: number) => {
-      page.drawText(text, {
-        x: width - 50,
-        y,
-        font: arabicFont,
-        size: fontSize,
-        color: rgb(0, 0, 0),
-      });
-      return y - lineHeight;
-    };
+    console.log('Starting report download process for:', report.id);
+    const zip = new JSZip();
 
-    let content = '';
-    content += `اسم التقرير: ${report.report_name}\n`;
-    content += `تاريخ النشاط: ${report.created_at}\n`;
-    content += `تقرير النشاط: ${report.report_text}\n`;
-    content += `عدد الحضور: ${report.attendees_count}\n`;
-    content += `مدة النشاط: ${report.activity_duration}\n`;
-    content += `أهداف النشاط: ${report.activity_objectives}\n`;
-    content += `آثار النشاط: ${report.impact_on_participants || ''}\n`;
+    // Add report text content
+    const reportContent = generateReportContent(report);
+    zip.file('تقرير-النشاط.txt', reportContent);
 
-    const lines = content.split('\n');
-    for (const line of lines) {
-      currentY = drawText(line, currentY);
-    }
-
+    // Download and add images if they exist
     if (report.photos && report.photos.length > 0) {
-      content += '\n\nصور النشاط:\n';
-      for (const photo of report.photos) {
+      console.log('Processing', report.photos.length, 'photos');
+      const imageFolder = zip.folder('الصور');
+      
+      for (let i = 0; i < report.photos.length; i++) {
+        const photo = report.photos[i];
+        if (!photo?.url) continue;
+
         try {
-          const photoData = typeof photo === 'string' ? JSON.parse(photo) : photo;
-
-          if (!photoData?.url) continue;
-
-          const response = await fetch(photoData.url);
-          const imageBytes = await response.arrayBuffer();
-          const image = await pdfDoc.embedJpg(imageBytes);
-          
-          const imgDims = image.scale(0.5);
-          
-          if (currentY - imgDims.height < 50) {
-            const newPage = pdfDoc.addPage();
-            currentY = height - 50;
-          }
-          
-          page.drawImage(image, {
-            x: width - imgDims.width - 50,
-            y: currentY - imgDims.height,
-            width: imgDims.width,
-            height: imgDims.height,
-          });
-          
-          currentY = currentY - imgDims.height - 20;
-          
-          if (photoData.description) {
-            currentY = drawText(photoData.description, currentY);
-          }
+          const response = await fetch(photo.url);
+          const blob = await response.blob();
+          const extension = photo.url.split('.').pop()?.toLowerCase() || '';
+          const fileName = `صورة_${i + 1}.${extension}`;
+          imageFolder?.file(fileName, blob);
         } catch (error) {
-          console.error('Error processing photo:', error);
-          continue;
+          console.error('Error downloading image:', error);
         }
       }
     }
 
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    saveAs(blob, `تقرير-${report.report_name}.pdf`);
+    // Generate and save zip file
+    const content = await zip.generateAsync({ type: 'blob' });
+    const fileName = `تقرير-${report.report_name || 'النشاط'}-${new Date().toISOString().split('T')[0]}.zip`;
+    saveAs(content, fileName);
+    
+    console.log('Report download completed successfully');
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    throw new Error('حدث خطأ أثناء إنشاء ملف PDF');
+    console.error('Error in downloadReport:', error);
+    throw new Error('حدث خطأ أثناء تحميل التقرير');
   }
 };
