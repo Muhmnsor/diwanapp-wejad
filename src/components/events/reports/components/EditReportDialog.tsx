@@ -24,6 +24,22 @@ export const EditReportDialog = ({
 }: EditReportDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+
+  // Parse photos from string to object if needed
+  const parsePhotos = (photos: any[]) => {
+    return photos?.map(photo => {
+      if (typeof photo === 'string') {
+        try {
+          return JSON.parse(photo);
+        } catch (e) {
+          console.error('Error parsing photo:', e);
+          return { url: photo, description: '' };
+        }
+      }
+      return photo;
+    }) || [];
+  };
+
   const [formValues, setFormValues] = useState({
     report_name: report.report_name,
     program_name: report.program_name,
@@ -33,7 +49,7 @@ export const EditReportDialog = ({
     attendees_count: report.attendees_count,
     event_objectives: report.event_objectives,
     impact_on_participants: report.impact_on_participants,
-    photos: report.photos || [],
+    photos: parsePhotos(report.photos || []),
   });
 
   const { data: activities = [] } = useQuery({
@@ -56,25 +72,36 @@ export const EditReportDialog = ({
       setIsSubmitting(true);
       console.log('Submitting updated report:', formValues);
 
+      // Prepare photos data for submission
+      const preparedPhotos = formValues.photos.map(photo => {
+        if (typeof photo === 'string') {
+          return photo;
+        }
+        return JSON.stringify(photo);
+      });
+
       const { error } = await supabase
-        .from('event_reports')
+        .from('project_activity_reports')
         .update({
           report_name: formValues.report_name,
           program_name: formValues.program_name,
           report_text: formValues.report_text,
           detailed_description: formValues.detailed_description,
-          event_duration: formValues.event_duration,
+          activity_duration: formValues.event_duration,
           attendees_count: formValues.attendees_count,
-          event_objectives: formValues.event_objectives,
+          activity_objectives: formValues.event_objectives,
           impact_on_participants: formValues.impact_on_participants,
-          photos: formValues.photos,
+          photos: preparedPhotos,
         })
         .eq('id', report.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating report:', error);
+        throw error;
+      }
 
       await queryClient.invalidateQueries({
-        queryKey: ['event-reports', report.event_id]
+        queryKey: ['project-activity-reports', report.event_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');
