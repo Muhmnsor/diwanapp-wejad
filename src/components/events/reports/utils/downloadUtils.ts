@@ -1,53 +1,8 @@
 import JSZip from 'jszip';
-import { supabase } from '@/integrations/supabase/client';
 import { Report } from '@/types/report';
-
-interface FeedbackSummary {
-  averageOverallRating: number;
-  averageContentRating: number;
-  averageOrganizationRating: number;
-  averagePresenterRating: number;
-  totalFeedbacks: number;
-}
-
-const fetchFeedbackSummary = async (eventId: string): Promise<FeedbackSummary> => {
-  console.log('Fetching feedback summary for event:', eventId);
-  
-  const { data: feedbacks, error } = await supabase
-    .from('event_feedback')
-    .select('overall_rating, content_rating, organization_rating, presenter_rating')
-    .eq('event_id', eventId);
-
-  if (error) {
-    console.error('Error fetching feedback:', error);
-    throw error;
-  }
-
-  if (!feedbacks.length) {
-    return {
-      averageOverallRating: 0,
-      averageContentRating: 0,
-      averageOrganizationRating: 0,
-      averagePresenterRating: 0,
-      totalFeedbacks: 0
-    };
-  }
-
-  const sum = feedbacks.reduce((acc, feedback) => ({
-    overall: acc.overall + (feedback.overall_rating || 0),
-    content: acc.content + (feedback.content_rating || 0),
-    organization: acc.organization + (feedback.organization_rating || 0),
-    presenter: acc.presenter + (feedback.presenter_rating || 0)
-  }), { overall: 0, content: 0, organization: 0, presenter: 0 });
-
-  return {
-    averageOverallRating: sum.overall / feedbacks.length,
-    averageContentRating: sum.content / feedbacks.length,
-    averageOrganizationRating: sum.organization / feedbacks.length,
-    averagePresenterRating: sum.presenter / feedbacks.length,
-    totalFeedbacks: feedbacks.length
-  };
-};
+import { fetchFeedbackSummary } from './feedback';
+import { parsePhotos, downloadPhotos } from './photos';
+import { generateReportContent } from './reportContent';
 
 export const downloadReportWithImages = async (
   report: Report,
@@ -60,83 +15,16 @@ export const downloadReportWithImages = async (
     const feedbackSummary = await fetchFeedbackSummary(report.event_id);
     console.log('Feedback summary:', feedbackSummary);
 
-    // Ensure photos is an array and parse any string entries
-    const photos = Array.isArray(report.photos) ? report.photos : [];
-    const parsedPhotos = photos.filter(photo => photo !== null).map(photo => {
-      if (typeof photo === 'string') {
-        try {
-          return JSON.parse(photo);
-        } catch {
-          return { url: photo, description: '' };
-        }
-      }
-      return photo;
-    });
-
+    const parsedPhotos = parsePhotos(report.photos || []);
     console.log('Parsed photos:', parsedPhotos);
 
-    const reportContent = `تقرير الفعالية
-
-اسم البرنامج: ${report.program_name || 'غير محدد'}
-اسم الفعالية: ${report.report_name || eventTitle || 'غير محدد'}
-التاريخ: ${new Date(report.created_at).toLocaleDateString('ar')}
-
-نص التقرير:
-${report.report_text}
-
-التفاصيل:
-${report.detailed_description || ''}
-
-معلومات الفعالية:
-- المدة: ${report.event_duration || 'غير محدد'}
-- عدد المشاركين: ${report.attendees_count || 'غير محدد'}
-
-الأهداف:
-${report.event_objectives || 'غير محدد'}
-
-الأثر على المشاركين:
-${report.impact_on_participants || 'غير محدد'}
-
-ملخص التقييمات:
-- عدد التقييمات: ${feedbackSummary.totalFeedbacks}
-- متوسط التقييم العام: ${feedbackSummary.averageOverallRating.toFixed(1)} / 5
-- متوسط تقييم المحتوى: ${feedbackSummary.averageContentRating.toFixed(1)} / 5
-- متوسط تقييم التنظيم: ${feedbackSummary.averageOrganizationRating.toFixed(1)} / 5
-- متوسط تقييم المقدم: ${feedbackSummary.averagePresenterRating.toFixed(1)} / 5
-
-الصور المرفقة:
-${parsedPhotos.map((photo, index) => `${index + 1}. ${photo.description || `صورة ${index + 1}`}`).join('\n')}`;
-
+    const reportContent = generateReportContent(report, eventTitle, feedbackSummary, parsedPhotos);
     zip.file('تقرير-الفعالية.txt', reportContent);
 
     if (parsedPhotos.length > 0) {
       const imagesFolder = zip.folder("الصور");
       if (!imagesFolder) throw new Error('Failed to create images folder');
-
-      console.log('Starting image downloads...');
-      const downloadPromises = parsedPhotos.map(async (photo, index) => {
-        if (!photo?.url) {
-          console.log(`Skipping invalid photo at index ${index}`);
-          return;
-        }
-
-        try {
-          console.log(`Downloading image ${index + 1}:`, photo.url);
-          const response = await fetch(photo.url);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          
-          const blob = await response.blob();
-          const extension = photo.url.split('.').pop() || 'jpg';
-          const fileName = `صورة-${index + 1}-${photo.description || ''}.${extension}`;
-          
-          console.log(`Adding image to zip:`, fileName);
-          imagesFolder.file(fileName, blob);
-        } catch (error) {
-          console.error(`Error downloading image ${index}:`, error);
-        }
-      });
-
-      await Promise.all(downloadPromises);
+      await downloadPhotos(parsedPhotos, imagesFolder);
     }
 
     console.log('Generating zip file...');
