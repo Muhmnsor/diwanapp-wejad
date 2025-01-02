@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash, Download } from "lucide-react";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { EditReportDialog } from "../components/EditReportDialog";
+import { downloadReportWithImages } from "../utils/downloadUtils";
+import { toast } from "sonner";
 
 interface ReportTableRowProps {
   report: ProjectActivityReport;
@@ -12,14 +14,29 @@ interface ReportTableRowProps {
 
 export const ReportTableRow = ({ report, onDelete }: ReportTableRowProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleEdit = () => {
     setShowEditDialog(true);
   };
 
-  const handleDownload = () => {
-    // Handle download functionality here
-    console.log('Downloading report:', report.id);
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      console.log('Starting download for report:', report.id);
+      const success = await downloadReportWithImages(report, report.events?.title);
+      
+      if (success) {
+        toast.success('تم تحميل التقرير بنجاح');
+      } else {
+        toast.error('حدث خطأ أثناء تحميل التقرير');
+      }
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      toast.error('حدث خطأ أثناء تحميل التقرير');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -47,6 +64,7 @@ export const ReportTableRow = ({ report, onDelete }: ReportTableRowProps) => {
               variant="ghost"
               size="icon"
               onClick={handleDownload}
+              disabled={isDownloading}
               className="h-8 w-8 text-blue-500 hover:text-blue-600"
             >
               <Download className="h-4 w-4" />
