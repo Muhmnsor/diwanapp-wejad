@@ -10,6 +10,45 @@ interface FeedbackSummary {
   totalFeedbacks: number;
 }
 
+const fetchActivityFeedback = async (activityId: string): Promise<FeedbackSummary> => {
+  console.log('Fetching activity feedback for:', activityId);
+  
+  const { data: feedbacks, error } = await supabase
+    .from('activity_feedback')
+    .select('overall_rating, content_rating, organization_rating, presenter_rating')
+    .eq('activity_id', activityId);
+
+  if (error) {
+    console.error('Error fetching activity feedback:', error);
+    throw error;
+  }
+
+  if (!feedbacks.length) {
+    return {
+      averageOverallRating: 0,
+      averageContentRating: 0,
+      averageOrganizationRating: 0,
+      averagePresenterRating: 0,
+      totalFeedbacks: 0
+    };
+  }
+
+  const sum = feedbacks.reduce((acc, feedback) => ({
+    overall: acc.overall + (feedback.overall_rating || 0),
+    content: acc.content + (feedback.content_rating || 0),
+    organization: acc.organization + (feedback.organization_rating || 0),
+    presenter: acc.presenter + (feedback.presenter_rating || 0)
+  }), { overall: 0, content: 0, organization: 0, presenter: 0 });
+
+  return {
+    averageOverallRating: sum.overall / feedbacks.length,
+    averageContentRating: sum.content / feedbacks.length,
+    averageOrganizationRating: sum.organization / feedbacks.length,
+    averagePresenterRating: sum.presenter / feedbacks.length,
+    totalFeedbacks: feedbacks.length
+  };
+};
+
 const fetchFeedbackSummary = async (eventId: string): Promise<FeedbackSummary> => {
   console.log('Fetching feedback summary for event:', eventId);
   
@@ -56,7 +95,11 @@ export const downloadReportWithImages = async (
   try {
     const zip = new JSZip();
     
-    const feedbackSummary = await fetchFeedbackSummary(report.event_id);
+    // Fetch feedback based on whether it's an activity or event report
+    const feedbackSummary = report.activity_id ? 
+      await fetchActivityFeedback(report.activity_id) :
+      await fetchFeedbackSummary(report.event_id);
+    
     console.log('Feedback summary:', feedbackSummary);
 
     // Parse photos array and ensure it's an array of objects
@@ -73,10 +116,10 @@ export const downloadReportWithImages = async (
 
     console.log('Parsed photos:', parsedPhotos);
 
-    const reportContent = `تقرير الفعالية
+    const reportContent = `تقرير ${report.activity_id ? 'النشاط' : 'الفعالية'}
 
 اسم البرنامج: ${report.program_name || 'غير محدد'}
-اسم الفعالية: ${report.report_name || eventTitle || 'غير محدد'}
+اسم ${report.activity_id ? 'النشاط' : 'الفعالية'}: ${report.report_name || eventTitle || 'غير محدد'}
 التاريخ: ${new Date(report.created_at).toLocaleDateString('ar')}
 
 نص التقرير:
@@ -85,12 +128,12 @@ ${report.report_text}
 التفاصيل:
 ${report.detailed_description || ''}
 
-معلومات الفعالية:
-- المدة: ${report.event_duration || 'غير محدد'}
+معلومات ${report.activity_id ? 'النشاط' : 'الفعالية'}:
+- المدة: ${report.activity_duration || report.event_duration || 'غير محدد'}
 - عدد المشاركين: ${report.attendees_count || 'غير محدد'}
 
 الأهداف:
-${report.event_objectives || 'غير محدد'}
+${report.activity_objectives || report.event_objectives || 'غير محدد'}
 
 الأثر على المشاركين:
 ${report.impact_on_participants || 'غير محدد'}
@@ -105,7 +148,7 @@ ${report.impact_on_participants || 'غير محدد'}
 الصور المرفقة:
 ${parsedPhotos.map((photo, index) => `${index + 1}. ${photo.description || `صورة ${index + 1}`}`).join('\n')}`;
 
-    zip.file('تقرير-الفعالية.txt', reportContent);
+    zip.file('تقرير.txt', reportContent);
 
     const imagesFolder = zip.folder("الصور");
     if (!imagesFolder) throw new Error('Failed to create images folder');
