@@ -18,14 +18,20 @@ export const downloadReportWithImages = async (report: ProjectActivityReport, ev
       const imageFolder = zip.folder('images');
       
       for (let i = 0; i < report.photos.length; i++) {
-        const photoUrl = report.photos[i];
+        const photoData = report.photos[i];
+        if (!photoData) continue; // Skip null entries
+        
         try {
-          const response = await fetch(photoUrl);
+          // Parse the JSON string if it's a string
+          const photoInfo = typeof photoData === 'string' ? JSON.parse(photoData) : photoData;
+          if (!photoInfo.url) continue; // Skip if no URL
+
+          const response = await fetch(photoInfo.url);
           const blob = await response.blob();
-          const fileName = `image_${i + 1}${getFileExtension(photoUrl)}`;
+          const fileName = `image_${i + 1}${getFileExtension(photoInfo.url)}`;
           imageFolder?.file(fileName, blob);
         } catch (error) {
-          console.error('Error downloading image:', photoUrl, error);
+          console.error('Error downloading image:', error);
         }
       }
     }
