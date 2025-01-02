@@ -1,8 +1,8 @@
 import { ProjectReport } from '@/types/projectReport';
-import { downloadReport as downloadReportUtil } from '@/utils/reports/downloadReport';
+import { downloadProjectReport } from '@/utils/reports/downloadProjectReport';
 
 export const downloadReport = async (report: ProjectReport): Promise<void> => {
-  return downloadReportUtil(report);
+  return downloadProjectReport(report);
 };
 
 export const validateProjectReport = (report: Partial<ProjectReport>): boolean => {

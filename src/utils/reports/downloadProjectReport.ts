@@ -1,7 +1,7 @@
 import { saveAs } from "file-saver";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { ProjectReport, ReportPhoto } from "@/types/projectReport";
+import { ProjectReport } from "@/types/projectReport";
 
 const arabicFontUrl = "/fonts/arabic.ttf";
 
@@ -54,11 +54,11 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     content += '\n\nصور النشاط:\n';
     for (let i = 0; i < report.photos.length; i++) {
       try {
-        let photoData: ReportPhoto;
+        let photoData;
         if (typeof report.photos[i] === 'string') {
-          photoData = JSON.parse(report.photos[i]) as ReportPhoto;
+          photoData = JSON.parse(report.photos[i]);
         } else {
-          photoData = report.photos[i] as ReportPhoto;
+          photoData = report.photos[i];
         }
 
         if (!photoData?.url) continue;
