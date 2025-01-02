@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, Download } from "lucide-react";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { EditReportDialog } from "../components/EditReportDialog";
 
@@ -15,6 +15,11 @@ export const ReportTableRow = ({ report, onDelete }: ReportTableRowProps) => {
 
   const handleEdit = () => {
     setShowEditDialog(true);
+  };
+
+  const handleDownload = () => {
+    // Handle download functionality here
+    console.log('Downloading report:', report.id);
   };
 
   return (
@@ -37,6 +42,14 @@ export const ReportTableRow = ({ report, onDelete }: ReportTableRowProps) => {
               className="h-8 w-8"
             >
               <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDownload}
+              className="h-8 w-8 text-blue-500 hover:text-blue-600"
+            >
+              <Download className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
