@@ -15,11 +15,13 @@ interface ReportPhotosSectionProps {
 }
 
 export const ReportPhotosSection = ({ 
-  photos,
+  photos = [],
   onChange,
   photoPlaceholders = [],
   form
 }: ReportPhotosSectionProps) => {
+  console.log("ReportPhotosSection - Initial photos:", photos);
+
   const handlePhotoUpload = async (file: File, index: number) => {
     try {
       const { publicUrl, error } = await handleImageUpload(file, 'project');
@@ -55,7 +57,7 @@ export const ReportPhotosSection = ({
   };
 
   // Initialize array with 6 slots if needed
-  const displayPhotos = [...photos];
+  const displayPhotos = [...(Array.isArray(photos) ? photos : [])];
   while (displayPhotos.length < 6) {
     displayPhotos.push({ url: '', description: '' });
   }
