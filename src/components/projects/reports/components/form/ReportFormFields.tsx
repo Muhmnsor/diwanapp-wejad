@@ -2,8 +2,10 @@ import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { PhotosSection } from "@/components/events/reports/PhotosSection";
 import { Card } from "@/components/ui/card";
+import { handleImageUpload } from "@/components/events/form/EventImageUpload";
+import { toast } from "sonner";
 
 interface ReportFormFieldsProps {
   form: UseFormReturn<any>;
@@ -11,6 +13,30 @@ interface ReportFormFieldsProps {
 
 export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
   console.log("ReportFormFields - form values:", form.getValues());
+
+  const handlePhotoUpload = async (file: File) => {
+    try {
+      const { publicUrl, error } = await handleImageUpload(file);
+      if (error) throw error;
+      
+      const currentPhotos = form.getValues('photos') || [];
+      const newPhoto = { url: publicUrl, description: '' };
+      form.setValue('photos', [...currentPhotos, newPhoto]);
+      
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error("حدث خطأ أثناء رفع الصورة");
+    }
+  };
+
+  const handlePhotoDelete = (index: number) => {
+    const currentPhotos = form.getValues('photos') || [];
+    const newPhotos = currentPhotos.filter((_, i) => i !== index);
+    form.setValue('photos', newPhotos);
+  };
+
+  const photos = form.watch('photos') || [];
+  const validPhotos = photos.filter(photo => photo && typeof photo === 'object' && photo.url);
 
   return (
     <div className="space-y-4">
@@ -145,51 +171,20 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
 
       <Card className="p-4">
         <h3 className="font-semibold mb-4">الصور</h3>
-        <div className="space-y-2">
-          {(form.watch('photos') || [])
-            .filter(photo => photo !== null)
-            .map((photo, index) => (
-            <div key={index} className="flex gap-2">
-              <Input 
-                value={photo.url}
-                onChange={(e) => {
-                  const newPhotos = [...(form.getValues('photos') || [])];
-                  newPhotos[index] = { ...photo, url: e.target.value };
-                  form.setValue('photos', newPhotos);
-                }}
-                placeholder="رابط الصورة"
-              />
-              <Input 
-                value={photo.description}
-                onChange={(e) => {
-                  const newPhotos = [...(form.getValues('photos') || [])];
-                  newPhotos[index] = { ...photo, description: e.target.value };
-                  form.setValue('photos', newPhotos);
-                }}
-                placeholder="وصف الصورة"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => {
-                  const newPhotos = form.getValues('photos')?.filter((_, i) => i !== index) || [];
-                  form.setValue('photos', newPhotos);
-                }}
-              >
-                حذف
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            onClick={() => {
-              const currentPhotos = form.getValues('photos') || [];
-              form.setValue('photos', [...currentPhotos, { url: '', description: '' }]);
-            }}
-          >
-            إضافة صورة
-          </Button>
-        </div>
+        <PhotosSection
+          photos={validPhotos}
+          onPhotoUpload={handlePhotoUpload}
+          onPhotoDelete={handlePhotoDelete}
+          maxPhotos={6}
+          photoPlaceholders={[
+            "صورة تظهر تفاعل المستفيدين والجمهور مع المحتوى",
+            "صورة توضح مكان إقامة النشاط",
+            "صورة للمتحدثين أو المدربين",
+            "صورة للمواد التدريبية أو التعليمية",
+            "صورة للأنشطة التفاعلية",
+            "صورة ختامية للنشاط"
+          ]}
+        />
       </Card>
     </div>
   );
