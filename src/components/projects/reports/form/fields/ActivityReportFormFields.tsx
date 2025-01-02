@@ -5,21 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { ReportPhotosSection } from "./ReportPhotosSection";
-
-export interface ActivityReportFormData {
-  program_name: string;
-  report_name: string;
-  report_text: string;
-  detailed_description: string;
-  activity_duration: string;
-  attendees_count: string;
-  activity_objectives: string;
-  impact_on_participants: string;
-  photos: { url: string; description: string; }[];
-}
+import { ReportFormFields } from "@/types/report";
 
 interface ActivityReportFormFieldsProps {
-  form: UseFormReturn<ActivityReportFormData>;
+  form: UseFormReturn<ReportFormFields>;
 }
 
 export const ActivityReportFormFields = ({ form }: ActivityReportFormFieldsProps) => {
@@ -170,7 +159,6 @@ export const ActivityReportFormFields = ({ form }: ActivityReportFormFieldsProps
             <ReportPhotosSection
               photos={field.value || []}
               onChange={field.onChange}
-              form={form}
               photoPlaceholders={[
                 "صورة تظهر تفاعل المستفيدين والجمهور مع المحتوى",
                 "صورة توضح مكان إقامة النشاط",

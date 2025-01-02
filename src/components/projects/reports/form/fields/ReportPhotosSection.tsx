@@ -6,20 +6,18 @@ import { ImagePlus, Trash2 } from "lucide-react";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
 import { UseFormReturn } from "react-hook-form";
-import { ActivityReportFormData } from "../fields/ActivityReportFormFields";
+import { ReportFormFields, ReportPhoto } from "@/types/report";
 
 interface ReportPhotosSectionProps {
-  photos: { url: string; description: string; }[];
-  onChange: (photos: { url: string; description: string; }[]) => void;
+  photos: ReportPhoto[];
+  onChange: (photos: ReportPhoto[]) => void;
   photoPlaceholders?: string[];
-  form: UseFormReturn<ActivityReportFormData>;
 }
 
 export const ReportPhotosSection = ({ 
   photos = [],
   onChange,
-  photoPlaceholders = [],
-  form
+  photoPlaceholders = []
 }: ReportPhotosSectionProps) => {
   console.log("ReportPhotosSection - Initial photos:", photos);
 
@@ -103,7 +101,7 @@ export const ReportPhotosSection = ({
                   </Button>
                 </div>
               ) : (
-                <div className="relative aspect-video bg-muted rounded-md flex items-center justify-center border-2 border-dashed border-accent hover:border-accent/80 transition-colors">
+                <div className="relative aspect-video bg-muted rounded-md flex items-center justify-center border-2 border-dashed border-orange-500 hover:border-orange-600 transition-colors">
                   <Input
                     type="file"
                     accept="image/*"
@@ -114,8 +112,8 @@ export const ReportPhotosSection = ({
                     }}
                   />
                   <div className="text-center">
-                    <ImagePlus className="h-8 w-8 mx-auto mb-2 text-accent" />
-                    <p className="text-sm font-medium text-accent mb-1">
+                    <ImagePlus className="h-8 w-8 mx-auto mb-2 text-orange-500" />
+                    <p className="text-sm font-medium text-orange-500 mb-1">
                       انقر لإضافة صورة
                     </p>
                     <p className="text-sm text-muted-foreground">
