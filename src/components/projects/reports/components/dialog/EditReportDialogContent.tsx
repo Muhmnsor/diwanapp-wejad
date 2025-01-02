@@ -32,7 +32,7 @@ export const EditReportDialogContent = ({
 
   const handlePhotoUpload = async (file: File) => {
     try {
-      const { publicUrl, error } = await handleImageUpload(file, 'project');
+      const { publicUrl, error } = await handleImageUpload(file, "project");
       if (error) throw error;
       
       const newPhoto = { url: publicUrl, description: '' };
