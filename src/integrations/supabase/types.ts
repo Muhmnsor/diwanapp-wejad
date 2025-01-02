@@ -293,13 +293,13 @@ export type Database = {
           comments: string[] | null
           created_at: string
           detailed_description: string | null
-          event_duration: string | null
+          duration: string | null
           event_id: string | null
-          event_objectives: string | null
           executor_id: string | null
           files: string[] | null
           id: string
           impact_on_participants: string | null
+          objectives: string | null
           photos: string[] | null
           program_name: string | null
           report_name: string
@@ -313,13 +313,13 @@ export type Database = {
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
-          event_duration?: string | null
+          duration?: string | null
           event_id?: string | null
-          event_objectives?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
+          objectives?: string | null
           photos?: string[] | null
           program_name?: string | null
           report_name: string
@@ -333,13 +333,13 @@ export type Database = {
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
-          event_duration?: string | null
+          duration?: string | null
           event_id?: string | null
-          event_objectives?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
+          objectives?: string | null
           photos?: string[] | null
           program_name?: string | null
           report_name?: string
@@ -569,7 +569,6 @@ export type Database = {
       }
       project_activity_reports: {
         Row: {
-          activity_duration: string | null
           activity_id: string | null
           activity_objectives: string | null
           additional_links: string[] | null
@@ -577,6 +576,7 @@ export type Database = {
           comments: string[] | null
           created_at: string
           detailed_description: string | null
+          duration: string | null
           executor_id: string | null
           files: string[] | null
           id: string
@@ -590,7 +590,6 @@ export type Database = {
           video_links: string[] | null
         }
         Insert: {
-          activity_duration?: string | null
           activity_id?: string | null
           activity_objectives?: string | null
           additional_links?: string[] | null
@@ -598,6 +597,7 @@ export type Database = {
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
+          duration?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
@@ -611,7 +611,6 @@ export type Database = {
           video_links?: string[] | null
         }
         Update: {
-          activity_duration?: string | null
           activity_id?: string | null
           activity_objectives?: string | null
           additional_links?: string[] | null
@@ -619,6 +618,7 @@ export type Database = {
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
+          duration?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
