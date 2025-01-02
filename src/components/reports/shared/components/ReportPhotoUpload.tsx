@@ -14,43 +14,62 @@ export const ReportPhotoUpload = ({
   onPhotosChange,
   maxPhotos = 6
 }: ReportPhotoUploadProps) => {
+  console.log('ReportPhotoUpload - Current photos:', photos);
+
   const handlePhotoUpload = async (file: File, index: number) => {
     try {
+      console.log(`Uploading photo for index ${index}:`, file.name);
+      
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `report-photos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('event-images')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('event-images')
         .getPublicUrl(filePath);
 
-      // Update the specific slot with the uploaded photo
+      console.log(`Successfully uploaded photo to ${publicUrl}`);
+
+      // Create a new array with the new photo at the specified index
       const updatedPhotos = [...photos];
-      updatedPhotos[index] = { url: publicUrl, description: '' };
-      
+      updatedPhotos[index] = {
+        url: publicUrl,
+        description: '',
+        index: index // Explicitly set the index
+      };
+
+      console.log('Updated photos array:', updatedPhotos);
       onPhotosChange(updatedPhotos);
-      toast.success("تم رفع الصورة بنجاح");
+      toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast.error("حدث خطأ أثناء رفع الصورة");
+      console.error('Error in handlePhotoUpload:', error);
+      toast.error('حدث خطأ أثناء رفع الصورة');
     }
   };
 
   const handlePhotoDelete = (index: number) => {
+    console.log(`Deleting photo at index ${index}`);
     const updatedPhotos = photos.filter((_, i) => i !== index);
+    console.log('Updated photos after deletion:', updatedPhotos);
     onPhotosChange(updatedPhotos);
+    toast.success('تم حذف الصورة بنجاح');
   };
 
   const handleDescriptionChange = (index: number, description: string) => {
+    console.log(`Updating description for photo at index ${index}:`, description);
     const updatedPhotos = photos.map((photo, i) => 
       i === index ? { ...photo, description } : photo
     );
+    console.log('Updated photos after description change:', updatedPhotos);
     onPhotosChange(updatedPhotos);
   };
 

@@ -48,8 +48,10 @@ export const ActivityPhotosSection = ({
   // Create an array of photo slots with proper indexing
   const photoSlots = Array(maxPhotos).fill(null).map((_, index) => {
     // Find photo with matching index, if it exists
-    const photo = photos.find(p => p?.index === index) || photos[index];
+    const photo = photos.find(p => p?.index === index);
     const placeholder = photoPlaceholders[index];
+
+    console.log(`Rendering slot ${index}, photo:`, photo);
 
     return (
       <Card key={`photo-slot-${index}`} className="p-4 space-y-4">
