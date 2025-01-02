@@ -6,6 +6,7 @@ interface BaseReport {
   report_name: string;
   program_name?: string | null;
   report_text: string;
+  detailed_description?: string | null;
   activity_duration?: string;
   attendees_count?: string | null;
   activity_objectives?: string;
@@ -19,7 +20,7 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
     console.log('Starting report download process for:', report.report_name);
     const zip = new JSZip();
 
-    // Add report text content
+    // Add report text content in the same order as the form
     const reportContent = generateReportContent(report);
     zip.file('تقرير-النشاط.txt', reportContent);
 
@@ -58,25 +59,58 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
 
 const generateReportContent = (report: BaseReport): string => {
   const formatValue = (value: string | null | undefined): string => {
-    return value || 'غير محدد';
+    if (!value || value.trim() === '') return 'لا يوجد';
+    return value;
   };
 
   const formatSatisfactionLevel = (level: number | null | undefined): string => {
-    return level ? `${level}/5` : 'غير محدد';
+    if (!level && level !== 0) return 'غير محدد';
+    return `${level}/5`;
   };
 
-  const content = [
-    `اسم البرنامج/المشروع: ${formatValue(report.program_name)}`,
-    `اسم التقرير: ${formatValue(report.report_name)}`,
-    `تقرير النشاط: ${formatValue(report.report_text)}`,
-    `عدد الحضور: ${formatValue(report.attendees_count)}`,
-    `مدة النشاط: ${formatValue(report.activity_duration)}`,
-    `أهداف النشاط: ${formatValue(report.activity_objectives)}`,
-    `الأثر على المشاركين: ${formatValue(report.impact_on_participants)}`,
-    `متوسط نسبة التقييم للنشاط: ${formatSatisfactionLevel(report.satisfaction_level)}`
-  ].join('\n\n');
+  // Order matches the form exactly
+  const sections = [
+    {
+      title: 'اسم التقرير',
+      value: formatValue(report.report_name)
+    },
+    {
+      title: 'اسم البرنامج',
+      value: formatValue(report.program_name)
+    },
+    {
+      title: 'الوصف التفصيلي',
+      value: formatValue(report.detailed_description)
+    },
+    {
+      title: 'مدة النشاط',
+      value: formatValue(report.activity_duration)
+    },
+    {
+      title: 'عدد الحضور',
+      value: formatValue(report.attendees_count)
+    },
+    {
+      title: 'أهداف النشاط',
+      value: formatValue(report.activity_objectives)
+    },
+    {
+      title: 'الأثر على المشاركين',
+      value: formatValue(report.impact_on_participants)
+    },
+    {
+      title: 'نص التقرير',
+      value: formatValue(report.report_text)
+    },
+    {
+      title: 'مستوى الرضا',
+      value: formatSatisfactionLevel(report.satisfaction_level)
+    }
+  ];
 
-  return content;
+  return sections
+    .map(section => `${section.title}:\n${section.value}\n`)
+    .join('\n');
 };
 
 const getFileExtension = (url: string): string => {
