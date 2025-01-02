@@ -1,15 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { ReportNameField } from "@/components/events/reports/form/ReportNameField";
-import { ReportTextField } from "@/components/events/reports/form/ReportTextField";
-import { EventMetadataFields } from "@/components/events/reports/form/EventMetadataFields";
-import { EventObjectivesField } from "@/components/events/reports/form/EventObjectivesField";
-import { ImpactField } from "@/components/events/reports/form/ImpactField";
-import { PhotosField } from "@/components/events/reports/form/PhotosField";
 import { ProjectActivity } from "@/types/activity";
 import { useQueryClient } from "@tanstack/react-query";
+import { ReportFormFields } from "./form/ReportFormFields";
+import { ReportFormActions } from "./form/ReportFormActions";
 
 interface ProjectReportFormProps {
   projectId: string;
@@ -28,13 +23,10 @@ export const ProjectReportForm = ({
   onSuccess,
   onCancel
 }: ProjectReportFormProps) => {
-  console.log("ProjectReportForm - activities:", activities);
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportName, setReportName] = useState("");
   const [programName, setProgramName] = useState(projectTitle);
   const [reportText, setReportText] = useState("");
-  const [detailedDescription, setDetailedDescription] = useState("");
   const [activityDuration, setActivityDuration] = useState("");
   const [attendeesCount, setAttendeesCount] = useState("");
   const [activityObjectives, setActivityObjectives] = useState("");
@@ -62,7 +54,6 @@ export const ProjectReportForm = ({
           program_name: programName,
           report_name: reportName,
           report_text: reportText,
-          detailed_description: detailedDescription,
           activity_duration: activityDuration,
           attendees_count: attendeesCount,
           activity_objectives: activityObjectives,
@@ -72,7 +63,6 @@ export const ProjectReportForm = ({
 
       if (error) throw error;
 
-      // Invalidate and refetch queries
       await queryClient.invalidateQueries({
         queryKey: ['project-activity-reports', projectId]
       });
@@ -92,58 +82,30 @@ export const ProjectReportForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <ReportNameField
-        value={reportName}
+      <ReportFormFields
+        reportName={reportName}
         programName={programName}
-        activities={activities}
-        onChange={setReportName}
-        onProgramNameChange={setProgramName}
-      />
-
-      <ReportTextField
-        value={reportText}
-        onChange={setReportText}
-      />
-
-      <EventMetadataFields
-        duration={activityDuration}
+        reportText={reportText}
+        activityDuration={activityDuration}
         attendeesCount={attendeesCount}
-        onDurationChange={setActivityDuration}
-        onAttendeesCountChange={setAttendeesCount}
-      />
-
-      <EventObjectivesField
-        value={activityObjectives}
-        onChange={setActivityObjectives}
-      />
-
-      <ImpactField
-        value={impactOnParticipants}
-        onChange={setImpactOnParticipants}
-      />
-
-      <PhotosField
+        activityObjectives={activityObjectives}
+        impactOnParticipants={impactOnParticipants}
         photos={photos}
+        activities={activities}
+        onReportNameChange={setReportName}
+        onProgramNameChange={setProgramName}
+        onReportTextChange={setReportText}
+        onActivityDurationChange={setActivityDuration}
+        onAttendeesCountChange={setAttendeesCount}
+        onActivityObjectivesChange={setActivityObjectives}
+        onImpactChange={setImpactOnParticipants}
         onPhotosChange={setPhotos}
       />
-
-      <div className="flex justify-end gap-4">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-          >
-            إلغاء
-          </Button>
-        )}
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "جاري الحفظ..." : "حفظ التقرير"}
-        </Button>
-      </div>
+      
+      <ReportFormActions
+        isSubmitting={isSubmitting}
+        onCancel={onCancel}
+      />
     </form>
   );
 };
