@@ -1,10 +1,29 @@
 import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
+import * as z from "zod";
+
+const formSchema = z.object({
+  program_name: z.string().min(1, "الرجاء إدخال اسم البرنامج"),
+  report_name: z.string().min(1, "الرجاء إدخال اسم التقرير"),
+  report_text: z.string().min(1, "الرجاء إدخال نص التقرير"),
+  detailed_description: z.string().optional(),
+  activity_duration: z.string().optional(),
+  attendees_count: z.string().optional(),
+  activity_objectives: z.string().optional(),
+  impact_on_participants: z.string().optional(),
+  photos: z.array(z.object({
+    url: z.string(),
+    description: z.string()
+  })).optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 interface ReportFormFieldsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FormData>;
 }
 
 export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
