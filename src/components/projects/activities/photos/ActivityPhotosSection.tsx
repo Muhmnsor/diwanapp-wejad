@@ -27,33 +27,33 @@ export const ActivityPhotosSection = ({
 }: ActivityPhotosSectionProps) => {
   console.log('ActivityPhotosSection - Current photos:', photos);
 
-  // Create empty slots array to represent all available photo slots
+  // Create an array of slots with fixed positions
   const photoSlots = Array(maxPhotos).fill(null).map((_, index) => {
-    return photos[index] || null;
+    const photo = photos.find((_, photoIndex) => photoIndex === index);
+    return photo || null;
   });
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    console.log('Starting file upload process for slot:', index);
-    console.log('Current photo slots state:', photoSlots);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slotIndex: number) => {
+    console.log('Starting file upload process for slot:', slotIndex);
     
     const file = e.target.files?.[0];
-    
-    if (file) {
-      console.log('Selected file for slot', index, ':', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-      });
-      
-      try {
-        console.log('Attempting to upload file to slot:', index);
-        await onPhotoUpload(file, index);
-        console.log('File upload completed successfully for slot:', index);
-      } catch (error) {
-        console.error('Error uploading photo to slot', index, ':', error);
-      }
-    } else {
-      console.log('No file selected for slot:', index);
+    if (!file) {
+      console.log('No file selected for slot:', slotIndex);
+      return;
+    }
+
+    console.log('Selected file for slot', slotIndex, ':', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+
+    try {
+      console.log('Attempting to upload file to slot:', slotIndex);
+      await onPhotoUpload(file, slotIndex);
+      console.log('File upload completed successfully for slot:', slotIndex);
+    } catch (error) {
+      console.error('Error uploading photo to slot', slotIndex, ':', error);
     }
   };
 
@@ -61,7 +61,7 @@ export const ActivityPhotosSection = ({
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {photoSlots.map((photo, index) => (
-          <div key={index} className="border rounded-lg p-4 space-y-4">
+          <div key={`photo-slot-${index}`} className="border rounded-lg p-4 space-y-4">
             <div className="text-sm text-muted-foreground mb-2">
               {photoPlaceholders[index]}
             </div>
