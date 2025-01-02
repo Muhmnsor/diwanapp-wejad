@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
 import { ReportPhoto } from "@/types/projectReport";
-import Image from "next/image";
 
 interface ProjectReportPhotoUploadProps {
   photos: ReportPhoto[];
@@ -59,11 +58,10 @@ export const ProjectReportPhotoUpload = ({
           >
             {photos[index]?.url ? (
               <div className="relative h-full">
-                <Image
+                <img
                   src={photos[index].url}
                   alt={`صورة ${index + 1}`}
-                  fill
-                  className="object-cover"
+                  className="object-cover w-full h-full"
                 />
                 <Button
                   variant="destructive"

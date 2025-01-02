@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportForm } from "../ReportForm";
 import { ProjectReportDeleteDialog } from "../components/ProjectReportDeleteDialog";
-import { downloadReport } from "@/utils/reports/downloadReport";
+import { downloadReport } from "@/utils/reports/downloadFiles";
 import { useToast } from "@/hooks/use-toast";
 import { ReportsHeader } from "../components/ReportsHeader";
 import { ReportsTable } from "../components/ReportsTable";
