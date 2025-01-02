@@ -1,9 +1,9 @@
+import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { UseFormReturn } from "react-hook-form";
 import { ReportPhotosSection } from "./ReportPhotosSection";
 
 export interface ActivityReportFormData {
