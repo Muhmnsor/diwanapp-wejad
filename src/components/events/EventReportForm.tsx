@@ -5,35 +5,25 @@ import { useAuthStore } from "@/store/authStore";
 import { ReportFormFields } from "./reports/form/ReportFormFields";
 import { submitReport } from "./reports/form/ReportFormSubmitHandler";
 import { ProjectActivity } from "@/types/activity";
+import { EventReportFormData } from "@/types/eventReport";
 
 interface EventReportFormProps {
   eventId: string;
   onSuccess?: () => void;
 }
 
-interface PhotoWithDescription {
-  url: string;
-  description: string;
-}
-
-interface ReportFormData {
-  program_name: string;
-  report_name: string;
-  report_text: string;
-  detailed_description: string;
-  event_duration: string;
-  attendees_count: string;
-  event_objectives: string;
-  impact_on_participants: string;
-  photos: PhotoWithDescription[];
-}
-
 export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) => {
   const { user } = useAuthStore();
-  const { handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<ReportFormData>({
+  const { handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<EventReportFormData>({
     defaultValues: {
       program_name: '',
       report_name: '',
+      report_text: '',
+      detailed_description: '',
+      activity_duration: '',
+      attendees_count: '',
+      activity_objectives: '',
+      impact_on_participants: '',
       photos: Array(6).fill({ url: '', description: '' })
     }
   });
@@ -41,7 +31,7 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   const formValues = watch();
   const activities: ProjectActivity[] = [];
 
-  const onSubmit = async (data: ReportFormData) => {
+  const onSubmit = async (data: EventReportFormData) => {
     try {
       await submitReport(data, eventId, user?.id);
       onSuccess?.();
