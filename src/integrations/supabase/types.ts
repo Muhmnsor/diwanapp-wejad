@@ -288,6 +288,8 @@ export type Database = {
       }
       event_reports: {
         Row: {
+          activity_duration: string | null
+          activity_objectives: string | null
           additional_links: string[] | null
           attendees_count: string | null
           comments: string[] | null
@@ -308,6 +310,8 @@ export type Database = {
           video_links: string[] | null
         }
         Insert: {
+          activity_duration?: string | null
+          activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
           comments?: string[] | null
@@ -328,6 +332,8 @@ export type Database = {
           video_links?: string[] | null
         }
         Update: {
+          activity_duration?: string | null
+          activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
           comments?: string[] | null
@@ -569,18 +575,18 @@ export type Database = {
       }
       project_activity_reports: {
         Row: {
+          activity_duration: string | null
           activity_id: string | null
-          activity_objectives: string | null
           additional_links: string[] | null
           attendees_count: string | null
           comments: string[] | null
           created_at: string
           detailed_description: string | null
-          duration: string | null
           executor_id: string | null
           files: string[] | null
           id: string
           impact_on_participants: string | null
+          objectives: string | null
           photos: string[] | null
           program_name: string | null
           project_id: string | null
@@ -590,18 +596,18 @@ export type Database = {
           video_links: string[] | null
         }
         Insert: {
+          activity_duration?: string | null
           activity_id?: string | null
-          activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
-          duration?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
+          objectives?: string | null
           photos?: string[] | null
           program_name?: string | null
           project_id?: string | null
@@ -611,18 +617,18 @@ export type Database = {
           video_links?: string[] | null
         }
         Update: {
+          activity_duration?: string | null
           activity_id?: string | null
-          activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
-          duration?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
+          objectives?: string | null
           photos?: string[] | null
           program_name?: string | null
           project_id?: string | null
