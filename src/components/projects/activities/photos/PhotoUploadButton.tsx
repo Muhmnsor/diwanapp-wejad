@@ -3,14 +3,11 @@ import { Label } from "@/components/ui/label";
 import { ImagePlus } from "lucide-react";
 
 interface PhotoUploadButtonProps {
-  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
 }
 
-export const PhotoUploadButton = ({
-  onFileChange,
-  placeholder
-}: PhotoUploadButtonProps) => {
+export const PhotoUploadButton = ({ onFileChange, placeholder }: PhotoUploadButtonProps) => {
   return (
     <div className="flex items-center gap-4">
       <Input
