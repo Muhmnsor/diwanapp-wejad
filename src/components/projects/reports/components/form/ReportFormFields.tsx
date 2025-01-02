@@ -128,7 +128,9 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
       />
 
       <div className="space-y-2">
-        {form.watch('photos')?.map((photo, index) => (
+        {(form.watch('photos') || [])
+          .filter(photo => photo !== null) // Filter out null values
+          .map((photo, index) => (
           <div key={index} className="flex gap-2">
             <Input 
               value={photo.url}
