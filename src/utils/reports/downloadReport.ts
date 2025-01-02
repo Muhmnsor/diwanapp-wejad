@@ -80,9 +80,12 @@ ${report.photos && Array.isArray(report.photos) ?
       
       for (let i = 0; i < report.photos.length; i++) {
         try {
-          const photoData: ReportPhoto = typeof report.photos[i] === 'string' 
-            ? JSON.parse(report.photos[i]) 
-            : report.photos[i];
+          let photoData: ReportPhoto;
+          if (typeof report.photos[i] === 'string') {
+            photoData = JSON.parse(report.photos[i] as string);
+          } else {
+            photoData = report.photos[i] as ReportPhoto;
+          }
 
           if (!photoData?.url) continue;
 
