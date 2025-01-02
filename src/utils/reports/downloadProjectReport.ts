@@ -18,17 +18,26 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       const imageFolder = zip.folder('الصور');
       
       for (let i = 0; i < report.photos.length; i++) {
-        const photo = report.photos[i];
-        if (!photo?.url) continue;
-
         try {
-          const response = await fetch(photo.url);
+          let photoUrl;
+          if (typeof report.photos[i] === 'string') {
+            const parsedPhoto = JSON.parse(report.photos[i]);
+            photoUrl = parsedPhoto.url;
+          } else {
+            photoUrl = report.photos[i].url;
+          }
+
+          if (!photoUrl) continue;
+
+          console.log(`Downloading image from ${photoUrl}`);
+          const response = await fetch(photoUrl);
           const blob = await response.blob();
-          const extension = photo.url.split('.').pop()?.toLowerCase() || '';
+          const extension = photoUrl.split('.').pop()?.toLowerCase() || 'jpg';
           const fileName = `صورة_${i + 1}.${extension}`;
           imageFolder?.file(fileName, blob);
+          console.log(`Successfully added ${fileName} to zip`);
         } catch (error) {
-          console.error('Error downloading image:', error);
+          console.error('Error processing photo:', error);
         }
       }
     }
