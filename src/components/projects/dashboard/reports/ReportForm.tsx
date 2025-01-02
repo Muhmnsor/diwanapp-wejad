@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -9,9 +9,11 @@ import { ReportPhoto } from "@/types/projectReport";
 
 interface ReportFormProps {
   projectId: string;
+  report?: any;
+  onSuccess?: () => void;
 }
 
-export const ReportForm = ({ projectId }: ReportFormProps) => {
+export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [photos, setPhotos] = useState<ReportPhoto[]>([]);
   const [formData, setFormData] = useState({
@@ -20,6 +22,19 @@ export const ReportForm = ({ projectId }: ReportFormProps) => {
     objectives: "",
     impact: "",
   });
+
+  useEffect(() => {
+    if (report) {
+      setSelectedActivity(report.activity_id);
+      setFormData({
+        reportName: report.report_name || "",
+        reportText: report.report_text || "",
+        objectives: report.activity_objectives || "",
+        impact: report.impact_on_participants || "",
+      });
+      setPhotos(report.photos || []);
+    }
+  }, [report]);
 
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
@@ -79,38 +94,47 @@ export const ReportForm = ({ projectId }: ReportFormProps) => {
     }
 
     try {
-      console.log("Submitting report with data:", {
-        projectId,
-        selectedActivity,
-        formData,
-        photos,
-        attendanceCount
-      });
+      const reportData = {
+        project_id: projectId,
+        activity_id: selectedActivity,
+        program_name: project?.title,
+        report_name: formData.reportName,
+        report_text: formData.reportText,
+        activity_objectives: formData.objectives,
+        impact_on_participants: formData.impact,
+        attendees_count: attendanceCount.toString(),
+        activity_duration: selectedActivityDetails?.event_hours?.toString(),
+        photos: photos.filter(photo => photo && photo.url),
+      };
 
-      const { error } = await supabase
-        .from('project_activity_reports')
-        .insert({
-          project_id: projectId,
-          activity_id: selectedActivity,
-          program_name: project?.title,
-          report_name: formData.reportName,
-          report_text: formData.reportText,
-          activity_objectives: formData.objectives,
-          impact_on_participants: formData.impact,
-          attendees_count: attendanceCount.toString(),
-          activity_duration: selectedActivityDetails?.event_hours?.toString(),
-          photos: photos.filter(photo => photo && photo.url),
-        });
+      let error;
+
+      if (report) {
+        // Update existing report
+        ({ error } = await supabase
+          .from('project_activity_reports')
+          .update(reportData)
+          .eq('id', report.id));
+      } else {
+        // Insert new report
+        ({ error } = await supabase
+          .from('project_activity_reports')
+          .insert(reportData));
+      }
 
       if (error) throw error;
 
-      toast.success("تم إضافة التقرير بنجاح");
-      setSelectedActivity(null);
-      setFormData({ reportName: "", reportText: "", objectives: "", impact: "" });
-      setPhotos([]);
+      toast.success(report ? "تم تحديث التقرير بنجاح" : "تم إضافة التقرير بنجاح");
+      onSuccess?.();
+      
+      if (!report) {
+        setSelectedActivity(null);
+        setFormData({ reportName: "", reportText: "", objectives: "", impact: "" });
+        setPhotos([]);
+      }
     } catch (error) {
       console.error('Error submitting report:', error);
-      toast.error("حدث خطأ أثناء إضافة التقرير");
+      toast.error("حدث خطأ أثناء حفظ التقرير");
     }
   };
 
@@ -129,6 +153,9 @@ export const ReportForm = ({ projectId }: ReportFormProps) => {
           photos={photos}
           setPhotos={setPhotos}
         />
+        <Button type="submit" className="w-full">
+          {report ? "تحديث التقرير" : "حفظ التقرير"}
+        </Button>
       </form>
     </Card>
   );

@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { BaseReport } from '../types';
+import { BaseReport } from '@/types/sharedReport';
 
 export const downloadReportWithImages = async (report: BaseReport, eventTitle?: string): Promise<boolean> => {
   try {
