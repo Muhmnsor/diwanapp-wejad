@@ -26,15 +26,23 @@ export const EditReportDialogContent = ({
   setFormValues,
   activities,
 }: EditReportDialogContentProps) => {
+  console.log('EditReportDialogContent - Current form values:', formValues);
+
   const handleChange = (field: string, value: any) => {
     setFormValues({ ...formValues, [field]: value });
   };
 
   const handlePhotoUpload = async (file: File) => {
     try {
+      console.log('Uploading photo for project activity report');
       const { publicUrl, error } = await handleImageUpload(file, "project");
-      if (error) throw error;
       
+      if (error) {
+        console.error('Error uploading photo:', error);
+        throw error;
+      }
+      
+      console.log('Photo uploaded successfully:', publicUrl);
       const newPhoto = { url: publicUrl, description: '' };
       handleChange('photos', [...formValues.photos, newPhoto]);
       
@@ -45,11 +53,13 @@ export const EditReportDialogContent = ({
   };
 
   const handlePhotoDelete = (index: number) => {
+    console.log('Deleting photo at index:', index);
     const newPhotos = formValues.photos.filter((_, i) => i !== index);
     handleChange('photos', newPhotos);
   };
 
   const handlePhotoDescriptionChange = (index: number, description: string) => {
+    console.log('Updating photo description at index:', index);
     const newPhotos = formValues.photos.map((photo, i) => 
       i === index ? { ...photo, description } : photo
     );
