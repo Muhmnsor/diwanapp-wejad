@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ReportActions } from "@/components/reports/shared/components/ReportActions";
+import { ProjectReportActions } from "./ProjectReportActions";
 
 interface ReportsTableProps {
   reports: any[];
@@ -66,7 +66,7 @@ export const ReportsTable = ({
                 <TableCell>{report.attendees_count}</TableCell>
                 <TableCell>{formatDate(report.created_at)}</TableCell>
                 <TableCell>
-                  <ReportActions
+                  <ProjectReportActions
                     onEdit={() => onEdit(report)}
                     onDelete={() => onDelete(report)}
                     onDownload={() => onDownload(report)}

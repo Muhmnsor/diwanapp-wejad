@@ -2,7 +2,7 @@ import { ActivitySelector } from "@/components/admin/dashboard/preparation/Activ
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ReportPhotoUpload } from "@/components/reports/shared/components/ReportPhotoUpload";
+import { ProjectReportPhotoUpload } from "./components/ProjectReportPhotoUpload";
 import { ReportPhoto } from "@/types/projectReport";
 
 interface ReportFormFieldsProps {
@@ -107,7 +107,7 @@ export const ReportFormFields = ({
 
           <div>
             <label className="block text-sm font-medium mb-2">صور النشاط</label>
-            <ReportPhotoUpload
+            <ProjectReportPhotoUpload
               photos={photos}
               onPhotosChange={setPhotos}
               maxPhotos={6}
