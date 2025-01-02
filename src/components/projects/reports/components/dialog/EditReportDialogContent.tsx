@@ -1,6 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PhotosSection } from "@/components/events/reports/PhotosSection";
+import { handleImageUpload } from "@/components/events/form/EventImageUpload";
+import { toast } from "sonner";
 
 interface EditReportDialogContentProps {
   formValues: {
@@ -25,6 +28,32 @@ export const EditReportDialogContent = ({
 }: EditReportDialogContentProps) => {
   const handleChange = (field: string, value: any) => {
     setFormValues({ ...formValues, [field]: value });
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    try {
+      const { publicUrl, error } = await handleImageUpload(file, 'project');
+      if (error) throw error;
+      
+      const newPhoto = { url: publicUrl, description: '' };
+      handleChange('photos', [...formValues.photos, newPhoto]);
+      
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error("حدث خطأ أثناء رفع الصورة");
+    }
+  };
+
+  const handlePhotoDelete = (index: number) => {
+    const newPhotos = formValues.photos.filter((_, i) => i !== index);
+    handleChange('photos', newPhotos);
+  };
+
+  const handlePhotoDescriptionChange = (index: number, description: string) => {
+    const newPhotos = formValues.photos.map((photo, i) => 
+      i === index ? { ...photo, description } : photo
+    );
+    handleChange('photos', newPhotos);
   };
 
   return (
@@ -102,6 +131,25 @@ export const EditReportDialogContent = ({
           value={formValues.impact_on_participants}
           onChange={(e) => handleChange('impact_on_participants', e.target.value)}
           rows={4}
+        />
+      </div>
+
+      <div>
+        <Label>الصور</Label>
+        <PhotosSection
+          photos={formValues.photos}
+          onPhotoUpload={handlePhotoUpload}
+          onPhotoDelete={handlePhotoDelete}
+          onPhotoDescriptionChange={handlePhotoDescriptionChange}
+          maxPhotos={6}
+          photoPlaceholders={[
+            "صورة تظهر تفاعل المستفيدين والجمهور مع المحتوى",
+            "صورة توضح مكان إقامة النشاط",
+            "صورة للمتحدثين أو المدربين",
+            "صورة للمواد التدريبية أو التعليمية",
+            "صورة للأنشطة التفاعلية",
+            "صورة ختامية للنشاط"
+          ]}
         />
       </div>
     </div>

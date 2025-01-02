@@ -37,7 +37,7 @@ export const EditReportDialog = ({
         }
       }
       return photo;
-    }) || [];
+    }).filter(photo => photo !== null) || [];
   };
 
   const [formValues, setFormValues] = useState({
@@ -51,6 +51,8 @@ export const EditReportDialog = ({
     impact_on_participants: report.impact_on_participants || '',
     photos: parsePhotos(report.photos || []),
   });
+
+  console.log('EditReportDialog - Current photos:', formValues.photos);
 
   const { data: activities = [] } = useQuery({
     queryKey: ['project-activities', report.activity_id],
