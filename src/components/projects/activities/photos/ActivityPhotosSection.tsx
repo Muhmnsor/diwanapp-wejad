@@ -1,5 +1,6 @@
-import { PhotoCard } from "./PhotoCard";
-import { PhotoUploadButton } from "./PhotoUploadButton";
+import { ImagePlus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface ActivityPhotosSectionProps {
   photos: { url: string; description: string }[];
@@ -27,60 +28,86 @@ export const ActivityPhotosSection = ({
 }: ActivityPhotosSectionProps) => {
   console.log('ActivityPhotosSection - Current photos:', photos);
 
-  // Create an array of slots with fixed positions
-  const photoSlots = Array(maxPhotos).fill(null).map((_, index) => {
-    const photo = photos.find((_, photoIndex) => photoIndex === index);
-    return photo || null;
-  });
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slotIndex: number) => {
-    console.log('Starting file upload process for slot:', slotIndex);
-    
+    console.log(`Handling file change for slot ${slotIndex}`);
     const file = e.target.files?.[0];
     if (!file) {
-      console.log('No file selected for slot:', slotIndex);
+      console.log(`No file selected for slot ${slotIndex}`);
       return;
     }
 
-    console.log('Selected file for slot', slotIndex, ':', {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
-
     try {
-      console.log('Attempting to upload file to slot:', slotIndex);
+      console.log(`Uploading file for slot ${slotIndex}:`, file.name);
       await onPhotoUpload(file, slotIndex);
-      console.log('File upload completed successfully for slot:', slotIndex);
+      console.log(`Successfully uploaded file to slot ${slotIndex}`);
     } catch (error) {
-      console.error('Error uploading photo to slot', slotIndex, ':', error);
+      console.error(`Error uploading file to slot ${slotIndex}:`, error);
     }
   };
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {photoSlots.map((photo, index) => (
-          <div key={`photo-slot-${index}`} className="border rounded-lg p-4 space-y-4">
-            <div className="text-sm text-muted-foreground mb-2">
-              {photoPlaceholders[index]}
-            </div>
-            {photo ? (
-              <PhotoCard
-                photo={photo}
-                index={index}
-                onDelete={() => onPhotoDelete(index)}
-                onDescriptionChange={(description) => onPhotoDescriptionChange(index, description)}
-                placeholder={photoPlaceholders[index]}
-              />
-            ) : (
-              <PhotoUploadButton
-                onFileChange={(e) => handleFileChange(e, index)}
-                placeholder={photoPlaceholders[index]}
-              />
-            )}
-          </div>
-        ))}
+        {Array(maxPhotos).fill(null).map((_, index) => {
+          const photo = photos[index];
+          const placeholder = photoPlaceholders[index];
+
+          return (
+            <Card key={`photo-slot-${index}`} className="p-4 space-y-4">
+              <div className="text-sm text-muted-foreground">
+                {placeholder}
+              </div>
+
+              {photo ? (
+                <div className="space-y-4">
+                  <div className="relative aspect-video">
+                    <img
+                      src={photo.url}
+                      alt={`صورة ${index + 1}`}
+                      className="rounded-md object-cover w-full h-full"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      console.log(`Deleting photo from slot ${index}`);
+                      onPhotoDelete(index);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    حذف الصورة
+                  </Button>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, index)}
+                    className="hidden"
+                    id={`photo-upload-${index}`}
+                  />
+                  <label htmlFor={`photo-upload-${index}`}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-32 flex flex-col items-center justify-center gap-2 cursor-pointer"
+                      asChild
+                    >
+                      <div>
+                        <ImagePlus className="h-8 w-8" />
+                        <span className="text-sm">اضغط لإضافة صورة</span>
+                      </div>
+                    </Button>
+                  </label>
+                </div>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
