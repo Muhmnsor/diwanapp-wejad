@@ -178,6 +178,7 @@ export const ActivityReportFormFields = ({ form }: ActivityReportFormFieldsProps
                 "صورة للأنشطة التفاعلية",
                 "صورة ختامية للنشاط"
               ]}
+              form={form}
             />
           </FormItem>
         )}

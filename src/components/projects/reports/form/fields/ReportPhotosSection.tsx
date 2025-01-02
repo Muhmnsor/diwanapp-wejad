@@ -5,21 +5,24 @@ import { Button } from "@/components/ui/button";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
+import { UseFormReturn } from "react-hook-form";
 
 interface ReportPhotosSectionProps {
   photos: { url: string; description: string; }[];
   onChange: (photos: { url: string; description: string; }[]) => void;
   photoPlaceholders?: string[];
+  form: UseFormReturn<any>;
 }
 
 export const ReportPhotosSection = ({ 
   photos,
   onChange,
-  photoPlaceholders = []
+  photoPlaceholders = [],
+  form
 }: ReportPhotosSectionProps) => {
   const handlePhotoUpload = async (file: File, index: number) => {
     try {
-      const { publicUrl, error } = await handleImageUpload(file, 'event-reports');
+      const { publicUrl, error } = await handleImageUpload(file, 'project');
       if (error) throw error;
       
       const currentPhotos = [...photos];
