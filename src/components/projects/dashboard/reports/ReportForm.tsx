@@ -14,6 +14,8 @@ interface ReportFormProps {
 }
 
 export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) => {
+  console.log('ReportForm - Initializing with report:', report);
+  
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [photos, setPhotos] = useState<ReportPhoto[]>([]);
   const [formData, setFormData] = useState({
@@ -25,6 +27,7 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
 
   useEffect(() => {
     if (report) {
+      console.log('ReportForm - Setting initial data from report:', report);
       setSelectedActivity(report.activity_id);
       setFormData({
         reportName: report.report_name || "",
@@ -83,6 +86,8 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('ReportForm - Handling submit. Is update?:', !!report);
+    
     if (!selectedActivity) {
       toast.error("الرجاء اختيار النشاط");
       return;
@@ -110,19 +115,22 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
       let error;
 
       if (report) {
-        // Update existing report
+        console.log('ReportForm - Updating existing report:', report.id);
         ({ error } = await supabase
           .from('project_activity_reports')
           .update(reportData)
           .eq('id', report.id));
       } else {
-        // Insert new report
+        console.log('ReportForm - Creating new report');
         ({ error } = await supabase
           .from('project_activity_reports')
           .insert(reportData));
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving report:', error);
+        throw error;
+      }
 
       toast.success(report ? "تم تحديث التقرير بنجاح" : "تم إضافة التقرير بنجاح");
       onSuccess?.();
