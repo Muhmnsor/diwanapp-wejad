@@ -1,4 +1,3 @@
-import { UseFormReturn } from "react-hook-form";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,19 +7,19 @@ import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
 
 interface ReportPhotosSectionProps {
-  form: UseFormReturn<any>;
+  photos: { url: string; description: string; }[];
+  onChange: (photos: { url: string; description: string; }[]) => void;
   photoPlaceholders?: string[];
 }
 
 export const ReportPhotosSection = ({ 
-  form,
+  photos,
+  onChange,
   photoPlaceholders = []
 }: ReportPhotosSectionProps) => {
-  const photos = form.watch('photos') || [];
-
   const handlePhotoUpload = async (file: File, index: number) => {
     try {
-      const { publicUrl, error } = await handleImageUpload(file, 'project');
+      const { publicUrl, error } = await handleImageUpload(file, 'event-reports');
       if (error) throw error;
       
       const currentPhotos = [...photos];
@@ -29,7 +28,7 @@ export const ReportPhotosSection = ({
         description: currentPhotos[index]?.description || '' 
       };
       
-      form.setValue('photos', currentPhotos);
+      onChange(currentPhotos);
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -43,25 +42,26 @@ export const ReportPhotosSection = ({
       ...currentPhotos[index], 
       description 
     };
-    form.setValue('photos', currentPhotos);
+    onChange(currentPhotos);
   };
 
   const handleDeletePhoto = (index: number) => {
     const currentPhotos = [...photos];
-    currentPhotos[index] = { url: '', description: '' };
-    form.setValue('photos', currentPhotos);
+    currentPhotos.splice(index, 1);
+    onChange(currentPhotos);
   };
 
-  // Initialize array with 6 slots if empty
-  while (photos.length < 6) {
-    photos.push({ url: '', description: '' });
+  // Initialize array with 6 slots if needed
+  const displayPhotos = [...photos];
+  while (displayPhotos.length < 6) {
+    displayPhotos.push({ url: '', description: '' });
   }
 
   return (
     <Card className="p-4">
       <h3 className="font-semibold mb-4">الصور</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {photos.map((photo, index) => (
+        {displayPhotos.map((photo, index) => (
           <Card key={index} className="p-4 space-y-4">
             <div className="space-y-2">
               {photo.url ? (

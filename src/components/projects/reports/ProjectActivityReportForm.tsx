@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
-import { ActivityReportFormFields } from "./form/ActivityReportFormFields";
+import { ActivityReportFormFields, ActivityReportFormData } from "./form/fields/ActivityReportFormFields";
 
 const formSchema = z.object({
   program_name: z.string().min(1, "الرجاء إدخال اسم البرنامج"),
@@ -40,7 +40,7 @@ export const ProjectActivityReportForm = ({
   initialData,
 }: ProjectActivityReportFormProps) => {
   const queryClient = useQueryClient();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<ActivityReportFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
       program_name: "",
@@ -55,7 +55,7 @@ export const ProjectActivityReportForm = ({
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: ActivityReportFormData) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
