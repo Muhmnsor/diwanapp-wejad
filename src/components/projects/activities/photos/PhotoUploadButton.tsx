@@ -31,18 +31,12 @@ export const PhotoUploadButton = ({ onFileChange, placeholder }: PhotoUploadButt
           variant="outline"
           className="w-full h-32 flex flex-col items-center justify-center gap-2 cursor-pointer"
           onClick={() => {
-            // Trigger the hidden file input when the button is clicked
             const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
             fileInput?.click();
           }}
         >
           <ImagePlus className="h-8 w-8" />
           <span className="text-sm">اضغط لإضافة صورة</span>
-          {placeholder && (
-            <span className="text-xs text-muted-foreground text-center px-2">
-              {placeholder}
-            </span>
-          )}
         </Button>
       </label>
     </div>
