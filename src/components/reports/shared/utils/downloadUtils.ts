@@ -61,14 +61,14 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
 
 const generateReportContent = (report: BaseReport): string => {
   const sections = [
+    { title: 'اسم البرنامج/المشروع', value: report.program_name || 'غير محدد' },
     { title: 'اسم التقرير', value: report.report_name },
-    { title: 'اسم البرنامج', value: report.program_name || 'غير محدد' },
-    { title: 'نص التقرير', value: report.report_text },
-    { title: 'مدة النشاط', value: report.activity_duration || 'غير محدد' },
+    { title: 'تقرير النشاط', value: report.report_text },
     { title: 'عدد الحضور', value: report.attendees_count || 'غير محدد' },
+    { title: 'مدة النشاط (ساعات)', value: report.activity_duration || 'غير محدد' },
     { title: 'أهداف النشاط', value: report.activity_objectives || 'غير محدد' },
-    { title: 'الأثر على المشاركين', value: report.impact_on_participants || 'غير محدد' },
-    { title: 'مستوى الرضا', value: report.satisfaction_level ? `${report.satisfaction_level}/5` : 'غير محدد' }
+    { title: 'آثار النشاط', value: report.impact_on_participants || 'غير محدد' },
+    { title: 'متوسط نسبة التقييم للنشاط', value: report.satisfaction_level ? `${report.satisfaction_level}/5` : 'غير محدد' }
   ];
 
   return sections
