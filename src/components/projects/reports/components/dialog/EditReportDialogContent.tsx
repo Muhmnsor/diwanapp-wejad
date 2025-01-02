@@ -45,6 +45,12 @@ export const EditReportDialogContent = ({
     handleChange('photos', currentPhotos);
   };
 
+  const handlePhotoDescriptionChange = (index: number, description: string) => {
+    const currentPhotos = [...formValues.photos];
+    currentPhotos[index] = { ...currentPhotos[index], description };
+    handleChange('photos', currentPhotos);
+  };
+
   return (
     <div className="space-y-6">
       <ReportBasicFields 
@@ -66,6 +72,7 @@ export const EditReportDialogContent = ({
         photos={formValues.photos}
         onPhotoUpload={handlePhotoUpload}
         onPhotoDelete={handlePhotoDelete}
+        onPhotoDescriptionChange={handlePhotoDescriptionChange}
       />
     </div>
   );
