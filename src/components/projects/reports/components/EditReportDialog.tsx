@@ -45,9 +45,9 @@ export const EditReportDialog = ({
     program_name: report.program_name,
     report_text: report.report_text,
     detailed_description: report.detailed_description,
-    event_duration: report.activity_duration || '',
+    activity_duration: report.activity_duration || '',
     attendees_count: report.attendees_count || '',
-    event_objectives: report.activity_objectives || '',
+    activity_objectives: report.activity_objectives || '',
     impact_on_participants: report.impact_on_participants || '',
     photos: parsePhotos(report.photos || []),
   });
@@ -87,9 +87,9 @@ export const EditReportDialog = ({
           program_name: formValues.program_name,
           report_text: formValues.report_text,
           detailed_description: formValues.detailed_description,
-          activity_duration: formValues.event_duration,
+          activity_duration: formValues.activity_duration,
           attendees_count: formValues.attendees_count,
-          activity_objectives: formValues.event_objectives,
+          activity_objectives: formValues.activity_objectives,
           impact_on_participants: formValues.impact_on_participants,
           photos: preparedPhotos,
         })

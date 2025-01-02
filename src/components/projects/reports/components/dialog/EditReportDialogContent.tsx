@@ -8,9 +8,9 @@ interface EditReportDialogContentProps {
     program_name: string | null;
     report_text: string;
     detailed_description: string | null;
-    event_duration: string;
+    activity_duration: string;
     attendees_count: string;
-    event_objectives: string;
+    activity_objectives: string;
     impact_on_participants: string;
     photos: { url: string; description: string; }[];
   };
@@ -68,11 +68,11 @@ export const EditReportDialogContent = ({
       </div>
 
       <div>
-        <Label htmlFor="event_duration">مدة النشاط</Label>
+        <Label htmlFor="activity_duration">مدة النشاط</Label>
         <Input
-          id="event_duration"
-          value={formValues.event_duration}
-          onChange={(e) => handleChange('event_duration', e.target.value)}
+          id="activity_duration"
+          value={formValues.activity_duration}
+          onChange={(e) => handleChange('activity_duration', e.target.value)}
         />
       </div>
 
@@ -86,11 +86,11 @@ export const EditReportDialogContent = ({
       </div>
 
       <div>
-        <Label htmlFor="event_objectives">أهداف النشاط</Label>
+        <Label htmlFor="activity_objectives">أهداف النشاط</Label>
         <Textarea
-          id="event_objectives"
-          value={formValues.event_objectives}
-          onChange={(e) => handleChange('event_objectives', e.target.value)}
+          id="activity_objectives"
+          value={formValues.activity_objectives}
+          onChange={(e) => handleChange('activity_objectives', e.target.value)}
           rows={4}
         />
       </div>
