@@ -74,6 +74,31 @@ export const generateReportContent = (report: ProjectReport): string => {
     );
   }
 
+  // Add photos section if there are photos
+  if (report.photos && report.photos.length > 0) {
+    const photoUrls = report.photos
+      .filter(photo => {
+        try {
+          const parsedPhoto = typeof photo === 'string' ? JSON.parse(photo) : photo;
+          return parsedPhoto && parsedPhoto.url;
+        } catch (e) {
+          console.error('Error parsing photo:', e);
+          return false;
+        }
+      })
+      .map((photo, index) => {
+        const parsedPhoto = typeof photo === 'string' ? JSON.parse(photo) : photo;
+        return `صورة ${index + 1}: ${parsedPhoto.url}`;
+      });
+
+    if (photoUrls.length > 0) {
+      sections.push({
+        title: 'روابط الصور',
+        value: photoUrls.join('\n')
+      });
+    }
+  }
+
   // Add a separator line
   const separator = '='.repeat(50);
   
