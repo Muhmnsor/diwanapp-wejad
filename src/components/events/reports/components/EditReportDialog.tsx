@@ -44,9 +44,9 @@ export const EditReportDialog = ({
     program_name: report.program_name,
     report_text: report.report_text,
     detailed_description: report.detailed_description,
-    duration: report.duration || report.activity_duration,
+    duration: report.duration,
     attendees_count: report.attendees_count,
-    objectives: report.objectives || report.activity_objectives,
+    objectives: report.objectives,
     impact_on_participants: report.impact_on_participants,
     photos: parsePhotos(report.photos || []),
   });
@@ -79,27 +79,24 @@ export const EditReportDialog = ({
       });
 
       const { error } = await supabase
-        .from('project_activity_reports')
+        .from('event_reports')
         .update({
           report_name: formValues.report_name,
           program_name: formValues.program_name,
           report_text: formValues.report_text,
           detailed_description: formValues.detailed_description,
-          activity_duration: formValues.duration,
+          duration: formValues.duration,
           attendees_count: formValues.attendees_count,
-          activity_objectives: formValues.objectives,
+          objectives: formValues.objectives,
           impact_on_participants: formValues.impact_on_participants,
           photos: preparedPhotos,
         })
         .eq('id', report.id);
 
-      if (error) {
-        console.error('Error updating report:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       await queryClient.invalidateQueries({
-        queryKey: ['project-activity-reports', report.event_id]
+        queryKey: ['event-reports', report.event_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');
