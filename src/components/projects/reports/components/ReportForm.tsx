@@ -53,7 +53,7 @@ export const ReportForm = ({
       attendees_count: initialData?.attendees_count || "",
       activity_objectives: initialData?.activity_objectives || "",
       impact_on_participants: initialData?.impact_on_participants || "",
-      photos: initialData?.photos || [],
+      photos: initialData?.photos?.filter(photo => photo !== null) || [],
     },
   });
 
