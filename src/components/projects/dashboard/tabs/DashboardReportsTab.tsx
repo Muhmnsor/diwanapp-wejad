@@ -1,21 +1,12 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { ReportForm } from "../reports/ReportForm";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ReportActions } from "@/components/reports/shared/components/ReportActions";
+import { ReportForm } from "../reports/ReportForm";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
 import { downloadReport } from "@/components/reports/project-reports/handlers/projectReportHandlers";
 import { useToast } from "@/hooks/use-toast";
+import { ReportsHeader } from "../reports/components/ReportsHeader";
+import { ReportsTable } from "../reports/components/ReportsTable";
 
 interface DashboardReportsTabProps {
   projectId: string;
@@ -115,13 +106,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">تقارير النشاط</h2>
-        <Button onClick={() => setIsFormOpen(!isFormOpen)}>
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة تقرير
-        </Button>
-      </div>
+      <ReportsHeader onAddReport={() => setIsFormOpen(!isFormOpen)} />
 
       {isFormOpen && (
         <ReportForm 
@@ -135,58 +120,19 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         />
       )}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-right">اسم التقرير</TableHead>
-              <TableHead className="text-right">النشاط</TableHead>
-              <TableHead className="text-right">عدد الحضور</TableHead>
-              <TableHead className="text-right">تاريخ الإنشاء</TableHead>
-              <TableHead className="text-center">الإجراءات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  جاري التحميل...
-                </TableCell>
-              </TableRow>
-            ) : reports.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  لا توجد تقارير بعد
-                </TableCell>
-              </TableRow>
-            ) : (
-              reports.map((report: any) => (
-                <TableRow key={report.id}>
-                  <TableCell className="font-medium">
-                    {report.report_name}
-                  </TableCell>
-                  <TableCell>
-                    {report.events?.title || 'النشاط غير موجود'}
-                  </TableCell>
-                  <TableCell>{report.attendees_count}</TableCell>
-                  <TableCell>{formatDate(report.created_at)}</TableCell>
-                  <TableCell>
-                    <ReportActions
-                      onEdit={() => handleEdit(report)}
-                      onDelete={() => {
-                        setSelectedReport(report);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                      onDownload={() => handleDownload(report)}
-                      isDeleting={isDeleting && selectedReport?.id === report.id}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <ReportsTable 
+        reports={reports}
+        isLoading={isLoading}
+        onEdit={handleEdit}
+        onDelete={(report) => {
+          setSelectedReport(report);
+          setIsDeleteDialogOpen(true);
+        }}
+        onDownload={handleDownload}
+        isDeleting={isDeleting}
+        selectedReport={selectedReport}
+        formatDate={formatDate}
+      />
 
       <ReportDeleteDialog
         open={isDeleteDialogOpen}
