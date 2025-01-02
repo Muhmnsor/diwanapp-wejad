@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -37,6 +36,8 @@ export const ReportForm = ({
   onSuccess,
   initialData,
 }: ReportFormProps) => {
+  console.log("ReportForm - initialData:", initialData);
+  
   const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -97,20 +98,7 @@ export const ReportForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <ReportFormFields
-          formValues={{
-            program_name: form.watch("program_name"),
-            report_name: form.watch("report_name"),
-            report_text: form.watch("report_text"),
-            detailed_description: form.watch("detailed_description"),
-            event_duration: form.watch("activity_duration"),
-            attendees_count: form.watch("attendees_count"),
-            event_objectives: form.watch("activity_objectives"),
-            impact_on_participants: form.watch("impact_on_participants"),
-            photos: form.watch("photos"),
-          }}
-          setValue={(field, value) => form.setValue(field, value)}
-        />
+        <ReportFormFields form={form} />
         <Button type="submit">
           {initialData ? "تحديث التقرير" : "إنشاء التقرير"}
         </Button>
