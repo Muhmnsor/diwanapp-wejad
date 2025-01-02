@@ -1,9 +1,7 @@
-import { ProjectActivityReport, ReportPhoto } from "@/types/projectReport";
-import { supabase } from "@/integrations/supabase/client";
+import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import { saveAs } from "file-saver";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { formatDate } from "@/lib/utils";
 
 const arabicFontUrl = "/fonts/arabic.ttf";
 
@@ -13,7 +11,7 @@ async function fetchFont(url: string) {
   return fontBytes;
 }
 
-export const downloadReport = async (report: ProjectActivityReport) => {
+export const downloadReport = async (report: ProjectReport): Promise<void> => {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
   
@@ -40,12 +38,12 @@ export const downloadReport = async (report: ProjectActivityReport) => {
 
   let content = '';
   content += `اسم التقرير: ${report.report_name}\n`;
-  content += `تاريخ النشاط: ${formatDate(report.activity_date)}\n`;
+  content += `تاريخ النشاط: ${report.created_at}\n`;
   content += `تقرير النشاط: ${report.report_text}\n`;
-  content += `عدد الحضور: ${report.attendance_count}\n`;
-  content += `مدة النشاط: ${report.activity_hours} ساعات\n`;
-  content += `أهداف النشاط: ${report.objectives}\n`;
-  content += `آثار النشاط: ${report.impact}\n`;
+  content += `عدد الحضور: ${report.attendees_count}\n`;
+  content += `مدة النشاط: ${report.activity_duration}\n`;
+  content += `أهداف النشاط: ${report.activity_objectives}\n`;
+  content += `آثار النشاط: ${report.impact_on_participants || ''}\n`;
 
   const lines = content.split('\n');
   for (const line of lines) {
