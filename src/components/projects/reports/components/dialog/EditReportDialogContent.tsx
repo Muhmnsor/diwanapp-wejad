@@ -4,21 +4,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
 import { ActivityPhotosSection } from "@/components/projects/activities/photos/ActivityPhotosSection";
+import { ActivityReportFormData } from "@/types/activityReport";
+import { ProjectActivity } from "@/types/activity";
 
 interface EditReportDialogContentProps {
-  formValues: {
-    report_name: string;
-    program_name: string | null;
-    report_text: string;
-    detailed_description: string | null;
-    activity_duration: string;
-    attendees_count: string;
-    activity_objectives: string;
-    impact_on_participants: string;
-    photos: { url: string; description: string; }[];
-  };
-  setFormValues: (values: any) => void;
-  activities: any[];
+  formValues: ActivityReportFormData;
+  setFormValues: (values: ActivityReportFormData) => void;
+  activities: ProjectActivity[];
 }
 
 export const EditReportDialogContent = ({
@@ -28,7 +20,7 @@ export const EditReportDialogContent = ({
 }: EditReportDialogContentProps) => {
   console.log('EditReportDialogContent - Current form values:', formValues);
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: keyof ActivityReportFormData, value: any) => {
     setFormValues({ ...formValues, [field]: value });
   };
 
