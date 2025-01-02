@@ -16,7 +16,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
 
   const handlePhotoUpload = async (file: File) => {
     try {
-      const { publicUrl, error } = await handleImageUpload(file);
+      const { publicUrl, error } = await handleImageUpload(file, 'project');
       if (error) throw error;
       
       const currentPhotos = form.getValues('photos') || [];

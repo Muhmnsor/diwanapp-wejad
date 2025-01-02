@@ -1,22 +1,31 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
-export const handleImageUpload = async (imageFile: File) => {
+export const handleImageUpload = async (file: File, type: 'event' | 'project' = 'event') => {
   try {
-    const fileName = `event-images/${Date.now()}.${imageFile.name.split('.').pop()}`;
-    const { error: uploadError, data } = await supabase.storage
-      .from('event-images')
-      .upload(fileName, imageFile);
+    console.log('Starting image upload process');
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const folderPath = type === 'project' ? 'project-reports' : 'event-reports';
+    const filePath = `${folderPath}/${fileName}`;
 
-    if (uploadError) {
-      console.error('Error uploading image:', uploadError);
-      return { error: uploadError };
+    const { data, error } = await supabase.storage
+      .from('event-images')
+      .upload(filePath, file);
+
+    if (error) {
+      console.error('Error uploading image:', error);
+      return { error };
     }
 
     const { data: { publicUrl } } = supabase.storage
       .from('event-images')
-      .getPublicUrl(fileName);
+      .getPublicUrl(filePath);
 
-    return { publicUrl, error: null };
+    console.log('Image uploaded successfully:', publicUrl);
+    return { publicUrl };
+
   } catch (error) {
     console.error('Error in handleImageUpload:', error);
     return { error };
