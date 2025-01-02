@@ -56,7 +56,7 @@ export const downloadReport = async (report: ProjectReport): Promise<void> => {
       try {
         let photoData: ReportPhoto;
         if (typeof report.photos[i] === 'string') {
-          photoData = JSON.parse(report.photos[i] as unknown as string);
+          photoData = JSON.parse(report.photos[i] as string) as ReportPhoto;
         } else {
           photoData = report.photos[i] as ReportPhoto;
         }
@@ -70,7 +70,7 @@ export const downloadReport = async (report: ProjectReport): Promise<void> => {
         const imgDims = image.scale(0.5);
         
         if (currentY - imgDims.height < 50) {
-          page.addPage();
+          const newPage = pdfDoc.addPage();
           currentY = height - 50;
         }
         
