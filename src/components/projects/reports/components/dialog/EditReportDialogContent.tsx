@@ -1,9 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PhotosSection } from "@/components/events/reports/PhotosSection";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
+import { ActivityPhotosSection } from "@/components/projects/activities/photos/ActivityPhotosSection";
 
 interface EditReportDialogContentProps {
   formValues: {
@@ -32,7 +32,7 @@ export const EditReportDialogContent = ({
 
   const handlePhotoUpload = async (file: File) => {
     try {
-      const { publicUrl, error } = await handleImageUpload(file, 'project');
+      const { publicUrl, error } = await handleImageUpload(file, 'project-reports');
       if (error) throw error;
       
       const newPhoto = { url: publicUrl, description: '' };
@@ -136,7 +136,7 @@ export const EditReportDialogContent = ({
 
       <div>
         <Label>الصور</Label>
-        <PhotosSection
+        <ActivityPhotosSection
           photos={formValues.photos}
           onPhotoUpload={handlePhotoUpload}
           onPhotoDelete={handlePhotoDelete}
