@@ -8,3 +8,6 @@ export type {
   ReportMetadata,
   ReportPhoto
 } from '@/components/reports/shared/types';
+
+// Legacy type for backward compatibility
+export type Report = EventReport;
