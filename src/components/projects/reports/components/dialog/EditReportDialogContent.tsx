@@ -73,6 +73,15 @@ export const EditReportDialogContent = ({
         onPhotoUpload={handlePhotoUpload}
         onPhotoDelete={handlePhotoDelete}
         onPhotoDescriptionChange={handlePhotoDescriptionChange}
+        maxPhotos={6}
+        photoPlaceholders={[
+          "صورة تظهر تفاعل المستفيدين والجمهور مع المحتوى",
+          "صورة توضح مكان إقامة النشاط",
+          "صورة للمتحدثين أو المدربين",
+          "صورة للمواد التدريبية أو التعليمية",
+          "صورة للأنشطة التفاعلية",
+          "صورة ختامية للنشاط"
+        ]}
       />
     </div>
   );
