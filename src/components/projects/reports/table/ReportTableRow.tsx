@@ -32,6 +32,26 @@ export const ReportTableRow = ({ report, onDelete, onDownload }: ReportTableRowP
 
       const zip = new JSZip();
 
+      // Fetch activity feedback to calculate average ratings
+      const { data: feedbackData } = await supabase
+        .from('activity_feedback')
+        .select('overall_rating, content_rating, organization_rating, presenter_rating')
+        .eq('activity_id', report.activity_id);
+
+      const calculateAverage = (ratings: number[]) => {
+        const validRatings = ratings.filter(r => r !== null);
+        return validRatings.length > 0 
+          ? validRatings.reduce((a, b) => a + b, 0) / validRatings.length 
+          : 0;
+      };
+
+      const averageRatings = feedbackData ? {
+        overall: calculateAverage(feedbackData.map(f => f.overall_rating)),
+        content: calculateAverage(feedbackData.map(f => f.content_rating)),
+        organization: calculateAverage(feedbackData.map(f => f.organization_rating)),
+        presenter: calculateAverage(feedbackData.map(f => f.presenter_rating))
+      } : null;
+
       const reportContent = `تقرير النشاط
 
 اسم البرنامج: ${report.program_name || 'غير محدد'}
@@ -53,6 +73,14 @@ ${report.activity_objectives || 'غير محدد'}
 
 الأثر على المشاركين:
 ${report.impact_on_participants || 'غير محدد'}
+
+${averageRatings ? `
+متوسط التقييمات:
+- التقييم العام: ${averageRatings.overall.toFixed(1)} من 5
+- تقييم المحتوى: ${averageRatings.content.toFixed(1)} من 5
+- تقييم التنظيم: ${averageRatings.organization.toFixed(1)} من 5
+- تقييم المقدم: ${averageRatings.presenter.toFixed(1)} من 5
+` : 'لا توجد تقييمات متاحة'}
 
 الصور المرفقة:
 ${report.photos?.map((photo, index) => {
