@@ -4,9 +4,9 @@ export interface BaseReport {
   program_name?: string | null;
   report_text: string;
   detailed_description?: string | null;
-  activity_duration?: string | null;
+  duration?: string | null;
   attendees_count?: string | null;
-  activity_objectives?: string | null;
+  objectives?: string | null;
   impact_on_participants?: string | null;
   photos?: { url: string; description: string; }[] | null;
   created_at: string;
@@ -44,4 +44,16 @@ export interface ReportMetadata {
 export interface ReportPhoto {
   url: string;
   description: string;
+}
+
+export interface ReportFormData {
+  program_name: string;
+  report_name: string;
+  report_text: string;
+  detailed_description: string;
+  duration: string;
+  attendees_count: string;
+  objectives: string;
+  impact_on_participants: string;
+  photos: ReportPhoto[];
 }

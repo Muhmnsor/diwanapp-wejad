@@ -1,11 +1,9 @@
-import { BaseReport } from "./sharedReport";
+import { BaseReport, ReportFormData } from "./sharedReport";
 
 export interface ProjectReport extends BaseReport {
   project_id: string | null;
   activity_id: string | null;
   executor_id: string | null;
-  activity_duration: string;
-  activity_objectives: string;
   profiles?: {
     id: string;
     email: string;
@@ -15,14 +13,8 @@ export interface ProjectReport extends BaseReport {
   } | null;
 }
 
-export interface ProjectReportFormData {
-  program_name: string;
-  report_name: string;
-  report_text: string;
-  detailed_description: string;
-  activity_duration: string;
-  attendees_count: string;
-  activity_objectives: string;
-  impact_on_participants: string;
-  photos: { url: string; description: string; }[];
+export interface ProjectReportFormData extends ReportFormData {
+  project_id?: string;
+  activity_id?: string;
+  executor_id?: string;
 }
