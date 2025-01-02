@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UseFormReturn } from "react-hook-form";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ReportBasicInfoFieldsProps {
   form: UseFormReturn<any>;
@@ -46,7 +47,11 @@ export const ReportBasicInfoFields = ({ form }: ReportBasicInfoFieldsProps) => {
             <FormItem>
               <Label>نص التقرير</Label>
               <FormControl>
-                <Input placeholder="نص التقرير" {...field} />
+                <Textarea 
+                  placeholder="نص التقرير" 
+                  className="min-h-[100px]"
+                  {...field} 
+                />
               </FormControl>
             </FormItem>
           )}
