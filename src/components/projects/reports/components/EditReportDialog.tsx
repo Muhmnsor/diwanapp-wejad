@@ -29,6 +29,7 @@ export const EditReportDialog = ({
       queryKey: ['project-activity-reports', report.activity_id]
     });
     onOpenChange(false);
+    toast.success("تم تحديث التقرير بنجاح");
   };
 
   return (
