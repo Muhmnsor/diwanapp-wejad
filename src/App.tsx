@@ -5,12 +5,20 @@ import { Toaster } from './components/ui/toaster';
 import AppRoutes from './AppRoutes';
 import './App.css';
 
-function App() {
-  const { initialize } = useAuthStore();
+// Initialize store outside of component
+const initializeAuth = async () => {
+  try {
+    const { initialize } = useAuthStore.getState();
+    await initialize();
+  } catch (error) {
+    console.error('Failed to initialize auth store:', error);
+  }
+};
 
+function App() {
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    initializeAuth();
+  }, []);
 
   return (
     <Router>
