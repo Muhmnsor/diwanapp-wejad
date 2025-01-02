@@ -1,41 +1,41 @@
 import { TableCell } from "@/components/ui/table";
-import { EventReport } from "@/types/eventReport";
+import { ProjectReport } from "@/types/projectReport";
 
 type ReportContentProps = Pick<
-  EventReport,
+  ProjectReport,
   | "report_text"
   | "detailed_description"
-  | "event_duration"
+  | "activity_duration"
   | "attendees_count"
-  | "event_objectives"
+  | "activity_objectives"
   | "impact_on_participants"
   | "created_at"
   | "photos"
-  | "event_id"
+  | "activity_id"
 >;
 
 export const ReportContent = ({
   report_text,
   detailed_description,
-  event_duration,
+  activity_duration,
   attendees_count,
-  event_objectives,
+  activity_objectives,
   impact_on_participants,
   created_at,
   photos,
-  event_id,
+  activity_id,
 }: ReportContentProps) => {
   return (
     <>
       <TableCell className="font-medium">{report_text}</TableCell>
       <TableCell>{detailed_description}</TableCell>
-      <TableCell>{event_duration}</TableCell>
+      <TableCell>{activity_duration}</TableCell>
       <TableCell>{attendees_count}</TableCell>
-      <TableCell>{event_objectives}</TableCell>
+      <TableCell>{activity_objectives}</TableCell>
       <TableCell>{impact_on_participants}</TableCell>
       <TableCell>{created_at}</TableCell>
       <TableCell>{photos?.length || 0} صور</TableCell>
-      <TableCell>{event_id}</TableCell>
+      <TableCell>{activity_id}</TableCell>
     </>
   );
 };
