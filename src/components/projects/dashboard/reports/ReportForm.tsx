@@ -35,7 +35,21 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
         objectives: report.activity_objectives || "",
         impact: report.impact_on_participants || "",
       });
-      setPhotos(report.photos?.map((p: string) => JSON.parse(p)) || []);
+      
+      // Parse photos and filter out any invalid entries
+      const parsedPhotos = report.photos
+        ?.map((p: string) => {
+          try {
+            return JSON.parse(p);
+          } catch (e) {
+            console.error('Error parsing photo:', e);
+            return null;
+          }
+        })
+        .filter((p: ReportPhoto | null): p is ReportPhoto => p !== null) || [];
+      
+      console.log('ReportForm - Parsed photos:', parsedPhotos);
+      setPhotos(parsedPhotos);
     }
   }, [report]);
 
@@ -99,6 +113,10 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
     }
 
     try {
+      // Filter out null values from photos array
+      const validPhotos = photos.filter(photo => photo && photo.url);
+      console.log('ReportForm - Valid photos for submission:', validPhotos);
+
       const reportData = {
         project_id: projectId,
         activity_id: selectedActivity,
@@ -109,7 +127,7 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
         impact_on_participants: formData.impact,
         attendees_count: attendanceCount.toString(),
         activity_duration: selectedActivityDetails?.event_hours?.toString(),
-        photos: photos.map(photo => JSON.stringify(photo)),
+        photos: validPhotos.map(photo => JSON.stringify(photo)),
       };
 
       console.log('ReportForm - Submitting data:', reportData);
@@ -126,6 +144,7 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
         error = updateError;
         
         if (!error) {
+          console.log('ReportForm - Update successful');
           toast.success("تم تحديث التقرير بنجاح");
           onSuccess?.();
         }
@@ -138,6 +157,7 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
         error = insertError;
         
         if (!error) {
+          console.log('ReportForm - Insert successful');
           toast.success("تم إضافة التقرير بنجاح");
           onSuccess?.();
           
