@@ -59,10 +59,10 @@ ${ratings ? `
 الصور المرفقة
 ============
 ${report.photos && Array.isArray(report.photos) ? 
-  report.photos.map((photoStr, index) => {
+  report.photos.map((photo: ReportPhoto | string, index: number) => {
     try {
-      const photo = typeof photoStr === 'string' ? JSON.parse(photoStr) : photoStr;
-      return `${index + 1}. ${photo.description || 'بدون وصف'}`;
+      const photoData = typeof photo === 'string' ? JSON.parse(photo) : photo;
+      return `${index + 1}. ${photoData.description || 'بدون وصف'}`;
     } catch (e) {
       console.error('Error parsing photo:', e);
       return `${index + 1}. صورة ${index + 1}`;
@@ -80,16 +80,16 @@ ${report.photos && Array.isArray(report.photos) ?
       
       for (let i = 0; i < report.photos.length; i++) {
         try {
-          const photoData = typeof report.photos[i] === 'string' 
-            ? JSON.parse(report.photos[i]) 
-            : report.photos[i];
+          const photo = typeof report.photos[i] === 'string' 
+            ? JSON.parse(report.photos[i]) as ReportPhoto
+            : report.photos[i] as ReportPhoto;
 
-          if (!photoData?.url) continue;
+          if (!photo?.url) continue;
 
-          const response = await fetch(photoData.url);
+          const response = await fetch(photo.url);
           const blob = await response.blob();
-          const extension = photoData.url.split('.').pop()?.toLowerCase() || 'jpg';
-          const fileName = `صورة_${i + 1}${photoData.description ? ` - ${photoData.description}` : ''}.${extension}`;
+          const extension = photo.url.split('.').pop()?.toLowerCase() || 'jpg';
+          const fileName = `صورة_${i + 1}${photo.description ? ` - ${photo.description}` : ''}.${extension}`;
           photosFolder?.file(fileName, blob);
         } catch (error) {
           console.error(`Error downloading photo ${i + 1}:`, error);
