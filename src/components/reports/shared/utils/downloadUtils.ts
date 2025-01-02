@@ -1,10 +1,27 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { BaseReport } from '@/types/sharedReport';
+import { ReportPhoto } from '../types';
+
+interface BaseReport {
+  report_name: string;
+  program_name?: string;
+  report_text: string;
+  detailed_description?: string;
+  activity_duration?: string;
+  attendees_count?: string;
+  activity_objectives?: string;
+  impact_on_participants?: string;
+  photos?: ReportPhoto[];
+  video_links?: string[];
+  additional_links?: string[];
+  files?: string[];
+  comments?: string[];
+  satisfaction_level?: number;
+}
 
 export const downloadReportWithImages = async (report: BaseReport, eventTitle?: string): Promise<boolean> => {
   try {
-    console.log('Starting report download process for:', report.id);
+    console.log('Starting report download process for:', report.report_name);
     const zip = new JSZip();
 
     // Add report text content
@@ -34,24 +51,6 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
       }
     }
 
-    // Add additional files if they exist
-    if (report.files && report.files.length > 0) {
-      const filesFolder = zip.folder('الملفات');
-      for (let i = 0; i < report.files.length; i++) {
-        const fileUrl = report.files[i];
-        if (!fileUrl) continue;
-
-        try {
-          const response = await fetch(fileUrl);
-          const blob = await response.blob();
-          const fileName = `ملف_${i + 1}${getFileExtension(fileUrl)}`;
-          filesFolder?.file(fileName, blob);
-        } catch (error) {
-          console.error('Error downloading file:', error);
-        }
-      }
-    }
-
     // Generate and save zip file
     const content = await zip.generateAsync({ type: 'blob' });
     const fileName = `تقرير-${eventTitle || report.report_name || 'النشاط'}-${new Date().toISOString().split('T')[0]}.zip`;
@@ -73,6 +72,7 @@ const generateReportContent = (report: BaseReport): string => {
 الوصف التفصيلي:
 ${report.detailed_description || 'لا يوجد وصف تفصيلي'}
 
+مدة النشاط: ${report.activity_duration || 'غير محدد'}
 عدد الحضور: ${report.attendees_count || 'غير محدد'}
 
 أهداف النشاط:
