@@ -14,7 +14,7 @@ export const ReportPhotoUpload = ({
   onPhotosChange,
   maxPhotos = 6
 }: ReportPhotoUploadProps) => {
-  const handlePhotoUpload = async (file: File) => {
+  const handlePhotoUpload = async (file: File, index: number) => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -30,13 +30,9 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      // Find the first empty slot
-      const emptyIndex = photos.findIndex(p => !p.url);
-      const insertIndex = emptyIndex >= 0 ? emptyIndex : photos.length;
-      
-      // Create a new array with the photo inserted at the correct position
+      // Update the specific slot with the uploaded photo
       const updatedPhotos = [...photos];
-      updatedPhotos[insertIndex] = { url: publicUrl, description: '' };
+      updatedPhotos[index] = { url: publicUrl, description: '' };
       
       onPhotosChange(updatedPhotos);
       toast.success("تم رفع الصورة بنجاح");

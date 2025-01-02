@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 
 interface PhotoCardProps {
@@ -16,30 +15,19 @@ interface PhotoCardProps {
 
 export const PhotoCard = ({
   photo,
-  index,
   onDelete,
-  onDescriptionChange,
-  placeholder
 }: PhotoCardProps) => {
   return (
     <Card className="p-4 space-y-4">
       <div className="relative aspect-video">
         <img
           src={photo.url}
-          alt={`صورة ${index + 1}`}
+          alt="صورة النشاط"
           className="rounded-md object-cover w-full h-full"
         />
       </div>
 
       <div className="space-y-2">
-        <div className="text-sm text-muted-foreground">
-          {placeholder && `اقتراح: ${placeholder}`}
-        </div>
-        <Input
-          placeholder="وصف الصورة"
-          value={photo.description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-        />
         <Button
           type="button"
           variant="destructive"

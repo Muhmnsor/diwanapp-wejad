@@ -34,13 +34,24 @@ export const ActivityPhotosSection = ({
     console.log('Handling file change for slot:', index);
     const file = e.target.files?.[0];
     if (file) {
-      // Create a copy of the photos array with the new photo in the correct position
+      // Create a copy of the photos array
       const updatedPhotos = [...photos];
-      // Wait for the upload to complete
-      await onPhotoUpload(file);
-      // Update the description for this specific slot
-      if (updatedPhotos[index]) {
-        onPhotoDescriptionChange(index, photoPlaceholders[index]);
+      // Create temporary URL for immediate preview
+      const tempUrl = URL.createObjectURL(file);
+      // Update the specific slot with the temporary URL
+      updatedPhotos[index] = { url: tempUrl, description: photoPlaceholders[index] };
+      onPhotosChange(updatedPhotos);
+      
+      try {
+        // Wait for the actual upload to complete
+        await onPhotoUpload(file);
+        // The URL will be updated by the parent component after successful upload
+      } catch (error) {
+        console.error('Error uploading photo:', error);
+        // Remove the temporary preview on error
+        const revertedPhotos = [...photos];
+        revertedPhotos[index] = { url: '', description: photoPlaceholders[index] };
+        onPhotosChange(revertedPhotos);
       }
     }
   };
@@ -50,23 +61,21 @@ export const ActivityPhotosSection = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {photoSlots.map((photo, index) => (
           <div key={index} className="border rounded-lg p-4 space-y-4">
+            <div className="text-sm text-muted-foreground mb-2">
+              {photoPlaceholders[index]}
+            </div>
             {photo.url ? (
               <PhotoGrid
-                photos={[{ url: photo.url, description: photoPlaceholders[index] }]}
+                photos={[{ url: photo.url, description: '' }]}
                 onPhotoDelete={() => onPhotoDelete(index)}
                 onPhotoDescriptionChange={(_, description) => onPhotoDescriptionChange(index, description)}
-                placeholders={[photoPlaceholders[index]]}
+                placeholders={[]}
               />
             ) : (
-              <div className="space-y-2">
-                <div className="text-sm text-muted-foreground mb-2">
-                  {photoPlaceholders[index]}
-                </div>
-                <PhotoUploadButton
-                  onFileChange={(e) => handleFileChange(e, index)}
-                  placeholder={photoPlaceholders[index]}
-                />
-              </div>
+              <PhotoUploadButton
+                onFileChange={(e) => handleFileChange(e, index)}
+                placeholder={photoPlaceholders[index]}
+              />
             )}
           </div>
         ))}
