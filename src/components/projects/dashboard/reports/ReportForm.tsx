@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { ReportFormFields } from "./ReportFormFields";
-import { useReportForm } from "./hooks/useReportForm";
+import { useReportForm } from "@/hooks/reports/useReportForm";
 
 interface ReportFormProps {
   projectId: string;
