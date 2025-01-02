@@ -28,11 +28,12 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
   const { data: reports = [], refetch } = useQuery({
     queryKey: ['project-activity-reports', projectId, activityId],
     queryFn: async () => {
+      // Update the query to properly join with profiles
       let query = supabase
         .from('project_activity_reports')
         .select(`
           *,
-          profiles:executor_id (
+          profiles!project_activity_reports_executor_id_fkey (
             id,
             email
           ),
@@ -40,14 +41,13 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
             title
           )
         `)
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+        .eq('project_id', projectId);
 
       if (activityId) {
         query = query.eq('activity_id', activityId);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching reports:', error);
