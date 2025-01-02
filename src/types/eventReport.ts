@@ -17,6 +17,9 @@ export interface EventReport {
   files?: string[];
   comments?: string[];
   satisfaction_level?: number | null;
+  profiles?: {
+    email: string;
+  };
 }
 
 export interface EventReportFormData {

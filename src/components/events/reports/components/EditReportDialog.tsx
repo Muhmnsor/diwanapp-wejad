@@ -10,17 +10,20 @@ import { EventReport } from "@/types/eventReport";
 import { EditReportDialogHeader } from "./dialog/EditReportDialogHeader";
 import { EditReportDialogContent } from "./dialog/EditReportDialogContent";
 import { EditReportDialogActions } from "./dialog/EditReportDialogActions";
+import { ProjectActivity } from "@/types/activity";
 
 interface EditReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   report: EventReport;
+  activities?: ProjectActivity[];
 }
 
 export const EditReportDialog = ({
   open,
   onOpenChange,
   report,
+  activities = [],
 }: EditReportDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
@@ -80,6 +83,7 @@ export const EditReportDialog = ({
         <EditReportDialogContent
           formValues={formValues}
           setFormValues={setFormValues}
+          activities={activities}
         />
         <EditReportDialogActions
           onSubmit={handleSubmit}
