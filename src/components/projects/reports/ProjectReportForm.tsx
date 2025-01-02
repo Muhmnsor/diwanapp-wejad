@@ -9,6 +9,7 @@ import { EventObjectivesField } from "@/components/events/reports/form/EventObje
 import { ImpactField } from "@/components/events/reports/form/ImpactField";
 import { PhotosField } from "@/components/events/reports/form/PhotosField";
 import { ProjectActivity } from "@/types/activity";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProjectReportFormProps {
   projectId: string;
@@ -39,6 +40,8 @@ export const ProjectReportForm = ({
   const [activityObjectives, setActivityObjectives] = useState("");
   const [impactOnParticipants, setImpactOnParticipants] = useState("");
   const [photos, setPhotos] = useState<{ url: string; description: string; }[]>([]);
+  
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +71,14 @@ export const ProjectReportForm = ({
         });
 
       if (error) throw error;
+
+      // Invalidate and refetch queries
+      await queryClient.invalidateQueries({
+        queryKey: ['project-activity-reports', projectId]
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['project-activity-reports', activityId]
+      });
 
       toast.success("تم إضافة التقرير بنجاح");
       if (onSuccess) onSuccess();
