@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { ReportActions } from "@/components/reports/shared/components/ReportActions";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
-import { downloadProjectReport } from "@/components/reports/project-reports/handlers/projectReportHandlers";
+import { downloadReport } from "@/components/reports/project-reports/handlers/projectReportHandlers";
 import { useToast } from "@/hooks/use-toast";
 
 interface DashboardReportsTabProps {
@@ -94,7 +94,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
 
   const handleDownload = async (report: any) => {
     try {
-      await downloadProjectReport(report);
+      await downloadReport(report);
       toast({
         title: "تم تحميل التقرير بنجاح",
         variant: "default",
