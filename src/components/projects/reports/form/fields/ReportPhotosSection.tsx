@@ -62,6 +62,17 @@ export const ReportPhotosSection = ({
     displayPhotos.push({ url: '', description: '' });
   }
 
+  const defaultPhotoPlaceholders = [
+    "صورة تظهر تفاعل المستفيدين والجمهور مع المحتوى",
+    "صورة توضح مكان إقامة النشاط",
+    "صورة للمتحدثين أو المدربين",
+    "صورة للمواد التدريبية أو التعليمية",
+    "صورة للأنشطة التفاعلية",
+    "صورة ختامية للنشاط"
+  ];
+
+  const finalPlaceholders = photoPlaceholders.length > 0 ? photoPlaceholders : defaultPhotoPlaceholders;
+
   return (
     <Card className="p-4">
       <h3 className="font-semibold mb-4">الصور</h3>
@@ -100,7 +111,7 @@ export const ReportPhotosSection = ({
                   <div className="text-center">
                     <ImagePlus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      {photoPlaceholders[index] || `اختر صورة ${index + 1}`}
+                      {finalPlaceholders[index] || `اختر صورة ${index + 1}`}
                     </p>
                   </div>
                 </div>
@@ -109,7 +120,7 @@ export const ReportPhotosSection = ({
             <div>
               <Label className="mb-2 block">وصف الصورة</Label>
               <Input
-                placeholder="أدخل وصفاً للصورة"
+                placeholder={finalPlaceholders[index] || "أدخل وصفاً للصورة"}
                 value={photo.description}
                 onChange={(e) => handleDescriptionChange(index, e.target.value)}
               />
