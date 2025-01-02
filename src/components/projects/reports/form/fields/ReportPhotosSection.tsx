@@ -99,7 +99,7 @@ export const ReportPhotosSection = ({
                   </Button>
                 </div>
               ) : (
-                <div className="relative aspect-video bg-muted rounded-md flex items-center justify-center">
+                <div className="relative aspect-video bg-muted rounded-md flex items-center justify-center border-2 border-dashed border-accent hover:border-accent/80 transition-colors">
                   <Input
                     type="file"
                     accept="image/*"
@@ -110,7 +110,10 @@ export const ReportPhotosSection = ({
                     }}
                   />
                   <div className="text-center">
-                    <ImagePlus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <ImagePlus className="h-8 w-8 mx-auto mb-2 text-accent" />
+                    <p className="text-sm font-medium text-accent mb-1">
+                      انقر لإضافة صورة
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {finalPlaceholders[index] || `اختر صورة ${index + 1}`}
                     </p>
