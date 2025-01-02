@@ -95,7 +95,8 @@ export const EditReportDialog = ({
           impact_on_participants: formValues.impact_on_participants,
           photos: preparedPhotos,
         })
-        .eq('id', report.id);
+        .eq('id', report.id)
+        .select();
 
       if (error) {
         console.error('Error updating report:', error);
@@ -103,7 +104,7 @@ export const EditReportDialog = ({
       }
 
       await queryClient.invalidateQueries({
-        queryKey: ['project-activity-reports', report.activity_id]
+        queryKey: ['project-activity-reports', report.project_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');
