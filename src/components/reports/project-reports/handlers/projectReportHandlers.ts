@@ -1,8 +1,8 @@
 import { ProjectReport } from '@/types/projectReport';
-import { downloadReport } from '@/components/reports/shared/handlers/sharedReportHandlers';
+import { downloadProjectReport } from '@/utils/reports/downloadReport';
 
-export const downloadProjectReport = async (report: ProjectReport, projectTitle?: string): Promise<boolean> => {
-  return downloadReport(report, projectTitle);
+export const downloadReport = async (report: ProjectReport, projectTitle?: string): Promise<boolean> => {
+  return downloadProjectReport(report, projectTitle);
 };
 
 export const validateProjectReport = (report: Partial<ProjectReport>): boolean => {
