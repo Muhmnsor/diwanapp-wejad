@@ -4,6 +4,17 @@ import { ReportTableHeader } from "./table/ReportTableHeader";
 import { ReportTableRow } from "./table/ReportTableRow";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface ProjectReportsListProps {
   projectId: string;
@@ -12,6 +23,7 @@ interface ProjectReportsListProps {
 
 export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsListProps) => {
   console.log('Fetching project activities for reports:', projectId);
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null);
   
   const { data: reports = [], refetch } = useQuery({
     queryKey: ['project-activity-reports', projectId, activityId],
@@ -48,11 +60,17 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
   });
 
   const handleDeleteReport = async (reportId: string) => {
+    setReportToDelete(reportId);
+  };
+
+  const confirmDelete = async () => {
+    if (!reportToDelete) return;
+
     try {
       const { error } = await supabase
         .from('project_activity_reports')
         .delete()
-        .eq('id', reportId);
+        .eq('id', reportToDelete);
 
       if (error) {
         console.error('Error deleting report:', error);
@@ -65,26 +83,45 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
     } catch (error) {
       console.error('Error deleting report:', error);
       toast.error('حدث خطأ أثناء حذف التقرير');
+    } finally {
+      setReportToDelete(null);
     }
   };
 
   return (
-    <Card className="p-6">
-      <div className="rounded-md border">
-        <div className="w-full">
-          <ReportTableHeader />
-          <div className="divide-y">
-            {reports.map((report: any) => (
-              <ReportTableRow
-                key={report.id}
-                report={report}
-                onDelete={() => handleDeleteReport(report.id)}
-                onDownload={() => {}} // ... keep existing code
-              />
-            ))}
+    <>
+      <Card className="p-6">
+        <div className="rounded-md border">
+          <div className="w-full">
+            <ReportTableHeader />
+            <div className="divide-y">
+              {reports.map((report: any) => (
+                <ReportTableRow
+                  key={report.id}
+                  report={report}
+                  onDelete={() => handleDeleteReport(report.id)}
+                  onDownload={() => {}} // ... keep existing code
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+
+      <AlertDialog open={!!reportToDelete} onOpenChange={() => setReportToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف هذا التقرير؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
