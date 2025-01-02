@@ -13,17 +13,13 @@ export const ProjectReportPhotoUpload = ({
   onPhotosChange,
   maxPhotos = 6,
 }: ProjectReportPhotoUploadProps) => {
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       const formData = new FormData();
       formData.append('file', file);
-
-      const timestamp = Date.now();
-      const fileName = `${timestamp}-${file.name}`;
-      formData.append('name', fileName);
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -34,21 +30,24 @@ export const ProjectReportPhotoUpload = ({
 
       const data = await response.json();
       const newPhotos = [...photos];
-      newPhotos[index] = { url: data.url, description: '' };
+      newPhotos[index] = {
+        url: data.url,
+        description: '',
+      };
       onPhotosChange(newPhotos);
     } catch (error) {
       console.error('Error uploading photo:', error);
     }
   };
 
-  const removePhoto = (index: number) => {
+  const handleRemovePhoto = (index: number) => {
     const newPhotos = [...photos];
     newPhotos[index] = null;
     onPhotosChange(newPhotos);
   };
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {Array(maxPhotos)
         .fill(null)
         .map((_, index) => (
@@ -66,21 +65,21 @@ export const ProjectReportPhotoUpload = ({
                 <Button
                   variant="destructive"
                   size="icon"
-                  className="absolute top-2 right-2 h-6 w-6"
-                  onClick={() => removePhoto(index)}
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemovePhoto(index)}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <label className="flex flex-col items-center justify-center h-full cursor-pointer bg-muted hover:bg-muted/80 transition-colors">
-                <ImagePlus className="h-6 w-6 mb-2" />
+                <ImagePlus className="h-8 w-8 mb-2" />
                 <span className="text-sm">إضافة صورة</span>
                 <input
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => handleFileChange(e, index)}
+                  onChange={(e) => handlePhotoUpload(e, index)}
                 />
               </label>
             )}
