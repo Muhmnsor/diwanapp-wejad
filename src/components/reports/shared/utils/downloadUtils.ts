@@ -29,16 +29,13 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
       const imageFolder = zip.folder('الصور');
       
       for (let i = 0; i < report.photos.length; i++) {
-        const photoData = report.photos[i];
-        if (!photoData) continue;
-        
-        try {
-          const photoInfo = typeof photoData === 'string' ? JSON.parse(photoData) : photoData;
-          if (!photoInfo.url) continue;
+        const photo = report.photos[i];
+        if (!photo?.url) continue;
 
-          const response = await fetch(photoInfo.url);
+        try {
+          const response = await fetch(photo.url);
           const blob = await response.blob();
-          const fileName = `صورة_${i + 1}${getFileExtension(photoInfo.url)}`;
+          const fileName = `صورة_${i + 1}${getFileExtension(photo.url)}`;
           imageFolder?.file(fileName, blob);
         } catch (error) {
           console.error('Error downloading image:', error);
@@ -60,63 +57,31 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
 };
 
 const generateReportContent = (report: BaseReport): string => {
-  const formatValue = (value: string | number | null | undefined): string => {
-    if (value === null || value === undefined || value === '') {
-      return 'غير محدد';
-    }
-    return value.toString();
+  const formatValue = (value: string | null | undefined): string => {
+    return value || 'غير محدد';
   };
 
   const formatSatisfactionLevel = (level: number | null | undefined): string => {
-    if (level === null || level === undefined) {
-      return 'غير محدد';
-    }
-    return `${level}/5`;
+    return level ? `${level}/5` : 'غير محدد';
   };
 
-  const sections = [
-    {
-      title: 'اسم البرنامج/المشروع',
-      value: formatValue(report.program_name)
-    },
-    {
-      title: 'اسم التقرير',
-      value: formatValue(report.report_name)
-    },
-    {
-      title: 'تقرير النشاط',
-      value: formatValue(report.report_text)
-    },
-    {
-      title: 'عدد الحضور',
-      value: formatValue(report.attendees_count)
-    },
-    {
-      title: 'مدة النشاط (ساعات)',
-      value: formatValue(report.activity_duration)
-    },
-    {
-      title: 'أهداف النشاط',
-      value: formatValue(report.activity_objectives)
-    },
-    {
-      title: 'آثار النشاط',
-      value: formatValue(report.impact_on_participants)
-    },
-    {
-      title: 'متوسط نسبة التقييم للنشاط',
-      value: formatSatisfactionLevel(report.satisfaction_level)
-    }
-  ];
+  const content = [
+    `اسم البرنامج/المشروع: ${formatValue(report.program_name)}`,
+    `اسم التقرير: ${formatValue(report.report_name)}`,
+    `تقرير النشاط: ${formatValue(report.report_text)}`,
+    `عدد الحضور: ${formatValue(report.attendees_count)}`,
+    `مدة النشاط: ${formatValue(report.activity_duration)}`,
+    `أهداف النشاط: ${formatValue(report.activity_objectives)}`,
+    `الأثر على المشاركين: ${formatValue(report.impact_on_participants)}`,
+    `متوسط نسبة التقييم للنشاط: ${formatSatisfactionLevel(report.satisfaction_level)}`
+  ].join('\n\n');
 
-  return sections
-    .map(section => `${section.title}:\n${section.value}`)
-    .join('\n\n');
+  return content;
 };
 
 const getFileExtension = (url: string): string => {
   const extension = url.split('.').pop()?.toLowerCase();
-  if (extension && ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'].includes(extension)) {
+  if (extension && ['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
     return `.${extension}`;
   }
   return '';
