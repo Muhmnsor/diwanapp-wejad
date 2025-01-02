@@ -1,7 +1,7 @@
 import { ActivityPhotosSection } from "@/components/projects/activities/photos/ActivityPhotosSection";
-import { handleImageUpload } from "@/components/events/form/EventImageUpload";
+import { ReportPhoto } from "@/types/projectReport";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ReportPhoto } from "../types";
 
 interface ReportPhotoUploadProps {
   photos: ReportPhoto[];
@@ -16,11 +16,24 @@ export const ReportPhotoUpload = ({
 }: ReportPhotoUploadProps) => {
   const handlePhotoUpload = async (file: File) => {
     try {
-      const { publicUrl, error } = await handleImageUpload(file, 'project');
-      if (error) throw error;
-      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `report-photos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(filePath);
+
       const newPhoto: ReportPhoto = { url: publicUrl, description: '' };
       onPhotosChange([...photos, newPhoto]);
+      
+      toast.success("تم رفع الصورة بنجاح");
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error("حدث خطأ أثناء رفع الصورة");

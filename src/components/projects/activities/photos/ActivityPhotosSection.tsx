@@ -25,7 +25,12 @@ export const ActivityPhotosSection = ({
   onPhotoDescriptionChange,
   maxPhotos = 6
 }: ActivityPhotosSectionProps) => {
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Create empty slots array to represent all available photo slots
+  const photoSlots = Array(maxPhotos).fill(null).map((_, index) => {
+    return photos[index] || { url: '', description: '' };
+  });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
       await onPhotoUpload(file);
@@ -34,19 +39,30 @@ export const ActivityPhotosSection = ({
 
   return (
     <div className="space-y-4">
-      {photos.length < maxPhotos && (
-        <PhotoUploadButton
-          onFileChange={handleFileChange}
-          placeholder={photoPlaceholders[photos.length]}
-        />
-      )}
-
-      <PhotoGrid
-        photos={photos}
-        onPhotoDelete={onPhotoDelete}
-        onPhotoDescriptionChange={onPhotoDescriptionChange}
-        placeholders={photoPlaceholders}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {photoSlots.map((photo, index) => (
+          <div key={index} className="border rounded-lg p-4 space-y-4">
+            {photo.url ? (
+              <PhotoGrid
+                photos={[photo]}
+                onPhotoDelete={() => onPhotoDelete(index)}
+                onPhotoDescriptionChange={(_, description) => onPhotoDescriptionChange(index, description)}
+                placeholders={[photoPlaceholders[index]]}
+              />
+            ) : (
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground mb-2">
+                  {photoPlaceholders[index]}
+                </div>
+                <PhotoUploadButton
+                  onFileChange={(e) => handleFileChange(e, index)}
+                  placeholder={photoPlaceholders[index]}
+                />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
