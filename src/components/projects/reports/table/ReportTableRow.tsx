@@ -3,9 +3,8 @@ import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { ReportTableActions } from "./ReportTableActions";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import JSZip from "jszip";
+import { toast } from "sonner";
 
 interface ReportTableRowProps {
   report: ProjectActivityReport;
@@ -57,6 +56,7 @@ export const ReportTableRow = ({ report, onDelete, onDownload }: ReportTableRowP
 اسم البرنامج: ${report.program_name || 'غير محدد'}
 اسم التقرير: ${report.report_name}
 التاريخ: ${new Date(report.created_at).toLocaleDateString('ar')}
+معد التقرير: ${report.profiles?.email || 'غير معروف'}
 
 نص التقرير:
 ${report.report_text}
