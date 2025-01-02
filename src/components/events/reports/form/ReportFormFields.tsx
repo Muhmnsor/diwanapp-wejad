@@ -23,7 +23,7 @@ interface ReportFormFieldsProps {
     impact_on_participants: string;
     photos: PhotoWithDescription[];
   };
-  activities: ProjectActivity[];
+  activities?: ProjectActivity[];
   setValue: (field: string, value: any) => void;
 }
 

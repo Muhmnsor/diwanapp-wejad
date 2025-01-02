@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { ReportForm } from "./ReportForm";
@@ -23,6 +24,9 @@ export const EditReportDialog = ({
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>تعديل التقرير</DialogTitle>
+          <DialogDescription>
+            قم بتعديل تفاصيل التقرير
+          </DialogDescription>
         </DialogHeader>
         <ReportForm
           projectId={report.project_id || ''}

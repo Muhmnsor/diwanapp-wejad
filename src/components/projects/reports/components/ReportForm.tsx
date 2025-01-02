@@ -2,9 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -20,7 +18,10 @@ const formSchema = z.object({
   attendees_count: z.string().optional(),
   activity_objectives: z.string().optional(),
   impact_on_participants: z.string().optional(),
-  photos: z.array(z.any()).optional(),
+  photos: z.array(z.object({
+    url: z.string(),
+    description: z.string()
+  })).optional(),
 });
 
 interface ReportFormProps {
@@ -39,16 +40,16 @@ export const ReportForm = ({
   const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      program_name: "",
-      report_name: "",
-      report_text: "",
-      detailed_description: "",
-      activity_duration: "",
-      attendees_count: "",
-      activity_objectives: "",
-      impact_on_participants: "",
-      photos: [],
+    defaultValues: {
+      program_name: initialData?.program_name || "",
+      report_name: initialData?.report_name || "",
+      report_text: initialData?.report_text || "",
+      detailed_description: initialData?.detailed_description || "",
+      activity_duration: initialData?.activity_duration || "",
+      attendees_count: initialData?.attendees_count || "",
+      activity_objectives: initialData?.activity_objectives || "",
+      impact_on_participants: initialData?.impact_on_participants || "",
+      photos: initialData?.photos || [],
     },
   });
 
@@ -96,7 +97,20 @@ export const ReportForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <ReportFormFields form={form} />
+        <ReportFormFields
+          formValues={{
+            program_name: form.watch("program_name"),
+            report_name: form.watch("report_name"),
+            report_text: form.watch("report_text"),
+            detailed_description: form.watch("detailed_description"),
+            event_duration: form.watch("activity_duration"),
+            attendees_count: form.watch("attendees_count"),
+            event_objectives: form.watch("activity_objectives"),
+            impact_on_participants: form.watch("impact_on_participants"),
+            photos: form.watch("photos"),
+          }}
+          setValue={(field, value) => form.setValue(field, value)}
+        />
         <Button type="submit">
           {initialData ? "تحديث التقرير" : "إنشاء التقرير"}
         </Button>
