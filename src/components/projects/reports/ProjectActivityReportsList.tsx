@@ -19,35 +19,45 @@ export const ProjectActivityReportsList = ({
     queryKey: ['project-activity-reports', projectId, activityId],
     queryFn: async () => {
       console.log('Fetching reports for activity:', activityId);
-      const { data, error } = await supabase
-        .from('project_activity_reports')
-        .select(`
-          *,
-          profiles:executor_id (
-            id,
-            email
-          )
-        `)
-        .eq('project_id', projectId)
-        .eq('activity_id', activityId)
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('project_activity_reports')
+          .select(`
+            *,
+            profiles:executor_id (
+              id,
+              email
+            )
+          `)
+          .eq('project_id', projectId)
+          .eq('activity_id', activityId)
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
+        if (error) {
+          console.error('Error fetching reports:', error);
+          throw error;
+        }
 
-      // Transform the photos data to match the expected type
-      return (data || []).map(report => ({
-        ...report,
-        photos: report.photos?.map(photo => {
-          try {
-            // If the photo is a string, try to parse it as JSON
-            return typeof photo === 'string' ? JSON.parse(photo) : photo;
-          } catch (e) {
-            console.error('Error parsing photo:', e);
-            return { url: photo, description: '' };
-          }
-        }) || []
-      })) as ProjectActivityReport[];
-    }
+        // Transform the photos data to match the expected type
+        return (data || []).map(report => ({
+          ...report,
+          photos: report.photos?.map(photo => {
+            try {
+              // If the photo is a string, try to parse it as JSON
+              return typeof photo === 'string' ? JSON.parse(photo) : photo;
+            } catch (e) {
+              console.error('Error parsing photo:', e);
+              return { url: photo, description: '' };
+            }
+          }) || []
+        })) as ProjectActivityReport[];
+      } catch (error) {
+        console.error('Error in reports query:', error);
+        toast.error('حدث خطأ أثناء تحميل التقارير');
+        return [];
+      }
+    },
+    retry: 1
   });
 
   const handleDelete = async (reportId: string) => {
@@ -57,7 +67,11 @@ export const ProjectActivityReportsList = ({
         .delete()
         .eq('id', reportId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting report:', error);
+        toast.error('حدث خطأ أثناء حذف التقرير');
+        return;
+      }
 
       toast.success('تم حذف التقرير بنجاح');
       refetch();
