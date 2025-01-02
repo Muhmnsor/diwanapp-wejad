@@ -1,5 +1,4 @@
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { ReportsTab } from "@/components/admin/dashboard/ReportsTab";
 import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
 import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
 import { ProjectTabsList } from "@/components/admin/dashboard/tabs/ProjectTabsList";
@@ -64,10 +63,6 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           projectId={project.id}
           activities={projectActivities}
         />
-      </TabsContent>
-
-      <TabsContent value="reports" className="mt-6">
-        <ReportsTab eventId={project.id} />
       </TabsContent>
     </Tabs>
   );
