@@ -572,10 +572,13 @@ export type Database = {
           activity_duration: string | null
           activity_id: string | null
           activity_objectives: string | null
+          additional_links: string[] | null
           attendees_count: string | null
+          comments: string[] | null
           created_at: string
           detailed_description: string | null
           executor_id: string | null
+          files: string[] | null
           id: string
           impact_on_participants: string | null
           photos: string[] | null
@@ -583,15 +586,20 @@ export type Database = {
           project_id: string | null
           report_name: string
           report_text: string
+          satisfaction_level: number | null
+          video_links: string[] | null
         }
         Insert: {
           activity_duration?: string | null
           activity_id?: string | null
           activity_objectives?: string | null
+          additional_links?: string[] | null
           attendees_count?: string | null
+          comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
           executor_id?: string | null
+          files?: string[] | null
           id?: string
           impact_on_participants?: string | null
           photos?: string[] | null
@@ -599,15 +607,20 @@ export type Database = {
           project_id?: string | null
           report_name: string
           report_text: string
+          satisfaction_level?: number | null
+          video_links?: string[] | null
         }
         Update: {
           activity_duration?: string | null
           activity_id?: string | null
           activity_objectives?: string | null
+          additional_links?: string[] | null
           attendees_count?: string | null
+          comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
           executor_id?: string | null
+          files?: string[] | null
           id?: string
           impact_on_participants?: string | null
           photos?: string[] | null
@@ -615,6 +628,8 @@ export type Database = {
           project_id?: string | null
           report_name?: string
           report_text?: string
+          satisfaction_level?: number | null
+          video_links?: string[] | null
         }
         Relationships: [
           {
