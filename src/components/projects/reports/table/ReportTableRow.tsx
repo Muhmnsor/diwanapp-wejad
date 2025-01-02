@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Edit, Trash } from "lucide-react";
-import { EditReportDialog } from "@/components/events/reports/components/EditReportDialog";
+import { EditReportDialog } from "@/components/events/reports/components/dialog/EditReportDialog";
 import { ReportDeleteDialog } from "@/components/events/reports/components/dialog/ReportDeleteDialog";
 
 interface ReportTableRowProps {
@@ -55,12 +55,14 @@ export const ReportTableRow = ({ report, onSuccess }: ReportTableRowProps) => {
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
         report={report}
+        onSuccess={handleEditSuccess}
       />
 
       <ReportDeleteDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        report={report}
+        reportId={report.id}
+        onSuccess={handleDeleteSuccess}
       />
     </tr>
   );

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportListContainer } from "@/components/events/reports/ReportListContainer";
 import { ReportListHeader } from "@/components/events/reports/ReportListHeader";
@@ -51,7 +51,7 @@ export const ProjectReportsList = ({
   };
 
   const reportRows = reports?.map((report) => (
-    <ReportListItem 
+    <ReportTableRow 
       key={report.id} 
       report={report}
       onSuccess={handleSuccess}
