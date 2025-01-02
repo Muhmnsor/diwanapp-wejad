@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ReportMetadata as ReportMetadataType } from "../types";
+import { ReportMetadataType } from "../types";
 
 interface ReportMetadataProps {
   metadata: ReportMetadataType;
