@@ -1,10 +1,19 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditReportFormFields } from "../../form/EditReportFormFields";
-import { Report } from "@/types/report";
 import { ProjectActivity } from "@/types/activity";
 
 interface EditReportDialogContentProps {
-  formValues: any;
+  formValues: {
+    report_name: string;
+    program_name: string | null;
+    report_text: string;
+    detailed_description: string | null;
+    activity_duration: string;
+    attendees_count: string;
+    activity_objectives: string;
+    impact_on_participants: string;
+    photos: { url: string; description: string; }[];
+  };
   setFormValues: (values: any) => void;
   activities: ProjectActivity[];
 }
