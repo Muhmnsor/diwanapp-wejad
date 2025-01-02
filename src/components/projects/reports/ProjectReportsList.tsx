@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { Table, TableBody } from "@/components/ui/table";
 
 interface ProjectReportsListProps {
   projectId: string;
@@ -92,9 +93,9 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
     <>
       <Card className="p-6">
         <div className="rounded-md border">
-          <div className="w-full">
+          <Table>
             <ReportTableHeader />
-            <div className="divide-y">
+            <TableBody>
               {reports.map((report: any) => (
                 <ReportTableRow
                   key={report.id}
@@ -102,8 +103,8 @@ export const ProjectReportsList = ({ projectId, activityId }: ProjectReportsList
                   onDelete={() => handleDeleteReport(report.id)}
                 />
               ))}
-            </div>
-          </div>
+            </TableBody>
+          </Table>
         </div>
       </Card>
 
