@@ -6,16 +6,11 @@ interface BaseReport {
   report_name: string;
   program_name?: string;
   report_text: string;
-  detailed_description?: string;
   activity_duration?: string;
   attendees_count?: string;
   activity_objectives?: string;
   impact_on_participants?: string;
   photos?: ReportPhoto[];
-  video_links?: string[];
-  additional_links?: string[];
-  files?: string[];
-  comments?: string[];
   satisfaction_level?: number;
 }
 
@@ -65,36 +60,21 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
 };
 
 const generateReportContent = (report: BaseReport): string => {
-  return `
-اسم التقرير: ${report.report_name}
-اسم البرنامج: ${report.program_name || 'غير محدد'}
+  const sections = [
+    { title: 'اسم التقرير', value: report.report_name },
+    { title: 'اسم البرنامج', value: report.program_name },
+    { title: 'نص التقرير', value: report.report_text },
+    { title: 'مدة النشاط', value: report.activity_duration },
+    { title: 'عدد الحضور', value: report.attendees_count },
+    { title: 'أهداف النشاط', value: report.activity_objectives },
+    { title: 'الأثر على المشاركين', value: report.impact_on_participants },
+    { title: 'مستوى الرضا', value: report.satisfaction_level ? `${report.satisfaction_level}/5` : 'غير محدد' }
+  ];
 
-الوصف التفصيلي:
-${report.detailed_description || 'لا يوجد وصف تفصيلي'}
-
-مدة النشاط: ${report.activity_duration || 'غير محدد'}
-عدد الحضور: ${report.attendees_count || 'غير محدد'}
-
-أهداف النشاط:
-${report.activity_objectives || 'لم يتم تحديد الأهداف'}
-
-الأثر على المشاركين:
-${report.impact_on_participants || 'لم يتم تحديد الأثر'}
-
-نص التقرير:
-${report.report_text || 'لا يوجد نص للتقرير'}
-
-روابط الفيديو:
-${report.video_links?.length ? report.video_links.join('\n') : 'لا يوجد روابط فيديو'}
-
-روابط إضافية:
-${report.additional_links?.length ? report.additional_links.join('\n') : 'لا يوجد روابط إضافية'}
-
-تعليقات:
-${report.comments?.length ? report.comments.join('\n') : 'لا يوجد تعليقات'}
-
-مستوى الرضا: ${report.satisfaction_level ? `${report.satisfaction_level}/5` : 'غير محدد'}
-`;
+  return sections
+    .filter(section => section.value)
+    .map(section => `${section.title}:\n${section.value}\n`)
+    .join('\n');
 };
 
 const getFileExtension = (url: string): string => {
