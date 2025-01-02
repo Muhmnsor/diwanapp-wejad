@@ -7,10 +7,8 @@ export interface EventReport {
   report_text: string;
   detailed_description?: string | null;
   duration?: string | null;
-  activity_duration?: string | null; // For backwards compatibility
   attendees_count?: string | null;
   objectives?: string | null;
-  activity_objectives?: string | null; // For backwards compatibility
   impact_on_participants?: string | null;
   photos?: { url: string; description: string; }[] | null;
   created_at: string;

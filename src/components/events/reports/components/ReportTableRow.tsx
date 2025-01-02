@@ -63,16 +63,16 @@ export const ReportTableRow = ({
                 <ReportContent
                   report_text={report.report_text}
                   detailed_description={report.detailed_description}
-                  event_duration={report.event_duration}
+                  duration={report.duration}
                   attendees_count={report.attendees_count}
-                  event_objectives={report.event_objectives}
+                  objectives={report.objectives}
                   impact_on_participants={report.impact_on_participants}
                   created_at={report.created_at}
                   photos={report.photos}
                   event_id={report.event_id}
                 />
                 <Separator />
-                <ReportPhotos photos={report.photos} />
+                <ReportPhotos photos={report.photos || []} />
               </div>
             </CollapsibleContent>
           </div>

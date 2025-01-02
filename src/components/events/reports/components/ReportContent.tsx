@@ -1,29 +1,23 @@
 import { TableCell } from "@/components/ui/table";
-import { EventReport } from "@/types/eventReport";
 
-type ReportContentProps = Pick<
-  EventReport,
-  | "report_text"
-  | "detailed_description"
-  | "duration"
-  | "activity_duration"
-  | "attendees_count"
-  | "objectives"
-  | "activity_objectives"
-  | "impact_on_participants"
-  | "created_at"
-  | "photos"
-  | "event_id"
->;
+interface ReportContentProps {
+  report_text: string;
+  detailed_description: string | null;
+  duration: string | null;
+  attendees_count: string | null;
+  objectives: string | null;
+  impact_on_participants: string | null;
+  created_at: string;
+  photos: { url: string; description: string; }[] | null;
+  event_id: string | null;
+}
 
 export const ReportContent = ({
   report_text,
   detailed_description,
   duration,
-  activity_duration,
   attendees_count,
   objectives,
-  activity_objectives,
   impact_on_participants,
   created_at,
   photos,
@@ -33,9 +27,9 @@ export const ReportContent = ({
     <>
       <TableCell className="font-medium">{report_text}</TableCell>
       <TableCell>{detailed_description}</TableCell>
-      <TableCell>{duration || activity_duration}</TableCell>
+      <TableCell>{duration}</TableCell>
       <TableCell>{attendees_count}</TableCell>
-      <TableCell>{objectives || activity_objectives}</TableCell>
+      <TableCell>{objectives}</TableCell>
       <TableCell>{impact_on_participants}</TableCell>
       <TableCell>{created_at}</TableCell>
       <TableCell>{photos?.length || 0} صور</TableCell>
