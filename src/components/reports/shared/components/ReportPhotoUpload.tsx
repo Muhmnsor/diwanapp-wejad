@@ -30,9 +30,15 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      const newPhoto: ReportPhoto = { url: publicUrl, description: '' };
-      onPhotosChange([...photos, newPhoto]);
+      // Find the first empty slot
+      const emptyIndex = photos.findIndex(p => !p.url);
+      const insertIndex = emptyIndex >= 0 ? emptyIndex : photos.length;
       
+      // Create a new array with the photo inserted at the correct position
+      const updatedPhotos = [...photos];
+      updatedPhotos[insertIndex] = { url: publicUrl, description: '' };
+      
+      onPhotosChange(updatedPhotos);
       toast.success("تم رفع الصورة بنجاح");
     } catch (error) {
       console.error('Error uploading photo:', error);

@@ -27,13 +27,21 @@ export const ActivityPhotosSection = ({
 }: ActivityPhotosSectionProps) => {
   // Create empty slots array to represent all available photo slots
   const photoSlots = Array(maxPhotos).fill(null).map((_, index) => {
-    return photos[index] || { url: '', description: '' };
+    return photos[index] || { url: '', description: photoPlaceholders[index] };
   });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    console.log('Handling file change for slot:', index);
     const file = e.target.files?.[0];
     if (file) {
+      // Create a copy of the photos array with the new photo in the correct position
+      const updatedPhotos = [...photos];
+      // Wait for the upload to complete
       await onPhotoUpload(file);
+      // Update the description for this specific slot
+      if (updatedPhotos[index]) {
+        onPhotoDescriptionChange(index, photoPlaceholders[index]);
+      }
     }
   };
 
@@ -44,7 +52,7 @@ export const ActivityPhotosSection = ({
           <div key={index} className="border rounded-lg p-4 space-y-4">
             {photo.url ? (
               <PhotoGrid
-                photos={[photo]}
+                photos={[{ url: photo.url, description: photoPlaceholders[index] }]}
                 onPhotoDelete={() => onPhotoDelete(index)}
                 onPhotoDescriptionChange={(_, description) => onPhotoDescriptionChange(index, description)}
                 placeholders={[photoPlaceholders[index]]}
