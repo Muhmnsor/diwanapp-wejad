@@ -5,7 +5,6 @@ export interface BaseReport {
   report_text: string;
   detailed_description?: string | null;
   attendees_count?: string | null;
-  activity_objectives?: string | null;
   impact_on_participants?: string | null;
   photos?: { url: string; description: string; }[] | null;
   created_at: string;
@@ -31,4 +30,16 @@ export interface ReportActionsProps {
 export interface ReportListProps {
   projectId?: string;
   activityId?: string;
+}
+
+export interface ReportMetadata {
+  duration: string;
+  attendeesCount: string;
+  objectives: string;
+  impactOnParticipants: string;
+}
+
+export interface ReportPhoto {
+  url: string;
+  description: string;
 }
