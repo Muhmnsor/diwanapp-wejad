@@ -5,9 +5,9 @@ type ReportContentProps = Pick<
   EventReport,
   | "report_text"
   | "detailed_description"
-  | "activity_duration"
+  | "event_duration"
   | "attendees_count"
-  | "activity_objectives"
+  | "event_objectives"
   | "impact_on_participants"
   | "created_at"
   | "photos"
@@ -17,9 +17,9 @@ type ReportContentProps = Pick<
 export const ReportContent = ({
   report_text,
   detailed_description,
-  activity_duration,
+  event_duration,
   attendees_count,
-  activity_objectives,
+  event_objectives,
   impact_on_participants,
   created_at,
   photos,
@@ -29,9 +29,9 @@ export const ReportContent = ({
     <>
       <TableCell className="font-medium">{report_text}</TableCell>
       <TableCell>{detailed_description}</TableCell>
-      <TableCell>{activity_duration}</TableCell>
+      <TableCell>{event_duration}</TableCell>
       <TableCell>{attendees_count}</TableCell>
-      <TableCell>{activity_objectives}</TableCell>
+      <TableCell>{event_objectives}</TableCell>
       <TableCell>{impact_on_participants}</TableCell>
       <TableCell>{created_at}</TableCell>
       <TableCell>{photos?.length || 0} صور</TableCell>

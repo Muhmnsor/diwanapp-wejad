@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ActivityReport } from "@/types/activityReport";
+import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Trash2 } from "lucide-react";
@@ -38,7 +38,19 @@ export const ProjectActivityReportsList = ({
           throw error;
         }
 
-        return (data || []) as ActivityReport[];
+        // Transform the photos data to match the expected type
+        return (data || []).map(report => ({
+          ...report,
+          photos: report.photos?.map(photo => {
+            try {
+              // If the photo is a string, try to parse it as JSON
+              return typeof photo === 'string' ? JSON.parse(photo) : photo;
+            } catch (e) {
+              console.error('Error parsing photo:', e);
+              return { url: photo, description: '' };
+            }
+          }) || []
+        })) as ProjectActivityReport[];
       } catch (error) {
         console.error('Error in reports query:', error);
         toast.error('حدث خطأ أثناء تحميل التقارير');
@@ -88,11 +100,6 @@ export const ProjectActivityReportsList = ({
                 <p className="text-sm text-gray-500">
                   {new Date(report.created_at).toLocaleDateString('ar')}
                 </p>
-                {report.profiles?.email && (
-                  <p className="text-sm text-gray-500">
-                    {report.profiles.email}
-                  </p>
-                )}
               </div>
               <div className="flex gap-2">
                 <Button

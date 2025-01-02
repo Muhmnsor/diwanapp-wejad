@@ -5,39 +5,66 @@ import {
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { EventReport } from "@/types/eventReport";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Report } from "@/types/report";
 import { EditReportDialogHeader } from "./dialog/EditReportDialogHeader";
 import { EditReportDialogContent } from "./dialog/EditReportDialogContent";
 import { EditReportDialogActions } from "./dialog/EditReportDialogActions";
-import { ProjectActivity } from "@/types/activity";
 
 interface EditReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  report: EventReport;
-  activities?: ProjectActivity[];
+  report: Report;
 }
 
 export const EditReportDialog = ({
   open,
   onOpenChange,
   report,
-  activities = [],
 }: EditReportDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+
+  // Parse photos from string to object if needed
+  const parsePhotos = (photos: any[]) => {
+    return photos?.map(photo => {
+      if (typeof photo === 'string') {
+        try {
+          return JSON.parse(photo);
+        } catch (e) {
+          console.error('Error parsing photo:', e);
+          return { url: photo, description: '' };
+        }
+      }
+      return photo;
+    }) || [];
+  };
 
   const [formValues, setFormValues] = useState({
     report_name: report.report_name,
     program_name: report.program_name,
     report_text: report.report_text,
     detailed_description: report.detailed_description,
-    activity_duration: report.activity_duration,
+    event_duration: report.event_duration,
     attendees_count: report.attendees_count,
-    activity_objectives: report.activity_objectives,
+    event_objectives: report.event_objectives,
     impact_on_participants: report.impact_on_participants,
-    photos: report.photos || [],
+    photos: parsePhotos(report.photos || []),
+  });
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ['project-activities', report.event_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('project_id', report.event_id)
+        .eq('is_project_activity', true)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const handleSubmit = async () => {
@@ -45,25 +72,36 @@ export const EditReportDialog = ({
       setIsSubmitting(true);
       console.log('Submitting updated report:', formValues);
 
+      // Prepare photos data for submission
+      const preparedPhotos = formValues.photos.map(photo => {
+        if (typeof photo === 'string') {
+          return photo;
+        }
+        return JSON.stringify(photo);
+      });
+
       const { error } = await supabase
-        .from('event_reports')
+        .from('project_activity_reports')
         .update({
           report_name: formValues.report_name,
           program_name: formValues.program_name,
           report_text: formValues.report_text,
           detailed_description: formValues.detailed_description,
-          activity_duration: formValues.activity_duration,
+          activity_duration: formValues.event_duration,
           attendees_count: formValues.attendees_count,
-          activity_objectives: formValues.activity_objectives,
+          activity_objectives: formValues.event_objectives,
           impact_on_participants: formValues.impact_on_participants,
-          photos: formValues.photos,
+          photos: preparedPhotos,
         })
         .eq('id', report.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating report:', error);
+        throw error;
+      }
 
       await queryClient.invalidateQueries({
-        queryKey: ['event-reports', report.event_id]
+        queryKey: ['project-activity-reports', report.event_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');

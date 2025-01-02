@@ -17,9 +17,9 @@ export const submitReport = async (
       report_name: data.report_name,
       report_text: data.report_text,
       detailed_description: data.detailed_description,
-      activity_duration: data.activity_duration,
+      event_duration: data.event_duration,
       attendees_count: data.attendees_count,
-      activity_objectives: data.activity_objectives,
+      event_objectives: data.event_objectives,
       impact_on_participants: data.impact_on_participants,
       photos: data.photos,
     });

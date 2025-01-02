@@ -1,16 +1,16 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { downloadReportWithImages } from "../utils/downloadUtils";
 import { ReportDeleteDialog } from "./ReportDeleteDialog";
 import { ReportListItemContent } from "./ReportListItemContent";
 import { ReportListItemActions } from "./ReportListItemActions";
 import { TableRow } from "@/components/ui/table";
-import { EventReport } from "@/types/eventReport";
+import { Report } from "@/types/report";
 
 interface ReportListItemProps {
-  report: EventReport;
+  report: Report;
   eventTitle?: string;
 }
 
@@ -72,7 +72,7 @@ export const ReportListItem = ({
       <TableRow dir="rtl">
         <ReportListItemContent
           reportName={report.report_name || eventTitle || ''}
-          authorEmail={report.executor_id || 'غير معروف'}
+          authorEmail={report.profiles?.email || 'غير معروف'}
           createdAt={report.created_at}
         />
         <ReportListItemActions

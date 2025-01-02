@@ -13,11 +13,7 @@ export const ReportsTab = ({ eventId }: ReportsTabProps) => {
 
   const handleSuccess = async () => {
     console.log('Report submitted successfully, refreshing reports list');
-    // Invalidate both event-reports and project-activity-reports queries
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['event-reports', eventId] }),
-      queryClient.invalidateQueries({ queryKey: ['project-activity-reports', eventId] })
-    ]);
+    await queryClient.invalidateQueries({ queryKey: ['event-reports', eventId] });
     toast.success("تم إضافة التقرير بنجاح");
   };
 

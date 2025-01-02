@@ -63,9 +63,9 @@ export const ReportTableRow = ({
                 <ReportContent
                   report_text={report.report_text}
                   detailed_description={report.detailed_description}
-                  activity_duration={report.activity_duration}
+                  event_duration={report.event_duration}
                   attendees_count={report.attendees_count}
-                  activity_objectives={report.activity_objectives}
+                  event_objectives={report.event_objectives}
                   impact_on_participants={report.impact_on_participants}
                   created_at={report.created_at}
                   photos={report.photos}

@@ -65,8 +65,8 @@ export const ReportFormFields = ({
         <div className="space-y-2">
           <Label>المدة</Label>
           <Input
-            value={values.activity_duration}
-            onChange={(e) => onChange('activity_duration', e.target.value)}
+            value={values.duration}
+            onChange={(e) => onChange('duration', e.target.value)}
             disabled={disabled}
             placeholder="أدخل مدة النشاط"
           />
@@ -86,8 +86,8 @@ export const ReportFormFields = ({
       <div className="space-y-2">
         <Label>الأهداف</Label>
         <Textarea
-          value={values.activity_objectives}
-          onChange={(e) => onChange('activity_objectives', e.target.value)}
+          value={values.objectives}
+          onChange={(e) => onChange('objectives', e.target.value)}
           disabled={disabled}
           placeholder="اكتب أهداف النشاط"
           className="min-h-[100px]"
