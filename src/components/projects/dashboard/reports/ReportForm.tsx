@@ -35,7 +35,7 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
         objectives: report.activity_objectives || "",
         impact: report.impact_on_participants || "",
       });
-      setPhotos(report.photos || []);
+      setPhotos(report.photos?.map((p: string) => JSON.parse(p)) || []);
     }
   }, [report]);
 
@@ -109,36 +109,48 @@ export const ReportForm = ({ projectId, report, onSuccess }: ReportFormProps) =>
         impact_on_participants: formData.impact,
         attendees_count: attendanceCount.toString(),
         activity_duration: selectedActivityDetails?.event_hours?.toString(),
-        photos: photos.filter(photo => photo && photo.url),
+        photos: photos.map(photo => JSON.stringify(photo)),
       };
+
+      console.log('ReportForm - Submitting data:', reportData);
 
       let error;
 
-      if (report) {
+      if (report?.id) {
         console.log('ReportForm - Updating existing report:', report.id);
-        ({ error } = await supabase
+        const { error: updateError } = await supabase
           .from('project_activity_reports')
           .update(reportData)
-          .eq('id', report.id));
+          .eq('id', report.id);
+          
+        error = updateError;
+        
+        if (!error) {
+          toast.success("تم تحديث التقرير بنجاح");
+          onSuccess?.();
+        }
       } else {
         console.log('ReportForm - Creating new report');
-        ({ error } = await supabase
+        const { error: insertError } = await supabase
           .from('project_activity_reports')
-          .insert(reportData));
+          .insert(reportData);
+          
+        error = insertError;
+        
+        if (!error) {
+          toast.success("تم إضافة التقرير بنجاح");
+          onSuccess?.();
+          
+          // Reset form for new reports only
+          setSelectedActivity(null);
+          setFormData({ reportName: "", reportText: "", objectives: "", impact: "" });
+          setPhotos([]);
+        }
       }
 
       if (error) {
         console.error('Error saving report:', error);
         throw error;
-      }
-
-      toast.success(report ? "تم تحديث التقرير بنجاح" : "تم إضافة التقرير بنجاح");
-      onSuccess?.();
-      
-      if (!report) {
-        setSelectedActivity(null);
-        setFormData({ reportName: "", reportText: "", objectives: "", impact: "" });
-        setPhotos([]);
       }
     } catch (error) {
       console.error('Error submitting report:', error);
