@@ -2,9 +2,13 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
-import { ReportFormFields } from "./reports/form/ReportFormFields";
+import { Form } from "@/components/ui/form";
+import { ReportBasicFields } from "./reports/form/fields/ReportBasicFields";
+import { ReportDetailsFields } from "./reports/form/fields/ReportDetailsFields";
+import { ReportMetadataFields } from "./reports/form/fields/ReportMetadataFields";
+import { ReportObjectivesFields } from "./reports/form/fields/ReportObjectivesFields";
+import { PhotosField } from "./reports/form/PhotosField";
 import { submitReport } from "./reports/form/ReportFormSubmitHandler";
-import { ProjectActivity } from "@/types/activity";
 import { EventReportFormData } from "@/types/eventReport";
 
 interface EventReportFormProps {
@@ -14,7 +18,7 @@ interface EventReportFormProps {
 
 export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) => {
   const { user } = useAuthStore();
-  const { handleSubmit, setValue, watch, formState: { isSubmitting } } = useForm<EventReportFormData>({
+  const form = useForm<EventReportFormData>({
     defaultValues: {
       program_name: '',
       report_name: '',
@@ -28,9 +32,6 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
     }
   });
 
-  const formValues = watch();
-  const activities: ProjectActivity[] = [];
-
   const onSubmit = async (data: EventReportFormData) => {
     try {
       await submitReport(data, eventId, user?.id);
@@ -42,16 +43,25 @@ export const EventReportForm = ({ eventId, onSuccess }: EventReportFormProps) =>
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <ReportFormFields 
-        formValues={formValues}
-        setValue={setValue}
-        activities={activities}
-      />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <ReportBasicFields form={form} />
+        <ReportDetailsFields form={form} />
+        <ReportMetadataFields form={form} />
+        <ReportObjectivesFields form={form} />
+        <PhotosField
+          photos={form.watch('photos')}
+          onPhotosChange={(photos) => form.setValue('photos', photos)}
+        />
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "جاري الإرسال..." : "إرسال التقرير"}
-      </Button>
-    </form>
+        <Button 
+          type="submit" 
+          disabled={form.formState.isSubmitting}
+          className="w-full"
+        >
+          {form.formState.isSubmitting ? "جاري الإرسال..." : "إرسال التقرير"}
+        </Button>
+      </form>
+    </Form>
   );
 };

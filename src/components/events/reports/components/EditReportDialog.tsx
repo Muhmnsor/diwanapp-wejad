@@ -5,8 +5,8 @@ import {
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Report } from "@/types/report";
+import { useQueryClient } from "@tanstack/react-query";
+import { EventReport } from "@/types/eventReport";
 import { EditReportDialogHeader } from "./dialog/EditReportDialogHeader";
 import { EditReportDialogContent } from "./dialog/EditReportDialogContent";
 import { EditReportDialogActions } from "./dialog/EditReportDialogActions";
@@ -14,7 +14,7 @@ import { EditReportDialogActions } from "./dialog/EditReportDialogActions";
 interface EditReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  report: Report;
+  report: EventReport;
 }
 
 export const EditReportDialog = ({
@@ -25,21 +25,6 @@ export const EditReportDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
-  // Parse photos from string to object if needed
-  const parsePhotos = (photos: any[]) => {
-    return photos?.map(photo => {
-      if (typeof photo === 'string') {
-        try {
-          return JSON.parse(photo);
-        } catch (e) {
-          console.error('Error parsing photo:', e);
-          return { url: photo, description: '' };
-        }
-      }
-      return photo;
-    }) || [];
-  };
-
   const [formValues, setFormValues] = useState({
     report_name: report.report_name,
     program_name: report.program_name,
@@ -49,22 +34,7 @@ export const EditReportDialog = ({
     attendees_count: report.attendees_count,
     activity_objectives: report.activity_objectives,
     impact_on_participants: report.impact_on_participants,
-    photos: parsePhotos(report.photos || []),
-  });
-
-  const { data: activities = [] } = useQuery({
-    queryKey: ['project-activities', report.event_id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('project_id', report.event_id)
-        .eq('is_project_activity', true)
-        .order('date', { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
+    photos: report.photos || [],
   });
 
   const handleSubmit = async () => {
@@ -72,16 +42,8 @@ export const EditReportDialog = ({
       setIsSubmitting(true);
       console.log('Submitting updated report:', formValues);
 
-      // Prepare photos data for submission
-      const preparedPhotos = formValues.photos.map(photo => {
-        if (typeof photo === 'string') {
-          return photo;
-        }
-        return JSON.stringify(photo);
-      });
-
       const { error } = await supabase
-        .from('project_activity_reports')
+        .from('event_reports')
         .update({
           report_name: formValues.report_name,
           program_name: formValues.program_name,
@@ -91,17 +53,14 @@ export const EditReportDialog = ({
           attendees_count: formValues.attendees_count,
           activity_objectives: formValues.activity_objectives,
           impact_on_participants: formValues.impact_on_participants,
-          photos: preparedPhotos,
+          photos: formValues.photos,
         })
         .eq('id', report.id);
 
-      if (error) {
-        console.error('Error updating report:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       await queryClient.invalidateQueries({
-        queryKey: ['project-activity-reports', report.event_id]
+        queryKey: ['event-reports', report.event_id]
       });
       
       toast.success('تم تحديث التقرير بنجاح');
@@ -121,7 +80,6 @@ export const EditReportDialog = ({
         <EditReportDialogContent
           formValues={formValues}
           setFormValues={setFormValues}
-          activities={activities}
         />
         <EditReportDialogActions
           onSubmit={handleSubmit}
