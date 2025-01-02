@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
 import { ActivityReportFormFields } from "./form/ActivityReportFormFields";
-import { handleActivityReportSubmit } from "./form/ActivityReportSubmitHandler";
 
 const formSchema = z.object({
   program_name: z.string().min(1, "الرجاء إدخال اسم البرنامج"),
@@ -18,13 +18,17 @@ const formSchema = z.object({
   attendees_count: z.string().optional(),
   activity_objectives: z.string().optional(),
   impact_on_participants: z.string().optional(),
-  photos: z.array(z.any()).optional(),
+  photos: z.array(z.object({
+    url: z.string(),
+    description: z.string()
+  })).optional(),
 });
 
 interface ProjectActivityReportFormProps {
   projectId: string;
   activityId: string;
   onSuccess?: () => void;
+  onCancel?: () => void;
   initialData?: ProjectActivityReport;
 }
 
@@ -32,6 +36,7 @@ export const ProjectActivityReportForm = ({
   projectId,
   activityId,
   onSuccess,
+  onCancel,
   initialData,
 }: ProjectActivityReportFormProps) => {
   const queryClient = useQueryClient();
@@ -51,20 +56,45 @@ export const ProjectActivityReportForm = ({
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    const success = await handleActivityReportSubmit({
-      values,
-      projectId,
-      activityId,
-      initialData,
-      user,
-      queryClient,
-      onSuccess,
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("يجب تسجيل الدخول لإنشاء تقرير");
+        return;
+      }
 
-    if (success && onSuccess) {
-      onSuccess();
+      const operation = initialData 
+        ? supabase
+            .from("project_activity_reports")
+            .update({
+              ...values,
+              photos: values.photos || [],
+            })
+            .eq("id", initialData.id)
+        : supabase
+            .from("project_activity_reports")
+            .insert({
+              ...values,
+              project_id: projectId,
+              activity_id: activityId,
+              executor_id: user.id,
+              photos: values.photos || [],
+            });
+
+      const { error } = await operation;
+
+      if (error) throw error;
+
+      toast.success(initialData ? "تم تحديث التقرير بنجاح" : "تم إنشاء التقرير بنجاح");
+      await queryClient.invalidateQueries({
+        queryKey: ["project-activity-reports", projectId],
+      });
+      
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error("Error saving report:", error);
+      toast.error("حدث خطأ أثناء حفظ التقرير");
     }
   };
 
@@ -72,14 +102,20 @@ export const ProjectActivityReportForm = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <ActivityReportFormFields form={form} />
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting 
-            ? "جاري الحفظ..." 
-            : initialData 
-              ? "تحديث التقرير" 
-              : "إنشاء التقرير"
-          }
-        </Button>
+        <div className="flex justify-end gap-4">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+            >
+              إلغاء
+            </Button>
+          )}
+          <Button type="submit">
+            {initialData ? "تحديث التقرير" : "إنشاء التقرير"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
