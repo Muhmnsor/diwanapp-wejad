@@ -5,11 +5,30 @@ const formatValue = (value: string | null | undefined): string => {
   return value;
 };
 
+const calculateAverage = (ratings: (number | null)[]): number => {
+  const validRatings = ratings.filter((r): r is number => r !== null);
+  if (validRatings.length === 0) return 0;
+  return validRatings.reduce((a, b) => a + b, 0) / validRatings.length;
+};
+
+const formatRating = (rating: number): string => {
+  return `${rating.toFixed(1)} من 5`;
+};
+
 export const generateReportContent = (report: ProjectReport): string => {
+  // Calculate averages if feedback exists
+  const feedback = report.activity?.activity_feedback || [];
+  const ratings = {
+    overall: calculateAverage(feedback.map(f => f.overall_rating)),
+    content: calculateAverage(feedback.map(f => f.content_rating)),
+    organization: calculateAverage(feedback.map(f => f.organization_rating)),
+    presenter: calculateAverage(feedback.map(f => f.presenter_rating))
+  };
+
   const sections = [
     {
       title: 'اسم النشاط',
-      value: report.events?.title || 'غير محدد'
+      value: report.activity?.title || 'غير محدد'
     },
     {
       title: 'اسم البرنامج',
@@ -40,6 +59,20 @@ export const generateReportContent = (report: ProjectReport): string => {
       value: formatValue(report.report_text)
     }
   ];
+
+  // Add feedback section if there are ratings
+  if (feedback.length > 0) {
+    sections.push(
+      {
+        title: 'نتائج التقييم',
+        value: `عدد المقيمين: ${feedback.length}\n\n` +
+               `التقييم العام: ${formatRating(ratings.overall)}\n` +
+               `تقييم المحتوى: ${formatRating(ratings.content)}\n` +
+               `تقييم التنظيم: ${formatRating(ratings.organization)}\n` +
+               `تقييم المقدم: ${formatRating(ratings.presenter)}`
+      }
+    );
+  }
 
   // Add a separator line
   const separator = '='.repeat(50);

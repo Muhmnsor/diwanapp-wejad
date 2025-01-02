@@ -18,6 +18,16 @@ export interface ProjectReport {
   files?: string[];
   comments?: string[];
   satisfaction_level?: number | null;
+  activity?: {
+    id: string;
+    title: string;
+    activity_feedback?: Array<{
+      overall_rating: number | null;
+      content_rating: number | null;
+      organization_rating: number | null;
+      presenter_rating: number | null;
+    }>;
+  };
 }
 
 export interface ProjectReportFormData {
