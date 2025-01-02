@@ -33,7 +33,20 @@ export const ProjectActivityReportsList = ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as ProjectActivityReport[];
+
+      // Transform the photos data to match the expected type
+      return (data || []).map(report => ({
+        ...report,
+        photos: report.photos?.map(photo => {
+          try {
+            // If the photo is a string, try to parse it as JSON
+            return typeof photo === 'string' ? JSON.parse(photo) : photo;
+          } catch (e) {
+            console.error('Error parsing photo:', e);
+            return { url: photo, description: '' };
+          }
+        }) || []
+      })) as ProjectActivityReport[];
     }
   });
 

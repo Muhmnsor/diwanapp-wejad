@@ -11,7 +11,7 @@ export interface ProjectActivityReport {
   attendees_count: string | null;
   activity_objectives: string | null;
   impact_on_participants: string | null;
-  photos: string[] | null;
+  photos: { url: string; description: string; }[] | null;
   created_at: string;
   profiles?: {
     id: string;
