@@ -6,7 +6,7 @@ import { ReportPhoto } from "@/types/projectReport";
 
 export const useReportForm = (projectId: string, report?: any, onSuccess?: () => void) => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
-  const [photos, setPhotos] = useState<ReportPhoto[]>([]);
+  const [photos, setPhotos] = useState<ReportPhoto[]>(Array(6).fill(null));
   const [formData, setFormData] = useState({
     reportName: "",
     reportText: "",
@@ -14,9 +14,11 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
     impact: "",
   });
 
+  // Initialize form data from report
   useEffect(() => {
     if (report) {
       console.log('ReportForm - Setting initial data from report:', report);
+      
       setSelectedActivity(report.activity_id);
       setFormData({
         reportName: report.report_name || "",
@@ -24,27 +26,30 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
         objectives: report.activity_objectives || "",
         impact: report.impact_on_participants || "",
       });
+
+      // Initialize photos array with nulls
+      const initialPhotos = Array(6).fill(null);
       
-      // Parse and maintain photo order
-      const parsedPhotos = Array(6).fill(null);
-      if (report.photos) {
+      // Parse and place photos in their correct positions
+      if (report.photos && Array.isArray(report.photos)) {
         report.photos.forEach((photoStr: string, index: number) => {
           try {
             const photo = JSON.parse(photoStr);
             if (photo && photo.url) {
-              parsedPhotos[index] = photo;
+              initialPhotos[index] = photo;
             }
           } catch (e) {
             console.error('Error parsing photo:', e);
           }
         });
       }
-      
-      console.log('ReportForm - Parsed photos with maintained order:', parsedPhotos);
-      setPhotos(parsedPhotos);
+
+      console.log('ReportForm - Initialized photos array:', initialPhotos);
+      setPhotos(initialPhotos);
     }
   }, [report]);
 
+  // Fetch project data
   const { data: project } = useQuery({
     queryKey: ['project', projectId],
     queryFn: async () => {
@@ -59,6 +64,7 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
     },
   });
 
+  // Fetch activities
   const { data: activities = [] } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
@@ -73,6 +79,7 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
     },
   });
 
+  // Fetch attendance count
   const { data: attendanceCount = 0 } = useQuery({
     queryKey: ['activity-attendance', selectedActivity],
     enabled: !!selectedActivity,
@@ -105,12 +112,17 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
     }
 
     try {
-      // Filter out null values while maintaining photo order
-      const validPhotos = photos.map(photo => 
-        photo && photo.url ? JSON.stringify(photo) : null
-      ).filter(Boolean);
+      // Prepare photos array for submission
+      const validPhotos = photos
+        .map((photo, index) => {
+          if (photo && photo.url) {
+            return JSON.stringify({ ...photo, index });
+          }
+          return null;
+        })
+        .filter(Boolean);
 
-      console.log('ReportForm - Valid photos for submission:', validPhotos);
+      console.log('ReportForm - Preparing photos for submission:', validPhotos);
 
       const reportData = {
         project_id: projectId,
@@ -156,9 +168,10 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
           toast.success("تم إضافة التقرير بنجاح");
           onSuccess?.();
           
+          // Reset form
           setSelectedActivity(null);
           setFormData({ reportName: "", reportText: "", objectives: "", impact: "" });
-          setPhotos([]);
+          setPhotos(Array(6).fill(null));
         }
       }
 

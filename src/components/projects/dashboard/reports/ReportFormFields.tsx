@@ -35,6 +35,8 @@ export const ReportFormFields = ({
   photos,
   setPhotos,
 }: ReportFormFieldsProps) => {
+  console.log('ReportFormFields - Current photos:', photos);
+  
   return (
     <div className="space-y-4">
       <div>
