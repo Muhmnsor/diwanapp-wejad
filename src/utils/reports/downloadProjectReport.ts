@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import { ProjectReport } from '@/types/projectReport';
+import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import { generateReportContent } from './formatReportContent';
 
 export const downloadProjectReport = async (report: ProjectReport): Promise<void> => {
@@ -19,12 +19,14 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       
       for (let i = 0; i < report.photos.length; i++) {
         try {
-          let photoUrl;
-          if (typeof report.photos[i] === 'string') {
-            const parsedPhoto = JSON.parse(report.photos[i]);
+          const photo = report.photos[i];
+          let photoUrl: string;
+
+          if (typeof photo === 'string') {
+            const parsedPhoto = JSON.parse(photo) as ReportPhoto;
             photoUrl = parsedPhoto.url;
           } else {
-            photoUrl = report.photos[i].url;
+            photoUrl = photo.url;
           }
 
           if (!photoUrl) continue;
