@@ -20,9 +20,9 @@ export interface ProjectReportFormData {
   report_name: string;
   report_text: string;
   detailed_description: string;
-  activity_duration: string;
+  duration: string;
   attendees_count: string;
-  activity_objectives: string;
+  objectives: string;
   impact_on_participants: string;
   photos: { url: string; description: string; }[];
 }

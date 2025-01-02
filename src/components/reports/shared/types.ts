@@ -13,6 +13,8 @@ export interface BaseReport {
   files?: string[];
   comments?: string[];
   satisfaction_level?: number | null;
+  activity_objectives?: string;
+  duration?: string;
 }
 
 export interface ReportFormProps {
