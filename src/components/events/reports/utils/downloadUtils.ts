@@ -54,13 +54,15 @@ export const downloadReportWithImages = async (
   eventTitle?: string
 ) => {
   try {
+    console.log('Starting report download process:', { report, eventTitle });
     const zip = new JSZip();
     
     const feedbackSummary = await fetchFeedbackSummary(report.event_id);
     console.log('Feedback summary:', feedbackSummary);
 
-    // Parse photos array and ensure it's an array of objects
-    const parsedPhotos = report.photos.map(photo => {
+    // Ensure photos is an array and parse any string entries
+    const photos = Array.isArray(report.photos) ? report.photos : [];
+    const parsedPhotos = photos.filter(photo => photo !== null).map(photo => {
       if (typeof photo === 'string') {
         try {
           return JSON.parse(photo);
@@ -107,32 +109,35 @@ ${parsedPhotos.map((photo, index) => `${index + 1}. ${photo.description || `صو
 
     zip.file('تقرير-الفعالية.txt', reportContent);
 
-    const imagesFolder = zip.folder("الصور");
-    if (!imagesFolder) throw new Error('Failed to create images folder');
+    if (parsedPhotos.length > 0) {
+      const imagesFolder = zip.folder("الصور");
+      if (!imagesFolder) throw new Error('Failed to create images folder');
 
-    const downloadPromises = parsedPhotos.map(async (photo, index) => {
-      if (!photo.url) {
-        console.log(`Skipping empty photo at index ${index}`);
-        return;
-      }
+      console.log('Starting image downloads...');
+      const downloadPromises = parsedPhotos.map(async (photo, index) => {
+        if (!photo?.url) {
+          console.log(`Skipping invalid photo at index ${index}`);
+          return;
+        }
 
-      try {
-        console.log(`Downloading image ${index + 1}:`, photo.url);
-        const response = await fetch(photo.url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        const blob = await response.blob();
-        const extension = photo.url.split('.').pop() || 'jpg';
-        const fileName = `صورة-${index + 1}-${photo.description || ''}.${extension}`;
-        
-        console.log(`Adding image to zip:`, fileName);
-        imagesFolder.file(fileName, blob);
-      } catch (error) {
-        console.error(`Error downloading image ${index}:`, error);
-      }
-    });
+        try {
+          console.log(`Downloading image ${index + 1}:`, photo.url);
+          const response = await fetch(photo.url);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          
+          const blob = await response.blob();
+          const extension = photo.url.split('.').pop() || 'jpg';
+          const fileName = `صورة-${index + 1}-${photo.description || ''}.${extension}`;
+          
+          console.log(`Adding image to zip:`, fileName);
+          imagesFolder.file(fileName, blob);
+        } catch (error) {
+          console.error(`Error downloading image ${index}:`, error);
+        }
+      });
 
-    await Promise.all(downloadPromises);
+      await Promise.all(downloadPromises);
+    }
 
     console.log('Generating zip file...');
     const content = await zip.generateAsync({ type: "blob" });
