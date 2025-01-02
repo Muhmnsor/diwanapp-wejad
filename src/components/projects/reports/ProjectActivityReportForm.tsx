@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ProjectActivityReport } from "@/types/projectActivityReport";
 
 const formSchema = z.object({
   program_name: z.string().min(1, "الرجاء إدخال اسم البرنامج"),
@@ -25,16 +26,29 @@ interface ProjectActivityReportFormProps {
   projectId: string;
   activityId: string;
   onSuccess?: () => void;
+  initialData?: ProjectActivityReport;
 }
 
 export const ProjectActivityReportForm = ({
   projectId,
   activityId,
   onSuccess,
+  initialData,
 }: ProjectActivityReportFormProps) => {
   const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: initialData || {
+      program_name: "",
+      report_name: "",
+      report_text: "",
+      detailed_description: "",
+      activity_duration: "",
+      attendees_count: "",
+      activity_objectives: "",
+      impact_on_participants: "",
+      photos: [],
+    },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -48,24 +62,33 @@ export const ProjectActivityReportForm = ({
         return;
       }
 
-      const { error } = await supabase.from("project_activity_reports").insert({
-        ...values,
-        project_id: projectId,
-        activity_id: activityId,
-        executor_id: user.id,
-      });
+      const operation = initialData 
+        ? supabase
+            .from("project_activity_reports")
+            .update(values)
+            .eq("id", initialData.id)
+        : supabase
+            .from("project_activity_reports")
+            .insert({
+              ...values,
+              project_id: projectId,
+              activity_id: activityId,
+              executor_id: user.id,
+            });
+
+      const { error } = await operation;
 
       if (error) throw error;
 
-      toast.success("تم إنشاء التقرير بنجاح");
+      toast.success(initialData ? "تم تحديث التقرير بنجاح" : "تم إنشاء التقرير بنجاح");
       await queryClient.invalidateQueries({
         queryKey: ["project-activity-reports", projectId],
       });
       
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error creating report:", error);
-      toast.error("حدث خطأ أثناء إنشاء التقرير");
+      console.error("Error saving report:", error);
+      toast.error("حدث خطأ أثناء حفظ التقرير");
     }
   };
 
@@ -160,7 +183,9 @@ export const ProjectActivityReportForm = ({
             </FormItem>
           )}
         />
-        <Button type="submit">إنشاء التقرير</Button>
+        <Button type="submit">
+          {initialData ? "تحديث التقرير" : "إنشاء التقرير"}
+        </Button>
       </form>
     </Form>
   );

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
 import { toast } from "sonner";
+import { EditReportDialog } from "../components/EditReportDialog";
 
 interface ReportTableRowProps {
   report: ProjectActivityReport;
@@ -14,6 +15,7 @@ interface ReportTableRowProps {
 
 export const ReportTableRow = ({ report, onDelete, onDownload }: ReportTableRowProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -151,9 +153,16 @@ ${report.photos?.map((photo, index) => {
         <ReportTableActions
           onDelete={handleDelete}
           onDownload={handleDownload}
+          onEdit={() => setIsEditDialogOpen(true)}
           isDeleting={isDeleting}
         />
       </TableCell>
+
+      <EditReportDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        report={report}
+      />
     </TableRow>
   );
 };
