@@ -5,38 +5,23 @@ const formatValue = (value: string | null | undefined): string => {
   return value;
 };
 
-const formatSatisfactionLevel = (level: number | null | undefined): string => {
-  if (!level && level !== 0) return 'غير محدد';
-  return `${level}/5`;
-};
-
-const formatLinks = (links?: string[]): string => {
-  if (!links || links.length === 0) return 'لا يوجد روابط';
-  return links.join('\n');
-};
-
-const formatComments = (comments?: string[]): string => {
-  if (!comments || comments.length === 0) return 'لا يوجد تعليقات';
-  return comments.join('\n');
-};
-
 export const generateReportContent = (report: ProjectReport): string => {
   const sections = [
     {
-      title: 'اسم التقرير',
-      value: formatValue(report.report_name)
+      title: 'اسم النشاط',
+      value: report.events?.title || 'غير محدد'
     },
     {
       title: 'اسم البرنامج',
       value: formatValue(report.program_name)
     },
     {
-      title: 'الوصف التفصيلي',
-      value: formatValue(report.detailed_description)
+      title: 'اسم التقرير',
+      value: formatValue(report.report_name)
     },
     {
       title: 'مدة النشاط',
-      value: formatValue(report.activity_duration)
+      value: `${formatValue(report.activity_duration)} ساعة`
     },
     {
       title: 'عدد الحضور',
@@ -53,26 +38,15 @@ export const generateReportContent = (report: ProjectReport): string => {
     {
       title: 'نص التقرير',
       value: formatValue(report.report_text)
-    },
-    {
-      title: 'روابط الفيديو',
-      value: formatLinks(report.video_links)
-    },
-    {
-      title: 'روابط إضافية',
-      value: formatLinks(report.additional_links)
-    },
-    {
-      title: 'تعليقات',
-      value: formatComments(report.comments)
-    },
-    {
-      title: 'مستوى الرضا',
-      value: formatSatisfactionLevel(report.satisfaction_level)
     }
   ];
 
-  return sections
-    .map(section => `${section.title}:\n${section.value}`)
-    .join('\n\n');
+  // Add a separator line
+  const separator = '='.repeat(50);
+  
+  // Format the content with proper spacing and separators
+  return `تقرير النشاط\n${separator}\n\n` + 
+    sections
+      .map(section => `${section.title}:\n${section.value}\n`)
+      .join('\n' + separator + '\n\n');
 };
