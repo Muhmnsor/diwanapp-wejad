@@ -9,7 +9,7 @@ export interface ProjectReport {
   detailed_description?: string | null;
   activity_duration: string;
   attendees_count?: string | null;
-  objectives: string;
+  activity_objectives: string;
   impact_on_participants?: string | null;
   photos?: { url: string; description: string; }[] | null;
   created_at: string;
@@ -37,7 +37,7 @@ export interface ProjectReportFormData {
   detailed_description: string;
   activity_duration: string;
   attendees_count: string;
-  objectives: string;
+  activity_objectives: string;
   impact_on_participants: string;
   photos: { url: string; description: string; }[];
 }
