@@ -1,6 +1,7 @@
 import { saveAs } from "file-saver";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { EventReport } from "@/types/report";
 
 const arabicFontUrl = "/fonts/arabic.ttf";
 
@@ -10,7 +11,7 @@ async function fetchFont(url: string) {
   return fontBytes;
 }
 
-export const downloadEventReport = async (report: any): Promise<void> => {
+export const downloadEventReport = async (report: EventReport): Promise<void> => {
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
   
@@ -37,12 +38,12 @@ export const downloadEventReport = async (report: any): Promise<void> => {
 
   let content = '';
   content += `اسم التقرير: ${report.report_name}\n`;
-  content += `تاريخ النشاط: ${report.created_at}\n`;
-  content += `تقرير النشاط: ${report.report_text}\n`;
+  content += `تاريخ الفعالية: ${report.created_at}\n`;
+  content += `تقرير الفعالية: ${report.report_text}\n`;
   content += `عدد الحضور: ${report.attendees_count}\n`;
-  content += `مدة النشاط: ${report.duration}\n`;
-  content += `أهداف النشاط: ${report.objectives}\n`;
-  content += `آثار النشاط: ${report.impact_on_participants || ''}\n`;
+  content += `مدة الفعالية: ${report.duration}\n`;
+  content += `أهداف الفعالية: ${report.objectives}\n`;
+  content += `آثار الفعالية: ${report.impact_on_participants || ''}\n`;
 
   const lines = content.split('\n');
   for (const line of lines) {
@@ -50,15 +51,10 @@ export const downloadEventReport = async (report: any): Promise<void> => {
   }
 
   if (report.photos && report.photos.length > 0) {
-    content += '\n\nصور النشاط:\n';
-    for (let i = 0; i < report.photos.length; i++) {
+    content += '\n\nصور الفعالية:\n';
+    for (const photo of report.photos) {
       try {
-        let photoData;
-        if (typeof report.photos[i] === 'string') {
-          photoData = JSON.parse(report.photos[i]);
-        } else {
-          photoData = report.photos[i];
-        }
+        const photoData = typeof photo === 'string' ? JSON.parse(photo) : photo;
 
         if (!photoData?.url) continue;
 

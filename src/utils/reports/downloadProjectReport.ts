@@ -52,14 +52,9 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
 
   if (report.photos && report.photos.length > 0) {
     content += '\n\nصور النشاط:\n';
-    for (let i = 0; i < report.photos.length; i++) {
+    for (const photo of report.photos) {
       try {
-        let photoData;
-        if (typeof report.photos[i] === 'string') {
-          photoData = JSON.parse(report.photos[i]);
-        } else {
-          photoData = report.photos[i];
-        }
+        const photoData = typeof photo === 'string' ? JSON.parse(photo) : photo;
 
         if (!photoData?.url) continue;
 
