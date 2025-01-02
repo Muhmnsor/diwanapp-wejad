@@ -15,6 +15,7 @@ export const ReportForm = ({ projectId }: ReportFormProps) => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(null);
   const [photos, setPhotos] = useState<ReportPhoto[]>([]);
   const [formData, setFormData] = useState({
+    reportName: "",
     reportText: "",
     objectives: "",
     impact: "",
@@ -72,26 +73,40 @@ export const ReportForm = ({ projectId }: ReportFormProps) => {
       return;
     }
 
+    if (!formData.reportName.trim()) {
+      toast.error("الرجاء إدخال اسم التقرير");
+      return;
+    }
+
     try {
+      console.log("Submitting report with data:", {
+        projectId,
+        selectedActivity,
+        formData,
+        photos,
+        attendanceCount
+      });
+
       const { error } = await supabase
         .from('project_activity_reports')
         .insert({
           project_id: projectId,
           activity_id: selectedActivity,
           program_name: project?.title,
+          report_name: formData.reportName,
           report_text: formData.reportText,
           activity_objectives: formData.objectives,
           impact_on_participants: formData.impact,
           attendees_count: attendanceCount.toString(),
           activity_duration: selectedActivityDetails?.event_hours?.toString(),
-          photos: photos,
+          photos: photos.filter(photo => photo && photo.url),
         });
 
       if (error) throw error;
 
       toast.success("تم إضافة التقرير بنجاح");
       setSelectedActivity(null);
-      setFormData({ reportText: "", objectives: "", impact: "" });
+      setFormData({ reportName: "", reportText: "", objectives: "", impact: "" });
       setPhotos([]);
     } catch (error) {
       console.error('Error submitting report:', error);

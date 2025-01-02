@@ -11,6 +11,7 @@ interface ReportFormFieldsProps {
   selectedActivity: string | null;
   setSelectedActivity: (value: string | null) => void;
   formData: {
+    reportName: string;
     reportText: string;
     objectives: string;
     impact: string;
@@ -52,6 +53,16 @@ export const ReportFormFields = ({
 
       {selectedActivity && (
         <>
+          <div>
+            <label className="block text-sm font-medium mb-2">اسم التقرير</label>
+            <Input
+              value={formData.reportName}
+              onChange={(e) => setFormData({ ...formData, reportName: e.target.value })}
+              placeholder="اسم التقرير"
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">تقرير النشاط</label>
             <Textarea
