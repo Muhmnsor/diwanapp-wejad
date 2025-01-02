@@ -7,9 +7,12 @@ interface DashboardActivitiesTabProps {
 }
 
 export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProps) => {
+  console.log('DashboardActivitiesTab - projectId:', projectId);
+
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
+      console.log('Fetching project activities for project:', projectId);
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -17,9 +20,15 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
         .eq('is_project_activity', true)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching project activities:', error);
+        throw error;
+      }
+      
+      console.log('Fetched activities:', data);
       return data || [];
     },
+    enabled: !!projectId, // Only run query when projectId exists
   });
 
   return (

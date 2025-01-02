@@ -40,9 +40,11 @@ export const ProjectReportsList = ({
       console.log('Reports fetched:', data);
       return data;
     },
+    enabled: !!projectId && !!activityId,
   });
 
   const handleSuccess = async () => {
+    console.log('Invalidating queries after report update');
     await queryClient.invalidateQueries({
       queryKey: ['project-activity-reports', projectId, activityId]
     });

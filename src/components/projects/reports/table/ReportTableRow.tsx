@@ -1,68 +1,62 @@
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import { Edit, Trash } from "lucide-react";
 import { useState } from "react";
-import { EditReportDialog } from "../components/EditReportDialog";
-import { ReportDeleteDialog } from "../components/ReportDeleteDialog";
+import { Button } from "@/components/ui/button";
+import { Edit, Trash } from "lucide-react";
+import { EditReportDialog } from "@/components/events/reports/components/EditReportDialog";
+import { ReportDeleteDialog } from "@/components/events/reports/components/dialog/ReportDeleteDialog";
+import { ReportTableActions } from "./ReportTableActions";
 
-interface ReportListItemProps {
+interface ReportTableRowProps {
   report: any;
-  onSuccess?: () => Promise<void>;
+  onSuccess: () => Promise<void>;
 }
 
-export const ReportTableRow = ({ report, onSuccess }: ReportListItemProps) => {
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+export const ReportTableRow = ({ report, onSuccess }: ReportTableRowProps) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const handleEditSuccess = async () => {
-    setIsEditOpen(false);
-    if (onSuccess) await onSuccess();
+  const handleEdit = () => {
+    setIsEditDialogOpen(true);
   };
 
-  const handleDeleteSuccess = async () => {
-    setIsDeleteOpen(false);
-    if (onSuccess) await onSuccess();
+  const handleDelete = () => {
+    setIsDeleteDialogOpen(true);
   };
 
   return (
-    <tr key={report.id}>
+    <tr className="border-b">
       <td className="px-4 py-2">{report.report_name}</td>
-      <td className="px-4 py-2">{report.program_name}</td>
+      <td className="px-4 py-2">{report.executor?.email}</td>
       <td className="px-4 py-2">
-        {format(new Date(report.created_at), 'PPP', { locale: ar })}
-      </td>
-      <td className="px-4 py-2">
-        <div className="flex gap-2 justify-end">
+        <ReportTableActions>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsEditOpen(true)}
+            onClick={handleEdit}
           >
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsDeleteOpen(true)}
+            onClick={handleDelete}
           >
             <Trash className="h-4 w-4" />
           </Button>
-        </div>
+        </ReportTableActions>
       </td>
 
       <EditReportDialog
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
         report={report}
-        onSuccess={handleEditSuccess}
+        onSuccess={onSuccess}
       />
 
       <ReportDeleteDialog
-        open={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        reportId={report.id}
-        onSuccess={handleDeleteSuccess}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        report={report}
+        onSuccess={onSuccess}
       />
     </tr>
   );
