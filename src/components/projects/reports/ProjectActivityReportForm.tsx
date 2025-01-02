@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
-import { ActivityReportFormFields, ActivityReportFormData } from "./form/fields/ActivityReportFormFields";
+import { ActivityReportFormFields } from "./form/fields/ActivityReportFormFields";
+import { ActivityReportFormData } from "@/types/activityReport";
 
 const formSchema = z.object({
   program_name: z.string().min(1, "الرجاء إدخال اسم البرنامج"),

@@ -5,10 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { ReportPhotosSection } from "./ReportPhotosSection";
-import { BaseReportFormFields } from "@/types/report";
+import { ActivityReportFormData } from "@/types/activityReport";
 
 interface ActivityReportFormFieldsProps {
-  form: UseFormReturn<BaseReportFormFields>;
+  form: UseFormReturn<ActivityReportFormData>;
 }
 
 export const ActivityReportFormFields = ({ form }: ActivityReportFormFieldsProps) => {
