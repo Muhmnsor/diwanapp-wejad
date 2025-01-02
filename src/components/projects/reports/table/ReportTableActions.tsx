@@ -27,19 +27,19 @@ export const ReportTableActions = ({
       <Button
         variant="ghost"
         size="icon"
+        onClick={onDownload}
+        title="تحميل التقرير"
+      >
+        <Download className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onDelete}
         disabled={isDeleting}
         title="حذف التقرير"
       >
         <Trash2 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onDownload}
-        title="تحميل التقرير"
-      >
-        <Download className="h-4 w-4" />
       </Button>
     </div>
   );

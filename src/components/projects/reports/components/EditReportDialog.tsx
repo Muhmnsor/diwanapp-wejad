@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ProjectActivityReport } from "@/types/projectActivityReport";
-import { ProjectActivityReportForm } from "../ProjectActivityReportForm";
+import { ReportForm } from "./ReportForm";
 
 interface EditReportDialogProps {
   open: boolean;
@@ -24,11 +24,11 @@ export const EditReportDialog = ({
         <DialogHeader>
           <DialogTitle>تعديل التقرير</DialogTitle>
         </DialogHeader>
-        <ProjectActivityReportForm
-          projectId={report.project_id}
-          activityId={report.activity_id}
-          onSuccess={() => onOpenChange(false)}
+        <ReportForm
+          projectId={report.project_id || ''}
+          activityId={report.activity_id || ''}
           initialData={report}
+          onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>
     </Dialog>

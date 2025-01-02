@@ -92,10 +92,10 @@ ${report.photos?.map((photo, index) => {
 
       zip.file('تقرير-النشاط.txt', reportContent);
 
-      const imagesFolder = zip.folder("الصور");
-      if (!imagesFolder) throw new Error('Failed to create images folder');
-
       if (report.photos && report.photos.length > 0) {
+        const imagesFolder = zip.folder("الصور");
+        if (!imagesFolder) throw new Error('Failed to create images folder');
+
         const downloadPromises = report.photos.map(async (photo, index) => {
           const parsedPhoto = typeof photo === 'string' ? JSON.parse(photo) : photo;
           if (!parsedPhoto.url) {
