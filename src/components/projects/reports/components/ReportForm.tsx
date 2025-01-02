@@ -71,7 +71,10 @@ export const ReportForm = ({
       const operation = initialData 
         ? supabase
             .from("project_activity_reports")
-            .update(values)
+            .update({
+              ...values,
+              photos: values.photos || [], // Ensure photos is always an array
+            })
             .eq("id", initialData.id)
         : supabase
             .from("project_activity_reports")
@@ -80,6 +83,7 @@ export const ReportForm = ({
               project_id: projectId,
               activity_id: activityId,
               executor_id: user.id,
+              photos: values.photos || [], // Ensure photos is always an array
             });
 
       const { error } = await operation;

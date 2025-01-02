@@ -1,8 +1,8 @@
+import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { UseFormReturn } from "react-hook-form";
 import * as z from "zod";
 
 const formSchema = z.object({
@@ -27,10 +27,10 @@ interface ReportFormFieldsProps {
 }
 
 export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
-  console.log("ReportFormFields - form:", form);
-  
+  console.log("ReportFormFields - form values:", form.getValues());
+
   return (
-    <>
+    <div className="space-y-4">
       <FormField
         control={form.control}
         name="program_name"
@@ -42,6 +42,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
+      
       <FormField
         control={form.control}
         name="report_name"
@@ -53,6 +54,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="report_text"
@@ -64,6 +66,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="detailed_description"
@@ -75,6 +78,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="activity_duration"
@@ -86,6 +90,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="attendees_count"
@@ -97,6 +102,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="activity_objectives"
@@ -108,6 +114,7 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
+
       <FormField
         control={form.control}
         name="impact_on_participants"
@@ -119,49 +126,50 @@ export const ReportFormFields = ({ form }: ReportFormFieldsProps) => {
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name="photos"
-        render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <div className="space-y-2">
-                {field.value?.map((photo: { url: string; description: string }, index: number) => (
-                  <div key={index} className="flex gap-2">
-                    <Input 
-                      value={photo.url}
-                      onChange={(e) => {
-                        const newPhotos = [...field.value];
-                        newPhotos[index] = { ...photo, url: e.target.value };
-                        field.onChange(newPhotos);
-                      }}
-                      placeholder="رابط الصورة"
-                    />
-                    <Input 
-                      value={photo.description}
-                      onChange={(e) => {
-                        const newPhotos = [...field.value];
-                        newPhotos[index] = { ...photo, description: e.target.value };
-                        field.onChange(newPhotos);
-                      }}
-                      placeholder="وصف الصورة"
-                    />
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  onClick={() => {
-                    const newPhotos = [...(field.value || []), { url: '', description: '' }];
-                    field.onChange(newPhotos);
-                  }}
-                >
-                  إضافة صورة
-                </Button>
-              </div>
-            </FormControl>
-          </FormItem>
-        )}
-      />
-    </>
+
+      <div className="space-y-2">
+        {form.watch('photos')?.map((photo, index) => (
+          <div key={index} className="flex gap-2">
+            <Input 
+              value={photo.url}
+              onChange={(e) => {
+                const newPhotos = [...(form.getValues('photos') || [])];
+                newPhotos[index] = { ...photo, url: e.target.value };
+                form.setValue('photos', newPhotos);
+              }}
+              placeholder="رابط الصورة"
+            />
+            <Input 
+              value={photo.description}
+              onChange={(e) => {
+                const newPhotos = [...(form.getValues('photos') || [])];
+                newPhotos[index] = { ...photo, description: e.target.value };
+                form.setValue('photos', newPhotos);
+              }}
+              placeholder="وصف الصورة"
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                const newPhotos = form.getValues('photos')?.filter((_, i) => i !== index) || [];
+                form.setValue('photos', newPhotos);
+              }}
+            >
+              حذف
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          onClick={() => {
+            const currentPhotos = form.getValues('photos') || [];
+            form.setValue('photos', [...currentPhotos, { url: '', description: '' }]);
+          }}
+        >
+          إضافة صورة
+        </Button>
+      </div>
+    </div>
   );
 };
