@@ -3,28 +3,16 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Edit, Trash } from "lucide-react";
-import { EditReportDialog } from "@/components/events/reports/components/dialog/EditReportDialog";
-import { ReportDeleteDialog } from "@/components/events/reports/components/dialog/ReportDeleteDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Report } from "@/types/report";
 
 interface ReportTableRowProps {
   report: Report;
-  onSuccess?: () => Promise<void>;
 }
 
-export const ReportTableRow = ({ report, onSuccess }: ReportTableRowProps) => {
+export const ReportTableRow = ({ report }: ReportTableRowProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-  const handleEditSuccess = async () => {
-    setIsEditOpen(false);
-    if (onSuccess) await onSuccess();
-  };
-
-  const handleDeleteSuccess = async () => {
-    setIsDeleteOpen(false);
-    if (onSuccess) await onSuccess();
-  };
 
   return (
     <tr key={report.id}>
@@ -52,19 +40,30 @@ export const ReportTableRow = ({ report, onSuccess }: ReportTableRowProps) => {
         </div>
       </td>
 
-      <EditReportDialog
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        report={report}
-        onSuccess={handleEditSuccess}
-      />
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعديل التقرير</DialogTitle>
+          </DialogHeader>
+          {/* Edit form will be implemented later */}
+        </DialogContent>
+      </Dialog>
 
-      <ReportDeleteDialog
-        open={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        reportId={report.id}
-        onSuccess={handleDeleteSuccess}
-      />
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>حذف التقرير</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+              إلغاء
+            </Button>
+            <Button variant="destructive" onClick={() => setIsDeleteOpen(false)}>
+              حذف
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </tr>
   );
 };
