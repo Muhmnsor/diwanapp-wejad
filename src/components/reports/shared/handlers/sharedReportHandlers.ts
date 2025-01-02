@@ -1,5 +1,7 @@
 import { BaseReport } from "@/types/sharedReport";
 import { supabase } from "@/integrations/supabase/client";
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 export const deleteReport = async (tableName: string, reportId: string) => {
   try {
@@ -88,7 +90,7 @@ const generateReportContent = (report: BaseReport): string => {
 الوصف التفصيلي:
 ${report.detailed_description || 'لا يوجد وصف تفصيلي'}
 
-مدة النشاط: ${report.duration || 'غير محدد'}
+مدة النشاط: ${report.activity_duration || 'غير محدد'}
 عدد الحضور: ${report.attendees_count || 'غير محدد'}
 
 أهداف النشاط:

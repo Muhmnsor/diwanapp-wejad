@@ -29,9 +29,9 @@ export const useProjectReport = (projectId: string, activityId: string) => {
           report_name: data.report_name,
           report_text: data.report_text,
           detailed_description: data.detailed_description,
-          duration: data.duration,
+          activity_duration: data.activity_duration,
           attendees_count: data.attendees_count,
-          objectives: data.objectives,
+          activity_objectives: data.activity_objectives,
           impact_on_participants: data.impact_on_participants,
           photos: data.photos,
         });

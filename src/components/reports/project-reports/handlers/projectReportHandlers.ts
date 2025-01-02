@@ -1,5 +1,5 @@
 import { ProjectReport } from '@/types/projectReport';
-import { downloadReport } from '../shared/handlers/sharedReportHandlers';
+import { downloadReport } from '@/components/reports/shared/handlers/sharedReportHandlers';
 
 export const downloadProjectReport = async (report: ProjectReport, projectTitle?: string): Promise<boolean> => {
   return downloadReport(report, projectTitle);
