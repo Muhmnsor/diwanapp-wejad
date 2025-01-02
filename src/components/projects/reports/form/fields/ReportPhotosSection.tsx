@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
-import { UseFormReturn } from "react-hook-form";
 
 interface ReportPhotosSectionProps {
   photos: { url: string; description: string; }[];
