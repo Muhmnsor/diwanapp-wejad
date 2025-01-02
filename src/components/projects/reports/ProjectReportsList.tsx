@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportListContainer } from "@/components/events/reports/ReportListContainer";
 import { ReportListHeader } from "@/components/events/reports/ReportListHeader";
-import { ReportListItem } from "@/components/events/reports/ReportListItem";
+import { ReportTableRow } from "./table/ReportTableRow";
+import { Report } from "@/types/report";
 
 interface ProjectReportsListProps {
   projectId: string;
@@ -11,7 +12,7 @@ interface ProjectReportsListProps {
 
 export const ProjectReportsList = ({
   projectId,
-  activityId
+  activityId,
 }: ProjectReportsListProps) => {
   const queryClient = useQueryClient();
 

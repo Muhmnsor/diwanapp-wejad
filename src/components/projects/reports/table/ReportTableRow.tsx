@@ -5,9 +5,10 @@ import { ar } from "date-fns/locale";
 import { Edit, Trash } from "lucide-react";
 import { EditReportDialog } from "@/components/events/reports/components/dialog/EditReportDialog";
 import { ReportDeleteDialog } from "@/components/events/reports/components/dialog/ReportDeleteDialog";
+import { Report } from "@/types/report";
 
 interface ReportTableRowProps {
-  report: any;
+  report: Report;
   onSuccess?: () => Promise<void>;
 }
 
@@ -26,7 +27,7 @@ export const ReportTableRow = ({ report, onSuccess }: ReportTableRowProps) => {
   };
 
   return (
-    <tr key={report.id} className="border-b">
+    <tr key={report.id}>
       <td className="px-4 py-2">{report.report_name}</td>
       <td className="px-4 py-2">{report.program_name}</td>
       <td className="px-4 py-2">

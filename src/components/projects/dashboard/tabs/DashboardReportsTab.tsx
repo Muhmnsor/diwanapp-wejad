@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronUp, ChevronDown } from "lucide-react";
-import { ProjectReportDialog } from "../../reports/ProjectReportDialog";
-import { ProjectReportsList } from "../../reports/ProjectReportsList";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectReportForm } from "../../reports/ProjectReportForm";
+import { ProjectReportsList } from "../../reports/ProjectReportsList";
 
 interface DashboardReportsTabProps {
   projectId: string;
@@ -17,13 +16,13 @@ export const DashboardReportsTab = ({
   projectId,
   activityId
 }: DashboardReportsTabProps) => {
-  const [isAddReportOpen, setIsAddReportOpen] = useState(false);
   const [isFormExpanded, setIsFormExpanded] = useState(false);
 
   // Fetch project details to get the title
-  const { data: project } = useQuery({
+  const { data: project, isLoading: isProjectLoading } = useQuery({
     queryKey: ['project-details', projectId],
     queryFn: async () => {
+      console.log('Fetching project details:', projectId);
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -33,12 +32,14 @@ export const DashboardReportsTab = ({
       if (error) throw error;
       return data;
     },
+    enabled: !!projectId,
   });
 
   // Fetch project activities
-  const { data: activities = [] } = useQuery({
+  const { data: activities = [], isLoading: isActivitiesLoading } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
+      console.log('Fetching project activities:', projectId);
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -49,11 +50,20 @@ export const DashboardReportsTab = ({
       if (error) throw error;
       return data || [];
     },
+    enabled: !!projectId,
   });
 
   const handleFormSuccess = () => {
     setIsFormExpanded(false);
   };
+
+  if (isProjectLoading || isActivitiesLoading) {
+    return (
+      <Card className="p-6">
+        <div className="text-center py-4">جاري التحميل...</div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -88,15 +98,6 @@ export const DashboardReportsTab = ({
           activityId={activityId}
         />
       </Card>
-
-      <ProjectReportDialog
-        open={isAddReportOpen}
-        onOpenChange={setIsAddReportOpen}
-        projectId={projectId}
-        activityId={activityId}
-        projectTitle={project?.title || ''}
-        activities={activities}
-      />
     </div>
   );
 };
