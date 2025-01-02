@@ -12,6 +12,9 @@ interface BaseReport {
   activity_objectives?: string;
   impact_on_participants?: string | null;
   photos?: ReportPhoto[];
+  video_links?: string[];
+  additional_links?: string[];
+  comments?: string[];
   satisfaction_level?: number | null;
 }
 
@@ -20,7 +23,7 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
     console.log('Starting report download process for:', report.report_name);
     const zip = new JSZip();
 
-    // Add report text content in the same order as the form
+    // Add report text content
     const reportContent = generateReportContent(report);
     zip.file('تقرير-النشاط.txt', reportContent);
 
@@ -68,7 +71,17 @@ const generateReportContent = (report: BaseReport): string => {
     return `${level}/5`;
   };
 
-  // Order matches the form exactly
+  const formatLinks = (links?: string[]): string => {
+    if (!links || links.length === 0) return 'لا يوجد روابط';
+    return links.join('\n');
+  };
+
+  const formatComments = (comments?: string[]): string => {
+    if (!comments || comments.length === 0) return 'لا يوجد تعليقات';
+    return comments.join('\n');
+  };
+
+  // Order matches the form exactly with proper spacing
   const sections = [
     {
       title: 'اسم التقرير',
@@ -103,14 +116,27 @@ const generateReportContent = (report: BaseReport): string => {
       value: formatValue(report.report_text)
     },
     {
+      title: 'روابط الفيديو',
+      value: formatLinks(report.video_links)
+    },
+    {
+      title: 'روابط إضافية',
+      value: formatLinks(report.additional_links)
+    },
+    {
+      title: 'تعليقات',
+      value: formatComments(report.comments)
+    },
+    {
       title: 'مستوى الرضا',
       value: formatSatisfactionLevel(report.satisfaction_level)
     }
   ];
 
+  // Add double line breaks between sections for better readability
   return sections
-    .map(section => `${section.title}:\n${section.value}\n`)
-    .join('\n');
+    .map(section => `${section.title}:\n${section.value}`)
+    .join('\n\n');
 };
 
 const getFileExtension = (url: string): string => {
