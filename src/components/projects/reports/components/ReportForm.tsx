@@ -24,6 +24,8 @@ const formSchema = z.object({
   })).optional(),
 });
 
+type FormData = z.infer<typeof formSchema>;
+
 interface ReportFormProps {
   projectId: string;
   activityId: string;
@@ -40,7 +42,7 @@ export const ReportForm = ({
   console.log("ReportForm - initialData:", initialData);
   
   const queryClient = useQueryClient();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       program_name: initialData?.program_name || "",
@@ -55,7 +57,7 @@ export const ReportForm = ({
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormData) => {
     try {
       const {
         data: { user },
