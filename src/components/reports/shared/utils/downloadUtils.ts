@@ -60,15 +60,53 @@ export const downloadReportWithImages = async (report: BaseReport, eventTitle?: 
 };
 
 const generateReportContent = (report: BaseReport): string => {
+  const formatValue = (value: string | number | null | undefined): string => {
+    if (value === null || value === undefined || value === '') {
+      return 'غير محدد';
+    }
+    return value.toString();
+  };
+
+  const formatSatisfactionLevel = (level: number | null | undefined): string => {
+    if (level === null || level === undefined) {
+      return 'غير محدد';
+    }
+    return `${level}/5`;
+  };
+
   const sections = [
-    { title: 'اسم البرنامج/المشروع', value: report.program_name || 'غير محدد' },
-    { title: 'اسم التقرير', value: report.report_name },
-    { title: 'تقرير النشاط', value: report.report_text },
-    { title: 'عدد الحضور', value: report.attendees_count || 'غير محدد' },
-    { title: 'مدة النشاط (ساعات)', value: report.activity_duration || 'غير محدد' },
-    { title: 'أهداف النشاط', value: report.activity_objectives || 'غير محدد' },
-    { title: 'آثار النشاط', value: report.impact_on_participants || 'غير محدد' },
-    { title: 'متوسط نسبة التقييم للنشاط', value: report.satisfaction_level ? `${report.satisfaction_level}/5` : 'غير محدد' }
+    {
+      title: 'اسم البرنامج/المشروع',
+      value: formatValue(report.program_name)
+    },
+    {
+      title: 'اسم التقرير',
+      value: formatValue(report.report_name)
+    },
+    {
+      title: 'تقرير النشاط',
+      value: formatValue(report.report_text)
+    },
+    {
+      title: 'عدد الحضور',
+      value: formatValue(report.attendees_count)
+    },
+    {
+      title: 'مدة النشاط (ساعات)',
+      value: formatValue(report.activity_duration)
+    },
+    {
+      title: 'أهداف النشاط',
+      value: formatValue(report.activity_objectives)
+    },
+    {
+      title: 'آثار النشاط',
+      value: formatValue(report.impact_on_participants)
+    },
+    {
+      title: 'متوسط نسبة التقييم للنشاط',
+      value: formatSatisfactionLevel(report.satisfaction_level)
+    }
   ];
 
   return sections
