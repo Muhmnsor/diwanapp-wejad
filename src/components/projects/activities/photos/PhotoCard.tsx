@@ -11,6 +11,7 @@ interface PhotoCardProps {
   index: number;
   onDelete: () => void;
   onDescriptionChange: (description: string) => void;
+  placeholder?: string;
 }
 
 export const PhotoCard = ({
@@ -18,6 +19,7 @@ export const PhotoCard = ({
   index,
   onDelete,
   onDescriptionChange,
+  placeholder
 }: PhotoCardProps) => {
   return (
     <Card className="p-4 space-y-4">
@@ -30,6 +32,9 @@ export const PhotoCard = ({
       </div>
 
       <div className="space-y-2">
+        <div className="text-sm text-muted-foreground">
+          {placeholder && `اقتراح: ${placeholder}`}
+        </div>
         <Input
           placeholder="وصف الصورة"
           value={photo.description}
