@@ -5,7 +5,6 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectTabs } from "@/components/home/ProjectTabs";
 import { useProjects } from "@/hooks/useProjects";
-import { Hero } from "@/components/home/Hero";
 
 export default function Index() {
   const { data: events, isLoading } = useEvents();
@@ -26,7 +25,6 @@ export default function Index() {
       
       <main className="flex-grow">
         <Banner />
-        <Hero />
         
         <div className="container mx-auto px-4 space-y-16 py-16">
           <EventsSection 
