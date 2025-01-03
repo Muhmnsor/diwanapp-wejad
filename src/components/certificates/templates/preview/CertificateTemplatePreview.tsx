@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, Download, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CertificateTemplatePreviewProps {
   open: boolean;
@@ -19,9 +20,28 @@ export const CertificateTemplatePreview = ({
 }: CertificateTemplatePreviewProps) => {
   const [previewData, setPreviewData] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleFieldChange = (key: string, value: string) => {
     setPreviewData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const downloadTemplateFile = async () => {
+    try {
+      console.log('📥 Downloading template file:', template.template_file);
+      const { data, error } = await supabase.storage
+        .from('certificate-templates')
+        .download(template.template_file);
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Error downloading template:', error);
+      throw new Error('Failed to download template file');
+    }
   };
 
   const handlePreview = async () => {
@@ -29,8 +49,12 @@ export const CertificateTemplatePreview = ({
       setIsLoading(true);
       console.log('🔄 Generating preview with data:', previewData);
       
-      // سيتم إضافة منطق المعاينة لاحقاً
-      await new Promise(resolve => setTimeout(resolve, 1000)); // محاكاة التحميل
+      // Download the template file
+      const templateFile = await downloadTemplateFile();
+      
+      // Create a temporary URL for preview
+      const previewUrl = URL.createObjectURL(templateFile);
+      setPreviewUrl(previewUrl);
       
       toast.success('تم إنشاء المعاينة بنجاح');
     } catch (error) {
@@ -46,8 +70,20 @@ export const CertificateTemplatePreview = ({
       setIsLoading(true);
       console.log('⬇️ جاري تحميل المعاينة...');
       
-      // سيتم إضافة منطق التحميل لاحقاً
-      await new Promise(resolve => setTimeout(resolve, 1000)); // محاكاة التحميل
+      // Download the template file
+      const templateFile = await downloadTemplateFile();
+      
+      // Create a download link
+      const downloadUrl = URL.createObjectURL(templateFile);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `preview-${template.name}.pdf`; // Assuming PDF format
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup
+      URL.revokeObjectURL(downloadUrl);
       
       toast.success('تم تحميل المعاينة بنجاح');
     } catch (error) {
@@ -78,6 +114,16 @@ export const CertificateTemplatePreview = ({
               </div>
             ))}
           </div>
+
+          {previewUrl && (
+            <div className="aspect-video w-full overflow-hidden rounded-lg border">
+              <iframe 
+                src={previewUrl} 
+                className="h-full w-full"
+                title="معاينة القالب"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button
