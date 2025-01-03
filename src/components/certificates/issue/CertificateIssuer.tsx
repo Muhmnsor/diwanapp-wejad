@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { processTemplate } from "../templates/preview/utils/templateProcessor";
 import { downloadTemplateFile } from "../templates/preview/utils/templateDownloader";
 import { CertificateTemplatePreview } from "../templates/preview/CertificateTemplatePreview";
+import { Eye } from "lucide-react";
 
 interface CertificateIssuerProps {
   templateId: string;
@@ -33,6 +34,7 @@ export const CertificateIssuer = ({
 
   const handlePreview = async () => {
     try {
+      setIsLoading(true);
       if (!template) {
         const { data, error } = await supabase
           .from('certificate_templates')
@@ -45,8 +47,10 @@ export const CertificateIssuer = ({
       }
       setShowPreview(true);
     } catch (error) {
-      console.error('❌ Error fetching template:', error);
+      console.error('❌ خطأ في تحميل القالب:', error);
       toast.error('حدث خطأ أثناء تحميل القالب');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,7 +119,16 @@ export const CertificateIssuer = ({
         disabled={isLoading}
         className="w-full"
       >
-        {isLoading ? 'جاري التحميل...' : 'معاينة الشهادة'}
+        {isLoading ? (
+          <span className="flex items-center gap-2">
+            جاري التحميل...
+          </span>
+        ) : (
+          <span className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            معاينة الشهادة
+          </span>
+        )}
       </Button>
 
       {template && (
