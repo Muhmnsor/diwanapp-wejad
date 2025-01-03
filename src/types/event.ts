@@ -1,13 +1,5 @@
-export type BeneficiaryType = 'men' | 'women' | 'both';
-
-export type EventPathType = 'environment' | 'community' | 'content';
-export type EventCategoryType = 
-  | 'social' | 'entertainment' | 'service' | 'educational' | 'consulting' // for environment
-  | 'interest' | 'specialization' // for community
-  | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
-
 export interface Event {
-  id?: string;
+  id: string;
   title: string;
   description: string;
   date: string;
@@ -15,29 +7,23 @@ export interface Event {
   time: string;
   location: string;
   location_url?: string;
-  imageUrl?: string;
-  image_url?: string;
-  attendees: number;
+  image_url: string;
+  event_type: string;
+  price?: number;
   max_attendees: number;
-  event_type: "online" | "in-person";
-  eventType: "online" | "in-person";
-  price: number | "free";
-  beneficiaryType: BeneficiaryType;
-  beneficiary_type: BeneficiaryType;
-  registrationStartDate?: string | null;
-  registrationEndDate?: string | null;
-  registration_start_date?: string | null;
-  registration_end_date?: string | null;
-  certificate_type: string;
-  certificateType: string;
-  event_hours: number | null;
-  eventHours: number | null;
-  eventPath: EventPathType;
-  event_path: EventPathType;
-  eventCategory: EventCategoryType;
-  event_category: EventCategoryType;
+  registration_start_date?: string;
+  registration_end_date?: string;
+  beneficiary_type: string;
+  certificate_type?: string;
+  event_hours?: number;
+  event_path: string;
+  event_category: string;
+  special_requirements?: string;
   is_visible?: boolean;
   is_project_activity?: boolean;
+  project_id?: string;
 }
 
-export type EventType = Event;
+export interface EventCardProps extends Event {
+  className?: string;
+}
