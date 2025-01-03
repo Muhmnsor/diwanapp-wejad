@@ -20,7 +20,7 @@ export default function Index() {
   const pastProjects = projects?.filter(project => new Date(project.end_date) < currentDate) || [];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       
       <main className="flex-grow">
