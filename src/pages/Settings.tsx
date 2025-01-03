@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { WhatsAppSettings } from "@/components/settings/WhatsAppSettings";
 import { WhatsAppTemplates } from "@/components/settings/WhatsAppTemplates";
 import { UsersManagement } from "@/components/settings/UsersManagement";
+import { CertificateSignatures } from "@/components/certificates/signatures/CertificateSignatures";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Settings = () => {
@@ -16,6 +17,7 @@ const Settings = () => {
             <TabsTrigger value="whatsapp" className="flex-1">إعدادات الواتساب</TabsTrigger>
             <TabsTrigger value="templates" className="flex-1">قوالب الرسائل</TabsTrigger>
             <TabsTrigger value="users" className="flex-1">إدارة المستخدمين</TabsTrigger>
+            <TabsTrigger value="signatures" className="flex-1">التوقيعات</TabsTrigger>
           </TabsList>
           <TabsContent value="whatsapp">
             <WhatsAppSettings />
@@ -25,6 +27,9 @@ const Settings = () => {
           </TabsContent>
           <TabsContent value="users">
             <UsersManagement />
+          </TabsContent>
+          <TabsContent value="signatures">
+            <CertificateSignatures />
           </TabsContent>
         </Tabs>
       </div>
