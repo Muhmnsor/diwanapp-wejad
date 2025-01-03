@@ -148,6 +148,181 @@ export type Database = {
         }
         Relationships: []
       }
+      certificate_signatures: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          position: string
+          signature_image: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          position: string
+          signature_image: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: string
+          signature_image?: string
+        }
+        Relationships: []
+      }
+      certificate_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          fields: Json
+          id: string
+          is_active: boolean | null
+          language: string | null
+          name: string
+          template_file: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          name: string
+          template_file: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          name?: string
+          template_file?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      certificate_verifications: {
+        Row: {
+          certificate_id: string | null
+          id: string
+          ip_address: string | null
+          verification_code: string
+          verification_method: string
+          verified_at: string
+        }
+        Insert: {
+          certificate_id?: string | null
+          id?: string
+          ip_address?: string | null
+          verification_code: string
+          verification_method: string
+          verified_at?: string
+        }
+        Update: {
+          certificate_id?: string | null
+          id?: string
+          ip_address?: string | null
+          verification_code?: string
+          verification_method?: string
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_verifications_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "certificates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          certificate_data: Json
+          certificate_number: string
+          event_id: string | null
+          id: string
+          issued_at: string
+          issued_by: string | null
+          pdf_url: string | null
+          project_id: string | null
+          qr_code: string | null
+          registration_id: string | null
+          status: string | null
+          template_id: string | null
+          verification_code: string
+        }
+        Insert: {
+          certificate_data?: Json
+          certificate_number: string
+          event_id?: string | null
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          pdf_url?: string | null
+          project_id?: string | null
+          qr_code?: string | null
+          registration_id?: string | null
+          status?: string | null
+          template_id?: string | null
+          verification_code: string
+        }
+        Update: {
+          certificate_data?: Json
+          certificate_number?: string
+          event_id?: string | null
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          pdf_url?: string | null
+          project_id?: string | null
+          qr_code?: string | null
+          registration_id?: string | null
+          status?: string | null
+          template_id?: string | null
+          verification_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_feedback: {
         Row: {
           content_rating: number | null
