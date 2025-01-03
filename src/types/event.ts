@@ -6,7 +6,7 @@ export type EventCategoryType =
   | 'interest' | 'specialization' // for community
   | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
 
-export interface EventType {
+export interface Event {
   id?: string;
   title: string;
   description: string;
@@ -36,4 +36,8 @@ export interface EventType {
   event_path: EventPathType;
   eventCategory: EventCategoryType;
   event_category: EventCategoryType;
+  is_visible?: boolean;
+  is_project_activity?: boolean;
 }
+
+export type EventType = Event;
