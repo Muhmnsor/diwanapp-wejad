@@ -1,45 +1,60 @@
 import { ProjectCard } from "@/components/projects/ProjectCard";
-import { useProjects } from "@/hooks/useProjects";
-import { Loader2 } from "lucide-react";
-import { Project } from "@/types/project";
+import { useAuthStore } from "@/store/authStore";
+import { History } from "lucide-react";
 
 interface ProjectsSectionProps {
-  title?: string;
-  projects?: Project[];
+  title: string;
+  projects: any[];
   isPastProjects?: boolean;
 }
 
-export const ProjectsSection = ({ 
-  title = "المشاريع",
-  projects: propProjects,
-  isPastProjects = false 
-}: ProjectsSectionProps) => {
-  const { data: fetchedProjects, isLoading } = useProjects();
-  const projects = propProjects || fetchedProjects;
+export const ProjectsSection = ({ title, projects, isPastProjects = false }: ProjectsSectionProps) => {
+  const { user } = useAuthStore();
+  console.log('ProjectsSection - User:', user);
+  console.log('ProjectsSection - Projects:', projects);
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // فلترة المشاريع بناءً على الصلاحيات
+  const visibleProjects = projects.filter(project => {
+    // إذا كان المستخدم مشرف، اعرض جميع المشاريع
+    if (user?.isAdmin) {
+      return true;
+    }
+    // للمستخدمين العاديين، اعرض فقط المشاريع المرئية
+    return project.is_visible !== false;
+  });
 
-  if (!projects?.length) {
+  console.log('ProjectsSection - Filtered Projects:', visibleProjects);
+
+  if (visibleProjects.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-12">
-        لا توجد مشاريع حالياً
-      </div>
+      <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
+        <div className={`border-r-4 ${isPastProjects ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-8 flex items-center gap-2`}>
+          <h2 className="text-3xl font-bold text-[#403E43] dark:text-white">{title}</h2>
+          {isPastProjects && <History className="w-6 h-6 text-[#9F9EA1]" />}
+        </div>
+        <div className="text-center text-[#9F9EA1] p-8 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
+          {isPastProjects ? 'لا توجد مشاريع سابقة' : 'لا توجد مشاريع قادمة حالياً'}
+        </div>
+      </section>
     );
   }
 
   return (
-    <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 animate-fade-in" dir="rtl">
-      {projects.map((project: Project) => (
-        <div key={project.id} className="flex justify-center">
-          <ProjectCard {...project} />
-        </div>
-      ))}
-    </div>
+    <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
+      <div className={`border-r-4 ${isPastProjects ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-8 flex items-center gap-2`}>
+        <h2 className="text-3xl font-bold text-[#403E43] dark:text-white">{title}</h2>
+        {isPastProjects && <History className="w-6 h-6 text-[#9F9EA1]" />}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        {visibleProjects.map((project) => (
+          <div key={project.id} className="flex justify-center">
+            <ProjectCard 
+              {...project} 
+              className={!project.is_visible ? "opacity-50" : ""}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 };

@@ -1,42 +1,39 @@
-export type BeneficiaryType = "male" | "female" | "both";
-export type EventType = "online" | "in-person";
-export type EventPathType = "environment" | "community" | "content";
-export type EventCategoryType = 
-  | "social"
-  | "entertainment"
-  | "service"
-  | "educational"
-  | "consulting"
-  | "interest"
-  | "specialization"
-  | "spiritual"
-  | "cultural"
-  | "behavioral"
-  | "skill"
-  | "health"
-  | "diverse";
+export type BeneficiaryType = 'men' | 'women' | 'both';
 
-export interface Event {
-  id: string;
+export type EventPathType = 'environment' | 'community' | 'content';
+export type EventCategoryType = 
+  | 'social' | 'entertainment' | 'service' | 'educational' | 'consulting' // for environment
+  | 'interest' | 'specialization' // for community
+  | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
+
+export interface EventType {
+  id?: string;
   title: string;
   description: string;
   date: string;
+  end_date?: string;
   time: string;
   location: string;
-  image_url: string;
-  event_type: EventType;
-  price: number | null;
+  location_url?: string;
+  imageUrl?: string;
+  image_url?: string;
+  attendees: number;
   max_attendees: number;
+  event_type: "online" | "in-person";
+  eventType: "online" | "in-person";
+  price: number | "free";
+  beneficiaryType: BeneficiaryType;
+  beneficiary_type: BeneficiaryType;
+  registrationStartDate?: string | null;
+  registrationEndDate?: string | null;
   registration_start_date?: string | null;
   registration_end_date?: string | null;
-  beneficiary_type: BeneficiaryType;
-  certificate_type?: string;
-  event_hours?: number;
-  location_url?: string;
-  event_path?: EventPathType;
-  event_category?: EventCategoryType;
-  is_visible?: boolean;
-  is_project_activity?: boolean;
-  project_id?: string;
-  end_date?: string;
+  certificate_type: string;
+  certificateType: string;
+  event_hours: number | null;
+  eventHours: number | null;
+  eventPath: EventPathType;
+  event_path: EventPathType;
+  eventCategory: EventCategoryType;
+  event_category: EventCategoryType;
 }

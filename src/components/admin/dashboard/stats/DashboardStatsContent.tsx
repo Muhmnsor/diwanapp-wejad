@@ -5,9 +5,6 @@ import { AttendanceAverageCard } from "./AttendanceAverageCard";
 import { ActivityAttendanceCard } from "./ActivityAttendanceCard";
 import { ActivityRatingCard } from "./ActivityRatingCard";
 import { EventStatsContent } from "./EventStatsContent";
-import { CertificateStatsCard } from "./CertificateStatsCard";
-import { RequirementsStatsCard } from "./RequirementsStatsCard";
-import { VerificationStatsCard } from "./VerificationStatsCard";
 
 interface DashboardStatsContentProps {
   registrationCount: number;
@@ -108,12 +105,6 @@ export const DashboardStatsContent = ({
         title="أقل نشاط تقييماً"
         activity={ratingStats?.lowest}
       />
-
-      <CertificateStatsCard projectId={project.id} />
-      
-      <RequirementsStatsCard projectId={project.id} />
-      
-      <VerificationStatsCard projectId={project.id} />
     </div>
   );
 };

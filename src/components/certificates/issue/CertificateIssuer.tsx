@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { processTemplate } from "../templates/preview/utils/templateProcessor";
 import { downloadTemplateFile } from "../templates/preview/utils/templateDownloader";
 import { CertificateTemplatePreview } from "../templates/preview/CertificateTemplatePreview";
-import { Eye, Shield } from "lucide-react";
 
 interface CertificateIssuerProps {
   templateId: string;
@@ -34,7 +33,6 @@ export const CertificateIssuer = ({
 
   const handlePreview = async () => {
     try {
-      setIsLoading(true);
       if (!template) {
         const { data, error } = await supabase
           .from('certificate_templates')
@@ -47,22 +45,9 @@ export const CertificateIssuer = ({
       }
       setShowPreview(true);
     } catch (error) {
-      console.error('❌ خطأ في تحميل القالب:', error);
+      console.error('❌ Error fetching template:', error);
       toast.error('حدث خطأ أثناء تحميل القالب');
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const generateVerificationCode = () => {
-    // Generate a more secure and readable verification code
-    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-    let code = '';
-    for (let i = 0; i < 8; i++) {
-      if (i > 0 && i % 4 === 0) code += '-';
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
   };
 
   const handleIssueCertificate = async (confirmedData: Record<string, string>) => {
@@ -82,13 +67,6 @@ export const CertificateIssuer = ({
 
       if (uploadError) throw uploadError;
 
-      // Generate a unique certificate number with prefix based on event/project
-      const prefix = eventId ? 'EVT' : 'PRJ';
-      const certificateNumber = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-      
-      // Generate a more secure verification code
-      const verificationCode = generateVerificationCode();
-
       // 3. Create certificate record
       const { error: insertError } = await supabase
         .from('certificates')
@@ -97,11 +75,10 @@ export const CertificateIssuer = ({
           registration_id: registrationId,
           event_id: eventId,
           project_id: projectId,
-          certificate_number: certificateNumber,
-          verification_code: verificationCode,
+          certificate_number: `CERT-${Date.now()}`,
+          verification_code: crypto.randomUUID().split('-')[0].toUpperCase(),
           certificate_data: confirmedData,
-          pdf_url: fileName,
-          status: 'active'
+          pdf_url: fileName
         }]);
 
       if (insertError) throw insertError;
@@ -118,10 +95,7 @@ export const CertificateIssuer = ({
 
   return (
     <Card className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">إصدار شهادة جديدة</h3>
-        <Shield className="h-5 w-5 text-muted-foreground" />
-      </div>
+      <h3 className="font-semibold">إصدار شهادة جديدة</h3>
 
       <div className="space-y-4">
         {Object.entries(certificateData).map(([key, value]) => (
@@ -141,16 +115,7 @@ export const CertificateIssuer = ({
         disabled={isLoading}
         className="w-full"
       >
-        {isLoading ? (
-          <span className="flex items-center gap-2">
-            جاري التحميل...
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            معاينة الشهادة
-          </span>
-        )}
+        {isLoading ? 'جاري التحميل...' : 'معاينة الشهادة'}
       </Button>
 
       {template && (
