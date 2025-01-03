@@ -1,9 +1,21 @@
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { useProjects } from "@/hooks/useProjects";
 import { Loader2 } from "lucide-react";
+import { Project } from "@/types/project";
 
-export const ProjectsSection = () => {
-  const { data: projects, isLoading } = useProjects();
+interface ProjectsSectionProps {
+  title?: string;
+  projects?: Project[];
+  isPastProjects?: boolean;
+}
+
+export const ProjectsSection = ({ 
+  title = "المشاريع",
+  projects: propProjects,
+  isPastProjects = false 
+}: ProjectsSectionProps) => {
+  const { data: fetchedProjects, isLoading } = useProjects();
+  const projects = propProjects || fetchedProjects;
 
   if (isLoading) {
     return (
@@ -23,8 +35,8 @@ export const ProjectsSection = () => {
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in">
-      {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
+      {projects.map((project: Project) => (
+        <ProjectCard key={project.id} {...project} />
       ))}
     </div>
   );

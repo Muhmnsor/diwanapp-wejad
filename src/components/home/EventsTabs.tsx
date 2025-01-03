@@ -2,6 +2,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { EventCard } from "@/components/EventCard";
 import { useEvents } from "@/hooks/useEvents";
 import { Loader2 } from "lucide-react";
+import { Event } from "@/types/event";
 
 export const EventsTabs = () => {
   const { data: events, isLoading } = useEvents();
@@ -35,8 +36,8 @@ export const EventsTabs = () => {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {upcomingEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
+            {upcomingEvents.map((event: Event) => (
+              <EventCard key={event.id} {...event} />
             ))}
           </div>
         )}
@@ -49,8 +50,8 @@ export const EventsTabs = () => {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {projectActivities.map((event) => (
-              <EventCard key={event.id} event={event} />
+            {projectActivities.map((event: Event) => (
+              <EventCard key={event.id} {...event} />
             ))}
           </div>
         )}

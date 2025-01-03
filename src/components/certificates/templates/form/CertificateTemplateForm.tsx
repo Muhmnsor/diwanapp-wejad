@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,18 +6,21 @@ import { useState } from "react";
 import { CertificateTemplateFields } from "../CertificateTemplateFields";
 
 interface CertificateTemplateFormProps {
-  template?: any;
-  isLoading: boolean;
-  onSubmit: (formData: any, selectedFile: File | null) => void;
-  onCancel: () => void;
+  template?: {
+    id?: string;
+    name: string;
+    description?: string;
+    template_file: string;
+    fields: Record<string, any>;
+    language?: string;
+    orientation?: string;
+    page_size?: string;
+    font_family?: string;
+  };
+  onSubmit: (formData: any) => void;
 }
 
-export const CertificateTemplateForm = ({
-  template,
-  isLoading,
-  onSubmit,
-  onCancel
-}: CertificateTemplateFormProps) => {
+export const CertificateTemplateForm = ({ template, onSubmit }: CertificateTemplateFormProps) => {
   const [formData, setFormData] = useState({
     name: template?.name || '',
     description: template?.description || '',
@@ -33,18 +35,18 @@ export const CertificateTemplateForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData, selectedFile);
+    onSubmit({ ...formData, file: selectedFile });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="name">اسم القالب</Label>
         <Input
           id="name"
+          required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
         />
       </div>
 
@@ -126,23 +128,13 @@ export const CertificateTemplateForm = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="template_file">ملف القالب</Label>
+        <Label htmlFor="template">ملف القالب</Label>
         <Input
-          id="template_file"
+          id="template"
           type="file"
-          accept=".pdf,.docx"
-          onChange={(e) => {
-            if (e.target.files?.[0]) {
-              console.log('File selected:', e.target.files[0]);
-              setSelectedFile(e.target.files[0]);
-            }
-          }}
+          accept=".pdf"
+          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
         />
-        {formData.template_file && (
-          <p className="text-sm text-muted-foreground">
-            الملف الحالي: {formData.template_file}
-          </p>
-        )}
       </div>
 
       <CertificateTemplateFields
@@ -150,19 +142,12 @@ export const CertificateTemplateForm = ({
         onChange={(fields) => setFormData({ ...formData, fields })}
       />
 
-      <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          إلغاء
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'جاري الحفظ...' : template ? 'تحديث' : 'إضافة'}
-        </Button>
-      </div>
+      <button
+        type="submit"
+        className="w-full px-4 py-2 text-white bg-primary rounded hover:bg-primary/90"
+      >
+        حفظ القالب
+      </button>
     </form>
   );
 };

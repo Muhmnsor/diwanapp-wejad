@@ -180,10 +180,13 @@ export type Database = {
           created_at: string
           description: string | null
           fields: Json
+          font_family: string | null
           id: string
           is_active: boolean | null
           language: string | null
           name: string
+          orientation: string | null
+          page_size: string | null
           template_file: string
           updated_at: string
         }
@@ -191,10 +194,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           fields?: Json
+          font_family?: string | null
           id?: string
           is_active?: boolean | null
           language?: string | null
           name: string
+          orientation?: string | null
+          page_size?: string | null
           template_file: string
           updated_at?: string
         }
@@ -202,10 +208,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           fields?: Json
+          font_family?: string | null
           id?: string
           is_active?: boolean | null
           language?: string | null
           name?: string
+          orientation?: string | null
+          page_size?: string | null
           template_file?: string
           updated_at?: string
         }
