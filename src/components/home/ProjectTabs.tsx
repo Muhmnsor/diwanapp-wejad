@@ -21,7 +21,6 @@ export const ProjectTabs = ({
 }: ProjectTabsProps) => {
   const isMobile = useIsMobile();
 
-  // Set upcoming projects as default tab on component mount
   useEffect(() => {
     setActiveTab("upcoming");
   }, []);

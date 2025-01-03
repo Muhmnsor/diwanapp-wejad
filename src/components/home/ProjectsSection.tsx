@@ -34,9 +34,11 @@ export const ProjectsSection = ({
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in">
+    <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 animate-fade-in" dir="rtl">
       {projects.map((project: Project) => (
-        <ProjectCard key={project.id} {...project} />
+        <div key={project.id} className="flex justify-center">
+          <ProjectCard {...project} />
+        </div>
       ))}
     </div>
   );
