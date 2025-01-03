@@ -1,4 +1,9 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, Download, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PDFDocument } from 'pdf-lib';
 
 interface CertificateTemplatePreviewProps {
   open: boolean;
@@ -44,6 +50,36 @@ export const CertificateTemplatePreview = ({
     }
   };
 
+  const processTemplate = async (pdfBytes: ArrayBuffer) => {
+    try {
+      console.log('🔄 Processing template with data:', previewData);
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const form = pdfDoc.getForm();
+
+      // Fill form fields with preview data
+      Object.entries(previewData).forEach(([key, value]) => {
+        try {
+          const field = form.getTextField(key);
+          if (field) {
+            field.setText(value);
+          }
+        } catch (error) {
+          console.warn(`⚠️ Field not found or error setting value for: ${key}`, error);
+        }
+      });
+
+      // Flatten form fields
+      form.flatten();
+
+      // Save the modified PDF
+      const modifiedPdfBytes = await pdfDoc.save();
+      return new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+    } catch (error) {
+      console.error('❌ Error processing template:', error);
+      throw new Error('Failed to process template');
+    }
+  };
+
   const handlePreview = async () => {
     try {
       setIsLoading(true);
@@ -52,8 +88,11 @@ export const CertificateTemplatePreview = ({
       // Download the template file
       const templateFile = await downloadTemplateFile();
       
+      // Process the template with preview data
+      const processedPdf = await processTemplate(await templateFile.arrayBuffer());
+      
       // Create a temporary URL for preview
-      const previewUrl = URL.createObjectURL(templateFile);
+      const previewUrl = URL.createObjectURL(processedPdf);
       setPreviewUrl(previewUrl);
       
       toast.success('تم إنشاء المعاينة بنجاح');
@@ -73,11 +112,14 @@ export const CertificateTemplatePreview = ({
       // Download the template file
       const templateFile = await downloadTemplateFile();
       
+      // Process the template with preview data
+      const processedPdf = await processTemplate(await templateFile.arrayBuffer());
+      
       // Create a download link
-      const downloadUrl = URL.createObjectURL(templateFile);
+      const downloadUrl = URL.createObjectURL(processedPdf);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `preview-${template.name}.pdf`; // Assuming PDF format
+      link.download = `preview-${template.name}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
