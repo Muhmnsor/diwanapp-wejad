@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { CertificateEligibilityCheck } from "./CertificateEligibilityCheck";
-import { EligibilityStatus } from "./EligibilityStatus";
+import { EligibilityCheckForm } from "./components/EligibilityCheckForm";
+import { EligibilityResult } from "./components/EligibilityResult";
+import { EligibilityRequirements } from "./components/EligibilityRequirements";
 import { useCertificateEligibility } from "@/hooks/certificates/useCertificateEligibility";
 
 interface CertificateEligibilityContainerProps {
@@ -14,6 +15,7 @@ export const CertificateEligibilityContainer = ({
   eventId,
   projectId
 }: CertificateEligibilityContainerProps) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [eligibilityResult, setEligibilityResult] = useState<{
     isEligible: boolean;
     reason?: string;
@@ -25,24 +27,41 @@ export const CertificateEligibilityContainer = ({
     };
   } | null>(null);
 
-  const handleEligibilityCheck = async (result: any) => {
-    setEligibilityResult(result);
+  const { checkEligibility } = useCertificateEligibility();
+
+  const handleCheck = async () => {
+    setIsLoading(true);
+    try {
+      const result = await checkEligibility({
+        registrationId,
+        eventId,
+        projectId
+      });
+      setEligibilityResult(result);
+    } catch (error) {
+      console.error('Error checking eligibility:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="space-y-4">
-      <CertificateEligibilityCheck
-        registrationId={registrationId}
-        eventId={eventId}
-        projectId={projectId}
+      <EligibilityCheckForm 
+        onCheck={handleCheck}
+        isLoading={isLoading}
       />
       
       {eligibilityResult && (
-        <EligibilityStatus
-          isEligible={eligibilityResult.isEligible}
-          reason={eligibilityResult.reason}
-          requirements={eligibilityResult.requirements}
-        />
+        <div className="space-y-4">
+          <EligibilityResult
+            isEligible={eligibilityResult.isEligible}
+            reason={eligibilityResult.reason}
+          />
+          <EligibilityRequirements
+            requirements={eligibilityResult.requirements}
+          />
+        </div>
       )}
     </div>
   );
