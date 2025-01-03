@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { processTemplate } from "../templates/preview/utils/templateProcessor";
 import { downloadTemplateFile } from "../templates/preview/utils/templateDownloader";
 import { CertificateTemplatePreview } from "../templates/preview/CertificateTemplatePreview";
-import { Eye } from "lucide-react";
+import { Eye, Shield } from "lucide-react";
 
 interface CertificateIssuerProps {
   templateId: string;
@@ -54,6 +54,17 @@ export const CertificateIssuer = ({
     }
   };
 
+  const generateVerificationCode = () => {
+    // Generate a more secure and readable verification code
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      if (i > 0 && i % 4 === 0) code += '-';
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return code;
+  };
+
   const handleIssueCertificate = async (confirmedData: Record<string, string>) => {
     try {
       setIsLoading(true);
@@ -71,6 +82,13 @@ export const CertificateIssuer = ({
 
       if (uploadError) throw uploadError;
 
+      // Generate a unique certificate number with prefix based on event/project
+      const prefix = eventId ? 'EVT' : 'PRJ';
+      const certificateNumber = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      
+      // Generate a more secure verification code
+      const verificationCode = generateVerificationCode();
+
       // 3. Create certificate record
       const { error: insertError } = await supabase
         .from('certificates')
@@ -79,10 +97,11 @@ export const CertificateIssuer = ({
           registration_id: registrationId,
           event_id: eventId,
           project_id: projectId,
-          certificate_number: `CERT-${Date.now()}`,
-          verification_code: crypto.randomUUID().split('-')[0].toUpperCase(),
+          certificate_number: certificateNumber,
+          verification_code: verificationCode,
           certificate_data: confirmedData,
-          pdf_url: fileName
+          pdf_url: fileName,
+          status: 'active'
         }]);
 
       if (insertError) throw insertError;
@@ -99,7 +118,10 @@ export const CertificateIssuer = ({
 
   return (
     <Card className="p-4 space-y-4">
-      <h3 className="font-semibold">إصدار شهادة جديدة</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">إصدار شهادة جديدة</h3>
+        <Shield className="h-5 w-5 text-muted-foreground" />
+      </div>
 
       <div className="space-y-4">
         {Object.entries(certificateData).map(([key, value]) => (
