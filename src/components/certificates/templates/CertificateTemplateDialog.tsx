@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { useToast } from "sonner";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -27,19 +27,53 @@ export const CertificateTemplateDialog = ({
     fields: template?.fields || {},
     language: template?.language || 'ar'
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const queryClient = useQueryClient();
-  const toast = useToast();
+
+  const handleFileUpload = async (file: File): Promise<string> => {
+    console.log('Uploading file:', file.name);
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    
+    const { error: uploadError, data } = await supabase.storage
+      .from('certificate-templates')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
+      throw uploadError;
+    }
+
+    console.log('File uploaded successfully:', data);
+    return fileName;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log('Submitting form with data:', formData);
 
     try {
+      let template_file = formData.template_file;
+
+      if (selectedFile) {
+        console.log('New file selected, uploading...');
+        template_file = await handleFileUpload(selectedFile);
+      }
+
+      const submitData = {
+        ...formData,
+        template_file
+      };
+
+      console.log('Submitting data to database:', submitData);
+
       if (template?.id) {
         const { error } = await supabase
           .from('certificate_templates')
-          .update(formData)
+          .update(submitData)
           .eq('id', template.id);
 
         if (error) throw error;
@@ -47,13 +81,13 @@ export const CertificateTemplateDialog = ({
       } else {
         const { error } = await supabase
           .from('certificate_templates')
-          .insert([formData]);
+          .insert([submitData]);
 
         if (error) throw error;
         toast.success('تم إضافة القالب بنجاح');
       }
 
-      queryClient.invalidateQueries(['certificate-templates']);
+      await queryClient.invalidateQueries({ queryKey: ['certificate-templates'] });
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving template:', error);
@@ -100,11 +134,16 @@ export const CertificateTemplateDialog = ({
               accept=".pdf,.docx"
               onChange={(e) => {
                 if (e.target.files?.[0]) {
-                  // Handle file upload logic here
-                  setFormData({ ...formData, template_file: e.target.files[0].name });
+                  console.log('File selected:', e.target.files[0]);
+                  setSelectedFile(e.target.files[0]);
                 }
               }}
             />
+            {formData.template_file && (
+              <p className="text-sm text-muted-foreground">
+                الملف الحالي: {formData.template_file}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">
