@@ -10,17 +10,15 @@ export default function Index() {
   const { data: events, isLoading } = useEvents();
   const { data: projects } = useProjects();
 
-  // تقسيم الفعاليات إلى قادمة وسابقة
   const currentDate = new Date();
   const upcomingEvents = events?.filter(event => new Date(event.date) >= currentDate) || [];
   const pastEvents = events?.filter(event => new Date(event.date) < currentDate) || [];
 
-  // تقسيم المشاريع إلى قادمة وسابقة
   const upcomingProjects = projects?.filter(project => new Date(project.end_date) >= currentDate) || [];
   const pastProjects = projects?.filter(project => new Date(project.end_date) < currentDate) || [];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       
       <main className="flex-grow">

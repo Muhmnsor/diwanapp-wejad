@@ -37,7 +37,7 @@ export const ProjectTabs = ({
   };
 
   return (
-    <div className="container mx-auto px-4 mt-12" dir="rtl">
+    <div className="container mx-auto px-4 mt-12">
       <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-6 mb-12 space-y-3 md:space-y-0">
         <Button
           variant={activeTab === "upcoming" ? "default" : "outline"}
