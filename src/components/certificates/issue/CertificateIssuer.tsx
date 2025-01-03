@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { processTemplate } from "../templates/preview/utils/templateProcessor";
 import { downloadTemplateFile } from "../templates/preview/utils/templateDownloader";
+import { CertificateTemplatePreview } from "../templates/preview/CertificateTemplatePreview";
 
 interface CertificateIssuerProps {
   templateId: string;
@@ -23,30 +24,42 @@ export const CertificateIssuer = ({
 }: CertificateIssuerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [certificateData, setCertificateData] = useState<Record<string, string>>({});
+  const [showPreview, setShowPreview] = useState(false);
+  const [template, setTemplate] = useState<any>(null);
 
   const handleFieldChange = (key: string, value: string) => {
     setCertificateData(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleIssueCertificate = async () => {
+  const handlePreview = async () => {
+    try {
+      if (!template) {
+        const { data, error } = await supabase
+          .from('certificate_templates')
+          .select('*')
+          .eq('id', templateId)
+          .single();
+
+        if (error) throw error;
+        setTemplate(data);
+      }
+      setShowPreview(true);
+    } catch (error) {
+      console.error('❌ Error fetching template:', error);
+      toast.error('حدث خطأ أثناء تحميل القالب');
+    }
+  };
+
+  const handleIssueCertificate = async (confirmedData: Record<string, string>) => {
     try {
       setIsLoading(true);
-      console.log('🎓 Issuing certificate with data:', { templateId, registrationId, certificateData });
+      console.log('🎓 إصدار شهادة بالبيانات:', { templateId, registrationId, confirmedData });
 
-      // 1. Get template details
-      const { data: template, error: templateError } = await supabase
-        .from('certificate_templates')
-        .select('*')
-        .eq('id', templateId)
-        .single();
-
-      if (templateError) throw templateError;
-
-      // 2. Process template with data
+      // 1. Process template with data
       const templateFile = await downloadTemplateFile(template.template_file);
-      const processedPdf = await processTemplate(await templateFile.arrayBuffer(), certificateData);
+      const processedPdf = await processTemplate(await templateFile.arrayBuffer(), confirmedData);
 
-      // 3. Upload processed PDF to storage
+      // 2. Upload processed PDF to storage
       const fileName = `${crypto.randomUUID()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from('certificates')
@@ -54,7 +67,7 @@ export const CertificateIssuer = ({
 
       if (uploadError) throw uploadError;
 
-      // 4. Create certificate record
+      // 3. Create certificate record
       const { error: insertError } = await supabase
         .from('certificates')
         .insert([{
@@ -64,15 +77,16 @@ export const CertificateIssuer = ({
           project_id: projectId,
           certificate_number: `CERT-${Date.now()}`,
           verification_code: crypto.randomUUID().split('-')[0].toUpperCase(),
-          certificate_data: certificateData,
+          certificate_data: confirmedData,
           pdf_url: fileName
         }]);
 
       if (insertError) throw insertError;
 
       toast.success('تم إصدار الشهادة بنجاح');
+      setShowPreview(false);
     } catch (error) {
-      console.error('❌ Error issuing certificate:', error);
+      console.error('❌ خطأ في إصدار الشهادة:', error);
       toast.error('حدث خطأ أثناء إصدار الشهادة');
     } finally {
       setIsLoading(false);
@@ -97,12 +111,23 @@ export const CertificateIssuer = ({
       </div>
 
       <Button
-        onClick={handleIssueCertificate}
+        onClick={handlePreview}
         disabled={isLoading}
         className="w-full"
       >
-        {isLoading ? 'جاري الإصدار...' : 'إصدار الشهادة'}
+        {isLoading ? 'جاري التحميل...' : 'معاينة الشهادة'}
       </Button>
+
+      {template && (
+        <CertificateTemplatePreview
+          open={showPreview}
+          onOpenChange={setShowPreview}
+          template={template}
+          initialData={certificateData}
+          onConfirm={handleIssueCertificate}
+          showConfirm={true}
+        />
+      )}
     </Card>
   );
 };
