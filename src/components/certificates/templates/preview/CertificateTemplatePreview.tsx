@@ -16,14 +16,20 @@ interface CertificateTemplatePreviewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   template: any;
+  initialData?: Record<string, string>;
+  onConfirm?: (data: Record<string, string>) => void;
+  showConfirm?: boolean;
 }
 
 export const CertificateTemplatePreview = ({
   open,
   onOpenChange,
-  template
+  template,
+  initialData = {},
+  onConfirm,
+  showConfirm = false
 }: CertificateTemplatePreviewProps) => {
-  const [previewData, setPreviewData] = useState<Record<string, string>>({});
+  const [previewData, setPreviewData] = useState<Record<string, string>>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -34,7 +40,7 @@ export const CertificateTemplatePreview = ({
   const handlePreview = async () => {
     try {
       setIsLoading(true);
-      console.log('🔄 Generating preview with data:', previewData);
+      console.log('🔄 توليد معاينة بالبيانات:', previewData);
       
       const templateFile = await downloadTemplateFile(template.template_file);
       const processedPdf = await processTemplate(await templateFile.arrayBuffer(), previewData);
@@ -76,6 +82,13 @@ export const CertificateTemplatePreview = ({
     }
   };
 
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm(previewData);
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -90,12 +103,16 @@ export const CertificateTemplatePreview = ({
             onFieldChange={handleFieldChange}
           />
 
-          <PreviewDisplay previewUrl={previewUrl} />
+          <PreviewDisplay 
+            previewUrl={previewUrl} 
+            isLoading={isLoading}
+          />
 
           <PreviewActions
             onPreview={handlePreview}
             onDownload={handleDownload}
             onClose={() => onOpenChange(false)}
+            onConfirm={showConfirm ? handleConfirm : undefined}
             isLoading={isLoading}
           />
         </div>

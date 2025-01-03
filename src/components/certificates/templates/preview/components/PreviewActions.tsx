@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Eye, Download, RefreshCw } from "lucide-react";
+import { Eye, Download, RefreshCw, Check } from "lucide-react";
 
 interface PreviewActionsProps {
   onPreview: () => Promise<void>;
   onDownload: () => Promise<void>;
   onClose: () => void;
+  onConfirm?: () => void;
   isLoading: boolean;
 }
 
@@ -12,6 +13,7 @@ export const PreviewActions = ({
   onPreview, 
   onDownload, 
   onClose,
+  onConfirm,
   isLoading 
 }: PreviewActionsProps) => {
   return (
@@ -36,6 +38,7 @@ export const PreviewActions = ({
         معاينة
       </Button>
       <Button
+        variant="outline"
         onClick={onDownload}
         disabled={isLoading}
       >
@@ -46,6 +49,15 @@ export const PreviewActions = ({
         )}
         تحميل
       </Button>
+      {onConfirm && (
+        <Button
+          onClick={onConfirm}
+          disabled={isLoading}
+        >
+          <Check className="h-4 w-4 ml-2" />
+          تأكيد
+        </Button>
+      )}
     </div>
   );
 };
