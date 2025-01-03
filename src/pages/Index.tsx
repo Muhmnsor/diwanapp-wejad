@@ -1,22 +1,32 @@
-import { Hero } from "@/components/home/Hero";
-import { EventsTabs } from "@/components/home/EventsTabs";
-import { ProjectsSection } from "@/components/home/ProjectsSection";
+import { Banner } from "@/components/home/Banner";
+import { EventsSection } from "@/components/events/EventsSection";
+import { useEvents } from "@/hooks/useEvents";
 
 export default function Index() {
+  const { data: events, isLoading } = useEvents();
+
+  // تقسيم الفعاليات إلى قادمة وسابقة
+  const currentDate = new Date();
+  const upcomingEvents = events?.filter(event => new Date(event.date) >= currentDate) || [];
+  const pastEvents = events?.filter(event => new Date(event.date) < currentDate) || [];
+
   return (
     <div className="min-h-screen space-y-16 pb-16">
-      <Hero />
+      <Banner />
       
       <div className="container mx-auto px-4 space-y-16">
-        <section className="space-y-8">
-          <h2 className="text-3xl font-bold text-center">الفعاليات والأنشطة</h2>
-          <EventsTabs />
-        </section>
+        <EventsSection 
+          title="الفعاليات القادمة" 
+          events={upcomingEvents}
+          registrations={{}}
+        />
 
-        <section className="space-y-8">
-          <h2 className="text-3xl font-bold text-center">المشاريع</h2>
-          <ProjectsSection />
-        </section>
+        <EventsSection 
+          title="الفعاليات السابقة" 
+          events={pastEvents}
+          registrations={{}}
+          isPastEvents
+        />
       </div>
     </div>
   );
