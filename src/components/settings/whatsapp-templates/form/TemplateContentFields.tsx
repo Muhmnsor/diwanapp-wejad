@@ -1,12 +1,12 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TemplateVariables } from "./components/TemplateVariables";
+import { ValidationResult } from "./components/ValidationResult";
 
 interface TemplateContentFieldsProps {
   content: string;
@@ -82,13 +82,10 @@ export const TemplateContentFields = ({
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>محتوى الرسالة</Label>
-        <Alert>
-          <InfoIcon className="h-4 w-4" />
-          <AlertDescription>
-            المتغيرات المتاحة:{' '}
-            {placeholders[notificationType as keyof typeof placeholders]?.join(', ')}
-          </AlertDescription>
-        </Alert>
+        <TemplateVariables 
+          notificationType={notificationType} 
+          placeholders={placeholders} 
+        />
         <Textarea
           value={content}
           onChange={(e) => onContentChange(e.target.value)}
@@ -124,39 +121,7 @@ export const TemplateContentFields = ({
           </Button>
 
           {validationResult && (
-            <Card className="p-4">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Label>نتيجة التحقق:</Label>
-                  {validationResult.isValid ? (
-                    <Badge variant="success" className="gap-1">
-                      <CheckCircle className="w-4 h-4" />
-                      صحيح
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive" className="gap-1">
-                      <XCircle className="w-4 h-4" />
-                      يوجد أخطاء
-                    </Badge>
-                  )}
-                </div>
-
-                {!validationResult.isValid && validationResult.missingVariables?.length > 0 && (
-                  <Alert variant="destructive">
-                    <AlertDescription>
-                      المتغيرات المفقودة: {validationResult.missingVariables.join(', ')}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="space-y-2">
-                  <Label>معاينة الرسالة:</Label>
-                  <div className="whitespace-pre-wrap text-sm text-muted-foreground bg-muted p-4 rounded-lg">
-                    {validationResult.processedTemplate || content}
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <ValidationResult validationResult={validationResult} />
           )}
         </>
       )}
