@@ -41,9 +41,9 @@ export const useUserRoles = () => {
           return [];
         }
 
-        // Map through the roles and extract names
+        // Map through the roles and extract names, ensuring proper type checking
         const roleNames = userRolesData.map(data => {
-          if (!data.roles) {
+          if (!data.roles || typeof data.roles !== 'object') {
             console.log('No roles data found for entry:', data);
             return 'لم يتم تعيين دور';
           }
