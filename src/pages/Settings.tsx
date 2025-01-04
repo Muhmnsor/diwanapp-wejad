@@ -4,6 +4,7 @@ import { WhatsAppSettings } from "@/components/settings/WhatsAppSettings";
 import { WhatsAppTemplates } from "@/components/settings/WhatsAppTemplates";
 import { UsersManagement } from "@/components/settings/UsersManagement";
 import { CertificateSignatures } from "@/components/certificates/signatures/CertificateSignatures";
+import { CertificateTemplates } from "@/components/certificates/templates/CertificateTemplates";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Settings = () => {
@@ -18,6 +19,7 @@ const Settings = () => {
             <TabsTrigger value="templates" className="flex-1">قوالب الرسائل</TabsTrigger>
             <TabsTrigger value="users" className="flex-1">إدارة المستخدمين</TabsTrigger>
             <TabsTrigger value="signatures" className="flex-1">التوقيعات</TabsTrigger>
+            <TabsTrigger value="certificate-templates" className="flex-1">قوالب الشهادات</TabsTrigger>
           </TabsList>
           <TabsContent value="whatsapp">
             <WhatsAppSettings />
@@ -30,6 +32,9 @@ const Settings = () => {
           </TabsContent>
           <TabsContent value="signatures">
             <CertificateSignatures />
+          </TabsContent>
+          <TabsContent value="certificate-templates">
+            <CertificateTemplates />
           </TabsContent>
         </Tabs>
       </div>
