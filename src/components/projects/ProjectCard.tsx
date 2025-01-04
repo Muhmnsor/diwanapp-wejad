@@ -1,9 +1,11 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { EyeOff } from "lucide-react";
+import { EyeOff, UserCheck, UserX } from "lucide-react";
 import { useEffect } from "react";
 import { ProjectCardContent } from "./cards/ProjectCardContent";
+import { useRegistrations } from "@/hooks/useRegistrations";
+import { useAuthStore } from "@/store/authStore";
 
 interface ProjectCardProps {
   id: string;
@@ -43,6 +45,10 @@ export const ProjectCard = ({
   is_visible = true,
   className = ""
 }: ProjectCardProps) => {
+  const { isAuthenticated } = useAuthStore();
+  const { data: registrations = {} } = useRegistrations();
+  
+  const isRegistered = isAuthenticated && registrations[id];
   
   useEffect(() => {
     console.log('ProjectCard data:', {
@@ -62,9 +68,10 @@ export const ProjectCard = ({
       beneficiaryType: beneficiary_type,
       eventPath: event_path,
       eventCategory: event_category,
-      isVisible: is_visible
+      isVisible: is_visible,
+      isRegistered
     });
-  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, registration_end_date, beneficiary_type, event_path, event_category, is_visible]);
+  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, registration_end_date, beneficiary_type, event_path, event_category, is_visible, isRegistered]);
 
   return (
     <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
@@ -74,6 +81,21 @@ export const ProjectCard = ({
           <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
             <EyeOff className="w-4 h-4" />
             مخفي
+          </div>
+        )}
+        {isAuthenticated && (
+          <div className="absolute top-2 left-2">
+            {isRegistered ? (
+              <div className="bg-green-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+                <UserCheck className="w-4 h-4" />
+                مسجل
+              </div>
+            ) : (
+              <div className="bg-gray-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+                <UserX className="w-4 h-4" />
+                غير مسجل
+              </div>
+            )}
           </div>
         )}
         <CardHeader className="p-4">
