@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 interface WhatsAppSettings {
   business_phone: string;
@@ -16,6 +18,7 @@ interface SettingsFormProps {
   onSubmit: (e: React.FormEvent) => void;
   onTestConnection: () => void;
   onSendTestMessage: () => void;
+  isLoading?: boolean;
 }
 
 export const SettingsForm = ({
@@ -24,6 +27,7 @@ export const SettingsForm = ({
   onSubmit,
   onTestConnection,
   onSendTestMessage,
+  isLoading
 }: SettingsFormProps) => {
   const handleChange = (field: keyof WhatsAppSettings) => (e: React.ChangeEvent<HTMLInputElement>) => {
     onSettingsChange({ ...settings, [field]: e.target.value });
@@ -31,6 +35,13 @@ export const SettingsForm = ({
 
   return (
     <form onSubmit={onSubmit} className="space-y-6" dir="rtl">
+      <Alert>
+        <InfoIcon className="h-4 w-4" />
+        <AlertDescription>
+          قم بإدخال بيانات حساب Interakt الخاص بك لتفعيل خدمة الواتساب
+        </AlertDescription>
+      </Alert>
+
       <div className="grid gap-6">
         <div className="space-y-2">
           <Label>رقم الواتساب</Label>
@@ -40,6 +51,7 @@ export const SettingsForm = ({
             placeholder="966500000000"
             dir="ltr"
             className="text-left"
+            disabled={isLoading}
           />
           <p className="text-sm text-muted-foreground">
             رقم الواتساب الخاص بحسابك التجاري على Interakt
@@ -55,6 +67,7 @@ export const SettingsForm = ({
             placeholder="أدخل مفتاح API الخاص بـ Interakt"
             dir="ltr"
             className="text-left font-mono"
+            disabled={isLoading}
           />
           <p className="text-sm text-muted-foreground">
             مفتاح API الخاص بحساب Interakt
@@ -69,6 +82,7 @@ export const SettingsForm = ({
             placeholder="https://example.com/webhook"
             dir="ltr"
             className="text-left"
+            disabled={isLoading}
           />
           <p className="text-sm text-muted-foreground">
             رابط Webhook لاستقبال التحديثات من الواتساب
@@ -78,24 +92,30 @@ export const SettingsForm = ({
 
       <div className="flex justify-between space-x-4 rtl:space-x-reverse">
         <div className="space-x-4 rtl:space-x-reverse">
-          <Button type="submit" size="lg">
-            حفظ الإعدادات
+          <Button 
+            type="submit" 
+            size="lg"
+            disabled={isLoading}
+          >
+            {isLoading ? "جاري الحفظ..." : "حفظ الإعدادات"}
           </Button>
           <Button 
             type="button" 
             variant="secondary" 
             size="lg"
             onClick={onTestConnection}
+            disabled={isLoading}
           >
-            اختبار الاتصال
+            {isLoading ? "جاري الاختبار..." : "اختبار الاتصال"}
           </Button>
           <Button 
             type="button" 
             variant="outline" 
             size="lg"
             onClick={onSendTestMessage}
+            disabled={isLoading}
           >
-            إرسال رسالة تجريبية
+            {isLoading ? "جاري الإرسال..." : "إرسال رسالة تجريبية"}
           </Button>
         </div>
       </div>
