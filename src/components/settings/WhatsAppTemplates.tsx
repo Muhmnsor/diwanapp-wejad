@@ -12,20 +12,35 @@ export const WhatsAppTemplates = () => {
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
+  const [templateType, setTemplateType] = useState("custom");
+  const [notificationType, setNotificationType] = useState("event_registration");
+  const [targetType, setTargetType] = useState("event");
+  const [isLoading, setIsLoading] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: async (newTemplate: { name: string; content: string }) => {
-      if (editingTemplate?.id) {
-        const { error } = await supabase
-          .from("whatsapp_templates")
-          .update(newTemplate)
-          .eq("id", editingTemplate.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("whatsapp_templates")
-          .insert([newTemplate]);
-        if (error) throw error;
+    mutationFn: async (newTemplate: {
+      name: string;
+      content: string;
+      template_type: string;
+      notification_type: string;
+      target_type: string;
+    }) => {
+      setIsLoading(true);
+      try {
+        if (editingTemplate?.id) {
+          const { error } = await supabase
+            .from("whatsapp_templates")
+            .update(newTemplate)
+            .eq("id", editingTemplate.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("whatsapp_templates")
+            .insert([newTemplate]);
+          if (error) throw error;
+        }
+      } finally {
+        setIsLoading(false);
       }
     },
     onSuccess: () => {
@@ -43,13 +58,22 @@ export const WhatsAppTemplates = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutation.mutate({ name, content });
+    mutation.mutate({
+      name,
+      content,
+      template_type: templateType,
+      notification_type: notificationType,
+      target_type: targetType,
+    });
   };
 
   const handleEdit = (template: any) => {
     setEditingTemplate(template);
     setName(template.name);
     setContent(template.content);
+    setTemplateType(template.template_type);
+    setNotificationType(template.notification_type);
+    setTargetType(template.target_type);
     setIsOpen(true);
   };
 
@@ -58,10 +82,18 @@ export const WhatsAppTemplates = () => {
     setEditingTemplate(null);
     setName("");
     setContent("");
+    setTemplateType("custom");
+    setNotificationType("event_registration");
+    setTargetType("event");
   };
 
   const handleAddClick = () => {
     setIsOpen(true);
+  };
+
+  const handlePreview = () => {
+    // Preview functionality will be implemented later
+    console.log("Preview template:", { name, content });
   };
 
   return (
@@ -72,10 +104,18 @@ export const WhatsAppTemplates = () => {
         onOpenChange={setIsOpen}
         name={name}
         content={content}
+        templateType={templateType}
+        notificationType={notificationType}
+        targetType={targetType}
         onNameChange={setName}
         onContentChange={setContent}
+        onTemplateTypeChange={setTemplateType}
+        onNotificationTypeChange={setNotificationType}
+        onTargetTypeChange={setTargetType}
         onSubmit={handleSubmit}
+        onPreview={handlePreview}
         isEditing={!!editingTemplate}
+        isLoading={isLoading}
       />
       <TemplateList onEdit={handleEdit} />
     </div>
