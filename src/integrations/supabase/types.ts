@@ -848,6 +848,41 @@ export type Database = {
           },
         ]
       }
+      project_notification_settings: {
+        Row: {
+          activity_reminder_enabled: boolean | null
+          created_at: string
+          feedback_enabled: boolean | null
+          id: string
+          project_id: string | null
+          registration_enabled: boolean | null
+        }
+        Insert: {
+          activity_reminder_enabled?: boolean | null
+          created_at?: string
+          feedback_enabled?: boolean | null
+          id?: string
+          project_id?: string | null
+          registration_enabled?: boolean | null
+        }
+        Update: {
+          activity_reminder_enabled?: boolean | null
+          created_at?: string
+          feedback_enabled?: boolean | null
+          id?: string
+          project_id?: string | null
+          registration_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_notification_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_registration_fields: {
         Row: {
           arabic_name: boolean | null
