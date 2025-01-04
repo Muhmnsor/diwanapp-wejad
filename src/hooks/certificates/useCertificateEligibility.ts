@@ -69,7 +69,7 @@ export const useCertificateEligibility = () => {
           ...(eventId ? { event_id: eventId } : {}),
           ...(projectId ? { project_id: projectId } : {})
         })
-        .single();
+        .maybeSingle();
 
       if (certificateError && certificateError.code !== 'PGRST116') {
         console.error('Error checking existing certificate:', certificateError);

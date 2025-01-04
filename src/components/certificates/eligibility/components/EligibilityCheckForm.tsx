@@ -6,14 +6,16 @@ interface EligibilityCheckFormProps {
   isLoading: boolean;
 }
 
-export const EligibilityCheckForm = ({ onCheck, isLoading }: EligibilityCheckFormProps) => {
+export const EligibilityCheckForm = ({
+  onCheck,
+  isLoading
+}: EligibilityCheckFormProps) => {
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">التحقق من أهلية الشهادة</h2>
+    <div className="flex justify-end">
       <Button 
-        onClick={onCheck} 
+        onClick={onCheck}
         disabled={isLoading}
-        className="w-full"
+        className="w-full md:w-auto"
       >
         {isLoading ? (
           <>
@@ -21,7 +23,7 @@ export const EligibilityCheckForm = ({ onCheck, isLoading }: EligibilityCheckFor
             جاري التحقق...
           </>
         ) : (
-          "التحقق من الأهلية"
+          'التحقق من الأهلية'
         )}
       </Button>
     </div>
