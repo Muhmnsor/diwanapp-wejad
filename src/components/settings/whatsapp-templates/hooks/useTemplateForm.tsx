@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,6 +13,20 @@ export const useTemplateForm = () => {
   const [notificationType, setNotificationType] = useState("event_registration");
   const [targetType, setTargetType] = useState("event");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch templates
+  const { data: templates, error } = useQuery({
+    queryKey: ['whatsapp-templates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('whatsapp_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const mutation = useMutation({
     mutationFn: async (newTemplate: {
@@ -53,6 +67,25 @@ export const useTemplateForm = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      const { error } = await supabase
+        .from('whatsapp_templates')
+        .delete()
+        .eq('id', templateId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-templates'] });
+      toast.success('تم حذف القالب بنجاح');
+    },
+    onError: (error) => {
+      console.error('Error deleting template:', error);
+      toast.error('حدث خطأ أثناء حذف القالب');
+    }
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate({
@@ -72,6 +105,12 @@ export const useTemplateForm = () => {
     setNotificationType(template.notification_type);
     setTargetType(template.target_type);
     setIsOpen(true);
+  };
+
+  const handleDelete = async (template: any) => {
+    if (window.confirm('هل أنت متأكد من حذف هذا القالب؟')) {
+      await deleteMutation.mutateAsync(template.id);
+    }
   };
 
   const handleClose = () => {
@@ -98,6 +137,8 @@ export const useTemplateForm = () => {
     targetType,
     isLoading,
     editingTemplate,
+    templates,
+    error,
     setName,
     setContent,
     setTemplateType,
@@ -107,5 +148,6 @@ export const useTemplateForm = () => {
     handleEdit,
     handleClose,
     handlePreview,
+    handleDelete
   };
 };

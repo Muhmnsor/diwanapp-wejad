@@ -1,43 +1,53 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { TemplatesTable } from "./TemplatesTable";
-import { useTemplateDelete } from "./hooks/useTemplateDelete";
-
-interface Template {
-  id: string;
-  name: string;
-  content: string;
-}
-
 interface TemplateListProps {
-  onEdit: (template: Template) => void;
+  templates: any[];
+  isLoading: boolean;
+  error: Error | null;
+  onEdit: (template: any) => void;
+  onDelete: (template: any) => void;
 }
 
-export const TemplateList = ({ onEdit }: TemplateListProps) => {
-  const { handleDelete } = useTemplateDelete();
-
-  const { data: templates, isLoading } = useQuery({
-    queryKey: ["whatsapp-templates"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("whatsapp_templates")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
+export const TemplateList = ({
+  templates,
+  isLoading,
+  error,
+  onEdit,
+  onDelete
+}: TemplateListProps) => {
   if (isLoading) {
     return <div>جاري التحميل...</div>;
   }
 
+  if (error) {
+    return <div>حدث خطأ: {error.message}</div>;
+  }
+
   return (
-    <TemplatesTable
-      templates={templates}
-      onEdit={onEdit}
-      onDelete={handleDelete}
-    />
+    <div className="space-y-4">
+      {templates?.map((template) => (
+        <div 
+          key={template.id}
+          className="flex justify-between items-center p-4 border rounded-lg"
+        >
+          <div>
+            <h3 className="font-semibold">{template.name}</h3>
+            <p className="text-sm text-gray-600">{template.content}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onEdit(template)}
+              className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            >
+              تعديل
+            </button>
+            <button
+              onClick={() => onDelete(template)}
+              className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600"
+            >
+              حذف
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 };

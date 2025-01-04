@@ -23,13 +23,22 @@ export const WhatsAppTemplates = () => {
     handleEdit,
     handleClose,
     handlePreview,
+    handleDelete,
+    templates,
+    error
   } = useTemplateForm();
 
   return (
     <div className="space-y-6">
       <TemplateHeader onAddClick={() => setIsOpen(true)} />
       
-      <TemplateList onEdit={handleEdit} />
+      <TemplateList 
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        templates={templates}
+        isLoading={isLoading}
+        error={error}
+      />
 
       <TemplateDialog
         isOpen={isOpen}
