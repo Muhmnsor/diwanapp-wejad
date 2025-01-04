@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { TemplatesTable } from "./TemplatesTable";
+import { useTemplateDelete } from "./hooks/useTemplateDelete";
 
 interface Template {
   id: string;
@@ -14,7 +14,7 @@ interface TemplateListProps {
 }
 
 export const TemplateList = ({ onEdit }: TemplateListProps) => {
-  const queryClient = useQueryClient();
+  const { handleDelete } = useTemplateDelete();
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ["whatsapp-templates"],
@@ -29,24 +29,6 @@ export const TemplateList = ({ onEdit }: TemplateListProps) => {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("whatsapp_templates")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["whatsapp-templates"] });
-      toast.success("تم حذف القالب بنجاح");
-    },
-    onError: (error) => {
-      console.error("Error deleting template:", error);
-      toast.error("حدث خطأ أثناء حذف القالب");
-    },
-  });
-
   if (isLoading) {
     return <div>جاري التحميل...</div>;
   }
@@ -55,7 +37,7 @@ export const TemplateList = ({ onEdit }: TemplateListProps) => {
     <TemplatesTable
       templates={templates}
       onEdit={onEdit}
-      onDelete={(id) => deleteMutation.mutate(id)}
+      onDelete={handleDelete}
     />
   );
 };
