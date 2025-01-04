@@ -13,6 +13,7 @@ export const WhatsAppTemplates = () => {
     notificationType,
     targetType,
     isLoading,
+    editingTemplate,
     setName,
     setContent,
     setTemplateType,
