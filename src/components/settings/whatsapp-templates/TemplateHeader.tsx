@@ -8,10 +8,10 @@ interface TemplateHeaderProps {
 export const TemplateHeader = ({ onAddClick }: TemplateHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-bold">قوالب الرسائل</h2>
-      <Button onClick={onAddClick}>
-        <Plus className="h-4 w-4 ml-2" />
-        إضافة قالب جديد
+      <h3 className="text-lg font-semibold">قوالب الواتساب</h3>
+      <Button onClick={onAddClick} className="gap-2">
+        <Plus className="w-4 h-4" />
+        إضافة قالب
       </Button>
     </div>
   );

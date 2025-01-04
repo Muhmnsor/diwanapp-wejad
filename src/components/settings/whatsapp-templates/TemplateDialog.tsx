@@ -1,9 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TemplateForm } from "./TemplateForm";
 
 interface TemplateDialogProps {
@@ -41,16 +36,17 @@ export const TemplateDialog = ({
   onSubmit,
   onPreview,
   isEditing,
-  isLoading,
+  isLoading
 }: TemplateDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "تعديل قالب" : "إضافة قالب جديد"}
           </DialogTitle>
         </DialogHeader>
+
         <TemplateForm
           name={name}
           content={content}
