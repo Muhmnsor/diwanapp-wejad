@@ -32,7 +32,12 @@ Deno.serve(async (req) => {
 
     // Parse and validate request payload
     const payload = await req.json() as NotificationPayload
-    console.log('Processing notification request:', { type: payload.type, eventId: payload.eventId, projectId: payload.projectId })
+    console.log('Processing notification request:', { 
+      type: payload.type, 
+      eventId: payload.eventId, 
+      projectId: payload.projectId,
+      recipientPhone: payload.recipientPhone ? '****' + payload.recipientPhone.slice(-4) : undefined 
+    })
 
     // Get WhatsApp settings
     const { data: whatsappSettings, error: settingsError } = await supabaseClient
@@ -80,7 +85,11 @@ Deno.serve(async (req) => {
         registration_id: payload.registrationId,
         notification_type: payload.type,
         template_id: payload.templateId,
-        status: 'pending'
+        status: 'pending',
+        recipient_phone: payload.recipientPhone,
+        message_content: messageContent,
+        retry_count: 0,
+        last_error: null
       })
       .select()
       .single()
@@ -111,10 +120,17 @@ Deno.serve(async (req) => {
         throw { code: 'WHATSAPP_API_ERROR', message: 'Failed to send WhatsApp message', details: errorData }
       }
 
+      const responseData = await response.json()
+      console.log('WhatsApp API response:', responseData)
+
       // Update notification log with success status
       const { error: updateError } = await supabaseClient
         .from('notification_logs')
-        .update({ status: 'sent' })
+        .update({ 
+          status: 'sent',
+          message_id: responseData.messages?.[0]?.id,
+          sent_at: new Date().toISOString()
+        })
         .eq('id', logEntry.id)
 
       if (updateError) {
@@ -132,7 +148,10 @@ Deno.serve(async (req) => {
         .from('notification_logs')
         .update({ 
           status: 'failed',
-          error_details: JSON.stringify(error)
+          error_details: JSON.stringify(error),
+          retry_count: 1,
+          last_error: error.message || 'Unknown error',
+          last_retry: new Date().toISOString()
         })
         .eq('id', logEntry.id)
 
