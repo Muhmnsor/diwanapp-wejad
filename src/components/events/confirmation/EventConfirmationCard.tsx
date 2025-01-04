@@ -1,7 +1,6 @@
-import { QRCodeSVG } from "qrcode.react";
-import { Logo } from "@/components/Logo";
-import { Card } from "@/components/ui/card";
-import { Ticket } from "lucide-react";
+import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Logo } from '@/components/Logo';
 
 interface EventConfirmationCardProps {
   eventTitle: string;
@@ -15,8 +14,69 @@ interface EventConfirmationCardProps {
     date?: string;
     time?: string;
     location?: string;
+    location_url?: string;
   };
 }
+
+const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; email: string }) => (
+  <div className="space-y-4 mb-8">
+    <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 flex items-center justify-between gap-3">
+      <User className="w-5 h-5 text-primary" />
+      <span className="text-lg font-semibold flex-1 text-right">{name}</span>
+    </div>
+
+    <div className="grid grid-cols-1 gap-3">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+        <Phone className="w-4 h-4 text-primary" />
+        <span className="flex-1 text-right" dir="ltr">{phone}</span>
+      </div>
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+        <Mail className="w-4 h-4 text-primary" />
+        <span className="flex-1 text-right" dir="ltr">{email}</span>
+      </div>
+    </div>
+  </div>
+);
+
+const QRCodeSection = ({ registrationId, locationUrl }: { registrationId: string; locationUrl?: string }) => (
+  <div className="grid grid-cols-2 gap-4 mb-6">
+    <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
+      <QrCode className="w-24 h-24 mx-auto mb-2 text-primary" />
+      <div className="text-sm text-gray-600">رقم التسجيل</div>
+      <div className="font-mono text-xs mt-1">{registrationId}</div>
+    </div>
+    {locationUrl && (
+      <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
+        <QrCode className="w-24 h-24 mx-auto mb-2 text-primary" />
+        <div className="text-sm text-gray-600">موقع الفعالية</div>
+        <div className="font-mono text-xs mt-1">امسح للوصول</div>
+      </div>
+    )}
+  </div>
+);
+
+const EventDetails = ({ date, time, location }: { date?: string; time?: string; location?: string }) => (
+  <div className="space-y-3">
+    {date && (
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+        <Calendar className="w-4 h-4 text-primary" />
+        <span className="flex-1 text-right">{date}</span>
+      </div>
+    )}
+    {time && (
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+        <Clock className="w-4 h-4 text-primary" />
+        <span className="flex-1 text-right">{time}</span>
+      </div>
+    )}
+    {location && (
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+        <MapPin className="w-4 h-4 text-primary" />
+        <span className="flex-1 text-right">{location}</span>
+      </div>
+    )}
+  </div>
+);
 
 export const EventConfirmationCard = ({
   eventTitle,
@@ -32,63 +92,32 @@ export const EventConfirmationCard = ({
   });
 
   return (
-    <Card id="confirmation-card" className="bg-white p-6 space-y-6 max-w-md mx-auto">
-      <div className="flex items-center justify-between">
-        <Ticket className="w-8 h-8 text-primary" />
-      </div>
-      
+    <Card id="confirmation-card" className="max-w-md mx-auto overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="text-right space-y-2">
-          <h3 className="font-bold text-xl">{eventTitle}</h3>
-          <p className="text-sm text-muted-foreground">
-            رقم التسجيل: {registrationId.split('-').pop()}
-          </p>
+      <div className="relative bg-gradient-to-r from-primary/90 to-primary pt-12 pb-8">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
         </div>
-        <Logo className="w-16 h-16" />
+        <div className="relative px-6 text-center text-white">
+          <Logo className="w-16 h-16 mx-auto mb-4" />
+          <div className="text-2xl font-bold mb-1">{eventTitle}</div>
+          <div className="text-sm opacity-90">بطاقة تأكيد التسجيل</div>
+        </div>
+        <div className="absolute -bottom-6 left-0 right-0">
+          <svg className="w-full h-6" viewBox="0 0 400 24" fill="none">
+            <path d="M0 24C200 -8 400 24 400 24H0Z" fill="white"/>
+          </svg>
+        </div>
       </div>
 
-      {/* QR Code */}
-      <div className="flex justify-center py-4">
-        <QRCodeSVG
-          value={registrationId}
-          size={150}
-          level="H"
-          includeMargin={true}
-          className="qr-code"
+      {/* Content */}
+      <div className="p-6 pt-8 space-y-6 bg-gradient-to-b from-gray-50/50 to-white">
+        <ParticipantInfo {...registrantInfo} />
+        <QRCodeSection 
+          registrationId={registrationId} 
+          locationUrl={eventDetails?.location_url} 
         />
-      </div>
-
-      {/* Registrant Details */}
-      <div className="space-y-4 text-right">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">معلومات المسجل:</p>
-          <div className="text-sm space-y-1">
-            <p>الاسم: {registrantInfo.name}</p>
-            <p>البريد الإلكتروني: {registrantInfo.email}</p>
-            <p>رقم الجوال: {registrantInfo.phone}</p>
-          </div>
-        </div>
-
-        {eventDetails && (
-          <div className="space-y-2">
-            {eventDetails.date && (
-              <p className="text-sm">
-                التاريخ: {eventDetails.date}
-              </p>
-            )}
-            {eventDetails.time && (
-              <p className="text-sm">
-                الوقت: {eventDetails.time}
-              </p>
-            )}
-            {eventDetails.location && (
-              <p className="text-sm">
-                المكان: {eventDetails.location}
-              </p>
-            )}
-          </div>
-        )}
+        <EventDetails {...eventDetails} />
       </div>
     </Card>
   );

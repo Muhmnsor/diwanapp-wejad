@@ -20,6 +20,7 @@ interface EventConfirmationDialogProps {
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
+  location_url?: string;
   formData: {
     name: string;
     email: string;
@@ -35,6 +36,7 @@ export const EventConfirmationDialog = ({
   eventDate,
   eventTime,
   eventLocation,
+  location_url,
   formData,
 }: EventConfirmationDialogProps) => {
   const [hasDownloaded, setHasDownloaded] = useState(false);
@@ -101,7 +103,8 @@ export const EventConfirmationDialog = ({
           eventDetails={{
             date: eventDate,
             time: eventTime,
-            location: eventLocation
+            location: eventLocation,
+            location_url: location_url
           }}
         />
 
