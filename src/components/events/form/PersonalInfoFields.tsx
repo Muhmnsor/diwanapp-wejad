@@ -32,6 +32,10 @@ export const PersonalInfoFields = ({
   // التحقق من صحة الاسم العربي
   const validateArabicName = (value: string) => {
     const arabicRegex = /^[\u0600-\u06FF\s]+$/;
+    if (!value.trim()) {
+      setErrors(prev => ({ ...prev, arabicName: "الاسم مطلوب" }));
+      return false;
+    }
     if (!arabicRegex.test(value)) {
       setErrors(prev => ({ ...prev, arabicName: "يرجى إدخال الاسم باللغة العربية فقط" }));
       return false;
@@ -42,6 +46,10 @@ export const PersonalInfoFields = ({
 
   // التحقق من صحة البريد الإلكتروني
   const validateEmail = (value: string) => {
+    if (!value.trim()) {
+      setErrors(prev => ({ ...prev, email: "البريد الإلكتروني مطلوب" }));
+      return false;
+    }
     const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     if (!emailRegex.test(value)) {
       setErrors(prev => ({ ...prev, email: "يرجى إدخال بريد إلكتروني صحيح" }));
@@ -53,6 +61,10 @@ export const PersonalInfoFields = ({
 
   // التحقق من صحة رقم الهاتف
   const validatePhone = (value: string) => {
+    if (!value.trim()) {
+      setErrors(prev => ({ ...prev, phone: "رقم الجوال مطلوب" }));
+      return false;
+    }
     const phoneRegex = /^05\d{8}$/;
     if (!phoneRegex.test(value)) {
       setErrors(prev => ({ ...prev, phone: "يجب أن يبدأ رقم الجوال ب 05 ويتكون من 10 أرقام" }));
@@ -63,18 +75,16 @@ export const PersonalInfoFields = ({
   };
 
   const handleChange = (field: string, value: string) => {
-    let isValid = true;
+    // تحديث القيمة أولاً
+    setFormData({ ...formData, [field]: value });
 
+    // ثم التحقق من صحتها
     if (field === 'arabicName') {
-      isValid = validateArabicName(value);
+      validateArabicName(value);
     } else if (field === 'email') {
-      isValid = validateEmail(value);
+      validateEmail(value);
     } else if (field === 'phone') {
-      isValid = validatePhone(value);
-    }
-
-    if (isValid) {
-      setFormData({ ...formData, [field]: value });
+      validatePhone(value);
     }
   };
 
