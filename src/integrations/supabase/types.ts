@@ -647,8 +647,14 @@ export type Database = {
         Row: {
           event_id: string | null
           id: string
+          last_error: string | null
+          last_retry: string | null
+          message_content: string | null
+          message_id: string | null
           notification_type: string
+          recipient_phone: string | null
           registration_id: string | null
+          retry_count: number | null
           sent_at: string
           status: string | null
           template_id: string | null
@@ -656,8 +662,14 @@ export type Database = {
         Insert: {
           event_id?: string | null
           id?: string
+          last_error?: string | null
+          last_retry?: string | null
+          message_content?: string | null
+          message_id?: string | null
           notification_type: string
+          recipient_phone?: string | null
           registration_id?: string | null
+          retry_count?: number | null
           sent_at?: string
           status?: string | null
           template_id?: string | null
@@ -665,8 +677,14 @@ export type Database = {
         Update: {
           event_id?: string | null
           id?: string
+          last_error?: string | null
+          last_retry?: string | null
+          message_content?: string | null
+          message_id?: string | null
           notification_type?: string
+          recipient_phone?: string | null
           registration_id?: string | null
+          retry_count?: number | null
           sent_at?: string
           status?: string | null
           template_id?: string | null

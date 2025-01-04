@@ -1,51 +1,51 @@
-import { useTemplateForm } from "./whatsapp-templates/hooks/useTemplateForm";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { TemplateDialog } from "./whatsapp-templates/TemplateDialog";
-import { TemplateHeader } from "./whatsapp-templates/TemplateHeader";
 import { TemplateList } from "./whatsapp-templates/TemplateList";
+import { useTemplateForm } from "./whatsapp-templates/hooks/useTemplateForm";
 
 export const WhatsAppTemplates = () => {
+  const { data: templates, isLoading, error } = useQuery({
+    queryKey: ['whatsapp-templates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('whatsapp_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const {
-    isOpen,
-    setIsOpen,
-    name,
-    content,
-    templateType,
-    notificationType,
-    targetType,
-    isLoading,
+    isDialogOpen,
+    setIsDialogOpen,
     editingTemplate,
-    setName,
-    setContent,
-    setTemplateType,
-    setNotificationType,
-    setTargetType,
+    setEditingTemplate,
     handleSubmit,
-    handleEdit,
-    handlePreview,
+    handleDelete
   } = useTemplateForm();
 
   return (
-    <div className="space-y-4" dir="rtl">
-      <TemplateHeader onAddClick={() => setIsOpen(true)} />
-      <TemplateDialog
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        name={name}
-        content={content}
-        templateType={templateType}
-        notificationType={notificationType}
-        targetType={targetType}
-        onNameChange={setName}
-        onContentChange={setContent}
-        onTemplateTypeChange={setTemplateType}
-        onNotificationTypeChange={setNotificationType}
-        onTargetTypeChange={setTargetType}
-        onSubmit={handleSubmit}
-        onPreview={handlePreview}
-        isEditing={!!editingTemplate}
+    <div className="space-y-6">
+      <TemplateList
+        templates={templates || []}
         isLoading={isLoading}
+        error={error}
+        onEdit={setEditingTemplate}
+        onDelete={handleDelete}
       />
-      <TemplateList onEdit={handleEdit} />
+
+      <TemplateDialog
+        isOpen={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setEditingTemplate(null);
+        }}
+        onSubmit={handleSubmit}
+        template={editingTemplate}
+      />
     </div>
   );
 };
