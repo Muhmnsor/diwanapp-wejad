@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TemplateFormProps {
   name: string;
@@ -40,6 +43,9 @@ export const TemplateForm = ({
   isEditing,
   isLoading
 }: TemplateFormProps) => {
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+
   const placeholders = {
     event_registration: ['[اسم_المشترك]', '[اسم_الفعالية]', '[تاريخ_الفعالية]', '[وقت_الفعالية]', '[مكان_الفعالية]'],
     event_reminder: ['[اسم_المشترك]', '[اسم_الفعالية]', '[تاريخ_الفعالية]', '[وقت_الفعالية]'],
@@ -48,8 +54,58 @@ export const TemplateForm = ({
     project_activity: ['[اسم_المشترك]', '[اسم_النشاط]', '[تاريخ_النشاط]', '[وقت_النشاط]']
   };
 
+  const validateTemplate = async () => {
+    setIsValidating(true);
+    setValidationError(null);
+
+    try {
+      console.log('Validating template:', { content });
+      
+      const { data, error } = await supabase.functions.invoke('validate-template', {
+        body: {
+          template: content,
+          variables: {
+            اسم_المشترك: 'محمد أحمد',
+            اسم_الفعالية: 'فعالية تجريبية',
+            تاريخ_الفعالية: '2024-03-20',
+            وقت_الفعالية: '14:00',
+            مكان_الفعالية: 'قاعة الاجتماعات'
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data.isValid) {
+        setValidationError(`المتغيرات المفقودة: ${data.missingVariables.join(', ')}`);
+        toast.error('يوجد متغيرات مفقودة في القالب');
+      } else {
+        toast.success('تم التحقق من صحة القالب بنجاح');
+      }
+
+      console.log('Validation result:', data);
+    } catch (error) {
+      console.error('Error validating template:', error);
+      setValidationError('حدث خطأ أثناء التحقق من صحة القالب');
+      toast.error('حدث خطأ أثناء التحقق من صحة القالب');
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate template before submitting
+    await validateTemplate();
+    
+    if (!validationError) {
+      onSubmit(e);
+    }
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>اسم القالب</Label>
@@ -136,6 +192,11 @@ export const TemplateForm = ({
             dir="rtl"
             disabled={isLoading}
           />
+          {validationError && (
+            <Alert variant="destructive">
+              <AlertDescription>{validationError}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
         {content && (
@@ -154,14 +215,22 @@ export const TemplateForm = ({
         <Button 
           type="button" 
           variant="outline"
+          onClick={validateTemplate}
+          disabled={isLoading || !content || isValidating}
+        >
+          {isValidating ? 'جاري التحقق...' : 'تحقق من القالب'}
+        </Button>
+        <Button 
+          type="button" 
+          variant="outline"
           onClick={onPreview}
-          disabled={isLoading || !content}
+          disabled={isLoading || !content || isValidating}
         >
           معاينة
         </Button>
         <Button 
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || isValidating}
         >
           {isLoading ? 'جاري الحفظ...' : isEditing ? 'تحديث' : 'إضافة'}
         </Button>
