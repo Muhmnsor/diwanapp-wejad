@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface TemplateFormActionsProps {
-  onValidate: () => void;
+  onValidate: () => Promise<void>;
   onPreview: () => void;
   onSubmit: (e: React.FormEvent) => void;
   isEditing: boolean;
-  isLoading?: boolean;
-  isValidating?: boolean;
+  isLoading: boolean;
+  isValidating: boolean;
   content: string;
 }
 
@@ -22,27 +23,25 @@ export const TemplateFormActions = ({
   return (
     <div className="flex justify-end gap-2">
       <Button 
-        type="button" 
-        variant="outline"
-        onClick={onValidate}
-        disabled={isLoading || !content || isValidating}
+        type="submit" 
+        disabled={isLoading || isValidating || !content}
       >
-        {isValidating ? 'جاري التحقق...' : 'تحقق من القالب'}
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            جاري الحفظ...
+          </>
+        ) : (
+          isEditing ? 'تحديث' : 'إضافة'
+        )}
       </Button>
       <Button 
         type="button" 
-        variant="outline"
+        variant="outline" 
         onClick={onPreview}
-        disabled={isLoading || !content || isValidating}
+        disabled={isLoading || !content}
       >
         معاينة
-      </Button>
-      <Button 
-        type="submit"
-        disabled={isLoading || isValidating}
-        onClick={onSubmit}
-      >
-        {isLoading ? 'جاري الحفظ...' : isEditing ? 'تحديث' : 'إضافة'}
       </Button>
     </div>
   );
