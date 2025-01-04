@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { processTemplate } from "../templates/preview/utils/templateProcessor";
 import { downloadTemplateFile } from "../templates/preview/utils/templateDownloader";
 import { CertificateTemplatePreview } from "../templates/preview/CertificateTemplatePreview";
-import { QRCodeSVG } from "qrcode.react";
+import { CertificateFields } from "./CertificateFields";
+import { CertificateActions } from "./CertificateActions";
 
 interface CertificateIssuerProps {
   templateId: string;
@@ -32,6 +30,11 @@ export const CertificateIssuer = ({
     setCertificateData(prev => ({ ...prev, [key]: value }));
   };
 
+  const generateVerificationUrl = (verificationCode: string) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/verify-certificate/${verificationCode}`;
+  };
+
   const handlePreview = async () => {
     try {
       if (!template) {
@@ -51,25 +54,17 @@ export const CertificateIssuer = ({
     }
   };
 
-  const generateVerificationUrl = (verificationCode: string) => {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/verify-certificate/${verificationCode}`;
-  };
-
   const handleIssueCertificate = async (confirmedData: Record<string, string>) => {
     try {
       setIsLoading(true);
       console.log('🎓 إصدار شهادة بالبيانات:', { templateId, registrationId, confirmedData });
 
-      // 1. Process template with data
       const templateFile = await downloadTemplateFile(template.template_file);
       const processedPdf = await processTemplate(await templateFile.arrayBuffer(), confirmedData);
 
-      // 2. Generate unique verification code and QR code
       const verificationCode = crypto.randomUUID().split('-')[0].toUpperCase();
       const verificationUrl = generateVerificationUrl(verificationCode);
       
-      // 3. Upload processed PDF to storage
       const fileName = `${crypto.randomUUID()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from('certificates')
@@ -77,7 +72,6 @@ export const CertificateIssuer = ({
 
       if (uploadError) throw uploadError;
 
-      // 4. Create certificate record with QR code data
       const { error: insertError } = await supabase
         .from('certificates')
         .insert([{
@@ -108,26 +102,15 @@ export const CertificateIssuer = ({
     <Card className="p-4 space-y-4">
       <h3 className="font-semibold">إصدار شهادة جديدة</h3>
 
-      <div className="space-y-4">
-        {Object.entries(certificateData).map(([key, value]) => (
-          <div key={key} className="space-y-2">
-            <Label>{key}</Label>
-            <Input
-              value={value}
-              onChange={(e) => handleFieldChange(key, e.target.value)}
-              placeholder={`أدخل ${key}`}
-            />
-          </div>
-        ))}
-      </div>
+      <CertificateFields 
+        certificateData={certificateData}
+        onFieldChange={handleFieldChange}
+      />
 
-      <Button
-        onClick={handlePreview}
-        disabled={isLoading}
-        className="w-full"
-      >
-        {isLoading ? 'جاري التحميل...' : 'معاينة الشهادة'}
-      </Button>
+      <CertificateActions 
+        onPreview={handlePreview}
+        isLoading={isLoading}
+      />
 
       {template && (
         <CertificateTemplatePreview
