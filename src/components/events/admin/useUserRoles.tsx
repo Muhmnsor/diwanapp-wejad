@@ -42,9 +42,12 @@ export const useUserRoles = () => {
         }
 
         // Map through the roles and extract names
-        const roleNames = (userRolesData as UserRoleData[]).map(data => {
-          // Since roles is now an array, we take the first role if it exists
-          return data.roles[0]?.name || 'لم يتم تعيين دور';
+        const roleNames = userRolesData.map(data => {
+          if (!data.roles) {
+            console.log('No roles data found for entry:', data);
+            return 'لم يتم تعيين دور';
+          }
+          return data.roles.name || 'لم يتم تعيين دور';
         });
         
         console.log('Processed user roles:', roleNames);
