@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 interface TemplateEditorProps {
   initialTemplate?: {
@@ -24,14 +26,18 @@ export const TemplateEditor = ({ initialTemplate, onSave, onCancel }: TemplateEd
     name: initialTemplate?.name || '',
     content: initialTemplate?.content || '',
     notification_type: initialTemplate?.notification_type || 'event_registration',
-    target_type: initialTemplate?.target_type || 'event'
+    target_type: initialTemplate?.target_type || 'event',
+    language: 'ar'
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Saving template:', template);
 
     try {
+      setIsSubmitting(true);
       const { error } = initialTemplate?.id 
         ? await supabase
             .from('whatsapp_templates')
@@ -48,11 +54,21 @@ export const TemplateEditor = ({ initialTemplate, onSave, onCancel }: TemplateEd
     } catch (error) {
       console.error('Error saving template:', error);
       toast.error('حدث خطأ أثناء حفظ القالب');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const placeholders = {
+    event_registration: ['[اسم_المشترك]', '[اسم_الفعالية]', '[تاريخ_الفعالية]', '[وقت_الفعالية]', '[مكان_الفعالية]'],
+    event_reminder: ['[اسم_المشترك]', '[اسم_الفعالية]', '[تاريخ_الفعالية]', '[وقت_الفعالية]'],
+    event_feedback: ['[اسم_المشترك]', '[اسم_الفعالية]', '[رابط_الاستبيان]'],
+    project_registration: ['[اسم_المشترك]', '[اسم_المشروع]', '[تاريخ_البداية]'],
+    project_activity: ['[اسم_المشترك]', '[اسم_النشاط]', '[تاريخ_النشاط]', '[وقت_النشاط]']
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
         <Label>اسم القالب</Label>
         <Input
@@ -60,6 +76,7 @@ export const TemplateEditor = ({ initialTemplate, onSave, onCancel }: TemplateEd
           onChange={(e) => setTemplate(prev => ({ ...prev, name: e.target.value }))}
           placeholder="أدخل اسم القالب"
           className="text-right"
+          required
         />
       </div>
 
@@ -100,20 +117,37 @@ export const TemplateEditor = ({ initialTemplate, onSave, onCancel }: TemplateEd
 
       <div className="space-y-2">
         <Label>محتوى الرسالة</Label>
+        <Alert>
+          <InfoIcon className="h-4 w-4" />
+          <AlertDescription>
+            المتغيرات المتاحة:{' '}
+            {placeholders[template.notification_type as keyof typeof placeholders]?.join(', ')}
+          </AlertDescription>
+        </Alert>
         <Textarea
           value={template.content}
           onChange={(e) => setTemplate(prev => ({ ...prev, content: e.target.value }))}
           placeholder="أدخل محتوى الرسالة"
           rows={5}
           className="text-right"
+          required
+          dir="rtl"
         />
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="submit">
-          {initialTemplate ? 'تحديث' : 'إضافة'}
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'جاري الحفظ...' : initialTemplate ? 'تحديث' : 'إضافة'}
         </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           إلغاء
         </Button>
       </div>

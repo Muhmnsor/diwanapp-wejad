@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface NotificationLogsProps {
   eventId?: string;
@@ -9,7 +12,7 @@ interface NotificationLogsProps {
 }
 
 export const NotificationLogs = ({ eventId, projectId }: NotificationLogsProps) => {
-  const { data: logs, isLoading } = useQuery({
+  const { data: logs, isLoading, error } = useQuery({
     queryKey: ['notification-logs', eventId, projectId],
     queryFn: async () => {
       console.log('Fetching notification logs for:', { eventId, projectId });
@@ -31,6 +34,9 @@ export const NotificationLogs = ({ eventId, projectId }: NotificationLogsProps) 
       if (eventId) {
         query.eq('event_id', eventId);
       }
+      if (projectId) {
+        query.eq('project_id', projectId);
+      }
       
       const { data, error } = await query;
       
@@ -39,8 +45,33 @@ export const NotificationLogs = ({ eventId, projectId }: NotificationLogsProps) 
     }
   });
 
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          حدث خطأ أثناء تحميل سجلات الإشعارات
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (isLoading) {
-    return <div className="text-center py-4">جاري تحميل السجلات...</div>;
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    );
+  }
+
+  if (!logs?.length) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        لا توجد سجلات إشعارات حتى الآن
+      </div>
+    );
   }
 
   return (
@@ -59,13 +90,23 @@ export const NotificationLogs = ({ eventId, projectId }: NotificationLogsProps) 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {logs?.map((log) => (
+          {logs.map((log) => (
             <TableRow key={log.id}>
               <TableCell>{log.registrations?.arabic_name}</TableCell>
-              <TableCell>{log.registrations?.phone}</TableCell>
+              <TableCell dir="ltr">{log.registrations?.phone}</TableCell>
               <TableCell>{log.notification_type}</TableCell>
               <TableCell>{log.whatsapp_templates?.name}</TableCell>
-              <TableCell>{log.status}</TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 rounded-full text-sm ${
+                  log.status === 'sent' ? 'bg-green-100 text-green-800' :
+                  log.status === 'failed' ? 'bg-red-100 text-red-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {log.status === 'sent' ? 'تم الإرسال' :
+                   log.status === 'failed' ? 'فشل الإرسال' :
+                   'قيد الانتظار'}
+                </span>
+              </TableCell>
               <TableCell>{format(new Date(log.sent_at), 'yyyy-MM-dd HH:mm')}</TableCell>
             </TableRow>
           ))}
