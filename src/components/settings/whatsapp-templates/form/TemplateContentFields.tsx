@@ -1,12 +1,9 @@
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TemplateVariables } from "./components/TemplateVariables";
 import { ValidationResult } from "./components/ValidationResult";
+import { TemplateValidationButton } from "./components/TemplateValidationButton";
+import { TemplateInput } from "./components/TemplateInput";
 
 interface TemplateContentFieldsProps {
   content: string;
@@ -80,45 +77,25 @@ export const TemplateContentFields = ({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>محتوى الرسالة</Label>
-        <TemplateVariables 
-          notificationType={notificationType} 
-          placeholders={placeholders} 
-        />
-        <Textarea
-          value={content}
-          onChange={(e) => onContentChange(e.target.value)}
-          placeholder="أدخل محتوى الرسالة"
-          rows={5}
-          className="text-right"
-          dir="rtl"
-          disabled={isLoading}
-        />
-        {validationError && (
-          <Alert variant="destructive">
-            <AlertDescription>{validationError}</AlertDescription>
-          </Alert>
-        )}
-      </div>
+      <TemplateVariables 
+        notificationType={notificationType} 
+        placeholders={placeholders} 
+      />
+      
+      <TemplateInput
+        content={content}
+        onContentChange={onContentChange}
+        validationError={validationError}
+        isLoading={isLoading}
+      />
 
       {content && (
         <>
-          <Button 
-            variant="outline" 
-            onClick={validateTemplate}
-            disabled={isValidating || !content}
-            className="w-full"
-          >
-            {isValidating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                جاري التحقق...
-              </>
-            ) : (
-              'التحقق من صحة القالب'
-            )}
-          </Button>
+          <TemplateValidationButton
+            onValidate={validateTemplate}
+            isValidating={isValidating}
+            content={content}
+          />
 
           {validationResult && (
             <ValidationResult validationResult={validationResult} />
