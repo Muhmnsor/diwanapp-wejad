@@ -6,8 +6,25 @@ import { UsersManagement } from "@/components/settings/UsersManagement";
 import { CertificateSignatures } from "@/components/certificates/signatures/CertificateSignatures";
 import { CertificateTemplates } from "@/components/certificates/templates/CertificateTemplates";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuthStore } from "@/store/authStore";
 
 const Settings = () => {
+  const { user } = useAuthStore();
+
+  // Only show settings if user is admin
+  if (!user?.isAdmin) {
+    return (
+      <div className="min-h-screen flex flex-col" dir="rtl">
+        <TopHeader />
+        <div className="container mx-auto px-4 py-8 flex-grow">
+          <h1 className="text-3xl font-bold mb-8">غير مصرح</h1>
+          <p>عذراً، لا تملك صلاحية الوصول لهذه الصفحة.</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
