@@ -11,6 +11,7 @@ import ActivityFeedback from "./pages/ActivityFeedback";
 import ProjectDetails from "./pages/ProjectDetails";
 import CreateProject from "./pages/CreateProject";
 import EditProject from "./pages/EditProject";
+import VerifyCertificate from "./pages/VerifyCertificate";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const AppRoutes = () => {
@@ -22,6 +23,7 @@ const AppRoutes = () => {
       <Route path="/projects/:id" element={<ProjectDetails />} />
       <Route path="/events/:id/feedback" element={<EventFeedback />} />
       <Route path="/activity/:id/feedback" element={<ActivityFeedback />} />
+      <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
       <Route
         path="/dashboard"
         element={
