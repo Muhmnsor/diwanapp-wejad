@@ -47,7 +47,7 @@ export const useUserRoles = () => {
             console.log('No roles data found for entry:', data);
             return 'لم يتم تعيين دور';
           }
-          return data.roles.name || 'لم يتم تعيين دور';
+          return (data.roles as { name: string }).name || 'لم يتم تعيين دور';
         });
         
         console.log('Processed user roles:', roleNames);
