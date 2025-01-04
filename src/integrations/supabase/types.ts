@@ -1121,7 +1121,9 @@ export type Database = {
           is_default: boolean | null
           language: string | null
           name: string
+          notification_type: string | null
           status: string | null
+          target_type: string | null
           template_type: string | null
           updated_at: string
         }
@@ -1132,7 +1134,9 @@ export type Database = {
           is_default?: boolean | null
           language?: string | null
           name: string
+          notification_type?: string | null
           status?: string | null
+          target_type?: string | null
           template_type?: string | null
           updated_at?: string
         }
@@ -1143,7 +1147,9 @@ export type Database = {
           is_default?: boolean | null
           language?: string | null
           name?: string
+          notification_type?: string | null
           status?: string | null
+          target_type?: string | null
           template_type?: string | null
           updated_at?: string
         }
