@@ -1,0 +1,9 @@
+project_id = "ynibjnazouypdvwgozih"
+
+[send-notification]
+verify_jwt = true
+max_retries = 3
+
+[schedule-notifications]
+verify_jwt = true
+max_retries = 3
