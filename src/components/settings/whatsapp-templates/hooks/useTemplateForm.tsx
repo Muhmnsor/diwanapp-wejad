@@ -14,20 +14,29 @@ export const useTemplateForm = () => {
   const [targetType, setTargetType] = useState("event");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch templates
+  // Optimized query with proper caching
   const { data: templates, error } = useQuery({
     queryKey: ['whatsapp-templates'],
     queryFn: async () => {
+      console.log('🔄 Fetching WhatsApp templates...');
       const { data, error } = await supabase
         .from('whatsapp_templates')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching templates:', error);
+        throw error;
+      }
+      
+      console.log('✅ Templates fetched successfully:', data?.length);
       return data;
-    }
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: 2
   });
 
+  // Optimized mutation with proper error handling
   const mutation = useMutation({
     mutationFn: async (newTemplate: {
       name: string;
@@ -37,6 +46,8 @@ export const useTemplateForm = () => {
       target_type: string;
     }) => {
       setIsLoading(true);
+      console.log('💾 Saving template:', newTemplate);
+      
       try {
         if (editingTemplate?.id) {
           const { error } = await supabase
@@ -44,11 +55,13 @@ export const useTemplateForm = () => {
             .update(newTemplate)
             .eq("id", editingTemplate.id);
           if (error) throw error;
+          console.log('✅ Template updated successfully');
         } else {
           const { error } = await supabase
             .from("whatsapp_templates")
             .insert([newTemplate]);
           if (error) throw error;
+          console.log('✅ Template created successfully');
         }
       } finally {
         setIsLoading(false);
@@ -62,26 +75,29 @@ export const useTemplateForm = () => {
       handleClose();
     },
     onError: (error) => {
-      console.error("Error saving template:", error);
+      console.error("❌ Error saving template:", error);
       toast.error("حدث خطأ أثناء حفظ القالب");
     },
   });
 
+  // Optimized delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (templateId: string) => {
+      console.log('🗑️ Deleting template:', templateId);
       const { error } = await supabase
         .from('whatsapp_templates')
         .delete()
         .eq('id', templateId);
       
       if (error) throw error;
+      console.log('✅ Template deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp-templates'] });
       toast.success('تم حذف القالب بنجاح');
     },
     onError: (error) => {
-      console.error('Error deleting template:', error);
+      console.error('❌ Error deleting template:', error);
       toast.error('حدث خطأ أثناء حذف القالب');
     }
   });
@@ -98,6 +114,7 @@ export const useTemplateForm = () => {
   };
 
   const handleEdit = (template: any) => {
+    console.log('✏️ Editing template:', template);
     setEditingTemplate(template);
     setName(template.name);
     setContent(template.content);
@@ -114,6 +131,7 @@ export const useTemplateForm = () => {
   };
 
   const handleClose = () => {
+    console.log('🔄 Resetting form state');
     setIsOpen(false);
     setEditingTemplate(null);
     setName("");
@@ -124,7 +142,7 @@ export const useTemplateForm = () => {
   };
 
   const handlePreview = () => {
-    console.log("Preview template:", { name, content });
+    console.log("👁️ Preview template:", { name, content });
   };
 
   return {
