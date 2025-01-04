@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { processTemplate } from "../templates/preview/utils/templateProcessor";
 import { downloadTemplateFile } from "../templates/preview/utils/templateDownloader";
 import { CertificateTemplatePreview } from "../templates/preview/CertificateTemplatePreview";
+import { QRCodeSVG } from "qrcode.react";
 
 interface CertificateIssuerProps {
   templateId: string;
@@ -50,6 +51,11 @@ export const CertificateIssuer = ({
     }
   };
 
+  const generateVerificationUrl = (verificationCode: string) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/verify-certificate/${verificationCode}`;
+  };
+
   const handleIssueCertificate = async (confirmedData: Record<string, string>) => {
     try {
       setIsLoading(true);
@@ -59,7 +65,11 @@ export const CertificateIssuer = ({
       const templateFile = await downloadTemplateFile(template.template_file);
       const processedPdf = await processTemplate(await templateFile.arrayBuffer(), confirmedData);
 
-      // 2. Upload processed PDF to storage
+      // 2. Generate unique verification code and QR code
+      const verificationCode = crypto.randomUUID().split('-')[0].toUpperCase();
+      const verificationUrl = generateVerificationUrl(verificationCode);
+      
+      // 3. Upload processed PDF to storage
       const fileName = `${crypto.randomUUID()}.pdf`;
       const { error: uploadError } = await supabase.storage
         .from('certificates')
@@ -67,7 +77,7 @@ export const CertificateIssuer = ({
 
       if (uploadError) throw uploadError;
 
-      // 3. Create certificate record
+      // 4. Create certificate record with QR code data
       const { error: insertError } = await supabase
         .from('certificates')
         .insert([{
@@ -76,9 +86,10 @@ export const CertificateIssuer = ({
           event_id: eventId,
           project_id: projectId,
           certificate_number: `CERT-${Date.now()}`,
-          verification_code: crypto.randomUUID().split('-')[0].toUpperCase(),
+          verification_code: verificationCode,
           certificate_data: confirmedData,
-          pdf_url: fileName
+          pdf_url: fileName,
+          qr_code: verificationUrl
         }]);
 
       if (insertError) throw insertError;
