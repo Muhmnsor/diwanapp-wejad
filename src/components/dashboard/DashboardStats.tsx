@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Users, Calendar, TrendingUp, TrendingDown, DollarSign, Star, UserCheck } from "lucide-react";
 import { DashboardData } from "@/types/dashboard";
 
 interface DashboardStatsProps {
@@ -83,6 +83,71 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <div className="text-lg font-bold">{data.highestRatedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
             {data.highestRatedEvent.rating} من 5
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الحدث الأكثر حضوراً</CardTitle>
+          <UserCheck className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.mostAttendedEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.mostAttendedEvent.attendanceCount} حاضر من {data.mostAttendedEvent.totalRegistrations} مسجل
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الحدث الأقل حضوراً</CardTitle>
+          <UserCheck className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.leastAttendedEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.leastAttendedEvent.attendanceCount} حاضر من {data.leastAttendedEvent.totalRegistrations} مسجل
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">الحدث الأقل تقييماً</CardTitle>
+          <Star className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.lowestRatedEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.lowestRatedEvent.rating} من 5
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">متوسط التقييم العام</CardTitle>
+          <Star className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{data.overallAverageRating}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            من 5 نجوم
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">إجمالي الحضور</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{data.totalAttendance}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            من {data.totalRegistrations} مسجل
           </div>
         </CardContent>
       </Card>
