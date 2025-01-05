@@ -35,12 +35,16 @@ export const EventAttendanceTab = ({ eventId }: EventAttendanceTabProps) => {
     return <LoadingState />;
   }
 
+  const handleRefresh = async () => {
+    await refetch();
+  };
+
   return (
     <AttendanceContent
       stats={attendanceStats}
       records={registrations}
       error={error}
-      onRefresh={refetch}
+      onRefresh={handleRefresh}
       onBarcodeScanned={async (code) => {
         const registration = registrations.find(r => r.registration_number === code);
         if (registration) {
