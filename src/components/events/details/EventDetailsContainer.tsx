@@ -47,7 +47,7 @@ export const EventDetailsContainer = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-gray-50/80 to-transparent pb-12">
       <EventImage imageUrl={event.image_url} title={event.title} />
       
       <div className="container mx-auto px-4 -mt-10 relative z-10">
