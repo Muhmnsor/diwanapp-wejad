@@ -1,6 +1,7 @@
 import { useAttendanceStatsQuery } from "./dashboard/stats/AttendanceStatsQuery";
 import { useRatingStatsQuery } from "./dashboard/stats/RatingStatsQuery";
 import { DashboardStatsContent } from "./dashboard/stats/DashboardStatsContent";
+import { EventStatsContent } from "./dashboard/stats/EventStatsContent";
 
 interface DashboardStatsProps {
   registrationCount: number;
@@ -79,7 +80,14 @@ export const DashboardStats = ({
     averageRating: isEvent ? project.averageRating : undefined
   };
 
-  return (
+  return isEvent ? (
+    <EventStatsContent
+      registrationCount={registrationCount}
+      remainingSeats={remainingSeats}
+      occupancyRate={occupancyRate}
+      project={transformedProject}
+    />
+  ) : (
     <DashboardStatsContent
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
