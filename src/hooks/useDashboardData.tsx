@@ -50,7 +50,7 @@ export const useDashboardData = () => {
 
       // Combine events and projects for unified stats
       const allEvents = [
-        ...events.map(event => ({
+        ...(events || []).map(event => ({
           ...event,
           type: 'event',
           registrationCount: event.registrations?.[0]?.count || 0,
@@ -60,7 +60,7 @@ export const useDashboardData = () => {
             : 0,
           date: new Date(event.date)
         })),
-        ...projects.map(project => ({
+        ...(projects || []).map(project => ({
           ...project,
           type: 'project',
           registrationCount: project.registrations?.[0]?.count || 0,
@@ -83,18 +83,16 @@ export const useDashboardData = () => {
       const pastEvents = allEvents.filter(event => event.date < now);
 
       // Calculate total registrations and attendance
-      const totalRegistrations = allEvents.reduce((sum, event) => sum + event.registrationCount, 0);
-      const totalAttendance = allEvents.reduce((sum, event) => sum + event.attendanceCount, 0);
+      const totalRegistrations = allEvents.reduce((sum, event) => sum + (event.registrationCount || 0), 0);
+      const totalAttendance = allEvents.reduce((sum, event) => sum + (event.attendanceCount || 0), 0);
       const averageAttendanceRate = totalRegistrations > 0 ? (totalAttendance / totalRegistrations) * 100 : 0;
 
       // Calculate total revenue
-      const totalRevenue = allEvents.reduce((sum, event) => {
-        return sum + (event.price || 0) * event.registrationCount;
-      }, 0);
+      const totalRevenue = allEvents.reduce((sum, event) => sum + ((event.price || 0) * (event.registrationCount || 0)), 0);
 
       // Find events with most and least registrations
-      const sortedByRegistrations = [...allEvents].sort(
-        (a, b) => b.registrationCount - a.registrationCount
+      const sortedByRegistrations = [...allEvents].sort((a, b) => 
+        (b.registrationCount || 0) - (a.registrationCount || 0)
       );
 
       // Find events with highest and lowest attendance rates
@@ -105,16 +103,19 @@ export const useDashboardData = () => {
           : 0
       }));
 
-      const sortedByAttendance = [...eventsWithAttendanceRates]
-        .sort((a, b) => b.attendanceRate - a.attendanceRate);
+      const sortedByAttendance = [...eventsWithAttendanceRates].sort((a, b) => 
+        (b.attendanceRate || 0) - (a.attendanceRate || 0)
+      );
 
       // Calculate average ratings and find highest/lowest rated events
-      const eventsWithRatings = allEvents.filter(event => event.averageRating > 0);
+      const eventsWithRatings = allEvents.filter(event => (event.averageRating || 0) > 0);
       const averageRating = eventsWithRatings.length > 0
-        ? eventsWithRatings.reduce((sum, event) => sum + event.averageRating, 0) / eventsWithRatings.length
+        ? eventsWithRatings.reduce((sum, event) => sum + (event.averageRating || 0), 0) / eventsWithRatings.length
         : 0;
 
-      const sortedByRating = [...eventsWithRatings].sort((a, b) => b.averageRating - a.averageRating);
+      const sortedByRating = [...eventsWithRatings].sort((a, b) => 
+        (b.averageRating || 0) - (a.averageRating || 0)
+      );
 
       // Group events by various categories with explicit number type
       const eventsByType: ChartData[] = Object.entries(
@@ -126,9 +127,18 @@ export const useDashboardData = () => {
       ).map(([name, value]) => ({ name, value: Number(value) }));
 
       const eventsByBeneficiary: ChartData[] = [
-        { name: 'البيئة', value: allEvents.filter(event => event.event_path === 'environment').length },
-        { name: 'المجتمع', value: allEvents.filter(event => event.event_path === 'community').length },
-        { name: 'المحتوى', value: allEvents.filter(event => event.event_path === 'content').length }
+        { 
+          name: 'البيئة', 
+          value: allEvents.filter(event => event.event_path === 'environment').length 
+        },
+        { 
+          name: 'المجتمع', 
+          value: allEvents.filter(event => event.event_path === 'community').length 
+        },
+        { 
+          name: 'المحتوى', 
+          value: allEvents.filter(event => event.event_path === 'content').length 
+        }
       ];
 
       const eventsByBeneficiaryType: ChartData[] = Object.entries(
@@ -150,10 +160,10 @@ export const useDashboardData = () => {
 
       return {
         totalEvents: allEvents.length,
-        eventsCount: events.length,
-        projectsCount: projects.length,
-        upcomingEvents: upcomingEvents.length,
-        pastEvents: pastEvents.length,
+        eventsCount: events?.length || 0,
+        projectsCount: projects?.length || 0,
+        upcomingEvents: allEvents.filter(event => event.date >= new Date()).length,
+        pastEvents: allEvents.filter(event => event.date < new Date()).length,
         totalRegistrations,
         totalRevenue,
         totalAttendance,
