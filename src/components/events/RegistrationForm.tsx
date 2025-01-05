@@ -160,7 +160,7 @@ export const RegistrationForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {registrationFields.arabic_name && (
-        <FormField label="الاسم الثلاثي" required>
+        <FormField label="الاسم الثلاثي بالعربية" required>
           <TextInputField
             value={formData.arabicName}
             onChange={(value) => setFormData({ ...formData, arabicName: value })}
@@ -170,7 +170,7 @@ export const RegistrationForm = ({
       )}
 
       {registrationFields.english_name && (
-        <FormField label="الاسم باللغة الإنجليزية">
+        <FormField label="الاسم الثلاثي بالإنجليزية">
           <TextInputField
             value={formData.englishName}
             onChange={(value) => setFormData({ ...formData, englishName: value })}
