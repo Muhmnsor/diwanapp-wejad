@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardTabs } from "./dashboard/DashboardTabs";
+import { EventDashboardTabs } from "./dashboard/EventDashboardTabs";
 import { ProjectDashboardTabs } from "../projects/dashboard/ProjectDashboardTabs";
 
 interface EventDashboardProps {
@@ -77,6 +77,6 @@ export const EventDashboard = ({ eventId }: EventDashboardProps) => {
   return isProject ? (
     <ProjectDashboardTabs project={data} />
   ) : (
-    <DashboardTabs event={data} />
+    <EventDashboardTabs event={data} />
   );
 };
