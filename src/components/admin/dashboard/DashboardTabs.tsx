@@ -71,7 +71,7 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
     }
   });
 
-  const projectData = {
+  const eventData = {
     id: event.id,
     start_date: event.start_date,
     end_date: event.end_date,
@@ -102,7 +102,7 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
           registrationCount={eventStats?.registrationCount || 0}
           remainingSeats={eventStats?.remainingSeats || 0}
           occupancyRate={eventStats?.occupancyRate || 0}
-          project={projectData}
+          event={eventData}
           isEvent={true}
         />
       </TabsContent>

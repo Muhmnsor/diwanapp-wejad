@@ -4,7 +4,7 @@ interface DashboardOverviewTabProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  project: {
+  event: {
     start_date: string;
     end_date: string;
     event_path?: string;
@@ -22,14 +22,14 @@ export const DashboardOverviewTab = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project,
+  event,
   activities
 }: DashboardOverviewTabProps) => {
   console.log("DashboardOverviewTab props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
-    project,
+    event,
     activities
   });
 
@@ -38,12 +38,12 @@ export const DashboardOverviewTab = ({
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      project={{
-        id: project.id,
-        start_date: project.start_date,
-        end_date: project.end_date,
-        event_path: project.event_path || '',
-        event_category: project.event_category || ''
+      event={{
+        id: event.id,
+        start_date: event.start_date,
+        end_date: event.end_date,
+        event_path: event.event_path || '',
+        event_category: event.event_category || ''
       }}
       activities={activities}
     />
