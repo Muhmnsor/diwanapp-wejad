@@ -32,14 +32,6 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
     return <div>جاري التحميل...</div>;
   }
 
-  const eventData = {
-    id: project.id,
-    start_date: project.start_date,
-    end_date: project.end_date,
-    event_path: project.event_path,
-    event_category: project.event_category
-  };
-
   return (
     <Tabs defaultValue="overview" dir="rtl" className="w-full space-y-6">
       <ProjectTabsList />
@@ -49,7 +41,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           registrationCount={metrics.registrationCount}
           remainingSeats={metrics.remainingSeats}
           occupancyRate={metrics.occupancyRate}
-          event={eventData}
+          project={project}
           activities={metrics.activitiesStats}
         />
       </TabsContent>
