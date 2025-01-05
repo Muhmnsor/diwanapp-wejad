@@ -4,14 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PathCategoryCardProps {
+  eventId?: string;
   projectId?: string;
 }
 
-export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {
+export const PathCategoryCard = ({ eventId, projectId }: PathCategoryCardProps) => {
   const { data: averageRating = 0 } = useQuery({
-    queryKey: ['project-average-rating', projectId],
+    queryKey: ['project-average-rating', projectId || eventId],
     queryFn: async () => {
-      console.log('Fetching average rating for project:', projectId);
+      console.log('Fetching average rating for:', { projectId, eventId });
       
       const { data: activities } = await supabase
         .from('events')
@@ -24,8 +25,8 @@ export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {
             presenter_rating
           )
         `)
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true);
+        .eq(projectId ? 'project_id' : 'id', projectId || eventId)
+        .eq('is_project_activity', projectId ? true : false);
 
       if (!activities?.length) {
         console.log('No activities found with feedback');
@@ -52,7 +53,7 @@ export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {
       });
 
       const average = ratingCount > 0 ? totalRating / ratingCount : 0;
-      console.log('Project average rating:', {
+      console.log('Average rating:', {
         totalRating,
         ratingCount,
         average: average.toFixed(1)
@@ -71,7 +72,7 @@ export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">مستوى تقييم المشروع</CardTitle>
+        <CardTitle className="text-sm font-medium">مستوى تقييم {projectId ? 'المشروع' : 'الفعالية'}</CardTitle>
         <Star className={`h-4 w-4 ${getRatingColor(averageRating)}`} />
       </CardHeader>
       <CardContent>
@@ -79,7 +80,7 @@ export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {
           {averageRating.toFixed(1)}
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          متوسط تقييم جميع أنشطة المشروع
+          متوسط تقييم {projectId ? 'جميع أنشطة المشروع' : 'الفعالية'}
         </p>
       </CardContent>
     </Card>
