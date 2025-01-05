@@ -75,52 +75,40 @@ export const DashboardStatsContent = ({
       
       <PathCategoryCard projectId={project.id} />
 
-      {activities && (
-        <ActivitiesStatsCard
-          activities={{
-            total: activities.total || 0,
-            completed: activities.completed || 0
-          }}
-        />
-      )}
+      <ActivitiesStatsCard
+        activities={{
+          total: activities?.total || 0,
+          completed: activities?.completed || 0
+        }}
+      />
       
-      {activities?.averageAttendance !== undefined && (
-        <AttendanceAverageCard
-          averageAttendance={activities.averageAttendance}
-        />
-      )}
+      <AttendanceAverageCard
+        averageAttendance={activities?.averageAttendance || 0}
+      />
       
-      {attendanceStats?.highest && (
-        <ActivityAttendanceCard
-          type="highest"
-          title="أعلى نسبة حضور"
-          activity={attendanceStats.highest}
-        />
-      )}
+      <ActivityAttendanceCard
+        type="highest"
+        title="أعلى نسبة حضور"
+        activity={attendanceStats?.highest}
+      />
       
-      {attendanceStats?.lowest && (
-        <ActivityAttendanceCard
-          type="lowest"
-          title="أقل نسبة حضور"
-          activity={attendanceStats.lowest}
-        />
-      )}
+      <ActivityAttendanceCard
+        type="lowest"
+        title="أقل نسبة حضور"
+        activity={attendanceStats?.lowest}
+      />
       
-      {ratingStats?.highest && (
-        <ActivityRatingCard
-          type="highest"
-          title="أعلى نشاط تقييماً"
-          activity={ratingStats.highest}
-        />
-      )}
+      <ActivityRatingCard
+        type="highest"
+        title="أعلى نشاط تقييماً"
+        activity={ratingStats?.highest}
+      />
       
-      {ratingStats?.lowest && (
-        <ActivityRatingCard
-          type="lowest"
-          title="أقل نشاط تقييماً"
-          activity={ratingStats.lowest}
-        />
-      )}
+      <ActivityRatingCard
+        type="lowest"
+        title="أقل نشاط تقييماً"
+        activity={ratingStats?.lowest}
+      />
     </div>
   );
 };
