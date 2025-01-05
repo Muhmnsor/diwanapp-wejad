@@ -20,7 +20,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>توزيع الفعاليات حسب النوع</CardTitle>
+          <CardTitle>توزيع الأحداث حسب النوع</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -49,7 +49,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>توزيع الفعاليات حسب المسار</CardTitle>
+          <CardTitle>توزيع الأحداث حسب المسار</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -78,7 +78,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>توزيع الفعاليات حسب نوع المستفيدين</CardTitle>
+          <CardTitle>توزيع الأحداث حسب نوع المستفيدين</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -107,7 +107,7 @@ export const DashboardCharts = ({ data }: DashboardChartsProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>توزيع الفعاليات حسب السعر</CardTitle>
+          <CardTitle>توزيع الأحداث حسب السعر</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
