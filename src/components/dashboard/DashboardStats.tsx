@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, TrendingUp, TrendingDown, DollarSign, Star } from "lucide-react";
+import { Users, Calendar, TrendingUp, TrendingDown, DollarSign, Star, UserCheck, UserX } from "lucide-react";
 import { DashboardData } from "@/types/dashboard";
 
 interface DashboardStatsProps {
@@ -7,6 +7,8 @@ interface DashboardStatsProps {
 }
 
 export const DashboardStats = ({ data }: DashboardStatsProps) => {
+  console.log("DashboardStats data:", data);
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card>
@@ -32,9 +34,6 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{data.totalRegistrations}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            معدل {(data.totalRegistrations / data.totalEvents).toFixed(1)} لكل حدث
-          </div>
         </CardContent>
       </Card>
 
@@ -51,12 +50,12 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">أعلى حدث حضوراً</CardTitle>
-          <TrendingUp className="h-4 w-4 text-green-500" />
+          <UserCheck className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
           <div className="text-lg font-bold">{data.mostAttendedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.mostAttendedEvent.attendanceCount} حاضر ({data.mostAttendedEvent.percentage}%)
+            {data.mostAttendedEvent.attendanceCount} حاضر ({data.mostAttendedEvent.percentage.toFixed(1)}%)
           </div>
         </CardContent>
       </Card>
@@ -64,12 +63,12 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">أقل حدث حضوراً</CardTitle>
-          <TrendingDown className="h-4 w-4 text-red-500" />
+          <UserX className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
           <div className="text-lg font-bold">{data.leastAttendedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.leastAttendedEvent.attendanceCount} حاضر ({data.leastAttendedEvent.percentage}%)
+            {data.leastAttendedEvent.attendanceCount} حاضر ({data.leastAttendedEvent.percentage.toFixed(1)}%)
           </div>
         </CardContent>
       </Card>

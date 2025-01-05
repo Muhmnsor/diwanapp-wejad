@@ -14,7 +14,8 @@ export const useDashboardData = () => {
         .select(`
           *,
           registrations (count),
-          event_feedback (overall_rating)
+          event_feedback (overall_rating),
+          attendance_records (status)
         `)
         .eq('is_project_activity', false)
         .eq('is_visible', true);
@@ -26,7 +27,13 @@ export const useDashboardData = () => {
         .from("projects")
         .select(`
           *,
-          registrations (count)
+          registrations (count),
+          events!project_id (
+            id,
+            title,
+            event_feedback (overall_rating),
+            attendance_records (status)
+          )
         `)
         .eq('is_visible', true);
 
@@ -35,96 +42,96 @@ export const useDashboardData = () => {
       console.log("Raw events data:", events);
       console.log("Raw projects data:", projects);
 
-      // Combine events and projects for unified stats
-      const allEvents = [
-        ...events.map(event => ({
-          ...event,
-          type: 'event',
-          registrationCount: event.registrations[0]?.count || 0,
-          date: new Date(event.date)
-        })),
-        ...projects.map(project => ({
-          ...project,
-          type: 'project',
-          registrationCount: project.registrations[0]?.count || 0,
-          date: new Date(project.start_date)
-        }))
-      ];
+      // Calculate attendance and ratings for events
+      const eventsWithStats = events.map(event => ({
+        ...event,
+        attendanceCount: event.attendance_records?.filter(r => r.status === 'present').length || 0,
+        totalRegistrations: event.registrations[0]?.count || 0,
+        averageRating: event.event_feedback?.reduce((acc: number, f: any) => acc + (f.overall_rating || 0), 0) / 
+                      (event.event_feedback?.length || 1) || 0
+      }));
 
-      console.log("Total number of events:", events.length);
-      console.log("Total number of projects:", projects.length);
-      console.log("Combined events and projects:", allEvents);
+      // Calculate attendance and ratings for projects
+      const projectsWithStats = projects.map(project => {
+        const projectEvents = project.events || [];
+        const totalAttendance = projectEvents.reduce((acc, event) => 
+          acc + (event.attendance_records?.filter(r => r.status === 'present').length || 0), 0);
+        const totalRatings = projectEvents.reduce((acc, event) => 
+          acc + (event.event_feedback?.reduce((sum: number, f: any) => sum + (f.overall_rating || 0), 0) || 0), 0);
+        const totalFeedback = projectEvents.reduce((acc, event) => 
+          acc + (event.event_feedback?.length || 0), 0);
+
+        return {
+          ...project,
+          attendanceCount: totalAttendance,
+          totalRegistrations: project.registrations[0]?.count || 0,
+          averageRating: totalFeedback > 0 ? totalRatings / totalFeedback : 0
+        };
+      });
+
+      // Combine all items for statistics
+      const allItems = [...eventsWithStats, ...projectsWithStats];
+
+      // Sort by attendance
+      const sortedByAttendance = [...allItems].sort((a, b) => 
+        (b.attendanceCount / b.totalRegistrations || 0) - (a.attendanceCount / a.totalRegistrations || 0));
+
+      // Sort by rating
+      const sortedByRating = [...allItems].sort((a, b) => b.averageRating - a.averageRating);
+
+      // Calculate total attendance and average rating
+      const totalAttendance = allItems.reduce((acc, item) => acc + item.attendanceCount, 0);
+      const totalRatings = allItems.reduce((acc, item) => acc + item.averageRating, 0);
+      const averageRating = allItems.length > 0 ? totalRatings / allItems.length : 0;
+
+      // Calculate attendance percentage
+      const totalRegistrations = allItems.reduce((acc, item) => acc + item.totalRegistrations, 0);
+      const averageAttendance = totalRegistrations > 0 ? (totalAttendance / totalRegistrations) * 100 : 0;
 
       const now = new Date();
-      const upcomingEvents = allEvents.filter(event => event.date >= now);
-      const pastEvents = allEvents.filter(event => event.date < now);
-
-      // Calculate total registrations
-      const totalRegistrations = allEvents.reduce((sum, event) => sum + event.registrationCount, 0);
+      const upcomingEvents = allItems.filter(event => new Date(event.date || event.start_date) >= now);
+      const pastEvents = allItems.filter(event => new Date(event.date || event.start_date) < now);
 
       // Calculate total revenue
-      const totalRevenue = allEvents.reduce((sum, event) => {
-        return sum + (event.price || 0) * event.registrationCount;
-      }, 0);
+      const totalRevenue = allItems.reduce((acc, item) => acc + (Number(item.price || 0) * item.totalRegistrations), 0);
 
-      // Find events with most and least registrations
-      const sortedByRegistrations = [...allEvents].sort(
-        (a, b) => b.registrationCount - a.registrationCount
-      );
+      // Group events by type
+      const eventsByType = Object.entries(
+        allItems.reduce((acc: Record<string, number>, event) => {
+          const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value }));
 
-      // Calculate average ratings and find highest rated event
-      const eventsWithRatings = events.map(event => ({
-        ...event,
-        avgRating: event.event_feedback.length > 0
-          ? event.event_feedback.reduce((sum: number, feedback: any) => 
-              sum + (feedback.overall_rating || 0), 0) / event.event_feedback.length
-          : 0
-      }));
-
-      const sortedByRating = [...eventsWithRatings]
-        .filter(event => event.avgRating > 0)
-        .sort((a, b) => b.avgRating - a.avgRating);
-
-      // Group all events by type with Arabic labels
-      const eventTypeCount = allEvents.reduce((acc: Record<string, number>, event) => {
-        const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {});
-
-      const eventsByType: ChartData[] = Object.entries(eventTypeCount).map(([name, value]) => ({
-        name,
-        value: value as number
-      }));
-
-      // Count events by path with Arabic labels
+      // Group by beneficiary (event_path)
       const eventsByBeneficiary: ChartData[] = [
-        { name: 'البيئة', value: allEvents.filter(event => event.event_path === 'environment').length },
-        { name: 'المجتمع', value: allEvents.filter(event => event.event_path === 'community').length },
-        { name: 'المحتوى', value: allEvents.filter(event => event.event_path === 'content').length }
+        { name: 'البيئة', value: allItems.filter(event => event.event_path === 'environment').length },
+        { name: 'المجتمع', value: allItems.filter(event => event.event_path === 'community').length },
+        { name: 'المحتوى', value: allItems.filter(event => event.event_path === 'content').length }
       ];
 
-      // Group events by beneficiary type with Arabic labels
-      const eventsByBeneficiaryType: ChartData[] = Object.entries(
-        allEvents.reduce((acc: Record<string, number>, event) => {
+      // Group by beneficiary type
+      const eventsByBeneficiaryType = Object.entries(
+        allItems.reduce((acc: Record<string, number>, event) => {
           const type = event.beneficiary_type === 'men' ? 'رجال' : 
                       event.beneficiary_type === 'women' ? 'نساء' : 'رجال ونساء';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value: value as number }));
+      ).map(([name, value]) => ({ name, value }));
 
-      // Group events by price type with Arabic labels
-      const eventsByPrice: ChartData[] = Object.entries(
-        allEvents.reduce((acc: Record<string, number>, event) => {
+      // Group by price
+      const eventsByPrice = Object.entries(
+        allItems.reduce((acc: Record<string, number>, event) => {
           const type = event.price === 0 || event.price === null ? 'مجاني' : 'مدفوع';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value: value as number }));
+      ).map(([name, value]) => ({ name, value }));
 
       return {
-        totalEvents: allEvents.length,
+        totalEvents: allItems.length,
         eventsCount: events.length,
         projectsCount: projects.length,
         upcomingEvents: upcomingEvents.length,
@@ -132,20 +139,40 @@ export const useDashboardData = () => {
         totalRegistrations,
         totalRevenue,
         mostRegisteredEvent: {
-          title: sortedByRegistrations[0]?.title || 'لا يوجد',
-          registrations: sortedByRegistrations[0]?.registrationCount || 0,
-          rating: 0
+          title: sortedByAttendance[0]?.title || 'لا يوجد',
+          registrations: sortedByAttendance[0]?.totalRegistrations || 0,
+          rating: sortedByAttendance[0]?.averageRating || 0
         },
         leastRegisteredEvent: {
-          title: sortedByRegistrations[sortedByRegistrations.length - 1]?.title || 'لا يوجد',
-          registrations: sortedByRegistrations[sortedByRegistrations.length - 1]?.registrationCount || 0,
-          rating: 0
+          title: sortedByAttendance[sortedByAttendance.length - 1]?.title || 'لا يوجد',
+          registrations: sortedByAttendance[sortedByAttendance.length - 1]?.totalRegistrations || 0,
+          rating: sortedByAttendance[sortedByAttendance.length - 1]?.averageRating || 0
         },
         highestRatedEvent: {
           title: sortedByRating[0]?.title || 'لا يوجد',
-          registrations: 0,
-          rating: sortedByRating[0]?.avgRating || 0
+          registrations: sortedByRating[0]?.totalRegistrations || 0,
+          rating: sortedByRating[0]?.averageRating || 0
         },
+        lowestRatedEvent: {
+          title: sortedByRating[sortedByRating.length - 1]?.title || 'لا يوجد',
+          registrations: sortedByRating[sortedByRating.length - 1]?.totalRegistrations || 0,
+          rating: sortedByRating[sortedByRating.length - 1]?.averageRating || 0
+        },
+        mostAttendedEvent: {
+          title: sortedByAttendance[0]?.title || 'لا يوجد',
+          attendanceCount: sortedByAttendance[0]?.attendanceCount || 0,
+          percentage: sortedByAttendance[0]?.totalRegistrations ? 
+            (sortedByAttendance[0].attendanceCount / sortedByAttendance[0].totalRegistrations) * 100 : 0
+        },
+        leastAttendedEvent: {
+          title: sortedByAttendance[sortedByAttendance.length - 1]?.title || 'لا يوجد',
+          attendanceCount: sortedByAttendance[sortedByAttendance.length - 1]?.attendanceCount || 0,
+          percentage: sortedByAttendance[sortedByAttendance.length - 1]?.totalRegistrations ?
+            (sortedByAttendance[sortedByAttendance.length - 1].attendanceCount / 
+             sortedByAttendance[sortedByAttendance.length - 1].totalRegistrations) * 100 : 0
+        },
+        averageAttendance,
+        averageRating,
         eventsByType,
         eventsByBeneficiary,
         eventsByBeneficiaryType,
