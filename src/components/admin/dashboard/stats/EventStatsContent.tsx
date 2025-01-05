@@ -1,7 +1,7 @@
-import { RegistrationStatsCard } from "./RegistrationStatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Star } from "lucide-react";
 import { formatDateWithDay } from "@/utils/dateTimeUtils";
+import { RegistrationStatsCard } from "./RegistrationStatsCard";
 
 interface EventStatsContentProps {
   registrationCount: number;
