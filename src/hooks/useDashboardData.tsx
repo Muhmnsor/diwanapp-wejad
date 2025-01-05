@@ -8,201 +8,149 @@ export const useDashboardData = () => {
     queryFn: async (): Promise<DashboardData> => {
       console.log("🔄 جاري تحميل إحصائيات لوحة المعلومات...");
 
-      try {
-        // Get standalone events (not project activities)
-        const { data: events, error: eventsError } = await supabase
-          .from("events")
-          .select(`
-            *,
-            registrations (count),
-            event_feedback (overall_rating),
-            attendance_records (status)
-          `)
-          .eq('is_project_activity', false)
-          .eq('is_visible', true);
+      // Get standalone events (not project activities)
+      const { data: events, error: eventsError } = await supabase
+        .from("events")
+        .select(`
+          *,
+          registrations (count),
+          event_feedback (overall_rating)
+        `)
+        .eq('is_project_activity', false)
+        .eq('is_visible', true);
 
-        if (eventsError) throw eventsError;
+      if (eventsError) throw eventsError;
 
-        // Get projects
-        const { data: projects, error: projectsError } = await supabase
-          .from("projects")
-          .select(`
-            *,
-            registrations (count),
-            events!events_project_id_fkey (
-              event_feedback (overall_rating),
-              attendance_records (status)
-            )
-          `)
-          .eq('is_visible', true);
+      // Get projects
+      const { data: projects, error: projectsError } = await supabase
+        .from("projects")
+        .select(`
+          *,
+          registrations (count)
+        `)
+        .eq('is_visible', true);
 
-        if (projectsError) throw projectsError;
+      if (projectsError) throw projectsError;
 
-        console.log("Raw events data:", events);
-        console.log("Raw projects data:", projects);
+      console.log("Raw events data:", events);
+      console.log("Raw projects data:", projects);
 
-        // Calculate attendance and ratings for all events
-        const eventsWithStats = events.map(event => ({
+      // Combine events and projects for unified stats
+      const allEvents = [
+        ...events.map(event => ({
           ...event,
-          attendanceCount: event.attendance_records?.filter(record => record.status === 'present').length || 0,
-          averageRating: event.event_feedback?.length > 0
-            ? event.event_feedback.reduce((sum: number, feedback: any) => sum + (feedback.overall_rating || 0), 0) / event.event_feedback.length
-            : 0,
-          registrationsCount: event.registrations?.[0]?.count || 0
-        }));
+          type: 'event',
+          registrationCount: event.registrations[0]?.count || 0,
+          date: new Date(event.date)
+        })),
+        ...projects.map(project => ({
+          ...project,
+          type: 'project',
+          registrationCount: project.registrations[0]?.count || 0,
+          date: new Date(project.start_date)
+        }))
+      ];
 
-        // Calculate attendance and ratings for all projects
-        const projectsWithStats = projects.map(project => {
-          const projectFeedback = project.events?.flatMap(event => event.event_feedback || []) || [];
-          const projectAttendance = project.events?.flatMap(event => event.attendance_records || []) || [];
-          
-          return {
-            ...project,
-            attendanceCount: projectAttendance.filter(record => record.status === 'present').length,
-            averageRating: projectFeedback.length > 0
-              ? projectFeedback.reduce((sum: number, feedback: any) => sum + (feedback.overall_rating || 0), 0) / projectFeedback.length
-              : 0,
-            registrationsCount: project.registrations?.[0]?.count || 0
-          };
-        });
+      console.log("Total number of events:", events.length);
+      console.log("Total number of projects:", projects.length);
+      console.log("Combined events and projects:", allEvents);
 
-        // Combine all events and projects for unified stats
-        const allItems = [...eventsWithStats, ...projectsWithStats];
+      const now = new Date();
+      const upcomingEvents = allEvents.filter(event => event.date >= now);
+      const pastEvents = allEvents.filter(event => event.date < now);
 
-        // Sort by attendance
-        const sortedByAttendance = [...allItems].sort((a, b) => 
-          (b.attendanceCount || 0) - (a.attendanceCount || 0)
-        );
+      // Calculate total registrations
+      const totalRegistrations = allEvents.reduce((sum, event) => sum + event.registrationCount, 0);
 
-        // Sort by rating
-        const sortedByRating = [...allItems].sort((a, b) => 
-          (b.averageRating || 0) - (a.averageRating || 0)
-        );
+      // Calculate total revenue
+      const totalRevenue = allEvents.reduce((sum, event) => {
+        return sum + (event.price || 0) * event.registrationCount;
+      }, 0);
 
-        // Sort by registrations
-        const sortedByRegistrations = [...allItems].sort((a, b) =>
-          (b.registrationsCount || 0) - (a.registrationsCount || 0)
-        );
+      // Find events with most and least registrations
+      const sortedByRegistrations = [...allEvents].sort(
+        (a, b) => b.registrationCount - a.registrationCount
+      );
 
-        // Calculate total attendance
-        const totalAttendance = allItems.reduce((sum, item) => 
-          sum + (item.attendanceCount || 0), 0
-        );
+      // Calculate average ratings and find highest rated event
+      const eventsWithRatings = events.map(event => ({
+        ...event,
+        avgRating: event.event_feedback.length > 0
+          ? event.event_feedback.reduce((sum: number, feedback: any) => 
+              sum + (feedback.overall_rating || 0), 0) / event.event_feedback.length
+          : 0
+      }));
 
-        // Calculate overall average rating
-        const overallAverageRating = Number((allItems.reduce((sum, item) => 
-          sum + (item.averageRating || 0), 0
-        ) / allItems.filter(item => item.averageRating > 0).length).toFixed(1));
+      const sortedByRating = [...eventsWithRatings]
+        .filter(event => event.avgRating > 0)
+        .sort((a, b) => b.avgRating - a.avgRating);
 
-        const now = new Date();
-        const upcomingEvents = allItems.filter(event => new Date(event.date || event.start_date) >= now);
-        const pastEvents = allItems.filter(event => new Date(event.date || event.start_date) < now);
+      // Group all events by type with Arabic labels
+      const eventTypeCount = allEvents.reduce((acc: Record<string, number>, event) => {
+        const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
 
-        // Calculate total registrations
-        const totalRegistrations = allItems.reduce((sum, event) => 
-          sum + (event.registrationsCount || 0), 0
-        );
+      const eventsByType: ChartData[] = Object.entries(eventTypeCount).map(([name, value]) => ({
+        name,
+        value: value as number
+      }));
 
-        // Calculate total revenue
-        const totalRevenue = allItems.reduce((sum, event) => {
-          return sum + (event.price || 0) * (event.registrationsCount || 0);
-        }, 0);
+      // Count events by path with Arabic labels
+      const eventsByBeneficiary: ChartData[] = [
+        { name: 'البيئة', value: allEvents.filter(event => event.event_path === 'environment').length },
+        { name: 'المجتمع', value: allEvents.filter(event => event.event_path === 'community').length },
+        { name: 'المحتوى', value: allEvents.filter(event => event.event_path === 'content').length }
+      ];
 
-        // Group events by type
-        const eventsByType: ChartData[] = Object.entries(
-          allItems.reduce((acc: Record<string, number>, event) => {
-            const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
-            acc[type] = (acc[type] || 0) + 1;
-            return acc;
-          }, {})
-        ).map(([name, value]): ChartData => ({
-          name,
-          value: Number(value)
-        }));
+      // Group events by beneficiary type with Arabic labels
+      const eventsByBeneficiaryType: ChartData[] = Object.entries(
+        allEvents.reduce((acc: Record<string, number>, event) => {
+          const type = event.beneficiary_type === 'men' ? 'رجال' : 
+                      event.beneficiary_type === 'women' ? 'نساء' : 'رجال ونساء';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value: value as number }));
 
-        // Count events by path
-        const eventsByBeneficiary: ChartData[] = [
-          { name: 'البيئة', value: allItems.filter(event => event.event_path === 'environment').length },
-          { name: 'المجتمع', value: allItems.filter(event => event.event_path === 'community').length },
-          { name: 'المحتوى', value: allItems.filter(event => event.event_path === 'content').length }
-        ];
+      // Group events by price type with Arabic labels
+      const eventsByPrice: ChartData[] = Object.entries(
+        allEvents.reduce((acc: Record<string, number>, event) => {
+          const type = event.price === 0 || event.price === null ? 'مجاني' : 'مدفوع';
+          acc[type] = (acc[type] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value: value as number }));
 
-        // Group events by beneficiary type
-        const eventsByBeneficiaryType: ChartData[] = Object.entries(
-          allItems.reduce((acc: Record<string, number>, event) => {
-            const type = event.beneficiary_type === 'men' ? 'رجال' : 
-                        event.beneficiary_type === 'women' ? 'نساء' : 'رجال ونساء';
-            acc[type] = (acc[type] || 0) + 1;
-            return acc;
-          }, {})
-        ).map(([name, value]): ChartData => ({
-          name,
-          value: Number(value)
-        }));
-
-        // Group events by price type
-        const eventsByPrice: ChartData[] = Object.entries(
-          allItems.reduce((acc: Record<string, number>, event) => {
-            const type = event.price === 0 || event.price === null ? 'مجاني' : 'مدفوع';
-            acc[type] = (acc[type] || 0) + 1;
-            return acc;
-          }, {})
-        ).map(([name, value]): ChartData => ({
-          name,
-          value: Number(value)
-        }));
-
-        return {
-          totalEvents: allItems.length,
-          eventsCount: events.length,
-          projectsCount: projects.length,
-          upcomingEvents: upcomingEvents.length,
-          pastEvents: pastEvents.length,
-          totalRegistrations,
-          totalRevenue,
-          totalAttendance,
-          overallAverageRating,
-          mostRegisteredEvent: {
-            title: sortedByRegistrations[0]?.title || 'لا يوجد',
-            registrations: sortedByRegistrations[0]?.registrationsCount || 0,
-            rating: 0
-          },
-          leastRegisteredEvent: {
-            title: sortedByRegistrations[sortedByRegistrations.length - 1]?.title || 'لا يوجد',
-            registrations: sortedByRegistrations[sortedByRegistrations.length - 1]?.registrationsCount || 0,
-            rating: 0
-          },
-          highestRatedEvent: {
-            title: sortedByRating[0]?.title || 'لا يوجد',
-            registrations: sortedByRating[0]?.registrationsCount || 0,
-            rating: sortedByRating[0]?.averageRating || 0
-          },
-          lowestRatedEvent: {
-            title: sortedByRating[sortedByRating.length - 1]?.title || 'لا يوجد',
-            registrations: sortedByRating[sortedByRating.length - 1]?.registrationsCount || 0,
-            rating: sortedByRating[sortedByRating.length - 1]?.averageRating || 0
-          },
-          mostAttendedEvent: {
-            title: sortedByAttendance[0]?.title || 'لا يوجد',
-            registrations: sortedByAttendance[0]?.registrationsCount || 0,
-            attendanceCount: sortedByAttendance[0]?.attendanceCount || 0,
-            totalRegistrations: sortedByAttendance[0]?.registrationsCount || 0
-          },
-          leastAttendedEvent: {
-            title: sortedByAttendance[sortedByAttendance.length - 1]?.title || 'لا يوجد',
-            registrations: sortedByAttendance[sortedByAttendance.length - 1]?.registrationsCount || 0,
-            attendanceCount: sortedByAttendance[sortedByAttendance.length - 1]?.attendanceCount || 0,
-            totalRegistrations: sortedByAttendance[sortedByAttendance.length - 1]?.registrationsCount || 0
-          },
-          eventsByType,
-          eventsByBeneficiary,
-          eventsByBeneficiaryType,
-          eventsByPrice
-        };
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-        throw error;
-      }
+      return {
+        totalEvents: allEvents.length,
+        eventsCount: events.length,
+        projectsCount: projects.length,
+        upcomingEvents: upcomingEvents.length,
+        pastEvents: pastEvents.length,
+        totalRegistrations,
+        totalRevenue,
+        mostRegisteredEvent: {
+          title: sortedByRegistrations[0]?.title || 'لا يوجد',
+          registrations: sortedByRegistrations[0]?.registrationCount || 0,
+          rating: 0
+        },
+        leastRegisteredEvent: {
+          title: sortedByRegistrations[sortedByRegistrations.length - 1]?.title || 'لا يوجد',
+          registrations: sortedByRegistrations[sortedByRegistrations.length - 1]?.registrationCount || 0,
+          rating: 0
+        },
+        highestRatedEvent: {
+          title: sortedByRating[0]?.title || 'لا يوجد',
+          registrations: 0,
+          rating: sortedByRating[0]?.avgRating || 0
+        },
+        eventsByType,
+        eventsByBeneficiary,
+        eventsByBeneficiaryType,
+        eventsByPrice
+      };
     }
   });
 };
