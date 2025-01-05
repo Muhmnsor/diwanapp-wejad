@@ -20,7 +20,10 @@ export const useDashboardData = () => {
         .eq('is_project_activity', false)
         .eq('is_visible', true);
 
-      if (eventsError) throw eventsError;
+      if (eventsError) {
+        console.error("Error fetching events:", eventsError);
+        throw eventsError;
+      }
 
       // Get projects
       const { data: projects, error: projectsError } = await supabase
@@ -37,7 +40,10 @@ export const useDashboardData = () => {
         `)
         .eq('is_visible', true);
 
-      if (projectsError) throw projectsError;
+      if (projectsError) {
+        console.error("Error fetching projects:", projectsError);
+        throw projectsError;
+      }
 
       console.log("Raw events data:", events);
       console.log("Raw projects data:", projects);
@@ -47,9 +53,9 @@ export const useDashboardData = () => {
         ...events.map(event => ({
           ...event,
           type: 'event',
-          registrationCount: event.registrations[0]?.count || 0,
+          registrationCount: event.registrations?.[0]?.count || 0,
           attendanceCount: event.attendance_records?.filter(record => record.status === 'present').length || 0,
-          averageRating: event.event_feedback.length > 0
+          averageRating: event.event_feedback?.length > 0
             ? event.event_feedback.reduce((sum: number, feedback: any) => sum + (feedback.overall_rating || 0), 0) / event.event_feedback.length
             : 0,
           date: new Date(event.date)
@@ -57,11 +63,11 @@ export const useDashboardData = () => {
         ...projects.map(project => ({
           ...project,
           type: 'project',
-          registrationCount: project.registrations[0]?.count || 0,
+          registrationCount: project.registrations?.[0]?.count || 0,
           attendanceCount: project.events?.reduce((sum: number, event: any) => 
             sum + (event.attendance_records?.filter((record: any) => record.status === 'present').length || 0), 0) || 0,
           averageRating: project.events?.reduce((sum: number, event: any) => {
-            const eventRating = event.event_feedback.length > 0
+            const eventRating = event.event_feedback?.length > 0
               ? event.event_feedback.reduce((rSum: number, feedback: any) => rSum + (feedback.overall_rating || 0), 0) / event.event_feedback.length
               : 0;
             return sum + eventRating;
@@ -110,37 +116,37 @@ export const useDashboardData = () => {
 
       const sortedByRating = [...eventsWithRatings].sort((a, b) => b.averageRating - a.averageRating);
 
-      // Group events by various categories
-      const eventsByType = Object.entries(
+      // Group events by various categories with explicit number type
+      const eventsByType: ChartData[] = Object.entries(
         allEvents.reduce((acc: Record<string, number>, event) => {
           const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: Number(value) }));
 
-      const eventsByBeneficiary = [
+      const eventsByBeneficiary: ChartData[] = [
         { name: 'البيئة', value: allEvents.filter(event => event.event_path === 'environment').length },
         { name: 'المجتمع', value: allEvents.filter(event => event.event_path === 'community').length },
         { name: 'المحتوى', value: allEvents.filter(event => event.event_path === 'content').length }
       ];
 
-      const eventsByBeneficiaryType = Object.entries(
+      const eventsByBeneficiaryType: ChartData[] = Object.entries(
         allEvents.reduce((acc: Record<string, number>, event) => {
           const type = event.beneficiary_type === 'men' ? 'رجال' : 
                       event.beneficiary_type === 'women' ? 'نساء' : 'رجال ونساء';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: Number(value) }));
 
-      const eventsByPrice = Object.entries(
+      const eventsByPrice: ChartData[] = Object.entries(
         allEvents.reduce((acc: Record<string, number>, event) => {
           const type = event.price === 0 || event.price === null ? 'مجاني' : 'مدفوع';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: Number(value) }));
 
       return {
         totalEvents: allEvents.length,
