@@ -24,8 +24,8 @@ export const ProjectCardRegistrationInfo = ({
   
   const isRegistered = isAuthenticated && registrations[id];
   const currentRegistrations = Object.values(registrations)
-    .filter(reg => 
-      reg && 
+    .filter((reg): reg is { project_id: string } => 
+      reg !== null && 
       typeof reg === 'object' && 
       'project_id' in reg && 
       reg.project_id === id
