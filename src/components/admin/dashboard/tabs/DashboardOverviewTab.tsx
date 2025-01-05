@@ -1,4 +1,4 @@
-import { ProjectStatsContent } from "../stats/ProjectStatsContent";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
 
 interface DashboardOverviewTabProps {
   registrationCount: number;
@@ -15,10 +15,6 @@ interface DashboardOverviewTabProps {
     total: number;
     completed: number;
     averageAttendance: number;
-    highestAttendance: any;
-    lowestAttendance: any;
-    highestRated: any;
-    lowestRated: any;
   };
 }
 
@@ -38,20 +34,18 @@ export const DashboardOverviewTab = ({
   });
 
   return (
-    <ProjectStatsContent
+    <DashboardOverview
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      project={project}
-      activities={activities || {
-        total: 0,
-        completed: 0,
-        averageAttendance: 0,
-        highestAttendance: null,
-        lowestAttendance: null,
-        highestRated: null,
-        lowestRated: null
+      project={{
+        id: project.id,
+        start_date: project.start_date,
+        end_date: project.end_date,
+        event_path: project.event_path || '',
+        event_category: project.event_category || ''
       }}
+      activities={activities}
     />
   );
 };
