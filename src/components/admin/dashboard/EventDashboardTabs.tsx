@@ -30,7 +30,8 @@ export const EventDashboardTabs = ({ event }: EventDashboardTabsProps) => {
     start_date: event.date,
     end_date: event.date,
     event_path: event.event_path,
-    event_category: event.event_category
+    event_category: event.event_category,
+    averageRating: eventStats?.averageRating
   };
 
   return (

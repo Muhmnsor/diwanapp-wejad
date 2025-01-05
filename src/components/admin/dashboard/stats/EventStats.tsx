@@ -36,15 +36,18 @@ export const useEventStats = ({ eventId, maxAttendees }: EventStatsProps) => {
       const remainingSeats = maxAttendees - registrationCount;
       const occupancyRate = (registrationCount / maxAttendees) * 100;
 
-      const averageRating = feedback?.length 
-        ? feedback.reduce((acc, curr) => acc + (curr.overall_rating || 0), 0) / feedback.length 
-        : undefined;
+      // Calculate average rating only from valid ratings (not null)
+      const validRatings = feedback?.filter(f => f.overall_rating !== null) || [];
+      const averageRating = validRatings.length > 0
+        ? validRatings.reduce((acc, curr) => acc + curr.overall_rating!, 0) / validRatings.length
+        : 0;
 
       console.log('Event stats calculated:', {
         registrationCount,
         remainingSeats,
         occupancyRate,
-        averageRating
+        averageRating,
+        feedbackCount: validRatings.length
       });
 
       return {
