@@ -10,6 +10,10 @@ interface FeedbackFormContainerProps {
 
 export const FeedbackFormContainer = ({ eventId }: FeedbackFormContainerProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [overallRating, setOverallRating] = useState<number | null>(null);
+  const [contentRating, setContentRating] = useState<number | null>(null);
+  const [organizationRating, setOrganizationRating] = useState<number | null>(null);
+  const [presenterRating, setPresenterRating] = useState<number | null>(null);
   const navigate = useNavigate();
 
   console.log('FeedbackFormContainer - Event ID:', eventId);
@@ -18,23 +22,26 @@ export const FeedbackFormContainer = ({ eventId }: FeedbackFormContainerProps) =
     return <div className="text-center">معرف الفعالية غير متوفر</div>;
   }
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setIsSubmitting(true);
-      console.log('Submitting feedback for event:', eventId, formData);
+      console.log('Submitting feedback for event:', eventId, {
+        overallRating,
+        contentRating,
+        organizationRating,
+        presenterRating
+      });
 
       const { error } = await supabase
         .from('event_feedback')
         .insert([
           {
             event_id: eventId,
-            name: formData.name,
-            phone: formData.phone,
-            overall_rating: formData.overallRating,
-            content_rating: formData.contentRating,
-            organization_rating: formData.organizationRating,
-            presenter_rating: formData.presenterRating,
-            feedback_text: formData.feedbackText
+            overall_rating: overallRating,
+            content_rating: contentRating,
+            organization_rating: organizationRating,
+            presenter_rating: presenterRating
           }
         ]);
 
@@ -54,6 +61,14 @@ export const FeedbackFormContainer = ({ eventId }: FeedbackFormContainerProps) =
     <EventFeedbackForm 
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
+      overallRating={overallRating}
+      contentRating={contentRating}
+      organizationRating={organizationRating}
+      presenterRating={presenterRating}
+      onOverallRatingChange={setOverallRating}
+      onContentRatingChange={setContentRating}
+      onOrganizationRatingChange={setOrganizationRating}
+      onPresenterRatingChange={setPresenterRating}
     />
   );
 };
