@@ -1,12 +1,14 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { EyeOff, UserCheck, UserX, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { useEffect } from "react";
 import { ProjectCardContent } from "./cards/ProjectCardContent";
 import { ProjectCardImage } from "./cards/ProjectCardImage";
 import { useRegistrations } from "@/hooks/useRegistrations";
 import { useAuthStore } from "@/store/authStore";
+import { ProjectCardStatus } from "./cards/ProjectCardStatus";
+import { ProjectCardVisibility } from "./cards/ProjectCardVisibility";
+import { ProjectCardHeader } from "./cards/ProjectCardHeader";
+import { ProjectCardFooter } from "./cards/ProjectCardFooter";
+import { getRegistrationStatus } from "./utils/registrationStatus";
 
 interface ProjectCardProps {
   id: string;
@@ -27,84 +29,6 @@ interface ProjectCardProps {
   is_visible?: boolean;
   className?: string;
 }
-
-const getRegistrationStatus = (
-  startDate: string,
-  endDate: string,
-  registrationStartDate: string | null | undefined,
-  registrationEndDate: string | null | undefined,
-  maxAttendees: number = 0,
-  currentRegistrations: number = 0,
-  isRegistered: boolean = false
-) => {
-  const now = new Date();
-  const projectEndDate = new Date(endDate);
-  const projectStartDate = new Date(startDate);
-  
-  const regStartDate = registrationStartDate ? new Date(registrationStartDate) : null;
-  const regEndDate = registrationEndDate ? new Date(registrationEndDate) : null;
-
-  if (now > projectEndDate) {
-    return {
-      status: 'ended',
-      label: 'انتهى المشروع',
-      icon: XCircle,
-      color: 'bg-gray-500'
-    };
-  }
-
-  if (isRegistered) {
-    return {
-      status: 'registered',
-      label: 'مسجل',
-      icon: CheckCircle,
-      color: 'bg-green-500'
-    };
-  }
-
-  if (maxAttendees > 0 && currentRegistrations >= maxAttendees) {
-    return {
-      status: 'full',
-      label: 'اكتمل العدد',
-      icon: AlertCircle,
-      color: 'bg-yellow-500'
-    };
-  }
-
-  if (regStartDate && now < regStartDate) {
-    return {
-      status: 'notStarted',
-      label: 'لم يبدأ التسجيل',
-      icon: Clock,
-      color: 'bg-blue-500'
-    };
-  }
-
-  if (regEndDate && now > regEndDate) {
-    return {
-      status: 'registrationEnded',
-      label: 'انتهى التسجيل',
-      icon: XCircle,
-      color: 'bg-red-500'
-    };
-  }
-
-  if (now >= projectStartDate) {
-    return {
-      status: 'started',
-      label: 'بدأ المشروع',
-      icon: AlertCircle,
-      color: 'bg-orange-500'
-    };
-  }
-
-  return {
-    status: 'available',
-    label: 'التسجيل متاح',
-    icon: CheckCircle,
-    color: 'bg-green-500'
-  };
-};
 
 export const ProjectCard = ({ 
   id, 
@@ -162,23 +86,20 @@ export const ProjectCard = ({
       isRegistered,
       registrationStatus: registrationStatus.status
     });
-  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, registration_end_date, beneficiary_type, event_path, event_category, is_visible, isRegistered, registrationStatus]);
+  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, 
+      registration_end_date, beneficiary_type, event_path, event_category, is_visible, 
+      isRegistered, registrationStatus]);
 
   return (
     <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <div className="relative">
           <ProjectCardImage src={image_url} alt={title} />
-          {!is_visible && (
-            <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
-              <EyeOff className="w-4 h-4" />
-              مخفي
-            </div>
-          )}
+          <ProjectCardVisibility isVisible={is_visible} />
         </div>
-        <CardHeader className="p-4">
-          <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
-        </CardHeader>
+        
+        <ProjectCardHeader title={title} />
+        
         <CardContent>
           <ProjectCardContent
             startDate={start_date}
@@ -191,16 +112,10 @@ export const ProjectCard = ({
             eventPath={event_path}
             eventCategory={event_category}
           />
-          <div className={`${registrationStatus.color} text-white px-2 py-1 rounded-md text-sm flex items-center gap-1 mt-2`}>
-            <registrationStatus.icon className="w-4 h-4" />
-            {registrationStatus.label}
-          </div>
+          <ProjectCardStatus status={registrationStatus} />
         </CardContent>
-        <CardFooter className="p-4 pt-0">
-          <Button asChild className="w-full" size="sm">
-            <Link to={`/projects/${id}`}>عرض التفاصيل</Link>
-          </Button>
-        </CardFooter>
+
+        <ProjectCardFooter projectId={id} />
       </Card>
     </div>
   );
