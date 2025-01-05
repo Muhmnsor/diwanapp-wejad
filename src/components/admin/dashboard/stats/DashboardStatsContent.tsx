@@ -54,17 +54,6 @@ export const DashboardStatsContent = ({
     isEvent
   });
 
-  if (isEvent) {
-    return (
-      <EventStatsContent
-        registrationCount={registrationCount}
-        remainingSeats={remainingSeats}
-        occupancyRate={occupancyRate}
-        project={project}
-      />
-    );
-  }
-
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <RegistrationStatsCard
