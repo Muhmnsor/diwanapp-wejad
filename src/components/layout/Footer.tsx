@@ -4,7 +4,7 @@ import { Instagram, Linkedin, X } from "lucide-react";
 export const Footer = () => {
   return (
     <footer className="mt-auto py-8 border-t border-[#C8C8C9] dark:border-[#2A2F3C]">
-      <div className="container mx-auto px-4">
+      <div dir="rtl" className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Left Side - Logo and Social Links */}
           <div className="order-last md:order-last flex flex-col items-center justify-between">
@@ -37,7 +37,7 @@ export const Footer = () => {
           </div>
           
           {/* Right Side - Content */}
-          <div className="flex flex-col space-y-8 items-start" dir="rtl">
+          <div className="flex flex-col space-y-8 items-start">
             {/* Text Content */}
             <div className="text-right">
               <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
