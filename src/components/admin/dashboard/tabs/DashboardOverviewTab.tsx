@@ -4,12 +4,19 @@ interface DashboardOverviewTabProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  event: {
-    start_date: string;
-    end_date: string;
+  event?: {
+    id: string;
+    start_date?: string;
+    end_date?: string;
     event_path?: string;
     event_category?: string;
+  };
+  project?: {
     id: string;
+    start_date: string;
+    end_date: string;
+    event_path: string;
+    event_category: string;
   };
   activities?: {
     total: number;
@@ -23,6 +30,7 @@ export const DashboardOverviewTab = ({
   remainingSeats,
   occupancyRate,
   event,
+  project,
   activities
 }: DashboardOverviewTabProps) => {
   console.log("DashboardOverviewTab props:", {
@@ -30,21 +38,30 @@ export const DashboardOverviewTab = ({
     remainingSeats,
     occupancyRate,
     event,
+    project,
     activities
   });
+
+  // Convert project data to event format if needed
+  const eventData = event || (project ? {
+    id: project.id,
+    start_date: project.start_date,
+    end_date: project.end_date,
+    event_path: project.event_path,
+    event_category: project.event_category
+  } : undefined);
+
+  if (!eventData) {
+    console.error("Neither event nor project data provided");
+    return null;
+  }
 
   return (
     <DashboardOverview
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      event={{
-        id: event.id,
-        start_date: event.start_date,
-        end_date: event.end_date,
-        event_path: event.event_path || '',
-        event_category: event.event_category || ''
-      }}
+      event={eventData}
       activities={activities}
     />
   );
