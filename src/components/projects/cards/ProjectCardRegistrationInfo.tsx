@@ -23,9 +23,13 @@ export const ProjectCardRegistrationInfo = ({
   const { data: registrations = {} } = useRegistrations();
   
   const isRegistered = isAuthenticated && registrations[id];
-  const currentRegistrations = Object.values(registrations).filter(reg => 
-    reg && typeof reg === 'object' && 'project_id' in reg && reg.project_id === id
-  ).length;
+  const currentRegistrations = Object.values(registrations)
+    .filter(reg => 
+      reg && 
+      typeof reg === 'object' && 
+      'project_id' in reg && 
+      reg.project_id === id
+    ).length;
   
   const registrationStatus = getRegistrationStatus(
     startDate,
