@@ -4,27 +4,9 @@ import { DashboardData } from "@/types/dashboard";
 
 interface DashboardStatsProps {
   data: DashboardData;
-  isLoading?: boolean;
-  error?: Error | null;
 }
 
-export const DashboardStats = ({ data, isLoading, error }: DashboardStatsProps) => {
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8 text-red-500">
-        حدث خطأ في تحميل البيانات
-      </div>
-    );
-  }
-
+export const DashboardStats = ({ data }: DashboardStatsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card>
@@ -101,32 +83,6 @@ export const DashboardStats = ({ data, isLoading, error }: DashboardStatsProps) 
           <div className="text-lg font-bold">{data.highestRatedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
             {data.highestRatedEvent.rating} من 5
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أعلى حدث حضوراً</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-lg font-bold">{data.mostAttendedEvent.title}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {data.mostAttendedEvent.attendance} حاضر
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أقل حدث حضوراً</CardTitle>
-          <TrendingDown className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-lg font-bold">{data.leastAttendedEvent.title}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {data.leastAttendedEvent.attendance} حاضر
           </div>
         </CardContent>
       </Card>
