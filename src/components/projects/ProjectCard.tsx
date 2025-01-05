@@ -1,14 +1,12 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { useEffect } from "react";
 import { ProjectCardContent } from "./cards/ProjectCardContent";
-import { ProjectCardImage } from "./cards/ProjectCardImage";
-import { useRegistrations } from "@/hooks/useRegistrations";
-import { useAuthStore } from "@/store/authStore";
 import { ProjectCardStatus } from "./cards/ProjectCardStatus";
-import { ProjectCardVisibility } from "./cards/ProjectCardVisibility";
 import { ProjectCardHeader } from "./cards/ProjectCardHeader";
 import { ProjectCardFooter } from "./cards/ProjectCardFooter";
-import { getRegistrationStatus } from "./utils/registrationStatus";
+import { ProjectCardWrapper } from "./cards/ProjectCardWrapper";
+import { ProjectCardImageSection } from "./cards/ProjectCardImageSection";
+import { ProjectCardRegistrationInfo } from "./cards/ProjectCardRegistrationInfo";
 
 interface ProjectCardProps {
   id: string;
@@ -48,23 +46,14 @@ export const ProjectCard = ({
   is_visible = true,
   className = ""
 }: ProjectCardProps) => {
-  const { isAuthenticated } = useAuthStore();
-  const { data: registrations = {} } = useRegistrations();
-  
-  const isRegistered = isAuthenticated && registrations[id];
-  const currentRegistrations = Object.values(registrations).filter(reg => 
-    typeof reg === 'object' && 'project_id' in reg && reg.project_id === id
-  ).length;
-  
-  const registrationStatus = getRegistrationStatus(
-    start_date,
-    end_date,
-    registration_start_date,
-    registration_end_date,
-    max_attendees,
-    currentRegistrations,
-    Boolean(isRegistered)
-  );
+  const { registrationStatus } = ProjectCardRegistrationInfo({
+    id,
+    startDate: start_date,
+    endDate: end_date,
+    registrationStartDate: registration_start_date,
+    registrationEndDate: registration_end_date,
+    maxAttendees: max_attendees,
+  });
 
   useEffect(() => {
     console.log('ProjectCard data:', {
@@ -85,40 +74,38 @@ export const ProjectCard = ({
       eventPath: event_path,
       eventCategory: event_category,
       isVisible: is_visible,
-      isRegistered,
       registrationStatus: registrationStatus.status
     });
   }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, 
       registration_end_date, beneficiary_type, event_path, event_category, is_visible, 
-      isRegistered, registrationStatus]);
+      registrationStatus]);
 
   return (
-    <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
-        <div className="relative">
-          <ProjectCardImage src={image_url} alt={title} />
-          <ProjectCardVisibility isVisible={is_visible} />
-        </div>
-        
-        <ProjectCardHeader title={title} />
-        
-        <CardContent>
-          <ProjectCardContent
-            startDate={start_date}
-            endDate={end_date}
-            eventType={event_type}
-            price={price}
-            beneficiaryType={beneficiary_type}
-            certificateType={certificate_type}
-            maxAttendees={max_attendees}
-            eventPath={event_path}
-            eventCategory={event_category}
-          />
-          <ProjectCardStatus status={registrationStatus} />
-        </CardContent>
+    <ProjectCardWrapper className={className}>
+      <ProjectCardImageSection
+        imageUrl={image_url}
+        title={title}
+        isVisible={is_visible}
+      />
+      
+      <ProjectCardHeader title={title} />
+      
+      <CardContent>
+        <ProjectCardContent
+          startDate={start_date}
+          endDate={end_date}
+          eventType={event_type}
+          price={price}
+          beneficiaryType={beneficiary_type}
+          certificateType={certificate_type}
+          maxAttendees={max_attendees}
+          eventPath={event_path}
+          eventCategory={event_category}
+        />
+        <ProjectCardStatus status={registrationStatus} />
+      </CardContent>
 
-        <ProjectCardFooter projectId={id} />
-      </Card>
-    </div>
+      <ProjectCardFooter projectId={id} />
+    </ProjectCardWrapper>
   );
 };
