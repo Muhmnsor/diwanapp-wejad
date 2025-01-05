@@ -1,37 +1,51 @@
-import { DashboardStats } from "@/components/admin/DashboardStats";
-import { RegistrantsTable } from "@/components/admin/dashboard/RegistrantsTable";
-import { useRegistrantsStats } from "@/hooks/useRegistrantsStats";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
 
 interface DashboardOverviewTabProps {
-  eventId: string;
-  isEvent?: boolean;
+  registrationCount: number;
+  remainingSeats: number;
+  occupancyRate: number;
+  project: {
+    start_date: string;
+    end_date: string;
+    event_path?: string;
+    event_category?: string;
+    id: string;
+  };
+  activities?: {
+    total: number;
+    completed: number;
+    averageAttendance: number;
+  };
 }
 
 export const DashboardOverviewTab = ({
-  eventId,
-  isEvent = false
+  registrationCount,
+  remainingSeats,
+  occupancyRate,
+  project,
+  activities
 }: DashboardOverviewTabProps) => {
-  console.log('DashboardOverviewTab - Rendering with:', { eventId, isEvent });
-
-  const { registrantsStats, isLoading } = useRegistrantsStats(eventId);
+  console.log("DashboardOverviewTab props:", {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    project,
+    activities
+  });
 
   return (
-    <div className="space-y-8" dir="rtl">
-      <DashboardStats
-        registrationCount={registrantsStats.length}
-        remainingSeats={0} // Replace with actual logic if needed
-        occupancyRate={0} // Replace with actual logic if needed
-        project={{ id: eventId }} // Replace with actual project data if needed
-        activities={[]} // Replace with actual activities data if needed
-        isEvent={isEvent}
-      />
-
-      {!isEvent && (
-        <RegistrantsTable 
-          registrantsStats={registrantsStats}
-          isLoading={isLoading}
-        />
-      )}
-    </div>
+    <DashboardOverview
+      registrationCount={registrationCount}
+      remainingSeats={remainingSeats}
+      occupancyRate={occupancyRate}
+      project={{
+        id: project.id,
+        start_date: project.start_date,
+        end_date: project.end_date,
+        event_path: project.event_path || '',
+        event_category: project.event_category || ''
+      }}
+      activities={activities}
+    />
   );
 };
