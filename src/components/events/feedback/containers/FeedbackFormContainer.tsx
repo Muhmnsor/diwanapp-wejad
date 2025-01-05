@@ -1,60 +1,58 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { EventFeedbackForm } from "../EventFeedbackForm";
+import { toast } from "sonner";
 
-export const FeedbackFormContainer = () => {
+interface FeedbackFormContainerProps {
+  eventId: string;
+}
+
+export const FeedbackFormContainer = ({ eventId }: FeedbackFormContainerProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [overallRating, setOverallRating] = useState<number | null>(null);
-  const [contentRating, setContentRating] = useState<number | null>(null);
-  const [organizationRating, setOrganizationRating] = useState<number | null>(null);
-  const [presenterRating, setPresenterRating] = useState<number | null>(null);
+  const navigate = useNavigate();
+  console.log('FeedbackFormContainer - Initializing with eventId:', eventId);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: any) => {
+    console.log('Submitting feedback for event:', eventId, formData);
     setIsSubmitting(true);
 
     try {
-      const { pathname } = window.location;
-      const activityId = pathname.split('/')[2];
+      const { error } = await supabase
+        .from('event_feedback')
+        .insert([
+          {
+            event_id: eventId,
+            overall_rating: formData.overallRating,
+            content_rating: formData.contentRating,
+            organization_rating: formData.organizationRating,
+            presenter_rating: formData.presenterRating,
+            feedback_text: formData.feedbackText,
+            name: formData.name,
+            phone: formData.phone,
+          }
+        ]);
 
-      const { error } = await supabase.from('event_feedback').insert({
-        event_id: activityId,
-        overall_rating: overallRating,
-        content_rating: contentRating,
-        organization_rating: organizationRating,
-        presenter_rating: presenterRating,
-      });
-
-      if (error) throw error;
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        toast.error('حدث خطأ في إرسال التقييم');
+        return;
+      }
 
       toast.success('تم إرسال التقييم بنجاح');
-      
-      // Reset form after successful submission
-      setOverallRating(null);
-      setContentRating(null);
-      setOrganizationRating(null);
-      setPresenterRating(null);
+      navigate(`/events/${eventId}`);
     } catch (error) {
-      console.error('Error submitting feedback:', error);
-      toast.error('حدث خطأ أثناء إرسال التقييم');
+      console.error('Error in feedback submission:', error);
+      toast.error('حدث خطأ في إرسال التقييم');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <EventFeedbackForm
-      isSubmitting={isSubmitting}
-      overallRating={overallRating}
-      contentRating={contentRating}
-      organizationRating={organizationRating}
-      presenterRating={presenterRating}
-      onOverallRatingChange={setOverallRating}
-      onContentRatingChange={setContentRating}
-      onOrganizationRatingChange={setOrganizationRating}
-      onPresenterRatingChange={setPresenterRating}
+    <EventFeedbackForm 
       onSubmit={handleSubmit}
+      isSubmitting={isSubmitting}
     />
   );
 };
