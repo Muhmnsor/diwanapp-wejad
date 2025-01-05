@@ -4,12 +4,3 @@ export interface AttendanceStats {
   absent: number;
   notRecorded: number;
 }
-
-export interface AttendanceRecord {
-  id: string;
-  registration_id: string;
-  event_id?: string;
-  activity_id?: string;
-  status: 'present' | 'absent';
-  check_in_time?: string;
-}
