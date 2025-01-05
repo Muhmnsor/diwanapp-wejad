@@ -76,7 +76,7 @@ export const DashboardStatsContent = ({
         occupancyRate={occupancyRate}
       />
       
-      <PathCategoryCard eventId={event.id} />
+      <PathCategoryCard projectId={event.id} />
 
       <ActivitiesStatsCard
         activities={{
