@@ -1,51 +1,40 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EventFeedbackForm } from "../EventFeedbackForm";
 
-interface FeedbackFormContainerProps {
-  eventId?: string;
-}
-
-export const FeedbackFormContainer = ({ eventId }: FeedbackFormContainerProps) => {
+export const FeedbackFormContainer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const effectiveEventId = eventId || id;
+  const [overallRating, setOverallRating] = useState<number | null>(null);
+  const [contentRating, setContentRating] = useState<number | null>(null);
+  const [organizationRating, setOrganizationRating] = useState<number | null>(null);
+  const [presenterRating, setPresenterRating] = useState<number | null>(null);
 
-  console.log('FeedbackFormContainer - Event ID:', effectiveEventId);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  if (!effectiveEventId) {
-    return <div className="text-center">معرف الفعالية غير متوفر</div>;
-  }
-
-  const handleSubmit = async (formData: {
-    overallRating: number | null;
-    contentRating: number | null;
-    organizationRating: number | null;
-    presenterRating: number | null;
-  }) => {
     try {
-      setIsSubmitting(true);
-      console.log('Submitting feedback for event:', effectiveEventId, formData);
+      const { pathname } = window.location;
+      const activityId = pathname.split('/')[2];
 
-      const { error } = await supabase
-        .from('event_feedback')
-        .insert([
-          {
-            event_id: effectiveEventId,
-            overall_rating: formData.overallRating,
-            content_rating: formData.contentRating,
-            organization_rating: formData.organizationRating,
-            presenter_rating: formData.presenterRating
-          }
-        ]);
+      const { error } = await supabase.from('event_feedback').insert({
+        event_id: activityId,
+        overall_rating: overallRating,
+        content_rating: contentRating,
+        organization_rating: organizationRating,
+        presenter_rating: presenterRating,
+      });
 
       if (error) throw error;
 
       toast.success('تم إرسال التقييم بنجاح');
-      navigate(`/events/${effectiveEventId}`);
+      
+      // Reset form after successful submission
+      setOverallRating(null);
+      setContentRating(null);
+      setOrganizationRating(null);
+      setPresenterRating(null);
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error('حدث خطأ أثناء إرسال التقييم');
@@ -55,9 +44,17 @@ export const FeedbackFormContainer = ({ eventId }: FeedbackFormContainerProps) =
   };
 
   return (
-    <EventFeedbackForm 
-      onSubmit={handleSubmit}
+    <EventFeedbackForm
       isSubmitting={isSubmitting}
+      overallRating={overallRating}
+      contentRating={contentRating}
+      organizationRating={organizationRating}
+      presenterRating={presenterRating}
+      onOverallRatingChange={setOverallRating}
+      onContentRatingChange={setContentRating}
+      onOrganizationRatingChange={setOrganizationRating}
+      onPresenterRatingChange={setPresenterRating}
+      onSubmit={handleSubmit}
     />
   );
 };

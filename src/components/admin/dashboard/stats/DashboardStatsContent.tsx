@@ -1,5 +1,9 @@
-import { EventStatsContent } from "./EventStatsContent";
-import { ProjectStatsContent } from "./ProjectStatsContent";
+import { RegistrationStatsCard } from "./RegistrationStatsCard";
+import { PathCategoryCard } from "./PathCategoryCard";
+import { ActivitiesStatsCard } from "./ActivitiesStatsCard";
+import { AttendanceAverageCard } from "./AttendanceAverageCard";
+import { ActivityAttendanceCard } from "./ActivityAttendanceCard";
+import { ActivityRatingCard } from "./ActivityRatingCard";
 
 interface DashboardStatsContentProps {
   registrationCount: number;
@@ -47,7 +51,6 @@ interface DashboardStatsContentProps {
       ratingsCount: number;
     } | null;
   };
-  isEvent?: boolean;
 }
 
 export const DashboardStatsContent = ({
@@ -55,36 +58,60 @@ export const DashboardStatsContent = ({
   remainingSeats,
   occupancyRate,
   project,
-  activities,
-  isEvent = false
+  activities
 }: DashboardStatsContentProps) => {
   console.log("DashboardStatsContent props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
     project,
-    activities,
-    isEvent
+    activities
   });
 
-  if (isEvent) {
-    return (
-      <EventStatsContent
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <RegistrationStatsCard
         registrationCount={registrationCount}
         remainingSeats={remainingSeats}
         occupancyRate={occupancyRate}
-        project={project}
       />
-    );
-  }
+      
+      <PathCategoryCard projectId={project.id} />
 
-  return (
-    <ProjectStatsContent
-      registrationCount={registrationCount}
-      remainingSeats={remainingSeats}
-      occupancyRate={occupancyRate}
-      project={project}
-      activities={activities}
-    />
+      <ActivitiesStatsCard
+        activities={{
+          total: activities?.total || 0,
+          completed: activities?.completed || 0
+        }}
+      />
+      
+      <AttendanceAverageCard
+        averageAttendance={activities?.averageAttendance || 0}
+      />
+      
+      <ActivityAttendanceCard
+        type="highest"
+        title="أعلى نسبة حضور"
+        activity={activities?.highestAttendance}
+      />
+      
+      <ActivityAttendanceCard
+        type="lowest"
+        title="أقل نسبة حضور"
+        activity={activities?.lowestAttendance}
+      />
+      
+      <ActivityRatingCard
+        type="highest"
+        title="أعلى نشاط تقييماً"
+        activity={activities?.highestRated}
+      />
+      
+      <ActivityRatingCard
+        type="lowest"
+        title="أقل نشاط تقييماً"
+        activity={activities?.lowestRated}
+      />
+    </div>
   );
 };

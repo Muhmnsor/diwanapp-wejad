@@ -86,7 +86,6 @@ export const DashboardStats = ({
       occupancyRate={occupancyRate}
       project={transformedProject}
       activities={activities}
-      isEvent={isEvent}
     />
   );
 };

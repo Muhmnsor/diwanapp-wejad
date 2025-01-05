@@ -8,20 +8,15 @@ interface EventTypeFieldsProps {
 }
 
 export const EventTypeFields = ({ formData, setFormData }: EventTypeFieldsProps) => {
-  console.log('EventTypeFields formData:', formData);
-  
   return (
     <>
       <div>
         <label className="text-sm font-medium block mb-1.5">نوع الفعالية</label>
         <Select
-          value={formData.event_type}
+          value={formData.eventType}
           onValueChange={(value: "online" | "in-person") => 
-            setFormData({ 
-              ...formData, 
-              event_type: value,
-              eventType: value // Keep both fields in sync
-            })}
+            setFormData({ ...formData, eventType: value })
+          }
         >
           <SelectTrigger className="text-right">
             <SelectValue placeholder="اختر نوع الفعالية" />
@@ -35,13 +30,10 @@ export const EventTypeFields = ({ formData, setFormData }: EventTypeFieldsProps)
       <div>
         <label className="text-sm font-medium block mb-1.5">نوع المستفيدين</label>
         <Select
-          value={formData.beneficiary_type}
+          value={formData.beneficiaryType}
           onValueChange={(value: BeneficiaryType) => 
-            setFormData({ 
-              ...formData, 
-              beneficiary_type: value,
-              beneficiaryType: value // Keep both fields in sync
-            })}
+            setFormData({ ...formData, beneficiaryType: value })
+          }
         >
           <SelectTrigger className="text-right">
             <SelectValue placeholder="اختر نوع المستفيدين" />
