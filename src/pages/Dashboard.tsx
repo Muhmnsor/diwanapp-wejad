@@ -2,7 +2,7 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
-export const Dashboard = () => {
+const Dashboard = () => {
   const { data, isLoading, error } = useDashboardData();
 
   console.log("Dashboard data:", { data, isLoading, error });
@@ -15,3 +15,5 @@ export const Dashboard = () => {
     </div>
   );
 };
+
+export default Dashboard;
