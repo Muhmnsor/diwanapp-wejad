@@ -23,13 +23,19 @@ export const ProjectCardRegistrationInfo = ({
   const { data: registrations = {} } = useRegistrations();
   
   const isRegistered = isAuthenticated && registrations[id];
+
+  // Type guard to ensure registration has project_id
+  const isValidRegistration = (reg: any): reg is { project_id: string } => {
+    return reg !== null && 
+           typeof reg === 'object' && 
+           'project_id' in reg && 
+           typeof reg.project_id === 'string' &&
+           reg.project_id === id;
+  };
+  
   const currentRegistrations = Object.values(registrations)
-    .filter((reg): reg is { project_id: string } => 
-      reg !== null && 
-      typeof reg === 'object' && 
-      'project_id' in reg && 
-      reg.project_id === id
-    ).length;
+    .filter(isValidRegistration)
+    .length;
   
   const registrationStatus = getRegistrationStatus(
     startDate,
