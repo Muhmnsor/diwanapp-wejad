@@ -76,6 +76,6 @@ export const EventDashboard = ({ eventId }: EventDashboardProps) => {
   return isProject ? (
     <ProjectDashboardTabs project={data} />
   ) : (
-    <DashboardTabs event={data} />
+    <DashboardTabs eventId={eventId} isEvent={true} />
   );
 };
