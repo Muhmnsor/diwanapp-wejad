@@ -17,7 +17,7 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{data.totalEvents}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.upcomingEvents} فعالية قادمة | {data.pastEvents} فعالية سابقة
+            {data.upcomingEvents} حدث قادم | {data.pastEvents} حدث سابق
           </div>
         </CardContent>
       </Card>
@@ -30,7 +30,7 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{data.totalRegistrations}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            معدل {(data.totalRegistrations / data.totalEvents).toFixed(1)} لكل فعالية
+            معدل {(data.totalRegistrations / data.totalEvents).toFixed(1)} لكل حدث
           </div>
         </CardContent>
       </Card>
@@ -47,7 +47,7 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أعلى فعالية تسجيلاً</CardTitle>
+          <CardTitle className="text-sm font-medium">أعلى حدث تسجيلاً</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -60,7 +60,7 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أقل فعالية تسجيلاً</CardTitle>
+          <CardTitle className="text-sm font-medium">أقل حدث تسجيلاً</CardTitle>
           <TrendingDown className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -73,7 +73,7 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أعلى فعالية تقييماً</CardTitle>
+          <CardTitle className="text-sm font-medium">أعلى حدث تقييماً</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
