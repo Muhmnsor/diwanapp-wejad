@@ -27,10 +27,10 @@ export const EventDashboardTabs = ({ event }: EventDashboardTabsProps) => {
 
   const eventData = {
     id: event.id,
-    event_path: event.event_path,
-    event_category: event.event_category,
     start_date: event.date,
-    end_date: event.date
+    end_date: event.date,
+    event_path: event.event_path,
+    event_category: event.event_category
   };
 
   return (

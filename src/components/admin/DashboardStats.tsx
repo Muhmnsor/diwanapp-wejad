@@ -74,10 +74,11 @@ export const DashboardStats = ({
   // Transform project data based on whether it's an event or project
   const transformedProject = {
     id: project.id,
+    start_date: isEvent ? project.date || '' : project.start_date || '',
+    end_date: isEvent ? project.date || '' : project.end_date || '',
     event_path: project.event_path,
     event_category: project.event_category,
-    date: isEvent ? project.date : undefined,
-    averageRating: isEvent ? project.averageRating : undefined
+    averageRating: project.averageRating
   };
 
   return isEvent ? (

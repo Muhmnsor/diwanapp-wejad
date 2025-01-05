@@ -73,9 +73,10 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
   const projectData = {
     id: event.id,
+    start_date: event.start_date,
+    end_date: event.end_date,
     event_path: event.event_path,
     event_category: event.event_category,
-    date: event.date,
     averageRating: eventStats?.averageRating
   };
 
