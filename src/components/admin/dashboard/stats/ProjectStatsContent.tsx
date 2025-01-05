@@ -1,7 +1,10 @@
-import { EventStatsContent } from "./EventStatsContent";
-import { ProjectStatsContent } from "./ProjectStatsContent";
+import { RegistrationStatsCard } from "./RegistrationStatsCard";
+import { ActivitiesStatsCard } from "./ActivitiesStatsCard";
+import { ActivityAttendanceCard } from "./ActivityAttendanceCard";
+import { ActivityRatingCard } from "./ActivityRatingCard";
+import { PathCategoryCard } from "./PathCategoryCard";
 
-interface DashboardStatsContentProps {
+interface ProjectStatsContentProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
@@ -9,8 +12,6 @@ interface DashboardStatsContentProps {
     id: string;
     event_path: string;
     event_category: string;
-    date?: string;
-    averageRating?: number;
   };
   activities?: {
     total: number;
@@ -47,44 +48,52 @@ interface DashboardStatsContentProps {
       ratingsCount: number;
     } | null;
   };
-  isEvent?: boolean;
 }
 
-export const DashboardStatsContent = ({
+export const ProjectStatsContent = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
   project,
-  activities,
-  isEvent = false
-}: DashboardStatsContentProps) => {
-  console.log("DashboardStatsContent props:", {
+  activities
+}: ProjectStatsContentProps) => {
+  console.log("ProjectStatsContent props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
     project,
-    activities,
-    isEvent
+    activities
   });
 
-  if (isEvent) {
-    return (
-      <EventStatsContent
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <RegistrationStatsCard
         registrationCount={registrationCount}
         remainingSeats={remainingSeats}
         occupancyRate={occupancyRate}
-        project={project}
       />
-    );
-  }
-
-  return (
-    <ProjectStatsContent
-      registrationCount={registrationCount}
-      remainingSeats={remainingSeats}
-      occupancyRate={occupancyRate}
-      project={project}
-      activities={activities}
-    />
+      
+      <PathCategoryCard projectId={project.id} />
+      
+      {activities && (
+        <>
+          <ActivitiesStatsCard
+            total={activities.total}
+            completed={activities.completed}
+            averageAttendance={activities.averageAttendance}
+          />
+          
+          <ActivityAttendanceCard
+            highestAttendance={activities.highestAttendance}
+            lowestAttendance={activities.lowestAttendance}
+          />
+          
+          <ActivityRatingCard
+            highestRated={activities.highestRated}
+            lowestRated={activities.lowestRated}
+          />
+        </>
+      )}
+    </div>
   );
 };
