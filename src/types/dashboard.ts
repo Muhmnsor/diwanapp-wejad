@@ -31,4 +31,5 @@ export interface DashboardData {
   eventsByBeneficiary: ChartData[];
   eventsByBeneficiaryType: ChartData[];
   eventsByPrice: ChartData[];
+  eventsByMonth: ChartData[];
 }

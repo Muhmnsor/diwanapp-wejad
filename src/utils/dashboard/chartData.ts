@@ -5,6 +5,7 @@ export const calculateChartData = (allEvents: any[]): {
   eventsByBeneficiary: ChartData[];
   eventsByBeneficiaryType: ChartData[];
   eventsByPrice: ChartData[];
+  eventsByMonth: ChartData[];
 } => {
   const eventsByType: ChartData[] = Object.entries(
     allEvents.reduce((acc: Record<string, number>, event) => {
@@ -46,10 +47,24 @@ export const calculateChartData = (allEvents: any[]): {
     }, {})
   ).map(([name, value]) => ({ name, value: Number(value) }));
 
+  const arabicMonths = [
+    'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+  ];
+
+  const eventsByMonth: ChartData[] = arabicMonths.map((month, index) => ({
+    name: month,
+    value: allEvents.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate.getMonth() === index;
+    }).length
+  }));
+
   return {
     eventsByType,
     eventsByBeneficiary,
     eventsByBeneficiaryType,
-    eventsByPrice
+    eventsByPrice,
+    eventsByMonth
   };
 };
