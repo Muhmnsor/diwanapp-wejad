@@ -8,10 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface EventFeedbackFormProps {
   eventId: string;
+  isSubmitting: boolean;
+  onSubmit: (formData: any) => Promise<void>;
 }
 
-export const EventFeedbackForm = ({ eventId }: EventFeedbackFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const EventFeedbackForm = ({
+  eventId,
+  isSubmitting,
+  onSubmit
+}: EventFeedbackFormProps) => {
   const [overallRating, setOverallRating] = useState<number | null>(null);
   const [contentRating, setContentRating] = useState<number | null>(null);
   const [organizationRating, setOrganizationRating] = useState<number | null>(null);
@@ -31,32 +36,18 @@ export const EventFeedbackForm = ({ eventId }: EventFeedbackFormProps) => {
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
-      const { error } = await supabase
-        .from('event_feedback')
-        .insert([
-          {
-            event_id: eventId,
-            overall_rating: overallRating,
-            content_rating: contentRating,
-            organization_rating: organizationRating,
-            presenter_rating: presenterRating,
-            feedback_text: feedbackText,
-            name: name || null,
-            phone: phone || null,
-          }
-        ]);
+      await onSubmit({
+        overallRating,
+        contentRating,
+        organizationRating,
+        presenterRating,
+        feedbackText,
+        name: name || null,
+        phone: phone || null,
+      });
 
-      if (error) {
-        console.error('Error submitting feedback:', error);
-        toast.error('حدث خطأ في إرسال التقييم');
-        return;
-      }
-
-      toast.success('تم إرسال التقييم بنجاح');
-      // Reset form
+      // Reset form after successful submission
       setOverallRating(null);
       setContentRating(null);
       setOrganizationRating(null);
@@ -67,8 +58,6 @@ export const EventFeedbackForm = ({ eventId }: EventFeedbackFormProps) => {
     } catch (error) {
       console.error('Error in feedback submission:', error);
       toast.error('حدث خطأ في إرسال التقييم');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

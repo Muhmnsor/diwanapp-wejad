@@ -51,8 +51,9 @@ export const FeedbackFormContainer = ({ eventId }: FeedbackFormContainerProps) =
 
   return (
     <EventFeedbackForm 
-      onSubmit={handleSubmit}
+      eventId={eventId}
       isSubmitting={isSubmitting}
+      onSubmit={handleSubmit}
     />
   );
 };
