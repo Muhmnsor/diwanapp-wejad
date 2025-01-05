@@ -21,24 +21,34 @@ interface DashboardStatsContentProps {
     completed: number;
     averageAttendance: number;
     highestAttendance?: {
+      eventId: string;
       title: string;
+      date: string;
+      count: number;
+      totalRegistrations: number;
       attendanceRate: number;
-      registrations: number;
     } | null;
     lowestAttendance?: {
+      eventId: string;
       title: string;
+      date: string;
+      count: number;
+      totalRegistrations: number;
       attendanceRate: number;
-      registrations: number;
     } | null;
     highestRated?: {
+      eventId: string;
       title: string;
-      rating: number;
-      registrations: number;
+      date: string;
+      averageRating: number;
+      ratingsCount: number;
     } | null;
     lowestRated?: {
+      eventId: string;
       title: string;
-      rating: number;
-      registrations: number;
+      date: string;
+      averageRating: number;
+      ratingsCount: number;
     } | null;
   };
 }

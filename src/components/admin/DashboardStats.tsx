@@ -19,6 +19,36 @@ interface DashboardStatsProps {
     total: number;
     completed: number;
     averageAttendance: number;
+    highestAttendance?: {
+      eventId: string;
+      title: string;
+      date: string;
+      count: number;
+      totalRegistrations: number;
+      attendanceRate: number;
+    } | null;
+    lowestAttendance?: {
+      eventId: string;
+      title: string;
+      date: string;
+      count: number;
+      totalRegistrations: number;
+      attendanceRate: number;
+    } | null;
+    highestRated?: {
+      eventId: string;
+      title: string;
+      date: string;
+      averageRating: number;
+      ratingsCount: number;
+    } | null;
+    lowestRated?: {
+      eventId: string;
+      title: string;
+      date: string;
+      averageRating: number;
+      ratingsCount: number;
+    } | null;
   };
   isEvent?: boolean;
 }
@@ -40,16 +70,6 @@ export const DashboardStats = ({
     isEvent
   });
 
-  const { data: attendanceStats } = useAttendanceStatsQuery({
-    projectId: project.id,
-    isEvent
-  });
-
-  const { data: ratingStats } = useRatingStatsQuery({
-    projectId: project.id,
-    isEvent
-  });
-
   // Transform project data based on whether it's an event or project
   const transformedProject = {
     id: project.id,
@@ -66,9 +86,6 @@ export const DashboardStats = ({
       occupancyRate={occupancyRate}
       project={transformedProject}
       activities={activities}
-      attendanceStats={attendanceStats}
-      ratingStats={ratingStats}
-      isEvent={isEvent}
     />
   );
 };
