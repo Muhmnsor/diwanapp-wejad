@@ -17,6 +17,9 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{data.totalEvents}</div>
           <div className="text-xs text-muted-foreground mt-1">
+            {data.projectsCount} مشروع | {data.eventsCount} فعالية
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
             {data.upcomingEvents} حدث قادم | {data.pastEvents} حدث سابق
           </div>
         </CardContent>

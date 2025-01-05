@@ -51,6 +51,8 @@ export const useDashboardData = () => {
         }))
       ];
 
+      console.log("Total number of events:", events.length);
+      console.log("Total number of projects:", projects.length);
       console.log("Combined events and projects:", allEvents);
 
       const now = new Date();
@@ -121,20 +123,10 @@ export const useDashboardData = () => {
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
 
-      console.log("Dashboard stats calculated:", {
-        totalEvents: allEvents.length,
-        upcomingEvents: upcomingEvents.length,
-        pastEvents: pastEvents.length,
-        totalRegistrations,
-        totalRevenue,
-        eventsByType,
-        eventsByBeneficiary,
-        eventsByBeneficiaryType,
-        eventsByPrice
-      });
-
       return {
         totalEvents: allEvents.length,
+        eventsCount: events.length,
+        projectsCount: projects.length,
         upcomingEvents: upcomingEvents.length,
         pastEvents: pastEvents.length,
         totalRegistrations,

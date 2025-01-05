@@ -11,6 +11,8 @@ export interface ChartData {
 
 export interface DashboardData {
   totalEvents: number;
+  eventsCount: number;
+  projectsCount: number;
   upcomingEvents: number;
   pastEvents: number;
   totalRegistrations: number;
