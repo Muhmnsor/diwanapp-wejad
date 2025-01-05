@@ -50,39 +50,51 @@ export const CertificateTemplateFields = ({
     type: 'free' 
   });
 
+  console.log('CertificateTemplateFields render:', { fields, fieldMappings, newField });
+
   const handleAddField = () => {
-    if (!newField.key.trim()) {
-      toast.error("الرجاء إدخال اسم الحقل");
-      return;
+    try {
+      if (!newField.key.trim()) {
+        toast.error("الرجاء إدخال اسم الحقل");
+        return;
+      }
+
+      if (fields[newField.key]) {
+        toast.error("هذا الحقل موجود مسبقاً");
+        return;
+      }
+
+      const updatedFields = { ...fields };
+      const updatedMappings = { ...fieldMappings };
+
+      if (newField.type === 'mapped' && newField.mapping) {
+        updatedFields[newField.key] = `{${newField.mapping}}`;
+        updatedMappings[newField.key] = newField.mapping;
+      } else {
+        updatedFields[newField.key] = newField.value;
+      }
+
+      onChange(updatedFields, updatedMappings);
+      setNewField({ key: '', value: '', type: 'free' });
+      toast.success("تم إضافة الحقل بنجاح");
+    } catch (error) {
+      console.error('Error adding field:', error);
+      toast.error("حدث خطأ أثناء إضافة الحقل");
     }
-
-    if (fields[newField.key]) {
-      toast.error("هذا الحقل موجود مسبقاً");
-      return;
-    }
-
-    const updatedFields = { ...fields };
-    const updatedMappings = { ...fieldMappings };
-
-    if (newField.type === 'mapped' && newField.mapping) {
-      updatedFields[newField.key] = `{${newField.mapping}}`;
-      updatedMappings[newField.key] = newField.mapping;
-    } else {
-      updatedFields[newField.key] = newField.value;
-    }
-
-    onChange(updatedFields, updatedMappings);
-    setNewField({ key: '', value: '', type: 'free' });
-    toast.success("تم إضافة الحقل بنجاح");
   };
 
   const handleRemoveField = (key: string) => {
-    const updatedFields = { ...fields };
-    const updatedMappings = { ...fieldMappings };
-    delete updatedFields[key];
-    delete updatedMappings[key];
-    onChange(updatedFields, updatedMappings);
-    toast.success("تم حذف الحقل بنجاح");
+    try {
+      const updatedFields = { ...fields };
+      const updatedMappings = { ...fieldMappings };
+      delete updatedFields[key];
+      delete updatedMappings[key];
+      onChange(updatedFields, updatedMappings);
+      toast.success("تم حذف الحقل بنجاح");
+    } catch (error) {
+      console.error('Error removing field:', error);
+      toast.error("حدث خطأ أثناء حذف الحقل");
+    }
   };
 
   return (
