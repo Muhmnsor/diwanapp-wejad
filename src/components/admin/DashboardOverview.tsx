@@ -6,7 +6,7 @@ interface DashboardOverviewProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  project: {
+  event: {
     id: string;
     start_date: string;
     end_date: string;
@@ -25,7 +25,7 @@ export const DashboardOverview = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project,
+  event,
   activities,
   isEvent = false
 }: DashboardOverviewProps) => {
@@ -33,12 +33,12 @@ export const DashboardOverview = ({
     registrationCount,
     remainingSeats,
     occupancyRate,
-    project,
+    event,
     activities,
     isEvent
   });
 
-  const { registrantsStats, isLoading } = useRegistrantsStats(project?.id);
+  const { registrantsStats, isLoading } = useRegistrantsStats(event?.id);
 
   return (
     <div className="space-y-8" dir="rtl">
@@ -46,7 +46,7 @@ export const DashboardOverview = ({
         registrationCount={registrationCount}
         remainingSeats={remainingSeats}
         occupancyRate={occupancyRate}
-        project={project}
+        event={event}
         activities={activities}
         isEvent={isEvent}
       />

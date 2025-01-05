@@ -8,7 +8,7 @@ interface EventStatsContentProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  project: {
+  event: {
     id: string;
     start_date: string;
     end_date: string;
@@ -22,9 +22,9 @@ export const EventStatsContent = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project
+  event
 }: EventStatsContentProps) => {
-  console.log("EventStatsContent props:", { project });
+  console.log("EventStatsContent props:", { event });
 
   const getArabicPath = (path: string) => {
     const pathMap: Record<string, string> = {
@@ -94,9 +94,9 @@ export const EventStatsContent = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{getArabicPath(project.event_path)}</div>
+          <div className="text-2xl font-bold">{getArabicPath(event.event_path)}</div>
           <p className="text-xs text-muted-foreground">
-            {getArabicCategory(project.event_category)}
+            {getArabicCategory(event.event_category)}
           </p>
         </CardContent>
       </Card>
@@ -110,10 +110,10 @@ export const EventStatsContent = ({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {project.start_date ? formatDateWithDay(project.start_date) : 'لم يتم تحديد الموعد'}
+            {event.start_date ? formatDateWithDay(event.start_date) : 'لم يتم تحديد الموعد'}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {project.start_date ? getRemainingTime(project.start_date) : ''}
+            {event.start_date ? getRemainingTime(event.start_date) : ''}
           </p>
         </CardContent>
       </Card>
@@ -127,8 +127,8 @@ export const EventStatsContent = ({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {project.averageRating ? 
-              `${project.averageRating.toFixed(1)} / 5` : 
+            {event.averageRating ? 
+              `${event.averageRating.toFixed(1)} / 5` : 
               'لا يوجد تقييم'}
           </div>
         </CardContent>

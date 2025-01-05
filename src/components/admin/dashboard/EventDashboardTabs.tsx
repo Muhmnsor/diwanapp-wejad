@@ -43,7 +43,7 @@ export const EventDashboardTabs = ({ event }: EventDashboardTabsProps) => {
           registrationCount={eventStats?.registrationCount || 0}
           remainingSeats={eventStats?.remainingSeats || 0}
           occupancyRate={eventStats?.occupancyRate || 0}
-          project={eventData}
+          event={eventData}
           isEvent={true}
         />
       </TabsContent>
