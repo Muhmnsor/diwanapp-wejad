@@ -5,6 +5,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { FormField } from "./form/fields/FormField";
 import { TextInputField } from "./form/fields/TextInputField";
 import { SelectField } from "./form/fields/SelectField";
+import { PaymentFields } from "./form/PaymentFields";
 
 export const RegistrationForm = ({ 
   eventTitle,
@@ -30,7 +31,10 @@ export const RegistrationForm = ({
     birthDate: "",
     nationalId: "",
     gender: "",
-    workStatus: ""
+    workStatus: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: ""
   });
   
   const [registrationFields, setRegistrationFields] = useState({
@@ -95,6 +99,14 @@ export const RegistrationForm = ({
       return;
     }
 
+    // Additional validation for payment fields if event is paid
+    if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
+      if (!formData.cardNumber || !formData.expiryDate || !formData.cvv) {
+        toast.error('يرجى إدخال معلومات الدفع');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -131,6 +143,20 @@ export const RegistrationForm = ({
 
       if (registrationError) throw registrationError;
 
+      // If event is paid, create payment transaction
+      if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
+        const { error: paymentError } = await supabase
+          .from('payment_transactions')
+          .insert([{
+            registration_id: registration.id,
+            amount: eventPrice,
+            status: 'pending',
+            payment_method: 'card'
+          }]);
+
+        if (paymentError) throw paymentError;
+      }
+
       // Send registration notification
       await sendNotification({
         type: 'registration',
@@ -156,6 +182,9 @@ export const RegistrationForm = ({
       setIsSubmitting(false);
     }
   };
+
+  // Check if event is paid
+  const isPaidEvent = eventPrice && eventPrice !== "free" && typeof eventPrice === "number";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -264,12 +293,20 @@ export const RegistrationForm = ({
         </FormField>
       )}
 
+      {isPaidEvent && (
+        <PaymentFields
+          formData={formData}
+          setFormData={setFormData}
+          eventPrice={eventPrice}
+        />
+      )}
+
       <button
         type="submit"
         disabled={isSubmitting}
         className="w-full bg-primary text-white p-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
       >
-        {isSubmitting ? 'جاري التسجيل...' : 'تسجيل'}
+        {isSubmitting ? 'جاري التسجيل...' : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : 'تأكيد التسجيل'}
       </button>
     </form>
   );
