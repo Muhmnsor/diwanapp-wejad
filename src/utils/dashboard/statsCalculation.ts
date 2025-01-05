@@ -56,19 +56,23 @@ export const calculateEventRankings = (allEvents: any[]) => {
     },
     highestRatedEvent: {
       title: sortedByRating[0]?.title || 'لا يوجد',
-      rating: sortedByRating[0]?.averageRating || 0
+      rating: sortedByRating[0]?.averageRating || 0,
+      registrations: sortedByRating[0]?.registrationCount || 0
     },
     lowestRatedEvent: {
       title: sortedByRating[sortedByRating.length - 1]?.title || 'لا يوجد',
-      rating: sortedByRating[sortedByRating.length - 1]?.averageRating || 0
+      rating: sortedByRating[sortedByRating.length - 1]?.averageRating || 0,
+      registrations: sortedByRating[sortedByRating.length - 1]?.registrationCount || 0
     },
     highestAttendanceEvent: {
       title: sortedByAttendance[0]?.title || 'لا يوجد',
-      attendanceRate: sortedByAttendance[0]?.attendanceRate || 0
+      attendanceRate: sortedByAttendance[0]?.attendanceRate || 0,
+      registrations: sortedByAttendance[0]?.registrationCount || 0
     },
     lowestAttendanceEvent: {
       title: sortedByAttendance[sortedByAttendance.length - 1]?.title || 'لا يوجد',
-      attendanceRate: sortedByAttendance[sortedByAttendance.length - 1]?.attendanceRate || 0
+      attendanceRate: sortedByAttendance[sortedByAttendance.length - 1]?.attendanceRate || 0,
+      registrations: sortedByAttendance[sortedByAttendance.length - 1]?.registrationCount || 0
     },
     averageRating
   };
