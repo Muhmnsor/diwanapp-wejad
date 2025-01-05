@@ -25,6 +25,7 @@ export const CertificateTemplateForm = ({
     description: template?.description || '',
     template_file: template?.template_file || '',
     fields: template?.fields || {},
+    field_mappings: template?.field_mappings || {},
     language: template?.language || 'ar',
     orientation: template?.orientation || 'portrait',
     page_size: template?.page_size || 'A4',
@@ -57,6 +58,10 @@ export const CertificateTemplateForm = ({
       console.log('File dropped:', e.dataTransfer.files[0]);
       setSelectedFile(e.dataTransfer.files[0]);
     }
+  };
+
+  const handleFieldsChange = (fields: Record<string, string>, fieldMappings: Record<string, string>) => {
+    setFormData({ ...formData, fields, field_mappings: fieldMappings });
   };
 
   return (
@@ -154,7 +159,8 @@ export const CertificateTemplateForm = ({
 
       <CertificateTemplateFields
         fields={formData.fields}
-        onChange={(fields) => setFormData({ ...formData, fields })}
+        fieldMappings={formData.field_mappings}
+        onChange={handleFieldsChange}
       />
 
       <div className="flex justify-end gap-2">

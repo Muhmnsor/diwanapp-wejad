@@ -179,6 +179,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          field_mappings: Json | null
           fields: Json
           font_family: string | null
           id: string
@@ -193,6 +194,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          field_mappings?: Json | null
           fields?: Json
           font_family?: string | null
           id?: string
@@ -207,6 +209,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          field_mappings?: Json | null
           fields?: Json
           font_family?: string | null
           id?: string

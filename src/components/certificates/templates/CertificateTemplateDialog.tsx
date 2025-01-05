@@ -52,7 +52,9 @@ export const CertificateTemplateDialog = ({
 
       const submitData = {
         ...formData,
-        template_file
+        template_file,
+        fields: formData.fields || {},
+        field_mappings: formData.field_mappings || {}
       };
 
       console.log('Submitting data to database:', submitData);
