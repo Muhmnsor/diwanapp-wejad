@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { EyeOff, UserCheck, UserX } from "lucide-react";
+import { EyeOff, UserCheck, UserX, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 import { ProjectCardContent } from "./cards/ProjectCardContent";
 import { useRegistrations } from "@/hooks/useRegistrations";
@@ -27,6 +27,92 @@ interface ProjectCardProps {
   className?: string;
 }
 
+const getRegistrationStatus = (
+  startDate: string,
+  endDate: string,
+  registrationStartDate: string | null | undefined,
+  registrationEndDate: string | null | undefined,
+  maxAttendees: number = 0,
+  currentRegistrations: number = 0,
+  isRegistered: boolean = false
+) => {
+  const now = new Date();
+  const projectEndDate = new Date(endDate);
+  const projectStartDate = new Date(startDate);
+  
+  // تحويل تواريخ التسجيل إلى كائنات Date
+  const regStartDate = registrationStartDate ? new Date(registrationStartDate) : null;
+  const regEndDate = registrationEndDate ? new Date(registrationEndDate) : null;
+
+  // التحقق من انتهاء المشروع
+  if (now > projectEndDate) {
+    return {
+      status: 'ended',
+      label: 'انتهى المشروع',
+      icon: XCircle,
+      color: 'bg-gray-500'
+    };
+  }
+
+  // إذا كان المستخدم مسجل
+  if (isRegistered) {
+    return {
+      status: 'registered',
+      label: 'مسجل',
+      icon: CheckCircle,
+      color: 'bg-green-500'
+    };
+  }
+
+  // التحقق من اكتمال العدد
+  if (maxAttendees > 0 && currentRegistrations >= maxAttendees) {
+    return {
+      status: 'full',
+      label: 'اكتمل العدد',
+      icon: AlertCircle,
+      color: 'bg-yellow-500'
+    };
+  }
+
+  // التحقق من موعد بدء التسجيل
+  if (regStartDate && now < regStartDate) {
+    return {
+      status: 'notStarted',
+      label: 'لم يبدأ التسجيل',
+      icon: Clock,
+      color: 'bg-blue-500'
+    };
+  }
+
+  // التحقق من انتهاء موعد التسجيل
+  if (regEndDate && now > regEndDate) {
+    return {
+      status: 'registrationEnded',
+      label: 'انتهى التسجيل',
+      icon: XCircle,
+      color: 'bg-red-500'
+    };
+  }
+
+  // التحقق من بدء المشروع
+  if (now >= projectStartDate) {
+    return {
+      status: 'started',
+      label: 'بدأ المشروع',
+      icon: AlertCircle,
+      color: 'bg-orange-500'
+    };
+  }
+
+  // التسجيل متاح
+  return {
+    status: 'available',
+    label: 'التسجيل متاح',
+    icon: CheckCircle,
+    color: 'bg-green-500'
+  };
+};
+
 export const ProjectCard = ({ 
   id, 
   title, 
@@ -50,6 +136,19 @@ export const ProjectCard = ({
   
   const isRegistered = isAuthenticated && registrations[id];
   
+  // حساب عدد التسجيلات الحالية
+  const currentRegistrations = Object.values(registrations).filter(reg => reg.project_id === id).length;
+  
+  const registrationStatus = getRegistrationStatus(
+    start_date,
+    end_date,
+    registration_start_date,
+    registration_end_date,
+    max_attendees,
+    currentRegistrations,
+    isRegistered
+  );
+
   useEffect(() => {
     console.log('ProjectCard data:', {
       title,
@@ -69,9 +168,10 @@ export const ProjectCard = ({
       eventPath: event_path,
       eventCategory: event_category,
       isVisible: is_visible,
-      isRegistered
+      isRegistered,
+      registrationStatus: registrationStatus.status
     });
-  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, registration_end_date, beneficiary_type, event_path, event_category, is_visible, isRegistered]);
+  }, [title, start_date, end_date, certificate_type, max_attendees, registration_start_date, registration_end_date, beneficiary_type, event_path, event_category, is_visible, isRegistered, registrationStatus]);
 
   return (
     <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
@@ -83,21 +183,12 @@ export const ProjectCard = ({
             مخفي
           </div>
         )}
-        {isAuthenticated && (
-          <div className="absolute top-2 left-2">
-            {isRegistered ? (
-              <div className="bg-green-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
-                <UserCheck className="w-4 h-4" />
-                مسجل
-              </div>
-            ) : (
-              <div className="bg-gray-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
-                <UserX className="w-4 h-4" />
-                غير مسجل
-              </div>
-            )}
+        <div className="absolute top-2 left-2">
+          <div className={`${registrationStatus.color} text-white px-2 py-1 rounded-md text-sm flex items-center gap-1`}>
+            <registrationStatus.icon className="w-4 h-4" />
+            {registrationStatus.label}
           </div>
-        )}
+        </div>
         <CardHeader className="p-4">
           <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
         </CardHeader>
