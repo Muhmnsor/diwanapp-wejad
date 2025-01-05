@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AttendanceStats } from "./types";
@@ -10,6 +10,58 @@ export const useEventAttendance = (eventId: string) => {
     absent: 0,
     notRecorded: 0
   });
+
+  useEffect(() => {
+    const fetchAttendanceStats = async () => {
+      try {
+        console.log('Fetching attendance stats for event:', eventId);
+        
+        // Get total registrations
+        const { data: registrations, error: regError } = await supabase
+          .from('registrations')
+          .select('id')
+          .eq('event_id', eventId);
+
+        if (regError) throw regError;
+
+        const total = registrations?.length || 0;
+
+        // Get attendance records
+        const { data: records, error: attError } = await supabase
+          .from('attendance_records')
+          .select('status')
+          .eq('event_id', eventId);
+
+        if (attError) throw attError;
+
+        const present = records?.filter(r => r.status === 'present').length || 0;
+        const absent = records?.filter(r => r.status === 'absent').length || 0;
+        const notRecorded = total - (present + absent);
+
+        console.log('Calculated attendance stats:', {
+          total,
+          present,
+          absent,
+          notRecorded
+        });
+
+        setAttendanceStats({
+          total,
+          present,
+          absent,
+          notRecorded
+        });
+
+      } catch (error) {
+        console.error('Error fetching attendance stats:', error);
+        toast.error('حدث خطأ في تحميل إحصائيات الحضور');
+      }
+    };
+
+    if (eventId) {
+      fetchAttendanceStats();
+    }
+  }, [eventId]);
 
   const handleAttendanceChange = async (registrationId: string, status: 'present' | 'absent') => {
     try {
@@ -45,16 +97,19 @@ export const useEventAttendance = (eventId: string) => {
         if (insertError) throw insertError;
       }
 
+      // Update local stats
       setAttendanceStats(prev => {
         const newStats = { ...prev };
         if (existingRecord) {
           if (existingRecord.status === 'present') newStats.present--;
           if (existingRecord.status === 'absent') newStats.absent--;
+          if (status === 'present') newStats.present++;
+          if (status === 'absent') newStats.absent++;
         } else {
           newStats.notRecorded--;
+          if (status === 'present') newStats.present++;
+          if (status === 'absent') newStats.absent++;
         }
-        if (status === 'present') newStats.present++;
-        if (status === 'absent') newStats.absent++;
         return newStats;
       });
 
