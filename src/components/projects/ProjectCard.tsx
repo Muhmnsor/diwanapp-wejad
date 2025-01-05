@@ -52,7 +52,9 @@ export const ProjectCard = ({
   const { data: registrations = {} } = useRegistrations();
   
   const isRegistered = isAuthenticated && registrations[id];
-  const currentRegistrations = Object.values(registrations).filter(reg => reg.project_id === id).length;
+  const currentRegistrations = Object.values(registrations).filter(reg => 
+    typeof reg === 'object' && 'project_id' in reg && reg.project_id === id
+  ).length;
   
   const registrationStatus = getRegistrationStatus(
     start_date,
@@ -61,7 +63,7 @@ export const ProjectCard = ({
     registration_end_date,
     max_attendees,
     currentRegistrations,
-    isRegistered
+    Boolean(isRegistered)
   );
 
   useEffect(() => {
