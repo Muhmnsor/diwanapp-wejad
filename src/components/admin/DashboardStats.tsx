@@ -71,29 +71,19 @@ export const DashboardStats = ({
     isEvent
   });
 
-  // Transform event data based on whether it's an event or project
-  const transformedEvent = {
-    id: event.id,
-    start_date: isEvent ? event.date || '' : event.start_date || '',
-    end_date: isEvent ? event.date || '' : event.end_date || '',
-    event_path: event.event_path,
-    event_category: event.event_category,
-    averageRating: event.averageRating
-  };
-
   return isEvent ? (
     <EventStatsContent
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      event={transformedEvent}
+      event={event}
     />
   ) : (
     <DashboardStatsContent
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      event={transformedEvent}
+      event={event}
       activities={activities}
     />
   );

@@ -9,7 +9,7 @@ interface DashboardStatsContentProps {
   registrationCount: number;
   remainingSeats: number;
   occupancyRate: number;
-  project: {
+  event: {
     id: string;
     event_path: string;
     event_category: string;
@@ -57,14 +57,14 @@ export const DashboardStatsContent = ({
   registrationCount,
   remainingSeats,
   occupancyRate,
-  project,
+  event,
   activities
 }: DashboardStatsContentProps) => {
   console.log("DashboardStatsContent props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
-    project,
+    event,
     activities
   });
 
@@ -76,7 +76,7 @@ export const DashboardStatsContent = ({
         occupancyRate={occupancyRate}
       />
       
-      <PathCategoryCard projectId={project.id} />
+      <PathCategoryCard eventId={event.id} />
 
       <ActivitiesStatsCard
         activities={{
