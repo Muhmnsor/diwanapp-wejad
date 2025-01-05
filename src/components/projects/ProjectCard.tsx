@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { EyeOff, UserCheck, UserX, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 import { ProjectCardContent } from "./cards/ProjectCardContent";
+import { ProjectCardImage } from "./cards/ProjectCardImage";
 import { useRegistrations } from "@/hooks/useRegistrations";
 import { useAuthStore } from "@/store/authStore";
 
@@ -40,11 +41,9 @@ const getRegistrationStatus = (
   const projectEndDate = new Date(endDate);
   const projectStartDate = new Date(startDate);
   
-  // تحويل تواريخ التسجيل إلى كائنات Date
   const regStartDate = registrationStartDate ? new Date(registrationStartDate) : null;
   const regEndDate = registrationEndDate ? new Date(registrationEndDate) : null;
 
-  // التحقق من انتهاء المشروع
   if (now > projectEndDate) {
     return {
       status: 'ended',
@@ -54,7 +53,6 @@ const getRegistrationStatus = (
     };
   }
 
-  // إذا كان المستخدم مسجل
   if (isRegistered) {
     return {
       status: 'registered',
@@ -64,7 +62,6 @@ const getRegistrationStatus = (
     };
   }
 
-  // التحقق من اكتمال العدد
   if (maxAttendees > 0 && currentRegistrations >= maxAttendees) {
     return {
       status: 'full',
@@ -74,7 +71,6 @@ const getRegistrationStatus = (
     };
   }
 
-  // التحقق من موعد بدء التسجيل
   if (regStartDate && now < regStartDate) {
     return {
       status: 'notStarted',
@@ -84,7 +80,6 @@ const getRegistrationStatus = (
     };
   }
 
-  // التحقق من انتهاء موعد التسجيل
   if (regEndDate && now > regEndDate) {
     return {
       status: 'registrationEnded',
@@ -94,7 +89,6 @@ const getRegistrationStatus = (
     };
   }
 
-  // التحقق من بدء المشروع
   if (now >= projectStartDate) {
     return {
       status: 'started',
@@ -104,7 +98,6 @@ const getRegistrationStatus = (
     };
   }
 
-  // التسجيل متاح
   return {
     status: 'available',
     label: 'التسجيل متاح',
@@ -135,9 +128,7 @@ export const ProjectCard = ({
   const { data: registrations = {} } = useRegistrations();
   
   const isRegistered = isAuthenticated && registrations[id];
-  
-  // حساب عدد التسجيلات الحالية
-  const currentRegistrations = Object.values(registrations).filter(reg => reg.project_id === id).length;
+  const currentRegistrations = Object.values(registrations).filter(reg => reg.event_id === id).length;
   
   const registrationStatus = getRegistrationStatus(
     start_date,
@@ -176,7 +167,7 @@ export const ProjectCard = ({
   return (
     <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
-        <img src={image_url} alt={title} className="w-full h-40 object-cover" />
+        <ProjectCardImage src={image_url} alt={title} />
         {!is_visible && (
           <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
             <EyeOff className="w-4 h-4" />
