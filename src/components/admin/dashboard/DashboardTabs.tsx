@@ -20,6 +20,8 @@ interface DashboardTabsProps {
 }
 
 export const DashboardTabs = ({ event }: DashboardTabsProps) => {
+  console.log('DashboardTabs - Rendering for event:', event);
+
   const { data: eventStats } = useQuery({
     queryKey: ['eventStats', event.id],
     queryFn: async () => {
@@ -71,8 +73,6 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
 
   const projectData = {
     id: event.id,
-    start_date: event.start_date || '',
-    end_date: event.end_date || '',
     event_path: event.event_path,
     event_category: event.event_category,
     date: event.date,
@@ -82,28 +82,16 @@ export const DashboardTabs = ({ event }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="overview" className="w-full space-y-6" dir="rtl">
       <TabsList className="grid grid-cols-4 bg-secondary/20 p-1 rounded-xl">
-        <TabsTrigger 
-          value="overview" 
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="overview" className="data-[state=active]:bg-white">
           نظرة عامة
         </TabsTrigger>
-        <TabsTrigger 
-          value="registrations" 
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="registrations" className="data-[state=active]:bg-white">
           المسجلون
         </TabsTrigger>
-        <TabsTrigger 
-          value="preparation" 
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="preparation" className="data-[state=active]:bg-white">
           التحضير
         </TabsTrigger>
-        <TabsTrigger 
-          value="feedback" 
-          className="data-[state=active]:bg-white"
-        >
+        <TabsTrigger value="feedback" className="data-[state=active]:bg-white">
           التقييمات
         </TabsTrigger>
       </TabsList>

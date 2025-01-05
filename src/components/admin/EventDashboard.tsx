@@ -52,6 +52,7 @@ export const EventDashboard = ({ eventId }: EventDashboardProps) => {
           return;
         }
 
+        console.log('Found event:', eventResult);
         setData(eventResult);
         setIsProject(false);
       } catch (err) {
