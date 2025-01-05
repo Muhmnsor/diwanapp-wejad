@@ -23,6 +23,7 @@ export const CertificateTemplateForm = ({
     description: template?.description || '',
     template_file: template?.template_file || '',
     fields: template?.fields || {},
+    field_mappings: template?.field_mappings || {},
     language: template?.language || 'ar'
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -30,6 +31,14 @@ export const CertificateTemplateForm = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData, selectedFile);
+  };
+
+  const handleFieldsChange = (fields: Record<string, string>, fieldMappings: Record<string, string>) => {
+    setFormData(prev => ({
+      ...prev,
+      fields,
+      field_mappings: fieldMappings
+    }));
   };
 
   return (
@@ -75,7 +84,8 @@ export const CertificateTemplateForm = ({
 
       <CertificateTemplateFields
         fields={formData.fields}
-        onChange={(fields) => setFormData({ ...formData, fields })}
+        fieldMappings={formData.field_mappings}
+        onChange={handleFieldsChange}
       />
 
       <div className="flex justify-end gap-2">
