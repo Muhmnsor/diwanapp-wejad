@@ -8,17 +8,19 @@ export const useDashboardData = () => {
     queryFn: async (): Promise<DashboardData> => {
       console.log("🔄 جاري تحميل إحصائيات لوحة المعلومات...");
 
-      // Get all events and projects with their registrations and feedback
+      // Get standalone events (not project activities)
       const { data: events, error: eventsError } = await supabase
         .from("events")
         .select(`
           *,
           registrations (count),
           event_feedback (overall_rating)
-        `);
+        `)
+        .eq('is_project_activity', false);
 
       if (eventsError) throw eventsError;
 
+      // Get projects
       const { data: projects, error: projectsError } = await supabase
         .from("projects")
         .select(`
@@ -114,6 +116,14 @@ export const useDashboardData = () => {
           return acc;
         }, {})
       ).map(([name, value]) => ({ name, value: value as number }));
+
+      console.log("Dashboard stats calculated:", {
+        totalEvents: allEvents.length,
+        upcomingEvents: upcomingEvents.length,
+        pastEvents: pastEvents.length,
+        totalRegistrations,
+        totalRevenue
+      });
 
       return {
         totalEvents: allEvents.length,
