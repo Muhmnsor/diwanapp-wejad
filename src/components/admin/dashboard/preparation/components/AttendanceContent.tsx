@@ -1,22 +1,28 @@
-import { AttendanceStats } from "@/hooks/attendance/types";
+import { AttendanceStats as AttendanceStatsType } from "@/hooks/attendance/types";
 import { AttendanceTable } from "../AttendanceTable";
 import { AttendanceControls } from "../AttendanceControls";
-import { AttendanceStats as AttendanceStatsComponent } from "../AttendanceStats";
+import { AttendanceStats } from "../AttendanceStats";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 interface AttendanceContentProps {
-  stats: AttendanceStats;
+  stats: AttendanceStatsType;
   records: any[];
   error: Error | null;
   onRefresh: () => Promise<void>;
+  onBarcodeScanned: (code: string) => Promise<void>;
+  onGroupAttendance: (status: 'present' | 'absent') => Promise<void>;
+  onAttendanceChange: (registrationId: string, status: 'present' | 'absent') => Promise<void>;
 }
 
 export const AttendanceContent = ({
   stats,
   records,
   error,
-  onRefresh
+  onRefresh,
+  onBarcodeScanned,
+  onGroupAttendance,
+  onAttendanceChange
 }: AttendanceContentProps) => {
   if (error) {
     return (
@@ -31,14 +37,14 @@ export const AttendanceContent = ({
 
   return (
     <div className="space-y-6">
-      <AttendanceStatsComponent stats={stats} />
+      <AttendanceStats stats={stats} />
       <AttendanceControls 
-        onBarcodeScanned={async () => {}} 
-        onGroupAttendance={async () => {}}
+        onBarcodeScanned={onBarcodeScanned}
+        onGroupAttendance={onGroupAttendance}
       />
       <AttendanceTable 
         registrations={records}
-        onAttendanceChange={async () => {}}
+        onAttendanceChange={onAttendanceChange}
       />
     </div>
   );
