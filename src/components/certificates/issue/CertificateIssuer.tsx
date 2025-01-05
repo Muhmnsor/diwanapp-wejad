@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,9 +25,62 @@ export const CertificateIssuer = ({
   const [certificateData, setCertificateData] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [template, setTemplate] = useState<any>(null);
+  const [registrationData, setRegistrationData] = useState<any>(null);
+
+  // Fetch template and registration data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('🔄 Fetching template and registration data...');
+        
+        // Fetch template
+        const { data: templateData, error: templateError } = await supabase
+          .from('certificate_templates')
+          .select('*')
+          .eq('id', templateId)
+          .single();
+
+        if (templateError) throw templateError;
+        
+        setTemplate(templateData);
+        setCertificateData(templateData.fields || {});
+
+        // Fetch registration data
+        const { data: regData, error: regError } = await supabase
+          .from('registrations')
+          .select('*')
+          .eq('id', registrationId)
+          .single();
+
+        if (regError) throw regError;
+        
+        console.log('✅ Data fetched successfully:', { template: templateData, registration: regData });
+        setRegistrationData(regData);
+      } catch (error) {
+        console.error('❌ Error fetching data:', error);
+        toast.error('حدث خطأ أثناء تحميل البيانات');
+      }
+    };
+
+    fetchData();
+  }, [templateId, registrationId]);
 
   const handleFieldChange = (key: string, value: string) => {
     setCertificateData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const validateCertificateData = () => {
+    // Check for empty required fields
+    const emptyFields = Object.entries(certificateData)
+      .filter(([_, value]) => !value.trim())
+      .map(([key]) => key);
+
+    if (emptyFields.length > 0) {
+      toast.error(`الرجاء ملء الحقول التالية: ${emptyFields.join(', ')}`);
+      return false;
+    }
+
+    return true;
   };
 
   const generateVerificationUrl = (verificationCode: string) => {
@@ -36,22 +89,8 @@ export const CertificateIssuer = ({
   };
 
   const handlePreview = async () => {
-    try {
-      if (!template) {
-        const { data, error } = await supabase
-          .from('certificate_templates')
-          .select('*')
-          .eq('id', templateId)
-          .single();
-
-        if (error) throw error;
-        setTemplate(data);
-      }
-      setShowPreview(true);
-    } catch (error) {
-      console.error('❌ Error fetching template:', error);
-      toast.error('حدث خطأ أثناء تحميل القالب');
-    }
+    if (!validateCertificateData()) return;
+    setShowPreview(true);
   };
 
   const handleIssueCertificate = async (confirmedData: Record<string, string>) => {
@@ -105,6 +144,8 @@ export const CertificateIssuer = ({
       <CertificateFields 
         certificateData={certificateData}
         onFieldChange={handleFieldChange}
+        fieldMappings={template?.field_mappings}
+        registrationData={registrationData}
       />
 
       <CertificateActions 
