@@ -53,9 +53,9 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <UserCheck className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">{data.mostAttendedEvent.title}</div>
+          <div className="text-lg font-bold">{data.mostAttendedEvent?.title || 'لا يوجد'}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.mostAttendedEvent.attendanceCount} حاضر ({data.mostAttendedEvent.percentage.toFixed(1)}%)
+            {data.mostAttendedEvent?.attendanceCount || 0} حاضر ({(data.mostAttendedEvent?.percentage || 0).toFixed(1)}%)
           </div>
         </CardContent>
       </Card>
@@ -66,9 +66,9 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <UserX className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">{data.leastAttendedEvent.title}</div>
+          <div className="text-lg font-bold">{data.leastAttendedEvent?.title || 'لا يوجد'}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.leastAttendedEvent.attendanceCount} حاضر ({data.leastAttendedEvent.percentage.toFixed(1)}%)
+            {data.leastAttendedEvent?.attendanceCount || 0} حاضر ({(data.leastAttendedEvent?.percentage || 0).toFixed(1)}%)
           </div>
         </CardContent>
       </Card>
@@ -79,7 +79,7 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.averageAttendance.toFixed(1)}%</div>
+          <div className="text-2xl font-bold">{data.averageAttendance?.toFixed(1) || 0}%</div>
         </CardContent>
       </Card>
 
@@ -89,9 +89,9 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <TrendingUp className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">{data.highestRatedEvent.title}</div>
+          <div className="text-lg font-bold">{data.highestRatedEvent?.title || 'لا يوجد'}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.highestRatedEvent.rating.toFixed(1)} من 5
+            {(data.highestRatedEvent?.rating || 0).toFixed(1)} من 5
           </div>
         </CardContent>
       </Card>
@@ -102,9 +102,9 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <TrendingDown className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">{data.lowestRatedEvent.title}</div>
+          <div className="text-lg font-bold">{data.lowestRatedEvent?.title || 'لا يوجد'}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.lowestRatedEvent.rating.toFixed(1)} من 5
+            {(data.lowestRatedEvent?.rating || 0).toFixed(1)} من 5
           </div>
         </CardContent>
       </Card>
@@ -115,7 +115,7 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <Star className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.averageRating.toFixed(1)} من 5</div>
+          <div className="text-2xl font-bold">{data.averageRating?.toFixed(1) || 0} من 5</div>
         </CardContent>
       </Card>
     </div>
