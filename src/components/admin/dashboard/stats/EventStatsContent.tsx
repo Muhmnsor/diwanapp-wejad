@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Star } from "lucide-react";
 import { formatDateWithDay } from "@/utils/dateTimeUtils";
 import { RegistrationStatsCard } from "./RegistrationStatsCard";
+import { differenceInDays, differenceInHours, parseISO } from "date-fns";
 
 interface EventStatsContentProps {
   registrationCount: number;
@@ -53,6 +54,31 @@ export const EventStatsContent = ({
     return categoryMap[category] || category;
   };
 
+  const getRemainingTime = (date: string) => {
+    try {
+      const eventDate = parseISO(date);
+      const now = new Date();
+      
+      if (eventDate < now) {
+        return "انتهت الفعالية";
+      }
+
+      const daysRemaining = differenceInDays(eventDate, now);
+      const hoursRemaining = differenceInHours(eventDate, now) % 24;
+
+      if (daysRemaining > 0) {
+        return `متبقي ${daysRemaining} يوم ${hoursRemaining} ساعة`;
+      } else if (hoursRemaining > 0) {
+        return `متبقي ${hoursRemaining} ساعة`;
+      } else {
+        return "الفعالية اليوم";
+      }
+    } catch (error) {
+      console.error('Error calculating remaining time:', error);
+      return '';
+    }
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <RegistrationStatsCard
@@ -86,6 +112,9 @@ export const EventStatsContent = ({
           <div className="text-2xl font-bold">
             {project.start_date ? formatDateWithDay(project.start_date) : 'لم يتم تحديد الموعد'}
           </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {project.start_date ? getRemainingTime(project.start_date) : ''}
+          </p>
         </CardContent>
       </Card>
 
