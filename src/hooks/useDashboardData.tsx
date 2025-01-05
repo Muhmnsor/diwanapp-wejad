@@ -100,8 +100,7 @@ export const useDashboardData = () => {
       ).map(([name, value]) => ({ name, value: value as number }));
 
       return {
-        totalEvents: events.length,
-        totalProjects: projects.length,
+        totalEvents: events.length + projects.length, // Total of both events and projects
         upcomingEvents: upcomingEvents.length,
         pastEvents: pastEvents.length,
         totalRegistrations,

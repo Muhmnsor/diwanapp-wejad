@@ -15,9 +15,9 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.totalEvents + (data.totalProjects || 0)}</div>
+          <div className="text-2xl font-bold">{data.totalEvents}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.upcomingEvents} فعالية قادمة | {data.pastEvents} فعالية سابقة | {data.totalProjects || 0} مشروع
+            {data.upcomingEvents} فعالية قادمة | {data.pastEvents} فعالية سابقة
           </div>
         </CardContent>
       </Card>
