@@ -2,6 +2,9 @@ import { FormEvent, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
+import { FormField } from "./form/fields/FormField";
+import { TextInputField } from "./form/fields/TextInputField";
+import { SelectField } from "./form/fields/SelectField";
 
 export const RegistrationForm = ({ 
   eventTitle,
@@ -157,129 +160,108 @@ export const RegistrationForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {registrationFields.arabic_name && (
-        <div>
-          <label className="block text-sm font-medium mb-1">الاسم الثلاثي</label>
-          <input
-            type="text"
+        <FormField label="الاسم الثلاثي" required>
+          <TextInputField
             value={formData.arabicName}
-            onChange={(e) => setFormData({ ...formData, arabicName: e.target.value })}
-            className="w-full p-2 border rounded-md"
+            onChange={(value) => setFormData({ ...formData, arabicName: value })}
             required
           />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.english_name && (
-        <div>
-          <label className="block text-sm font-medium mb-1">الاسم باللغة الإنجليزية</label>
-          <input
-            type="text"
+        <FormField label="الاسم باللغة الإنجليزية">
+          <TextInputField
             value={formData.englishName}
-            onChange={(e) => setFormData({ ...formData, englishName: e.target.value })}
-            className="w-full p-2 border rounded-md"
+            onChange={(value) => setFormData({ ...formData, englishName: value })}
           />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.email && (
-        <div>
-          <label className="block text-sm font-medium mb-1">البريد الإلكتروني</label>
-          <input
+        <FormField label="البريد الإلكتروني" required>
+          <TextInputField
             type="email"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full p-2 border rounded-md"
+            onChange={(value) => setFormData({ ...formData, email: value })}
             required
           />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.phone && (
-        <div>
-          <label className="block text-sm font-medium mb-1">رقم الجوال</label>
-          <input
+        <FormField label="رقم الجوال" required>
+          <TextInputField
             type="tel"
             value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full p-2 border rounded-md"
+            onChange={(value) => setFormData({ ...formData, phone: value })}
             required
           />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.education_level && (
-        <div>
-          <label className="block text-sm font-medium mb-1">المستوى التعليمي</label>
-          <select
+        <FormField label="المستوى التعليمي">
+          <SelectField
             value={formData.educationLevel}
-            onChange={(e) => setFormData({ ...formData, educationLevel: e.target.value })}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="">اختر المستوى التعليمي</option>
-            <option value="primary">ابتدائي</option>
-            <option value="intermediate">متوسط</option>
-            <option value="high_school">ثانوي</option>
-            <option value="bachelor">بكالوريوس</option>
-            <option value="master">ماجستير</option>
-            <option value="phd">دكتوراه</option>
-          </select>
-        </div>
+            onChange={(value) => setFormData({ ...formData, educationLevel: value })}
+            options={[
+              { value: "primary", label: "ابتدائي" },
+              { value: "intermediate", label: "متوسط" },
+              { value: "high_school", label: "ثانوي" },
+              { value: "bachelor", label: "بكالوريوس" },
+              { value: "master", label: "ماجستير" },
+              { value: "phd", label: "دكتوراه" }
+            ]}
+          />
+        </FormField>
       )}
 
       {registrationFields.birth_date && (
-        <div>
-          <label className="block text-sm font-medium mb-1">تاريخ الميلاد</label>
-          <input
+        <FormField label="تاريخ الميلاد">
+          <TextInputField
             type="date"
             value={formData.birthDate}
-            onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-            className="w-full p-2 border rounded-md"
+            onChange={(value) => setFormData({ ...formData, birthDate: value })}
           />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.national_id && (
-        <div>
-          <label className="block text-sm font-medium mb-1">رقم الهوية</label>
-          <input
-            type="text"
+        <FormField label="رقم الهوية">
+          <TextInputField
             value={formData.nationalId}
-            onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
-            className="w-full p-2 border rounded-md"
+            onChange={(value) => setFormData({ ...formData, nationalId: value })}
           />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.gender && (
-        <div>
-          <label className="block text-sm font-medium mb-1">الجنس</label>
-          <select
+        <FormField label="الجنس">
+          <SelectField
             value={formData.gender}
-            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="">اختر الجنس</option>
-            <option value="male">ذكر</option>
-            <option value="female">أنثى</option>
-          </select>
-        </div>
+            onChange={(value) => setFormData({ ...formData, gender: value })}
+            options={[
+              { value: "male", label: "ذكر" },
+              { value: "female", label: "أنثى" }
+            ]}
+          />
+        </FormField>
       )}
 
       {registrationFields.work_status && (
-        <div>
-          <label className="block text-sm font-medium mb-1">الحالة الوظيفية</label>
-          <select
+        <FormField label="الحالة الوظيفية">
+          <SelectField
             value={formData.workStatus}
-            onChange={(e) => setFormData({ ...formData, workStatus: e.target.value })}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="">اختر الحالة الوظيفية</option>
-            <option value="employed">موظف</option>
-            <option value="unemployed">غير موظف</option>
-            <option value="student">طالب</option>
-            <option value="retired">متقاعد</option>
-          </select>
-        </div>
+            onChange={(value) => setFormData({ ...formData, workStatus: value })}
+            options={[
+              { value: "employed", label: "موظف" },
+              { value: "unemployed", label: "غير موظف" },
+              { value: "student", label: "طالب" },
+              { value: "retired", label: "متقاعد" }
+            ]}
+          />
+        </FormField>
       )}
 
       <button
