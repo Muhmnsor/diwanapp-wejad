@@ -16,7 +16,8 @@ export const useDashboardData = () => {
           registrations (count),
           event_feedback (overall_rating)
         `)
-        .eq('is_project_activity', false);
+        .eq('is_project_activity', false)
+        .eq('is_visible', true);
 
       if (eventsError) throw eventsError;
 
@@ -26,7 +27,8 @@ export const useDashboardData = () => {
         .select(`
           *,
           registrations (count)
-        `);
+        `)
+        .eq('is_visible', true);
 
       if (projectsError) throw projectsError;
 
@@ -48,6 +50,8 @@ export const useDashboardData = () => {
           date: new Date(project.start_date)
         }))
       ];
+
+      console.log("Combined events and projects:", allEvents);
 
       const now = new Date();
       const upcomingEvents = allEvents.filter(event => event.date >= now);
@@ -122,7 +126,11 @@ export const useDashboardData = () => {
         upcomingEvents: upcomingEvents.length,
         pastEvents: pastEvents.length,
         totalRegistrations,
-        totalRevenue
+        totalRevenue,
+        eventsByType,
+        eventsByBeneficiary,
+        eventsByBeneficiaryType,
+        eventsByPrice
       });
 
       return {
