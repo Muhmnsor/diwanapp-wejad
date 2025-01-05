@@ -21,7 +21,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/events/:id" element={<EventDetails />} />
       <Route path="/projects/:id" element={<ProjectDetails />} />
-      <Route path="/events/:id/feedback" element={<EventFeedback />} />
+      <Route path="/event/:id/feedback" element={<EventFeedback />} />
       <Route path="/activity/:id/feedback" element={<ActivityFeedback />} />
       <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
       <Route
