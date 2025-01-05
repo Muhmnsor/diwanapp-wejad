@@ -14,24 +14,8 @@ export const EventCardStatus = ({
   status
 }: EventCardStatusProps) => {
   return (
-    <div className="flex">
-      <div 
-        className={`
-          px-4 py-1.5 
-          rounded-full 
-          text-sm 
-          font-medium
-          shadow-sm
-          border
-          transition-all
-          duration-200
-          ${status.color} 
-          ${status.textColor}
-          hover:opacity-90
-        `}
-      >
-        {status.text}
-      </div>
+    <div className={`${status.color} text-white px-2 py-1 rounded-md text-sm flex items-center gap-1 mt-2`}>
+      {status.text}
     </div>
   );
 };
