@@ -16,9 +16,11 @@ export const DashboardPreparation = ({
   console.log('DashboardPreparation - Rendering with:', { eventId, isProjectActivity, projectId });
 
   return (
-    <Tabs defaultValue="attendance" className="w-full space-y-6">
+    <Tabs dir="rtl" defaultValue="attendance" className="w-full space-y-6">
       <TabsList className="grid w-full grid-cols-1 h-auto">
-        <TabsTrigger value="attendance">الحضور</TabsTrigger>
+        <TabsTrigger value="attendance" className="data-[state=active]:bg-white">
+          الحضور
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="attendance" className="space-y-6">
