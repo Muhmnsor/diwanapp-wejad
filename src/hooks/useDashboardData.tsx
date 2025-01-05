@@ -19,7 +19,15 @@ export const useDashboardData = () => {
 
       if (eventsError) throw eventsError;
 
+      // Get all projects
+      const { data: projects, error: projectsError } = await supabase
+        .from("projects")
+        .select("*");
+
+      if (projectsError) throw projectsError;
+
       console.log("Raw events data:", events);
+      console.log("Raw projects data:", projects);
 
       const now = new Date();
       const upcomingEvents = events.filter(event => new Date(event.date) >= now);
@@ -51,7 +59,7 @@ export const useDashboardData = () => {
         .filter(event => event.avgRating > 0)
         .sort((a, b) => b.avgRating - a.avgRating);
 
-      // Group events by type with Arabic labels - FIXED counting logic
+      // Group events by type with Arabic labels
       const eventTypeCount = events.reduce((acc: Record<string, number>, event) => {
         const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
         acc[type] = (acc[type] || 0) + 1;
@@ -64,8 +72,6 @@ export const useDashboardData = () => {
         name,
         value: value as number
       }));
-
-      console.log("Events by type after processing:", eventsByType);
 
       // Count events by path with Arabic labels
       const eventsByBeneficiary: ChartData[] = [
@@ -95,6 +101,7 @@ export const useDashboardData = () => {
 
       return {
         totalEvents: events.length,
+        totalProjects: projects.length,
         upcomingEvents: upcomingEvents.length,
         pastEvents: pastEvents.length,
         totalRegistrations,

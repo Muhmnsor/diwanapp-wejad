@@ -11,13 +11,13 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">إجمالي الفعاليات</CardTitle>
+          <CardTitle className="text-sm font-medium">إجمالي الأحداث</CardTitle>
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.totalEvents}</div>
+          <div className="text-2xl font-bold">{data.totalEvents + (data.totalProjects || 0)}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.upcomingEvents} فعالية قادمة | {data.pastEvents} فعالية سابقة
+            {data.upcomingEvents} فعالية قادمة | {data.pastEvents} فعالية سابقة | {data.totalProjects || 0} مشروع
           </div>
         </CardContent>
       </Card>
