@@ -13,7 +13,7 @@ export const useRatingStatsQuery = ({ projectId, isEvent = false }: { projectId:
   return useQuery({
     queryKey: ['rating-stats', projectId, isEvent],
     queryFn: async () => {
-      console.log('Fetching rating stats for:', { projectId, isEvent });
+      console.log('Starting rating stats query for:', { projectId, isEvent });
 
       // Get all activities with their feedback
       const { data: activities, error } = await supabase
@@ -34,17 +34,22 @@ export const useRatingStatsQuery = ({ projectId, isEvent = false }: { projectId:
         throw error;
       }
 
+      console.log('Found activities:', activities?.length);
+
       // Calculate average ratings for each activity
-      const activityRatings: RatingStats[] = activities?.map(activity => ({
-        eventId: activity.id,
-        title: activity.title,
-        date: activity.date,
-        ratingsCount: activity.activity_feedback?.length || 0,
-        averageRating: activity.activity_feedback?.length 
-          ? activity.activity_feedback.reduce((sum: number, feedback: any) => 
-              sum + (feedback.overall_rating || 0), 0) / activity.activity_feedback.length
-          : 0
-      })) || [];
+      const activityRatings: RatingStats[] = activities?.map(activity => {
+        console.log('Processing activity:', activity.title, 'with feedback:', activity.activity_feedback?.length);
+        return {
+          eventId: activity.id,
+          title: activity.title,
+          date: activity.date,
+          ratingsCount: activity.activity_feedback?.length || 0,
+          averageRating: activity.activity_feedback?.length 
+            ? activity.activity_feedback.reduce((sum: number, feedback: any) => 
+                sum + (feedback.overall_rating || 0), 0) / activity.activity_feedback.length
+            : 0
+        };
+      }) || [];
 
       // Sort by average rating
       const sortedActivities = activityRatings
@@ -53,7 +58,8 @@ export const useRatingStatsQuery = ({ projectId, isEvent = false }: { projectId:
 
       console.log('Rating stats calculated:', {
         highest: sortedActivities[0],
-        lowest: sortedActivities[sortedActivities.length - 1]
+        lowest: sortedActivities[sortedActivities.length - 1],
+        totalActivities: sortedActivities.length
       });
 
       return {

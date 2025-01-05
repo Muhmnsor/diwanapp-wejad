@@ -14,7 +14,7 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: { projec
   return useQuery({
     queryKey: ['attendance-stats', projectId, isEvent],
     queryFn: async () => {
-      console.log('Fetching attendance stats for:', { projectId, isEvent });
+      console.log('Starting attendance stats query for:', { projectId, isEvent });
       
       // First get all registrations to calculate rates
       const { data: registrations, error: regError } = await supabase
@@ -26,6 +26,8 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: { projec
         console.error('Error fetching registrations:', regError);
         throw regError;
       }
+
+      console.log('Found registrations:', registrations?.length);
 
       // Then get attendance records
       const { data: records, error } = await supabase
@@ -44,6 +46,8 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: { projec
         console.error('Error fetching attendance stats:', error);
         throw error;
       }
+
+      console.log('Found attendance records:', records?.length);
 
       // Group by event and count attendance
       const eventAttendance: Record<string, AttendanceStats> = {};
@@ -74,7 +78,8 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: { projec
 
       console.log('Attendance stats calculated:', { 
         highest: sortedEvents[0], 
-        lowest: sortedEvents[sortedEvents.length - 1] 
+        lowest: sortedEvents[sortedEvents.length - 1],
+        totalEvents: sortedEvents.length
       });
       
       return {
