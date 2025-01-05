@@ -128,7 +128,7 @@ export const ProjectCard = ({
   const { data: registrations = {} } = useRegistrations();
   
   const isRegistered = isAuthenticated && registrations[id];
-  const currentRegistrations = Object.values(registrations).filter(reg => reg.event_id === id).length;
+  const currentRegistrations = Object.values(registrations).filter(reg => reg.project_id === id).length;
   
   const registrationStatus = getRegistrationStatus(
     start_date,
@@ -167,18 +167,14 @@ export const ProjectCard = ({
   return (
     <div className={`w-[380px] sm:w-[460px] lg:w-[480px] mx-auto relative ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
-        <ProjectCardImage src={image_url} alt={title} />
-        {!is_visible && (
-          <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
-            <EyeOff className="w-4 h-4" />
-            مخفي
-          </div>
-        )}
-        <div className="absolute top-2 left-2">
-          <div className={`${registrationStatus.color} text-white px-2 py-1 rounded-md text-sm flex items-center gap-1`}>
-            <registrationStatus.icon className="w-4 h-4" />
-            {registrationStatus.label}
-          </div>
+        <div className="relative">
+          <ProjectCardImage src={image_url} alt={title} />
+          {!is_visible && (
+            <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center gap-1">
+              <EyeOff className="w-4 h-4" />
+              مخفي
+            </div>
+          )}
         </div>
         <CardHeader className="p-4">
           <CardTitle className="text-lg line-clamp-2 text-right">{title}</CardTitle>
@@ -195,6 +191,10 @@ export const ProjectCard = ({
             eventPath={event_path}
             eventCategory={event_category}
           />
+          <div className={`${registrationStatus.color} text-white px-2 py-1 rounded-md text-sm flex items-center gap-1 mt-2`}>
+            <registrationStatus.icon className="w-4 h-4" />
+            {registrationStatus.label}
+          </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button asChild className="w-full" size="sm">
