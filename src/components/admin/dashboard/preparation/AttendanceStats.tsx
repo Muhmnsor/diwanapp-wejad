@@ -1,12 +1,8 @@
 import { FC } from "react";
+import { AttendanceStats as AttendanceStatsType } from "@/hooks/attendance/types";
 
 interface AttendanceStatsProps {
-  stats: {
-    total: number;
-    present: number;
-    absent: number;
-    notRecorded: number;
-  };
+  stats: AttendanceStatsType;
 }
 
 export const AttendanceStats: FC<AttendanceStatsProps> = ({ stats }) => {

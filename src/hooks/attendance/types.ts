@@ -1,8 +1,8 @@
 export interface AttendanceStats {
-  totalRegistrations: number;
-  presentCount: number;
-  absentCount: number;
-  attendanceRate: number;
+  total: number;
+  present: number;
+  absent: number;
+  notRecorded: number;
 }
 
 export interface AttendanceRecord {
@@ -14,9 +14,8 @@ export interface AttendanceRecord {
 }
 
 export interface AttendanceHookReturn {
-  stats: AttendanceStats;
-  records: AttendanceRecord[];
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
+  attendanceStats: AttendanceStats;
+  setAttendanceStats: (stats: AttendanceStats) => void;
+  handleAttendanceChange: (registrationId: string, status: 'present' | 'absent', activityId?: string) => Promise<void>;
+  handleGroupAttendance: (status: 'present' | 'absent', activityId?: string) => Promise<void>;
 }

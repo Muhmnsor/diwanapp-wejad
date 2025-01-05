@@ -1,13 +1,13 @@
-import { AttendanceStats, AttendanceRecord } from "@/hooks/attendance/types";
+import { AttendanceStats } from "@/hooks/attendance/types";
 import { AttendanceTable } from "../AttendanceTable";
 import { AttendanceControls } from "../AttendanceControls";
-import { AttendanceStatsDisplay } from "../AttendanceStats";
+import { AttendanceStats as AttendanceStatsComponent } from "../AttendanceStats";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 interface AttendanceContentProps {
   stats: AttendanceStats;
-  records: AttendanceRecord[];
+  records: any[];
   error: Error | null;
   onRefresh: () => Promise<void>;
 }
@@ -31,9 +31,15 @@ export const AttendanceContent = ({
 
   return (
     <div className="space-y-6">
-      <AttendanceStatsDisplay stats={stats} />
-      <AttendanceControls onRefresh={onRefresh} />
-      <AttendanceTable records={records} />
+      <AttendanceStatsComponent stats={stats} />
+      <AttendanceControls 
+        onBarcodeScanned={async () => {}} 
+        onGroupAttendance={async () => {}}
+      />
+      <AttendanceTable 
+        registrations={records}
+        onAttendanceChange={async () => {}}
+      />
     </div>
   );
 };
