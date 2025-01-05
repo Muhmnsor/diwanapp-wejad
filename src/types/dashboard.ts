@@ -1,6 +1,6 @@
 export interface EventStats {
   title: string;
-  registrations: number;
+  registrations?: number;
   rating?: number;
   attendanceRate?: number;
 }
