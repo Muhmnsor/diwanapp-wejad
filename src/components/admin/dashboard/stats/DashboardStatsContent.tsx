@@ -44,6 +44,10 @@ export const DashboardStatsContent = ({
   isEvent = false
 }: DashboardStatsContentProps) => {
   console.log("DashboardStatsContent props:", {
+    registrationCount,
+    remainingSeats,
+    occupancyRate,
+    project,
     activities,
     attendanceStats,
     ratingStats,
@@ -71,40 +75,52 @@ export const DashboardStatsContent = ({
       
       <PathCategoryCard projectId={project.id} />
 
-      <ActivitiesStatsCard
-        activities={{
-          total: activities?.total || 0,
-          completed: activities?.completed || 0
-        }}
-      />
+      {activities && (
+        <ActivitiesStatsCard
+          activities={{
+            total: activities.total || 0,
+            completed: activities.completed || 0
+          }}
+        />
+      )}
       
-      <AttendanceAverageCard
-        averageAttendance={activities?.averageAttendance || 0}
-      />
+      {activities?.averageAttendance !== undefined && (
+        <AttendanceAverageCard
+          averageAttendance={activities.averageAttendance}
+        />
+      )}
       
-      <ActivityAttendanceCard
-        type="highest"
-        title="أعلى نسبة حضور"
-        activity={attendanceStats?.highest}
-      />
+      {attendanceStats?.highest && (
+        <ActivityAttendanceCard
+          type="highest"
+          title="أعلى نسبة حضور"
+          activity={attendanceStats.highest}
+        />
+      )}
       
-      <ActivityAttendanceCard
-        type="lowest"
-        title="أقل نسبة حضور"
-        activity={attendanceStats?.lowest}
-      />
+      {attendanceStats?.lowest && (
+        <ActivityAttendanceCard
+          type="lowest"
+          title="أقل نسبة حضور"
+          activity={attendanceStats.lowest}
+        />
+      )}
       
-      <ActivityRatingCard
-        type="highest"
-        title="أعلى نشاط تقييماً"
-        activity={ratingStats?.highest}
-      />
+      {ratingStats?.highest && (
+        <ActivityRatingCard
+          type="highest"
+          title="أعلى نشاط تقييماً"
+          activity={ratingStats.highest}
+        />
+      )}
       
-      <ActivityRatingCard
-        type="lowest"
-        title="أقل نشاط تقييماً"
-        activity={ratingStats?.lowest}
-      />
+      {ratingStats?.lowest && (
+        <ActivityRatingCard
+          type="lowest"
+          title="أقل نشاط تقييماً"
+          activity={ratingStats.lowest}
+        />
+      )}
     </div>
   );
 };
