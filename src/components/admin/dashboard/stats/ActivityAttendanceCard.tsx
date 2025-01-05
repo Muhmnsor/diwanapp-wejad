@@ -1,16 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, UserMinus } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface ActivityAttendanceCardProps {
   type: "highest" | "lowest";
   title: string;
   activity?: {
     eventId: string;
+    title: string;
+    date: string;
     count: number;
-    event: {
-      title: string;
-      date: string;
-    };
+    totalRegistrations: number;
+    attendanceRate: number;
   };
 }
 
@@ -19,7 +19,7 @@ export const ActivityAttendanceCard = ({
   title,
   activity
 }: ActivityAttendanceCardProps) => {
-  const Icon = type === "highest" ? UserPlus : UserMinus;
+  const Icon = type === "highest" ? TrendingUp : TrendingDown;
 
   return (
     <Card>
@@ -30,14 +30,14 @@ export const ActivityAttendanceCard = ({
       <CardContent>
         {activity ? (
           <>
-            <div className="text-lg font-bold truncate" title={activity.event.title}>
-              {activity.event.title}
+            <div className="text-lg font-bold truncate" title={activity.title}>
+              {activity.title}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {activity.count} حاضر
+              {activity.attendanceRate.toFixed(1)}% نسبة الحضور
             </div>
             <div className="text-xs text-muted-foreground">
-              {activity.event.date}
+              {activity.count} من {activity.totalRegistrations} مسجل
             </div>
           </>
         ) : (

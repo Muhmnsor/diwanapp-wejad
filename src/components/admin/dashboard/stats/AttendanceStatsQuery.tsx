@@ -1,12 +1,33 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface AttendanceStats {
+  eventId: string;
+  title: string;
+  date: string;
+  count: number;
+  totalRegistrations: number;
+  attendanceRate: number;
+}
+
 export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: { projectId: string, isEvent?: boolean }) => {
   return useQuery({
     queryKey: ['attendance-stats', projectId, isEvent],
     queryFn: async () => {
       console.log('Fetching attendance stats for:', { projectId, isEvent });
       
+      // First get all registrations to calculate rates
+      const { data: registrations, error: regError } = await supabase
+        .from('registrations')
+        .select('id')
+        .eq(isEvent ? 'event_id' : 'project_id', projectId);
+
+      if (regError) {
+        console.error('Error fetching registrations:', regError);
+        throw regError;
+      }
+
+      // Then get attendance records
       const { data: records, error } = await supabase
         .from('attendance_records')
         .select(`
@@ -25,36 +46,40 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: { projec
       }
 
       // Group by event and count attendance
-      const eventAttendance = records?.reduce((acc: Record<string, number>, record) => {
+      const eventAttendance: Record<string, AttendanceStats> = {};
+      
+      records?.forEach(record => {
         const eventId = record.event_id;
-        if (eventId) {
-          acc[eventId] = (acc[eventId] || 0) + 1;
+        if (eventId && record.event) {
+          if (!eventAttendance[eventId]) {
+            eventAttendance[eventId] = {
+              eventId,
+              title: record.event.title,
+              date: record.event.date,
+              count: 0,
+              totalRegistrations: registrations?.length || 0,
+              attendanceRate: 0
+            };
+          }
+          eventAttendance[eventId].count++;
+          // Calculate attendance rate
+          eventAttendance[eventId].attendanceRate = 
+            (eventAttendance[eventId].count / eventAttendance[eventId].totalRegistrations) * 100;
         }
-        return acc;
-      }, {});
+      });
 
-      // Find highest and lowest attendance
-      let highest = null;
-      let lowest = null;
+      // Convert to array and sort
+      const sortedEvents = Object.values(eventAttendance)
+        .sort((a, b) => b.attendanceRate - a.attendanceRate);
 
-      if (records && records.length > 0) {
-        const sortedEvents = Object.entries(eventAttendance)
-          .map(([eventId, count]) => ({
-            eventId,
-            count,
-            event: records.find(r => r.event_id === eventId)?.event
-          }))
-          .sort((a, b) => b.count - a.count);
-
-        highest = sortedEvents[0];
-        lowest = sortedEvents[sortedEvents.length - 1];
-      }
-
-      console.log('Attendance stats calculated:', { highest, lowest });
+      console.log('Attendance stats calculated:', { 
+        highest: sortedEvents[0], 
+        lowest: sortedEvents[sortedEvents.length - 1] 
+      });
       
       return {
-        highest,
-        lowest
+        highest: sortedEvents[0] || null,
+        lowest: sortedEvents[sortedEvents.length - 1] || null
       };
     },
     enabled: !!projectId
