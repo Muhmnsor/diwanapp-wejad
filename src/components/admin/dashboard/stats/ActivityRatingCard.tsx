@@ -4,11 +4,13 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 interface ActivityRatingCardProps {
   type: "highest" | "lowest";
   title: string;
-  activity: {
+  activity?: {
+    eventId: string;
     title: string;
     date: string;
-    rating: number;
-  } | null;
+    averageRating: number;
+    ratingsCount: number;
+  };
 }
 
 export const ActivityRatingCard = ({
@@ -17,34 +19,31 @@ export const ActivityRatingCard = ({
   activity
 }: ActivityRatingCardProps) => {
   const Icon = type === "highest" ? TrendingUp : TrendingDown;
-  const iconColorClass = type === "highest" ? "text-green-500" : "text-red-500";
-
-  if (!activity) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          <Icon className={`h-4 w-4 ${iconColorClass}`} />
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground">لا توجد تقييمات بعد</div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className={`h-4 w-4 ${iconColorClass}`} />
+        <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{activity.rating.toFixed(1)}</div>
-        <div className="text-xs text-muted-foreground mt-1 space-y-1">
-          <div>{activity.title}</div>
-          <div className="text-xs opacity-70">{activity.date}</div>
-        </div>
+        {activity ? (
+          <>
+            <div className="text-lg font-bold truncate" title={activity.title}>
+              {activity.title}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {activity.averageRating.toFixed(1)} من 5
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {activity.ratingsCount} تقييم
+            </div>
+          </>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            لا توجد بيانات
+          </div>
+        )}
       </CardContent>
     </Card>
   );

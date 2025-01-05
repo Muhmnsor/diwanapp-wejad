@@ -1,67 +1,61 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RatingStatsQueryProps {
-  projectId: string;
-  isEvent?: boolean;
-}
-
-export const useRatingStatsQuery = ({ projectId, isEvent = false }: RatingStatsQueryProps) => {
+export const useRatingStatsQuery = ({ projectId, isEvent = false }: { projectId: string, isEvent?: boolean }) => {
   return useQuery({
-    queryKey: ['project-activities-ratings', projectId],
+    queryKey: ['rating-stats', projectId, isEvent],
     queryFn: async () => {
-      console.log('Fetching activity ratings for project:', projectId);
+      console.log('Fetching rating stats for:', { projectId, isEvent });
       
-      // Get all activities with their feedback
-      const { data: activitiesWithFeedback } = await supabase
+      const { data: events, error } = await supabase
         .from('events')
         .select(`
           id,
           title,
           date,
-          event_feedback(
-            overall_rating
-          )
+          event_feedback(overall_rating),
+          activity_feedback(overall_rating)
         `)
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true);
+        .eq(isEvent ? 'id' : 'project_id', projectId);
 
-      if (!activitiesWithFeedback?.length) {
-        console.log('No activities found with feedback');
-        return { highest: null, lowest: null };
+      if (error) {
+        console.error('Error fetching rating stats:', error);
+        throw error;
       }
 
-      // Calculate average rating for each activity
-      const activitiesWithRatings = activitiesWithFeedback
-        .map(activity => ({
-          title: activity.title,
-          date: activity.date,
-          rating: activity.event_feedback.length > 0
-            ? activity.event_feedback.reduce((sum: number, feedback: any) => sum + (feedback.overall_rating || 0), 0) / activity.event_feedback.length
-            : 0
-        }))
-        .filter(activity => activity.rating > 0);
+      // Calculate average rating for each event
+      const eventRatings = events?.map(event => {
+        const allRatings = [
+          ...event.event_feedback?.map((f: any) => f.overall_rating) || [],
+          ...event.activity_feedback?.map((f: any) => f.overall_rating) || []
+        ].filter(r => r !== null);
 
-      if (!activitiesWithRatings.length) {
-        console.log('No activities found with ratings');
-        return { highest: null, lowest: null };
-      }
+        const average = allRatings.length > 0
+          ? allRatings.reduce((a: number, b: number) => a + b, 0) / allRatings.length
+          : 0;
 
-      // Sort by rating and get highest and lowest
-      const sortedActivities = [...activitiesWithRatings].sort((a, b) => {
-        if (a.rating === b.rating) {
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        }
-        return b.rating - a.rating;
+        return {
+          eventId: event.id,
+          title: event.title,
+          date: event.date,
+          averageRating: average,
+          ratingsCount: allRatings.length
+        };
       });
 
-      console.log('Activities with ratings:', sortedActivities);
+      // Sort by average rating
+      const sortedEvents = eventRatings?.sort((a, b) => b.averageRating - a.averageRating);
 
+      const highest = sortedEvents?.[0] || null;
+      const lowest = sortedEvents?.[sortedEvents.length - 1] || null;
+
+      console.log('Rating stats calculated:', { highest, lowest });
+      
       return {
-        highest: sortedActivities[0] || null,
-        lowest: sortedActivities[sortedActivities.length - 1] || null
+        highest,
+        lowest
       };
     },
-    enabled: !isEvent && !!projectId
+    enabled: !!projectId
   });
 };

@@ -1,62 +1,62 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface AttendanceStatsQueryProps {
-  projectId: string;
-  isEvent?: boolean;
-}
-
-export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: AttendanceStatsQueryProps) => {
+export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: { projectId: string, isEvent?: boolean }) => {
   return useQuery({
-    queryKey: ['project-activities-attendance', projectId],
+    queryKey: ['attendance-stats', projectId, isEvent],
     queryFn: async () => {
-      // Get all activities for this project
-      const { data: projectActivities } = await supabase
-        .from('events')
+      console.log('Fetching attendance stats for:', { projectId, isEvent });
+      
+      const { data: records, error } = await supabase
+        .from('attendance_records')
         .select(`
-          id,
-          title,
-          date,
-          attendance_records!attendance_records_activity_id_fkey(*)
+          *,
+          event:events!attendance_records_event_id_fkey(
+            title,
+            date
+          )
         `)
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true)
-        .order('date', { ascending: true });
+        .eq(isEvent ? 'event_id' : 'project_id', projectId)
+        .eq('status', 'present');
 
-      if (!projectActivities?.length) return { highest: null, lowest: null };
+      if (error) {
+        console.error('Error fetching attendance stats:', error);
+        throw error;
+      }
 
-      // Get total registrations for the project
-      const { data: registrations } = await supabase
-        .from('registrations')
-        .select('id')
-        .eq('project_id', projectId);
-
-      const totalRegistrations = registrations?.length || 0;
-
-      // Calculate attendance percentage for each activity
-      const activitiesWithStats = projectActivities.map(activity => ({
-        title: activity.title,
-        date: activity.date,
-        attendanceCount: activity.attendance_records.filter(record => record.status === 'present').length,
-        totalRegistrations,
-        percentage: totalRegistrations > 0 
-          ? (activity.attendance_records.filter(record => record.status === 'present').length / totalRegistrations) * 100
-          : 0
-      }));
-
-      // Sort by percentage and date
-      const sortedActivities = activitiesWithStats.sort((a, b) => {
-        if (a.percentage === b.percentage) {
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
+      // Group by event and count attendance
+      const eventAttendance = records?.reduce((acc: Record<string, number>, record) => {
+        const eventId = record.event_id;
+        if (eventId) {
+          acc[eventId] = (acc[eventId] || 0) + 1;
         }
-        return b.percentage - a.percentage;
-      });
+        return acc;
+      }, {});
 
+      // Find highest and lowest attendance
+      let highest = null;
+      let lowest = null;
+
+      if (records && records.length > 0) {
+        const sortedEvents = Object.entries(eventAttendance)
+          .map(([eventId, count]) => ({
+            eventId,
+            count,
+            event: records.find(r => r.event_id === eventId)?.event
+          }))
+          .sort((a, b) => b.count - a.count);
+
+        highest = sortedEvents[0];
+        lowest = sortedEvents[sortedEvents.length - 1];
+      }
+
+      console.log('Attendance stats calculated:', { highest, lowest });
+      
       return {
-        highest: sortedActivities[0] || null,
-        lowest: sortedActivities[sortedActivities.length - 1] || null
+        highest,
+        lowest
       };
     },
-    enabled: !isEvent && !!projectId
+    enabled: !!projectId
   });
 };
