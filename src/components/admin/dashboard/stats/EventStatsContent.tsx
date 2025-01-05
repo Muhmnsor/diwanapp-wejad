@@ -9,9 +9,10 @@ interface EventStatsContentProps {
   occupancyRate: number;
   project: {
     id: string;
+    start_date: string;
+    end_date: string;
     event_path: string;
     event_category: string;
-    date?: string;
     averageRating?: number;
   };
 }
@@ -83,7 +84,7 @@ export const EventStatsContent = ({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {project.date ? formatDateWithDay(project.date) : 'لم يتم تحديد الموعد'}
+            {project.start_date ? formatDateWithDay(project.start_date) : 'لم يتم تحديد الموعد'}
           </div>
         </CardContent>
       </Card>

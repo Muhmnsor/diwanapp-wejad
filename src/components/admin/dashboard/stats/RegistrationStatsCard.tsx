@@ -14,15 +14,17 @@ export const RegistrationStatsCard = ({
 }: RegistrationStatsCardProps) => {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">المسجلين</CardTitle>
+      <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
         <Users className="h-4 w-4 text-muted-foreground" />
+        <CardTitle className="text-sm font-medium">
+          التسجيلات
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{registrationCount}</div>
-        <p className="text-xs text-muted-foreground mt-1">
-          المقاعد المتبقية: {remainingSeats} | نسبة الإشغال: {occupancyRate.toFixed(1)}%
-        </p>
+        <div className="text-xs text-muted-foreground">
+          {remainingSeats} مقعد متبقي ({occupancyRate.toFixed(1)}%)
+        </div>
       </CardContent>
     </Card>
   );
