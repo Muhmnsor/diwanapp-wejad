@@ -95,23 +95,23 @@ export const useDashboardData = () => {
       // Calculate total revenue
       const totalRevenue = allItems.reduce((acc, item) => acc + (Number(item.price || 0) * (item.totalRegistrations || 0)), 0);
 
-      // Group events by type with explicit type casting
+      // Group events by type with explicit type casting for ChartData
       const eventsByType: ChartData[] = Object.entries(
         allItems.reduce((acc: Record<string, number>, event) => {
           const type = event.event_type === 'online' ? 'عن بعد' : 'حضوري';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: value as number }));
 
-      // Group by beneficiary (event_path) with explicit type casting
+      // Group by beneficiary (event_path) with explicit type casting for ChartData
       const eventsByBeneficiary: ChartData[] = [
         { name: 'البيئة', value: allItems.filter(event => event.event_path === 'environment').length },
         { name: 'المجتمع', value: allItems.filter(event => event.event_path === 'community').length },
         { name: 'المحتوى', value: allItems.filter(event => event.event_path === 'content').length }
       ];
 
-      // Group by beneficiary type with explicit type casting
+      // Group by beneficiary type with explicit type casting for ChartData
       const eventsByBeneficiaryType: ChartData[] = Object.entries(
         allItems.reduce((acc: Record<string, number>, event) => {
           const type = event.beneficiary_type === 'men' ? 'رجال' : 
@@ -119,16 +119,16 @@ export const useDashboardData = () => {
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: value as number }));
 
-      // Group by price with explicit type casting
+      // Group by price with explicit type casting for ChartData
       const eventsByPrice: ChartData[] = Object.entries(
         allItems.reduce((acc: Record<string, number>, event) => {
           const type = event.price === 0 || event.price === null ? 'مجاني' : 'مدفوع';
           acc[type] = (acc[type] || 0) + 1;
           return acc;
         }, {})
-      ).map(([name, value]) => ({ name, value }));
+      ).map(([name, value]) => ({ name, value: value as number }));
 
       const defaultStats = {
         title: 'لا يوجد',
