@@ -10,6 +10,8 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: Attendan
   return useQuery({
     queryKey: ['project-activities-attendance', projectId],
     queryFn: async () => {
+      console.log('Fetching attendance stats for project:', projectId);
+      
       // Get all activities for this project
       const { data: projectActivities } = await supabase
         .from('events')
@@ -23,7 +25,7 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: Attendan
         .eq('is_project_activity', true)
         .order('date', { ascending: true });
 
-      if (!projectActivities?.length) return { highest: null, lowest: null };
+      if (!projectActivities?.length) return { highest: null, lowest: null, average: 0 };
 
       // Get total registrations for the project
       const { data: registrations } = await supabase
@@ -44,6 +46,10 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: Attendan
           : 0
       }));
 
+      // Calculate average attendance
+      const totalAttendance = activitiesWithStats.reduce((sum, activity) => sum + activity.percentage, 0);
+      const averageAttendance = activitiesWithStats.length > 0 ? totalAttendance / activitiesWithStats.length : 0;
+
       // Sort by percentage and date
       const sortedActivities = activitiesWithStats.sort((a, b) => {
         if (a.percentage === b.percentage) {
@@ -54,7 +60,8 @@ export const useAttendanceStatsQuery = ({ projectId, isEvent = false }: Attendan
 
       return {
         highest: sortedActivities[0] || null,
-        lowest: sortedActivities[sortedActivities.length - 1] || null
+        lowest: sortedActivities[sortedActivities.length - 1] || null,
+        average: averageAttendance
       };
     },
     enabled: !isEvent && !!projectId

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Users, Calendar, TrendingUp, TrendingDown, DollarSign, Star } from "lucide-react";
 import { DashboardData } from "@/types/dashboard";
 
 interface DashboardStatsProps {
@@ -50,40 +50,73 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أعلى حدث تسجيلاً</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">أعلى حدث حضوراً</CardTitle>
+          <TrendingUp className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">{data.mostRegisteredEvent.title}</div>
+          <div className="text-lg font-bold">{data.mostAttendedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.mostRegisteredEvent.registrations} مسجل
+            {data.mostAttendedEvent.attendanceCount} حاضر ({data.mostAttendedEvent.percentage}%)
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">أقل حدث تسجيلاً</CardTitle>
-          <TrendingDown className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">أقل حدث حضوراً</CardTitle>
+          <TrendingDown className="h-4 w-4 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">{data.leastRegisteredEvent.title}</div>
+          <div className="text-lg font-bold">{data.leastAttendedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.leastRegisteredEvent.registrations} مسجل
+            {data.leastAttendedEvent.attendanceCount} حاضر ({data.leastAttendedEvent.percentage}%)
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">متوسط الحضور</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{data.averageAttendance.toFixed(1)}%</div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">أعلى حدث تقييماً</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <TrendingUp className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
           <div className="text-lg font-bold">{data.highestRatedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {data.highestRatedEvent.rating} من 5
+            {data.highestRatedEvent.rating.toFixed(1)} من 5
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">أقل حدث تقييماً</CardTitle>
+          <TrendingDown className="h-4 w-4 text-red-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.lowestRatedEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.lowestRatedEvent.rating.toFixed(1)} من 5
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">متوسط التقييم</CardTitle>
+          <Star className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{data.averageRating.toFixed(1)} من 5</div>
         </CardContent>
       </Card>
     </div>

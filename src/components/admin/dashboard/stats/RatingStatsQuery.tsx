@@ -28,7 +28,7 @@ export const useRatingStatsQuery = ({ projectId, isEvent = false }: RatingStatsQ
 
       if (!activitiesWithFeedback?.length) {
         console.log('No activities found with feedback');
-        return { highest: null, lowest: null };
+        return { highest: null, lowest: null, average: 0 };
       }
 
       // Calculate average rating for each activity
@@ -44,8 +44,12 @@ export const useRatingStatsQuery = ({ projectId, isEvent = false }: RatingStatsQ
 
       if (!activitiesWithRatings.length) {
         console.log('No activities found with ratings');
-        return { highest: null, lowest: null };
+        return { highest: null, lowest: null, average: 0 };
       }
+
+      // Calculate overall average rating
+      const totalRating = activitiesWithRatings.reduce((sum, activity) => sum + activity.rating, 0);
+      const averageRating = activitiesWithRatings.length > 0 ? totalRating / activitiesWithRatings.length : 0;
 
       // Sort by rating and get highest and lowest
       const sortedActivities = [...activitiesWithRatings].sort((a, b) => {
@@ -59,7 +63,8 @@ export const useRatingStatsQuery = ({ projectId, isEvent = false }: RatingStatsQ
 
       return {
         highest: sortedActivities[0] || null,
-        lowest: sortedActivities[sortedActivities.length - 1] || null
+        lowest: sortedActivities[sortedActivities.length - 1] || null,
+        average: averageRating
       };
     },
     enabled: !isEvent && !!projectId
