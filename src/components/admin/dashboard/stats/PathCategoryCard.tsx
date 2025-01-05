@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PathCategoryCardProps {
-  projectId: string;
+  projectId?: string;
 }
 
 export const PathCategoryCard = ({ projectId }: PathCategoryCardProps) => {

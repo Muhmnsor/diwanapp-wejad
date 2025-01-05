@@ -71,19 +71,28 @@ export const DashboardStats = ({
     isEvent
   });
 
+  const formattedEvent = {
+    id: event.id,
+    start_date: event.start_date || event.date || '',
+    end_date: event.end_date || event.date || '',
+    event_path: event.event_path,
+    event_category: event.event_category,
+    averageRating: event.averageRating
+  };
+
   return isEvent ? (
     <EventStatsContent
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      event={event}
+      event={formattedEvent}
     />
   ) : (
     <DashboardStatsContent
       registrationCount={registrationCount}
       remainingSeats={remainingSeats}
       occupancyRate={occupancyRate}
-      event={event}
+      event={formattedEvent}
       activities={activities}
     />
   );

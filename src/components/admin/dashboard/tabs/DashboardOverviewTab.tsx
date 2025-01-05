@@ -42,19 +42,13 @@ export const DashboardOverviewTab = ({
     activities
   });
 
-  // Convert project data to event format if needed
-  const eventData = event || (project ? {
-    id: project.id,
-    start_date: project.start_date,
-    end_date: project.end_date,
-    event_path: project.event_path,
-    event_category: project.event_category
-  } : undefined);
-
-  if (!eventData) {
-    console.error("Neither event nor project data provided");
-    return null;
-  }
+  const eventData = {
+    id: project?.id || event?.id || '',
+    start_date: project?.start_date || event?.start_date || '',
+    end_date: project?.end_date || event?.end_date || '',
+    event_path: project?.event_path || event?.event_path || '',
+    event_category: project?.event_category || event?.event_category || ''
+  };
 
   return (
     <DashboardOverview
