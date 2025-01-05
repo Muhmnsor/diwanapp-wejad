@@ -86,6 +86,32 @@ export const DashboardStats = ({ data }: DashboardStatsProps) => {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">أعلى حدث حضوراً</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.mostAttendedEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.mostAttendedEvent.attendance} حاضر
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">أقل حدث حضوراً</CardTitle>
+          <TrendingDown className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.leastAttendedEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.leastAttendedEvent.attendance} حاضر
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

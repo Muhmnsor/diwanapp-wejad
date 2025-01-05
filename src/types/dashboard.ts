@@ -2,6 +2,7 @@ export interface EventStats {
   title: string;
   registrations: number;
   rating?: number;
+  attendance?: number;
 }
 
 export interface ChartData {
@@ -20,6 +21,8 @@ export interface DashboardData {
   mostRegisteredEvent: EventStats;
   leastRegisteredEvent: EventStats;
   highestRatedEvent: EventStats;
+  mostAttendedEvent: EventStats;
+  leastAttendedEvent: EventStats;
   eventsByType: ChartData[];
   eventsByBeneficiary: ChartData[];
   eventsByBeneficiaryType: ChartData[];

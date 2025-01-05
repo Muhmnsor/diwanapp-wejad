@@ -14,7 +14,8 @@ export const useDashboardData = () => {
         .select(`
           *,
           registrations (count),
-          event_feedback (overall_rating)
+          event_feedback (overall_rating),
+          attendance_records (status)
         `)
         .eq('is_project_activity', false)
         .eq('is_visible', true);
@@ -26,7 +27,8 @@ export const useDashboardData = () => {
         .from("projects")
         .select(`
           *,
-          registrations (count)
+          registrations (count),
+          attendance_records (status)
         `)
         .eq('is_visible', true);
 
@@ -41,12 +43,14 @@ export const useDashboardData = () => {
           ...event,
           type: 'event',
           registrationCount: event.registrations[0]?.count || 0,
+          attendanceCount: event.attendance_records?.filter((record: any) => record.status === 'present').length || 0,
           date: new Date(event.date)
         })),
         ...projects.map(project => ({
           ...project,
           type: 'project',
           registrationCount: project.registrations[0]?.count || 0,
+          attendanceCount: project.attendance_records?.filter((record: any) => record.status === 'present').length || 0,
           date: new Date(project.start_date)
         }))
       ];
@@ -70,6 +74,11 @@ export const useDashboardData = () => {
       // Find events with most and least registrations
       const sortedByRegistrations = [...allEvents].sort(
         (a, b) => b.registrationCount - a.registrationCount
+      );
+
+      // Find events with most and least attendance
+      const sortedByAttendance = [...allEvents].sort(
+        (a, b) => b.attendanceCount - a.attendanceCount
       );
 
       // Calculate average ratings and find highest rated event
@@ -145,6 +154,16 @@ export const useDashboardData = () => {
           title: sortedByRating[0]?.title || 'لا يوجد',
           registrations: 0,
           rating: sortedByRating[0]?.avgRating || 0
+        },
+        mostAttendedEvent: {
+          title: sortedByAttendance[0]?.title || 'لا يوجد',
+          registrations: sortedByAttendance[0]?.registrationCount || 0,
+          attendance: sortedByAttendance[0]?.attendanceCount || 0
+        },
+        leastAttendedEvent: {
+          title: sortedByAttendance[sortedByAttendance.length - 1]?.title || 'لا يوجد',
+          registrations: sortedByAttendance[sortedByAttendance.length - 1]?.registrationCount || 0,
+          attendance: sortedByAttendance[sortedByAttendance.length - 1]?.attendanceCount || 0
         },
         eventsByType,
         eventsByBeneficiary,
