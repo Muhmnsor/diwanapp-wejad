@@ -37,6 +37,12 @@ export const getEventStatus = (event: Event): EventStatus => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const eventDateTime = getEventDateTime(event.date, event.time);
   
+  // التحقق من انتهاء الفعالية أولاً
+  if (now >= eventDateTime) {
+    console.log('Event has already ended');
+    return 'eventStarted';
+  }
+
   // تحويل تواريخ التسجيل إلى كائنات Date
   const registrationStartDate = (event.registrationStartDate || event.registration_start_date) ? 
     new Date(event.registrationStartDate || event.registration_start_date) : null;
@@ -51,7 +57,7 @@ export const getEventStatus = (event: Event): EventStatus => {
     today: today.toISOString()
   });
 
-  // التحقق من اكتمال العدد أولاً
+  // التحقق من اكتمال العدد
   const currentAttendees = typeof event.attendees === 'number' ? event.attendees : 0;
   if (event.max_attendees && currentAttendees >= event.max_attendees) {
     console.log('Event is full - no more seats available');
@@ -85,12 +91,6 @@ export const getEventStatus = (event: Event): EventStatus => {
       console.log('Registration period has ended');
       return 'ended';
     }
-  }
-
-  // التحقق من بدء الفعالية
-  if (now >= eventDateTime) {
-    console.log('Event has already started or ended');
-    return 'eventStarted';
   }
 
   console.log('Registration is available');
