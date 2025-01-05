@@ -41,7 +41,7 @@ export const useProjectDashboard = (projectId: string) => {
     },
   });
 
-  // Fetch project activities with their attendance records
+  // Fetch project activities with their attendance records and feedback
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
@@ -50,7 +50,8 @@ export const useProjectDashboard = (projectId: string) => {
         .from('events')
         .select(`
           *,
-          attendance_records!attendance_records_activity_id_fkey(*)
+          attendance_records(*),
+          activity_feedback(*)
         `)
         .eq('project_id', projectId)
         .eq('is_project_activity', true)
@@ -110,7 +111,58 @@ export const useProjectDashboard = (projectId: string) => {
     return Math.round(average);
   };
 
-  const averageAttendance = calculateAverageAttendance();
+  const calculateActivityStats = () => {
+    const stats = {
+      total: projectActivities.length,
+      completed: completedActivities.length,
+      averageAttendance: calculateAverageAttendance(),
+      highestAttendance: null as any,
+      lowestAttendance: null as any,
+      highestRated: null as any,
+      lowestRated: null as any
+    };
+
+    if (completedActivities.length > 0) {
+      // Calculate attendance rates for each activity
+      const activitiesWithStats = completedActivities.map(activity => {
+        const presentCount = activity.attendance_records?.filter(
+          (record: { status: string }) => record.status === 'present'
+        ).length || 0;
+        
+        const attendanceRate = registrations.length ? (presentCount / registrations.length) * 100 : 0;
+        
+        // Calculate average rating
+        const ratings = activity.activity_feedback?.map((f: any) => f.overall_rating).filter(Boolean) || [];
+        const averageRating = ratings.length ? 
+          ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length : 0;
+
+        return {
+          ...activity,
+          attendanceRate,
+          presentCount,
+          averageRating,
+          ratingsCount: ratings.length
+        };
+      });
+
+      // Sort by attendance rate
+      const sortedByAttendance = [...activitiesWithStats].sort((a, b) => b.attendanceRate - a.attendanceRate);
+      stats.highestAttendance = sortedByAttendance[0];
+      stats.lowestAttendance = sortedByAttendance[sortedByAttendance.length - 1];
+
+      // Sort by rating
+      const sortedByRating = [...activitiesWithStats]
+        .filter(a => a.ratingsCount > 0)
+        .sort((a, b) => b.averageRating - a.averageRating);
+      
+      stats.highestRated = sortedByRating[0] || null;
+      stats.lowestRated = sortedByRating[sortedByRating.length - 1] || null;
+    }
+
+    return stats;
+  };
+
+  const activityStats = calculateActivityStats();
 
   // Calculate dashboard metrics
   const registrationCount = registrations.length;
@@ -121,11 +173,7 @@ export const useProjectDashboard = (projectId: string) => {
     registrationCount,
     remainingSeats,
     occupancyRate,
-    activitiesStats: {
-      total: projectActivities.length,
-      completed: completedActivities.length,
-      averageAttendance
-    }
+    activityStats
   });
 
   return {
@@ -136,9 +184,29 @@ export const useProjectDashboard = (projectId: string) => {
       remainingSeats,
       occupancyRate,
       activitiesStats: {
-        total: projectActivities.length,
-        completed: completedActivities.length,
-        averageAttendance
+        total: activityStats.total,
+        completed: activityStats.completed,
+        averageAttendance: activityStats.averageAttendance,
+        highestAttendance: activityStats.highestAttendance ? {
+          title: activityStats.highestAttendance.title,
+          attendanceRate: activityStats.highestAttendance.attendanceRate,
+          registrations: registrationCount
+        } : null,
+        lowestAttendance: activityStats.lowestAttendance ? {
+          title: activityStats.lowestAttendance.title,
+          attendanceRate: activityStats.lowestAttendance.attendanceRate,
+          registrations: registrationCount
+        } : null,
+        highestRated: activityStats.highestRated ? {
+          title: activityStats.highestRated.title,
+          rating: activityStats.highestRated.averageRating,
+          registrations: registrationCount
+        } : null,
+        lowestRated: activityStats.lowestRated ? {
+          title: activityStats.lowestRated.title,
+          rating: activityStats.lowestRated.averageRating,
+          registrations: registrationCount
+        } : null
       }
     },
     isLoading: isProjectLoading || isRegistrationsLoading

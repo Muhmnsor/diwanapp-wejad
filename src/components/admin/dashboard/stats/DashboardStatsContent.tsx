@@ -4,7 +4,6 @@ import { ActivitiesStatsCard } from "./ActivitiesStatsCard";
 import { AttendanceAverageCard } from "./AttendanceAverageCard";
 import { ActivityAttendanceCard } from "./ActivityAttendanceCard";
 import { ActivityRatingCard } from "./ActivityRatingCard";
-import { EventStatsContent } from "./EventStatsContent";
 
 interface DashboardStatsContentProps {
   registrationCount: number;
@@ -21,16 +20,27 @@ interface DashboardStatsContentProps {
     total: number;
     completed: number;
     averageAttendance: number;
+    highestAttendance?: {
+      title: string;
+      attendanceRate: number;
+      registrations: number;
+    } | null;
+    lowestAttendance?: {
+      title: string;
+      attendanceRate: number;
+      registrations: number;
+    } | null;
+    highestRated?: {
+      title: string;
+      rating: number;
+      registrations: number;
+    } | null;
+    lowestRated?: {
+      title: string;
+      rating: number;
+      registrations: number;
+    } | null;
   };
-  attendanceStats?: {
-    highest: any;
-    lowest: any;
-  };
-  ratingStats?: {
-    highest: any;
-    lowest: any;
-  };
-  isEvent?: boolean;
 }
 
 export const DashboardStatsContent = ({
@@ -38,20 +48,14 @@ export const DashboardStatsContent = ({
   remainingSeats,
   occupancyRate,
   project,
-  activities,
-  attendanceStats,
-  ratingStats,
-  isEvent = false
+  activities
 }: DashboardStatsContentProps) => {
   console.log("DashboardStatsContent props:", {
     registrationCount,
     remainingSeats,
     occupancyRate,
     project,
-    activities,
-    attendanceStats,
-    ratingStats,
-    isEvent
+    activities
   });
 
   return (
@@ -78,25 +82,25 @@ export const DashboardStatsContent = ({
       <ActivityAttendanceCard
         type="highest"
         title="أعلى نسبة حضور"
-        activity={attendanceStats?.highest}
+        activity={activities?.highestAttendance}
       />
       
       <ActivityAttendanceCard
         type="lowest"
         title="أقل نسبة حضور"
-        activity={attendanceStats?.lowest}
+        activity={activities?.lowestAttendance}
       />
       
       <ActivityRatingCard
         type="highest"
         title="أعلى نشاط تقييماً"
-        activity={ratingStats?.highest}
+        activity={activities?.highestRated}
       />
       
       <ActivityRatingCard
         type="lowest"
         title="أقل نشاط تقييماً"
-        activity={ratingStats?.lowest}
+        activity={activities?.lowestRated}
       />
     </div>
   );
