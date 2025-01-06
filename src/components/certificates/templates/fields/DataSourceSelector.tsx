@@ -45,7 +45,7 @@ export const DataSourceSelector = ({ value, onChange }: DataSourceSelectorProps)
     <div>
       <Label>مصدر البيانات</Label>
       <Select
-        value={value}
+        value={value || "registration.arabic_name"} // Provide a default value
         onValueChange={handleValueChange}
       >
         <SelectTrigger>
@@ -60,7 +60,7 @@ export const DataSourceSelector = ({ value, onChange }: DataSourceSelectorProps)
               {group.options.map((option) => (
                 <SelectItem
                   key={option.value}
-                  value={option.value}
+                  value={option.value} // This is now guaranteed to be non-empty
                   className="pl-8"
                 >
                   {option.label}
