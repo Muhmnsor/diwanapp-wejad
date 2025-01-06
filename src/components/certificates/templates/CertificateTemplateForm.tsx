@@ -38,7 +38,49 @@ export const CertificateTemplateForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Final validation before submission
+    if (!validateStep(currentStep)) {
+      return;
+    }
+    
     onSubmit(formData, selectedFile);
+  };
+
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        if (!formData.name.trim()) {
+          toast.error('الرجاء إدخال اسم القالب');
+          return false;
+        }
+        return true;
+
+      case 2:
+        if (!selectedFile && !formData.template_file) {
+          toast.error('الرجاء رفع ملف القالب');
+          return false;
+        }
+        return true;
+
+      case 3:
+        if (!formData.orientation || !formData.page_size) {
+          toast.error('الرجاء تحديد إعدادات الصفحة');
+          return false;
+        }
+        return true;
+
+      case 4:
+        if (Object.keys(formData.fields).length === 0) {
+          toast.warning('لم يتم إضافة أي حقول للقالب');
+          // Allow submission even without fields
+          return true;
+        }
+        return true;
+
+      default:
+        return true;
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -57,8 +99,14 @@ export const CertificateTemplateForm = ({
     setDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      console.log('File dropped:', e.dataTransfer.files[0]);
-      setSelectedFile(e.dataTransfer.files[0]);
+      const file = e.dataTransfer.files[0];
+      if (file.type !== 'application/pdf') {
+        toast.error('يجب أن يكون الملف بصيغة PDF');
+        return;
+      }
+      console.log('File dropped:', file);
+      setSelectedFile(file);
+      toast.success('تم رفع الملف بنجاح');
     }
   };
 
@@ -79,19 +127,38 @@ export const CertificateTemplateForm = ({
   };
 
   const handleNext = () => {
-    if (currentStep === 1 && !formData.name.trim()) {
-      toast.error('الرجاء إدخال اسم القالب');
+    if (!validateStep(currentStep)) {
       return;
     }
-    if (currentStep === 2 && !selectedFile && !formData.template_file) {
-      toast.error('الرجاء رفع ملف القالب');
-      return;
+    
+    const nextStep = currentStep + 1;
+    if (nextStep <= 4) {
+      setCurrentStep(nextStep);
+      toast.success(`الخطوة ${nextStep} من 4`);
     }
-    setCurrentStep(prev => Math.min(prev + 1, 4));
   };
 
   const handleBack = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    const prevStep = currentStep - 1;
+    if (prevStep >= 1) {
+      setCurrentStep(prevStep);
+      toast.info(`الخطوة ${prevStep} من 4`);
+    }
+  };
+
+  const getStepTitle = (step: number): string => {
+    switch (step) {
+      case 1:
+        return 'المعلومات الأساسية';
+      case 2:
+        return 'رفع ملف القالب';
+      case 3:
+        return 'إعدادات الصفحة';
+      case 4:
+        return 'إعداد الحقول';
+      default:
+        return '';
+    }
   };
 
   const renderStepContent = () => {
@@ -159,7 +226,7 @@ export const CertificateTemplateForm = ({
           ))}
         </div>
         <div className="text-sm text-muted-foreground">
-          الخطوة {currentStep} من 4
+          {getStepTitle(currentStep)} - الخطوة {currentStep} من 4
         </div>
       </div>
 

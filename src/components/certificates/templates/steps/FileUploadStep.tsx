@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload } from "lucide-react";
+import { toast } from "sonner";
 
 interface FileUploadStepProps {
   currentFile: string;
@@ -18,6 +19,19 @@ export const FileUploadStep = ({
   onDrag,
   onDrop
 }: FileUploadStepProps) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      if (file.type !== 'application/pdf') {
+        toast.error('يجب أن يكون الملف بصيغة PDF');
+        return;
+      }
+      console.log('File selected:', file);
+      onFileSelect(file);
+      toast.success('تم رفع الملف بنجاح');
+    }
+  };
+
   return (
     <Card className="p-4 space-y-4">
       <div className="space-y-2">
@@ -41,12 +55,7 @@ export const FileUploadStep = ({
               type="file"
               accept=".pdf"
               className="max-w-[200px]"
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  console.log('File selected:', e.target.files[0]);
-                  onFileSelect(e.target.files[0]);
-                }
-              }}
+              onChange={handleFileChange}
             />
             {currentFile && (
               <p className="text-sm text-muted-foreground mt-2">
