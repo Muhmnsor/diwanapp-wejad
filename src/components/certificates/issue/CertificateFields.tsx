@@ -53,7 +53,7 @@ export const CertificateFields = ({
               onChange={(e) => onFieldChange(key, e.target.value)}
               placeholder={`أدخل ${key}`}
               className={isMapped ? "bg-gray-50" : ""}
-              readOnly={isMapped} // Make mapped fields read-only
+              readOnly={isMapped ? true : false}
             />
             {mappingLabel && (
               <p className="text-sm text-muted-foreground">
