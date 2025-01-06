@@ -1,11 +1,10 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useTemplateForm } from "./useTemplateForm";
+import { StepIndicator } from "./StepIndicator";
+import { StepNavigation } from "./StepNavigation";
+import { BasicInfoStep } from "../steps/BasicInfoStep";
+import { FileUploadStep } from "../steps/FileUploadStep";
+import { PageSettingsStep } from "../steps/PageSettingsStep";
 import { CertificateTemplateFields } from "../CertificateTemplateFields";
-import { Card } from "@/components/ui/card";
-import { Upload } from "lucide-react";
 
 interface CertificateTemplateFormProps {
   template?: any;
@@ -20,169 +19,103 @@ export const CertificateTemplateForm = ({
   onSubmit,
   onCancel
 }: CertificateTemplateFormProps) => {
-  const [formData, setFormData] = useState({
-    name: template?.name || '',
-    description: template?.description || '',
-    template_file: template?.template_file || '',
-    fields: template?.fields || {},
-    field_mappings: template?.field_mappings || {},
-    language: template?.language || 'ar',
-    orientation: template?.orientation || 'portrait',
-    page_size: template?.page_size || 'A4',
-    font_family: template?.font_family || 'Arial'
-  });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
+  const {
+    currentStep,
+    formData,
+    selectedFile,
+    dragActive,
+    pdfFields,
+    handleSubmit,
+    handleNext,
+    handleBack,
+    handleDrag,
+    handleDrop,
+    handleFieldsChange,
+    handleInputChange,
+    setSelectedFile
+  } = useTemplateForm(template, onSubmit);
 
-  console.log('CertificateTemplateForm render:', { formData, selectedFile });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData, selectedFile);
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
+  const getStepTitle = (step: number): string => {
+    switch (step) {
+      case 1:
+        return 'المعلومات الأساسية';
+      case 2:
+        return 'رفع ملف القالب';
+      case 3:
+        return 'إعدادات الصفحة';
+      case 4:
+        return 'إعداد الحقول';
+      default:
+        return '';
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      console.log('File dropped:', e.dataTransfer.files[0]);
-      setSelectedFile(e.dataTransfer.files[0]);
-    }
-  };
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <BasicInfoStep
+            name={formData.name}
+            description={formData.description}
+            onChange={handleInputChange}
+          />
+        );
 
-  const handleFieldsChange = (fields: Record<string, string>, fieldMappings: Record<string, string>) => {
-    console.log('handleFieldsChange:', { fields, fieldMappings });
-    setFormData(prev => ({
-      ...prev,
-      fields,
-      field_mappings: fieldMappings
-    }));
+      case 2:
+        return (
+          <FileUploadStep
+            currentFile={formData.template_file}
+            onFileSelect={setSelectedFile}
+            dragActive={dragActive}
+            onDrag={handleDrag}
+            onDrop={handleDrop}
+            pdfFields={pdfFields}
+          />
+        );
+
+      case 3:
+        return (
+          <PageSettingsStep
+            orientation={formData.orientation}
+            pageSize={formData.page_size}
+            fontFamily={formData.font_family}
+            onChange={handleInputChange}
+          />
+        );
+
+      case 4:
+        return (
+          <CertificateTemplateFields
+            fields={formData.fields}
+            fieldMappings={formData.field_mappings}
+            pdfFields={pdfFields}
+            onChange={handleFieldsChange}
+          />
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Card className="p-4 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">اسم القالب</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-            className="text-right"
-            placeholder="أدخل اسم القالب"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">وصف القالب</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="text-right min-h-[100px]"
-            placeholder="أدخل وصفاً للقالب"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>ملف القالب</Label>
-          <div
-            className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-              dragActive ? 'border-primary bg-primary/5' : 'border-border'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <div className="flex flex-col items-center justify-center gap-2 text-center">
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                اسحب وأفلت الملف هنا أو
-              </p>
-              <Input
-                id="template_file"
-                type="file"
-                accept=".pdf"
-                className="max-w-[200px]"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    console.log('File selected:', e.target.files[0]);
-                    setSelectedFile(e.target.files[0]);
-                  }
-                }}
-              />
-              {formData.template_file && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  الملف الحالي: {formData.template_file}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="orientation">اتجاه الصفحة</Label>
-            <select
-              id="orientation"
-              value={formData.orientation}
-              onChange={(e) => setFormData({ ...formData, orientation: e.target.value })}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="portrait">عمودي</option>
-              <option value="landscape">أفقي</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="page_size">حجم الصفحة</Label>
-            <select
-              id="page_size"
-              value={formData.page_size}
-              onChange={(e) => setFormData({ ...formData, page_size: e.target.value })}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="A4">A4</option>
-              <option value="Letter">Letter</option>
-              <option value="Legal">Legal</option>
-            </select>
-          </div>
-        </div>
-      </Card>
-
-      <CertificateTemplateFields
-        fields={formData.fields}
-        fieldMappings={formData.field_mappings}
-        onChange={handleFieldsChange}
+      <StepIndicator 
+        currentStep={currentStep} 
+        stepTitle={getStepTitle(currentStep)} 
       />
 
-      <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          إلغاء
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'جاري الحفظ...' : template ? 'تحديث' : 'إضافة'}
-        </Button>
-      </div>
+      {renderStepContent()}
+
+      <StepNavigation
+        currentStep={currentStep}
+        onNext={handleNext}
+        onBack={handleBack}
+        onCancel={onCancel}
+        isLoading={isLoading}
+        isLastStep={currentStep === 4}
+        template={template}
+      />
     </form>
   );
 };
