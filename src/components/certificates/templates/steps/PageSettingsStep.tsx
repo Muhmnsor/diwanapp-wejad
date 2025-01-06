@@ -5,12 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface PageSettingsStepProps {
   orientation: string;
   pageSize: string;
+  fontFamily: string;
   onChange: (field: string, value: string) => void;
 }
 
 export const PageSettingsStep = ({
   orientation,
   pageSize,
+  fontFamily,
   onChange
 }: PageSettingsStepProps) => {
   return (
@@ -44,6 +46,23 @@ export const PageSettingsStep = ({
             <SelectItem value="A4">A4</SelectItem>
             <SelectItem value="A5">A5</SelectItem>
             <SelectItem value="Letter">Letter</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>نوع الخط</Label>
+        <Select
+          value={fontFamily}
+          onValueChange={(value) => onChange('font_family', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="اختر نوع الخط" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Arial">Arial</SelectItem>
+            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+            <SelectItem value="Calibri">Calibri</SelectItem>
           </SelectContent>
         </Select>
       </div>

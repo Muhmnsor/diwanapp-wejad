@@ -18,12 +18,14 @@ interface Field {
 interface CertificateTemplateFieldsProps {
   fields: Record<string, string>;
   fieldMappings: Record<string, string>;
+  pdfFields: string[];
   onChange: (fields: Record<string, string>, fieldMappings: Record<string, string>) => void;
 }
 
 export const CertificateTemplateFields = ({
   fields,
   fieldMappings,
+  pdfFields,
   onChange
 }: CertificateTemplateFieldsProps) => {
   const [newField, setNewField] = useState<Field>({ 
@@ -32,7 +34,7 @@ export const CertificateTemplateFields = ({
     type: 'free' 
   });
 
-  console.log('CertificateTemplateFields render:', { fields, fieldMappings, newField });
+  console.log('CertificateTemplateFields render:', { fields, fieldMappings, pdfFields, newField });
 
   const handleAddField = () => {
     try {
@@ -43,6 +45,12 @@ export const CertificateTemplateFields = ({
 
       if (fields[newField.key]) {
         toast.error("هذا الحقل موجود مسبقاً");
+        return;
+      }
+
+      // Validate if the field exists in PDF when type is 'mapped'
+      if (newField.type === 'mapped' && !pdfFields.includes(newField.key)) {
+        toast.error("هذا الحقل غير موجود في ملف PDF");
         return;
       }
 
@@ -88,6 +96,19 @@ export const CertificateTemplateFields = ({
         </span>
       </div>
 
+      {pdfFields.length > 0 && (
+        <div className="bg-muted p-4 rounded-lg">
+          <h4 className="text-sm font-medium mb-2">الحقول المتاحة في القالب:</h4>
+          <div className="grid grid-cols-2 gap-2">
+            {pdfFields.map((field, index) => (
+              <div key={index} className="text-sm text-muted-foreground">
+                {field}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <FieldsList 
         fields={fields}
         fieldMappings={fieldMappings}
@@ -121,7 +142,15 @@ export const CertificateTemplateFields = ({
             value={newField.key}
             onChange={(e) => setNewField({ ...newField, key: e.target.value })}
             className="flex-1"
+            list="pdf-fields"
           />
+          {newField.type === 'mapped' && pdfFields.length > 0 && (
+            <datalist id="pdf-fields">
+              {pdfFields.map((field, index) => (
+                <option key={index} value={field} />
+              ))}
+            </datalist>
+          )}
           {newField.type === 'free' && (
             <Input
               placeholder="القيمة الافتراضية"

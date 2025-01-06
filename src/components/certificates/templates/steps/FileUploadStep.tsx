@@ -10,6 +10,7 @@ interface FileUploadStepProps {
   dragActive: boolean;
   onDrag: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
+  pdfFields: string[];
 }
 
 export const FileUploadStep = ({
@@ -17,7 +18,8 @@ export const FileUploadStep = ({
   onFileSelect,
   dragActive,
   onDrag,
-  onDrop
+  onDrop,
+  pdfFields
 }: FileUploadStepProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -65,6 +67,21 @@ export const FileUploadStep = ({
           </div>
         </div>
       </div>
+
+      {pdfFields.length > 0 && (
+        <div className="space-y-2">
+          <Label>الحقول المكتشفة في الملف</Label>
+          <div className="bg-muted p-4 rounded-lg">
+            <div className="grid grid-cols-2 gap-2">
+              {pdfFields.map((field, index) => (
+                <div key={index} className="text-sm text-muted-foreground">
+                  {field}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };

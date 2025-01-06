@@ -5,6 +5,7 @@ import { BasicInfoStep } from "./steps/BasicInfoStep";
 import { FileUploadStep } from "./steps/FileUploadStep";
 import { PageSettingsStep } from "./steps/PageSettingsStep";
 import { toast } from "sonner";
+import { PDFDocument } from 'pdf-lib';
 
 interface CertificateTemplateFormProps {
   template?: any;
@@ -33,18 +34,80 @@ export const CertificateTemplateForm = ({
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [pdfFields, setPdfFields] = useState<string[]>([]);
 
-  console.log('CertificateTemplateForm render:', { formData, selectedFile });
+  console.log('CertificateTemplateForm render:', { formData, selectedFile, pdfFields });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Final validation before submission
     if (!validateStep(currentStep)) {
       return;
     }
-    
-    onSubmit(formData, selectedFile);
+
+    try {
+      // If there's a file, read its fields before submission
+      if (selectedFile) {
+        const fields = await readPDFFields(selectedFile);
+        if (fields.length > 0) {
+          const updatedFields = { ...formData.fields };
+          fields.forEach(field => {
+            if (!updatedFields[field]) {
+              updatedFields[field] = '';
+            }
+          });
+          setFormData(prev => ({
+            ...prev,
+            fields: updatedFields
+          }));
+        }
+      }
+      
+      onSubmit(formData, selectedFile);
+    } catch (error) {
+      console.error('Error processing template:', error);
+      toast.error('حدث خطأ أثناء معالجة القالب');
+    }
+  };
+
+  const readPDFFields = async (file: File): Promise<string[]> => {
+    try {
+      console.log('Reading PDF fields from:', file.name);
+      const arrayBuffer = await file.arrayBuffer();
+      
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('PDF file is empty');
+      }
+
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      if (!pdfDoc) {
+        throw new Error('Failed to load PDF document');
+      }
+
+      const form = pdfDoc.getForm();
+      const fields = form.getFields();
+      
+      const fieldNames = fields.map(field => {
+        const name = field.getName();
+        console.log('Found field:', name, 'Type:', field.constructor.name);
+        return name;
+      });
+
+      console.log('Total fields found:', fieldNames.length);
+      
+      if (fieldNames.length === 0) {
+        toast.warning('لم يتم العثور على حقول في ملف PDF');
+      } else {
+        toast.success(`تم العثور على ${fieldNames.length} حقل`);
+        setPdfFields(fieldNames);
+      }
+      
+      return fieldNames;
+    } catch (error) {
+      console.error('Error reading PDF fields:', error);
+      toast.error('حدث خطأ أثناء قراءة حقول ملف PDF');
+      return [];
+    }
   };
 
   const validateStep = (step: number): boolean => {
@@ -52,6 +115,10 @@ export const CertificateTemplateForm = ({
       case 1:
         if (!formData.name.trim()) {
           toast.error('الرجاء إدخال اسم القالب');
+          return false;
+        }
+        if (!formData.description.trim()) {
+          toast.error('الرجاء إدخال وصف القالب');
           return false;
         }
         return true;
@@ -64,8 +131,16 @@ export const CertificateTemplateForm = ({
         return true;
 
       case 3:
-        if (!formData.orientation || !formData.page_size) {
-          toast.error('الرجاء تحديد إعدادات الصفحة');
+        if (!formData.orientation) {
+          toast.error('الرجاء تحديد اتجاه الصفحة');
+          return false;
+        }
+        if (!formData.page_size) {
+          toast.error('الرجاء تحديد حجم الصفحة');
+          return false;
+        }
+        if (!formData.font_family) {
+          toast.error('الرجاء تحديد نوع الخط');
           return false;
         }
         return true;
@@ -73,8 +148,9 @@ export const CertificateTemplateForm = ({
       case 4:
         if (Object.keys(formData.fields).length === 0) {
           toast.warning('لم يتم إضافة أي حقول للقالب');
-          // Allow submission even without fields
-          return true;
+          if (!confirm('هل تريد المتابعة بدون إضافة حقول؟')) {
+            return false;
+          }
         }
         return true;
 
@@ -126,9 +202,14 @@ export const CertificateTemplateForm = ({
     }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!validateStep(currentStep)) {
       return;
+    }
+    
+    // If moving from file upload step, read PDF fields
+    if (currentStep === 2 && selectedFile) {
+      await readPDFFields(selectedFile);
     }
     
     const nextStep = currentStep + 1;
@@ -180,6 +261,7 @@ export const CertificateTemplateForm = ({
             dragActive={dragActive}
             onDrag={handleDrag}
             onDrop={handleDrop}
+            pdfFields={pdfFields}
           />
         );
 
@@ -188,6 +270,7 @@ export const CertificateTemplateForm = ({
           <PageSettingsStep
             orientation={formData.orientation}
             pageSize={formData.page_size}
+            fontFamily={formData.font_family}
             onChange={handleInputChange}
           />
         );
@@ -197,6 +280,7 @@ export const CertificateTemplateForm = ({
           <CertificateTemplateFields
             fields={formData.fields}
             fieldMappings={formData.field_mappings}
+            pdfFields={pdfFields}
             onChange={handleFieldsChange}
           />
         );
