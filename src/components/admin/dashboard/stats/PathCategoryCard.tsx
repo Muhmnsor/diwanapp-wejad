@@ -14,52 +14,104 @@ export const PathCategoryCard = ({ eventId, projectId }: PathCategoryCardProps) 
     queryFn: async () => {
       console.log('Fetching average rating for:', { projectId, eventId });
       
-      const { data: activities } = await supabase
-        .from('events')
-        .select(`
-          id,
-          event_feedback (
-            overall_rating,
-            content_rating,
-            organization_rating,
-            presenter_rating
-          )
-        `)
-        .eq(projectId ? 'project_id' : 'id', projectId || eventId)
-        .eq('is_project_activity', projectId ? true : false);
+      if (projectId) {
+        // For projects, fetch activities and their feedback
+        const { data: activities } = await supabase
+          .from('events')
+          .select(`
+            id,
+            activity_feedback (
+              overall_rating,
+              content_rating,
+              organization_rating,
+              presenter_rating
+            )
+          `)
+          .eq('project_id', projectId)
+          .eq('is_project_activity', true);
 
-      if (!activities?.length) {
-        console.log('No activities found with feedback');
-        return 0;
-      }
+        if (!activities?.length) {
+          console.log('No project activities found with feedback');
+          return 0;
+        }
 
-      let totalRating = 0;
-      let ratingCount = 0;
+        let totalRating = 0;
+        let ratingCount = 0;
 
-      activities.forEach(activity => {
-        activity.event_feedback.forEach((feedback: any) => {
-          const ratings = [
-            feedback.overall_rating,
-            feedback.content_rating,
-            feedback.organization_rating,
-            feedback.presenter_rating
-          ].filter(rating => rating !== null);
+        activities.forEach(activity => {
+          if (activity.activity_feedback) {
+            activity.activity_feedback.forEach((feedback: any) => {
+              const ratings = [
+                feedback.overall_rating,
+                feedback.content_rating,
+                feedback.organization_rating,
+                feedback.presenter_rating
+              ].filter(rating => rating !== null);
 
-          if (ratings.length > 0) {
-            totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
-            ratingCount += ratings.length;
+              if (ratings.length > 0) {
+                totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
+                ratingCount += ratings.length;
+              }
+            });
           }
         });
-      });
 
-      const average = ratingCount > 0 ? totalRating / ratingCount : 0;
-      console.log('Average rating:', {
-        totalRating,
-        ratingCount,
-        average: average.toFixed(1)
-      });
+        const average = ratingCount > 0 ? totalRating / ratingCount : 0;
+        console.log('Project activities average rating:', {
+          totalRating,
+          ratingCount,
+          average: average.toFixed(1)
+        });
 
-      return average;
+        return average;
+      } else {
+        // For single events, use event_feedback
+        const { data: activities } = await supabase
+          .from('events')
+          .select(`
+            id,
+            event_feedback (
+              overall_rating,
+              content_rating,
+              organization_rating,
+              presenter_rating
+            )
+          `)
+          .eq('id', eventId);
+
+        if (!activities?.length) {
+          console.log('No event found with feedback');
+          return 0;
+        }
+
+        let totalRating = 0;
+        let ratingCount = 0;
+
+        activities.forEach(activity => {
+          activity.event_feedback.forEach((feedback: any) => {
+            const ratings = [
+              feedback.overall_rating,
+              feedback.content_rating,
+              feedback.organization_rating,
+              feedback.presenter_rating
+            ].filter(rating => rating !== null);
+
+            if (ratings.length > 0) {
+              totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
+              ratingCount += ratings.length;
+            }
+          });
+        });
+
+        const average = ratingCount > 0 ? totalRating / ratingCount : 0;
+        console.log('Event average rating:', {
+          totalRating,
+          ratingCount,
+          average: average.toFixed(1)
+        });
+
+        return average;
+      }
     },
   });
 
