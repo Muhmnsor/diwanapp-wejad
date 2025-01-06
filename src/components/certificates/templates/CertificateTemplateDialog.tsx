@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { CertificateTemplateForm } from "./form/CertificateTemplateForm";
+import { PDFDocument } from 'pdf-lib';
 
 interface CertificateTemplateDialogProps {
   open: boolean;
@@ -18,6 +19,25 @@ export const CertificateTemplateDialog = ({
 }: CertificateTemplateDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+
+  const readPDFFields = async (file: File): Promise<string[]> => {
+    try {
+      console.log('Reading PDF fields from:', file.name);
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const form = pdfDoc.getForm();
+      const fields = form.getFields();
+      
+      const fieldNames = fields.map(field => field.getName());
+      console.log('Found PDF fields:', fieldNames);
+      
+      return fieldNames;
+    } catch (error) {
+      console.error('Error reading PDF fields:', error);
+      toast.error('حدث خطأ أثناء قراءة حقول ملف PDF');
+      return [];
+    }
+  };
 
   const handleFileUpload = async (file: File): Promise<string> => {
     console.log('Uploading file:', file.name);
@@ -44,16 +64,27 @@ export const CertificateTemplateDialog = ({
 
     try {
       let template_file = formData.template_file;
+      let fields = formData.fields || {};
 
       if (selectedFile) {
         console.log('New file selected, uploading...');
         template_file = await handleFileUpload(selectedFile);
+        
+        // Read fields from the PDF file
+        const pdfFields = await readPDFFields(selectedFile);
+        
+        // Create initial fields object with empty values
+        pdfFields.forEach(fieldName => {
+          if (!fields[fieldName]) {
+            fields[fieldName] = '';
+          }
+        });
       }
 
       const submitData = {
         ...formData,
         template_file,
-        fields: formData.fields || {},
+        fields,
         field_mappings: formData.field_mappings || {}
       };
 
