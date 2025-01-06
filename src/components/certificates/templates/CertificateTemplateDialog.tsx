@@ -24,12 +24,33 @@ export const CertificateTemplateDialog = ({
     try {
       console.log('Reading PDF fields from:', file.name);
       const arrayBuffer = await file.arrayBuffer();
+      
+      // Add validation for PDF file
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('PDF file is empty');
+      }
+
       const pdfDoc = await PDFDocument.load(arrayBuffer);
+      if (!pdfDoc) {
+        throw new Error('Failed to load PDF document');
+      }
+
       const form = pdfDoc.getForm();
       const fields = form.getFields();
       
-      const fieldNames = fields.map(field => field.getName());
-      console.log('Found PDF fields:', fieldNames);
+      const fieldNames = fields.map(field => {
+        const name = field.getName();
+        console.log('Found field:', name, 'Type:', field.constructor.name);
+        return name;
+      });
+
+      console.log('Total fields found:', fieldNames.length);
+      
+      if (fieldNames.length === 0) {
+        toast.warning('لم يتم العثور على حقول في ملف PDF');
+      } else {
+        toast.success(`تم العثور على ${fieldNames.length} حقل`);
+      }
       
       return fieldNames;
     } catch (error) {
@@ -41,6 +62,10 @@ export const CertificateTemplateDialog = ({
 
   const handleFileUpload = async (file: File): Promise<string> => {
     console.log('Uploading file:', file.name);
+    
+    if (!file.type.includes('pdf')) {
+      throw new Error('يجب أن يكون الملف بصيغة PDF');
+    }
     
     const fileExt = file.name.split('.').pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -74,11 +99,14 @@ export const CertificateTemplateDialog = ({
         const pdfFields = await readPDFFields(selectedFile);
         
         // Create initial fields object with empty values
-        pdfFields.forEach(fieldName => {
-          if (!fields[fieldName]) {
-            fields[fieldName] = '';
-          }
-        });
+        if (pdfFields.length > 0) {
+          pdfFields.forEach(fieldName => {
+            if (!fields[fieldName]) {
+              fields[fieldName] = '';
+            }
+          });
+          console.log('Updated fields object:', fields);
+        }
       }
 
       const submitData = {
