@@ -51,14 +51,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data: roleIds, error: roleIdsError } = await supabase
         .from('user_roles')
         .select('role_id')
-        .eq('user_id', session.user.id);
+        .eq('user_id', session.user.id)
+        .single();
 
       if (roleIdsError) {
         console.error("AuthStore: Error fetching role IDs:", roleIdsError);
         return;
       }
 
-      if (!roleIds?.length) {
+      if (!roleIds) {
         console.log("AuthStore: No roles found for user");
         return;
       }
@@ -67,7 +68,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data: roles, error: rolesError } = await supabase
         .from('roles')
         .select('name')
-        .in('id', roleIds.map(r => r.role_id));
+        .eq('id', roleIds.role_id)
+        .single();
 
       if (rolesError) {
         console.error("AuthStore: Error fetching role names:", rolesError);
@@ -75,7 +77,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       // Check if user has admin role
-      const isAdmin = roles?.some(role => role.name === 'admin') ?? false;
+      const isAdmin = roles?.name === 'admin';
       
       if (isAdmin) {
         console.log("AuthStore: User is admin, updating state");
@@ -132,14 +134,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data: roleIds, error: roleIdsError } = await supabase
         .from('user_roles')
         .select('role_id')
-        .eq('user_id', authData.user.id);
+        .eq('user_id', authData.user.id)
+        .single();
 
       if (roleIdsError) {
         console.error("AuthStore: Error fetching role IDs:", roleIdsError);
         return;
       }
 
-      if (!roleIds?.length) {
+      if (!roleIds) {
         console.log("AuthStore: No roles found for user");
         return;
       }
@@ -148,7 +151,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data: roles, error: rolesError } = await supabase
         .from('roles')
         .select('name')
-        .in('id', roleIds.map(r => r.role_id));
+        .eq('id', roleIds.role_id)
+        .single();
 
       if (rolesError) {
         console.error("AuthStore: Error fetching role names:", rolesError);
@@ -156,7 +160,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       // Check if user has admin role
-      const isAdmin = roles?.some(role => role.name === 'admin') ?? false;
+      const isAdmin = roles?.name === 'admin';
       
       if (isAdmin) {
         console.log("AuthStore: User is admin, updating state");
