@@ -3,32 +3,33 @@ import { Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface PathCategoryCardProps {
-  eventId?: string;
+interface ProjectRatingCardProps {
+  projectId: string;
 }
 
-export const PathCategoryCard = ({ eventId }: PathCategoryCardProps) => {
+export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
   const { data: averageRating = 0 } = useQuery({
-    queryKey: ['event-average-rating', eventId],
+    queryKey: ['project-activities-rating', projectId],
     queryFn: async () => {
-      console.log('Fetching average rating for event:', eventId);
+      console.log('Fetching project activities rating for:', projectId);
       
-      // For single events, use event_feedback
+      // Fetch all activities for this project and their feedback
       const { data: activities } = await supabase
         .from('events')
         .select(`
           id,
-          event_feedback (
+          activity_feedback (
             overall_rating,
             content_rating,
             organization_rating,
             presenter_rating
           )
         `)
-        .eq('id', eventId);
+        .eq('project_id', projectId)
+        .eq('is_project_activity', true);
 
       if (!activities?.length) {
-        console.log('No event found with feedback');
+        console.log('No project activities found with feedback');
         return 0;
       }
 
@@ -36,23 +37,25 @@ export const PathCategoryCard = ({ eventId }: PathCategoryCardProps) => {
       let ratingCount = 0;
 
       activities.forEach(activity => {
-        activity.event_feedback.forEach((feedback: any) => {
-          const ratings = [
-            feedback.overall_rating,
-            feedback.content_rating,
-            feedback.organization_rating,
-            feedback.presenter_rating
-          ].filter(rating => rating !== null);
+        if (activity.activity_feedback) {
+          activity.activity_feedback.forEach((feedback: any) => {
+            const ratings = [
+              feedback.overall_rating,
+              feedback.content_rating,
+              feedback.organization_rating,
+              feedback.presenter_rating
+            ].filter(rating => rating !== null);
 
-          if (ratings.length > 0) {
-            totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
-            ratingCount += ratings.length;
-          }
-        });
+            if (ratings.length > 0) {
+              totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
+              ratingCount += ratings.length;
+            }
+          });
+        }
       });
 
       const average = ratingCount > 0 ? totalRating / ratingCount : 0;
-      console.log('Event average rating:', {
+      console.log('Project activities average rating:', {
         totalRating,
         ratingCount,
         average: average.toFixed(1)
@@ -71,7 +74,7 @@ export const PathCategoryCard = ({ eventId }: PathCategoryCardProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">مستوى تقييم الفعالية</CardTitle>
+        <CardTitle className="text-sm font-medium">مستوى تقييم المشروع</CardTitle>
         <Star className={`h-4 w-4 ${getRatingColor(averageRating)}`} />
       </CardHeader>
       <CardContent>
@@ -79,7 +82,7 @@ export const PathCategoryCard = ({ eventId }: PathCategoryCardProps) => {
           {averageRating.toFixed(1)}
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          متوسط تقييم الفعالية
+          متوسط تقييم جميع أنشطة المشروع
         </p>
       </CardContent>
     </Card>

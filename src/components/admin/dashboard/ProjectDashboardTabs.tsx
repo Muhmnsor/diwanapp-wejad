@@ -6,6 +6,7 @@ import { DashboardOverviewTab } from "@/components/admin/dashboard/tabs/Dashboar
 import { DashboardActivitiesTab } from "@/components/admin/dashboard/tabs/DashboardActivitiesTab";
 import { DashboardFeedbackTab } from "@/components/admin/dashboard/tabs/DashboardFeedbackTab";
 import { useProjectDashboard } from "@/hooks/useProjectDashboard";
+import { ProjectRatingCard } from "./stats/ProjectRatingCard";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -44,6 +45,9 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           project={project}
           activities={metrics.activitiesStats}
         />
+        <div className="mt-4">
+          <ProjectRatingCard projectId={project.id} />
+        </div>
       </TabsContent>
 
       <TabsContent value="registrations" className="mt-6">
