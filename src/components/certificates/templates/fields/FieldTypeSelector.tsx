@@ -9,15 +9,22 @@ interface FieldTypeSelectorProps {
 export const FieldTypeSelector = ({ value, onChange }: FieldTypeSelectorProps) => {
   console.log('FieldTypeSelector render:', { value });
   
+  const handleValueChange = (newValue: string) => {
+    console.log('FieldTypeSelector change:', newValue);
+    // Validate the value before passing it to onChange
+    if (newValue === 'mapped' || newValue === 'free') {
+      onChange(newValue as 'mapped' | 'free');
+    } else {
+      console.error('Invalid field type value:', newValue);
+    }
+  };
+
   return (
     <div>
       <Label>نوع الحقل</Label>
       <Select
         value={value}
-        onValueChange={(value: 'mapped' | 'free') => {
-          console.log('FieldTypeSelector change:', value);
-          onChange(value);
-        }}
+        onValueChange={handleValueChange}
       >
         <SelectTrigger>
           <SelectValue placeholder="اختر نوع الحقل" />
