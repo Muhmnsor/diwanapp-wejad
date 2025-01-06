@@ -14,36 +14,41 @@ export const PathCategoryCard = ({ eventId }: PathCategoryCardProps) => {
       console.log('Fetching average rating for event:', eventId);
       
       // For single events, use event_feedback
-      const { data: eventFeedback } = await supabase
-        .from('event_feedback')
+      const { data: activities } = await supabase
+        .from('events')
         .select(`
-          overall_rating,
-          content_rating,
-          organization_rating,
-          presenter_rating
+          id,
+          event_feedback (
+            overall_rating,
+            content_rating,
+            organization_rating,
+            presenter_rating
+          )
         `)
-        .eq('event_id', eventId);
+        .eq('id', eventId);
 
-      if (!eventFeedback?.length) {
-        console.log('No event feedback found');
+      if (!activities?.length) {
+        console.log('No event found with feedback');
         return 0;
       }
 
       let totalRating = 0;
       let ratingCount = 0;
 
-      eventFeedback.forEach(feedback => {
-        const ratings = [
-          feedback.overall_rating,
-          feedback.content_rating,
-          feedback.organization_rating,
-          feedback.presenter_rating
-        ].filter(rating => rating !== null);
+      activities.forEach(activity => {
+        activity.event_feedback.forEach((feedback: any) => {
+          const ratings = [
+            feedback.overall_rating,
+            feedback.content_rating,
+            feedback.organization_rating,
+            feedback.presenter_rating
+          ].filter(rating => rating !== null);
 
-        if (ratings.length > 0) {
-          totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
-          ratingCount += ratings.length;
-        }
+          if (ratings.length > 0) {
+            totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
+            ratingCount += ratings.length;
+          }
+        });
       });
 
       const average = ratingCount > 0 ? totalRating / ratingCount : 0;
