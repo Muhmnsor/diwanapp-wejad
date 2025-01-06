@@ -14,30 +14,77 @@ export const PathCategoryCard = ({ eventId, projectId }: PathCategoryCardProps) 
     queryFn: async () => {
       console.log('Fetching average rating for:', { projectId, eventId });
       
-      const { data: activities } = await supabase
-        .from('events')
-        .select(`
-          id,
-          event_feedback (
+      if (projectId) {
+        // For projects, fetch all activities and their feedback
+        const { data: activities } = await supabase
+          .from('events')
+          .select(`
+            id,
+            activity_feedback (
+              overall_rating,
+              content_rating,
+              organization_rating,
+              presenter_rating
+            )
+          `)
+          .eq('project_id', projectId)
+          .eq('is_project_activity', true);
+
+        if (!activities?.length) {
+          console.log('No project activities found with feedback');
+          return 0;
+        }
+
+        let totalRating = 0;
+        let ratingCount = 0;
+
+        activities.forEach(activity => {
+          if (activity.activity_feedback) {
+            activity.activity_feedback.forEach((feedback: any) => {
+              const ratings = [
+                feedback.overall_rating,
+                feedback.content_rating,
+                feedback.organization_rating,
+                feedback.presenter_rating
+              ].filter(rating => rating !== null);
+
+              if (ratings.length > 0) {
+                totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
+                ratingCount += ratings.length;
+              }
+            });
+          }
+        });
+
+        const average = ratingCount > 0 ? totalRating / ratingCount : 0;
+        console.log('Project activities average rating:', {
+          totalRating,
+          ratingCount,
+          average: average.toFixed(1)
+        });
+
+        return average;
+      } else {
+        // For single events, fetch event feedback
+        const { data: eventFeedback } = await supabase
+          .from('event_feedback')
+          .select(`
             overall_rating,
             content_rating,
             organization_rating,
             presenter_rating
-          )
-        `)
-        .eq(projectId ? 'project_id' : 'id', projectId || eventId)
-        .eq('is_project_activity', projectId ? true : false);
+          `)
+          .eq('event_id', eventId);
 
-      if (!activities?.length) {
-        console.log('No activities found with feedback');
-        return 0;
-      }
+        if (!eventFeedback?.length) {
+          console.log('No event feedback found');
+          return 0;
+        }
 
-      let totalRating = 0;
-      let ratingCount = 0;
+        let totalRating = 0;
+        let ratingCount = 0;
 
-      activities.forEach(activity => {
-        activity.event_feedback.forEach((feedback: any) => {
+        eventFeedback.forEach((feedback: any) => {
           const ratings = [
             feedback.overall_rating,
             feedback.content_rating,
@@ -50,16 +97,16 @@ export const PathCategoryCard = ({ eventId, projectId }: PathCategoryCardProps) 
             ratingCount += ratings.length;
           }
         });
-      });
 
-      const average = ratingCount > 0 ? totalRating / ratingCount : 0;
-      console.log('Average rating:', {
-        totalRating,
-        ratingCount,
-        average: average.toFixed(1)
-      });
+        const average = ratingCount > 0 ? totalRating / ratingCount : 0;
+        console.log('Event average rating:', {
+          totalRating,
+          ratingCount,
+          average: average.toFixed(1)
+        });
 
-      return average;
+        return average;
+      }
     },
   });
 
@@ -72,7 +119,9 @@ export const PathCategoryCard = ({ eventId, projectId }: PathCategoryCardProps) 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">مستوى تقييم {projectId ? 'المشروع' : 'الفعالية'}</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          مستوى تقييم {projectId ? 'المشروع' : 'الفعالية'}
+        </CardTitle>
         <Star className={`h-4 w-4 ${getRatingColor(averageRating)}`} />
       </CardHeader>
       <CardContent>
@@ -80,7 +129,7 @@ export const PathCategoryCard = ({ eventId, projectId }: PathCategoryCardProps) 
           {averageRating.toFixed(1)}
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          متوسط تقييم {projectId ? 'جميع أنشطة المشروع' : 'الفعالية'}
+          {projectId ? 'متوسط تقييم جميع أنشطة المشروع' : 'متوسط تقييم الفعالية'}
         </p>
       </CardContent>
     </Card>
