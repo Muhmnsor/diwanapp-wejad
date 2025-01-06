@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { CertificateTemplateFields } from "./CertificateTemplateFields";
-import { Card } from "@/components/ui/card";
-import { Upload } from "lucide-react";
+import { BasicInfoStep } from "./steps/BasicInfoStep";
+import { FileUploadStep } from "./steps/FileUploadStep";
+import { PageSettingsStep } from "./steps/PageSettingsStep";
 import { toast } from "sonner";
 
 interface CertificateTemplateFormProps {
@@ -73,6 +71,13 @@ export const CertificateTemplateForm = ({
     }));
   };
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleNext = () => {
     if (currentStep === 1 && !formData.name.trim()) {
       toast.error('الرجاء إدخال اسم القالب');
@@ -93,106 +98,31 @@ export const CertificateTemplateForm = ({
     switch (currentStep) {
       case 1:
         return (
-          <Card className="p-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">اسم القالب</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-                className="text-right"
-                placeholder="أدخل اسم القالب"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">وصف القالب</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="text-right min-h-[100px]"
-                placeholder="أدخل وصفاً للقالب"
-              />
-            </div>
-          </Card>
+          <BasicInfoStep
+            name={formData.name}
+            description={formData.description}
+            onChange={handleInputChange}
+          />
         );
 
       case 2:
         return (
-          <Card className="p-4 space-y-4">
-            <div className="space-y-2">
-              <Label>ملف القالب</Label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
-                  dragActive ? 'border-primary bg-primary/5' : 'border-border'
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <div className="flex flex-col items-center justify-center gap-2 text-center">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    اسحب وأفلت الملف هنا أو
-                  </p>
-                  <Input
-                    id="template_file"
-                    type="file"
-                    accept=".pdf"
-                    className="max-w-[200px]"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        console.log('File selected:', e.target.files[0]);
-                        setSelectedFile(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  {formData.template_file && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      الملف الحالي: {formData.template_file}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
+          <FileUploadStep
+            currentFile={formData.template_file}
+            onFileSelect={setSelectedFile}
+            dragActive={dragActive}
+            onDrag={handleDrag}
+            onDrop={handleDrop}
+          />
         );
 
       case 3:
         return (
-          <Card className="p-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="orientation">اتجاه الصفحة</Label>
-                <select
-                  id="orientation"
-                  value={formData.orientation}
-                  onChange={(e) => setFormData({ ...formData, orientation: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="portrait">عمودي</option>
-                  <option value="landscape">أفقي</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="page_size">حجم الصفحة</Label>
-                <select
-                  id="page_size"
-                  value={formData.page_size}
-                  onChange={(e) => setFormData({ ...formData, page_size: e.target.value })}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="A4">A4</option>
-                  <option value="Letter">Letter</option>
-                  <option value="Legal">Legal</option>
-                </select>
-              </div>
-            </div>
-          </Card>
+          <PageSettingsStep
+            orientation={formData.orientation}
+            pageSize={formData.page_size}
+            onChange={handleInputChange}
+          />
         );
 
       case 4:
