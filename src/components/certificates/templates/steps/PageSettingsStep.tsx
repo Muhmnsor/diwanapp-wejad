@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PageSettingsStepProps {
   orientation: string;
@@ -14,33 +15,37 @@ export const PageSettingsStep = ({
 }: PageSettingsStepProps) => {
   return (
     <Card className="p-4 space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="orientation">اتجاه الصفحة</Label>
-          <select
-            id="orientation"
-            value={orientation}
-            onChange={(e) => onChange('orientation', e.target.value)}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="portrait">عمودي</option>
-            <option value="landscape">أفقي</option>
-          </select>
-        </div>
+      <div className="space-y-2">
+        <Label>اتجاه الصفحة</Label>
+        <Select
+          value={orientation}
+          onValueChange={(value) => onChange('orientation', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="اختر اتجاه الصفحة" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="portrait">عمودي</SelectItem>
+            <SelectItem value="landscape">أفقي</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="page_size">حجم الصفحة</Label>
-          <select
-            id="page_size"
-            value={pageSize}
-            onChange={(e) => onChange('page_size', e.target.value)}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="A4">A4</option>
-            <option value="Letter">Letter</option>
-            <option value="Legal">Legal</option>
-          </select>
-        </div>
+      <div className="space-y-2">
+        <Label>حجم الصفحة</Label>
+        <Select
+          value={pageSize}
+          onValueChange={(value) => onChange('page_size', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="اختر حجم الصفحة" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="A4">A4</SelectItem>
+            <SelectItem value="A5">A5</SelectItem>
+            <SelectItem value="Letter">Letter</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </Card>
   );
