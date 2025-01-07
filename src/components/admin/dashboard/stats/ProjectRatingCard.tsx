@@ -1,86 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useProjectRating } from "@/hooks/useProjectRating";
+import { RatingDisplay } from "./rating/RatingDisplay";
 
 interface ProjectRatingCardProps {
   projectId: string;
 }
 
 export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
-  const { data: averageRating = 0 } = useQuery({
-    queryKey: ['project-activities-rating', projectId],
-    queryFn: async () => {
-      console.log('Fetching project activities rating for:', projectId);
-      
-      // First get all activities for this project
-      const { data: activities } = await supabase
-        .from('events')
-        .select(`
-          id,
-          title,
-          event_feedback (
-            overall_rating,
-            content_rating,
-            organization_rating,
-            presenter_rating
-          )
-        `)
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true);
-
-      if (!activities?.length) {
-        console.log('No project activities found');
-        return 0;
-      }
-
-      console.log('Found activities:', activities);
-
-      let totalRating = 0;
-      let totalFeedbackCount = 0;
-
-      // Process each activity's feedback
-      activities.forEach(activity => {
-        if (!activity.event_feedback?.length) {
-          console.log(`No feedback for activity: ${activity.title}`);
-          return;
-        }
-
-        console.log(`Processing feedback for activity: ${activity.title}`);
-
-        // Calculate average for each feedback entry
-        activity.event_feedback.forEach((feedback: any) => {
-          const ratings = [
-            feedback.overall_rating,
-            feedback.content_rating,
-            feedback.organization_rating,
-            feedback.presenter_rating
-          ].filter(rating => rating !== null && rating !== undefined);
-
-          if (ratings.length > 0) {
-            const feedbackAverage = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-            totalRating += feedbackAverage;
-            totalFeedbackCount++;
-            
-            console.log('Feedback ratings:', {
-              ratings,
-              feedbackAverage
-            });
-          }
-        });
-      });
-
-      const finalAverage = totalFeedbackCount > 0 ? totalRating / totalFeedbackCount : 0;
-      
-      console.log('Final project rating calculation:', {
-        totalRating,
-        totalFeedbackCount,
-        finalAverage: finalAverage.toFixed(1)
-      });
-
-      return finalAverage;
-    },
-  });
+  const { data: averageRating = 0 } = useProjectRating(projectId);
 
   const getRatingColor = (rating: number) => {
     if (rating >= 4) return 'text-green-600';
@@ -95,12 +23,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
         <Star className={`h-4 w-4 ${getRatingColor(averageRating)}`} />
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${getRatingColor(averageRating)}`}>
-          {averageRating.toFixed(1)}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          متوسط تقييم جميع أنشطة المشروع
-        </p>
+        <RatingDisplay rating={averageRating} />
       </CardContent>
     </Card>
   );
