@@ -1,29 +1,15 @@
 export interface RegistrationFormData {
-  arabicName: string;
+  name: string;
   email: string;
   phone: string;
-  englishName?: string;
-  educationLevel?: string;
-  birthDate?: string | null;
-  nationalId?: string;
-  gender?: string;
-  workStatus?: string;
   cardNumber?: string;
   expiryDate?: string;
   cvv?: string;
-}
-
-export interface UseRegistrationProps {
-  onSuccess?: () => void;
-  isProject?: boolean;
-}
-
-export interface UseRegistrationReturn {
-  formData: RegistrationFormData;
-  setFormData: React.Dispatch<React.SetStateAction<RegistrationFormData>>;
-  isSubmitting: boolean;
-  registrationNumber: string;
-  isRegistered: boolean;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
-  submitRegistration: (data: RegistrationFormData) => Promise<void>;
+  arabicName: string;
+  englishName?: string;
+  educationLevel?: string;
+  birthDate?: string | null;  // Making it nullable to handle empty values
+  nationalId?: string;
+  gender?: string;
+  workStatus?: string;
 }

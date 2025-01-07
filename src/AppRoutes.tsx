@@ -13,9 +13,6 @@ import CreateProject from "./pages/CreateProject";
 import EditProject from "./pages/EditProject";
 import VerifyCertificate from "./pages/VerifyCertificate";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Tasks from "./pages/Tasks";
-import Notifications from "./pages/Notifications";
-import Apps from "./pages/Apps";
 
 const AppRoutes = () => {
   return (
@@ -27,16 +24,6 @@ const AppRoutes = () => {
       <Route path="/event/:id/feedback" element={<EventFeedback />} />
       <Route path="/activity/:id/feedback" element={<ActivityFeedback />} />
       <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
-      
-      {/* Protected Routes */}
-      <Route
-        path="/apps"
-        element={
-          <ProtectedRoute>
-            <Apps />
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/dashboard"
         element={
@@ -46,25 +33,9 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/tasks"
-        element={
-          <ProtectedRoute>
-            <Tasks />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/notifications"
-        element={
-          <ProtectedRoute>
-            <Notifications />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/settings"
         element={
-          <ProtectedRoute requireAdmin>
+          <ProtectedRoute>
             <Settings />
           </ProtectedRoute>
         }
@@ -72,7 +43,7 @@ const AppRoutes = () => {
       <Route
         path="/users"
         element={
-          <ProtectedRoute requireAdmin>
+          <ProtectedRoute>
             <Users />
           </ProtectedRoute>
         }
@@ -80,7 +51,7 @@ const AppRoutes = () => {
       <Route
         path="/events/create"
         element={
-          <ProtectedRoute requirePermission="events.create">
+          <ProtectedRoute>
             <CreateEvent />
           </ProtectedRoute>
         }
@@ -88,7 +59,7 @@ const AppRoutes = () => {
       <Route
         path="/create-project"
         element={
-          <ProtectedRoute requirePermission="projects.create">
+          <ProtectedRoute>
             <CreateProject />
           </ProtectedRoute>
         }
@@ -96,7 +67,7 @@ const AppRoutes = () => {
       <Route
         path="/projects/:id/edit"
         element={
-          <ProtectedRoute requirePermission="projects.edit">
+          <ProtectedRoute>
             <EditProject />
           </ProtectedRoute>
         }

@@ -13,16 +13,16 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
   const [showConfirmation, setShowConfirmation] = useState(false);
   const {
     formData,
-    registrationNumber,
+    registrationId,
     isRegistered,
     handleSubmit,
     isSubmitting
-  } = useRegistration(onClose);
+  } = useRegistration(onClose, false);
 
   console.log('EventRegistrationSystem - Current state:', {
     showConfirmation,
     isRegistered,
-    registrationNumber,
+    registrationId,
     formData
   });
 
@@ -31,7 +31,7 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
       <EventRegistrationConfirmation
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
-        registrationId={registrationNumber}
+        registrationId={registrationId}
         eventTitle={event.title}
         eventDate={event.date}
         eventTime={event.time}

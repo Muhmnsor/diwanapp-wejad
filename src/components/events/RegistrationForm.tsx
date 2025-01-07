@@ -6,32 +6,29 @@ import { SelectField } from "./form/fields/SelectField";
 import { PaymentFields } from "./form/PaymentFields";
 import { useFormValidation } from "./registration/validation/useFormValidation";
 import { useRegistrationSubmit } from "./registration/hooks/useRegistrationSubmit";
-import { RegistrationFormData } from "./registration/types/registration";
 
-interface RegistrationFormProps {
+export const RegistrationForm = ({ 
+  eventTitle,
+  eventPrice,
+  eventDate,
+  eventTime,
+  eventLocation,
+  onSubmit 
+}: {
   eventTitle: string;
   eventPrice: number | "free" | null;
   eventDate?: string;
   eventTime?: string;
   eventLocation?: string;
   onSubmit: () => void;
-}
-
-export const RegistrationForm = ({
-  eventTitle,
-  eventPrice,
-  eventDate,
-  eventTime,
-  eventLocation,
-  onSubmit
-}: RegistrationFormProps) => {
-  const [formData, setFormData] = useState<RegistrationFormData>({
+}) => {
+  const [formData, setFormData] = useState({
     arabicName: "",
+    englishName: "",
     email: "",
     phone: "",
-    englishName: "",
     educationLevel: "",
-    birthDate: null,
+    birthDate: "",
     nationalId: "",
     gender: "",
     workStatus: "",
@@ -39,7 +36,7 @@ export const RegistrationForm = ({
     expiryDate: "",
     cvv: ""
   });
-
+  
   const [registrationFields, setRegistrationFields] = useState({
     arabic_name: true,
     email: true,
@@ -92,7 +89,6 @@ export const RegistrationForm = ({
   }, [eventId]);
 
   const handleFormSubmit = async (e: FormEvent) => {
-    e.preventDefault();
     if (!validateForm(formData)) return;
     await submitRegistration(e, formData, setIsSubmitting);
   };
