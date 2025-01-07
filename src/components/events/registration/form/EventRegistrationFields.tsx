@@ -1,8 +1,13 @@
 import { PersonalInfoFields } from "./fields/PersonalInfoFields";
+import { EducationFields } from "./fields/EducationFields";
+import { IdentityFields } from "./fields/IdentityFields";
 import { PaymentFields } from "./fields/PaymentFields";
 import { RegistrationFormData } from "../types/registration";
 
 interface EventRegistrationFieldsProps {
+  formData: RegistrationFormData;
+  setFormData: React.Dispatch<React.SetStateAction<RegistrationFormData>>;
+  projectPrice: number | "free" | null;
   registrationFields: {
     arabic_name: boolean;
     english_name: boolean;
@@ -14,26 +19,16 @@ interface EventRegistrationFieldsProps {
     gender: boolean;
     work_status: boolean;
   };
-  eventPrice: number | "free" | null;
-  showPaymentFields: boolean;
-  formData: RegistrationFormData;
-  setFormData: React.Dispatch<React.SetStateAction<RegistrationFormData>>;
 }
 
 export const EventRegistrationFields = ({
-  registrationFields,
-  eventPrice,
-  showPaymentFields,
   formData,
-  setFormData
+  setFormData,
+  projectPrice,
+  registrationFields,
 }: EventRegistrationFieldsProps) => {
-  console.log('🔄 EventRegistrationFields - Current fields config:', registrationFields);
-  console.log('📝 EventRegistrationFields - Current form data:', formData);
-
-  if (!registrationFields) {
-    console.error('❌ Registration fields are undefined');
-    return null;
-  }
+  console.log('Registration fields config:', registrationFields);
+  console.log('Current form data:', formData);
 
   return (
     <div className="space-y-4">
@@ -42,12 +37,23 @@ export const EventRegistrationFields = ({
         setFormData={setFormData}
         registrationFields={registrationFields}
       />
-      
-      {showPaymentFields && (
+
+      <EducationFields
+        formData={formData}
+        setFormData={setFormData}
+        registrationFields={registrationFields}
+      />
+
+      <IdentityFields
+        formData={formData}
+        setFormData={setFormData}
+        registrationFields={registrationFields}
+      />
+
+      {projectPrice !== "free" && projectPrice !== null && projectPrice > 0 && (
         <PaymentFields
           formData={formData}
           setFormData={setFormData}
-          eventPrice={eventPrice}
         />
       )}
     </div>

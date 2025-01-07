@@ -17,14 +17,7 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
     isRegistered,
     handleSubmit,
     isSubmitting
-  } = useRegistration(() => {
-    setShowConfirmation(true);
-    console.log('Registration successful, showing confirmation:', {
-      registrationId,
-      formData,
-      isRegistered
-    });
-  }, false);
+  } = useRegistration(onClose, false);
 
   console.log('EventRegistrationSystem - Current state:', {
     showConfirmation,
@@ -33,12 +26,7 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
     formData
   });
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await handleSubmit(e);
-  };
-
-  if (showConfirmation && isRegistered) {
+  if (isRegistered && showConfirmation) {
     return (
       <EventRegistrationConfirmation
         open={showConfirmation}
@@ -64,7 +52,7 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
       eventDate={event.date}
       eventTime={event.time}
       eventLocation={event.location}
-      onSubmit={handleFormSubmit}
+      onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
     />
   );
