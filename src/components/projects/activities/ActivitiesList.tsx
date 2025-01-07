@@ -21,7 +21,7 @@ export const ActivitiesList = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4 md:grid-cols-2">
       {activities.map((activity) => (
         <ActivityCard
           key={activity.id}
