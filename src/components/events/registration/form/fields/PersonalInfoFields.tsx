@@ -1,13 +1,12 @@
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { FormField } from "@/components/events/form/fields/FormField";
+import { TextInputField } from "@/components/events/form/fields/TextInputField";
 import { RegistrationFormData } from "../../types/registration";
 
 interface PersonalInfoFieldsProps {
   formData: RegistrationFormData;
-  setFormData: React.Dispatch<React.SetStateAction<RegistrationFormData>>;
+  setFormData: (data: RegistrationFormData) => void;
   registrationFields: {
     arabic_name: boolean;
-    english_name: boolean;
     email: boolean;
     phone: boolean;
   };
@@ -19,66 +18,38 @@ export const PersonalInfoFields = ({
   registrationFields,
 }: PersonalInfoFieldsProps) => {
   return (
-    <>
+    <div className="space-y-4">
       {registrationFields.arabic_name && (
-        <div>
-          <Label htmlFor="arabicName">الاسم بالعربي</Label>
-          <Input
-            id="arabicName"
+        <FormField label="الاسم الثلاثي بالعربية" required>
+          <TextInputField
             value={formData.arabicName}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, arabicName: e.target.value }))
-            }
-            placeholder="أدخل اسمك بالعربي"
+            onChange={(value) => setFormData({ ...formData, arabicName: value })}
             required
           />
-        </div>
-      )}
-
-      {registrationFields.english_name && (
-        <div>
-          <Label htmlFor="englishName">الاسم بالإنجليزي</Label>
-          <Input
-            id="englishName"
-            value={formData.englishName}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, englishName: e.target.value }))
-            }
-            placeholder="Enter your name in English"
-          />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.email && (
-        <div>
-          <Label htmlFor="email">البريد الإلكتروني</Label>
-          <Input
-            id="email"
+        <FormField label="البريد الإلكتروني" required>
+          <TextInputField
             type="email"
             value={formData.email}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, email: e.target.value }))
-            }
-            placeholder="أدخل بريدك الإلكتروني"
+            onChange={(value) => setFormData({ ...formData, email: value })}
             required
           />
-        </div>
+        </FormField>
       )}
 
       {registrationFields.phone && (
-        <div>
-          <Label htmlFor="phone">رقم الجوال</Label>
-          <Input
-            id="phone"
+        <FormField label="رقم الجوال" required>
+          <TextInputField
+            type="tel"
             value={formData.phone}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, phone: e.target.value }))
-            }
-            placeholder="أدخل رقم جوالك"
+            onChange={(value) => setFormData({ ...formData, phone: value })}
             required
           />
-        </div>
+        </FormField>
       )}
-    </>
+    </div>
   );
 };

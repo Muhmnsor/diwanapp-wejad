@@ -1,64 +1,45 @@
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { FormField } from "@/components/events/form/fields/FormField";
+import { TextInputField } from "@/components/events/form/fields/TextInputField";
 import { RegistrationFormData } from "../../types/registration";
 
 interface PaymentFieldsProps {
   formData: RegistrationFormData;
-  setFormData: React.Dispatch<React.SetStateAction<RegistrationFormData>>;
+  setFormData: (data: RegistrationFormData) => void;
+  eventPrice: number | "free" | null;
 }
 
-export const PaymentFields = ({
-  formData,
-  setFormData,
-}: PaymentFieldsProps) => {
+export const PaymentFields = ({ formData, setFormData, eventPrice }: PaymentFieldsProps) => {
+  if (eventPrice === "free" || !eventPrice || typeof eventPrice !== "number") {
+    return null;
+  }
+
   return (
-    <>
-      <div>
-        <Label htmlFor="cardNumber">رقم البطاقة</Label>
-        <Input
-          id="cardNumber"
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold mb-4">معلومات الدفع</h3>
+      <FormField label="رقم البطاقة" required>
+        <TextInputField
           value={formData.cardNumber}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              cardNumber: e.target.value,
-            }))
-          }
-          placeholder="أدخل رقم البطاقة"
+          onChange={(value) => setFormData({ ...formData, cardNumber: value })}
           required
         />
-      </div>
-
+      </FormField>
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="expiryDate">تاريخ الانتهاء</Label>
-          <Input
-            id="expiryDate"
+        <FormField label="تاريخ الانتهاء" required>
+          <TextInputField
             value={formData.expiryDate}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                expiryDate: e.target.value,
-              }))
-            }
+            onChange={(value) => setFormData({ ...formData, expiryDate: value })}
             placeholder="MM/YY"
             required
           />
-        </div>
-
-        <div>
-          <Label htmlFor="cvv">CVV</Label>
-          <Input
-            id="cvv"
+        </FormField>
+        <FormField label="CVV" required>
+          <TextInputField
             value={formData.cvv}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, cvv: e.target.value }))
-            }
-            placeholder="123"
+            onChange={(value) => setFormData({ ...formData, cvv: value })}
             required
           />
-        </div>
+        </FormField>
       </div>
-    </>
+    </div>
   );
 };
