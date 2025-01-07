@@ -13,6 +13,8 @@ import CreateProject from "./pages/CreateProject";
 import EditProject from "./pages/EditProject";
 import VerifyCertificate from "./pages/VerifyCertificate";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Tasks from "./pages/Tasks";
+import Notifications from "./pages/Notifications";
 
 const AppRoutes = () => {
   return (
@@ -24,6 +26,8 @@ const AppRoutes = () => {
       <Route path="/event/:id/feedback" element={<EventFeedback />} />
       <Route path="/activity/:id/feedback" element={<ActivityFeedback />} />
       <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
+      
+      {/* Protected Routes */}
       <Route
         path="/dashboard"
         element={
@@ -33,9 +37,25 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/settings"
+        path="/tasks"
         element={
           <ProtectedRoute>
+            <Tasks />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute requireAdmin>
             <Settings />
           </ProtectedRoute>
         }
@@ -43,7 +63,7 @@ const AppRoutes = () => {
       <Route
         path="/users"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAdmin>
             <Users />
           </ProtectedRoute>
         }
@@ -51,7 +71,7 @@ const AppRoutes = () => {
       <Route
         path="/events/create"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePermission="events.create">
             <CreateEvent />
           </ProtectedRoute>
         }
@@ -59,7 +79,7 @@ const AppRoutes = () => {
       <Route
         path="/create-project"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePermission="projects.create">
             <CreateProject />
           </ProtectedRoute>
         }
@@ -67,7 +87,7 @@ const AppRoutes = () => {
       <Route
         path="/projects/:id/edit"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requirePermission="projects.edit">
             <EditProject />
           </ProtectedRoute>
         }
