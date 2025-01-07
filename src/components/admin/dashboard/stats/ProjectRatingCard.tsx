@@ -19,7 +19,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
         .select(`
           id,
           title,
-          activity_feedback (
+          event_feedback (
             overall_rating,
             content_rating,
             organization_rating,
@@ -41,7 +41,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
 
       // Process each activity
       activities.forEach(activity => {
-        if (!activity.activity_feedback?.length) {
+        if (!activity.event_feedback?.length) {
           console.log(`No feedback for activity: ${activity.title}`);
           return;
         }
@@ -49,7 +49,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
         console.log(`Processing feedback for activity: ${activity.title}`);
 
         // Calculate average for each feedback entry
-        activity.activity_feedback.forEach((feedback: any) => {
+        activity.event_feedback.forEach((feedback: any) => {
           const validRatings = [
             feedback.overall_rating,
             feedback.content_rating,
