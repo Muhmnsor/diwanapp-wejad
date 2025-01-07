@@ -33,6 +33,11 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
     formData
   });
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleSubmit(e);
+  };
+
   if (showConfirmation && isRegistered) {
     return (
       <EventRegistrationConfirmation
@@ -59,7 +64,7 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
       eventDate={event.date}
       eventTime={event.time}
       eventLocation={event.location}
-      onSubmit={handleSubmit}
+      onSubmit={handleFormSubmit}
       isSubmitting={isSubmitting}
     />
   );

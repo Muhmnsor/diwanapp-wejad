@@ -34,6 +34,7 @@ export const useRegistration = (
     console.log('useRegistration - Form submitted with data:', formData);
     
     try {
+      setIsSubmitting(true);
       const newRegistrationId = await submitRegistration(e);
       console.log('useRegistration - Registration successful, ID:', newRegistrationId);
       
@@ -54,6 +55,8 @@ export const useRegistration = (
     } catch (error) {
       console.error('useRegistration - Error in registration:', error);
       toast.error('حدث خطأ في التسجيل، يرجى المحاولة مرة أخرى');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
