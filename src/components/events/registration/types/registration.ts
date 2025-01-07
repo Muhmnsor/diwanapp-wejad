@@ -1,9 +1,8 @@
 export interface RegistrationFormData {
-  name?: string;
   arabicName: string;
-  englishName?: string;
   email: string;
   phone: string;
+  englishName?: string;
   educationLevel?: string;
   birthDate?: string | null;
   nationalId?: string;
@@ -15,7 +14,16 @@ export interface RegistrationFormData {
 }
 
 export interface UseRegistrationProps {
-  eventId?: string;
   onSuccess?: () => void;
-  onError?: (error: any) => void;
+  isProject?: boolean;
+}
+
+export interface UseRegistrationReturn {
+  formData: RegistrationFormData;
+  setFormData: React.Dispatch<React.SetStateAction<RegistrationFormData>>;
+  isSubmitting: boolean;
+  registrationNumber: string;
+  isRegistered: boolean;
+  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  submitRegistration: (data: RegistrationFormData) => Promise<void>;
 }

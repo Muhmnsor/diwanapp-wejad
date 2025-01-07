@@ -35,15 +35,11 @@ export const RegistrationFormContainer = ({
     handleSubmit
   } = useRegistration(() => {
     if (onSubmit) {
-      const syntheticEvent = { preventDefault: () => {} } as FormEvent<Element>;
-      onSubmit(syntheticEvent);
+      onSubmit(new Event('submit'));
     }
   }, isProject);
 
   const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
-
-  console.log('📝 Form Data:', formData);
-  console.log('🔧 Registration Fields Config:', registrationFields);
 
   if (isLoading) {
     return <LoadingState />;
