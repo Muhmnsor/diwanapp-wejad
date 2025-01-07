@@ -1,113 +1,108 @@
 import { FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
-import { useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { useNotifications } from "@/hooks/useNotifications";
 import { RegistrationFormData } from "../types/registration";
 
 interface UseRegistrationSubmitProps {
-  formData: RegistrationFormData;
-  setIsSubmitting: (value: boolean) => void;
-  setRegistrationId: (value: string) => void;
-  setIsRegistered: (value: boolean) => void;
-  setShowConfirmation: (value: boolean) => void;
-  isProject: boolean;
+  eventTitle: string;
+  eventPrice: number | "free" | null;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
+  onSubmit: () => void;
 }
 
 export const useRegistrationSubmit = ({
-  formData,
-  setIsSubmitting,
-  setRegistrationId,
-  setIsRegistered,
-  setShowConfirmation,
-  isProject,
+  eventTitle,
+  eventPrice,
+  eventDate,
+  eventTime,
+  eventLocation,
+  onSubmit
 }: UseRegistrationSubmitProps) => {
-  const { id } = useParams();
+  const { sendNotification } = useNotifications();
+  const eventId = window.location.pathname.split('/').pop();
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (
+    e: FormEvent,
+    formData: RegistrationFormData,
+    setIsSubmitting: (value: boolean) => void
+  ) => {
     e.preventDefault();
-    console.log('Starting registration submission...');
-    console.log('Form data:', formData);
-    console.log('Event/Project ID from URL:', id);
-    
-    if (!formData.arabicName || !formData.email || !formData.phone) {
-      console.error('Required fields are missing:', {
-        arabicName: formData.arabicName,
-        email: formData.email,
-        phone: formData.phone
-      });
-      throw new Error('Required fields are missing');
-    }
+    console.log('Submitting registration form:', formData);
     
     setIsSubmitting(true);
-    
+
     try {
-      const registrationId = uuidv4();
-      const registrationNumber = `REG-${registrationId.split('-')[0]}`;
+      // Get registration template
+      const { data: template } = await supabase
+        .from('whatsapp_templates')
+        .select('id')
+        .eq('notification_type', 'event_registration')
+        .eq('is_default', true)
+        .single();
 
-      const registrationData = {
-        id: registrationId,
-        arabic_name: formData.arabicName,
-        english_name: formData.englishName || null,
-        email: formData.email,
-        phone: formData.phone,
-        education_level: formData.educationLevel || null,
-        birth_date: formData.birthDate || null,
-        national_id: formData.nationalId || null,
-        gender: formData.gender || null,
-        work_status: formData.workStatus || null,
-        registration_number: registrationNumber,
-      };
-
-      // Check if this is a project activity
-      if (!isProject) {
-        const { data: eventData } = await supabase
-          .from('events')
-          .select('is_project_activity')
-          .eq('id', id)
-          .maybeSingle();
-
-        console.log('Event data:', eventData);
-
-        // If this is a project activity, we don't allow direct registration
-        if (eventData?.is_project_activity) {
-          console.error('Cannot register directly for project activities');
-          throw new Error('Cannot register directly for project activities');
-        }
-
-        // This is a regular event registration
-        Object.assign(registrationData, { event_id: id });
-      } else {
-        // This is a project registration
-        Object.assign(registrationData, { project_id: id });
+      if (!template) {
+        throw new Error('Registration template not found');
       }
 
-      console.log('Submitting registration with data:', registrationData);
-
-      const { error } = await supabase
+      // Create registration with all fields
+      const { data: registration, error: registrationError } = await supabase
         .from('registrations')
-        .insert([registrationData]);
+        .insert([{
+          event_id: eventId,
+          arabic_name: formData.arabicName,
+          english_name: formData.englishName,
+          email: formData.email,
+          phone: formData.phone,
+          education_level: formData.educationLevel,
+          birth_date: formData.birthDate,
+          national_id: formData.nationalId,
+          gender: formData.gender,
+          work_status: formData.workStatus,
+          registration_number: `REG-${Date.now()}`
+        }])
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Registration error:', error);
-        throw error;
+      if (registrationError) throw registrationError;
+
+      // If event is paid, create payment transaction
+      if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
+        const { error: paymentError } = await supabase
+          .from('payment_transactions')
+          .insert([{
+            registration_id: registration.id,
+            amount: eventPrice,
+            status: 'pending',
+            payment_method: 'card'
+          }]);
+
+        if (paymentError) throw paymentError;
       }
 
-      console.log('Registration successful:', registrationId);
-      
-      setRegistrationId(registrationId);
-      setIsRegistered(true);
-      setShowConfirmation(true);
-      
-      console.log('States updated after successful registration:', {
-        registrationId,
-        isRegistered: true,
-        showConfirmation: true
+      // Send registration notification
+      await sendNotification({
+        type: 'registration',
+        eventId,
+        registrationId: registration.id,
+        recipientPhone: formData.phone,
+        templateId: template.id,
+        variables: {
+          name: formData.arabicName,
+          event_title: eventTitle,
+          event_date: eventDate || '',
+          event_time: eventTime || '',
+          event_location: eventLocation || '',
+        }
       });
-      
-      return registrationId;
+
+      toast.success('تم التسجيل بنجاح');
+      onSubmit();
     } catch (error) {
-      console.error('Registration failed:', error);
-      throw error;
+      console.error('Error in registration:', error);
+      toast.error('حدث خطأ أثناء التسجيل');
     } finally {
       setIsSubmitting(false);
     }

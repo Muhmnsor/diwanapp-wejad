@@ -1,11 +1,11 @@
 import { FormEvent, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useNotifications } from "@/hooks/useNotifications";
 import { FormField } from "./form/fields/FormField";
 import { TextInputField } from "./form/fields/TextInputField";
 import { SelectField } from "./form/fields/SelectField";
 import { PaymentFields } from "./form/PaymentFields";
+import { useFormValidation } from "./registration/validation/useFormValidation";
+import { useRegistrationSubmit } from "./registration/hooks/useRegistrationSubmit";
 
 export const RegistrationForm = ({ 
   eventTitle,
@@ -50,7 +50,15 @@ export const RegistrationForm = ({
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { sendNotification } = useNotifications();
+  const { errors, validateForm } = useFormValidation(registrationFields, eventPrice);
+  const { handleSubmit: submitRegistration } = useRegistrationSubmit({
+    eventTitle,
+    eventPrice,
+    eventDate,
+    eventTime,
+    eventLocation,
+    onSubmit
+  });
 
   // Get event ID from URL
   const eventId = window.location.pathname.split('/').pop();
@@ -80,114 +88,16 @@ export const RegistrationForm = ({
     fetchRegistrationFields();
   }, [eventId]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    console.log('Submitting registration form:', formData);
-    
-    // Validate required fields based on registration settings
-    const requiredFields = Object.entries(registrationFields)
-      .filter(([_, isRequired]) => isRequired)
-      .map(([field]) => field.toLowerCase());
-
-    const missingFields = requiredFields.filter(field => {
-      const formField = field.replace(/_/g, '');
-      return !formData[formField as keyof typeof formData];
-    });
-
-    if (missingFields.length > 0) {
-      toast.error('يرجى تعبئة جميع الحقول المطلوبة');
-      return;
-    }
-
-    // Additional validation for payment fields if event is paid
-    if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
-      if (!formData.cardNumber || !formData.expiryDate || !formData.cvv) {
-        toast.error('يرجى إدخال معلومات الدفع');
-        return;
-      }
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Get registration template
-      const { data: template } = await supabase
-        .from('whatsapp_templates')
-        .select('id')
-        .eq('notification_type', 'event_registration')
-        .eq('is_default', true)
-        .single();
-
-      if (!template) {
-        throw new Error('Registration template not found');
-      }
-
-      // Create registration with all fields
-      const { data: registration, error: registrationError } = await supabase
-        .from('registrations')
-        .insert([{
-          event_id: eventId,
-          arabic_name: formData.arabicName,
-          english_name: formData.englishName,
-          email: formData.email,
-          phone: formData.phone,
-          education_level: formData.educationLevel,
-          birth_date: formData.birthDate,
-          national_id: formData.nationalId,
-          gender: formData.gender,
-          work_status: formData.workStatus,
-          registration_number: `REG-${Date.now()}`
-        }])
-        .select()
-        .single();
-
-      if (registrationError) throw registrationError;
-
-      // If event is paid, create payment transaction
-      if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
-        const { error: paymentError } = await supabase
-          .from('payment_transactions')
-          .insert([{
-            registration_id: registration.id,
-            amount: eventPrice,
-            status: 'pending',
-            payment_method: 'card'
-          }]);
-
-        if (paymentError) throw paymentError;
-      }
-
-      // Send registration notification
-      await sendNotification({
-        type: 'registration',
-        eventId,
-        registrationId: registration.id,
-        recipientPhone: formData.phone,
-        templateId: template.id,
-        variables: {
-          name: formData.arabicName,
-          event_title: eventTitle,
-          event_date: eventDate || '',
-          event_time: eventTime || '',
-          event_location: eventLocation || '',
-        }
-      });
-
-      toast.success('تم التسجيل بنجاح');
-      onSubmit();
-    } catch (error) {
-      console.error('Error in registration:', error);
-      toast.error('حدث خطأ أثناء التسجيل');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleFormSubmit = async (e: FormEvent) => {
+    if (!validateForm(formData)) return;
+    await submitRegistration(e, formData, setIsSubmitting);
   };
 
   // Check if event is paid
   const isPaidEvent = eventPrice && eventPrice !== "free" && typeof eventPrice === "number";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleFormSubmit} className="space-y-4">
       {registrationFields.arabic_name && (
         <FormField label="الاسم الثلاثي بالعربية" required>
           <TextInputField
