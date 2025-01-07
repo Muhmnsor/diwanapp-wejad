@@ -25,7 +25,7 @@ export const useProjectRating = (projectId: string) => {
 
       if (activitiesError) {
         console.error('Error fetching activities:', activitiesError);
-        return 0;
+        throw activitiesError;
       }
 
       console.log('Found activities:', activities?.length);
