@@ -1,11 +1,10 @@
 import { PersonalInfoFields } from "./fields/PersonalInfoFields";
 import { PaymentFields } from "./fields/PaymentFields";
 import { OptionalRegistrationFields } from "./fields/OptionalRegistrationFields";
-import { RegistrationFormData } from "../types/registration";
 
 interface RegistrationFormFieldsProps {
-  formData: RegistrationFormData;
-  setFormData: (data: RegistrationFormData) => void;
+  formData: any;
+  setFormData: (data: any) => void;
   eventPrice: number | "free" | null;
   showPaymentFields?: boolean;
   registrationFields: {
