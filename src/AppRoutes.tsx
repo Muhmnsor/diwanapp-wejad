@@ -15,6 +15,7 @@ import VerifyCertificate from "./pages/VerifyCertificate";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Tasks from "./pages/Tasks";
 import Notifications from "./pages/Notifications";
+import Apps from "./pages/Apps";
 
 const AppRoutes = () => {
   return (
@@ -28,6 +29,14 @@ const AppRoutes = () => {
       <Route path="/verify-certificate/:code" element={<VerifyCertificate />} />
       
       {/* Protected Routes */}
+      <Route
+        path="/apps"
+        element={
+          <ProtectedRoute>
+            <Apps />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={

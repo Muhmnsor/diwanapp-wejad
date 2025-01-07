@@ -34,40 +34,6 @@ export const Navigation = () => {
           "الرئيسية"
         )}
       </Link>
-      {user?.isAdmin && (
-        <>
-          <Link
-            to="/dashboard"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              isActive("/dashboard")
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {isMobile ? (
-              <LayoutDashboard className="h-4 w-4" />
-            ) : (
-              "لوحة المعلومات"
-            )}
-          </Link>
-          <Link
-            to="/settings"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              isActive("/settings")
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {isMobile ? (
-              <Settings className="h-4 w-4" />
-            ) : (
-              "الإعدادات"
-            )}
-          </Link>
-        </>
-      )}
       {isAuthenticated && (
         <div className="flex gap-2">
           <Link to="/events/create">
