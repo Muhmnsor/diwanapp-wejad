@@ -1,15 +1,21 @@
 export interface RegistrationFormData {
-  name: string;
-  email: string;
-  phone: string;
-  cardNumber?: string;
-  expiryDate?: string;
-  cvv?: string;
+  name?: string;
   arabicName: string;
   englishName?: string;
+  email: string;
+  phone: string;
   educationLevel?: string;
-  birthDate?: string | null;  // Making it nullable to handle empty values
+  birthDate?: string | null;
   nationalId?: string;
   gender?: string;
   workStatus?: string;
+  cardNumber?: string;
+  expiryDate?: string;
+  cvv?: string;
+}
+
+export interface UseRegistrationProps {
+  eventId?: string;
+  onSuccess?: () => void;
+  onError?: (error: any) => void;
 }

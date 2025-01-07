@@ -1,40 +1,37 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RegistrationFormData, UseRegistrationProps } from '../types/registration';
 
-interface RegistrationFormData {
-  arabicName: string;
-  englishName?: string;
-  email: string;
-  phone: string;
-  educationLevel?: string;
-  birthDate?: string;
-  nationalId?: string;
-  gender?: string;
-  workStatus?: string;
-}
-
-interface UseRegistrationSubmitProps {
-  eventId: string;
-  onSuccess?: () => void;
-  onError?: (error: any) => void;
-}
-
-export const useRegistration = ({ eventId, onSuccess, onError }: UseRegistrationSubmitProps) => {
+export const useRegistration = ({ eventId, onSuccess, onError }: UseRegistrationProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationNumber, setRegistrationNumber] = useState("");
+  const [formData, setFormData] = useState<RegistrationFormData>({
+    arabicName: "",
+    email: "",
+    phone: "",
+    englishName: "",
+    educationLevel: "",
+    birthDate: null,
+    nationalId: "",
+    gender: "",
+    workStatus: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: ""
+  });
 
-  const submitRegistration = async (formData: RegistrationFormData) => {
-    console.log('Submitting registration:', { eventId, formData });
+  const submitRegistration = async (data: RegistrationFormData) => {
+    console.log('Submitting registration:', { eventId, data });
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase
+      const { data: registration, error } = await supabase
         .from('registrations')
         .insert([
           {
             event_id: eventId,
-            ...formData,
+            ...data,
             registration_number: Math.random().toString(36).substring(2, 8).toUpperCase()
           }
         ])
@@ -43,8 +40,8 @@ export const useRegistration = ({ eventId, onSuccess, onError }: UseRegistration
 
       if (error) throw error;
 
-      console.log('Registration successful:', data);
-      setRegistrationNumber(data.registration_number);
+      console.log('Registration successful:', registration);
+      setRegistrationNumber(registration.registration_number);
       toast.success('تم التسجيل بنجاح');
       onSuccess?.();
     } catch (error) {
@@ -57,6 +54,8 @@ export const useRegistration = ({ eventId, onSuccess, onError }: UseRegistration
   };
 
   return {
+    formData,
+    setFormData,
     submitRegistration,
     isSubmitting,
     registrationNumber
