@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useProjectRating = (projectId: string) => {
   return useQuery({
-    queryKey: ['project-activities-rating', projectId],
+    queryKey: ['project-rating', projectId],
     queryFn: async () => {
-      console.log('Fetching project activities rating for:', projectId);
+      console.log('Fetching ratings for project:', projectId);
       
-      const { data: activities } = await supabase
+      // Get all activities for this project
+      const { data: activities, error: activitiesError } = await supabase
         .from('events')
         .select(`
           id,
@@ -22,12 +23,17 @@ export const useProjectRating = (projectId: string) => {
         .eq('project_id', projectId)
         .eq('is_project_activity', true);
 
-      if (!activities?.length) {
-        console.log('No project activities found');
+      if (activitiesError) {
+        console.error('Error fetching activities:', activitiesError);
         return 0;
       }
 
-      console.log('Found activities:', activities);
+      console.log('Found activities:', activities?.length);
+
+      if (!activities?.length) {
+        console.log('No activities found for project');
+        return 0;
+      }
 
       let totalRating = 0;
       let totalFeedbackCount = 0;
@@ -38,38 +44,33 @@ export const useProjectRating = (projectId: string) => {
           return;
         }
 
-        console.log(`Processing feedback for activity: ${activity.title}`);
-
-        activity.event_feedback.forEach((feedback: any) => {
+        activity.event_feedback.forEach(feedback => {
           const ratings = [
             feedback.overall_rating,
             feedback.content_rating,
             feedback.organization_rating,
             feedback.presenter_rating
-          ].filter(rating => rating !== null && rating !== undefined);
+          ].filter(Boolean);
 
           if (ratings.length > 0) {
-            const feedbackAverage = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-            totalRating += feedbackAverage;
+            const avgRating = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+            totalRating += avgRating;
             totalFeedbackCount++;
             
-            console.log('Feedback ratings:', {
-              ratings,
-              feedbackAverage
-            });
+            console.log(`Activity: ${activity.title}, Average Rating: ${avgRating}`);
           }
         });
       });
 
-      const finalAverage = totalFeedbackCount > 0 ? totalRating / totalFeedbackCount : 0;
+      const finalRating = totalFeedbackCount > 0 ? totalRating / totalFeedbackCount : 0;
       
-      console.log('Final project rating calculation:', {
+      console.log('Final project rating:', {
         totalRating,
         totalFeedbackCount,
-        finalAverage: finalAverage.toFixed(1)
+        finalRating: finalRating.toFixed(1)
       });
 
-      return finalAverage;
-    },
+      return finalRating;
+    }
   });
 };
