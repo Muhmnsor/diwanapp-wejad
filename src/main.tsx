@@ -9,8 +9,15 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
+      retry: (failureCount, error: any) => {
+        // Don't retry on 401/403 errors
+        if (error?.code === '401' || error?.code === '403') {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      refetchOnWindowFocus: true, // Changed to true to keep data fresh
+      refetchOnReconnect: true,
     },
   },
 })
