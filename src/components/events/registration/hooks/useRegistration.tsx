@@ -2,6 +2,7 @@ import { FormEvent } from "react";
 import { toast } from "sonner";
 import { useRegistrationState } from "./useRegistrationState";
 import { useRegistrationSubmit } from "./useRegistrationSubmit";
+import { RegistrationFormData } from "../types/registration";
 
 export const useRegistration = (
   onSubmit: () => void,
@@ -21,12 +22,9 @@ export const useRegistration = (
   } = useRegistrationState();
 
   const { handleSubmit: submitRegistration } = useRegistrationSubmit({
-    formData,
-    setIsSubmitting,
-    setRegistrationId,
-    setIsRegistered,
-    setShowConfirmation,
-    isProject,
+    eventTitle: "",
+    eventPrice: null,
+    onSubmit
   });
 
   const handleSubmit = async (e: FormEvent) => {
@@ -34,18 +32,13 @@ export const useRegistration = (
     console.log('useRegistration - Form submitted with data:', formData);
     
     try {
-      const newRegistrationId = await submitRegistration(e);
-      console.log('useRegistration - Registration successful, ID:', newRegistrationId);
+      setIsSubmitting(true);
+      await submitRegistration(e, formData, setIsSubmitting);
       
       setShowConfirmation(true);
       setIsRegistered(true);
-      setRegistrationId(newRegistrationId);
       
-      console.log('States updated after successful registration:', {
-        registrationId: newRegistrationId,
-        isRegistered: true,
-        showConfirmation: true
-      });
+      console.log('States updated after successful registration');
       
       if (onSubmit) {
         console.log('useRegistration - Calling onSubmit callback');
@@ -54,6 +47,8 @@ export const useRegistration = (
     } catch (error) {
       console.error('useRegistration - Error in registration:', error);
       toast.error('حدث خطأ في التسجيل، يرجى المحاولة مرة أخرى');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

@@ -7,18 +7,12 @@ import { RegistrationFormData } from "../types/registration";
 interface UseRegistrationSubmitProps {
   eventTitle: string;
   eventPrice: number | "free" | null;
-  eventDate?: string;
-  eventTime?: string;
-  eventLocation?: string;
   onSubmit: () => void;
 }
 
 export const useRegistrationSubmit = ({
   eventTitle,
   eventPrice,
-  eventDate,
-  eventTime,
-  eventLocation,
   onSubmit
 }: UseRegistrationSubmitProps) => {
   const { sendNotification } = useNotifications();
@@ -41,7 +35,7 @@ export const useRegistrationSubmit = ({
         .select('id')
         .eq('notification_type', 'event_registration')
         .eq('is_default', true)
-        .single();
+        .maybeSingle();
 
       if (!template) {
         throw new Error('Registration template not found');
@@ -83,26 +77,27 @@ export const useRegistrationSubmit = ({
       }
 
       // Send registration notification
-      await sendNotification({
-        type: 'registration',
-        eventId,
-        registrationId: registration.id,
-        recipientPhone: formData.phone,
-        templateId: template.id,
-        variables: {
-          name: formData.arabicName,
-          event_title: eventTitle,
-          event_date: eventDate || '',
-          event_time: eventTime || '',
-          event_location: eventLocation || '',
-        }
-      });
+      if (template) {
+        await sendNotification({
+          type: 'registration',
+          eventId,
+          registrationId: registration.id,
+          recipientPhone: formData.phone,
+          templateId: template.id,
+          variables: {
+            name: formData.arabicName,
+            event_title: eventTitle,
+          }
+        });
+      }
 
       toast.success('تم التسجيل بنجاح');
       onSubmit();
+      return registration.id;
     } catch (error) {
       console.error('Error in registration:', error);
       toast.error('حدث خطأ أثناء التسجيل');
+      throw error;
     } finally {
       setIsSubmitting(false);
     }

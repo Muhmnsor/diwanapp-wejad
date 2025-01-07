@@ -3,7 +3,6 @@ import { RegistrationFormData } from "../types/registration";
 
 export const useRegistrationState = () => {
   const [formData, setFormData] = useState<RegistrationFormData>({
-    name: "",
     arabicName: "",
     englishName: "",
     email: "",
