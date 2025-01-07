@@ -27,7 +27,8 @@ const Login = () => {
       await login(email, password);
       
       toast.success("تم تسجيل الدخول بنجاح");
-      const from = (location.state as any)?.from || "/dashboard";
+      // Change default redirect to /apps instead of /dashboard
+      const from = (location.state as any)?.from || "/apps";
       console.log("Login: Redirecting to:", from);
       navigate(from, { replace: true });
     } catch (error) {

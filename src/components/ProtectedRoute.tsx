@@ -66,13 +66,13 @@ const ProtectedRoute = ({
   // Check for admin-only routes
   if (requireAdmin && !user?.isAdmin) {
     console.log('User is not admin, redirecting from:', location.pathname);
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/apps" replace />;
   }
 
   // Check for permission-required routes
   if (requirePermission && !permissions) {
     console.log('User lacks permission:', requirePermission);
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/apps" replace />;
   }
 
   return <>{children}</>;
