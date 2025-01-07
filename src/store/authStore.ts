@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AuthError, AuthApiError } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -24,7 +25,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log("AuthStore: Initializing auth state");
       
       // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("AuthStore: Session error:", sessionError);
+        set({ user: null, isAuthenticated: false });
+        return;
+      }
       
       if (!session) {
         console.log("AuthStore: No active session found");
@@ -91,6 +98,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     } catch (error) {
       console.error('AuthStore: Error initializing auth state:', error);
+      if (error instanceof AuthApiError && error.message.includes('refresh_token_not_found')) {
+        console.log('AuthStore: Invalid refresh token, clearing session');
+        await supabase.auth.signOut();
+      }
       set({ user: null, isAuthenticated: false });
     }
   },
@@ -174,6 +185,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     } catch (error) {
       console.error('AuthStore: Login error:', error);
+      if (error instanceof AuthApiError) {
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('بيانات الدخول غير صحيحة');
+        } else {
+          toast.error(error.message);
+        }
+      }
       throw error;
     }
   },
@@ -193,12 +211,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 useAuthStore.getState().initialize();
 
 // Listen for auth changes
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.onAuthStateChange(async (event, session) => {
   console.log("Auth state changed:", event, session);
   
-  if (event === 'SIGNED_OUT') {
+  if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
     useAuthStore.setState({ user: null, isAuthenticated: false });
-  } else if (event === 'SIGNED_IN' && session) {
-    useAuthStore.getState().initialize();
+  } else if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+    await useAuthStore.getState().initialize();
   }
 });
