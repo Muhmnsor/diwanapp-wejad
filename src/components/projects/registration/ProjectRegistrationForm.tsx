@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { ProjectRegistrationFields } from "./fields/ProjectRegistrationFields";
 import { ProjectRegistrationButton } from "./components/ProjectRegistrationButton";
-import { ProjectRegistrationFormData, ProjectRegistrationFieldsConfig } from "./types/registration";
+import { ProjectRegistrationFormData } from "./types/registration";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProjectActivityConfirmationDialog } from "@/components/events/confirmation/ProjectActivityConfirmationDialog";
@@ -15,7 +15,17 @@ interface ProjectRegistrationFormProps {
   setFormData: (data: ProjectRegistrationFormData) => void;
   isSubmitting: boolean;
   onSubmit: (e: FormEvent) => void;
-  registrationFields: ProjectRegistrationFieldsConfig;
+  registrationFields: {
+    arabic_name: boolean;
+    email: boolean;
+    phone: boolean;
+    english_name: boolean;
+    education_level: boolean;
+    birth_date: boolean;
+    national_id: boolean;
+    gender: boolean;
+    work_status: boolean;
+  };
 }
 
 export const ProjectRegistrationForm = ({
@@ -46,6 +56,12 @@ export const ProjectRegistrationForm = ({
       // Get project ID from URL
       const projectId = window.location.pathname.split('/').pop();
       
+      console.log('Submitting project registration:', {
+        projectId,
+        registrationNumber,
+        formData
+      });
+
       // Insert registration data into the database
       const { data, error } = await supabase
         .from('registrations')
