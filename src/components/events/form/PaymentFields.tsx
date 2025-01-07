@@ -62,10 +62,6 @@ export const PaymentFields = ({
     return true;
   };
 
-  const formatCardNumber = (value: string) => {
-    return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
-  };
-
   return (
     <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
       <h3 className="font-semibold text-lg mb-4 text-right">معلومات الدفع</h3>

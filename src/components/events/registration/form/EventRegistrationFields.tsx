@@ -1,7 +1,7 @@
 import { PersonalInfoFields } from "./fields/PersonalInfoFields";
 import { EducationFields } from "./fields/EducationFields";
 import { IdentityFields } from "./fields/IdentityFields";
-import { PaymentFields } from "./fields/PaymentFields";
+import { PaymentFields } from "../../form/PaymentFields";
 import { RegistrationFormData } from "../types/registration";
 
 interface EventRegistrationFieldsProps {
@@ -54,7 +54,7 @@ export const EventRegistrationFields = ({
         <PaymentFields
           formData={formData}
           setFormData={setFormData}
-          eventPrice={projectPrice} // Added the missing eventPrice prop
+          eventPrice={projectPrice}
         />
       )}
     </div>
