@@ -13,7 +13,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
     queryFn: async () => {
       console.log('Fetching project activities rating for:', projectId);
       
-      // Fetch all activities for this project and their feedback
+      // First get all activities for this project
       const { data: activities } = await supabase
         .from('events')
         .select(`
@@ -36,10 +36,10 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
 
       console.log('Found activities:', activities);
 
-      let totalProjectRating = 0;
+      let totalRating = 0;
       let totalFeedbackCount = 0;
 
-      // Process each activity
+      // Process each activity's feedback
       activities.forEach(activity => {
         if (!activity.event_feedback?.length) {
           console.log(`No feedback for activity: ${activity.title}`);
@@ -50,30 +50,30 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
 
         // Calculate average for each feedback entry
         activity.event_feedback.forEach((feedback: any) => {
-          const validRatings = [
+          const ratings = [
             feedback.overall_rating,
             feedback.content_rating,
             feedback.organization_rating,
             feedback.presenter_rating
           ].filter(rating => rating !== null && rating !== undefined);
 
-          if (validRatings.length > 0) {
-            const feedbackAverage = validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length;
-            totalProjectRating += feedbackAverage;
+          if (ratings.length > 0) {
+            const feedbackAverage = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+            totalRating += feedbackAverage;
             totalFeedbackCount++;
             
             console.log('Feedback ratings:', {
-              validRatings,
+              ratings,
               feedbackAverage
             });
           }
         });
       });
 
-      const finalAverage = totalFeedbackCount > 0 ? totalProjectRating / totalFeedbackCount : 0;
+      const finalAverage = totalFeedbackCount > 0 ? totalRating / totalFeedbackCount : 0;
       
       console.log('Final project rating calculation:', {
-        totalProjectRating,
+        totalRating,
         totalFeedbackCount,
         finalAverage: finalAverage.toFixed(1)
       });
