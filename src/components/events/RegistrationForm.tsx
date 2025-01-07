@@ -174,7 +174,9 @@ export const RegistrationForm = ({
       });
 
       toast.success('تم التسجيل بنجاح');
-      onSubmit();
+      if (onSubmit) {
+        onSubmit();
+      }
     } catch (error) {
       console.error('Error in registration:', error);
       toast.error('حدث خطأ أثناء التسجيل');
@@ -305,6 +307,10 @@ export const RegistrationForm = ({
         type="submit"
         disabled={isSubmitting}
         className="w-full bg-primary text-white p-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
+        onClick={(e) => {
+          e.preventDefault();
+          handleSubmit(e);
+        }}
       >
         {isSubmitting ? 'جاري التسجيل...' : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : 'تأكيد التسجيل'}
       </button>
