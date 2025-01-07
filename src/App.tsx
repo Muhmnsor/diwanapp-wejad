@@ -16,7 +16,10 @@ function App() {
       }
     };
 
-    initAuth();
+    // Wrap initialization in a small timeout to ensure React is fully initialized
+    setTimeout(() => {
+      initAuth();
+    }, 0);
   }, [initialize]);
 
   return (

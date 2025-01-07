@@ -54,6 +54,7 @@ export const EventRegistrationFields = ({
         <PaymentFields
           formData={formData}
           setFormData={setFormData}
+          eventPrice={projectPrice} // Added the missing eventPrice prop
         />
       )}
     </div>
