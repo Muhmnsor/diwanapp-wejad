@@ -1,70 +1,64 @@
-import { FormEvent } from "react";
-import { toast } from "sonner";
-import { useRegistrationState } from "./useRegistrationState";
-import { useRegistrationSubmit } from "./useRegistrationSubmit";
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export const useRegistration = (
-  onSubmit: () => void,
-  isProject: boolean = false
-) => {
-  const {
-    formData,
-    setFormData,
-    showConfirmation,
-    setShowConfirmation,
-    registrationId,
-    setRegistrationId,
-    isSubmitting,
-    setIsSubmitting,
-    isRegistered,
-    setIsRegistered,
-  } = useRegistrationState();
+interface RegistrationFormData {
+  arabicName: string;
+  englishName?: string;
+  email: string;
+  phone: string;
+  educationLevel?: string;
+  birthDate?: string;
+  nationalId?: string;
+  gender?: string;
+  workStatus?: string;
+}
 
-  const { handleSubmit: submitRegistration } = useRegistrationSubmit({
-    formData,
-    setIsSubmitting,
-    setRegistrationId,
-    setIsRegistered,
-    setShowConfirmation,
-    isProject,
-  });
+interface UseRegistrationSubmitProps {
+  eventId: string;
+  onSuccess?: () => void;
+  onError?: (error: any) => void;
+}
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    console.log('useRegistration - Form submitted with data:', formData);
-    
+export const useRegistration = ({ eventId, onSuccess, onError }: UseRegistrationSubmitProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationNumber, setRegistrationNumber] = useState("");
+
+  const submitRegistration = async (formData: RegistrationFormData) => {
+    console.log('Submitting registration:', { eventId, formData });
+    setIsSubmitting(true);
+
     try {
-      const newRegistrationId = await submitRegistration(e);
-      console.log('useRegistration - Registration successful, ID:', newRegistrationId);
-      
-      setShowConfirmation(true);
-      setIsRegistered(true);
-      setRegistrationId(newRegistrationId);
-      
-      console.log('States updated after successful registration:', {
-        registrationId: newRegistrationId,
-        isRegistered: true,
-        showConfirmation: true
-      });
-      
-      if (onSubmit) {
-        console.log('useRegistration - Calling onSubmit callback');
-        onSubmit();
-      }
+      const { data, error } = await supabase
+        .from('registrations')
+        .insert([
+          {
+            event_id: eventId,
+            ...formData,
+            registration_number: Math.random().toString(36).substring(2, 8).toUpperCase()
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log('Registration successful:', data);
+      setRegistrationNumber(data.registration_number);
+      toast.success('تم التسجيل بنجاح');
+      onSuccess?.();
     } catch (error) {
-      console.error('useRegistration - Error in registration:', error);
-      toast.error('حدث خطأ في التسجيل، يرجى المحاولة مرة أخرى');
+      console.error('Registration error:', error);
+      toast.error('حدث خطأ أثناء التسجيل');
+      onError?.(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return {
-    formData,
-    setFormData,
-    showConfirmation,
-    setShowConfirmation,
-    registrationId,
+    submitRegistration,
     isSubmitting,
-    isRegistered,
-    handleSubmit
+    registrationNumber
   };
 };

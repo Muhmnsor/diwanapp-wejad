@@ -8,6 +8,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/auth/authStore";
 import { toast } from "sonner";
 import { LogIn } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -38,50 +39,54 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" dir="rtl">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-secondary/50 to-background" dir="rtl">
       <TopHeader />
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="max-w-md mx-auto">
-          <div className="flex items-center justify-center mb-8">
-            <LogIn className="h-8 w-8 text-primary mr-2" />
-            <h1 className="text-3xl font-bold">تسجيل الدخول</h1>
-          </div>
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                className="text-right"
-                placeholder="أدخل بريدك الإلكتروني"
-              />
+      <div className="flex-grow flex items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-md mx-auto shadow-lg animate-fade-in">
+          <CardHeader className="space-y-2 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <LogIn className="h-10 w-10 text-primary" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+            <CardTitle className="text-2xl font-bold">تسجيل الدخول</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email">البريد الإلكتروني</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="text-right"
+                  placeholder="أدخل بريدك الإلكتروني"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">كلمة المرور</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="text-right"
+                  placeholder="أدخل كلمة المرور"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full"
                 disabled={isLoading}
-                className="text-right"
-                placeholder="أدخل كلمة المرور"
-              />
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
-            </Button>
-          </form>
-        </div>
+              >
+                {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
       <Footer />
     </div>
