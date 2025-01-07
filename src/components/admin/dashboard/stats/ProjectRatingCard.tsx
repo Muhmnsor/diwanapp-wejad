@@ -18,6 +18,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
         .from('events')
         .select(`
           id,
+          title,
           activity_feedback (
             overall_rating,
             content_rating,
@@ -29,40 +30,55 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
         .eq('is_project_activity', true);
 
       if (!activities?.length) {
-        console.log('No project activities found with feedback');
+        console.log('No project activities found');
         return 0;
       }
 
-      let totalRating = 0;
-      let ratingCount = 0;
+      console.log('Found activities:', activities);
 
+      let totalProjectRating = 0;
+      let totalFeedbackCount = 0;
+
+      // Process each activity
       activities.forEach(activity => {
-        if (activity.activity_feedback && activity.activity_feedback.length > 0) {
-          activity.activity_feedback.forEach((feedback: any) => {
-            // Calculate average of all rating types for each feedback
-            const ratings = [
-              feedback.overall_rating,
-              feedback.content_rating,
-              feedback.organization_rating,
-              feedback.presenter_rating
-            ].filter(rating => rating !== null);
-
-            if (ratings.length > 0) {
-              totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length;
-              ratingCount++;
-            }
-          });
+        if (!activity.activity_feedback?.length) {
+          console.log(`No feedback for activity: ${activity.title}`);
+          return;
         }
+
+        console.log(`Processing feedback for activity: ${activity.title}`);
+
+        // Calculate average for each feedback entry
+        activity.activity_feedback.forEach((feedback: any) => {
+          const validRatings = [
+            feedback.overall_rating,
+            feedback.content_rating,
+            feedback.organization_rating,
+            feedback.presenter_rating
+          ].filter(rating => rating !== null && rating !== undefined);
+
+          if (validRatings.length > 0) {
+            const feedbackAverage = validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length;
+            totalProjectRating += feedbackAverage;
+            totalFeedbackCount++;
+            
+            console.log('Feedback ratings:', {
+              validRatings,
+              feedbackAverage
+            });
+          }
+        });
       });
 
-      const average = ratingCount > 0 ? totalRating / ratingCount : 0;
-      console.log('Project activities average rating:', {
-        totalRating,
-        ratingCount,
-        average: average.toFixed(1)
+      const finalAverage = totalFeedbackCount > 0 ? totalProjectRating / totalFeedbackCount : 0;
+      
+      console.log('Final project rating calculation:', {
+        totalProjectRating,
+        totalFeedbackCount,
+        finalAverage: finalAverage.toFixed(1)
       });
 
-      return average;
+      return finalAverage;
     },
   });
 
