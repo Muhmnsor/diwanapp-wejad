@@ -37,8 +37,9 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
       let ratingCount = 0;
 
       activities.forEach(activity => {
-        if (activity.activity_feedback) {
+        if (activity.activity_feedback && activity.activity_feedback.length > 0) {
           activity.activity_feedback.forEach((feedback: any) => {
+            // Calculate average of all rating types for each feedback
             const ratings = [
               feedback.overall_rating,
               feedback.content_rating,
@@ -47,8 +48,8 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
             ].filter(rating => rating !== null);
 
             if (ratings.length > 0) {
-              totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0);
-              ratingCount += ratings.length;
+              totalRating += ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length;
+              ratingCount++;
             }
           });
         }
