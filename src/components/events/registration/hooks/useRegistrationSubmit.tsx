@@ -7,12 +7,18 @@ import { RegistrationFormData } from "../types/registration";
 interface UseRegistrationSubmitProps {
   eventTitle: string;
   eventPrice: number | "free" | null;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
   onSubmit: () => void;
 }
 
 export const useRegistrationSubmit = ({
   eventTitle,
   eventPrice,
+  eventDate,
+  eventTime,
+  eventLocation,
   onSubmit
 }: UseRegistrationSubmitProps) => {
   const { sendNotification } = useNotifications();
@@ -29,7 +35,6 @@ export const useRegistrationSubmit = ({
     setIsSubmitting(true);
 
     try {
-      // Get registration template
       const { data: template } = await supabase
         .from('whatsapp_templates')
         .select('id')
@@ -41,7 +46,6 @@ export const useRegistrationSubmit = ({
         throw new Error('Registration template not found');
       }
 
-      // Create registration with all fields
       const { data: registration, error: registrationError } = await supabase
         .from('registrations')
         .insert([{
@@ -62,7 +66,6 @@ export const useRegistrationSubmit = ({
 
       if (registrationError) throw registrationError;
 
-      // If event is paid, create payment transaction
       if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
         const { error: paymentError } = await supabase
           .from('payment_transactions')
@@ -76,7 +79,6 @@ export const useRegistrationSubmit = ({
         if (paymentError) throw paymentError;
       }
 
-      // Send registration notification
       if (template) {
         await sendNotification({
           type: 'registration',
@@ -87,6 +89,9 @@ export const useRegistrationSubmit = ({
           variables: {
             name: formData.arabicName,
             event_title: eventTitle,
+            event_date: eventDate || '',
+            event_time: eventTime || '',
+            event_location: eventLocation || '',
           }
         });
       }

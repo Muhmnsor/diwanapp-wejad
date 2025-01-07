@@ -1,10 +1,8 @@
 import { FormEvent } from "react";
-import { useParams } from "react-router-dom";
-import { RegistrationFormInputs } from "@/components/events/RegistrationFormInputs";
-import { Button } from "@/components/ui/button";
 import { useRegistration } from "../hooks/useRegistration";
-import { useRegistrationFields } from "../hooks/useRegistrationFields";
-import { LoadingState, ErrorState } from "../components/RegistrationFormStates";
+import { RegistrationFormFields } from "./RegistrationFormFields";
+import { RegistrationFormActions } from "./RegistrationFormActions";
+import { RegistrationConfirmation } from "./RegistrationConfirmation";
 
 interface RegistrationFormContainerProps {
   eventTitle: string;
@@ -12,8 +10,7 @@ interface RegistrationFormContainerProps {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
-  onSubmit: (e: FormEvent) => void;
-  isProject?: boolean;
+  onSubmit: () => void;
 }
 
 export const RegistrationFormContainer = ({
@@ -22,62 +19,44 @@ export const RegistrationFormContainer = ({
   eventDate,
   eventTime,
   eventLocation,
-  onSubmit,
-  isProject = false
+  onSubmit
 }: RegistrationFormContainerProps) => {
-  const { id } = useParams();
-  console.log('🎯 RegistrationFormContainer - Event/Project ID:', id);
-
   const {
     formData,
     setFormData,
+    showConfirmation,
+    registrationId,
     isSubmitting,
     handleSubmit
-  } = useRegistration(() => {
-    if (onSubmit) {
-      const syntheticEvent = { preventDefault: () => {} } as FormEvent<Element>;
-      onSubmit(syntheticEvent);
-    }
-  }, isProject);
-
-  const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
-
-  console.log('📝 Form Data:', formData);
-  console.log('🔧 Registration Fields Config:', registrationFields);
-
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (error) {
-    console.error('❌ Error in registration form:', error);
-    return <ErrorState error={error} />;
-  }
-
-  if (!registrationFields) {
-    console.error('❌ No registration fields available');
-    return <ErrorState error={new Error('No registration fields available')} />;
-  }
+  } = useRegistration(onSubmit, false);
 
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
-  const buttonText = isSubmitting ? "جاري المعالجة..." : isPaidEvent ? `الدفع وتأكيد التسجيل (${eventPrice} ريال)` : "تأكيد التسجيل";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-      <RegistrationFormInputs
-        formData={formData}
-        setFormData={setFormData}
-        eventPrice={eventPrice}
-        showPaymentFields={isPaidEvent}
-        registrationFields={registrationFields}
-      />
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={isSubmitting}
-      >
-        {buttonText}
-      </Button>
-    </form>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <RegistrationFormFields
+          formData={formData}
+          setFormData={setFormData}
+          eventPrice={eventPrice}
+          showPaymentFields={isPaidEvent}
+        />
+        
+        <RegistrationFormActions
+          isSubmitting={isSubmitting}
+          isPaidEvent={isPaidEvent}
+          eventPrice={eventPrice}
+        />
+      </form>
+
+      {showConfirmation && (
+        <RegistrationConfirmation
+          registrationId={registrationId}
+          eventTitle={eventTitle}
+          formData={formData}
+          showConfirmation={showConfirmation}
+        />
+      )}
+    </>
   );
 };
