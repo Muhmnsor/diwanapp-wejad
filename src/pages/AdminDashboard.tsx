@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Database, ListChecks, Lightbulb, DollarSign } from "lucide-react";
+import { TopHeader } from "@/components/layout/TopHeader";
+import { Footer } from "@/components/layout/Footer";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -39,26 +41,32 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8" dir="rtl">
-      <h1 className="text-3xl font-bold mb-8 text-center">لوحة التحكم المركزية</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {apps.map((app) => {
-          const Icon = app.icon;
-          return (
-            <Card
-              key={app.path}
-              className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(app.path)}
-            >
-              <div className="flex flex-col items-center text-center space-y-4">
-                <Icon className="w-12 h-12 text-primary" />
-                <h2 className="text-xl font-semibold">{app.title}</h2>
-                <p className="text-gray-600">{app.description}</p>
-              </div>
-            </Card>
-          );
-        })}
+    <div className="min-h-screen flex flex-col">
+      <TopHeader />
+      
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        <h1 className="text-3xl font-bold mb-8 text-center">لوحة التحكم المركزية</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {apps.map((app) => {
+            const Icon = app.icon;
+            return (
+              <Card
+                key={app.path}
+                className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(app.path)}
+              >
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <Icon className="w-12 h-12 text-primary" />
+                  <h2 className="text-xl font-semibold">{app.title}</h2>
+                  <p className="text-gray-600">{app.description}</p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
