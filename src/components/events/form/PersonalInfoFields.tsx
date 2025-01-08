@@ -29,9 +29,9 @@ export const PersonalInfoFields = ({
   
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // التحقق من صحة الاسم العربي
   const validateArabicName = (value: string) => {
-    const arabicRegex = /^[\u0600-\u06FF\s]+$/;
+    const arabicRegex = /^[\u0600-\u06FF\s]*$/;
+    
     if (!value.trim()) {
       setErrors(prev => ({ ...prev, arabicName: "الاسم مطلوب" }));
       return false;
@@ -44,7 +44,6 @@ export const PersonalInfoFields = ({
     return true;
   };
 
-  // التحقق من صحة البريد الإلكتروني
   const validateEmail = (value: string) => {
     if (!value.trim()) {
       setErrors(prev => ({ ...prev, email: "البريد الإلكتروني مطلوب" }));
@@ -59,7 +58,6 @@ export const PersonalInfoFields = ({
     return true;
   };
 
-  // التحقق من صحة رقم الهاتف
   const validatePhone = (value: string) => {
     if (!value.trim()) {
       setErrors(prev => ({ ...prev, phone: "رقم الجوال مطلوب" }));
@@ -75,10 +73,8 @@ export const PersonalInfoFields = ({
   };
 
   const handleChange = (field: string, value: string) => {
-    // تحديث القيمة أولاً
     setFormData({ ...formData, [field]: value });
 
-    // ثم التحقق من صحتها
     if (field === 'arabicName') {
       validateArabicName(value);
     } else if (field === 'email') {
@@ -91,7 +87,7 @@ export const PersonalInfoFields = ({
   return (
     <>
       {registrationFields.arabic_name && (
-        <div className="space-y-2">
+        <div className="space-y-2 text-right">
           <Label>الاسم الثلاثي بالعربية</Label>
           <Input
             value={formData.arabicName || ""}
@@ -106,8 +102,23 @@ export const PersonalInfoFields = ({
         </div>
       )}
 
+      {registrationFields.english_name && (
+        <div className="space-y-2 text-right">
+          <Label>الاسم الثلاثي بالإنجليزية</Label>
+          <Input
+            value={formData.englishName || ""}
+            onChange={(e) => handleChange('englishName', e.target.value)}
+            placeholder="Enter your full name in English"
+            className={errors.englishName ? "border-red-500" : ""}
+          />
+          {errors.englishName && (
+            <p className="text-sm text-red-500">{errors.englishName}</p>
+          )}
+        </div>
+      )}
+
       {registrationFields.email && (
-        <div className="space-y-2">
+        <div className="space-y-2 text-right">
           <Label>البريد الإلكتروني</Label>
           <Input
             type="email"
@@ -124,13 +135,13 @@ export const PersonalInfoFields = ({
       )}
 
       {registrationFields.phone && (
-        <div className="space-y-2">
+        <div className="space-y-2 text-right">
           <Label>رقم الجوال</Label>
           <Input
             type="tel"
             value={formData.phone || ""}
             onChange={(e) => handleChange('phone', e.target.value)}
-            placeholder="أدخل رقم الجوال"
+            placeholder="05xxxxxxxx"
             className={errors.phone ? "border-red-500" : ""}
             required
           />
