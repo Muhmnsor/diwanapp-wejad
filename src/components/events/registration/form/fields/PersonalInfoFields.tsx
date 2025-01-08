@@ -22,7 +22,7 @@ export const PersonalInfoFields = ({
     <>
       {registrationFields.arabic_name && (
         <div>
-          <Label htmlFor="arabicName">الاسم بالعربي</Label>
+          <Label htmlFor="arabicName">الاسم الثلاثي بالعربية</Label>
           <Input
             id="arabicName"
             value={formData.arabicName}
