@@ -57,7 +57,7 @@ export const TopHeader = () => {
               <Button
                 variant="ghost"
                 className="flex items-center gap-2"
-                onClick={() => navigate("/events")}
+                onClick={() => navigate("/")}
               >
                 <Calendar className="h-4 w-4" />
                 <span>الأحداث</span>
