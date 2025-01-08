@@ -11,7 +11,10 @@ export const TopHeader = () => {
   const { isAuthenticated } = useAuthStore();
   
   // Check if we're on an events-related page - updated to include all event management paths
-  const isEventsPage = location.pathname.includes('/events') || location.pathname === '/' || location.pathname.includes('/dashboard');
+  const isEventsPage = location.pathname.includes('/events') || 
+                      location.pathname === '/' || 
+                      location.pathname.includes('/dashboard') ||
+                      location.pathname.includes('/create-project');
 
   return (
     <div className="w-full bg-white py-4 border-b">
