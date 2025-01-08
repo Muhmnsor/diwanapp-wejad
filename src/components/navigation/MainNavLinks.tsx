@@ -16,7 +16,7 @@ export const MainNavLinks = ({ isActive, isMobile }: MainNavLinksProps) => {
         isActive("/") ? "text-foreground" : "text-muted-foreground"
       )}
     >
-      {isMobile ? <Home className="h-4 w-4" /> : "الرئيسية"}
+      {isMobile ? <Home className="h-4 w-4" /> : "الأحداث"}
     </Link>
   );
 };
