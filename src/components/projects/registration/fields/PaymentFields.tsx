@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import { ProjectRegistrationFormData } from "../types/registration";
 
 interface PaymentFieldsProps {
@@ -13,8 +14,17 @@ export const PaymentFields = ({
   setFormData,
   projectPrice
 }: PaymentFieldsProps) => {
-  const handleChange = (field: keyof ProjectRegistrationFormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: "",
+    expiryDate: "",
+    cvv: ""
+  });
+
+  const handleChange = (field: keyof typeof paymentData, value: string) => {
+    setPaymentData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -25,7 +35,7 @@ export const PaymentFields = ({
         <Label htmlFor="cardNumber">رقم البطاقة</Label>
         <Input
           id="cardNumber"
-          value={formData.cardNumber || ""}
+          value={paymentData.cardNumber}
           onChange={(e) => handleChange("cardNumber", e.target.value)}
           placeholder="أدخل رقم البطاقة"
           required
@@ -37,7 +47,7 @@ export const PaymentFields = ({
           <Label htmlFor="expiryDate">تاريخ الانتهاء</Label>
           <Input
             id="expiryDate"
-            value={formData.expiryDate || ""}
+            value={paymentData.expiryDate}
             onChange={(e) => handleChange("expiryDate", e.target.value)}
             placeholder="MM/YY"
             required
@@ -48,7 +58,7 @@ export const PaymentFields = ({
           <Label htmlFor="cvv">CVV</Label>
           <Input
             id="cvv"
-            value={formData.cvv || ""}
+            value={paymentData.cvv}
             onChange={(e) => handleChange("cvv", e.target.value)}
             placeholder="123"
             required
