@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Plus, Settings, Home, LayoutDashboard } from "lucide-react";
+import { Plus, Settings, Home, LayoutDashboard, Grid } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -19,6 +19,23 @@ export const Navigation = () => {
 
   return (
     <nav className="flex gap-2 md:gap-4 items-center flex-wrap" dir="rtl">
+      {user?.isAdmin && (
+        <Link
+          to="/admin"
+          className={cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            isActive("/admin")
+              ? "text-foreground"
+              : "text-muted-foreground"
+          )}
+        >
+          {isMobile ? (
+            <Grid className="h-4 w-4" />
+          ) : (
+            "التطبيقات"
+          )}
+        </Link>
+      )}
       <Link
         to="/"
         className={cn(
