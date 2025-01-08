@@ -10,8 +10,8 @@ export const TopHeader = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   
-  // Check if we're on an events-related page
-  const isEventsPage = location.pathname.includes('/events') || location.pathname === '/';
+  // Check if we're on an events-related page - updated to include all event management paths
+  const isEventsPage = location.pathname.includes('/events') || location.pathname === '/' || location.pathname.includes('/dashboard');
 
   return (
     <div className="w-full bg-white py-4 border-b">
