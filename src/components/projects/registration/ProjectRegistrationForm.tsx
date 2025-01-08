@@ -47,24 +47,25 @@ export const ProjectRegistrationForm = ({
       // Get project ID from URL
       const projectId = window.location.pathname.split('/').pop();
       
+      // Prepare registration data
+      const registrationData = {
+        project_id: projectId,
+        registration_number: registrationNumber,
+        arabic_name: formData.arabicName,
+        english_name: formData.englishName || null,
+        email: formData.email,
+        phone: formData.phone,
+        education_level: formData.educationLevel || null,
+        birth_date: formData.birthDate || null,
+        national_id: formData.nationalId || null,
+        gender: formData.gender || null,
+        work_status: formData.workStatus || null
+      };
+
       // Insert registration data into the database
       const { data, error } = await supabase
         .from('registrations')
-        .insert([
-          {
-            project_id: projectId,
-            registration_number: registrationNumber,
-            arabic_name: formData.arabicName,
-            english_name: formData.englishName,
-            email: formData.email,
-            phone: formData.phone,
-            education_level: formData.educationLevel,
-            birth_date: formData.birthDate,
-            national_id: formData.nationalId,
-            gender: formData.gender,
-            work_status: formData.workStatus
-          }
-        ])
+        .insert([registrationData])
         .select()
         .single();
 
