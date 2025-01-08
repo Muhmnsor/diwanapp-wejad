@@ -32,7 +32,7 @@ export const TopHeader = () => {
                 onClick={() => navigate("/")}
               />
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <Navigation />
               <UserNav />
             </div>
