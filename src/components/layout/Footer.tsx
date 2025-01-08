@@ -9,7 +9,7 @@ export const Footer = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between" dir="rtl">
             {/* Slogan - Right */}
-            <p className="text-primary text-lg font-semibold">
+            <p className="text-primary text-lg font-semibold text-right">
               ديوان .. شريك الشباب
             </p>
             
@@ -44,7 +44,7 @@ export const Footer = () => {
         <div dir="rtl" className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             {/* Organization Details - Right */}
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-2 text-right">
               <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
               <p className="text-[#9F9EA1]">المملكة العربية السعودية - المدينة المنورة</p>
               <p className="text-[#9F9EA1]">رقم الترخيص 5531</p>
