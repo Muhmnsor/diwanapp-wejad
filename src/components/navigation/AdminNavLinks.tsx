@@ -10,10 +10,10 @@ interface AdminNavLinksProps {
 export const AdminNavLinks = ({ isActive, isMobile }: AdminNavLinksProps) => {
   return (
     <Link
-      to="/admin"
+      to="/admin/dashboard"
       className={cn(
         "text-sm font-medium transition-colors hover:text-primary",
-        isActive("/admin") ? "text-foreground" : "text-muted-foreground"
+        isActive("/admin/dashboard") ? "text-foreground" : "text-muted-foreground"
       )}
     >
       {isMobile ? <Grid className="h-4 w-4" /> : "التطبيقات"}
