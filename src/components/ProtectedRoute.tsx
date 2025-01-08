@@ -13,6 +13,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
+    console.log("ProtectedRoute: Setting up auth state listener");
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed in ProtectedRoute:', { event, userId: session?.user?.id });
       
@@ -22,7 +24,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       if (event === 'SIGNED_OUT') {
         console.log('User signed out, redirecting to login');
-        logout();
+        await logout();
       }
     });
 
@@ -34,24 +36,25 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         if (error) {
           console.error('Session check error:', error);
           if (error.message.includes('refresh_token_not_found')) {
-            toast.error('Your session has expired. Please login again.');
-            logout();
+            toast.error('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
+            await logout();
           }
         }
 
         if (!session) {
           console.log('No active session found');
-          logout();
+          await logout();
         }
       } catch (error) {
         console.error('Error checking session:', error);
-        logout();
+        await logout();
       }
     };
 
     checkSession();
 
     return () => {
+      console.log("ProtectedRoute: Cleaning up auth state listener");
       subscription.unsubscribe();
     };
   }, [logout]);
@@ -59,6 +62,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   console.log('Protected route check:', { isAuthenticated, user, pathname: location.pathname });
 
   if (!isAuthenticated) {
+    console.log('User not authenticated, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

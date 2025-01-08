@@ -9,9 +9,16 @@ export const UserNav = () => {
   const { logout, isAuthenticated } = useAuthStore();
 
   const handleLogout = async () => {
-    await logout();
-    toast.success("تم تسجيل الخروج بنجاح");
-    navigate("/login");
+    try {
+      console.log("UserNav: Starting logout process");
+      await logout();
+      console.log("UserNav: Logout successful, redirecting to login");
+      toast.success("تم تسجيل الخروج بنجاح");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("UserNav: Error during logout:", error);
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
+    }
   };
 
   if (!isAuthenticated) return null;

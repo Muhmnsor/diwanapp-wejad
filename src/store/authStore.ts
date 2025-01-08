@@ -12,7 +12,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   initialize: () => Promise<void>;
 }
 
@@ -23,7 +23,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log("AuthStore: Initializing auth state");
       
-      // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -34,20 +33,17 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       console.log("AuthStore: Active session found, user:", session.user);
 
-      // Set initial user state
       const initialUserState: User = {
         id: session.user.id,
         email: session.user.email ?? '',
         isAdmin: false
       };
 
-      // First set the basic user info
       set({
         user: initialUserState,
         isAuthenticated: true
       });
 
-      // Check for admin role
       const { data: roleIds, error: roleIdsError } = await supabase
         .from('user_roles')
         .select('role_id')
@@ -64,7 +60,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
 
-      // Get role names
       const { data: roles, error: rolesError } = await supabase
         .from('roles')
         .select('name')
@@ -76,7 +71,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
 
-      // Check if user has admin role
       const isAdmin = roles?.name === 'admin';
       
       if (isAdmin) {
@@ -103,34 +97,23 @@ export const useAuthStore = create<AuthState>((set) => ({
         password
       });
 
-      console.log("AuthStore: Sign in response:", { authData, signInError });
-
-      if (signInError) {
-        console.error("AuthStore: Sign in error:", signInError);
-        throw signInError;
-      }
+      if (signInError) throw signInError;
 
       if (!authData.user) {
-        console.log("AuthStore: No user found after login");
         throw new Error('No user data available');
       }
 
-      // Set initial user state
       const initialUserState: User = {
         id: authData.user.id,
         email: authData.user.email ?? '',
         isAdmin: false
       };
 
-      console.log("AuthStore: Setting initial user state:", initialUserState);
-
-      // First set the basic user info
       set({
         user: initialUserState,
         isAuthenticated: true
       });
 
-      // Check for admin role
       const { data: roleIds, error: roleIdsError } = await supabase
         .from('user_roles')
         .select('role_id')
@@ -147,7 +130,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
 
-      // Get role names
       const { data: roles, error: rolesError } = await supabase
         .from('roles')
         .select('name')
@@ -159,11 +141,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
 
-      // Check if user has admin role
       const isAdmin = roles?.name === 'admin';
       
       if (isAdmin) {
-        console.log("AuthStore: User is admin, updating state");
         set(state => ({
           user: {
             ...state.user!,
@@ -179,12 +159,29 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   logout: async () => {
     try {
-      await supabase.auth.signOut();
+      console.log("AuthStore: Starting logout process");
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("AuthStore: Error during logout:", error);
+        throw error;
+      }
+
+      console.log("AuthStore: Successfully signed out from Supabase");
+      
+      // Clear auth state
       set({ user: null, isAuthenticated: false });
-      toast.success('تم تسجيل الخروج بنجاح');
+      
+      // Clear any local storage items if needed
+      localStorage.removeItem('supabase.auth.token');
+      
+      console.log("AuthStore: Auth state cleared");
+      
     } catch (error) {
       console.error('AuthStore: Logout error:', error);
       toast.error('حدث خطأ أثناء تسجيل الخروج');
+      throw error;
     }
   }
 }));

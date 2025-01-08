@@ -9,9 +9,16 @@ export const AdminHeader = () => {
   const { logout } = useAuthStore();
 
   const handleLogout = async () => {
-    await logout();
-    toast.success("تم تسجيل الخروج بنجاح");
-    navigate("/login");
+    try {
+      console.log("AdminHeader: Starting logout process");
+      await logout();
+      console.log("AdminHeader: Logout successful, redirecting to login");
+      toast.success("تم تسجيل الخروج بنجاح");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("AdminHeader: Error during logout:", error);
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
+    }
   };
 
   return (
@@ -22,7 +29,7 @@ export const AdminHeader = () => {
             <img 
               src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
               alt="ديوان" 
-              className="h-24 object-contain cursor-pointer"
+              className="h-20 object-contain cursor-pointer"
               onClick={() => navigate("/admin")}
             />
           </div>
