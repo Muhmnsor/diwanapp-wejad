@@ -14,10 +14,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   useEffect(() => {
     console.log("ProtectedRoute: Setting up auth state listener");
+    let isSubscribed = true;
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed in ProtectedRoute:', { event, userId: session?.user?.id });
       
+      if (!isSubscribed) return;
+
       if (event === 'TOKEN_REFRESHED') {
         console.log('Token refreshed successfully');
       }
@@ -30,12 +33,14 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     // Check session validity
     const checkSession = async () => {
+      if (!isSubscribed) return;
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Session check error:', error);
-          if (error.message.includes('refresh_token_not_found')) {
+          if (error.message.includes('session_not_found') || error.message.includes('refresh_token_not_found')) {
             toast.error('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
             await logout();
           }
@@ -47,7 +52,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         }
       } catch (error) {
         console.error('Error checking session:', error);
-        await logout();
+        if (isSubscribed) {
+          await logout();
+        }
       }
     };
 
@@ -55,6 +62,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     return () => {
       console.log("ProtectedRoute: Cleaning up auth state listener");
+      isSubscribed = false;
       subscription.unsubscribe();
     };
   }, [logout]);

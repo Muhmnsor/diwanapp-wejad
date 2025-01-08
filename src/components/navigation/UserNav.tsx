@@ -14,10 +14,12 @@ export const UserNav = () => {
       await logout();
       console.log("UserNav: Logout successful, redirecting to login");
       toast.success("تم تسجيل الخروج بنجاح");
+      // Use replace to prevent going back to protected routes
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("UserNav: Error during logout:", error);
-      toast.error("حدث خطأ أثناء تسجيل الخروج");
+      // Still clear local state and redirect even if server logout fails
+      navigate("/login", { replace: true });
     }
   };
 
