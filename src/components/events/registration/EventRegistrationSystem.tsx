@@ -17,7 +17,10 @@ export const EventRegistrationSystem = ({ event, onClose }: EventRegistrationSys
     isRegistered,
     handleSubmit,
     isSubmitting
-  } = useRegistration(onClose, false);
+  } = useRegistration((id: string) => {
+    console.log('Registration successful, showing confirmation with ID:', id);
+    setShowConfirmation(true);
+  }, false);
 
   console.log('EventRegistrationSystem - Current state:', {
     showConfirmation,
