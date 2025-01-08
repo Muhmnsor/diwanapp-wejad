@@ -85,10 +85,10 @@ export const PersonalInfoFields = ({
   };
 
   return (
-    <>
+    <div className="space-y-4 text-right" dir="rtl">
       {registrationFields.arabic_name && (
-        <div className="space-y-2 text-right">
-          <Label>الاسم الثلاثي بالعربية</Label>
+        <div className="space-y-2">
+          <Label className="block">الاسم الثلاثي بالعربية</Label>
           <Input
             value={formData.arabicName || ""}
             onChange={(e) => handleChange('arabicName', e.target.value)}
@@ -103,8 +103,8 @@ export const PersonalInfoFields = ({
       )}
 
       {registrationFields.english_name && (
-        <div className="space-y-2 text-right">
-          <Label>الاسم الثلاثي بالإنجليزية</Label>
+        <div className="space-y-2">
+          <Label className="block">الاسم الثلاثي بالإنجليزية</Label>
           <Input
             value={formData.englishName || ""}
             onChange={(e) => handleChange('englishName', e.target.value)}
@@ -118,8 +118,8 @@ export const PersonalInfoFields = ({
       )}
 
       {registrationFields.email && (
-        <div className="space-y-2 text-right">
-          <Label>البريد الإلكتروني</Label>
+        <div className="space-y-2">
+          <Label className="block">البريد الإلكتروني</Label>
           <Input
             type="email"
             value={formData.email || ""}
@@ -135,8 +135,8 @@ export const PersonalInfoFields = ({
       )}
 
       {registrationFields.phone && (
-        <div className="space-y-2 text-right">
-          <Label>رقم الجوال</Label>
+        <div className="space-y-2">
+          <Label className="block">رقم الجوال</Label>
           <Input
             type="tel"
             value={formData.phone || ""}
@@ -150,6 +150,6 @@ export const PersonalInfoFields = ({
           )}
         </div>
       )}
-    </>
+    </div>
   );
 };
