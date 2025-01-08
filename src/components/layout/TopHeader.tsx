@@ -19,11 +19,11 @@ export const TopHeader = () => {
                       location.pathname === '/settings';
 
   return (
-    <div className="w-full bg-white py-4 border-b">
+    <div className="w-full bg-white border-b">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col space-y-4" dir="rtl">
+        <div className="flex flex-col" dir="rtl">
           {/* Logo and Main Navigation */}
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center py-4">
             <div className="w-full flex justify-center md:justify-start md:w-auto">
               <img 
                 src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
@@ -40,9 +40,10 @@ export const TopHeader = () => {
 
           {/* Events Action Bar - Only shown on events pages and for authenticated users */}
           {isAuthenticated && isEventsPage && (
-            <div className="flex justify-center items-center gap-4 py-2">
+            <div className="flex justify-center items-center gap-4 py-2 border-t">
               <Button
                 variant="ghost"
+                size="sm"
                 className="flex items-center gap-2"
                 onClick={() => navigate("/dashboard")}
               >
@@ -52,6 +53,7 @@ export const TopHeader = () => {
               
               <Button
                 variant="ghost"
+                size="sm"
                 className="flex items-center gap-2"
                 onClick={() => navigate("/settings")}
               >
@@ -61,6 +63,7 @@ export const TopHeader = () => {
               
               <Button
                 variant="ghost"
+                size="sm"
                 className="flex items-center gap-2"
                 onClick={() => navigate("/")}
               >
@@ -70,6 +73,7 @@ export const TopHeader = () => {
               
               <Button
                 variant="ghost"
+                size="sm"
                 className="flex items-center gap-2"
                 onClick={() => navigate("/events/create")}
               >
@@ -79,6 +83,7 @@ export const TopHeader = () => {
               
               <Button
                 variant="ghost"
+                size="sm"
                 className="flex items-center gap-2"
                 onClick={() => navigate("/create-project")}
               >
