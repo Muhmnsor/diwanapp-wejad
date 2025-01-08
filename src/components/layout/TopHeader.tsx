@@ -1,7 +1,7 @@
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
 import { Button } from "@/components/ui/button";
-import { Settings, Plus, LayoutDashboard, Calendar } from "lucide-react";
+import { Settings, Plus, LayoutDashboard, Calendar, Home } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 
@@ -10,13 +10,15 @@ export const TopHeader = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   
-  // Check if we're on an events-related page - updated to include projects and settings pages
+  // Check if we're on an events-related page
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
                       location.pathname.includes('/dashboard') ||
                       location.pathname.includes('/create-project') ||
                       location.pathname.includes('/projects') ||
                       location.pathname === '/settings';
+
+  const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
 
   return (
     <div className="w-full bg-white border-b">
@@ -33,6 +35,17 @@ export const TopHeader = () => {
               />
             </div>
             <div className="flex items-center gap-2">
+              {isEventOrProjectDetails && !isAuthenticated && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => navigate("/")}
+                >
+                  <Home className="h-4 w-4" />
+                  <span>العودة للأحداث</span>
+                </Button>
+              )}
               <Navigation />
               <UserNav />
             </div>
