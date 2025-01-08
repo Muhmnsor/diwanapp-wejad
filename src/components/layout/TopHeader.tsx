@@ -1,45 +1,78 @@
 import { Navigation } from "@/components/Navigation";
+import { UserNav } from "@/components/navigation/UserNav";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Settings, Plus, LayoutDashboard } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { toast } from "sonner";
 
 export const TopHeader = () => {
   const navigate = useNavigate();
-  const { logout, isAuthenticated } = useAuthStore();
-
-  const handleLogout = async () => {
-    await logout();
-    toast.success("تم تسجيل الخروج بنجاح");
-    navigate("/login");
-  };
+  const location = useLocation();
+  const { isAuthenticated } = useAuthStore();
+  
+  // Check if we're on an events-related page
+  const isEventsPage = location.pathname.includes('/events') || location.pathname === '/';
 
   return (
     <div className="w-full bg-white py-4 border-b">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4" dir="rtl">
-          <div className="w-full flex justify-center md:justify-start md:w-auto">
-            <img 
-              src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
-              alt="ديوان" 
-              className="h-24 object-contain cursor-pointer"
-              onClick={() => navigate("/")}
-            />
+        <div className="flex flex-col space-y-4" dir="rtl">
+          {/* Logo and Main Navigation */}
+          <div className="flex justify-between items-center">
+            <div className="w-full flex justify-center md:justify-start md:w-auto">
+              <img 
+                src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
+                alt="ديوان" 
+                className="h-24 object-contain cursor-pointer"
+                onClick={() => navigate("/")}
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <Navigation />
+              <UserNav />
+            </div>
           </div>
-          <div className="flex items-center justify-center gap-4 md:justify-end">
-            <Navigation />
-            {isAuthenticated && (
+
+          {/* Events Action Bar - Only shown on events pages and for authenticated users */}
+          {isAuthenticated && isEventsPage && (
+            <div className="flex justify-center items-center gap-4 py-2">
               <Button
                 variant="ghost"
-                onClick={handleLogout}
                 className="flex items-center gap-2"
+                onClick={() => navigate("/dashboard")}
               >
-                <LogOut className="h-4 w-4" />
-                <span>تسجيل الخروج</span>
+                <LayoutDashboard className="h-4 w-4" />
+                <span>لوحة المعلومات</span>
               </Button>
-            )}
-          </div>
+              
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2"
+                onClick={() => navigate("/settings")}
+              >
+                <Settings className="h-4 w-4" />
+                <span>الإعدادات</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2"
+                onClick={() => navigate("/create-event")}
+              >
+                <Plus className="h-4 w-4" />
+                <span>إنشاء فعالية</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2"
+                onClick={() => navigate("/create-project")}
+              >
+                <Plus className="h-4 w-4" />
+                <span>إنشاء مشروع</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
