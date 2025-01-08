@@ -32,7 +32,7 @@ export const RegistrationFormInputs = ({
   console.log('🔄 RegistrationFormInputs - Registration Fields:', registrationFields);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" dir="rtl">
       <PersonalInfoFields
         formData={formData}
         setFormData={setFormData}

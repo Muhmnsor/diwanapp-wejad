@@ -87,7 +87,7 @@ export const PersonalInfoFields = ({
   };
 
   return (
-    <div className="space-y-4 text-right" dir="rtl">
+    <div className="space-y-4 text-right">
       {registrationFields.arabic_name && (
         <ArabicNameField
           value={formData.arabicName || ""}
