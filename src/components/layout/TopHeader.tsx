@@ -10,11 +10,12 @@ export const TopHeader = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   
-  // Check if we're on an events-related page - updated to include settings page
+  // Check if we're on an events-related page - updated to include projects and settings pages
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
                       location.pathname.includes('/dashboard') ||
                       location.pathname.includes('/create-project') ||
+                      location.pathname.includes('/projects') ||
                       location.pathname === '/settings';
 
   return (
