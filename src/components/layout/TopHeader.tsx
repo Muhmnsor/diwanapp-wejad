@@ -66,7 +66,7 @@ export const TopHeader = () => {
               <Button
                 variant="ghost"
                 className="flex items-center gap-2"
-                onClick={() => navigate("/create-event")}
+                onClick={() => navigate("/events/create")}
               >
                 <Plus className="h-4 w-4" />
                 <span>إنشاء فعالية</span>
