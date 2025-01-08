@@ -41,7 +41,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
