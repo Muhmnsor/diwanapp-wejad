@@ -6,9 +6,14 @@ import { EventLoadingState } from "@/components/events/EventLoadingState";
 import { EventNotFound } from "@/components/events/EventNotFound";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useAuthStore } from "@/store/authStore";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const EventDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
   console.log('Fetching event with ID:', id);
 
   // Skip fetching if we're on the create page
@@ -37,6 +42,23 @@ const EventDetails = () => {
     enabled: !isCreatePage // Don't run the query if we're on create page
   });
 
+  const handleEdit = () => {
+    // Handle edit functionality
+    console.log('Edit event:', id);
+  };
+
+  const handleDelete = () => {
+    // Handle delete functionality
+    console.log('Delete event:', id);
+    navigate('/');
+  };
+
+  const handleAddToCalendar = () => {
+    // Handle add to calendar functionality
+    console.log('Add to calendar:', id);
+    toast.success('تمت إضافة الفعالية إلى التقويم');
+  };
+
   if (isCreatePage) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -63,7 +85,19 @@ const EventDetails = () => {
     return <EventNotFound />;
   }
 
-  return <EventDetailsView event={event} />;
+  // Check if user is admin (you might want to adjust this based on your actual admin check logic)
+  const isAdmin = user?.role === 'admin';
+
+  return (
+    <EventDetailsView 
+      event={event}
+      isAdmin={isAdmin}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+      onAddToCalendar={handleAddToCalendar}
+      id={id || ''}
+    />
+  );
 };
 
 export default EventDetails;
