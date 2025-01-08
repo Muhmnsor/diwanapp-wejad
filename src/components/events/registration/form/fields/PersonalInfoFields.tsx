@@ -35,20 +35,6 @@ export const PersonalInfoFields = ({
         </div>
       )}
 
-      {registrationFields.english_name && (
-        <div>
-          <Label htmlFor="englishName">الاسم بالإنجليزي</Label>
-          <Input
-            id="englishName"
-            value={formData.englishName}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, englishName: e.target.value }))
-            }
-            placeholder="Enter your name in English"
-          />
-        </div>
-      )}
-
       {registrationFields.email && (
         <div>
           <Label htmlFor="email">البريد الإلكتروني</Label>
