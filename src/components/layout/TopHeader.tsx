@@ -1,7 +1,7 @@
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
 import { Button } from "@/components/ui/button";
-import { Settings, Plus, LayoutDashboard } from "lucide-react";
+import { Settings, Plus, LayoutDashboard, Calendar } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 
@@ -52,6 +52,15 @@ export const TopHeader = () => {
               >
                 <Settings className="h-4 w-4" />
                 <span>الإعدادات</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2"
+                onClick={() => navigate("/events")}
+              >
+                <Calendar className="h-4 w-4" />
+                <span>الأحداث</span>
               </Button>
               
               <Button
