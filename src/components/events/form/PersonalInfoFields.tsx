@@ -1,7 +1,9 @@
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { RegistrationFormData } from "../registration/types/registration";
+import { ArabicNameField } from "./fields/ArabicNameField";
+import { EnglishNameField } from "./fields/EnglishNameField";
+import { EmailField } from "./fields/EmailField";
+import { PhoneField } from "./fields/PhoneField";
 
 interface PersonalInfoFieldsProps {
   formData: RegistrationFormData;
@@ -87,68 +89,35 @@ export const PersonalInfoFields = ({
   return (
     <div className="space-y-4 text-right" dir="rtl">
       {registrationFields.arabic_name && (
-        <div className="space-y-2">
-          <Label className="block">الاسم الثلاثي بالعربية</Label>
-          <Input
-            value={formData.arabicName || ""}
-            onChange={(e) => handleChange('arabicName', e.target.value)}
-            placeholder="أدخل الاسم الثلاثي بالعربية"
-            className={errors.arabicName ? "border-red-500" : ""}
-            required
-          />
-          {errors.arabicName && (
-            <p className="text-sm text-red-500">{errors.arabicName}</p>
-          )}
-        </div>
+        <ArabicNameField
+          value={formData.arabicName || ""}
+          onChange={(value) => handleChange('arabicName', value)}
+          error={errors.arabicName}
+        />
       )}
 
       {registrationFields.english_name && (
-        <div className="space-y-2">
-          <Label className="block">الاسم الثلاثي بالإنجليزية</Label>
-          <Input
-            value={formData.englishName || ""}
-            onChange={(e) => handleChange('englishName', e.target.value)}
-            placeholder="Enter your full name in English"
-            className={errors.englishName ? "border-red-500" : ""}
-          />
-          {errors.englishName && (
-            <p className="text-sm text-red-500">{errors.englishName}</p>
-          )}
-        </div>
+        <EnglishNameField
+          value={formData.englishName || ""}
+          onChange={(value) => handleChange('englishName', value)}
+          error={errors.englishName}
+        />
       )}
 
       {registrationFields.email && (
-        <div className="space-y-2">
-          <Label className="block">البريد الإلكتروني</Label>
-          <Input
-            type="email"
-            value={formData.email || ""}
-            onChange={(e) => handleChange('email', e.target.value)}
-            placeholder="أدخل البريد الإلكتروني"
-            className={errors.email ? "border-red-500" : ""}
-            required
-          />
-          {errors.email && (
-            <p className="text-sm text-red-500">{errors.email}</p>
-          )}
-        </div>
+        <EmailField
+          value={formData.email || ""}
+          onChange={(value) => handleChange('email', value)}
+          error={errors.email}
+        />
       )}
 
       {registrationFields.phone && (
-        <div className="space-y-2">
-          <Label className="block">رقم الجوال</Label>
-          <Input
-            type="tel"
-            value={formData.phone || ""}
-            onChange={(e) => handleChange('phone', e.target.value)}
-            placeholder="05xxxxxxxx"
-            className={errors.phone ? "border-red-500" : ""}
-            required
-          />
-          {errors.phone && (
-            <p className="text-sm text-red-500">{errors.phone}</p>
-          )}
-        </div>
+        <PhoneField
+          value={formData.phone || ""}
+          onChange={(value) => handleChange('phone', value)}
+          error={errors.phone}
+        />
       )}
     </div>
   );
