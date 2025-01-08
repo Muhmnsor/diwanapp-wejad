@@ -38,22 +38,30 @@ export const useRegistrationSubmit = ({
       // Generate registration number
       const registrationNumber = `REG-${Date.now()}`;
 
+      // Format birth date properly if it exists
+      const birthDate = formData.birthDate ? new Date(formData.birthDate).toISOString().split('T')[0] : null;
+
+      // Prepare registration data
+      const registrationData = {
+        event_id: eventId,
+        registration_number: registrationNumber,
+        arabic_name: formData.arabicName,
+        english_name: formData.englishName || null,
+        email: formData.email,
+        phone: formData.phone,
+        education_level: formData.educationLevel || null,
+        birth_date: birthDate,
+        national_id: formData.nationalId || null,
+        gender: formData.gender || null,
+        work_status: formData.workStatus || null
+      };
+
+      console.log('Registration data being sent:', registrationData);
+
       // Insert registration record
       const { data: registration, error: registrationError } = await supabase
         .from('registrations')
-        .insert([{
-          event_id: eventId,
-          arabic_name: formData.arabicName,
-          english_name: formData.englishName,
-          email: formData.email,
-          phone: formData.phone,
-          education_level: formData.educationLevel,
-          birth_date: formData.birthDate,
-          national_id: formData.nationalId,
-          gender: formData.gender,
-          work_status: formData.workStatus,
-          registration_number: registrationNumber
-        }])
+        .insert([registrationData])
         .select()
         .single();
 

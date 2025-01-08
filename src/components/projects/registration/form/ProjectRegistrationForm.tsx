@@ -4,6 +4,7 @@ import { ProjectRegistrationButton } from "../components/ProjectRegistrationButt
 import { ProjectRegistrationFormData } from "../types/registration";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ProjectRegistrationFormProps {
   formData: ProjectRegistrationFormData;
@@ -34,10 +35,62 @@ export const ProjectRegistrationForm = ({
 }: ProjectRegistrationFormProps) => {
   console.log('ProjectRegistrationForm - Current form data:', formData);
   
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Generate registration number
+      const registrationNumber = `REG-${Date.now()}`;
+      
+      // Get project ID from URL
+      const projectId = window.location.pathname.split('/').pop();
+      
+      // Format birth date properly if it exists
+      const birthDate = formData.birthDate ? new Date(formData.birthDate).toISOString().split('T')[0] : null;
+
+      // Prepare registration data
+      const registrationData = {
+        project_id: projectId,
+        registration_number: registrationNumber,
+        arabic_name: formData.arabicName,
+        english_name: formData.englishName || null,
+        email: formData.email,
+        phone: formData.phone,
+        education_level: formData.educationLevel || null,
+        birth_date: birthDate,
+        national_id: formData.nationalId || null,
+        gender: formData.gender || null,
+        work_status: formData.workStatus || null
+      };
+
+      console.log('Registration data being sent:', registrationData);
+
+      // Insert registration data into the database
+      const { data, error } = await supabase
+        .from('registrations')
+        .insert([registrationData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating registration:', error);
+        toast.error('حدث خطأ أثناء التسجيل');
+        throw error;
+      }
+
+      console.log('Registration created successfully:', data);
+      toast.success('تم التسجيل بنجاح');
+      onSubmit(e);
+    } catch (error) {
+      console.error('Error in form submission:', error);
+      toast.error('حدث خطأ أثناء التسجيل');
+    }
+  };
+
   const isPaidProject = projectPrice !== "free" && projectPrice !== null && projectPrice > 0;
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <ProjectRegistrationFields
         formData={formData}
         setFormData={setFormData}
