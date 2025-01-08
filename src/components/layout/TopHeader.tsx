@@ -1,4 +1,3 @@
-import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +27,6 @@ export const TopHeader = () => {
             />
           </div>
           <div className="flex items-center justify-center gap-4 md:justify-end">
-            <Navigation />
             {isAuthenticated && (
               <Button
                 variant="ghost"

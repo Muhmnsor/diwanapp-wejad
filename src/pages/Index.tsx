@@ -7,6 +7,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useRegistrations } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
+import { EventsNavBar } from "@/components/navigation/EventsNavBar";
 import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/authStore";
 
@@ -130,6 +131,7 @@ const Index = () => {
   return (
     <div className="min-h-screen" dir="rtl">
       <TopHeader />
+      <EventsNavBar />
       <Hero />
       <div className="container mx-auto px-4 space-y-12">
         <EventsTabs
