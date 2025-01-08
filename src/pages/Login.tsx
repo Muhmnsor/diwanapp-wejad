@@ -37,8 +37,8 @@ const Login = () => {
       
       toast.success("تم تسجيل الدخول بنجاح");
       
-      // Get the redirect path from location state, or default to "/"
-      const from = (location.state as any)?.from?.pathname || "/";
+      // Get the redirect path from location state, or default to "/admin" instead of "/"
+      const from = (location.state as any)?.from?.pathname || "/admin";
       console.log("Login: Redirecting to:", from);
       navigate(from, { replace: true });
     } catch (error: any) {
