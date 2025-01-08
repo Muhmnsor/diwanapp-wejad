@@ -30,6 +30,8 @@ export const EventDetailsContainer = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [visibility, setVisibility] = useState(event.is_visible);
 
+  console.log('EventDetailsContainer - isAdmin:', isAdmin);
+
   const handleVisibilityChange = async (visible: boolean) => {
     try {
       const { error } = await supabase

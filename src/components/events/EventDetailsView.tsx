@@ -7,6 +7,7 @@ import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventUpdate } from "./details/handlers/EventUpdateHandler";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
 import { EventDetailsContainer } from "./details/EventDetailsContainer";
+import { useUserRoles } from "./admin/useUserRoles";
 
 interface EventDetailsViewProps {
   event: Event;
@@ -30,9 +31,12 @@ export const EventDetailsView = ({
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
+  const { data: userRoles } = useUserRoles();
 
   console.log('EventDetailsView - Event:', event);
   console.log('EventDetailsView - User:', user);
+  console.log('EventDetailsView - User Roles:', userRoles);
+  console.log('EventDetailsView - isAdmin:', isAdmin);
 
   useEffect(() => {
     setCurrentEvent(event);
@@ -60,11 +64,13 @@ export const EventDetailsView = ({
 
   if (!currentEvent) return null;
 
+  const hasAdminAccess = isAdmin || (userRoles && userRoles.includes('admin'));
+
   return (
     <>
       <EventDetailsContainer
         event={currentEvent}
-        isAdmin={isAdmin}
+        isAdmin={hasAdminAccess}
         onEdit={() => setIsEditDialogOpen(true)}
         onDelete={() => setIsDeleteDialogOpen(true)}
         onAddToCalendar={onAddToCalendar}
