@@ -1,10 +1,14 @@
 import { Link } from "react-router-dom";
 import { Info, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuthStore } from "@/store/authStore";
 
 export const EventsNavBar = () => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
+  const { isAuthenticated } = useAuthStore();
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="w-full bg-secondary/20 py-2 border-b">
