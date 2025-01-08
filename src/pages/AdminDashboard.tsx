@@ -11,7 +11,7 @@ const AdminDashboard = () => {
     {
       title: "إدارة الفعاليات",
       icon: ListChecks,
-      path: "/dashboard",
+      path: "/",
       description: "إدارة وتنظيم الفعاليات والأنشطة"
     },
     {
