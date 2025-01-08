@@ -1,9 +1,9 @@
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
-import { Plus, Settings, Home, LayoutDashboard, Grid } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminNavLinks } from "./navigation/AdminNavLinks";
+import { CreateButtons } from "./navigation/CreateButtons";
+import { MainNavLinks } from "./navigation/MainNavLinks";
 
 export const Navigation = () => {
   const location = useLocation();
@@ -19,102 +19,9 @@ export const Navigation = () => {
 
   return (
     <nav className="flex gap-2 md:gap-4 items-center flex-wrap" dir="rtl">
-      {user?.isAdmin && (
-        <Link
-          to="/admin"
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            isActive("/admin")
-              ? "text-foreground"
-              : "text-muted-foreground"
-          )}
-        >
-          {isMobile ? (
-            <Grid className="h-4 w-4" />
-          ) : (
-            "التطبيقات"
-          )}
-        </Link>
-      )}
-      <Link
-        to="/"
-        className={cn(
-          "text-sm font-medium transition-colors hover:text-primary",
-          isActive("/")
-            ? "text-foreground"
-            : "text-muted-foreground"
-        )}
-      >
-        {isMobile ? (
-          <Home className="h-4 w-4" />
-        ) : (
-          "الرئيسية"
-        )}
-      </Link>
-      {user?.isAdmin && (
-        <>
-          <Link
-            to="/dashboard"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              isActive("/dashboard")
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {isMobile ? (
-              <LayoutDashboard className="h-4 w-4" />
-            ) : (
-              "لوحة المعلومات"
-            )}
-          </Link>
-          <Link
-            to="/settings"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary",
-              isActive("/settings")
-                ? "text-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {isMobile ? (
-              <Settings className="h-4 w-4" />
-            ) : (
-              "الإعدادات"
-            )}
-          </Link>
-        </>
-      )}
-      {isAuthenticated && (
-        <div className="flex gap-2">
-          <Link to="/events/create">
-            <Button 
-              variant="outline" 
-              size={isMobile ? "icon" : "sm"} 
-              className={cn(
-                "gap-2",
-                isMobile ? "w-8 h-8 p-0" : ""
-              )}
-            >
-              <Plus className="h-4 w-4" />
-              {!isMobile && "إنشاء فعالية"}
-            </Button>
-          </Link>
-          <Link to="/create-project">
-            <Button 
-              variant="outline" 
-              size={isMobile ? "icon" : "sm"} 
-              className={cn(
-                "gap-2",
-                isMobile ? "w-8 h-8 p-0" : ""
-              )}
-            >
-              <Plus className="h-4 w-4" />
-              {!isMobile && "إنشاء مشروع"}
-            </Button>
-          </Link>
-        </div>
-      )}
+      {user?.isAdmin && <AdminNavLinks isActive={isActive} isMobile={isMobile} />}
+      <MainNavLinks isActive={isActive} isMobile={isMobile} />
+      {isAuthenticated && <CreateButtons isMobile={isMobile} />}
     </nav>
   );
 };
