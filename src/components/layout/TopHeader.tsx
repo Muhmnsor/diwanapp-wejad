@@ -1,92 +1,37 @@
-import { Navigation } from "@/components/Navigation";
-import { UserNav } from "@/components/navigation/UserNav";
-import { Button } from "@/components/ui/button";
-import { Settings, Plus, LayoutDashboard, Calendar } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { AdminNavLinks } from "../navigation/AdminNavLinks";
+import { MainNavLinks } from "../navigation/MainNavLinks";
+import { UserNav } from "../navigation/UserNav";
+import { CreateButtons } from "../navigation/CreateButtons";
 import { useAuthStore } from "@/store/authStore";
 
 export const TopHeader = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   
-  // Check if we're on an events-related page - updated to include all event management paths
+  // Check if we're on an events-related page - updated to include all management paths
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
                       location.pathname.includes('/dashboard') ||
-                      location.pathname.includes('/create-project');
+                      location.pathname.includes('/create-project') ||
+                      location.pathname.includes('/settings');
 
   return (
     <div className="w-full bg-white py-4 border-b">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col space-y-4" dir="rtl">
-          {/* Logo and Main Navigation */}
-          <div className="flex justify-between items-center">
-            <div className="w-full flex justify-center md:justify-start md:w-auto">
-              <img 
-                src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
-                alt="ديوان" 
-                className="h-24 object-contain cursor-pointer"
-                onClick={() => navigate("/")}
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <Navigation />
-              <UserNav />
-            </div>
+        <div className="flex items-center justify-between">
+          <MainNavLinks />
+          <div className="flex items-center gap-4">
+            {isAuthenticated && <CreateButtons />}
+            <UserNav />
           </div>
-
-          {/* Events Action Bar - Only shown on events pages and for authenticated users */}
-          {isAuthenticated && isEventsPage && (
-            <div className="flex justify-center items-center gap-4 py-2">
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/dashboard")}
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>لوحة المعلومات</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/settings")}
-              >
-                <Settings className="h-4 w-4" />
-                <span>الإعدادات</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/")}
-              >
-                <Calendar className="h-4 w-4" />
-                <span>الأحداث</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/events/create")}
-              >
-                <Plus className="h-4 w-4" />
-                <span>إنشاء فعالية</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/create-project")}
-              >
-                <Plus className="h-4 w-4" />
-                <span>إنشاء مشروع</span>
-              </Button>
-            </div>
-          )}
         </div>
       </div>
+      {isAuthenticated && isEventsPage && (
+        <div className="container mx-auto px-4 mt-4">
+          <AdminNavLinks />
+        </div>
+      )}
     </div>
   );
 };
