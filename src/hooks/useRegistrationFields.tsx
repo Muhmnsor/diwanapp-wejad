@@ -10,44 +10,23 @@ export const useRegistrationFields = (projectId: string | undefined) => {
         throw new Error('Project ID is required');
       }
 
-      // Delete any duplicate records first
-      const { data: duplicates, error: deleteError } = await supabase
-        .from('project_registration_fields')
-        .delete()
-        .eq('project_id', projectId)
-        .neq('id', (
-          await supabase
-            .from('project_registration_fields')
-            .select('id')
-            .eq('project_id', projectId)
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .maybeSingle()
-        )?.data?.id)
-        .select();
-
-      if (deleteError) {
-        console.error('Error deleting duplicate fields:', deleteError);
-      } else if (duplicates && duplicates.length > 0) {
-        console.log('Deleted duplicate registration fields:', duplicates);
-      }
-
-      // Now fetch the single record
-      const { data, error } = await supabase
+      // First, check if registration fields exist
+      const { data: existingFields, error: checkError } = await supabase
         .from('project_registration_fields')
         .select('*')
         .eq('project_id', projectId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching project registration fields:', error);
-        throw error;
+      if (checkError) {
+        console.error('Error checking project registration fields:', checkError);
+        throw checkError;
       }
 
-      // If no fields are found, return default values
-      if (!data) {
-        console.log('No project registration fields found, using defaults');
-        return {
+      // If no fields exist, create default ones
+      if (!existingFields) {
+        console.log('No registration fields found, creating defaults for project:', projectId);
+        const defaultFields = {
+          project_id: projectId,
           arabic_name: true,
           email: true,
           phone: true,
@@ -58,11 +37,27 @@ export const useRegistrationFields = (projectId: string | undefined) => {
           gender: false,
           work_status: false
         };
+
+        const { data: newFields, error: insertError } = await supabase
+          .from('project_registration_fields')
+          .insert(defaultFields)
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating default registration fields:', insertError);
+          return defaultFields; // Return defaults even if insert fails
+        }
+
+        console.log('Created default registration fields:', newFields);
+        return newFields;
       }
 
-      console.log('Fetched project registration fields:', data);
-      return data;
+      console.log('Found existing registration fields:', existingFields);
+      return existingFields;
     },
-    retry: 1
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
   });
 };
