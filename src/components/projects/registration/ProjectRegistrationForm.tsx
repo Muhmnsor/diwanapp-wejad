@@ -30,6 +30,7 @@ export const ProjectRegistrationForm = ({
   registrationFields,
 }: ProjectRegistrationFormProps) => {
   console.log('ProjectRegistrationForm - Current form data:', formData);
+  console.log('ProjectRegistrationForm - Registration fields config:', registrationFields);
   
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registrationId, setRegistrationId] = useState("");

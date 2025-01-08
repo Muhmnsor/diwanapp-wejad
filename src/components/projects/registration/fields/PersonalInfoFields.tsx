@@ -12,23 +12,13 @@ import { WorkStatusField } from "./components/WorkStatusField";
 interface PersonalInfoFieldsProps {
   formData: ProjectRegistrationFormData;
   setFormData: (data: ProjectRegistrationFormData) => void;
-  registrationFields?: ProjectRegistrationFieldsConfig;
+  registrationFields: ProjectRegistrationFieldsConfig;
 }
 
 export const PersonalInfoFields = ({
   formData,
   setFormData,
-  registrationFields = {
-    arabic_name: true,
-    email: true,
-    phone: true,
-    english_name: false,
-    education_level: false,
-    birth_date: false,
-    national_id: false,
-    gender: false,
-    work_status: false
-  }
+  registrationFields
 }: PersonalInfoFieldsProps) => {
   console.log('PersonalInfoFields - Registration fields:', registrationFields);
   console.log('PersonalInfoFields - Form data:', formData);
