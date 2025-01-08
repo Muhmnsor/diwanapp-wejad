@@ -1,12 +1,12 @@
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
-import { Button } from "@/components/ui/button";
-import { Settings, Plus, LayoutDashboard, Calendar, Home } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import { Logo } from "./header/Logo";
+import { HomeButton } from "./header/HomeButton";
+import { AdminActions } from "./header/AdminActions";
 
 export const TopHeader = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   
@@ -18,7 +18,8 @@ export const TopHeader = () => {
                       location.pathname.includes('/projects') ||
                       location.pathname === '/settings';
 
-  const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
+  const isEventOrProjectDetails = location.pathname.includes('/events/') || 
+                                 location.pathname.includes('/projects/');
 
   return (
     <div className="w-full bg-white border-b">
@@ -26,85 +27,22 @@ export const TopHeader = () => {
         <div className="flex flex-col" dir="rtl">
           {/* Logo and Main Navigation */}
           <div className="flex justify-between items-center py-4">
-            <div className="w-full flex justify-center md:justify-start md:w-auto">
-              <img 
-                src="/lovable-uploads/6e693a05-5355-4718-95b9-23327287d678.png" 
-                alt="ديوان" 
-                className="h-20 object-contain cursor-pointer"
-                onClick={() => navigate("/")}
-              />
-            </div>
+            <Logo />
             <div className="flex items-center gap-2">
-              {isEventOrProjectDetails && !isAuthenticated && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => navigate("/")}
-                >
-                  <Home className="h-4 w-4" />
-                  <span>العودة للأحداث</span>
-                </Button>
-              )}
+              <HomeButton 
+                isEventOrProjectDetails={isEventOrProjectDetails}
+                isAuthenticated={isAuthenticated}
+              />
               <Navigation />
               <UserNav />
             </div>
           </div>
 
-          {/* Events Action Bar - Only shown on events pages and for authenticated users */}
-          {isAuthenticated && isEventsPage && (
-            <div className="flex justify-center items-center gap-4 py-2 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/dashboard")}
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>لوحة المعلومات</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/settings")}
-              >
-                <Settings className="h-4 w-4" />
-                <span>الإعدادات</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/")}
-              >
-                <Calendar className="h-4 w-4" />
-                <span>الأحداث</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/events/create")}
-              >
-                <Plus className="h-4 w-4" />
-                <span>إنشاء فعالية</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => navigate("/create-project")}
-              >
-                <Plus className="h-4 w-4" />
-                <span>إنشاء مشروع</span>
-              </Button>
-            </div>
-          )}
+          {/* Admin Actions Bar */}
+          <AdminActions 
+            isAuthenticated={isAuthenticated}
+            isEventsPage={isEventsPage}
+          />
         </div>
       </div>
     </div>
