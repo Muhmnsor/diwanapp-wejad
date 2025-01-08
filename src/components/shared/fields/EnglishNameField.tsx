@@ -10,7 +10,7 @@ interface EnglishNameFieldProps {
 export const EnglishNameField = ({ value, onChange, error }: EnglishNameFieldProps) => {
   return (
     <div className="space-y-2">
-      <Label>الاسم باللغة الإنجليزية</Label>
+      <Label>الاسم الثلاثي بالانجليزية</Label>
       <Input
         type="text"
         value={value}
