@@ -27,7 +27,7 @@ export const EventRegistrationDialog = ({
       modal={true}
     >
       <DialogContent 
-        className="sm:max-w-[425px]"
+        className="sm:max-w-[425px] rtl"
         onPointerDownOutside={(e) => {
           e.preventDefault();
         }}
@@ -38,14 +38,16 @@ export const EventRegistrationDialog = ({
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
         </DialogHeader>
-        <RegistrationForm
-          eventTitle={event.title}
-          eventPrice={event.price}
-          eventDate={event.date}
-          eventTime={event.time}
-          eventLocation={event.location}
-          onSubmit={() => onOpenChange(false)}
-        />
+        <div className="rtl" dir="rtl">
+          <RegistrationForm
+            eventTitle={event.title}
+            eventPrice={event.price}
+            eventDate={event.date}
+            eventTime={event.time}
+            eventLocation={event.location}
+            onSubmit={() => onOpenChange(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
