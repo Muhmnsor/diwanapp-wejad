@@ -1,15 +1,11 @@
-import { EnglishNameField } from "@/components/shared/fields/EnglishNameField";
-import { EducationLevelField } from "./optional/EducationLevelField";
-import { BirthDateField } from "./optional/BirthDateField";
-import { NationalIdField } from "./optional/NationalIdField";
-import { GenderField } from "./optional/GenderField";
-import { WorkStatusField } from "./optional/WorkStatusField";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
-interface OptionalFieldsProps {
+interface OptionalRegistrationFieldsProps {
   formData: any;
-  handleInputChange: (field: string, value: string) => void;
+  handleInputChange: (field: string, value: any) => void;
   registrationFields: {
-    english_name: boolean;
     education_level: boolean;
     birth_date: boolean;
     national_id: boolean;
@@ -22,52 +18,89 @@ export const OptionalRegistrationFields = ({
   formData,
   handleInputChange,
   registrationFields
-}: OptionalFieldsProps) => {
+}: OptionalRegistrationFieldsProps) => {
   console.log('🔄 OptionalRegistrationFields - Registration Fields:', registrationFields);
   console.log('📝 OptionalRegistrationFields - Form Data:', formData);
 
   return (
     <>
-      {registrationFields.english_name && (
-        <EnglishNameField
-          value={formData.englishName || ""}
-          onChange={(value) => handleInputChange('englishName', value)}
-        />
-      )}
-
-      {registrationFields.education_level && (
-        <EducationLevelField
-          value={formData.educationLevel || ""}
-          onChange={(value) => handleInputChange('educationLevel', value)}
-        />
+      {registrationFields.national_id && (
+        <div>
+          <Label htmlFor="nationalId">رقم الهوية</Label>
+          <Input
+            id="nationalId"
+            value={formData.nationalId || ""}
+            onChange={(e) => handleInputChange("nationalId", e.target.value)}
+            placeholder="أدخل رقم الهوية"
+          />
+        </div>
       )}
 
       {registrationFields.birth_date && (
-        <BirthDateField
-          value={formData.birthDate || ""}
-          onChange={(value) => handleInputChange('birthDate', value)}
-        />
-      )}
-
-      {registrationFields.national_id && (
-        <NationalIdField
-          value={formData.nationalId || ""}
-          onChange={(value) => handleInputChange('nationalId', value)}
-        />
+        <div>
+          <Label htmlFor="birthDate">تاريخ الميلاد</Label>
+          <Input
+            id="birthDate"
+            type="date"
+            value={formData.birthDate || ""}
+            onChange={(e) => handleInputChange("birthDate", e.target.value)}
+          />
+        </div>
       )}
 
       {registrationFields.gender && (
-        <GenderField
-          value={formData.gender || ""}
-          onChange={(value) => handleInputChange('gender', value)}
-        />
+        <div>
+          <Label htmlFor="gender">الجنس</Label>
+          <Select value={formData.gender || ""} onValueChange={(value) => handleInputChange("gender", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="اختر الجنس" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="male">ذكر</SelectItem>
+              <SelectItem value="female">أنثى</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {registrationFields.education_level && (
+        <div>
+          <Label htmlFor="educationLevel">المستوى التعليمي</Label>
+          <Select 
+            value={formData.educationLevel || ""} 
+            onValueChange={(value) => handleInputChange("educationLevel", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر المستوى التعليمي" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high_school">ثانوي</SelectItem>
+              <SelectItem value="bachelor">بكالوريوس</SelectItem>
+              <SelectItem value="master">ماجستير</SelectItem>
+              <SelectItem value="phd">دكتوراه</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       )}
 
       {registrationFields.work_status && (
-        <WorkStatusField
-          value={formData.workStatus || ""}
-          onChange={(value) => handleInputChange('workStatus', value)}
-        />
+        <div>
+          <Label htmlFor="workStatus">الحالة الوظيفية</Label>
+          <Select 
+            value={formData.workStatus || ""} 
+            onValueChange={(value) => handleInputChange("workStatus", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر الحالة الوظيفية" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="employed">موظف</SelectItem>
+              <SelectItem value="unemployed">غير موظف</SelectItem>
+              <SelectItem value="student">طالب</SelectItem>
+              <SelectItem value="retired">متقاعد</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       )}
     </>
   );
