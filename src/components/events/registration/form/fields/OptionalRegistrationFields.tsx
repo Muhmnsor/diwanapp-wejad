@@ -1,4 +1,4 @@
-import { EnglishNameField } from "./optional/EnglishNameField";
+import { EnglishNameField } from "@/components/shared/fields/EnglishNameField";
 import { EducationLevelField } from "./optional/EducationLevelField";
 import { BirthDateField } from "./optional/BirthDateField";
 import { NationalIdField } from "./optional/NationalIdField";
