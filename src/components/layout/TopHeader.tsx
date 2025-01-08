@@ -28,7 +28,7 @@ export const TopHeader = () => {
           <div className="flex justify-between items-center py-4">
             <div className="w-full flex justify-center md:justify-start md:w-auto">
               <img 
-                src="/lovable-uploads/cc0ac885-dec0-4720-b30c-27371944cda6.png" 
+                src="/lovable-uploads/6e693a05-5355-4718-95b9-23327287d678.png" 
                 alt="ديوان" 
                 className="h-24 object-contain cursor-pointer"
                 onClick={() => navigate("/")}
