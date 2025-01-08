@@ -1,133 +1,69 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { EventDetailsView } from "@/components/events/EventDetailsView";
+import { EventLoadingState } from "@/components/events/EventLoadingState";
+import { EventNotFound } from "@/components/events/EventNotFound";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { EventDetailsView } from "@/components/events/EventDetailsView";
-import { useAuthStore } from "@/store/authStore";
 
 const EventDetails = () => {
-  const [event, setEvent] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { id } = useParams();
-  const { user } = useAuthStore();
-  const navigate = useNavigate();
+  console.log('Fetching event with ID:', id);
 
-  useEffect(() => {
-    const fetchEvent = async () => {
-      try {
-        if (!id) {
-          setError("معرف الفعالية غير موجود");
-          return;
-        }
-
-        console.log("Fetching event with ID:", id);
-        const { data, error: fetchError } = await supabase
-          .from("events")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (fetchError) {
-          console.error("Error fetching event:", fetchError);
-          setError("حدث خطأ في جلب بيانات الفعالية");
-          return;
-        }
-
-        if (!data) {
-          console.log("No event found with ID:", id);
-          setError("الفعالية غير موجودة");
-          return;
-        }
-
-        console.log("Fetched event:", data);
-        setEvent(data);
-      } catch (err) {
-        console.error("Error in fetchEvent:", err);
-        setError("حدث خطأ غير متوقع");
-      } finally {
-        setLoading(false);
+  // Skip fetching if we're on the create page
+  const isCreatePage = id === 'create';
+  
+  const { data: event, isLoading, error } = useQuery({
+    queryKey: ['event', id],
+    queryFn: async () => {
+      if (isCreatePage) {
+        return null;
       }
-    };
 
-    fetchEvent();
-  }, [id]);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
 
-  const handleEdit = () => {
-    console.log("Edit event clicked");
-  };
+      if (error) {
+        console.error('Error fetching event:', error);
+        throw error;
+      }
 
-  const handleDelete = async () => {
-    if (!id) return;
-    
-    try {
-      const { error: deleteError } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", id);
+      return data;
+    },
+    enabled: !isCreatePage // Don't run the query if we're on create page
+  });
 
-      if (deleteError) throw deleteError;
-
-      toast.success("تم حذف الفعالية بنجاح");
-      navigate("/");
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      toast.error("حدث خطأ أثناء حذف الفعالية");
-    }
-  };
-
-  const handleAddToCalendar = () => {
-    console.log("Add to calendar clicked");
-  };
-
-  if (loading) {
+  if (isCreatePage) {
     return (
-      <div className="min-h-screen flex flex-col" dir="rtl">
+      <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex-grow container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-8">إنشاء فعالية جديدة</h1>
+          {/* Your create event form component here */}
         </div>
         <Footer />
       </div>
     );
+  }
+
+  if (isLoading) {
+    return <EventLoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex flex-col" dir="rtl">
-        <TopHeader />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-red-500">{error}</div>
-        </div>
-        <Footer />
-      </div>
-    );
+    console.error('Error in event details:', error);
+    return <EventNotFound />;
   }
-
-  const isAdmin = user?.isAdmin;
 
   if (!event) {
-    return null;
+    return <EventNotFound />;
   }
 
-  return (
-    <div className="min-h-screen flex flex-col" dir="rtl">
-      <TopHeader />
-      <main className="flex-1">
-        <EventDetailsView
-          event={event}
-          isAdmin={isAdmin}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onAddToCalendar={handleAddToCalendar}
-          id={id!}
-        />
-      </main>
-      <Footer />
-    </div>
-  );
+  return <EventDetailsView event={event} />;
 };
 
 export default EventDetails;
