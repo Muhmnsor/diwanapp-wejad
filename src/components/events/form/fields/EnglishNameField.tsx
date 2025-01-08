@@ -8,8 +8,6 @@ interface EnglishNameFieldProps {
 }
 
 export const EnglishNameField = ({ value, onChange, error }: EnglishNameFieldProps) => {
-  console.log('🔤 EnglishNameField - Current value:', value);
-  
   return (
     <div className="space-y-2">
       <Label className="block">الاسم الثلاثي بالإنجليزية</Label>
