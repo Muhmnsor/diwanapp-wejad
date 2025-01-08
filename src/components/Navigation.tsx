@@ -2,8 +2,6 @@ import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminNavLinks } from "./navigation/AdminNavLinks";
-import { CreateButtons } from "./navigation/CreateButtons";
-import { MainNavLinks } from "./navigation/MainNavLinks";
 
 export const Navigation = () => {
   const location = useLocation();
@@ -20,8 +18,6 @@ export const Navigation = () => {
   return (
     <nav className="flex gap-2 md:gap-4 items-center flex-wrap" dir="rtl">
       {user?.isAdmin && <AdminNavLinks isActive={isActive} isMobile={isMobile} />}
-      <MainNavLinks isActive={isActive} isMobile={isMobile} />
-      {isAuthenticated && <CreateButtons isMobile={isMobile} />}
     </nav>
   );
 };
