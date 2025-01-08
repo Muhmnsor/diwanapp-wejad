@@ -15,6 +15,7 @@ import VerifyCertificate from "./pages/VerifyCertificate";
 import AdminDashboard from "./pages/AdminDashboard";
 import Documents from "./pages/Documents";
 import Tasks from "./pages/Tasks";
+import Ideas from "./pages/Ideas";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 
@@ -45,6 +46,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Tasks />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/ideas" 
+        element={
+          <ProtectedRoute>
+            <Ideas />
           </ProtectedRoute>
         } 
       />
