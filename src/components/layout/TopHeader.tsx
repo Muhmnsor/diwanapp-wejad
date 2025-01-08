@@ -1,6 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { LogOut, LogIn } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ export const TopHeader = () => {
           </div>
           <div className="flex items-center justify-center gap-4 md:justify-end">
             <Navigation />
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <Button
                 variant="ghost"
                 onClick={handleLogout}
@@ -37,15 +37,6 @@ export const TopHeader = () => {
               >
                 <LogOut className="h-4 w-4" />
                 <span>تسجيل الخروج</span>
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/login")}
-                className="flex items-center gap-2"
-              >
-                <LogIn className="h-4 w-4" />
-                <span>تسجيل الدخول</span>
               </Button>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -12,13 +12,34 @@ import ProjectDetails from "./pages/ProjectDetails";
 import CreateProject from "./pages/CreateProject";
 import EditProject from "./pages/EditProject";
 import VerifyCertificate from "./pages/VerifyCertificate";
+import AdminDashboard from "./pages/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuthStore } from "@/store/authStore";
 
 const AppRoutes = () => {
+  const { user } = useAuthStore();
+
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/login" 
+        element={
+          user?.isAdmin ? (
+            <Navigate to="/admin" replace />
+          ) : (
+            <Login />
+          )
+        } 
+      />
       <Route path="/events/:id" element={<EventDetails />} />
       <Route path="/projects/:id" element={<ProjectDetails />} />
       <Route path="/event/:id/feedback" element={<EventFeedback />} />
