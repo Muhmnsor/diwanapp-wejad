@@ -8,10 +8,6 @@ export interface ProjectRegistrationFormData {
   nationalId?: string;
   gender?: string;
   workStatus?: string;
-  cardNumber?: string;
-  expiryDate?: string;
-  cvv?: string;
-  name?: string; // Added for compatibility with confirmation dialog
 }
 
 export interface ProjectRegistrationFieldsConfig {

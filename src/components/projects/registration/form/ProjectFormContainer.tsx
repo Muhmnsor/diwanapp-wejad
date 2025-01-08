@@ -3,6 +3,7 @@ import { ProjectRegistrationForm } from "../ProjectRegistrationForm";
 import { useRegistration } from "@/components/events/registration/hooks/useRegistration";
 import { useRegistrationFields } from "@/hooks/useRegistrationFields";
 import { useParams } from "react-router-dom";
+import { ProjectRegistrationFormData } from "../types/registration";
 
 interface ProjectFormContainerProps {
   projectTitle: string;
@@ -23,8 +24,8 @@ export const ProjectFormContainer = ({
   console.log('ProjectFormContainer - Project ID:', id);
 
   const {
-    formData,
-    setFormData,
+    formData: registrationFormData,
+    setFormData: setRegistrationFormData,
     isSubmitting,
     handleSubmit: submitRegistration
   } = useRegistration(() => {
@@ -32,6 +33,23 @@ export const ProjectFormContainer = ({
       onSubmit();
     }
   }, true);
+
+  // Convert registration form data to project registration form data
+  const formData: ProjectRegistrationFormData = {
+    arabicName: registrationFormData.arabicName || "",
+    englishName: registrationFormData.englishName || "",
+    email: registrationFormData.email || "",
+    phone: registrationFormData.phone || "",
+    educationLevel: registrationFormData.educationLevel || "",
+    birthDate: registrationFormData.birthDate || "",
+    nationalId: registrationFormData.nationalId || "",
+    gender: registrationFormData.gender || "",
+    workStatus: registrationFormData.workStatus || ""
+  };
+
+  const setFormData = (data: ProjectRegistrationFormData) => {
+    setRegistrationFormData(data);
+  };
 
   const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
 
