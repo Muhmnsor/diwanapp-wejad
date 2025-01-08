@@ -13,6 +13,7 @@ import CreateProject from "./pages/CreateProject";
 import EditProject from "./pages/EditProject";
 import VerifyCertificate from "./pages/VerifyCertificate";
 import AdminDashboard from "./pages/AdminDashboard";
+import Documents from "./pages/Documents";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 
@@ -27,6 +28,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/documents" 
+        element={
+          <ProtectedRoute>
+            <Documents />
           </ProtectedRoute>
         } 
       />
