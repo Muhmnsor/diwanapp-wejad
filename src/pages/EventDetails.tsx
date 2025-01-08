@@ -76,30 +76,52 @@ const EventDetails = () => {
   }
 
   if (isLoading) {
-    return <EventLoadingState />;
+    return (
+      <div className="min-h-screen">
+        <TopHeader />
+        <EventLoadingState />
+        <Footer />
+      </div>
+    );
   }
 
   if (error) {
     console.error('Error in event details:', error);
-    return <EventNotFound />;
+    return (
+      <div className="min-h-screen">
+        <TopHeader />
+        <EventNotFound />
+        <Footer />
+      </div>
+    );
   }
 
   if (!event) {
-    return <EventNotFound />;
+    return (
+      <div className="min-h-screen">
+        <TopHeader />
+        <EventNotFound />
+        <Footer />
+      </div>
+    );
   }
 
   // Check if user is admin
   const isAdmin = user?.email?.endsWith('@admin.com') || false;
 
   return (
-    <EventDetailsView 
-      event={event}
-      isAdmin={isAdmin}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      onAddToCalendar={handleAddToCalendar}
-      id={id || ''}
-    />
+    <div className="min-h-screen">
+      <TopHeader />
+      <EventDetailsView 
+        event={event}
+        isAdmin={isAdmin}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onAddToCalendar={handleAddToCalendar}
+        id={id || ''}
+      />
+      <Footer />
+    </div>
   );
 };
 
