@@ -21,7 +21,7 @@ export const EventRegistrationDialog = ({
   event,
 }: EventRegistrationDialogProps) => {
   const status = getEventStatus(event);
-  console.log('Event registration status:', status);
+  console.log('📋 EventRegistrationDialog - Event:', event);
 
   if (status !== 'available' && open) {
     console.log('Closing dialog because registration is not allowed');
@@ -36,7 +36,7 @@ export const EventRegistrationDialog = ({
       modal={true}
     >
       <DialogContent 
-        className="sm:max-w-[425px]"
+        className="sm:max-w-[425px] rtl"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -50,10 +50,12 @@ export const EventRegistrationDialog = ({
         {status !== 'available' ? (
           <RegistrationStatusAlert status={status} />
         ) : (
-          <EventRegistrationSystem 
-            event={event}
-            onClose={() => onOpenChange(false)}
-          />
+          <div className="rtl" dir="rtl">
+            <EventRegistrationSystem 
+              event={event}
+              onClose={() => onOpenChange(false)}
+            />
+          </div>
         )}
       </DialogContent>
     </Dialog>
