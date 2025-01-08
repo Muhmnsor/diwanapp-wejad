@@ -35,17 +35,10 @@ export const useRegistrationSubmit = ({
     setIsSubmitting(true);
 
     try {
-      const { data: template } = await supabase
-        .from('whatsapp_templates')
-        .select('id')
-        .eq('notification_type', 'event_registration')
-        .eq('is_default', true)
-        .maybeSingle();
+      // Generate registration number
+      const registrationNumber = `REG-${Date.now()}`;
 
-      if (!template) {
-        throw new Error('Registration template not found');
-      }
-
+      // Insert registration record
       const { data: registration, error: registrationError } = await supabase
         .from('registrations')
         .insert([{
@@ -59,13 +52,19 @@ export const useRegistrationSubmit = ({
           national_id: formData.nationalId,
           gender: formData.gender,
           work_status: formData.workStatus,
-          registration_number: `REG-${Date.now()}`
+          registration_number: registrationNumber
         }])
         .select()
         .single();
 
-      if (registrationError) throw registrationError;
+      if (registrationError) {
+        console.error('Error creating registration:', registrationError);
+        throw registrationError;
+      }
 
+      console.log('Registration created successfully:', registration);
+
+      // Handle payment if it's a paid event
       if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
         const { error: paymentError } = await supabase
           .from('payment_transactions')
@@ -76,24 +75,41 @@ export const useRegistrationSubmit = ({
             payment_method: 'card'
           }]);
 
-        if (paymentError) throw paymentError;
+        if (paymentError) {
+          console.error('Error creating payment transaction:', paymentError);
+          throw paymentError;
+        }
       }
 
+      // Get default registration template
+      const { data: template } = await supabase
+        .from('whatsapp_templates')
+        .select('id')
+        .eq('notification_type', 'event_registration')
+        .eq('is_default', true)
+        .maybeSingle();
+
+      // Send WhatsApp notification if template exists
       if (template) {
-        await sendNotification({
-          type: 'registration',
-          eventId,
-          registrationId: registration.id,
-          recipientPhone: formData.phone,
-          templateId: template.id,
-          variables: {
-            name: formData.arabicName,
-            event_title: eventTitle,
-            event_date: eventDate || '',
-            event_time: eventTime || '',
-            event_location: eventLocation || '',
-          }
-        });
+        try {
+          await sendNotification({
+            type: 'registration',
+            eventId,
+            registrationId: registration.id,
+            recipientPhone: formData.phone,
+            templateId: template.id,
+            variables: {
+              name: formData.arabicName,
+              event_title: eventTitle,
+              event_date: eventDate || '',
+              event_time: eventTime || '',
+              event_location: eventLocation || '',
+            }
+          });
+        } catch (notificationError) {
+          console.error('Error sending notification:', notificationError);
+          // Continue with registration even if notification fails
+        }
       }
 
       toast.success('تم التسجيل بنجاح');
