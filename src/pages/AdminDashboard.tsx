@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Database, ListChecks, Lightbulb, DollarSign } from "lucide-react";
-import { TopHeader } from "@/components/layout/TopHeader";
+import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 
 const AdminDashboard = () => {
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopHeader />
+      <AdminHeader />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-3xl font-bold mb-8 text-center">لوحة التحكم المركزية</h1>
