@@ -42,7 +42,7 @@ export const useRegistrationFields = (projectId: string | undefined) => {
           .from('project_registration_fields')
           .insert(defaultFields)
           .select()
-          .single();
+          .maybeSingle();
 
         if (insertError) {
           console.error('Error creating default registration fields:', insertError);
@@ -50,7 +50,7 @@ export const useRegistrationFields = (projectId: string | undefined) => {
         }
 
         console.log('Created default registration fields:', newFields);
-        return newFields;
+        return newFields || defaultFields;
       }
 
       console.log('Found existing registration fields:', existingFields);
@@ -58,6 +58,6 @@ export const useRegistrationFields = (projectId: string | undefined) => {
     },
     retry: 1,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
   });
 };
