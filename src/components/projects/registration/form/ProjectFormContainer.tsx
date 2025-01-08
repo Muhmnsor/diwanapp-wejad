@@ -1,15 +1,15 @@
-import { FormEvent, useState } from "react";
+import { FormEvent } from "react";
 import { ProjectRegistrationForm } from "../ProjectRegistrationForm";
-import { useRegistrationFields } from "../hooks/useRegistrationFields";
-import { LoadingState, ErrorState } from "@/components/events/registration/components/RegistrationFormStates";
-import { ProjectRegistrationFormData } from "../types/registration";
+import { useRegistration } from "@/components/events/registration/hooks/useRegistration";
+import { useRegistrationFields } from "@/hooks/useRegistrationFields";
+import { useParams } from "react-router-dom";
 
 interface ProjectFormContainerProps {
   projectTitle: string;
   projectPrice: number | "free" | null;
   startDate: string;
   endDate: string;
-  onSubmit: (e: FormEvent) => void;
+  onSubmit: () => void;
 }
 
 export const ProjectFormContainer = ({
@@ -19,39 +19,34 @@ export const ProjectFormContainer = ({
   endDate,
   onSubmit
 }: ProjectFormContainerProps) => {
-  const [formData, setFormData] = useState<ProjectRegistrationFormData>({
-    arabicName: "",
-    englishName: "",
-    email: "",
-    phone: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { id } = useParams();
+  console.log('ProjectFormContainer - Project ID:', id);
 
-  // Extract project ID from URL or pass it as prop if needed
-  const projectId = window.location.pathname.split('/').pop();
-  const { data: registrationFields, isLoading, error } = useRegistrationFields(projectId);
+  const {
+    formData,
+    setFormData,
+    isSubmitting,
+    handleSubmit: submitRegistration
+  } = useRegistration(() => {
+    if (onSubmit) {
+      onSubmit();
+    }
+  }, true);
+
+  const { data: registrationFields, isLoading, error } = useRegistrationFields(id);
 
   if (isLoading) {
-    return <LoadingState />;
+    return <div className="p-4 text-center">جاري التحميل...</div>;
   }
 
   if (error) {
     console.error('Error loading registration fields:', error);
-    return <ErrorState error={error} />;
-  }
-
-  if (!registrationFields) {
-    return <ErrorState error={new Error('No registration fields configuration found')} />;
+    return <div className="p-4 text-center text-red-500">حدث خطأ في تحميل النموذج</div>;
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await onSubmit(e);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitRegistration(e);
   };
 
   return (
@@ -64,7 +59,17 @@ export const ProjectFormContainer = ({
       setFormData={setFormData}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
-      registrationFields={registrationFields}
+      registrationFields={registrationFields || {
+        arabic_name: true,
+        email: true,
+        phone: true,
+        english_name: false,
+        education_level: false,
+        birth_date: false,
+        national_id: false,
+        gender: false,
+        work_status: false
+      }}
     />
   );
 };

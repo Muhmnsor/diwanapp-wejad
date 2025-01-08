@@ -18,11 +18,28 @@ export const ProjectRegistrationDialog = ({
   onOpenChange,
   project,
 }: ProjectRegistrationDialogProps) => {
+  console.log('ProjectRegistrationDialog - Project:', project);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      modal={true}
+    >
+      <DialogContent 
+        className="sm:max-w-[500px]"
+        onPointerDownOutside={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          e.preventDefault();
+        }}
+      >
         <DialogHeader>
-          <DialogTitle className="text-right">التسجيل في المشروع</DialogTitle>
+          <DialogTitle className="text-right">التسجيل في المشروع {project.title}</DialogTitle>
         </DialogHeader>
         <ProjectFormContainer
           projectTitle={project.title}
