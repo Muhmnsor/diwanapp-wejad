@@ -16,7 +16,7 @@ import Documents from "./pages/Documents";
 import Tasks from "./pages/Tasks";
 import Ideas from "./pages/Ideas";
 import Finance from "./pages/Finance";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const AppRoutes = () => {
   return (
