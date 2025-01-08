@@ -9,6 +9,8 @@ import { Footer } from "@/components/layout/Footer";
 import { useAuthStore } from "@/store/authStore";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { CreateEventFormContainer } from "@/components/events/form/CreateEventFormContainer";
+import { Separator } from "@/components/ui/separator";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -61,11 +63,12 @@ const EventDetails = () => {
 
   if (isCreatePage) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen" dir="rtl">
         <TopHeader />
-        <div className="flex-grow container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-8">إنشاء فعالية جديدة</h1>
-          {/* Your create event form component here */}
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-4">إنشاء فعالية جديدة</h1>
+          <Separator className="my-6" />
+          <CreateEventFormContainer />
         </div>
         <Footer />
       </div>
@@ -85,8 +88,8 @@ const EventDetails = () => {
     return <EventNotFound />;
   }
 
-  // Check if user is admin (you might want to adjust this based on your actual admin check logic)
-  const isAdmin = user?.role === 'admin';
+  // Check if user is admin
+  const isAdmin = user?.email?.endsWith('@admin.com') || false;
 
   return (
     <EventDetailsView 
