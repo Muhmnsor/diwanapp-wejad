@@ -11,7 +11,7 @@ const ProjectDetails = lazy(() => import("@/pages/ProjectDetails"));
 const ProjectEdit = lazy(() => import("@/pages/ProjectEdit"));
 const ProjectCreate = lazy(() => import("@/pages/ProjectCreate"));
 const Tasks = lazy(() => import("@/pages/Tasks"));
-const DepartmentProjects = lazy(() => import("@/pages/DepartmentProjects"));
+const DepartmentTaskProjects = lazy(() => import("@/pages/DepartmentProjects"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 export const AppRoutes = () => {
@@ -116,7 +116,7 @@ export const AppRoutes = () => {
         element={
           user?.isAdmin ? (
             <Suspense fallback={<LoadingScreen />}>
-              <DepartmentProjects />
+              <DepartmentTaskProjects />
             </Suspense>
           ) : (
             <Navigate to="/" />
