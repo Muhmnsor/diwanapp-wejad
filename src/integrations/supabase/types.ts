@@ -407,6 +407,7 @@ export type Database = {
         Row: {
           asana_folder_gid: string | null
           asana_gid: string | null
+          asana_sync_enabled: boolean | null
           created_at: string
           description: string | null
           id: string
@@ -416,6 +417,7 @@ export type Database = {
         Insert: {
           asana_folder_gid?: string | null
           asana_gid?: string | null
+          asana_sync_enabled?: boolean | null
           created_at?: string
           description?: string | null
           id?: string
@@ -425,6 +427,7 @@ export type Database = {
         Update: {
           asana_folder_gid?: string | null
           asana_gid?: string | null
+          asana_sync_enabled?: boolean | null
           created_at?: string
           description?: string | null
           id?: string
