@@ -12,6 +12,7 @@ interface AsanaApiOptions {
   taskNotes?: string;
   taskStatus?: string;
   projectId?: string;
+  taskId?: string;
 }
 
 export const useAsanaApi = () => {
@@ -52,6 +53,6 @@ export const useAsanaApi = () => {
     createTask: (projectId: string, taskName: string, taskNotes?: string) =>
       callAsanaApi({ action: 'createTask', projectId, taskName, taskNotes }),
     updateTask: (taskId: string, taskStatus: string) =>
-      callAsanaApi({ action: 'updateTask', taskId: string, taskStatus })
+      callAsanaApi({ action: 'updateTask', taskId, taskStatus })
   };
 };

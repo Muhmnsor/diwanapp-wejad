@@ -16,6 +16,7 @@ interface AsanaRequest {
   taskNotes?: string;
   taskStatus?: string;
   projectId?: string;
+  taskId?: string;
 }
 
 serve(async (req) => {
@@ -30,7 +31,7 @@ serve(async (req) => {
       throw new Error('ASANA_ACCESS_TOKEN is not configured');
     }
 
-    const { action, folderId, workspaceId, folderName, projectName, projectNotes, taskName, taskNotes, taskStatus, projectId } = 
+    const { action, folderId, workspaceId, folderName, projectName, projectNotes, taskName, taskNotes, taskStatus, projectId, taskId } = 
       await req.json() as AsanaRequest;
     
     const baseUrl = 'https://app.asana.com/api/1.0';
@@ -121,8 +122,8 @@ serve(async (req) => {
         break;
 
       case 'updateTask':
-        if (!taskStatus) {
-          throw new Error('Task status is required');
+        if (!taskId || !taskStatus) {
+          throw new Error('Task ID and status are required');
         }
         response = await fetch(`${baseUrl}/tasks/${taskId}`, {
           method: 'PUT',
