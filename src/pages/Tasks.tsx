@@ -15,11 +15,13 @@ const Tasks = () => {
         .select(`
           *,
           department_projects (
-            *,
-            project: projects (*),
-            project_tasks (
+            id,
+            project: projects (
               *,
-              task_subtasks (*)
+              project_tasks (
+                *,
+                task_subtasks (*)
+              )
             )
           )
         `)
