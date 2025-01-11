@@ -405,6 +405,7 @@ export type Database = {
       }
       departments: {
         Row: {
+          asana_folder_gid: string | null
           asana_gid: string | null
           created_at: string
           description: string | null
@@ -413,6 +414,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          asana_folder_gid?: string | null
           asana_gid?: string | null
           created_at?: string
           description?: string | null
@@ -421,6 +423,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          asana_folder_gid?: string | null
           asana_gid?: string | null
           created_at?: string
           description?: string | null

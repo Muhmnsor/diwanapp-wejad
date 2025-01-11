@@ -1,5 +1,9 @@
 project_id = "ynibjnazouypdvwgozih"
 
+[asana-api]
+verify_jwt = true
+max_retries = 3
+
 [send-notification]
 verify_jwt = true
 max_retries = 3
