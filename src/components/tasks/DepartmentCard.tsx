@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Department } from "@/types/department";
 import { Card } from "@/components/ui/card";
-import { ChevronDown, ChevronUp, Building2, Plus, RefreshCw } from "lucide-react";
-import { ProjectsList } from "./ProjectsList";
+import { Building2, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,18 +9,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "react-router-dom";
 
 interface DepartmentCardProps {
   department: Department;
 }
 
 export const DepartmentCard = ({ department }: DepartmentCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [projectTitle, setProjectTitle] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const navigate = useNavigate();
 
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,81 +96,79 @@ export const DepartmentCard = ({ department }: DepartmentCardProps) => {
     }
   };
 
+  const projectsCount = department.department_projects?.length || 0;
+
   return (
-    <Card className="p-6">
+    <Card 
+      className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => navigate(`/departments/${department.id}/projects`)}
+    >
       <div className="space-y-4">
-        <div 
-          className="flex items-center justify-between cursor-pointer"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Building2 className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">إدارة: {department.name}</h3>
+            <div>
+              <h3 className="text-lg font-semibold">إدارة: {department.name}</h3>
+              <p className="text-sm text-gray-500">
+                {projectsCount} {projectsCount === 1 ? 'مشروع' : 'مشاريع'}
+              </p>
+            </div>
           </div>
-          {isExpanded ? (
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-gray-500" />
-          )}
         </div>
 
-        {isExpanded && (
-          <div className="space-y-4">
-            <div className="flex justify-end gap-2">
-              <Dialog open={isAddingProject} onOpenChange={setIsAddingProject}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    إضافة مشروع مهام جديد
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>إضافة مشروع مهام جديد</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleAddProject} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">عنوان المشروع</Label>
-                      <Input
-                        id="title"
-                        value={projectTitle}
-                        onChange={(e) => setProjectTitle(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="description">وصف المشروع</Label>
-                      <Textarea
-                        id="description"
-                        value={projectDescription}
-                        onChange={(e) => setProjectDescription(e.target.value)}
-                        rows={3}
-                      />
-                    </div>
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading ? "جاري الإضافة..." : "إضافة"}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-2"
-                onClick={handleSync}
-                disabled={isSyncing || !department.asana_gid}
-              >
-                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                {isSyncing ? 'جاري المزامنة...' : 'مزامنة مع Asana'}
-              </Button>
-            </div>
-            
-            <div className="pr-6 border-r border-gray-200">
-              <ProjectsList projects={department.department_projects || []} />
-            </div>
-          </div>
+        {department.description && (
+          <p className="text-gray-600 text-sm line-clamp-2">{department.description}</p>
         )}
+
+        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          <Dialog open={isAddingProject} onOpenChange={setIsAddingProject}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                إضافة مشروع
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>إضافة مشروع مهام جديد</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddProject} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">عنوان المشروع</Label>
+                  <Input
+                    id="title"
+                    value={projectTitle}
+                    onChange={(e) => setProjectTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">وصف المشروع</Label>
+                  <Textarea
+                    id="description"
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "جاري الإضافة..." : "إضافة"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleSync}
+            disabled={isSyncing || !department.asana_gid}
+          >
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'جاري المزامنة...' : 'مزامنة مع Asana'}
+          </Button>
+        </div>
       </div>
     </Card>
   );
