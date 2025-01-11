@@ -1,136 +1,56 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import CreateEvent from "./pages/CreateEvent";
+import EventDetails from "./pages/EventDetails";
+import CreateProject from "./pages/CreateProject";
+import ProjectDetails from "./pages/ProjectDetails";
+import Settings from "./pages/Settings";
+import Users from "./pages/Users";
+import EventFeedback from "./pages/EventFeedback";
+import ActivityFeedback from "./pages/ActivityFeedback";
+import VerifyCertificate from "./pages/VerifyCertificate";
+import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import Documents from "./pages/Documents";
+import Tasks from "./pages/Tasks";
+import Ideas from "./pages/Ideas";
+import Finance from "./pages/Finance";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
-import { lazy, Suspense } from "react";
-import { LoadingScreen } from "@/components/layout/LoadingScreen";
 
-const Home = lazy(() => import("@/pages/Home"));
-const Login = lazy(() => import("@/pages/Login"));
-const Register = lazy(() => import("@/pages/Register"));
-const Profile = lazy(() => import("@/pages/Profile"));
-const ProjectDetails = lazy(() => import("@/pages/ProjectDetails"));
-const ProjectEdit = lazy(() => import("@/pages/ProjectEdit"));
-const ProjectCreate = lazy(() => import("@/pages/ProjectCreate"));
-const Tasks = lazy(() => import("@/pages/Tasks"));
-const DepartmentTaskProjects = lazy(() => import("@/pages/DepartmentProjects"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
-
-export const AppRoutes = () => {
-  const { user, isLoading } = useAuthStore();
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
+const AppRoutes = () => {
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <Routes>
-      <Route
-        path="/"
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/create-event" element={<CreateEvent />} />
+      <Route path="/events/:id" element={<EventDetails />} />
+      <Route path="/create-project" element={<CreateProject />} />
+      <Route path="/projects/:id" element={<ProjectDetails />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/users" element={<Users />} />
+      <Route path="/events/:id/feedback" element={<EventFeedback />} />
+      <Route path="/activities/:id/feedback" element={<ActivityFeedback />} />
+      <Route path="/verify-certificate" element={<VerifyCertificate />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="/documents" element={<Documents />} />
+      <Route path="/tasks" element={<Tasks />} />
+      <Route path="/ideas" element={<Ideas />} />
+      <Route 
+        path="/finance" 
         element={
-          <Suspense fallback={<LoadingScreen />}>
-            <Home />
-          </Suspense>
-        }
+          <ProtectedRoute>
+            <Finance />
+          </ProtectedRoute>
+        } 
       />
-      <Route
-        path="/login"
-        element={
-          user ? (
-            <Navigate to="/" />
-          ) : (
-            <Suspense fallback={<LoadingScreen />}>
-              <Login />
-            </Suspense>
-          )
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          user ? (
-            <Navigate to="/" />
-          ) : (
-            <Suspense fallback={<LoadingScreen />}>
-              <Register />
-            </Suspense>
-          )
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          user ? (
-            <Suspense fallback={<LoadingScreen />}>
-              <Profile />
-            </Suspense>
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-      <Route
-        path="/projects/:id"
-        element={
-          <Suspense fallback={<LoadingScreen />}>
-            <ProjectDetails />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/projects/:id/edit"
-        element={
-          user?.isAdmin ? (
-            <Suspense fallback={<LoadingScreen />}>
-              <ProjectEdit />
-            </Suspense>
-          ) : (
-            <Navigate to="/" />
-          )
-        }
-      />
-      <Route
-        path="/projects/create"
-        element={
-          user?.isAdmin ? (
-            <Suspense fallback={<LoadingScreen />}>
-              <ProjectCreate />
-            </Suspense>
-          ) : (
-            <Navigate to="/" />
-          )
-        }
-      />
-      <Route
-        path="/tasks"
-        element={
-          user?.isAdmin ? (
-            <Suspense fallback={<LoadingScreen />}>
-              <Tasks />
-            </Suspense>
-          ) : (
-            <Navigate to="/" />
-          )
-        }
-      />
-      <Route
-        path="/departments/:id/projects"
-        element={
-          user?.isAdmin ? (
-            <Suspense fallback={<LoadingScreen />}>
-              <DepartmentTaskProjects />
-            </Suspense>
-          ) : (
-            <Navigate to="/" />
-          )
-        }
-      />
-      <Route
-        path="*"
-        element={
-          <Suspense fallback={<LoadingScreen />}>
-            <NotFound />
-          </Suspense>
-        }
-      />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 };
+
+export default AppRoutes;

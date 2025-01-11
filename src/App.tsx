@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { AppRoutes } from './AppRoutes';
+import AppRoutes from './AppRoutes';
 import './App.css';
 
 function App() {
