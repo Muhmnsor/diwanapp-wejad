@@ -1,17 +1,16 @@
 import { useState } from "react";
-import { Project } from "@/types/project";
-import { ProjectTask } from "@/types/task";
+import { TaskProject } from "@/types/task";
 import { Card } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, FolderKanban } from "lucide-react";
 import { TasksList } from "./TasksList";
 import { TaskDialog } from "./dialogs/TaskDialog";
 
-interface ProjectCardProps {
-  project: Project;
+interface TaskProjectCardProps {
+  project: TaskProject;
   tasks: ProjectTask[];
 }
 
-export const ProjectCard = ({ project, tasks }: ProjectCardProps) => {
+export const TaskProjectCard = ({ project, tasks }: TaskProjectCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (

@@ -1,11 +1,11 @@
 import { DepartmentProject } from "@/types/department";
-import { ProjectCard } from "./ProjectCard";
+import { TaskProjectCard } from "./ProjectCard";
 
-interface ProjectsListProps {
+interface TaskProjectsListProps {
   projects: DepartmentProject[];
 }
 
-export const ProjectsList = ({ projects }: ProjectsListProps) => {
+export const TaskProjectsList = ({ projects }: TaskProjectsListProps) => {
   if (!projects.length) {
     return (
       <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -17,7 +17,7 @@ export const ProjectsList = ({ projects }: ProjectsListProps) => {
   return (
     <div className="space-y-4">
       {projects.map((departmentProject) => (
-        <ProjectCard 
+        <TaskProjectCard 
           key={departmentProject.id} 
           project={departmentProject.project}
           tasks={departmentProject.project_tasks || []}

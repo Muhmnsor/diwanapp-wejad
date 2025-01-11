@@ -4,11 +4,11 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProjectsList } from "@/components/tasks/ProjectsList";
+import { TaskProjectsList } from "@/components/tasks/ProjectsList";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 
-const DepartmentProjects = () => {
+const DepartmentTaskProjects = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -75,7 +75,7 @@ const DepartmentProjects = () => {
                   <p className="text-gray-600 mt-2">{department.description}</p>
                 )}
               </div>
-              <ProjectsList projects={department.department_projects || []} />
+              <TaskProjectsList projects={department.department_projects || []} />
             </div>
           ) : (
             <div className="text-center p-8 bg-gray-50 rounded-lg">
@@ -90,4 +90,4 @@ const DepartmentProjects = () => {
   );
 };
 
-export default DepartmentProjects;
+export default DepartmentTaskProjects;
