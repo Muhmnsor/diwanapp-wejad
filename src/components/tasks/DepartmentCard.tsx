@@ -19,7 +19,7 @@ export const DepartmentCard = ({ department }: DepartmentCardProps) => {
       >
         <div className="flex items-center gap-3">
           <Building2 className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">{department.name}</h3>
+          <h3 className="text-lg font-semibold">إدارة: {department.name}</h3>
         </div>
         {isExpanded ? (
           <ChevronUp className="h-5 w-5 text-gray-500" />

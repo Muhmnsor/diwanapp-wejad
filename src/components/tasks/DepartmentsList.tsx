@@ -9,7 +9,7 @@ export const DepartmentsList = ({ departments }: DepartmentsListProps) => {
   if (!departments.length) {
     return (
       <div className="text-center p-8 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">لا توجد إدارات مضافة</p>
+        <p className="text-gray-500">لا توجد إدارات أو وحدات مضافة</p>
       </div>
     );
   }

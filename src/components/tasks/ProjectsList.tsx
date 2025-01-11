@@ -9,7 +9,7 @@ export const ProjectsList = ({ projects }: ProjectsListProps) => {
   if (!projects.length) {
     return (
       <div className="text-center p-4 bg-gray-50 rounded-lg">
-        <p className="text-gray-500">لا توجد مشاريع في هذه الإدارة</p>
+        <p className="text-gray-500">لا توجد مشاريع مهام في هذه الإدارة</p>
       </div>
     );
   }

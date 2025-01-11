@@ -21,7 +21,7 @@ export const ProjectCard = ({ project, tasks }: ProjectCardProps) => {
       >
         <div className="flex items-center gap-3">
           <FolderKanban className="h-5 w-5 text-primary" />
-          <h4 className="font-medium">{project.title}</h4>
+          <h4 className="font-medium">مشروع المهام: {project.title}</h4>
         </div>
         {isExpanded ? (
           <ChevronUp className="h-4 w-4 text-gray-500" />
