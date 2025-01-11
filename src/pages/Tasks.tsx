@@ -4,9 +4,10 @@ import { Footer } from "@/components/layout/Footer";
 import { DepartmentsList } from "@/components/tasks/DepartmentsList";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DepartmentDialog } from "@/components/tasks/dialogs/DepartmentDialog";
 
 const Tasks = () => {
-  const { data: departments, isLoading } = useQuery({
+  const { data: departments, isLoading, refetch } = useQuery({
     queryKey: ['departments'],
     queryFn: async () => {
       console.log('Fetching departments...');
@@ -45,6 +46,7 @@ const Tasks = () => {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">إدارة المهام</h1>
+            <DepartmentDialog onSuccess={refetch} />
           </div>
 
           {isLoading ? (
