@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { LayoutDashboard, Settings, Calendar, Plus } from "lucide-react";
 
 interface AdminActionsProps {
@@ -9,8 +9,10 @@ interface AdminActionsProps {
 
 export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProps) => {
   const navigate = useNavigate();
-
-  if (!isAuthenticated || !isEventsPage) {
+  const location = useLocation();
+  
+  // Don't show admin actions in tasks/departments section
+  if (!isAuthenticated || !isEventsPage || location.pathname.includes('/departments')) {
     return null;
   }
 
