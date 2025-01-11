@@ -14,6 +14,8 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Documents from "./pages/Documents";
 import Tasks from "./pages/Tasks";
+import TasksDashboard from "./pages/TasksDashboard";
+import TasksSettings from "./pages/TasksSettings";
 import Ideas from "./pages/Ideas";
 import Finance from "./pages/Finance";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -40,8 +42,8 @@ const AppRoutes = () => {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/documents" element={<Documents />} />
       <Route path="/tasks" element={<Tasks />} />
-      <Route path="/tasks/dashboard" element={<Tasks />} /> {/* Placeholder for tasks dashboard */}
-      <Route path="/tasks/settings" element={<Settings />} /> {/* Placeholder for tasks settings */}
+      <Route path="/tasks/dashboard" element={<TasksDashboard />} />
+      <Route path="/tasks/settings" element={<TasksSettings />} />
       <Route path="/departments/:id/projects" element={<DepartmentProjects />} />
       <Route path="/ideas" element={<Ideas />} />
       <Route 
