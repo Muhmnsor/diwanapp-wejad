@@ -18,6 +18,7 @@ import Ideas from "./pages/Ideas";
 import Finance from "./pages/Finance";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
+import DepartmentProjects from "./pages/DepartmentProjects";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -39,6 +40,7 @@ const AppRoutes = () => {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/documents" element={<Documents />} />
       <Route path="/tasks" element={<Tasks />} />
+      <Route path="/departments/:id/projects" element={<DepartmentProjects />} />
       <Route path="/ideas" element={<Ideas />} />
       <Route 
         path="/finance" 
