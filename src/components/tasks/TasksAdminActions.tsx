@@ -8,8 +8,8 @@ export const TasksAdminActions = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   
-  // Only show in tasks section
-  if (!isAuthenticated || !location.pathname.includes('/tasks')) {
+  // Only show in tasks/departments section
+  if (!isAuthenticated || (!location.pathname.includes('/tasks') && !location.pathname.includes('/departments'))) {
     return null;
   }
 

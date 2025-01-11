@@ -11,8 +11,8 @@ export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProp
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Don't show admin actions in tasks section
-  if (!isAuthenticated || !isEventsPage || location.pathname.includes('/tasks')) {
+  // Don't show admin actions in tasks/departments section
+  if (!isAuthenticated || !isEventsPage || location.pathname.includes('/tasks') || location.pathname.includes('/departments')) {
     return null;
   }
 
