@@ -1,7 +1,9 @@
 import { format } from "date-fns";
-import { Calendar, CheckCircle2, Circle, Clock } from "lucide-react";
+import { Calendar, CheckCircle2, Circle, Clock, Sync } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAsanaApi } from "@/hooks/useAsanaApi";
+import { toast } from "sonner";
 
 interface TaskCardProps {
   task: {
@@ -10,6 +12,7 @@ interface TaskCardProps {
     description: string | null;
     status: string;
     due_date: string | null;
+    asana_gid: string | null;
     projects: {
       title: string;
     } | null;
@@ -17,6 +20,8 @@ interface TaskCardProps {
 }
 
 export const TaskCard = ({ task }: TaskCardProps) => {
+  const { updateTask } = useAsanaApi();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -41,17 +46,41 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     }
   };
 
+  const handleStatusUpdate = async (newStatus: string) => {
+    if (task.asana_gid) {
+      try {
+        await updateTask(task.asana_gid, newStatus);
+        toast.success("تم تحديث حالة المهمة في Asana");
+      } catch (error) {
+        console.error('Error updating task in Asana:', error);
+        toast.error("حدث خطأ في تحديث حالة المهمة في Asana");
+      }
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg font-medium">{task.title}</CardTitle>
-        <Badge variant="secondary" className={getStatusColor(task.status)}>
-          <span className="flex items-center gap-1">
-            {getStatusIcon(task.status)}
-            {task.status === 'completed' ? 'مكتمل' : 
-             task.status === 'in_progress' ? 'قيد التنفيذ' : 'معلق'}
-          </span>
-        </Badge>
+        <div className="flex items-center gap-2">
+          {task.asana_gid && (
+            <Badge variant="outline" className="bg-purple-100 text-purple-800">
+              <Sync className="h-3 w-3 mr-1" />
+              Asana
+            </Badge>
+          )}
+          <Badge 
+            variant="secondary" 
+            className={getStatusColor(task.status)}
+            onClick={() => handleStatusUpdate(task.status === 'completed' ? 'pending' : 'completed')}
+          >
+            <span className="flex items-center gap-1">
+              {getStatusIcon(task.status)}
+              {task.status === 'completed' ? 'مكتمل' : 
+               task.status === 'in_progress' ? 'قيد التنفيذ' : 'معلق'}
+            </span>
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         {task.description && (
