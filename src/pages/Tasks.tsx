@@ -1,16 +1,59 @@
+import { useQuery } from "@tanstack/react-query";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { ListChecks } from "lucide-react";
+import { DepartmentsList } from "@/components/tasks/DepartmentsList";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Tasks = () => {
+  const { data: departments, isLoading } = useQuery({
+    queryKey: ['departments'],
+    queryFn: async () => {
+      console.log('Fetching departments...');
+      const { data, error } = await supabase
+        .from('departments')
+        .select(`
+          *,
+          department_projects (
+            *,
+            project: projects (*),
+            project_tasks (
+              *,
+              task_subtasks (*)
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching departments:', error);
+        throw error;
+      }
+
+      console.log('Fetched departments:', data);
+      return data || [];
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center h-full space-y-4">
-          <ListChecks className="w-16 h-16 text-primary" />
-          <h1 className="text-2xl font-bold text-primary text-center">قيد التطوير</h1>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">إدارة المهام</h1>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <DepartmentsList departments={departments || []} />
+          )}
         </div>
       </main>
 
