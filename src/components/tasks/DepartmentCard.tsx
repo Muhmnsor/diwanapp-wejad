@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Department } from "@/types/department";
 import { Card } from "@/components/ui/card";
-import { ChevronDown, ChevronUp, Building2, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Building2, Plus, RefreshCw } from "lucide-react";
 import { ProjectsList } from "./ProjectsList";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ export const DepartmentCard = ({ department }: DepartmentCardProps) => {
   const [projectTitle, setProjectTitle] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +72,30 @@ export const DepartmentCard = ({ department }: DepartmentCardProps) => {
     }
   };
 
+  const handleSync = async () => {
+    if (!department.asana_gid) {
+      toast.error("لم يتم ربط الإدارة مع Asana");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('asana-sync', {
+        body: { action: 'sync', departmentId: department.id }
+      });
+
+      if (error) throw error;
+
+      toast.success("تم مزامنة المهام بنجاح");
+      window.location.reload();
+    } catch (error) {
+      console.error('Error syncing with Asana:', error);
+      toast.error("حدث خطأ أثناء المزامنة مع Asana");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <Card className="p-6">
       <div className="space-y-4">
@@ -91,7 +116,7 @@ export const DepartmentCard = ({ department }: DepartmentCardProps) => {
 
         {isExpanded && (
           <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
               <Dialog open={isAddingProject} onOpenChange={setIsAddingProject}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
@@ -128,6 +153,17 @@ export const DepartmentCard = ({ department }: DepartmentCardProps) => {
                   </form>
                 </DialogContent>
               </Dialog>
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2"
+                onClick={handleSync}
+                disabled={isSyncing || !department.asana_gid}
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'جاري المزامنة...' : 'مزامنة مع Asana'}
+              </Button>
             </div>
             
             <div className="pr-6 border-r border-gray-200">
