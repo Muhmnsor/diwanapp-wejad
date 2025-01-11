@@ -40,6 +40,8 @@ const AppRoutes = () => {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/documents" element={<Documents />} />
       <Route path="/tasks" element={<Tasks />} />
+      <Route path="/tasks/dashboard" element={<Tasks />} /> {/* Placeholder for tasks dashboard */}
+      <Route path="/tasks/settings" element={<Settings />} /> {/* Placeholder for tasks settings */}
       <Route path="/departments/:id/projects" element={<DepartmentProjects />} />
       <Route path="/ideas" element={<Ideas />} />
       <Route 
