@@ -6,10 +6,16 @@ const corsHeaders = {
 };
 
 interface AsanaRequest {
-  action: 'getFolder' | 'createFolder' | 'getWorkspace' | 'getFolderProjects';
+  action: 'getFolder' | 'createFolder' | 'getWorkspace' | 'getFolderProjects' | 'createProject' | 'createTask' | 'updateTask';
   folderId?: string;
   workspaceId?: string;
   folderName?: string;
+  projectName?: string;
+  projectNotes?: string;
+  taskName?: string;
+  taskNotes?: string;
+  taskStatus?: string;
+  projectId?: string;
 }
 
 serve(async (req) => {
@@ -24,7 +30,9 @@ serve(async (req) => {
       throw new Error('ASANA_ACCESS_TOKEN is not configured');
     }
 
-    const { action, folderId, workspaceId, folderName } = await req.json() as AsanaRequest;
+    const { action, folderId, workspaceId, folderName, projectName, projectNotes, taskName, taskNotes, taskStatus, projectId } = 
+      await req.json() as AsanaRequest;
+    
     const baseUrl = 'https://app.asana.com/api/1.0';
     
     const headers = {
@@ -38,6 +46,7 @@ serve(async (req) => {
     console.log(`Processing Asana API request: ${action}`);
 
     switch (action) {
+      // الوظائف الحالية
       case 'getWorkspace':
         response = await fetch(`${baseUrl}/workspaces`, {
           headers
@@ -72,6 +81,57 @@ serve(async (req) => {
         if (!folderId) throw new Error('Folder ID is required');
         response = await fetch(`${baseUrl}/portfolios/${folderId}/items`, {
           headers
+        });
+        break;
+
+      // وظائف جديدة للتزامن
+      case 'createProject':
+        if (!folderId || !projectName) {
+          throw new Error('Folder ID and project name are required');
+        }
+        response = await fetch(`${baseUrl}/projects`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            data: {
+              name: projectName,
+              notes: projectNotes,
+              workspace: workspaceId,
+              team: folderId
+            }
+          })
+        });
+        break;
+
+      case 'createTask':
+        if (!projectId || !taskName) {
+          throw new Error('Project ID and task name are required');
+        }
+        response = await fetch(`${baseUrl}/tasks`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            data: {
+              name: taskName,
+              notes: taskNotes,
+              projects: [projectId]
+            }
+          })
+        });
+        break;
+
+      case 'updateTask':
+        if (!taskStatus) {
+          throw new Error('Task status is required');
+        }
+        response = await fetch(`${baseUrl}/tasks/${taskId}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            data: {
+              completed: taskStatus === 'completed'
+            }
+          })
         });
         break;
 
