@@ -28,29 +28,36 @@ export const DepartmentForm = ({ onSuccess, onClose }: DepartmentFormProps) => {
     setIsLoading(true);
 
     try {
-      console.log('Creating new department:', { name, description });
+      console.log('بدء إنشاء إدارة جديدة:', { name, description });
       
       // Get Asana workspace
+      console.log('جاري جلب مساحة العمل من Asana...');
       const workspaceResponse = await getWorkspace();
-      console.log('Asana workspace response:', workspaceResponse);
+      console.log('استجابة مساحة العمل من Asana:', workspaceResponse);
       
       if (!workspaceResponse?.data?.data?.[0]?.gid) {
+        console.error('خطأ: لم يتم العثور على مساحة عمل في Asana', workspaceResponse);
         throw new Error('لم يتم العثور على مساحة عمل صالحة في Asana');
       }
 
       const workspaceGid = workspaceResponse.data.data[0].gid;
+      console.log('تم العثور على معرف مساحة العمل:', workspaceGid);
       
       // Create portfolio in Asana
+      console.log('جاري إنشاء محفظة في Asana...', { workspaceGid, name });
       const folderResponse = await createFolder(workspaceGid, name);
-      console.log('Asana folder creation response:', folderResponse);
+      console.log('استجابة إنشاء المحفظة من Asana:', folderResponse);
       
       if (!folderResponse?.data?.data?.gid) {
+        console.error('خطأ: فشل إنشاء المحفظة في Asana', folderResponse);
         throw new Error('فشل إنشاء المحفظة في Asana');
       }
 
       const folderGid = folderResponse.data.data.gid;
+      console.log('تم إنشاء المحفظة بنجاح، المعرف:', folderGid);
 
       // Create department in database
+      console.log('جاري إنشاء الإدارة في قاعدة البيانات...');
       const { error: dbError } = await supabase
         .from('departments')
         .insert([
@@ -62,16 +69,17 @@ export const DepartmentForm = ({ onSuccess, onClose }: DepartmentFormProps) => {
         ]);
 
       if (dbError) {
-        console.error('Database error:', dbError);
+        console.error('خطأ في قاعدة البيانات:', dbError);
         throw new Error('فشل إنشاء الإدارة في قاعدة البيانات');
       }
 
+      console.log('تم إنشاء الإدارة بنجاح في كل من Asana وقاعدة البيانات');
       toast.success("تم إنشاء الإدارة بنجاح");
       onSuccess();
       onClose();
 
     } catch (error) {
-      console.error('Error creating department:', error);
+      console.error('خطأ في إنشاء الإدارة:', error);
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء الإدارة");
     } finally {
       setIsLoading(false);

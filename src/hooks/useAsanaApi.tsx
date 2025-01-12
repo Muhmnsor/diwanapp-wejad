@@ -9,7 +9,7 @@ interface AsanaApiOptions {
 
 export const useAsanaApi = () => {
   const callAsanaApi = async (options: AsanaApiOptions) => {
-    console.log('Calling Asana API with options:', options);
+    console.log('بدء طلب Asana API:', options);
     
     try {
       const { data, error } = await supabase.functions.invoke('asana-api', {
@@ -17,14 +17,19 @@ export const useAsanaApi = () => {
       });
 
       if (error) {
-        console.error('Error calling Asana API:', error);
+        console.error('خطأ في استدعاء Asana API:', error);
         throw error;
       }
 
-      console.log('Asana API response:', data);
+      if (!data) {
+        console.error('لم يتم استلام بيانات من Asana API');
+        throw new Error('فشل الاتصال مع Asana');
+      }
+
+      console.log('استجابة Asana API:', data);
       return data;
     } catch (error) {
-      console.error('Error in useAsanaApi:', error);
+      console.error('خطأ في useAsanaApi:', error);
       throw error;
     }
   };
