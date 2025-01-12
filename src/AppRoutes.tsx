@@ -49,7 +49,6 @@ const AppRoutes = () => {
         } 
       />
       <Route path="*" element={<Navigate to="/" />} />
-      <Route path="/projects/:projectId/tasks" element={<ProjectTasks />} />
     </Routes>
   );
 };
