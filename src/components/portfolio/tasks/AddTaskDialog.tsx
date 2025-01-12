@@ -33,7 +33,26 @@ export const AddTaskDialog = ({
     setIsSubmitting(true);
     
     try {
-      // First get the workspace UUID from Asana GID
+      // First create task in Asana
+      const { data: asanaResponse, error: asanaError } = await supabase.functions.invoke('create-asana-task', {
+        body: {
+          workspaceId,
+          title,
+          description,
+          dueDate,
+          priority
+        }
+      });
+
+      if (asanaError) {
+        console.error('Error creating task in Asana:', asanaError);
+        toast.error('حدث خطأ أثناء إنشاء المهمة في Asana');
+        throw asanaError;
+      }
+
+      console.log('Successfully created task in Asana:', asanaResponse);
+
+      // Then get the workspace UUID from Asana GID
       const { data: workspace, error: workspaceError } = await supabase
         .from('portfolio_workspaces')
         .select('id')
@@ -58,9 +77,11 @@ export const AddTaskDialog = ({
         description,
         due_date: dueDate,
         priority,
+        asana_gid: asanaResponse.gid
       });
 
-      const { error } = await supabase
+      // Create task in our database
+      const { error: createError } = await supabase
         .from('portfolio_tasks')
         .insert([
           {
@@ -69,14 +90,15 @@ export const AddTaskDialog = ({
             description,
             due_date: dueDate,
             priority,
-            status: 'pending'
+            status: 'pending',
+            asana_gid: asanaResponse.gid
           }
         ]);
 
-      if (error) {
-        console.error('Error creating task:', error);
-        toast.error('حدث خطأ أثناء إنشاء المهمة');
-        throw error;
+      if (createError) {
+        console.error('Error creating task:', createError);
+        toast.error('حدث خطأ أثناء إنشاء المهمة في قاعدة البيانات');
+        throw createError;
       }
 
       toast.success('تم إنشاء المهمة بنجاح');
