@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import AppRoutes from './AppRoutes';
 import './App.css';
@@ -21,7 +22,11 @@ function App() {
     }, 0);
   }, [initialize]);
 
-  return <AppRoutes />;
+  return (
+    <Router>
+      <AppRoutes />
+    </Router>
+  );
 }
 
 export default App;
