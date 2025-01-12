@@ -12,13 +12,18 @@ import { PortfolioWorkspaceDescription } from '@/components/portfolio/workspace/
 import { PortfolioWorkspaceGrid } from '@/components/portfolio/workspace/PortfolioWorkspaceGrid';
 
 const PortfolioDetails = () => {
-  const { portfolioId } = useParams();
+  const { portfolioId } = useParams<{ portfolioId: string }>();
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const { data: portfolio, isLoading, error, refetch } = useQuery({
     queryKey: ['portfolio-workspace', portfolioId],
     queryFn: async () => {
+      if (!portfolioId) {
+        console.error('No portfolio ID provided');
+        throw new Error('معرف المحفظة غير موجود');
+      }
+
       console.log('Fetching portfolio workspace details for ID:', portfolioId);
       
       const { data: portfolioData, error: fetchError } = await supabase
@@ -39,6 +44,7 @@ const PortfolioDetails = () => {
       console.log('Successfully fetched portfolio workspace data:', portfolioData);
       return portfolioData;
     },
+    enabled: !!portfolioId,
     retry: 1,
     meta: {
       errorMessage: 'حدث خطأ أثناء تحميل بيانات المحفظة'
