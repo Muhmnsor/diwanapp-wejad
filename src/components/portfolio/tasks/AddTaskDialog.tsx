@@ -33,8 +33,27 @@ export const AddTaskDialog = ({
     setIsSubmitting(true);
     
     try {
+      // First get the workspace UUID from Asana GID
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('portfolio_workspaces')
+        .select('id')
+        .eq('asana_gid', workspaceId)
+        .single();
+
+      if (workspaceError) {
+        console.error('Error fetching workspace:', workspaceError);
+        toast.error('حدث خطأ أثناء إنشاء المهمة');
+        throw workspaceError;
+      }
+
+      if (!workspace) {
+        console.error('Workspace not found');
+        toast.error('لم يتم العثور على مساحة العمل');
+        return;
+      }
+
       console.log('Creating new portfolio task:', {
-        workspace_id: workspaceId,
+        workspace_id: workspace.id,
         title,
         description,
         due_date: dueDate,
@@ -45,7 +64,7 @@ export const AddTaskDialog = ({
         .from('portfolio_tasks')
         .insert([
           {
-            workspace_id: workspaceId,
+            workspace_id: workspace.id,
             title,
             description,
             due_date: dueDate,

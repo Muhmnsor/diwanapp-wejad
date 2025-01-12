@@ -14,6 +14,23 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
     queryFn: async () => {
       console.log('Fetching tasks for workspace:', workspaceId);
       
+      // First get the workspace UUID from Asana GID
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('portfolio_workspaces')
+        .select('id')
+        .eq('asana_gid', workspaceId)
+        .single();
+
+      if (workspaceError) {
+        console.error('Error fetching workspace:', workspaceError);
+        throw workspaceError;
+      }
+
+      if (!workspace) {
+        console.error('Workspace not found');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('portfolio_tasks')
         .select(`
@@ -22,7 +39,7 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
             email
           )
         `)
-        .eq('workspace_id', workspaceId)
+        .eq('workspace_id', workspace.id)
         .order('created_at', { ascending: false });
 
       if (error) {
