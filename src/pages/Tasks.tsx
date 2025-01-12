@@ -28,7 +28,7 @@ interface Project {
 interface PortfolioProject {
   portfolio_id: string;
   project_id: string;
-  projects: Project;
+  projects: Project;  // Changed from Project to single Project since it's a direct relation
 }
 
 const Tasks = () => {
@@ -65,7 +65,7 @@ const Tasks = () => {
         .select(`
           portfolio_id,
           project_id,
-          projects (
+          projects:projects (
             id,
             title,
             description
@@ -79,7 +79,7 @@ const Tasks = () => {
       }
 
       console.log('Fetched portfolio projects:', data);
-      return data as PortfolioProject[];
+      return data as unknown as PortfolioProject[];  // Using unknown as intermediate step for type safety
     }
   });
 
