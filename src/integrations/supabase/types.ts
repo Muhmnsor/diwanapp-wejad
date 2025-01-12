@@ -1232,6 +1232,7 @@ export type Database = {
           is_visible: boolean | null
           max_attendees: number
           price: number | null
+          project_type: string
           registration_end_date: string | null
           registration_start_date: string | null
           required_activities_count: number | null
@@ -1254,6 +1255,7 @@ export type Database = {
           is_visible?: boolean | null
           max_attendees?: number
           price?: number | null
+          project_type?: string
           registration_end_date?: string | null
           registration_start_date?: string | null
           required_activities_count?: number | null
@@ -1276,6 +1278,7 @@ export type Database = {
           is_visible?: boolean | null
           max_attendees?: number
           price?: number | null
+          project_type?: string
           registration_end_date?: string | null
           registration_start_date?: string | null
           required_activities_count?: number | null
