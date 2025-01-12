@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface AsanaTask {
+  gid: string;
+  name: string;
+  notes: string;
+  completed: boolean;
+  due_on: string | null;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,6 +21,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting Asana sync process...')
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -23,23 +33,55 @@ serve(async (req) => {
       throw new Error('Asana access token not configured')
     }
 
-    // Fetch tasks from Asana
-    const asanaResponse = await fetch('https://app.asana.com/api/1.0/tasks?workspace=1205738783059671&assignee=me', {
+    // First get user's workspaces
+    console.log('Fetching Asana workspaces...')
+    const workspacesResponse = await fetch('https://app.asana.com/api/1.0/workspaces', {
       headers: {
         'Authorization': `Bearer ${asanaToken}`,
         'Accept': 'application/json'
       }
     })
 
-    if (!asanaResponse.ok) {
-      throw new Error(`Asana API error: ${asanaResponse.statusText}`)
+    if (!workspacesResponse.ok) {
+      const error = await workspacesResponse.text()
+      console.error('Asana workspaces API error:', error)
+      throw new Error(`Asana workspaces API error: ${workspacesResponse.statusText}`)
     }
 
-    const asanaData = await asanaResponse.json()
+    const workspaces = await workspacesResponse.json()
+    console.log('Available workspaces:', workspaces)
+
+    if (!workspaces.data || workspaces.data.length === 0) {
+      throw new Error('No workspaces found in Asana account')
+    }
+
+    // Use the first workspace
+    const workspaceId = workspaces.data[0].gid
+    console.log(`Using workspace ID: ${workspaceId}`)
+
+    // Fetch tasks from Asana
+    console.log('Fetching tasks from Asana...')
+    const tasksResponse = await fetch(`https://app.asana.com/api/1.0/tasks?workspace=${workspaceId}&assignee=me&opt_fields=gid,name,notes,completed,due_on`, {
+      headers: {
+        'Authorization': `Bearer ${asanaToken}`,
+        'Accept': 'application/json'
+      }
+    })
+
+    if (!tasksResponse.ok) {
+      const error = await tasksResponse.text()
+      console.error('Asana tasks API error:', error)
+      throw new Error(`Asana tasks API error: ${tasksResponse.statusText}`)
+    }
+
+    const asanaData = await tasksResponse.json()
     console.log('Fetched tasks from Asana:', asanaData)
 
     // Process and store tasks in Supabase
-    for (const task of asanaData.data) {
+    console.log('Processing tasks...')
+    const tasks = asanaData.data as AsanaTask[]
+    
+    for (const task of tasks) {
       const { data, error } = await supabaseClient
         .from('tasks')
         .upsert({
@@ -58,18 +100,34 @@ serve(async (req) => {
       }
     }
 
+    console.log('Sync completed successfully')
     return new Response(
-      JSON.stringify({ success: true, message: 'Tasks synced successfully' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        success: true, 
+        message: 'Tasks synced successfully',
+        count: tasks.length 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error in sync process:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'Unknown error occurred',
+        details: error.toString()
+      }),
       { 
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }
       }
     )
   }
