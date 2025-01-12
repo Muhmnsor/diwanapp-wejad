@@ -36,6 +36,11 @@ export const DepartmentsList = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) {
+      toast.error("يرجى إدخال اسم الإدارة");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -46,7 +51,7 @@ export const DepartmentsList = () => {
       console.log('Asana workspace response:', workspaceResponse);
       
       if (!workspaceResponse?.data?.data?.[0]?.gid) {
-        throw new Error('No valid workspace found in Asana');
+        throw new Error('لم يتم العثور على مساحة عمل صالحة في Asana');
       }
 
       const workspace = workspaceResponse.data.data[0];
@@ -56,7 +61,7 @@ export const DepartmentsList = () => {
       console.log('Asana folder creation response:', folderResponse);
       
       if (!folderResponse?.data?.data?.gid) {
-        throw new Error('Failed to create portfolio in Asana');
+        throw new Error('فشل إنشاء المحفظة في Asana');
       }
 
       // Create department in database
@@ -72,7 +77,7 @@ export const DepartmentsList = () => {
 
       if (dbError) {
         console.error('Database error:', dbError);
-        throw new Error('Failed to create department in database');
+        throw new Error('فشل إنشاء الإدارة في قاعدة البيانات');
       }
 
       toast.success("تم إنشاء الإدارة بنجاح");
@@ -121,7 +126,7 @@ export const DepartmentsList = () => {
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || !name.trim()}>
                 {isLoading ? "جاري الإنشاء..." : "إنشاء"}
               </Button>
             </form>
