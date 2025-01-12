@@ -26,6 +26,12 @@ serve(async (req) => {
 
     if (portfolioError) throw portfolioError
 
+    console.log('Creating project in Asana:', {
+      portfolioId,
+      workspaceGid: portfolio.asana_gid,
+      project
+    })
+
     // Create project in Asana
     const response = await fetch('https://app.asana.com/api/1.0/projects', {
       method: 'POST',
@@ -48,11 +54,19 @@ serve(async (req) => {
 
     const asanaProject = await response.json()
 
+    if (!response.ok) {
+      console.error('Asana API error:', asanaProject)
+      throw new Error(`Asana API error: ${response.statusText}`)
+    }
+
+    console.log('Project created in Asana:', asanaProject)
+
     return new Response(
       JSON.stringify(asanaProject.data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
+    console.error('Error creating project:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
