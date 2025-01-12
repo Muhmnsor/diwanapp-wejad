@@ -13,34 +13,53 @@ serve(async (req) => {
 
   try {
     const { portfolioId } = await req.json()
-    console.log('Processing portfolio request for ID:', portfolioId)
+    console.log('Step 1: Received request for portfolio ID:', portfolioId)
 
     if (!ASANA_ACCESS_TOKEN) {
+      console.error('Step 1.1: Missing ASANA_ACCESS_TOKEN')
       throw new Error('Missing ASANA_ACCESS_TOKEN')
     }
 
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Step 1.2: Missing Supabase configuration')
+      throw new Error('Missing Supabase configuration')
+    }
+
     // Initialize Supabase client
+    console.log('Step 2: Initializing Supabase client')
     const supabase = createClient(
-      SUPABASE_URL!,
-      SUPABASE_SERVICE_ROLE_KEY!
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY
     )
 
     // First get the Asana GID from our database
+    console.log('Step 3: Querying database for portfolio with ID:', portfolioId)
     const { data: portfolioData, error: dbError } = await supabase
       .from('portfolios')
-      .select('asana_gid')
+      .select('asana_gid, name')
       .eq('id', portfolioId)
       .single()
 
-    if (dbError || !portfolioData?.asana_gid) {
-      console.error('Database error or no Asana GID found:', dbError)
-      throw new Error('Portfolio not found or no Asana ID available')
+    if (dbError) {
+      console.error('Step 3.1: Database error:', dbError)
+      throw new Error('خطأ في قاعدة البيانات: ' + dbError.message)
+    }
+
+    if (!portfolioData) {
+      console.error('Step 3.2: No portfolio found in database')
+      throw new Error('لم يتم العثور على المحفظة في قاعدة البيانات')
+    }
+
+    if (!portfolioData.asana_gid) {
+      console.error('Step 3.3: Portfolio found but no Asana GID:', portfolioData)
+      throw new Error('المحفظة موجودة ولكن لا يوجد معرف Asana مرتبط بها')
     }
 
     const asanaGid = portfolioData.asana_gid
-    console.log('Found Asana GID:', asanaGid)
+    console.log('Step 4: Found Asana GID:', asanaGid, 'for portfolio:', portfolioData.name)
 
     // Fetch portfolio details from Asana
+    console.log('Step 5: Fetching portfolio details from Asana')
     const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${asanaGid}`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -50,14 +69,15 @@ serve(async (req) => {
 
     if (!portfolioResponse.ok) {
       const error = await portfolioResponse.json()
-      console.error('Asana API error:', error)
-      throw new Error(`Asana API error: ${portfolioResponse.statusText}`)
+      console.error('Step 5.1: Asana API error:', error)
+      throw new Error(`خطأ في واجهة برمجة تطبيقات Asana: ${portfolioResponse.statusText}`)
     }
 
     const asanaPortfolioData = await portfolioResponse.json()
-    console.log('Portfolio data from Asana:', asanaPortfolioData)
+    console.log('Step 6: Successfully fetched portfolio data from Asana')
 
     // Fetch portfolio items (projects)
+    console.log('Step 7: Fetching portfolio items from Asana')
     const itemsResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${asanaGid}/items`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -67,12 +87,12 @@ serve(async (req) => {
 
     if (!itemsResponse.ok) {
       const error = await itemsResponse.json()
-      console.error('Asana API error when fetching items:', error)
-      throw new Error(`Asana API error: ${itemsResponse.statusText}`)
+      console.error('Step 7.1: Asana API error when fetching items:', error)
+      throw new Error(`خطأ في جلب عناصر المحفظة: ${itemsResponse.statusText}`)
     }
 
     const itemsData = await itemsResponse.json()
-    console.log('Portfolio items from Asana:', itemsData)
+    console.log('Step 8: Successfully fetched portfolio items')
 
     // Combine portfolio data with its items
     const portfolio = {
@@ -80,6 +100,7 @@ serve(async (req) => {
       items: itemsData.data
     }
 
+    console.log('Step 9: Returning complete portfolio data')
     return new Response(
       JSON.stringify(portfolio),
       { 
@@ -91,7 +112,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error:', error.message)
+    console.error('Error in get-portfolio function:', error.message)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
