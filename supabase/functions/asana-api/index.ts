@@ -79,6 +79,12 @@ serve(async (req) => {
         throw new Error('Invalid action');
     }
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error(`Asana API error for ${action}:`, errorData);
+      throw new Error(`Asana API error: ${errorData?.errors?.[0]?.message || 'Unknown error'}`);
+    }
+
     const data = await response.json();
     console.log(`Asana API response for ${action}:`, data);
 
