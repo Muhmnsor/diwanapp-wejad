@@ -17,9 +17,13 @@ serve(async (req) => {
 
     console.log('Creating portfolio in Asana:', { name, description })
 
-    // Validate required environment variables
-    if (!ASANA_ACCESS_TOKEN || !ASANA_WORKSPACE_ID) {
-      throw new Error('Missing required environment variables')
+    // Validate required environment variables with specific messages
+    const missingVars = []
+    if (!ASANA_ACCESS_TOKEN) missingVars.push('ASANA_ACCESS_TOKEN')
+    if (!ASANA_WORKSPACE_ID) missingVars.push('ASANA_WORKSPACE_ID')
+    
+    if (missingVars.length > 0) {
+      throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`)
     }
 
     // Create portfolio in Asana
