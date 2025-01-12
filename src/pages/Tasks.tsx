@@ -20,7 +20,7 @@ interface Task {
 const Tasks = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: tasks, isLoading: isLoadingTasks } = useQuery({
+  const { data: tasks, isLoading: isLoadingTasks, refetch: refetchTasks } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
       console.log('Fetching tasks...');
@@ -51,6 +51,7 @@ const Tasks = () => {
 
       if (error) throw error;
 
+      await refetchTasks();
       toast.success('تم مزامنة المهام بنجاح');
       console.log('Asana sync completed:', data);
     } catch (error) {
