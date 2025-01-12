@@ -1,22 +1,31 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
-console.log("Hello from Create Asana Task!")
+console.log("Create Asana Task function started")
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { workspaceId, title, description, dueDate, priority } = await req.json()
+    console.log('Received request with data:', { workspaceId, title, description, dueDate, priority })
 
-    // Get Asana access token from environment variable
+    // Validate required fields
+    if (!workspaceId || !title) {
+      throw new Error('Workspace ID and title are required')
+    }
+
+    // Get Asana access token
     const asanaAccessToken = Deno.env.get('ASANA_ACCESS_TOKEN')
     if (!asanaAccessToken) {
+      console.error('Asana access token not found')
       throw new Error('Asana access token not configured')
     }
+
+    console.log('Creating task in Asana workspace:', workspaceId)
 
     // Create task in Asana
     const asanaResponse = await fetch('https://app.asana.com/api/1.0/tasks', {
@@ -30,25 +39,26 @@ serve(async (req) => {
         data: {
           workspace: workspaceId,
           name: title,
-          notes: description,
-          due_on: dueDate,
-          custom_fields: {
+          notes: description || '',
+          due_on: dueDate || null,
+          custom_fields: priority ? {
             priority: priority
-          }
+          } : undefined
         }
       })
     })
 
+    const responseData = await asanaResponse.json()
+    
     if (!asanaResponse.ok) {
-      const errorData = await asanaResponse.json()
-      console.error('Asana API error:', errorData)
-      throw new Error('Failed to create task in Asana')
+      console.error('Asana API error:', responseData)
+      throw new Error(`Failed to create task in Asana: ${responseData.errors?.[0]?.message || 'Unknown error'}`)
     }
 
-    const asanaData = await asanaResponse.json()
+    console.log('Successfully created task in Asana:', responseData)
     
     return new Response(
-      JSON.stringify(asanaData.data),
+      JSON.stringify(responseData.data),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -56,9 +66,12 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error:', error.message)
+    console.error('Error in create-asana-task function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

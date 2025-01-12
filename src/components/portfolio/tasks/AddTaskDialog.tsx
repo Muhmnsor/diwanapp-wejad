@@ -31,8 +31,17 @@ export const AddTaskDialog = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log('Starting task creation process...');
     
     try {
+      console.log('Creating task in Asana with data:', {
+        workspaceId,
+        title,
+        description,
+        dueDate,
+        priority
+      });
+
       // First create task in Asana
       const { data: asanaResponse, error: asanaError } = await supabase.functions.invoke('create-asana-task', {
         body: {
