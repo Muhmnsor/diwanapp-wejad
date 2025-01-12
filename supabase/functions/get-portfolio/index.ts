@@ -40,6 +40,8 @@ serve(async (req) => {
       .eq('id', portfolioId)
       .single()
 
+    console.log('Database response:', { portfolioData, dbError })
+
     if (dbError) {
       console.error('Step 3.1: Database error:', dbError)
       throw new Error('خطأ في قاعدة البيانات: ' + dbError.message)
@@ -74,7 +76,7 @@ serve(async (req) => {
     }
 
     const asanaPortfolioData = await portfolioResponse.json()
-    console.log('Step 6: Successfully fetched portfolio data from Asana')
+    console.log('Step 6: Successfully fetched portfolio data from Asana:', asanaPortfolioData)
 
     // Fetch portfolio items (projects)
     console.log('Step 7: Fetching portfolio items from Asana')
@@ -92,7 +94,7 @@ serve(async (req) => {
     }
 
     const itemsData = await itemsResponse.json()
-    console.log('Step 8: Successfully fetched portfolio items')
+    console.log('Step 8: Successfully fetched portfolio items:', itemsData)
 
     // Combine portfolio data with its items
     const portfolio = {
@@ -100,7 +102,7 @@ serve(async (req) => {
       items: itemsData.data
     }
 
-    console.log('Step 9: Returning complete portfolio data')
+    console.log('Step 9: Returning complete portfolio data:', portfolio)
     return new Response(
       JSON.stringify(portfolio),
       { 
