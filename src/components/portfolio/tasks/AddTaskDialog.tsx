@@ -5,13 +5,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AddTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
-  onSuccess: () => Promise<void>;
+  onSuccess: () => void;
 }
 
 export const AddTaskDialog = ({ 
@@ -31,6 +33,14 @@ export const AddTaskDialog = ({
     setIsSubmitting(true);
     
     try {
+      console.log('Creating new portfolio task:', {
+        workspace_id: workspaceId,
+        title,
+        description,
+        due_date: dueDate,
+        priority,
+      });
+
       const { error } = await supabase
         .from('portfolio_tasks')
         .insert([
@@ -44,9 +54,14 @@ export const AddTaskDialog = ({
           }
         ]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating task:', error);
+        toast.error('حدث خطأ أثناء إنشاء المهمة');
+        throw error;
+      }
 
-      await onSuccess();
+      toast.success('تم إنشاء المهمة بنجاح');
+      onSuccess();
       onOpenChange(false);
       setTitle("");
       setDescription("");
@@ -55,6 +70,7 @@ export const AddTaskDialog = ({
       
     } catch (error) {
       console.error('Error creating task:', error);
+      toast.error('حدث خطأ أثناء إنشاء المهمة');
     } finally {
       setIsSubmitting(false);
     }

@@ -4,11 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { ListChecks, Calendar, User, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { AddTaskDialog } from './tasks/AddTaskDialog';
 
 export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
-  const { data: tasks, isLoading } = useQuery({
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
+
+  const { data: tasks, isLoading, refetch } = useQuery({
     queryKey: ['portfolio-tasks', workspaceId],
     queryFn: async () => {
+      console.log('Fetching tasks for workspace:', workspaceId);
+      
       const { data, error } = await supabase
         .from('portfolio_tasks')
         .select(`
@@ -25,9 +30,14 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
         throw error;
       }
 
+      console.log('Fetched tasks:', data);
       return data;
     }
   });
+
+  const handleTaskAdded = async () => {
+    await refetch();
+  };
 
   if (isLoading) {
     return <div className="p-4">جاري التحميل...</div>;
@@ -37,7 +47,11 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-semibold">المهام</h3>
-        <Button variant="outline" size="sm">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setIsAddTaskDialogOpen(true)}
+        >
           <Plus className="h-4 w-4 ml-2" />
           إضافة مهمة
         </Button>
@@ -69,6 +83,13 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
           </Card>
         ))}
       </div>
+
+      <AddTaskDialog
+        open={isAddTaskDialogOpen}
+        onOpenChange={setIsAddTaskDialogOpen}
+        workspaceId={workspaceId}
+        onSuccess={handleTaskAdded}
+      />
     </div>
   );
 };
