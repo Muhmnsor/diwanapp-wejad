@@ -14,7 +14,7 @@ const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
 
-  const { data: workspace, isLoading: isWorkspaceLoading, error: workspaceError } = useQuery({
+  const { data: workspace, isLoading, error } = useQuery({
     queryKey: ['portfolio-workspace', workspaceId],
     queryFn: async () => {
       console.log('Fetching workspace details for ID:', workspaceId);
@@ -38,13 +38,7 @@ const PortfolioWorkspaceDetails = () => {
     }
   });
 
-  const getTasksProgress = () => {
-    if (!workspace?.tasks?.length) return 0;
-    const completedTasks = workspace.tasks.filter(task => task.status === 'completed').length;
-    return Math.round((completedTasks / workspace.tasks.length) * 100);
-  };
-
-  if (isWorkspaceLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
@@ -61,7 +55,7 @@ const PortfolioWorkspaceDetails = () => {
     );
   }
 
-  if (workspaceError || !workspace) {
+  if (error || !workspace) {
     toast.error('حدث خطأ أثناء تحميل بيانات مساحة العمل');
     return (
       <div className="min-h-screen flex flex-col">
@@ -72,9 +66,6 @@ const PortfolioWorkspaceDetails = () => {
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
                 لم يتم العثور على مساحة العمل
               </h2>
-              <p className="text-gray-600 mb-4">
-                عذراً، لا يمكن العثور على مساحة العمل المطلوبة
-              </p>
               <Button 
                 variant="outline" 
                 onClick={() => navigate(-1)}
@@ -115,9 +106,9 @@ const PortfolioWorkspaceDetails = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>تقدم المهام</span>
-                  <span>{getTasksProgress()}%</span>
+                  <span>{workspace.tasks ? Math.round((workspace.tasks.filter(task => task.status === 'completed').length / workspace.tasks.length) * 100) : 0}%</span>
                 </div>
-                <Progress value={getTasksProgress()} className="h-2" />
+                <Progress value={workspace.tasks ? Math.round((workspace.tasks.filter(task => task.status === 'completed').length / workspace.tasks.length) * 100) : 0} className="h-2" />
               </div>
             </Card>
 
@@ -146,7 +137,7 @@ const PortfolioWorkspaceDetails = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">لا توجد مهام في مساحة العمل هذه</p>
+                <p className="text-gray-500 text-center py-8">لا توجد مهام في مساحة العمل هذه</p>
               )}
             </div>
           </div>
