@@ -364,6 +364,78 @@ export type Database = {
           },
         ]
       }
+      department_projects: {
+        Row: {
+          asana_gid: string | null
+          created_at: string
+          department_id: string | null
+          id: string
+          project_id: string | null
+        }
+        Insert: {
+          asana_gid?: string | null
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          project_id?: string | null
+        }
+        Update: {
+          asana_gid?: string | null
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_projects_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          asana_folder_gid: string | null
+          asana_gid: string | null
+          asana_sync_enabled: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          asana_folder_gid?: string | null
+          asana_gid?: string | null
+          asana_sync_enabled?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          asana_folder_gid?: string | null
+          asana_gid?: string | null
+          asana_sync_enabled?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       event_feedback: {
         Row: {
           content_rating: number | null
@@ -1016,6 +1088,53 @@ export type Database = {
           },
         ]
       }
+      project_tasks: {
+        Row: {
+          asana_gid: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          project_id: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           attendance_requirement_type: string | null
@@ -1171,6 +1290,167 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      sync_status: {
+        Row: {
+          created_at: string
+          department_id: string | null
+          id: string
+          last_sync: string | null
+          sync_attachments: boolean | null
+          sync_comments: boolean | null
+          sync_enabled: boolean | null
+          sync_interval: number | null
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          last_sync?: string | null
+          sync_attachments?: boolean | null
+          sync_comments?: boolean | null
+          sync_enabled?: boolean | null
+          sync_interval?: number | null
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          last_sync?: string | null
+          sync_attachments?: boolean | null
+          sync_comments?: boolean | null
+          sync_enabled?: boolean | null
+          sync_interval?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_status_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_attachments: {
+        Row: {
+          asana_gid: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_url: string
+          id: string
+          task_id: string | null
+        }
+        Insert: {
+          asana_gid?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_url: string
+          id?: string
+          task_id?: string | null
+        }
+        Update: {
+          asana_gid?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comments: {
+        Row: {
+          asana_gid: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          task_id: string | null
+        }
+        Insert: {
+          asana_gid?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          task_id?: string | null
+        }
+        Update: {
+          asana_gid?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_subtasks: {
+        Row: {
+          asana_gid: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          parent_task_id: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          parent_task_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          parent_task_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_subtasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
