@@ -9,12 +9,15 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { Footer } from '@/components/layout/Footer';
+import { CreatePortfolioProjectDialog } from '@/components/projects/portfolio/CreatePortfolioProjectDialog';
+import { useState } from 'react';
 
 const PortfolioDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
-  const { data: portfolio, isLoading, error } = useQuery({
+  const { data: portfolio, isLoading, error, refetch } = useQuery({
     queryKey: ['portfolio', id],
     queryFn: async () => {
       console.log('Fetching portfolio details for ID:', id);
@@ -78,7 +81,7 @@ const PortfolioDetails = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">{portfolio.name}</h1>
           <Button 
-            onClick={() => navigate(`/portfolios/${id}/projects/new`)}
+            onClick={() => setIsCreateDialogOpen(true)}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -123,6 +126,13 @@ const PortfolioDetails = () => {
         </div>
       </main>
       <Footer />
+
+      <CreatePortfolioProjectDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        portfolioId={id!}
+        onSuccess={refetch}
+      />
     </div>
   );
 };
