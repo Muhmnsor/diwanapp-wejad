@@ -63,17 +63,31 @@ serve(async (req) => {
     const teamGid = teamsData.data[0].gid // Use the first team
     console.log('Using team GID:', teamGid)
 
-    // Map status to color
+    // Map status to Asana supported colors
     const getStatusColor = (status: string) => {
       switch (status) {
         case 'not_started':
-          return 'light-gray';
+          return 'BLUE';
         case 'in_progress':
-          return 'blue';
+          return 'YELLOW';
         case 'completed':
-          return 'green';
+          return 'GREEN';
         default:
-          return 'light-gray';
+          return 'BLUE';
+      }
+    };
+
+    // Map status to text
+    const getStatusText = (status: string) => {
+      switch (status) {
+        case 'not_started':
+          return 'On Track';
+        case 'in_progress':
+          return 'At Risk';
+        case 'completed':
+          return 'Complete';
+        default:
+          return 'On Track';
       }
     };
 
@@ -94,7 +108,7 @@ serve(async (req) => {
           start_on: startDate,
           due_on: dueDate,
           current_status: {
-            text: status === 'not_started' ? 'On Track' : status,
+            text: getStatusText(status),
             color: getStatusColor(status)
           },
           public: isPublic === 'public'
