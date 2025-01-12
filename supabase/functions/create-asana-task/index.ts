@@ -44,14 +44,12 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         data: {
-          workspace: asanaWorkspaceId, // Use the workspace ID from environment
-          projects: [workspaceId], // Use the provided ID as project ID instead
+          workspace: asanaWorkspaceId,
+          projects: [workspaceId],
           name: title,
           notes: description || '',
-          due_on: dueDate || null,
-          custom_fields: priority ? {
-            priority: priority
-          } : undefined
+          due_on: dueDate || null
+          // Removed the custom field priority since it's not configured in Asana
         }
       })
     })
