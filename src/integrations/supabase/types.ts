@@ -1526,34 +1526,43 @@ export type Database = {
       }
       tasks: {
         Row: {
+          asana_gid: string | null
           assigned_to: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
           id: string
+          project_id: string | null
           status: string | null
           title: string
           updated_at: string | null
+          workspace_id: string | null
         }
         Insert: {
+          asana_gid?: string | null
           assigned_to?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          project_id?: string | null
           status?: string | null
           title: string
           updated_at?: string | null
+          workspace_id?: string | null
         }
         Update: {
+          asana_gid?: string | null
           assigned_to?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          project_id?: string | null
           status?: string | null
           title?: string
           updated_at?: string | null
+          workspace_id?: string | null
         }
         Relationships: []
       }
