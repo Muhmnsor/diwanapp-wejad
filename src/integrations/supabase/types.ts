@@ -894,9 +894,6 @@ export type Database = {
       portfolio_projects: {
         Row: {
           asana_gid: string | null
-          asana_priority: string | null
-          asana_status: string | null
-          asana_workspace_id: string | null
           created_at: string
           id: string
           portfolio_id: string | null
@@ -904,9 +901,6 @@ export type Database = {
         }
         Insert: {
           asana_gid?: string | null
-          asana_priority?: string | null
-          asana_status?: string | null
-          asana_workspace_id?: string | null
           created_at?: string
           id?: string
           portfolio_id?: string | null
@@ -914,9 +908,6 @@ export type Database = {
         }
         Update: {
           asana_gid?: string | null
-          asana_priority?: string | null
-          asana_status?: string | null
-          asana_workspace_id?: string | null
           created_at?: string
           id?: string
           portfolio_id?: string | null
