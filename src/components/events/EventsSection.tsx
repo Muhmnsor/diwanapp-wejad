@@ -16,11 +16,6 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
 
   // فلترة الفعاليات بناءً على الصلاحيات والنوع
   const visibleEvents = events.filter(event => {
-    // تجاهل الأنشطة التي تنتمي إلى مشاريع إدارة المهام
-    if (event.project_type === 'task_project') {
-      return false;
-    }
-    
     // تجاهل الأنشطة التي تنتمي إلى مشاريع
     if (event.is_project_activity) {
       return false;
