@@ -35,12 +35,23 @@ serve(async (req) => {
     };
 
     let response;
-    console.log(`Processing Asana API request: ${action}`, { workspaceId, folderName, folderId });
+    console.log(`📡 Processing Asana API request: ${action}`, { workspaceId, folderName, folderId });
 
     switch (action) {
-      case 'getWorkspace':
-        response = await fetch(`${baseUrl}/workspaces`, {
-          headers
+      case 'createFolder':
+        if (!folderName) throw new Error('Folder name is required');
+        
+        console.log('🔨 Creating portfolio in Asana:', { workspaceId: '1209130949457034', folderName });
+        response = await fetch(`${baseUrl}/portfolios`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            data: {
+              name: folderName,
+              workspace: '1209130949457034', // Using the fixed workspace ID
+              resource_type: 'portfolio'
+            }
+          })
         });
         break;
 
@@ -48,24 +59,6 @@ serve(async (req) => {
         if (!folderId) throw new Error('Folder ID is required');
         response = await fetch(`${baseUrl}/portfolios/${folderId}`, {
           headers
-        });
-        break;
-
-      case 'createFolder':
-        if (!workspaceId || !folderName) {
-          throw new Error('Workspace ID and folder name are required');
-        }
-        console.log('Creating Asana portfolio with:', { workspaceId, folderName });
-        response = await fetch(`${baseUrl}/portfolios`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            data: {
-              name: folderName,
-              workspace: workspaceId,
-              resource_type: 'portfolio'
-            }
-          })
         });
         break;
 
@@ -82,28 +75,22 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error(`Asana API error for ${action}:`, errorData);
+      console.error('❌ Asana API error:', errorData);
       throw new Error(`Asana API error: ${errorData?.errors?.[0]?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
-    console.log(`Asana API response for ${action}:`, data);
+    console.log('✅ Asana API response:', data);
 
     return new Response(JSON.stringify(data), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders }
     });
 
   } catch (error) {
-    console.error('Error in Asana API:', error);
+    console.error('❌ Error in Asana API:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.stack
-      }), 
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders }
-      }
+      JSON.stringify({ error: error.message }), 
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 });
