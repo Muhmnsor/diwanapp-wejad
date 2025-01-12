@@ -19,6 +19,7 @@ import Finance from "./pages/Finance";
 import PortfolioDetails from "./pages/PortfolioDetails";
 import NewPortfolioProject from "./pages/NewPortfolioProject";
 import PortfolioProjectDetails from "./pages/PortfolioProjectDetails";
+import PortfolioWorkspaceDetails from "./pages/PortfolioWorkspaceDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 
@@ -79,6 +80,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <PortfolioProjectDetails />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/portfolio-workspaces/:workspaceId" 
+        element={
+          <ProtectedRoute>
+            <PortfolioWorkspaceDetails />
           </ProtectedRoute>
         } 
       />
