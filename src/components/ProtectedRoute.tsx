@@ -25,9 +25,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         console.log('Token refreshed successfully');
       }
 
-      if (event === 'SIGNED_OUT') {
-        console.log('User signed out, redirecting to login');
-        await logout();
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        console.log('User signed out or deleted, redirecting to login');
+        await handleLogout('تم تسجيل الخروج');
       }
     });
 
@@ -40,24 +40,42 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         
         if (error) {
           console.error('Session check error:', error);
-          if (error.message.includes('session_not_found') || error.message.includes('refresh_token_not_found')) {
-            toast.error('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
-            await logout();
+          
+          // Handle specific error cases
+          if (error.message.includes('refresh_token_not_found')) {
+            await handleLogout('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
+          } else if (error.message.includes('session_not_found')) {
+            await handleLogout('لم يتم العثور على جلسة نشطة');
+          } else {
+            await handleLogout('حدث خطأ في التحقق من الجلسة');
           }
+          return;
         }
 
         if (!session) {
           console.log('No active session found');
-          await logout();
+          await handleLogout('لم يتم العثور على جلسة نشطة');
         }
       } catch (error) {
         console.error('Error checking session:', error);
         if (isSubscribed) {
-          await logout();
+          await handleLogout('حدث خطأ في التحقق من الجلسة');
         }
       }
     };
 
+    const handleLogout = async (message: string) => {
+      if (!isSubscribed) return;
+      
+      try {
+        await logout();
+        toast.error(message);
+      } catch (error) {
+        console.error('Error during logout:', error);
+      }
+    };
+
+    // Initial session check
     checkSession();
 
     return () => {
