@@ -23,7 +23,25 @@ serve(async (req) => {
       throw new Error('Portfolio GID is required')
     }
 
-    // Create project in Asana
+    // First get the portfolio details to get the workspace
+    const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioGid}`, {
+      headers: {
+        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!portfolioResponse.ok) {
+      console.error('Failed to fetch portfolio:', await portfolioResponse.json())
+      throw new Error('Failed to fetch portfolio details')
+    }
+
+    const portfolioData = await portfolioResponse.json()
+    const workspaceGid = portfolioData.data.workspace.gid
+
+    console.log('Found workspace GID:', workspaceGid)
+
+    // Create project in Asana workspace
     const response = await fetch('https://app.asana.com/api/1.0/projects', {
       method: 'POST',
       headers: {
@@ -35,7 +53,7 @@ serve(async (req) => {
         data: {
           name,
           notes: description,
-          workspace: portfolioGid,
+          workspace: workspaceGid,
           start_on: startDate,
           due_on: dueDate,
           current_status: status === 'not_started' ? 'on_track' : status,
