@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { AsanaSyncSettings } from "./sync/AsanaSyncSettings";
 import { toast } from "sonner";
 import { useAsanaApi } from "@/hooks/useAsanaApi";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DepartmentProjectsProps {
   departmentId: string;
