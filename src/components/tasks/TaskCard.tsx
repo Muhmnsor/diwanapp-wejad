@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Calendar, CheckCircle2, Circle, Clock, Sync } from "lucide-react";
+import { Calendar, CheckCircle2, Circle, Clock, RefreshCw } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAsanaApi } from "@/hooks/useAsanaApi";
@@ -65,7 +65,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
         <div className="flex items-center gap-2">
           {task.asana_gid && (
             <Badge variant="outline" className="bg-purple-100 text-purple-800">
-              <Sync className="h-3 w-3 mr-1" />
+              <RefreshCw className="h-3 w-3 mr-1" />
               Asana
             </Badge>
           )}
