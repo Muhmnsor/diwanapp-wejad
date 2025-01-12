@@ -23,7 +23,7 @@ serve(async (req) => {
       throw new Error('Portfolio GID is required')
     }
 
-    // First get the portfolio details to get the workspace and team
+    // First get the portfolio details to get the workspace
     const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioGid}`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -60,36 +60,8 @@ serve(async (req) => {
       throw new Error('No teams found in workspace')
     }
 
-    const teamGid = teamsData.data[0].gid // Use the first team
+    const teamGid = teamsData.data[0].gid
     console.log('Using team GID:', teamGid)
-
-    // Map status to Asana supported colors
-    const getStatusColor = (status: string) => {
-      switch (status) {
-        case 'not_started':
-          return 'BLUE';
-        case 'in_progress':
-          return 'YELLOW';
-        case 'completed':
-          return 'GREEN';
-        default:
-          return 'BLUE';
-      }
-    };
-
-    // Map status to text
-    const getStatusText = (status: string) => {
-      switch (status) {
-        case 'not_started':
-          return 'On Track';
-        case 'in_progress':
-          return 'At Risk';
-        case 'completed':
-          return 'Complete';
-        default:
-          return 'On Track';
-      }
-    };
 
     // Create project in Asana workspace
     const response = await fetch('https://app.asana.com/api/1.0/projects', {
@@ -107,10 +79,6 @@ serve(async (req) => {
           team: teamGid,
           start_on: startDate,
           due_on: dueDate,
-          current_status: {
-            text: getStatusText(status),
-            color: getStatusColor(status)
-          },
           public: isPublic === 'public'
         }
       })
