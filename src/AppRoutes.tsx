@@ -20,8 +20,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuthStore();
-
   return (
     <Routes>
       <Route path="/" element={<Index />} />
@@ -34,6 +32,7 @@ const AppRoutes = () => {
       <Route path="/users" element={<Users />} />
       <Route path="/events/:id/feedback" element={<EventFeedback />} />
       <Route path="/activities/:id/feedback" element={<ActivityFeedback />} />
+      <Route path="/portfolios/:id" element={<PortfolioDetails />} />
       <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />

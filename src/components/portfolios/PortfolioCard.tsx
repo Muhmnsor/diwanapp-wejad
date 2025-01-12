@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, FolderKanban, Pencil, Trash2 } from "lucide-
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface PortfolioCardProps {
   portfolio: Portfolio;
@@ -13,8 +14,15 @@ interface PortfolioCardProps {
   onDelete: () => void;
 }
 
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+}
+
 export const PortfolioCard = ({ portfolio, onEdit, onDelete }: PortfolioCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const { data: portfolioProjects } = useQuery({
     queryKey: ['portfolio-projects', portfolio.id],
@@ -44,65 +52,47 @@ export const PortfolioCard = ({ portfolio, onEdit, onDelete }: PortfolioCardProp
 
   const projects = portfolioProjects?.map(pp => pp.projects) || [];
 
-  return (
-    <Collapsible
-      open={isExpanded}
-      onOpenChange={setIsExpanded}
-    >
-      <Card className="p-4">
-        <CollapsibleTrigger className="flex justify-between items-center w-full">
-          <div className="flex items-center gap-2">
-            <FolderKanban className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">{portfolio.name}</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-            {isExpanded ? (
-              <ChevronDown className="h-5 w-5" />
-            ) : (
-              <ChevronRight className="h-5 w-5" />
-            )}
-          </div>
-        </CollapsibleTrigger>
+  const handleCardClick = () => {
+    navigate(`/portfolios/${portfolio.id}`);
+  };
 
-        <CollapsibleContent className="mt-4 space-y-2">
-          {portfolio.description && (
-            <p className="text-muted-foreground mb-4">{portfolio.description}</p>
-          )}
-          
-          <div className="grid gap-2">
-            {projects.map((project) => (
-              <Card key={project.id} className="p-4 hover:bg-accent transition-colors">
-                <h4 className="font-medium">{project.title}</h4>
-                {project.description && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {project.description}
-                  </p>
-                )}
-              </Card>
-            ))}
-          </div>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+  return (
+    <Card 
+      className="p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+      onClick={handleCardClick}
+    >
+      <div className="flex justify-between items-center w-full">
+        <div className="flex items-center gap-2">
+          <FolderKanban className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">{portfolio.name}</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </div>
+
+      {portfolio.description && (
+        <p className="text-muted-foreground mt-2">{portfolio.description}</p>
+      )}
+    </Card>
   );
 };
