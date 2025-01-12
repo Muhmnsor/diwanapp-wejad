@@ -13,31 +13,31 @@ import { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 const PortfolioDetails = () => {
-  const { id } = useParams();
+  const { id: portfolioId } = useParams();
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const { data: portfolio, isLoading, error, refetch } = useQuery({
-    queryKey: ['portfolio', id],
+    queryKey: ['portfolio-workspace', portfolioId],
     queryFn: async () => {
-      console.log('Fetching portfolio details for ID:', id);
+      console.log('Fetching portfolio workspace details for ID:', portfolioId);
       
       const { data: portfolioData, error: fetchError } = await supabase
         .functions.invoke('get-portfolio', {
-          body: { portfolioId: id }
+          body: { portfolioId }
         });
 
       if (fetchError) {
-        console.error('Error fetching portfolio:', fetchError);
+        console.error('Error fetching portfolio workspace:', fetchError);
         throw new Error(fetchError.message || 'حدث خطأ أثناء تحميل بيانات المحفظة');
       }
 
       if (!portfolioData) {
-        console.error('Portfolio data not found for ID:', id);
+        console.error('Portfolio workspace data not found for ID:', portfolioId);
         throw new Error('لم يتم العثور على المحفظة');
       }
 
-      console.log('Successfully fetched portfolio data:', portfolioData);
+      console.log('Successfully fetched portfolio workspace data:', portfolioData);
       return portfolioData;
     },
     retry: 1,
@@ -46,31 +46,31 @@ const PortfolioDetails = () => {
     }
   });
 
-  // Fetch tasks for each project
-  const { data: tasks } = useQuery({
-    queryKey: ['portfolio-tasks', id],
+  // Fetch portfolio tasks
+  const { data: portfolioTasks } = useQuery({
+    queryKey: ['portfolio-workspace-tasks', portfolioId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('portfolio_tasks')
         .select('*')
-        .eq('workspace_id', id);
+        .eq('workspace_id', portfolioId);
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!id
+    enabled: !!portfolioId
   });
 
-  const getProjectProgress = (projectId: string) => {
-    if (!tasks) return 0;
-    const projectTasks = tasks.filter(task => task.workspace_id === id);
-    if (projectTasks.length === 0) return 0;
+  const getPortfolioTaskProgress = (workspaceId: string) => {
+    if (!portfolioTasks) return 0;
+    const workspaceTasks = portfolioTasks.filter(task => task.workspace_id === workspaceId);
+    if (workspaceTasks.length === 0) return 0;
     
-    const completedTasks = projectTasks.filter(task => task.status === 'completed').length;
-    return Math.round((completedTasks / projectTasks.length) * 100);
+    const completedTasks = workspaceTasks.filter(task => task.status === 'completed').length;
+    return Math.round((completedTasks / workspaceTasks.length) * 100);
   };
 
-  const getStatusIcon = (status: string) => {
+  const getPortfolioStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
         return <CheckCircle2 className="h-5 w-5 text-green-500" />;
@@ -81,14 +81,13 @@ const PortfolioDetails = () => {
     }
   };
 
-  // Show error toast when query fails
   if (error) {
     toast.error('حدث خطأ أثناء تحميل بيانات المحفظة');
   }
 
-  const handleProjectClick = (projectId: string) => {
-    console.log('Navigating to project details:', projectId);
-    navigate(`/portfolio-projects/${projectId}`);
+  const handlePortfolioWorkspaceClick = (workspaceId: string) => {
+    console.log('Navigating to portfolio workspace details:', workspaceId);
+    navigate(`/portfolio-workspaces/${workspaceId}`);
   };
 
   const renderContent = () => {
@@ -144,11 +143,11 @@ const PortfolioDetails = () => {
                 <Card 
                   key={item.gid} 
                   className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleProjectClick(item.gid)}
+                  onClick={() => handlePortfolioWorkspaceClick(item.gid)}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="font-medium">{item.name}</h3>
-                    {getStatusIcon(item.status || 'not_started')}
+                    {getPortfolioStatusIcon(item.status || 'not_started')}
                   </div>
                   <p className="text-sm text-gray-500 mb-4">
                     {item.notes || 'لا يوجد وصف'}
@@ -156,9 +155,9 @@ const PortfolioDetails = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>تقدم المشروع</span>
-                      <span>{getProjectProgress(item.gid)}%</span>
+                      <span>{getPortfolioTaskProgress(item.gid)}%</span>
                     </div>
-                    <Progress value={getProjectProgress(item.gid)} className="h-2" />
+                    <Progress value={getPortfolioTaskProgress(item.gid)} className="h-2" />
                   </div>
                 </Card>
               ))}
@@ -184,7 +183,7 @@ const PortfolioDetails = () => {
       <CreatePortfolioProjectDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        portfolioId={id!}
+        portfolioId={portfolioId!}
         onSuccess={refetch}
       />
     </div>
