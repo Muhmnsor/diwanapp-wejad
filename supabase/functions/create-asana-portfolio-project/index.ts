@@ -34,14 +34,31 @@ serve(async (req) => {
       throw new Error('Portfolio has no Asana workspace ID')
     }
 
-    console.log('Creating project in Asana:', {
+    console.log('Creating project in Asana workspace:', {
       portfolioId,
       workspaceGid: portfolio.asana_gid,
       project
     })
 
-    // First create the project in Asana workspace
-    const createResponse = await fetch('https://app.asana.com/api/1.0/workspaces/' + portfolio.asana_gid + '/projects', {
+    // First verify the workspace exists
+    const workspaceResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${portfolio.asana_gid}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+        'Accept': 'application/json'
+      }
+    })
+
+    if (!workspaceResponse.ok) {
+      const workspaceError = await workspaceResponse.json()
+      console.error('Error verifying workspace:', workspaceError)
+      throw new Error(`Invalid workspace: ${workspaceError.errors?.[0]?.message || workspaceResponse.statusText}`)
+    }
+
+    console.log('Workspace verified, creating project...')
+
+    // Create the project in Asana workspace
+    const createResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${portfolio.asana_gid}/projects`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -60,6 +77,7 @@ serve(async (req) => {
     })
 
     const asanaProject = await createResponse.json()
+    console.log('Asana API response:', asanaProject)
 
     if (!createResponse.ok) {
       console.error('Asana API error:', asanaProject)
@@ -87,7 +105,8 @@ serve(async (req) => {
     })
 
     if (!updateResponse.ok) {
-      console.error('Failed to update project custom fields:', await updateResponse.json())
+      const updateError = await updateResponse.json()
+      console.error('Failed to update project custom fields:', updateError)
     }
 
     return new Response(
