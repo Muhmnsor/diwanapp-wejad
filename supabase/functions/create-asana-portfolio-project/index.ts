@@ -11,9 +11,9 @@ serve(async (req) => {
 
   try {
     const { portfolioId, project } = await req.json()
-    console.log('Received request to create project:', { portfolioId, project })
+    console.log('Creating project in portfolio:', { portfolioId, project })
 
-    // Get portfolio Asana details from Supabase
+    // Get portfolio details from Supabase
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -21,20 +21,21 @@ serve(async (req) => {
 
     const { data: portfolio, error: portfolioError } = await supabaseClient
       .from('portfolios')
-      .select('asana_gid')
+      .select('asana_gid, asana_folder_gid')
       .eq('id', portfolioId)
       .single()
 
     if (portfolioError) {
       console.error('Error fetching portfolio:', portfolioError)
-      throw portfolioError
+      throw new Error('Failed to fetch portfolio details')
     }
 
     if (!portfolio.asana_gid) {
       throw new Error('Portfolio has no Asana GID')
     }
 
-    // First get the workspace ID from the portfolio
+    // Get portfolio details from Asana to get workspace info
+    console.log('Fetching portfolio details from Asana:', portfolio.asana_gid)
     const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolio.asana_gid}`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -44,17 +45,16 @@ serve(async (req) => {
 
     if (!portfolioResponse.ok) {
       const portfolioError = await portfolioResponse.json()
-      console.error('Error fetching portfolio:', portfolioError)
-      throw new Error(`Failed to fetch portfolio: ${portfolioError.errors?.[0]?.message}`)
+      console.error('Error fetching Asana portfolio:', portfolioError)
+      throw new Error(`Failed to fetch Asana portfolio: ${portfolioError.errors?.[0]?.message}`)
     }
 
     const portfolioData = await portfolioResponse.json()
     const workspaceId = portfolioData.data.workspace.gid
 
-    console.log('Creating project in workspace:', workspaceId)
-
-    // First create the project in the workspace
-    const createProjectResponse = await fetch(`https://app.asana.com/api/1.0/projects`, {
+    // Create project in Asana workspace
+    console.log('Creating project in Asana workspace:', workspaceId)
+    const createProjectResponse = await fetch('https://app.asana.com/api/1.0/projects', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -68,23 +68,24 @@ serve(async (req) => {
           due_date: project.dueDate,
           start_date: project.startDate,
           workspace: workspaceId,
-          custom_fields: {
-            status: project.status,
-            priority: project.priority
-          }
+          // If portfolio has a folder, use it as parent
+          ...(portfolio.asana_folder_gid && {
+            team: portfolio.asana_folder_gid
+          })
         }
       })
     })
 
-    const projectResponse = await createProjectResponse.json()
-    console.log('Project creation response:', projectResponse)
+    const projectData = await createProjectResponse.json()
+    console.log('Asana project creation response:', projectData)
 
     if (!createProjectResponse.ok) {
-      console.error('Error creating project:', projectResponse)
-      throw new Error(`Failed to create project: ${projectResponse.errors?.[0]?.message}`)
+      console.error('Error creating Asana project:', projectData)
+      throw new Error(`Failed to create Asana project: ${projectData.errors?.[0]?.message}`)
     }
 
-    // Now add the project to the portfolio
+    // Add project to portfolio
+    console.log('Adding project to portfolio:', portfolio.asana_gid)
     const addToPortfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolio.asana_gid}/addItem`, {
       method: 'POST',
       headers: {
@@ -94,25 +95,50 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         data: {
-          item: projectResponse.data.gid
+          item: projectData.data.gid
         }
       })
     })
 
-    const portfolioAddResponse = await addToPortfolioResponse.json()
-    console.log('Add to portfolio response:', portfolioAddResponse)
+    const portfolioAddData = await addToPortfolioResponse.json()
+    console.log('Add to portfolio response:', portfolioAddData)
 
     if (!addToPortfolioResponse.ok) {
-      console.error('Error adding project to portfolio:', portfolioAddResponse)
-      throw new Error(`Failed to add project to portfolio: ${portfolioAddResponse.errors?.[0]?.message}`)
+      console.error('Error adding project to portfolio:', portfolioAddData)
+      throw new Error(`Failed to add project to portfolio: ${portfolioAddData.errors?.[0]?.message}`)
+    }
+
+    // Update project status and priority if provided
+    if (project.status || project.priority) {
+      console.log('Updating project custom fields:', { status: project.status, priority: project.priority })
+      const updateResponse = await fetch(`https://app.asana.com/api/1.0/projects/${projectData.data.gid}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          data: {
+            custom_fields: {
+              status: project.status,
+              priority: project.priority
+            }
+          }
+        })
+      })
+
+      if (!updateResponse.ok) {
+        console.warn('Warning: Failed to update project custom fields:', await updateResponse.json())
+      }
     }
 
     return new Response(
-      JSON.stringify(projectResponse.data),
+      JSON.stringify(projectData.data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
-    console.error('Error creating project:', error)
+    console.error('Error in create-asana-portfolio-project:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
