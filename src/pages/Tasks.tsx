@@ -17,6 +17,7 @@ interface Portfolio {
   id: string;
   name: string;
   description: string | null;
+  asana_gid?: string;
 }
 
 interface Project {
@@ -98,12 +99,29 @@ const Tasks = () => {
 
   const handleCreatePortfolio = async () => {
     try {
+      // First create portfolio in Asana
+      const asanaResponse = await supabase.functions.invoke('create-asana-portfolio', {
+        body: { 
+          name: 'محفظة جديدة',
+          notes: 'وصف المحفظة'
+        }
+      });
+
+      if (asanaResponse.error) {
+        throw new Error('Failed to create portfolio in Asana');
+      }
+
+      const asanaGid = asanaResponse.data.gid;
+      console.log('Created Asana portfolio with GID:', asanaGid);
+
+      // Then create in our database with the Asana GID
       const { data, error } = await supabase
         .from('portfolios')
         .insert([
           { 
             name: 'محفظة جديدة',
-            description: 'وصف المحفظة'
+            description: 'وصف المحفظة',
+            asana_gid: asanaGid
           }
         ])
         .select()

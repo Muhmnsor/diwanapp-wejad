@@ -11,3 +11,7 @@ max_retries = 3
 [schedule-notifications]
 verify_jwt = true
 max_retries = 3
+
+[create-asana-portfolio]
+verify_jwt = true
+max_retries = 3
