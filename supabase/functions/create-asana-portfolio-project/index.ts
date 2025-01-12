@@ -11,6 +11,7 @@ serve(async (req) => {
 
   try {
     const { portfolioId, project } = await req.json()
+    console.log('Received request to create project:', { portfolioId, project })
 
     // Get portfolio Asana details from Supabase
     const supabaseClient = createClient(
@@ -24,7 +25,14 @@ serve(async (req) => {
       .eq('id', portfolioId)
       .single()
 
-    if (portfolioError) throw portfolioError
+    if (portfolioError) {
+      console.error('Error fetching portfolio:', portfolioError)
+      throw portfolioError
+    }
+
+    if (!portfolio.asana_gid) {
+      throw new Error('Portfolio has no Asana workspace ID')
+    }
 
     console.log('Creating project in Asana:', {
       portfolioId,
@@ -32,22 +40,25 @@ serve(async (req) => {
       project
     })
 
-    // Create project in Asana
+    // Create project in Asana using the correct endpoint and payload structure
     const response = await fetch('https://app.asana.com/api/1.0/projects', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         data: {
           name: project.title,
           notes: project.description,
           workspace: portfolio.asana_gid,
-          start_on: project.startDate,
-          due_on: project.dueDate,
-          status: project.status,
-          priority: project.priority
+          due_date: project.dueDate,
+          start_date: project.startDate,
+          custom_fields: {
+            status: project.status,
+            priority: project.priority
+          }
         }
       })
     })
@@ -56,7 +67,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error('Asana API error:', asanaProject)
-      throw new Error(`Asana API error: ${response.statusText}`)
+      throw new Error(`Asana API error: ${response.statusText || asanaProject.errors?.[0]?.message || 'Unknown error'}`)
     }
 
     console.log('Project created in Asana:', asanaProject)
