@@ -17,31 +17,25 @@ const PortfolioDetails = () => {
   const { data: portfolio, isLoading, error } = useQuery({
     queryKey: ['portfolio', id],
     queryFn: async () => {
-      console.log('Fetching portfolio details:', id);
-      const { data, error: fetchError } = await supabase
-        .from('portfolios')
-        .select(`
-          *,
-          portfolio_projects (
-            *,
-            projects (*)
-          )
-        `)
-        .eq('id', id)
-        .maybeSingle();
+      console.log('Fetching portfolio details from Asana:', id);
+      
+      const { data: portfolioData, error: fetchError } = await supabase
+        .functions.invoke('get-portfolio', {
+          body: { portfolioId: id }
+        });
 
       if (fetchError) {
-        console.error('Error fetching portfolio:', fetchError);
+        console.error('Error fetching portfolio from Asana:', fetchError);
         throw fetchError;
       }
 
-      if (!data) {
-        console.error('Portfolio not found:', id);
+      if (!portfolioData) {
+        console.error('Portfolio not found in Asana:', id);
         throw new Error('Portfolio not found');
       }
 
-      console.log('Portfolio data:', data);
-      return data;
+      console.log('Portfolio data from Asana:', portfolioData);
+      return portfolioData;
     },
     retry: 1,
     meta: {
@@ -101,13 +95,13 @@ const PortfolioDetails = () => {
 
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">المشاريع</h2>
-          {portfolio.portfolio_projects?.length > 0 ? (
+          {portfolio.items?.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {portfolio.portfolio_projects.map((pp) => (
-                <Card key={pp.id} className="p-4">
-                  <h3 className="font-medium">{pp.projects?.title}</h3>
+              {portfolio.items.map((item: any) => (
+                <Card key={item.gid} className="p-4">
+                  <h3 className="font-medium">{item.name}</h3>
                   <p className="text-sm text-gray-500 mt-2">
-                    {pp.projects?.description || 'لا يوجد وصف'}
+                    {item.notes || 'لا يوجد وصف'}
                   </p>
                 </Card>
               ))}
