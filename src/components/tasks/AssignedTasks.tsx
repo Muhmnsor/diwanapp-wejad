@@ -3,19 +3,14 @@ import { ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 import { TaskCard } from "./TaskCard";
-import { useAsanaApi } from "@/hooks/useAsanaApi";
-import { toast } from "sonner";
 
 export const AssignedTasks = () => {
   const { user } = useAuthStore();
-  const { createTask } = useAsanaApi();
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['assigned-tasks', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
-      console.log('Fetching tasks for user:', user.id);
       
       const { data, error } = await supabase
         .from('project_tasks')
@@ -26,12 +21,7 @@ export const AssignedTasks = () => {
         .eq('assigned_to', user.id)
         .order('due_date', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        throw error;
-      }
-      
-      console.log('Retrieved tasks:', data);
+      if (error) throw error;
       return data || [];
     },
     enabled: !!user?.id,

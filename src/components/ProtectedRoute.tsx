@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       if (event === 'SIGNED_OUT') {
         console.log('User signed out, redirecting to login');
-        await handleLogout('تم تسجيل الخروج');
+        await logout();
       }
     });
 
@@ -40,42 +40,24 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         
         if (error) {
           console.error('Session check error:', error);
-          
-          // Handle specific error cases
-          if (error.message.includes('refresh_token_not_found')) {
-            await handleLogout('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
-          } else if (error.message.includes('session_not_found')) {
-            await handleLogout('لم يتم العثور على جلسة نشطة');
-          } else {
-            await handleLogout('حدث خطأ في التحقق من الجلسة');
+          if (error.message.includes('session_not_found') || error.message.includes('refresh_token_not_found')) {
+            toast.error('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
+            await logout();
           }
-          return;
         }
 
         if (!session) {
           console.log('No active session found');
-          await handleLogout('لم يتم العثور على جلسة نشطة');
+          await logout();
         }
       } catch (error) {
         console.error('Error checking session:', error);
         if (isSubscribed) {
-          await handleLogout('حدث خطأ في التحقق من الجلسة');
+          await logout();
         }
       }
     };
 
-    const handleLogout = async (message: string) => {
-      if (!isSubscribed) return;
-      
-      try {
-        await logout();
-        toast.error(message);
-      } catch (error) {
-        console.error('Error during logout:', error);
-      }
-    };
-
-    // Initial session check
     checkSession();
 
     return () => {

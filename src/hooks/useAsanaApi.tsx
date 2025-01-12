@@ -1,18 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface AsanaApiOptions {
-  action: 'getFolder' | 'createFolder' | 'getWorkspace' | 'getFolderProjects' | 'createProject' | 'createTask' | 'updateTask';
+  action: 'getFolder' | 'createFolder' | 'getWorkspace' | 'getFolderProjects';
   folderId?: string;
   workspaceId?: string;
   folderName?: string;
-  projectName?: string;
-  projectNotes?: string;
-  taskName?: string;
-  taskNotes?: string;
-  taskStatus?: string;
-  projectId?: string;
-  taskId?: string;
 }
 
 export const useAsanaApi = () => {
@@ -26,7 +18,6 @@ export const useAsanaApi = () => {
 
       if (error) {
         console.error('Error calling Asana API:', error);
-        toast.error('حدث خطأ في الاتصال مع Asana');
         throw error;
       }
 
@@ -39,20 +30,11 @@ export const useAsanaApi = () => {
   };
 
   return {
-    // Current functions
     getWorkspace: () => callAsanaApi({ action: 'getWorkspace' }),
     getFolder: (folderId: string) => callAsanaApi({ action: 'getFolder', folderId }),
     createFolder: (workspaceId: string, folderName: string) => 
       callAsanaApi({ action: 'createFolder', workspaceId, folderName }),
     getFolderProjects: (folderId: string) => 
-      callAsanaApi({ action: 'getFolderProjects', folderId }),
-      
-    // New sync functions
-    createProject: (folderId: string, projectName: string, projectNotes?: string) =>
-      callAsanaApi({ action: 'createProject', folderId, projectName, projectNotes }),
-    createTask: (projectId: string, taskName: string, taskNotes?: string) =>
-      callAsanaApi({ action: 'createTask', projectId, taskName, taskNotes }),
-    updateTask: (taskId: string, taskStatus: string) =>
-      callAsanaApi({ action: 'updateTask', taskId, taskStatus })
+      callAsanaApi({ action: 'getFolderProjects', folderId })
   };
 };

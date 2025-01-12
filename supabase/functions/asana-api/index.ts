@@ -6,17 +6,10 @@ const corsHeaders = {
 };
 
 interface AsanaRequest {
-  action: 'getFolder' | 'createFolder' | 'getWorkspace' | 'getFolderProjects' | 'createProject' | 'createTask' | 'updateTask';
+  action: 'getFolder' | 'createFolder' | 'getWorkspace' | 'getFolderProjects';
   folderId?: string;
   workspaceId?: string;
   folderName?: string;
-  projectName?: string;
-  projectNotes?: string;
-  taskName?: string;
-  taskNotes?: string;
-  taskStatus?: string;
-  projectId?: string;
-  taskId?: string;
 }
 
 serve(async (req) => {
@@ -31,9 +24,7 @@ serve(async (req) => {
       throw new Error('ASANA_ACCESS_TOKEN is not configured');
     }
 
-    const { action, folderId, workspaceId, folderName, projectName, projectNotes, taskName, taskNotes, taskStatus, projectId, taskId } = 
-      await req.json() as AsanaRequest;
-    
+    const { action, folderId, workspaceId, folderName } = await req.json() as AsanaRequest;
     const baseUrl = 'https://app.asana.com/api/1.0';
     
     const headers = {
@@ -81,56 +72,6 @@ serve(async (req) => {
         if (!folderId) throw new Error('Folder ID is required');
         response = await fetch(`${baseUrl}/portfolios/${folderId}/items`, {
           headers
-        });
-        break;
-
-      case 'createProject':
-        if (!folderId || !projectName) {
-          throw new Error('Folder ID and project name are required');
-        }
-        response = await fetch(`${baseUrl}/projects`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            data: {
-              name: projectName,
-              notes: projectNotes,
-              workspace: workspaceId,
-              team: folderId
-            }
-          })
-        });
-        break;
-
-      case 'createTask':
-        if (!projectId || !taskName) {
-          throw new Error('Project ID and task name are required');
-        }
-        response = await fetch(`${baseUrl}/tasks`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            data: {
-              name: taskName,
-              notes: taskNotes,
-              projects: [projectId]
-            }
-          })
-        });
-        break;
-
-      case 'updateTask':
-        if (!taskId || !taskStatus) {
-          throw new Error('Task ID and status are required');
-        }
-        response = await fetch(`${baseUrl}/tasks/${taskId}`, {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({
-            data: {
-              completed: taskStatus === 'completed'
-            }
-          })
         });
         break;
 
