@@ -10,6 +10,24 @@ import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { CreateAsanaProjectDialog } from "@/components/portfolios/dialogs/CreateAsanaProjectDialog";
 
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  image_url?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+interface PortfolioProject {
+  id: string;
+  portfolio_id: string;
+  project_id: string;
+  asana_status?: string;
+  asana_priority?: string;
+  project: Project;
+}
+
 const PortfolioDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -63,7 +81,7 @@ const PortfolioDetails = () => {
         throw error;
       }
 
-      return data;
+      return data as PortfolioProject[];
     }
   });
 
