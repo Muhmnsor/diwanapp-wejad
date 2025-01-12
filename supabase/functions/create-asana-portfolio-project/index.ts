@@ -1,10 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
 const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -13,30 +13,9 @@ serve(async (req) => {
     const { portfolioId, project } = await req.json()
     console.log('Creating project in portfolio:', { portfolioId, project })
 
-    // Get portfolio details from Supabase
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    const { data: portfolio, error: portfolioError } = await supabaseClient
-      .from('portfolios')
-      .select('asana_gid, asana_folder_gid')
-      .eq('id', portfolioId)
-      .single()
-
-    if (portfolioError) {
-      console.error('Error fetching portfolio:', portfolioError)
-      throw new Error('Failed to fetch portfolio details')
-    }
-
-    if (!portfolio.asana_gid) {
-      throw new Error('Portfolio has no Asana GID')
-    }
-
-    // Get portfolio details from Asana to get workspace info
-    console.log('Fetching portfolio details from Asana:', portfolio.asana_gid)
-    const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolio.asana_gid}`, {
+    // First get portfolio details from Asana to get workspace info
+    console.log('Fetching portfolio details from Asana:', portfolioId)
+    const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioId}`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
         'Accept': 'application/json'
@@ -51,6 +30,30 @@ serve(async (req) => {
 
     const portfolioData = await portfolioResponse.json()
     const workspaceId = portfolioData.data.workspace.gid
+    console.log('Got workspace ID:', workspaceId)
+
+    // Get the team ID from the workspace
+    console.log('Fetching teams for workspace:', workspaceId)
+    const teamsResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${workspaceId}/teams`, {
+      headers: {
+        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+        'Accept': 'application/json'
+      }
+    })
+
+    if (!teamsResponse.ok) {
+      const teamsError = await teamsResponse.json()
+      console.error('Error fetching teams:', teamsError)
+      throw new Error(`Failed to fetch teams: ${teamsError.errors?.[0]?.message}`)
+    }
+
+    const teamsData = await teamsResponse.json()
+    if (!teamsData.data?.length) {
+      throw new Error('No teams found in workspace')
+    }
+
+    const teamId = teamsData.data[0].gid // Use the first team
+    console.log('Using team ID:', teamId)
 
     // Create project in Asana workspace
     console.log('Creating project in Asana workspace:', workspaceId)
@@ -68,10 +71,7 @@ serve(async (req) => {
           due_date: project.dueDate,
           start_date: project.startDate,
           workspace: workspaceId,
-          // If portfolio has a folder, use it as parent
-          ...(portfolio.asana_folder_gid && {
-            team: portfolio.asana_folder_gid
-          })
+          team: teamId
         }
       })
     })
@@ -85,8 +85,8 @@ serve(async (req) => {
     }
 
     // Add project to portfolio
-    console.log('Adding project to portfolio:', portfolio.asana_gid)
-    const addToPortfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolio.asana_gid}/addItem`, {
+    console.log('Adding project to portfolio:', portfolioId)
+    const addToPortfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioId}/addItem`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
