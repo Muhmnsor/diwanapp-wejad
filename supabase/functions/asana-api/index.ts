@@ -35,7 +35,7 @@ serve(async (req) => {
     };
 
     let response;
-    console.log(`Processing Asana API request: ${action}`);
+    console.log(`Processing Asana API request: ${action}`, { workspaceId, folderName, folderId });
 
     switch (action) {
       case 'getWorkspace':
@@ -55,6 +55,7 @@ serve(async (req) => {
         if (!workspaceId || !folderName) {
           throw new Error('Workspace ID and folder name are required');
         }
+        console.log('Creating Asana portfolio with:', { workspaceId, folderName });
         response = await fetch(`${baseUrl}/portfolios`, {
           method: 'POST',
           headers,
@@ -94,9 +95,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in Asana API:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }), 
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      }
+    );
   }
 });

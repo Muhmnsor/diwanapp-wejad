@@ -45,21 +45,18 @@ export const DepartmentsList = () => {
       const workspaceResponse = await getWorkspace();
       console.log('Asana workspace response:', workspaceResponse);
       
-      if (!workspaceResponse?.data?.data) {
-        throw new Error('No workspace data returned from Asana');
+      if (!workspaceResponse?.data?.data?.[0]?.gid) {
+        throw new Error('No valid workspace found in Asana');
       }
 
       const workspace = workspaceResponse.data.data[0];
-      if (!workspace?.gid) {
-        throw new Error('Invalid workspace data from Asana');
-      }
       
       // Create folder in Asana
       const folderResponse = await createFolder(workspace.gid, name);
       console.log('Asana folder creation response:', folderResponse);
       
       if (!folderResponse?.data?.data?.gid) {
-        throw new Error('Failed to create folder in Asana');
+        throw new Error('Failed to create portfolio in Asana');
       }
 
       // Create department in database
@@ -91,16 +88,6 @@ export const DepartmentsList = () => {
       setIsLoading(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 bg-gray-100 animate-pulse rounded-lg"></div>
-        ))}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
