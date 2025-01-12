@@ -5,7 +5,6 @@ import { useAuthStore } from "@/store/authStore";
 import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
-import { TasksAdminActions } from "@/components/tasks/TasksAdminActions";
 
 export const TopHeader = () => {
   const location = useLocation();
@@ -44,9 +43,6 @@ export const TopHeader = () => {
             isAuthenticated={isAuthenticated}
             isEventsPage={isEventsPage}
           />
-          
-          {/* Tasks Admin Actions Bar */}
-          <TasksAdminActions />
         </div>
       </div>
     </div>
