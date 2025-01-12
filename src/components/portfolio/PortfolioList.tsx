@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Folder, ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Folder, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { AddPortfolioDialog } from './AddPortfolioDialog';
 
 export const PortfolioList = () => {
   const [expandedPortfolio, setExpandedPortfolio] = useState<string | null>(null);
@@ -37,10 +37,7 @@ export const PortfolioList = () => {
     <div className="space-y-4" dir="rtl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">المحافظ</h2>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة محفظة
-        </Button>
+        <AddPortfolioDialog />
       </div>
 
       <div className="grid gap-4">
@@ -63,7 +60,6 @@ export const PortfolioList = () => {
             
             {expandedPortfolio === portfolio.id && (
               <div className="mt-4 pr-6 border-r border-gray-200">
-                {/* Projects list will go here */}
                 <div className="text-sm text-gray-500">
                   {portfolio.description || 'لا يوجد وصف'}
                 </div>
