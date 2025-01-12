@@ -25,8 +25,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         console.log('Token refreshed successfully');
       }
 
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-        console.log('User signed out or deleted, redirecting to login');
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out, redirecting to login');
         await handleLogout('تم تسجيل الخروج');
       }
     });
