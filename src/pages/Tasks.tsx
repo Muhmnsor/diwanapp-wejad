@@ -28,6 +28,7 @@ interface Project {
 interface PortfolioProject {
   portfolio_id: string;
   project_id: string;
+  projects: Project;
 }
 
 const Tasks = () => {
@@ -78,7 +79,7 @@ const Tasks = () => {
       }
 
       console.log('Fetched portfolio projects:', data);
-      return data;
+      return data as PortfolioProject[];
     }
   });
 
@@ -95,6 +96,28 @@ const Tasks = () => {
       .map(pp => pp.projects) || [];
   };
 
+  const handleCreatePortfolio = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('portfolios')
+        .insert([
+          { 
+            name: 'محفظة جديدة',
+            description: 'وصف المحفظة'
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('تم إنشاء المحفظة بنجاح');
+    } catch (error) {
+      console.error('Error creating portfolio:', error);
+      toast.error('حدث خطأ أثناء إنشاء المحفظة');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
@@ -102,7 +125,7 @@ const Tasks = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-primary">المحافظ والمشاريع</h1>
-          <Button>
+          <Button onClick={handleCreatePortfolio}>
             <Plus className="h-4 w-4 mr-2" />
             محفظة جديدة
           </Button>
