@@ -29,11 +29,6 @@ const PortfolioWorkspaceDetails = () => {
         throw new Error(fetchError.message || 'حدث خطأ أثناء تحميل بيانات مساحة العمل');
       }
 
-      if (!workspaceData) {
-        console.error('Workspace data not found for ID:', workspaceId);
-        throw new Error('لم يتم العثور على مساحة العمل');
-      }
-
       console.log('Successfully fetched workspace data:', workspaceData);
       return workspaceData;
     },

@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
-console.log("Hello from get-workspace function!")
+console.log("Get workspace function running")
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -23,7 +23,7 @@ serve(async (req) => {
       .from('portfolio_workspaces')
       .select('*')
       .eq('asana_gid', workspaceId)
-      .single()
+      .maybeSingle()
 
     if (workspaceError) {
       console.error('Error fetching workspace:', workspaceError)
@@ -38,7 +38,12 @@ serve(async (req) => {
     // Then get the tasks for this workspace
     const { data: tasks, error: tasksError } = await supabase
       .from('portfolio_tasks')
-      .select('*')
+      .select(`
+        *,
+        assigned_to (
+          email
+        )
+      `)
       .eq('workspace_id', workspace.id)
 
     if (tasksError) {
