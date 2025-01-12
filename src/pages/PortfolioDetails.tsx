@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,12 @@ import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
-import { Portfolio, PortfolioProject } from "@/types/portfolio";
 import { useState } from "react";
 import { CreateAsanaProjectDialog } from "@/components/portfolios/dialogs/CreateAsanaProjectDialog";
 
 const PortfolioDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: portfolio, isLoading: isLoadingPortfolio } = useQuery({
@@ -30,7 +30,7 @@ const PortfolioDetails = () => {
         throw error;
       }
 
-      return data as Portfolio;
+      return data;
     }
   });
 
@@ -63,7 +63,7 @@ const PortfolioDetails = () => {
         throw error;
       }
 
-      return data as unknown as PortfolioProject[];
+      return data;
     }
   });
 
@@ -123,7 +123,11 @@ const PortfolioDetails = () => {
 
         <div className="grid gap-4">
           {projects?.map((pp) => (
-            <Card key={pp.id} className="p-4">
+            <Card 
+              key={pp.id} 
+              className="p-4 cursor-pointer hover:shadow-md transition-all"
+              onClick={() => navigate(`/projects/${pp.project.id}/tasks`)}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold">{pp.project.title}</h3>
