@@ -17,7 +17,7 @@ const PortfolioDetails = () => {
   const { data: portfolio, isLoading, error } = useQuery({
     queryKey: ['portfolio', id],
     queryFn: async () => {
-      console.log('Fetching portfolio details from Asana:', id);
+      console.log('Fetching portfolio details for ID:', id);
       
       const { data: portfolioData, error: fetchError } = await supabase
         .functions.invoke('get-portfolio', {
@@ -25,16 +25,16 @@ const PortfolioDetails = () => {
         });
 
       if (fetchError) {
-        console.error('Error fetching portfolio from Asana:', fetchError);
-        throw fetchError;
+        console.error('Error fetching portfolio:', fetchError);
+        throw new Error(fetchError.message || 'حدث خطأ أثناء تحميل بيانات المحفظة');
       }
 
       if (!portfolioData) {
-        console.error('Portfolio not found in Asana:', id);
-        throw new Error('Portfolio not found');
+        console.error('Portfolio data not found for ID:', id);
+        throw new Error('لم يتم العثور على المحفظة');
       }
 
-      console.log('Portfolio data from Asana:', portfolioData);
+      console.log('Successfully fetched portfolio data:', portfolioData);
       return portfolioData;
     },
     retry: 1,
