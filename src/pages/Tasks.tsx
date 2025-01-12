@@ -12,6 +12,15 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Portfolio {
   id: string;
@@ -29,11 +38,16 @@ interface Project {
 interface PortfolioProject {
   portfolio_id: string;
   project_id: string;
-  projects: Project;  // Changed from Project to single Project since it's a direct relation
+  projects: Project;
 }
 
 const Tasks = () => {
   const [expandedPortfolios, setExpandedPortfolios] = useState<{ [key: string]: boolean }>({});
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newPortfolio, setNewPortfolio] = useState({
+    name: '',
+    description: ''
+  });
 
   // Fetch portfolios
   const { data: portfolios, isLoading: isLoadingPortfolios } = useQuery({
@@ -80,30 +94,22 @@ const Tasks = () => {
       }
 
       console.log('Fetched portfolio projects:', data);
-      return data as unknown as PortfolioProject[];  // Using unknown as intermediate step for type safety
+      return data as unknown as PortfolioProject[];
     }
   });
 
-  const togglePortfolio = (portfolioId: string) => {
-    setExpandedPortfolios(prev => ({
-      ...prev,
-      [portfolioId]: !prev[portfolioId]
-    }));
-  };
-
-  const getProjectsForPortfolio = (portfolioId: string) => {
-    return portfolioProjects
-      ?.filter(pp => pp.portfolio_id === portfolioId)
-      .map(pp => pp.projects) || [];
-  };
-
   const handleCreatePortfolio = async () => {
     try {
+      if (!newPortfolio.name.trim()) {
+        toast.error('الرجاء إدخال اسم المحفظة');
+        return;
+      }
+
       // First create portfolio in Asana
       const asanaResponse = await supabase.functions.invoke('create-asana-portfolio', {
         body: { 
-          name: 'محفظة جديدة',
-          notes: 'وصف المحفظة'
+          name: newPortfolio.name,
+          notes: newPortfolio.description
         }
       });
 
@@ -119,21 +125,41 @@ const Tasks = () => {
         .from('portfolios')
         .insert([
           { 
-            name: 'محفظة جديدة',
-            description: 'وصف المحفظة',
+            name: newPortfolio.name,
+            description: newPortfolio.description,
             asana_gid: asanaGid
           }
         ])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating portfolio:', error);
+        toast.error('حدث خطأ أثناء إنشاء المحفظة');
+        return;
+      }
 
       toast.success('تم إنشاء المحفظة بنجاح');
+      setShowCreateDialog(false);
+      setNewPortfolio({ name: '', description: '' });
+      
     } catch (error) {
-      console.error('Error creating portfolio:', error);
+      console.error('Error in form submission:', error);
       toast.error('حدث خطأ أثناء إنشاء المحفظة');
     }
+  };
+
+  const togglePortfolio = (portfolioId: string) => {
+    setExpandedPortfolios(prev => ({
+      ...prev,
+      [portfolioId]: !prev[portfolioId]
+    }));
+  };
+
+  const getProjectsForPortfolio = (portfolioId: string) => {
+    return portfolioProjects
+      ?.filter(pp => pp.portfolio_id === portfolioId)
+      .map(pp => pp.projects) || [];
   };
 
   return (
@@ -143,8 +169,8 @@ const Tasks = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-primary">المحافظ والمشاريع</h1>
-          <Button onClick={handleCreatePortfolio}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 ml-2" />
             محفظة جديدة
           </Button>
         </div>
@@ -202,6 +228,37 @@ const Tasks = () => {
             ))}
           </div>
         )}
+
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-right">إنشاء محفظة جديدة</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Input
+                  id="name"
+                  placeholder="اسم المحفظة"
+                  value={newPortfolio.name}
+                  onChange={(e) => setNewPortfolio(prev => ({ ...prev, name: e.target.value }))}
+                  className="text-right"
+                />
+              </div>
+              <div className="space-y-2">
+                <Textarea
+                  id="description"
+                  placeholder="وصف المحفظة"
+                  value={newPortfolio.description}
+                  onChange={(e) => setNewPortfolio(prev => ({ ...prev, description: e.target.value }))}
+                  className="text-right"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleCreatePortfolio}>إنشاء</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <Footer />
