@@ -42,14 +42,17 @@ export const DepartmentsList = () => {
       const workspaceResponse = await getWorkspace();
       console.log('Asana workspace response:', workspaceResponse);
       
-      if (!workspaceResponse?.data?.data?.[0]?.gid) {
-        throw new Error('No workspace found in Asana');
+      if (!workspaceResponse?.data?.data) {
+        throw new Error('No workspace data returned from Asana');
+      }
+
+      const workspace = workspaceResponse.data.data[0];
+      if (!workspace?.gid) {
+        throw new Error('Invalid workspace data from Asana');
       }
       
-      const workspaceId = workspaceResponse.data.data[0].gid;
-      
       // Create folder in Asana
-      const folderResponse = await createFolder(workspaceId, name);
+      const folderResponse = await createFolder(workspace.gid, name);
       console.log('Asana folder creation response:', folderResponse);
       
       if (!folderResponse?.data?.data?.gid) {
@@ -67,7 +70,10 @@ export const DepartmentsList = () => {
           }
         ]);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error('Failed to create department in database');
+      }
 
       toast.success("تم إنشاء الإدارة بنجاح");
       setIsOpen(false);
@@ -77,7 +83,7 @@ export const DepartmentsList = () => {
 
     } catch (error) {
       console.error('Error creating department:', error);
-      toast.error("حدث خطأ أثناء إنشاء الإدارة");
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء الإدارة");
     } finally {
       setIsLoading(false);
     }
