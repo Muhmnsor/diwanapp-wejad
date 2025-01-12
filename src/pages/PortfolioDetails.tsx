@@ -36,9 +36,11 @@ const PortfolioDetails = () => {
       }
 
       if (!data) {
+        console.error('Portfolio not found:', id);
         throw new Error('Portfolio not found');
       }
 
+      console.log('Portfolio data:', data);
       return data;
     },
     retry: 1,
