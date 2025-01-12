@@ -13,18 +13,19 @@ import { CreateAsanaProjectDialog } from "@/components/portfolios/dialogs/Create
 interface Project {
   id: string;
   title: string;
-  description?: string;
-  image_url?: string;
-  start_date?: string;
-  end_date?: string;
+  description?: string | null;
+  image_url?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 interface PortfolioProject {
   id: string;
   portfolio_id: string;
   project_id: string;
-  asana_status?: string;
-  asana_priority?: string;
+  created_at: string;
+  asana_status?: string | null;
+  asana_priority?: string | null;
   project: Project;
 }
 
@@ -65,7 +66,7 @@ const PortfolioDetails = () => {
           created_at,
           asana_status,
           asana_priority,
-          project:projects (
+          project:projects!inner (
             id,
             title,
             description,
@@ -81,6 +82,7 @@ const PortfolioDetails = () => {
         throw error;
       }
 
+      console.log('Portfolio projects data:', data);
       return data as PortfolioProject[];
     }
   });
