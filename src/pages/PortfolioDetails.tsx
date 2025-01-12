@@ -6,16 +6,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const PortfolioDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  const { data: portfolio, isLoading } = useQuery({
+  const { data: portfolio, isLoading, error } = useQuery({
     queryKey: ['portfolio', id],
     queryFn: async () => {
       console.log('Fetching portfolio details:', id);
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('portfolios')
         .select(`
           *,
@@ -25,15 +26,24 @@ const PortfolioDetails = () => {
           )
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching portfolio:', error);
-        throw error;
+      if (fetchError) {
+        console.error('Error fetching portfolio:', fetchError);
+        throw fetchError;
+      }
+
+      if (!data) {
+        throw new Error('Portfolio not found');
       }
 
       return data;
     },
+    retry: 1,
+    onError: (err) => {
+      console.error('Error fetching portfolio:', err);
+      toast.error('حدث خطأ أثناء تحميل بيانات المحفظة');
+    }
   });
 
   if (isLoading) {
@@ -45,8 +55,19 @@ const PortfolioDetails = () => {
     );
   }
 
-  if (!portfolio) {
-    return <div className="p-4" dir="rtl">لم يتم العثور على المحفظة</div>;
+  if (error || !portfolio) {
+    return (
+      <div className="p-4 text-center" dir="rtl">
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">لم يتم العثور على المحفظة</h2>
+        <p className="text-gray-600 mb-4">عذراً، لا يمكن العثور على المحفظة المطلوبة</p>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/portfolios')}
+        >
+          العودة إلى المحافظ
+        </Button>
+      </div>
+    );
   }
 
   return (
