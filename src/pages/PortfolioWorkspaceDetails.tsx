@@ -19,12 +19,9 @@ const PortfolioWorkspaceDetails = () => {
       console.log('Fetching workspace details for ID:', workspaceId);
       
       const { data: workspaceData, error: fetchError } = await supabase
-        .from('portfolio_tasks')
-        .select(`
-          *,
-          workspace:portfolio_workspaces(*)
-        `)
-        .eq('workspace_id', workspaceId)
+        .from('portfolio_workspaces')
+        .select('*')
+        .eq('asana_gid', workspaceId)
         .single();
 
       if (fetchError) {
@@ -50,12 +47,12 @@ const PortfolioWorkspaceDetails = () => {
       const { data, error } = await supabase
         .from('portfolio_tasks')
         .select('*')
-        .eq('workspace_id', workspaceId);
+        .eq('workspace_id', workspace?.id);
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!workspaceId
+    enabled: !!workspace?.id // Only run query if we have the workspace UUID
   });
 
   const getTasksProgress = () => {
@@ -115,7 +112,7 @@ const PortfolioWorkspaceDetails = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">{workspace.workspace?.name}</h1>
+              <h1 className="text-2xl font-bold">{workspace.name}</h1>
               <Button 
                 onClick={() => {}} // Will implement task creation dialog later
                 className="flex items-center gap-2"
@@ -128,7 +125,7 @@ const PortfolioWorkspaceDetails = () => {
             <Card className="p-4">
               <h2 className="text-lg font-semibold mb-2">الوصف</h2>
               <p className="text-gray-600 mb-4">
-                {workspace.workspace?.description || 'لا يوجد وصف'}
+                {workspace.description || 'لا يوجد وصف'}
               </p>
               
               <div className="space-y-2">
