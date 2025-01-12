@@ -9,12 +9,15 @@ import { toast } from 'sonner';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { Footer } from '@/components/layout/Footer';
 import { Progress } from '@/components/ui/progress';
+import { AddTaskDialog } from '@/components/portfolio/tasks/AddTaskDialog';
+import { useState } from 'react';
 
 const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
 
-  const { data: workspace, isLoading, error } = useQuery({
+  const { data: workspace, isLoading, error, refetch } = useQuery({
     queryKey: ['portfolio-workspace', workspaceId],
     queryFn: async () => {
       console.log('Fetching workspace details for ID:', workspaceId);
@@ -89,7 +92,7 @@ const PortfolioWorkspaceDetails = () => {
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">{workspace.name}</h1>
               <Button 
-                onClick={() => {}} // Will implement task creation dialog later
+                onClick={() => setIsAddTaskDialogOpen(true)}
                 className="flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />
@@ -144,6 +147,13 @@ const PortfolioWorkspaceDetails = () => {
         </div>
       </main>
       <Footer />
+
+      <AddTaskDialog
+        open={isAddTaskDialogOpen}
+        onOpenChange={setIsAddTaskDialogOpen}
+        workspaceId={workspaceId!}
+        onSuccess={refetch}
+      />
     </div>
   );
 };
