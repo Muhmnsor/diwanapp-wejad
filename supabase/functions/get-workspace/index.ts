@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 console.log("Get workspace function running")
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -18,7 +19,7 @@ serve(async (req) => {
     const { workspaceId } = await req.json()
     console.log('Fetching workspace details for ID:', workspaceId)
 
-    // First get the workspace details
+    // First get the workspace details from portfolio_workspaces
     const { data: workspace, error: workspaceError } = await supabase
       .from('portfolio_workspaces')
       .select('*')
@@ -32,7 +33,17 @@ serve(async (req) => {
 
     if (!workspace) {
       console.error('Workspace not found for ID:', workspaceId)
-      throw new Error('Workspace not found')
+      return new Response(
+        JSON.stringify({ 
+          name: 'مساحة عمل جديدة',
+          description: '',
+          tasks: []
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      )
     }
 
     // Then get the tasks for this workspace
@@ -45,6 +56,7 @@ serve(async (req) => {
         )
       `)
       .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: false })
 
     if (tasksError) {
       console.error('Error fetching tasks:', tasksError)
