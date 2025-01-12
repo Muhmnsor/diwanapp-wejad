@@ -6,6 +6,8 @@ import { Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
+import { Card } from "@/components/ui/card";
+import { Portfolio, PortfolioProject } from "@/types/portfolio";
 
 const PortfolioDetails = () => {
   const { id } = useParams();
@@ -13,26 +15,32 @@ const PortfolioDetails = () => {
   const { data: portfolio, isLoading: isLoadingPortfolio } = useQuery({
     queryKey: ['portfolio', id],
     queryFn: async () => {
+      console.log('Fetching portfolio details...');
       const { data, error } = await supabase
         .from('portfolios')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching portfolio:', error);
+        throw error;
+      }
+
+      return data as Portfolio;
     }
   });
 
   const { data: projects, isLoading: isLoadingProjects, refetch: refetchProjects } = useQuery({
     queryKey: ['portfolio-projects', id],
     queryFn: async () => {
+      console.log('Fetching portfolio projects...');
       const { data, error } = await supabase
         .from('portfolio_projects')
         .select(`
           portfolio_id,
           project_id,
-          projects:projects (
+          project:projects (
             id,
             title,
             description,
@@ -43,8 +51,12 @@ const PortfolioDetails = () => {
         `)
         .eq('portfolio_id', id);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching portfolio projects:', error);
+        throw error;
+      }
+
+      return data as PortfolioProject[];
     }
   });
 
@@ -105,9 +117,9 @@ const PortfolioDetails = () => {
         <div className="grid gap-4">
           {projects?.map((pp) => (
             <Card key={pp.project_id} className="p-4">
-              <h3 className="font-semibold">{pp.projects.title}</h3>
-              {pp.projects.description && (
-                <p className="text-muted-foreground mt-2">{pp.projects.description}</p>
+              <h3 className="font-semibold">{pp.project.title}</h3>
+              {pp.project.description && (
+                <p className="text-muted-foreground mt-2">{pp.project.description}</p>
               )}
             </Card>
           ))}

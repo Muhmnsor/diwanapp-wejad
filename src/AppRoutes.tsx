@@ -16,6 +16,7 @@ import Documents from "./pages/Documents";
 import Tasks from "./pages/Tasks";
 import Ideas from "./pages/Ideas";
 import Finance from "./pages/Finance";
+import PortfolioDetails from "./pages/PortfolioDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 
