@@ -63,6 +63,20 @@ serve(async (req) => {
     const teamGid = teamsData.data[0].gid // Use the first team
     console.log('Using team GID:', teamGid)
 
+    // Map status to color
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'not_started':
+          return 'light-gray';
+        case 'in_progress':
+          return 'blue';
+        case 'completed':
+          return 'green';
+        default:
+          return 'light-gray';
+      }
+    };
+
     // Create project in Asana workspace
     const response = await fetch('https://app.asana.com/api/1.0/projects', {
       method: 'POST',
@@ -79,7 +93,10 @@ serve(async (req) => {
           team: teamGid,
           start_on: startDate,
           due_on: dueDate,
-          current_status: status === 'not_started' ? 'on_track' : status,
+          current_status: {
+            text: status === 'not_started' ? 'On Track' : status,
+            color: getStatusColor(status)
+          },
           public: isPublic === 'public'
         }
       })
