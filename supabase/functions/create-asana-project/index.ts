@@ -23,7 +23,7 @@ serve(async (req) => {
       throw new Error('Portfolio GID is required')
     }
 
-    // First get the portfolio details to get the workspace
+    // First get the portfolio details to get the workspace and team
     const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioGid}`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -41,6 +41,28 @@ serve(async (req) => {
 
     console.log('Found workspace GID:', workspaceGid)
 
+    // Get the team for this workspace
+    const teamsResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/teams`, {
+      headers: {
+        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!teamsResponse.ok) {
+      console.error('Failed to fetch teams:', await teamsResponse.json())
+      throw new Error('Failed to fetch workspace teams')
+    }
+
+    const teamsData = await teamsResponse.json()
+    if (!teamsData.data || teamsData.data.length === 0) {
+      console.error('No teams found in workspace')
+      throw new Error('No teams found in workspace')
+    }
+
+    const teamGid = teamsData.data[0].gid // Use the first team
+    console.log('Using team GID:', teamGid)
+
     // Create project in Asana workspace
     const response = await fetch('https://app.asana.com/api/1.0/projects', {
       method: 'POST',
@@ -54,6 +76,7 @@ serve(async (req) => {
           name,
           notes: description,
           workspace: workspaceGid,
+          team: teamGid,
           start_on: startDate,
           due_on: dueDate,
           current_status: status === 'not_started' ? 'on_track' : status,
