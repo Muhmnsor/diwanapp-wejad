@@ -38,8 +38,10 @@ const PortfolioDetails = () => {
       const { data, error } = await supabase
         .from('portfolio_projects')
         .select(`
+          id,
           portfolio_id,
           project_id,
+          created_at,
           project:projects (
             id,
             title,
