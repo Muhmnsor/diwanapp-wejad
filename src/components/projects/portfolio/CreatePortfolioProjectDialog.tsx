@@ -37,7 +37,46 @@ export const CreatePortfolioProjectDialog = ({
     try {
       console.log('Creating portfolio project with data:', formData);
       
-      // First create the project in our database
+      // First get the portfolio's Asana GID
+      const { data: portfolioData, error: portfolioError } = await supabase
+        .from('portfolio_workspaces')
+        .select('asana_gid')
+        .eq('id', portfolioId)
+        .single();
+
+      if (portfolioError) {
+        console.error('Error fetching portfolio:', portfolioError);
+        throw new Error('خطأ في جلب بيانات المحفظة');
+      }
+
+      if (!portfolioData?.asana_gid) {
+        console.error('Portfolio has no Asana GID:', portfolioId);
+        throw new Error('المحفظة غير مرتبطة بمنصة Asana');
+      }
+
+      console.log('Found portfolio Asana GID:', portfolioData.asana_gid);
+
+      // Create the project in Asana first
+      const { data: asanaData, error: asanaError } = await supabase.functions.invoke('create-asana-project', {
+        body: {
+          portfolioGid: portfolioData.asana_gid,
+          name: formData.name,
+          description: formData.description,
+          startDate: formData.startDate || null,
+          dueDate: formData.dueDate || null,
+          status: formData.status,
+          public: formData.privacy === 'public'
+        }
+      });
+
+      if (asanaError) {
+        console.error('Error creating Asana project:', asanaError);
+        throw new Error('حدث خطأ أثناء إنشاء المشروع في منصة Asana');
+      }
+
+      console.log('Successfully created Asana project:', asanaData);
+
+      // Then create the project in our database
       const { data: projectData, error: projectError } = await supabase
         .from('portfolio_tasks')
         .insert([{
@@ -45,19 +84,25 @@ export const CreatePortfolioProjectDialog = ({
           description: formData.description,
           status: formData.status,
           due_date: formData.dueDate || null,
-          workspace_id: portfolioId
+          workspace_id: portfolioId,
+          asana_gid: asanaData.gid // Store the Asana project GID
         }])
         .select()
         .single();
 
-      if (projectError) throw projectError;
+      if (projectError) {
+        console.error('Error creating portfolio project in database:', projectError);
+        throw projectError;
+      }
+
+      console.log('Successfully created project in database:', projectData);
 
       toast.success("تم إنشاء المشروع بنجاح");
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating portfolio project:', error);
-      toast.error("حدث خطأ أثناء إنشاء المشروع");
+      console.error('Error in project creation:', error);
+      toast.error(error.message || "حدث خطأ أثناء إنشاء المشروع");
     } finally {
       setIsSubmitting(false);
     }
