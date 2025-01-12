@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, FolderKanban, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Plus, Loader2, FolderKanban, ChevronDown, ChevronRight, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   Collapsible,
@@ -102,6 +102,26 @@ const Tasks = () => {
     }
   });
 
+  // Add sync function
+  const syncPortfolios = async () => {
+    try {
+      const { error } = await supabase.functions.invoke('sync-asana-portfolios')
+      
+      if (error) {
+        console.error('Error syncing portfolios:', error);
+        toast.error('حدث خطأ أثناء مزامنة المحافظ');
+        return;
+      }
+
+      toast.success('تم مزامنة المحافظ بنجاح');
+      refetchPortfolios();
+      
+    } catch (error) {
+      console.error('Error syncing portfolios:', error);
+      toast.error('حدث خطأ أثناء مزامنة المحافظ');
+    }
+  };
+
   const handleCreatePortfolio = async () => {
     try {
       if (!portfolioForm.name.trim()) {
@@ -185,10 +205,25 @@ const Tasks = () => {
     }
   };
 
+  // Update handleDeletePortfolio
   const handleDeletePortfolio = async () => {
     try {
       if (!selectedPortfolio) return;
 
+      // First delete from Asana if we have an Asana GID
+      if (selectedPortfolio.asana_gid) {
+        const { error: asanaError } = await supabase.functions.invoke('delete-asana-portfolio', {
+          body: { asana_gid: selectedPortfolio.asana_gid }
+        });
+
+        if (asanaError) {
+          console.error('Error deleting from Asana:', asanaError);
+          toast.error('حدث خطأ أثناء حذف المحفظة من Asana');
+          return;
+        }
+      }
+
+      // Then delete from our database
       const { error } = await supabase
         .from('portfolios')
         .delete()
@@ -245,13 +280,23 @@ const Tasks = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-primary">المحافظ والمشاريع</h1>
-          <Button onClick={() => {
-            setPortfolioForm({ name: '', description: '' });
-            setShowCreateDialog(true);
-          }}>
-            <Plus className="h-4 w-4 ml-2" />
-            محفظة جديدة
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={syncPortfolios}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              مزامنة مع Asana
+            </Button>
+            <Button onClick={() => {
+              setPortfolioForm({ name: '', description: '' });
+              setShowCreateDialog(true);
+            }}>
+              <Plus className="h-4 w-4 ml-2" />
+              محفظة جديدة
+            </Button>
+          </div>
         </div>
 
         {isLoadingPortfolios || isLoadingPortfolioProjects ? (
