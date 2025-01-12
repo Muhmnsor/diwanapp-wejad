@@ -3,12 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { AsanaSyncSettings } from "./sync/AsanaSyncSettings";
 import { toast } from "sonner";
+import { useAsanaApi } from "@/hooks/useAsanaApi";
 
 interface DepartmentProjectsProps {
   departmentId: string;
 }
 
 export const DepartmentProjects = ({ departmentId }: DepartmentProjectsProps) => {
+  const { getWorkspace, createFolder } = useAsanaApi();
+
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['department-projects', departmentId],
     queryFn: async () => {
@@ -24,6 +27,37 @@ export const DepartmentProjects = ({ departmentId }: DepartmentProjectsProps) =>
         console.error('Error fetching department:', deptError);
         toast.error('حدث خطأ في جلب بيانات الإدارة');
         throw deptError;
+      }
+
+      // If department doesn't have an Asana folder, create one
+      if (!department.asana_folder_gid) {
+        try {
+          // Get workspace first
+          const workspace = await getWorkspace();
+          console.log('Got Asana workspace:', workspace);
+
+          if (workspace?.gid) {
+            // Create portfolio/folder in Asana
+            const folder = await createFolder(workspace.gid, department.name);
+            console.log('Created Asana folder:', folder);
+
+            if (folder?.gid) {
+              // Update department with Asana folder GID
+              const { error: updateError } = await supabase
+                .from('departments')
+                .update({ asana_folder_gid: folder.gid })
+                .eq('id', departmentId);
+
+              if (updateError) {
+                console.error('Error updating department with Asana GID:', updateError);
+                toast.error('حدث خطأ في تحديث معرف مجلد Asana');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error creating Asana folder:', error);
+          toast.error('حدث خطأ في إنشاء مجلد Asana');
+        }
       }
 
       console.log('Department data:', department);

@@ -47,7 +47,6 @@ serve(async (req) => {
     console.log(`Processing Asana API request: ${action}`);
 
     switch (action) {
-      // الوظائف الحالية
       case 'getWorkspace':
         response = await fetch(`${baseUrl}/workspaces`, {
           headers
@@ -85,7 +84,6 @@ serve(async (req) => {
         });
         break;
 
-      // وظائف جديدة للتزامن
       case 'createProject':
         if (!folderId || !projectName) {
           throw new Error('Folder ID and project name are required');

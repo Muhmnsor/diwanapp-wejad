@@ -39,7 +39,7 @@ export const useAsanaApi = () => {
   };
 
   return {
-    // الوظائف الحالية
+    // Current functions
     getWorkspace: () => callAsanaApi({ action: 'getWorkspace' }),
     getFolder: (folderId: string) => callAsanaApi({ action: 'getFolder', folderId }),
     createFolder: (workspaceId: string, folderName: string) => 
@@ -47,7 +47,7 @@ export const useAsanaApi = () => {
     getFolderProjects: (folderId: string) => 
       callAsanaApi({ action: 'getFolderProjects', folderId }),
       
-    // وظائف جديدة للتزامن
+    // New sync functions
     createProject: (folderId: string, projectName: string, projectNotes?: string) =>
       callAsanaApi({ action: 'createProject', folderId, projectName, projectNotes }),
     createTask: (projectId: string, taskName: string, taskNotes?: string) =>
