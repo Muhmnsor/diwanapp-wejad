@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, LayoutDashboard, Settings } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Settings, ListTodo } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 export const TasksAdminActions = () => {
@@ -23,6 +23,16 @@ export const TasksAdminActions = () => {
       >
         <ArrowLeft className="h-4 w-4" />
         <span>الإدارات</span>
+      </Button>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        className="flex items-center gap-2"
+        onClick={() => navigate("/tasks/my-tasks")}
+      >
+        <ListTodo className="h-4 w-4" />
+        <span>مهامي</span>
       </Button>
       
       <Button
