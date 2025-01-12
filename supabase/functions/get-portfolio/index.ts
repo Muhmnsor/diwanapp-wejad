@@ -35,8 +35,8 @@ serve(async (req) => {
     // First get the Asana GID from our database
     console.log('Step 3: Querying database for portfolio with ID:', portfolioId)
     const { data: portfolioData, error: dbError } = await supabase
-      .from('portfolios')
-      .select('asana_gid, name')
+      .from('portfolio_workspaces')  // Changed from 'portfolios' to 'portfolio_workspaces'
+      .select('asana_gid, name, description')
       .eq('id', portfolioId)
       .single()
 
@@ -54,7 +54,20 @@ serve(async (req) => {
 
     if (!portfolioData.asana_gid) {
       console.error('Step 3.3: Portfolio found but no Asana GID:', portfolioData)
-      throw new Error('المحفظة موجودة ولكن لا يوجد معرف Asana مرتبط بها')
+      return new Response(
+        JSON.stringify({
+          name: portfolioData.name,
+          description: portfolioData.description,
+          items: []
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          },
+          status: 200 
+        }
+      )
     }
 
     const asanaGid = portfolioData.asana_gid
@@ -72,7 +85,20 @@ serve(async (req) => {
     if (!portfolioResponse.ok) {
       const error = await portfolioResponse.json()
       console.error('Step 5.1: Asana API error:', error)
-      throw new Error(`خطأ في واجهة برمجة تطبيقات Asana: ${portfolioResponse.statusText}`)
+      return new Response(
+        JSON.stringify({
+          name: portfolioData.name,
+          description: portfolioData.description,
+          items: []
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          },
+          status: 200 
+        }
+      )
     }
 
     const asanaPortfolioData = await portfolioResponse.json()
@@ -90,7 +116,19 @@ serve(async (req) => {
     if (!itemsResponse.ok) {
       const error = await itemsResponse.json()
       console.error('Step 7.1: Asana API error when fetching items:', error)
-      throw new Error(`خطأ في جلب عناصر المحفظة: ${itemsResponse.statusText}`)
+      return new Response(
+        JSON.stringify({
+          ...asanaPortfolioData.data,
+          items: []
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          },
+          status: 200 
+        }
+      )
     }
 
     const itemsData = await itemsResponse.json()
