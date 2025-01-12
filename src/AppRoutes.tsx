@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Index from "@/pages/Index";
 import PortfolioDetails from "@/pages/PortfolioDetails";
 import PortfolioProjectDetails from "@/pages/PortfolioProjectDetails";
@@ -17,3 +17,9 @@ export const router = createBrowserRouter([
     element: <PortfolioProjectDetails />,
   },
 ]);
+
+const AppRoutes = () => {
+  return <RouterProvider router={router} />;
+};
+
+export default AppRoutes;
