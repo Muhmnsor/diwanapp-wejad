@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, FolderKanban, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Loader2, FolderKanban, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Collapsible,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
 
 interface Portfolio {
   id: string;
@@ -44,13 +45,16 @@ interface PortfolioProject {
 const Tasks = () => {
   const [expandedPortfolios, setExpandedPortfolios] = useState<{ [key: string]: boolean }>({});
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newPortfolio, setNewPortfolio] = useState({
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(null);
+  const [portfolioForm, setPortfolioForm] = useState({
     name: '',
     description: ''
   });
 
   // Fetch portfolios
-  const { data: portfolios, isLoading: isLoadingPortfolios } = useQuery({
+  const { data: portfolios, isLoading: isLoadingPortfolios, refetch: refetchPortfolios } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
       console.log('Fetching portfolios...');
@@ -100,7 +104,7 @@ const Tasks = () => {
 
   const handleCreatePortfolio = async () => {
     try {
-      if (!newPortfolio.name.trim()) {
+      if (!portfolioForm.name.trim()) {
         toast.error('الرجاء إدخال اسم المحفظة');
         return;
       }
@@ -108,8 +112,8 @@ const Tasks = () => {
       // First create portfolio in Asana
       const asanaResponse = await supabase.functions.invoke('create-asana-portfolio', {
         body: { 
-          name: newPortfolio.name,
-          notes: newPortfolio.description
+          name: portfolioForm.name,
+          notes: portfolioForm.description
         }
       });
 
@@ -121,17 +125,15 @@ const Tasks = () => {
       console.log('Created Asana portfolio with GID:', asanaGid);
 
       // Then create in our database with the Asana GID
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('portfolios')
         .insert([
           { 
-            name: newPortfolio.name,
-            description: newPortfolio.description,
+            name: portfolioForm.name,
+            description: portfolioForm.description,
             asana_gid: asanaGid
           }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (error) {
         console.error('Error creating portfolio:', error);
@@ -141,11 +143,71 @@ const Tasks = () => {
 
       toast.success('تم إنشاء المحفظة بنجاح');
       setShowCreateDialog(false);
-      setNewPortfolio({ name: '', description: '' });
+      setPortfolioForm({ name: '', description: '' });
+      refetchPortfolios();
       
     } catch (error) {
       console.error('Error in form submission:', error);
       toast.error('حدث خطأ أثناء إنشاء المحفظة');
+    }
+  };
+
+  const handleEditPortfolio = async () => {
+    try {
+      if (!selectedPortfolio || !portfolioForm.name.trim()) {
+        toast.error('الرجاء إدخال اسم المحفظة');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('portfolios')
+        .update({ 
+          name: portfolioForm.name,
+          description: portfolioForm.description
+        })
+        .eq('id', selectedPortfolio.id);
+
+      if (error) {
+        console.error('Error updating portfolio:', error);
+        toast.error('حدث خطأ أثناء تحديث المحفظة');
+        return;
+      }
+
+      toast.success('تم تحديث المحفظة بنجاح');
+      setShowEditDialog(false);
+      setSelectedPortfolio(null);
+      setPortfolioForm({ name: '', description: '' });
+      refetchPortfolios();
+
+    } catch (error) {
+      console.error('Error updating portfolio:', error);
+      toast.error('حدث خطأ أثناء تحديث المحفظة');
+    }
+  };
+
+  const handleDeletePortfolio = async () => {
+    try {
+      if (!selectedPortfolio) return;
+
+      const { error } = await supabase
+        .from('portfolios')
+        .delete()
+        .eq('id', selectedPortfolio.id);
+
+      if (error) {
+        console.error('Error deleting portfolio:', error);
+        toast.error('حدث خطأ أثناء حذف المحفظة');
+        return;
+      }
+
+      toast.success('تم حذف المحفظة بنجاح');
+      setShowDeleteDialog(false);
+      setSelectedPortfolio(null);
+      refetchPortfolios();
+
+    } catch (error) {
+      console.error('Error deleting portfolio:', error);
+      toast.error('حدث خطأ أثناء حذف المحفظة');
     }
   };
 
@@ -162,14 +224,31 @@ const Tasks = () => {
       .map(pp => pp.projects) || [];
   };
 
+  const openEditDialog = (portfolio: Portfolio) => {
+    setSelectedPortfolio(portfolio);
+    setPortfolioForm({
+      name: portfolio.name,
+      description: portfolio.description || ''
+    });
+    setShowEditDialog(true);
+  };
+
+  const openDeleteDialog = (portfolio: Portfolio) => {
+    setSelectedPortfolio(portfolio);
+    setShowDeleteDialog(true);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-primary">المحافظ والمشاريع</h1>
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button onClick={() => {
+            setPortfolioForm({ name: '', description: '' });
+            setShowCreateDialog(true);
+          }}>
             <Plus className="h-4 w-4 ml-2" />
             محفظة جديدة
           </Button>
@@ -198,11 +277,33 @@ const Tasks = () => {
                       <FolderKanban className="h-5 w-5 text-primary" />
                       <h3 className="text-lg font-semibold">{portfolio.name}</h3>
                     </div>
-                    {expandedPortfolios[portfolio.id] ? (
-                      <ChevronDown className="h-5 w-5" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditDialog(portfolio);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDeleteDialog(portfolio);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                      {expandedPortfolios[portfolio.id] ? (
+                        <ChevronDown className="h-5 w-5" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5" />
+                      )}
+                    </div>
                   </CollapsibleTrigger>
 
                   <CollapsibleContent className="mt-4 space-y-2">
@@ -229,6 +330,7 @@ const Tasks = () => {
           </div>
         )}
 
+        {/* Create Portfolio Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -239,8 +341,8 @@ const Tasks = () => {
                 <Input
                   id="name"
                   placeholder="اسم المحفظة"
-                  value={newPortfolio.name}
-                  onChange={(e) => setNewPortfolio(prev => ({ ...prev, name: e.target.value }))}
+                  value={portfolioForm.name}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, name: e.target.value }))}
                   className="text-right"
                 />
               </div>
@@ -248,8 +350,8 @@ const Tasks = () => {
                 <Textarea
                   id="description"
                   placeholder="وصف المحفظة"
-                  value={newPortfolio.description}
-                  onChange={(e) => setNewPortfolio(prev => ({ ...prev, description: e.target.value }))}
+                  value={portfolioForm.description}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, description: e.target.value }))}
                   className="text-right"
                 />
               </div>
@@ -259,6 +361,45 @@ const Tasks = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Portfolio Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-right">تعديل المحفظة</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Input
+                  id="name"
+                  placeholder="اسم المحفظة"
+                  value={portfolioForm.name}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="text-right"
+                />
+              </div>
+              <div className="space-y-2">
+                <Textarea
+                  id="description"
+                  placeholder="وصف المحفظة"
+                  value={portfolioForm.description}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="text-right"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleEditPortfolio}>حفظ التغييرات</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Portfolio Dialog */}
+        <ReportDeleteDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onConfirm={handleDeletePortfolio}
+        />
       </main>
 
       <Footer />
