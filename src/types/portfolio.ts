@@ -15,6 +15,8 @@ export interface PortfolioProject {
   project_id: string;
   asana_gid?: string;
   created_at: string;
+  asana_status?: string;
+  asana_priority?: string;
   project: {
     id: string;
     title: string;

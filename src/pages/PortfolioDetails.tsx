@@ -8,9 +8,12 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Portfolio, PortfolioProject } from "@/types/portfolio";
+import { useState } from "react";
+import { CreateAsanaProjectDialog } from "@/components/portfolios/dialogs/CreateAsanaProjectDialog";
 
 const PortfolioDetails = () => {
   const { id } = useParams();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: portfolio, isLoading: isLoadingPortfolio } = useQuery({
     queryKey: ['portfolio', id],
@@ -42,6 +45,8 @@ const PortfolioDetails = () => {
           portfolio_id,
           project_id,
           created_at,
+          asana_status,
+          asana_priority,
           project:projects (
             id,
             title,
@@ -58,7 +63,7 @@ const PortfolioDetails = () => {
         throw error;
       }
 
-      return data as PortfolioProject[];
+      return data as unknown as PortfolioProject[];
     }
   });
 
@@ -105,7 +110,7 @@ const PortfolioDetails = () => {
               <RefreshCw className="h-4 w-4" />
               مزامنة مع Asana
             </Button>
-            <Button>
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="h-4 w-4 ml-2" />
               مشروع جديد
             </Button>
@@ -118,14 +123,51 @@ const PortfolioDetails = () => {
 
         <div className="grid gap-4">
           {projects?.map((pp) => (
-            <Card key={pp.project_id} className="p-4">
-              <h3 className="font-semibold">{pp.project.title}</h3>
-              {pp.project.description && (
-                <p className="text-muted-foreground mt-2">{pp.project.description}</p>
-              )}
+            <Card key={pp.id} className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold">{pp.project.title}</h3>
+                  {pp.project.description && (
+                    <p className="text-muted-foreground mt-2">{pp.project.description}</p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  {pp.asana_priority && (
+                    <span className={`text-sm px-2 py-1 rounded ${
+                      pp.asana_priority === 'high' ? 'bg-red-100 text-red-800' :
+                      pp.asana_priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {pp.asana_priority === 'high' ? 'أولوية عالية' :
+                       pp.asana_priority === 'medium' ? 'أولوية متوسطة' :
+                       'أولوية منخفضة'}
+                    </span>
+                  )}
+                  {pp.asana_status && (
+                    <span className={`text-sm px-2 py-1 rounded ${
+                      pp.asana_status === 'off_track' ? 'bg-red-100 text-red-800' :
+                      pp.asana_status === 'at_risk' ? 'bg-yellow-100 text-yellow-800' :
+                      pp.asana_status === 'on_hold' ? 'bg-gray-100 text-gray-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {pp.asana_status === 'off_track' ? 'خارج المسار' :
+                       pp.asana_status === 'at_risk' ? 'في خطر' :
+                       pp.asana_status === 'on_hold' ? 'متوقف' :
+                       'في المسار'}
+                    </span>
+                  )}
+                </div>
+              </div>
             </Card>
           ))}
         </div>
+
+        <CreateAsanaProjectDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          portfolioId={id!}
+          onSuccess={refetchProjects}
+        />
       </main>
       <Footer />
     </div>
