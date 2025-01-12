@@ -39,26 +39,24 @@ export const PortfolioForm = ({ onSuccess }: PortfolioFormProps) => {
       console.log('Creating portfolio with values:', values);
       
       // First create the portfolio in Asana
-      const asanaResponse = await fetch('/api/asana/create-portfolio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+      const { data: asanaData, error: asanaError } = await supabase.functions.invoke('create-portfolio', {
+        body: JSON.stringify(values)
       });
       
-      const asanaData = await asanaResponse.json();
-      
-      if (!asanaResponse.ok) {
-        throw new Error(asanaData.message || 'Failed to create portfolio in Asana');
+      if (asanaError) {
+        throw new Error(asanaError.message || 'Failed to create portfolio in Asana');
       }
 
+      console.log('Asana portfolio created:', asanaData);
+
       // Then create in Supabase with the Asana GID
-      const { error } = await supabase.from('portfolio_workspaces').insert({
+      const { error: supabaseError } = await supabase.from('portfolio_workspaces').insert({
         name: values.name,
         description: values.description,
         asana_gid: asanaData.gid,
       });
 
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
 
       toast.success('تم إنشاء المحفظة بنجاح');
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });

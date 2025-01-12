@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
 const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
@@ -12,6 +11,8 @@ serve(async (req) => {
 
   try {
     const { name, description } = await req.json()
+
+    console.log('Creating portfolio in Asana:', { name, description })
 
     // Create portfolio in Asana
     const asanaResponse = await fetch('https://app.asana.com/api/1.0/portfolios', {
@@ -34,6 +35,7 @@ serve(async (req) => {
     }
 
     const asanaData = await asanaResponse.json()
+    console.log('Asana portfolio created:', asanaData)
 
     return new Response(
       JSON.stringify(asanaData.data),
@@ -43,6 +45,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('Error creating portfolio:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
