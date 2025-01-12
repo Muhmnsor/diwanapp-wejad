@@ -891,6 +891,78 @@ export type Database = {
           },
         ]
       }
+      portfolio_projects: {
+        Row: {
+          asana_gid: string | null
+          created_at: string
+          id: string
+          portfolio_id: string | null
+          project_id: string | null
+        }
+        Insert: {
+          asana_gid?: string | null
+          created_at?: string
+          id?: string
+          portfolio_id?: string | null
+          project_id?: string | null
+        }
+        Update: {
+          asana_gid?: string | null
+          created_at?: string
+          id?: string
+          portfolio_id?: string | null
+          project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_projects_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolios: {
+        Row: {
+          asana_folder_gid: string | null
+          asana_gid: string | null
+          asana_sync_enabled: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          asana_folder_gid?: string | null
+          asana_gid?: string | null
+          asana_sync_enabled?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          asana_folder_gid?: string | null
+          asana_gid?: string | null
+          asana_sync_enabled?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
