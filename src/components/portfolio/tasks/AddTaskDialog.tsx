@@ -34,45 +34,6 @@ export const AddTaskDialog = ({
     console.log('Starting task creation process...');
     
     try {
-      // First check if we have this workspace in our database
-      console.log('Checking for workspace:', workspaceId);
-      const { data: workspace, error: workspaceError } = await supabase
-        .from('portfolio_workspaces')
-        .select('id, name')
-        .eq('asana_gid', workspaceId)
-        .maybeSingle();
-
-      if (workspaceError) {
-        console.error('Error checking workspace:', workspaceError);
-        throw workspaceError;
-      }
-
-      let workspaceDbId;
-      
-      if (!workspace) {
-        console.log('Workspace not found, creating new workspace...');
-        // Create the workspace in our database
-        const { data: newWorkspace, error: createError } = await supabase
-          .from('portfolio_workspaces')
-          .insert([
-            {
-              name: 'New Workspace', // Default name
-              asana_gid: workspaceId
-            }
-          ])
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating workspace:', createError);
-          throw createError;
-        }
-
-        workspaceDbId = newWorkspace.id;
-      } else {
-        workspaceDbId = workspace.id;
-      }
-
       console.log('Creating task in Asana with data:', {
         workspaceId,
         title,
@@ -81,7 +42,7 @@ export const AddTaskDialog = ({
         priority
       });
 
-      // Create task in Asana
+      // First create task in Asana
       const { data: asanaResponse, error: asanaError } = await supabase.functions.invoke('create-asana-task', {
         body: {
           workspaceId,
@@ -100,8 +61,27 @@ export const AddTaskDialog = ({
 
       console.log('Successfully created task in Asana:', asanaResponse);
 
+      // Then get the workspace UUID from Asana GID
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('portfolio_workspaces')
+        .select('id')
+        .eq('asana_gid', workspaceId)
+        .single();
+
+      if (workspaceError) {
+        console.error('Error fetching workspace:', workspaceError);
+        toast.error('حدث خطأ أثناء إنشاء المهمة');
+        throw workspaceError;
+      }
+
+      if (!workspace) {
+        console.error('Workspace not found');
+        toast.error('لم يتم العثور على مساحة العمل');
+        return;
+      }
+
       console.log('Creating new portfolio task:', {
-        workspace_id: workspaceDbId,
+        workspace_id: workspace.id,
         title,
         description,
         due_date: dueDate,
@@ -114,7 +94,7 @@ export const AddTaskDialog = ({
         .from('portfolio_tasks')
         .insert([
           {
-            workspace_id: workspaceDbId,
+            workspace_id: workspace.id,
             title,
             description,
             due_date: dueDate,
