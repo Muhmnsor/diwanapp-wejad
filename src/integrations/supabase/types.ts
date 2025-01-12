@@ -939,6 +939,203 @@ export type Database = {
           },
         ]
       }
+      portfolio_subtasks: {
+        Row: {
+          asana_gid: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          parent_task_id: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          parent_task_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          parent_task_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_subtasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_task_attachments: {
+        Row: {
+          asana_gid: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_url: string
+          id: string
+          task_id: string | null
+        }
+        Insert: {
+          asana_gid?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_url: string
+          id?: string
+          task_id?: string | null
+        }
+        Update: {
+          asana_gid?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_task_comments: {
+        Row: {
+          asana_gid: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          task_id: string | null
+        }
+        Insert: {
+          asana_gid?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          task_id?: string | null
+        }
+        Update: {
+          asana_gid?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_tasks: {
+        Row: {
+          asana_gid: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          asana_gid?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_tasks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_workspaces: {
+        Row: {
+          asana_gid: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          asana_gid?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          asana_gid?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portfolios: {
         Row: {
           asana_folder_gid: string | null
