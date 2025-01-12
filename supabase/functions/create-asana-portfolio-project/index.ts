@@ -31,34 +31,17 @@ serve(async (req) => {
     }
 
     if (!portfolio.asana_gid) {
-      throw new Error('Portfolio has no Asana workspace ID')
+      throw new Error('Portfolio has no Asana GID')
     }
 
-    console.log('Creating project in Asana workspace:', {
+    console.log('Creating project in Asana portfolio:', {
       portfolioId,
-      workspaceGid: portfolio.asana_gid,
+      asanaGid: portfolio.asana_gid,
       project
     })
 
-    // First verify the workspace exists
-    const workspaceResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${portfolio.asana_gid}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Accept': 'application/json'
-      }
-    })
-
-    if (!workspaceResponse.ok) {
-      const workspaceError = await workspaceResponse.json()
-      console.error('Error verifying workspace:', workspaceError)
-      throw new Error(`Invalid workspace: ${workspaceError.errors?.[0]?.message || workspaceResponse.statusText}`)
-    }
-
-    console.log('Workspace verified, creating project...')
-
-    // Create the project in Asana workspace
-    const createResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${portfolio.asana_gid}/projects`, {
+    // Create the project directly in the portfolio
+    const createResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolio.asana_gid}/addItem`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -71,31 +54,6 @@ serve(async (req) => {
           notes: project.description,
           due_date: project.dueDate,
           start_date: project.startDate,
-          owner: 'me'
-        }
-      })
-    })
-
-    const asanaProject = await createResponse.json()
-    console.log('Asana API response:', asanaProject)
-
-    if (!createResponse.ok) {
-      console.error('Asana API error:', asanaProject)
-      throw new Error(`Asana API error: ${createResponse.statusText || asanaProject.errors?.[0]?.message || 'Unknown error'}`)
-    }
-
-    console.log('Project created in Asana:', asanaProject)
-
-    // Now update the project with custom fields
-    const updateResponse = await fetch(`https://app.asana.com/api/1.0/projects/${asanaProject.data.gid}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        data: {
           custom_fields: {
             status: project.status,
             priority: project.priority
@@ -104,13 +62,16 @@ serve(async (req) => {
       })
     })
 
-    if (!updateResponse.ok) {
-      const updateError = await updateResponse.json()
-      console.error('Failed to update project custom fields:', updateError)
+    const asanaResponse = await createResponse.json()
+    console.log('Asana API response:', asanaResponse)
+
+    if (!createResponse.ok) {
+      console.error('Asana API error:', asanaResponse)
+      throw new Error(`Asana API error: ${asanaResponse.errors?.[0]?.message || createResponse.statusText}`)
     }
 
     return new Response(
-      JSON.stringify(asanaProject.data),
+      JSON.stringify(asanaResponse.data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
