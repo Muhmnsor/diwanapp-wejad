@@ -40,11 +40,15 @@ const PortfolioDetails = () => {
       return data;
     },
     retry: 1,
-    onError: (err) => {
-      console.error('Error fetching portfolio:', err);
-      toast.error('حدث خطأ أثناء تحميل بيانات المحفظة');
+    meta: {
+      errorMessage: 'حدث خطأ أثناء تحميل بيانات المحفظة'
     }
   });
+
+  // Show error toast when query fails
+  if (error) {
+    toast.error('حدث خطأ أثناء تحميل بيانات المحفظة');
+  }
 
   if (isLoading) {
     return (
