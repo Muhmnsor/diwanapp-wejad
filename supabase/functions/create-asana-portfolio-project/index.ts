@@ -40,8 +40,8 @@ serve(async (req) => {
       project
     })
 
-    // Create project in Asana using the correct endpoint and payload structure
-    const response = await fetch('https://app.asana.com/api/1.0/projects', {
+    // First create the project in Asana workspace
+    const createResponse = await fetch('https://app.asana.com/api/1.0/workspaces/' + portfolio.asana_gid + '/projects', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -52,9 +52,32 @@ serve(async (req) => {
         data: {
           name: project.title,
           notes: project.description,
-          workspace: portfolio.asana_gid,
           due_date: project.dueDate,
           start_date: project.startDate,
+          owner: 'me'
+        }
+      })
+    })
+
+    const asanaProject = await createResponse.json()
+
+    if (!createResponse.ok) {
+      console.error('Asana API error:', asanaProject)
+      throw new Error(`Asana API error: ${createResponse.statusText || asanaProject.errors?.[0]?.message || 'Unknown error'}`)
+    }
+
+    console.log('Project created in Asana:', asanaProject)
+
+    // Now update the project with custom fields
+    const updateResponse = await fetch(`https://app.asana.com/api/1.0/projects/${asanaProject.data.gid}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        data: {
           custom_fields: {
             status: project.status,
             priority: project.priority
@@ -63,14 +86,9 @@ serve(async (req) => {
       })
     })
 
-    const asanaProject = await response.json()
-
-    if (!response.ok) {
-      console.error('Asana API error:', asanaProject)
-      throw new Error(`Asana API error: ${response.statusText || asanaProject.errors?.[0]?.message || 'Unknown error'}`)
+    if (!updateResponse.ok) {
+      console.error('Failed to update project custom fields:', await updateResponse.json())
     }
-
-    console.log('Project created in Asana:', asanaProject)
 
     return new Response(
       JSON.stringify(asanaProject.data),
