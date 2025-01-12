@@ -25,7 +25,14 @@ serve(async (req) => {
       throw new Error('Asana access token not configured')
     }
 
-    console.log('Creating task in Asana workspace:', workspaceId)
+    // Get the Asana workspace ID from environment
+    const asanaWorkspaceId = Deno.env.get('ASANA_WORKSPACE_ID')
+    if (!asanaWorkspaceId) {
+      console.error('Asana workspace ID not found')
+      throw new Error('Asana workspace ID not configured')
+    }
+
+    console.log('Creating task in Asana workspace:', asanaWorkspaceId)
 
     // Create task in Asana
     const asanaResponse = await fetch('https://app.asana.com/api/1.0/tasks', {
@@ -37,7 +44,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         data: {
-          workspace: workspaceId,
+          workspace: asanaWorkspaceId, // Use the workspace ID from environment
+          projects: [workspaceId], // Use the provided ID as project ID instead
           name: title,
           notes: description || '',
           due_on: dueDate || null,
