@@ -6,6 +6,7 @@ import { Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { PortfolioDialogs } from "./PortfolioDialogs";
+import { Portfolio } from "@/types/portfolio";
 
 export const PortfolioList = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
