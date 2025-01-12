@@ -88,7 +88,7 @@ const PortfolioDetails = () => {
 
   const handleProjectClick = (projectId: string) => {
     console.log('Navigating to project details:', projectId);
-    navigate(`/portfolio-projects/${projectId}`);
+    navigate(`/portfolio-workspaces/${projectId}`);
   };
 
   const renderContent = () => {

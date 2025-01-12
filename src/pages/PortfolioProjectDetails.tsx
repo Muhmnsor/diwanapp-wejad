@@ -11,55 +11,28 @@ import { Footer } from '@/components/layout/Footer';
 import { Progress } from '@/components/ui/progress';
 
 const PortfolioProjectDetails = () => {
-  const { projectId } = useParams();
+  const { workspaceId } = useParams();
   const navigate = useNavigate();
 
-  const { data: project, isLoading, error } = useQuery({
-    queryKey: ['portfolio-project', projectId],
-    queryFn: async () => {
-      console.log('Fetching portfolio project details for ID:', projectId);
-      
-      const { data: projectData, error: fetchError } = await supabase
-        .from('portfolio_projects')
-        .select(`
-          *,
-          project:projects(*)
-        `)
-        .eq('id', projectId)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching project:', fetchError);
-        throw new Error(fetchError.message || 'حدث خطأ أثناء تحميل بيانات المشروع');
-      }
-
-      if (!projectData) {
-        console.error('Project data not found for ID:', projectId);
-        throw new Error('لم يتم العثور على المشروع');
-      }
-
-      console.log('Successfully fetched project data:', projectData);
-      return projectData;
-    },
-    retry: 1,
-    meta: {
-      errorMessage: 'حدث خطأ أثناء تحميل بيانات المشروع'
-    }
-  });
-
-  // Fetch tasks for the project
   const { data: tasks } = useQuery({
-    queryKey: ['portfolio-project-tasks', projectId],
+    queryKey: ['portfolio-workspace-tasks', workspaceId],
     queryFn: async () => {
+      console.log('Fetching tasks for workspace:', workspaceId);
+      
       const { data, error } = await supabase
         .from('portfolio_tasks')
         .select('*')
-        .eq('workspace_id', projectId);
+        .eq('workspace_id', workspaceId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        throw error;
+      }
+      
+      console.log('Successfully fetched tasks:', data);
       return data || [];
     },
-    enabled: !!projectId
+    enabled: !!workspaceId
   });
 
   const getProjectProgress = () => {
@@ -68,48 +41,6 @@ const PortfolioProjectDetails = () => {
     return tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <main className="flex-grow bg-gray-50">
-          <div className="container mx-auto px-4 py-8">
-            <div className="p-4 space-y-4" dir="rtl">
-              <Skeleton className="h-8 w-1/3" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error || !project) {
-    toast.error('حدث خطأ أثناء تحميل بيانات المشروع');
-    return (
-      <div className="min-h-screen flex flex-col">
-        <TopHeader />
-        <main className="flex-grow bg-gray-50">
-          <div className="container mx-auto px-4 py-8">
-            <div className="text-center" dir="rtl">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                لم يتم العثور على المشروع
-              </h2>
-              <Button 
-                variant="outline" 
-                onClick={() => navigate(-1)}
-              >
-                العودة
-              </Button>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
@@ -117,9 +48,9 @@ const PortfolioProjectDetails = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">{project.project?.title}</h1>
+              <h1 className="text-2xl font-bold">تفاصيل المشروع</h1>
               <Button 
-                onClick={() => {}} // Will implement task creation dialog later
+                onClick={() => {}} 
                 className="flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />
@@ -128,11 +59,6 @@ const PortfolioProjectDetails = () => {
             </div>
 
             <Card className="p-4">
-              <h2 className="text-lg font-semibold mb-2">الوصف</h2>
-              <p className="text-gray-600 mb-4">
-                {project.project?.description || 'لا يوجد وصف'}
-              </p>
-              
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>تقدم المشروع</span>
