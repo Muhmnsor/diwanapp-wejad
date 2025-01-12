@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Folder, Plus } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { AddPortfolioDialog } from './AddPortfolioDialog';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 export const PortfolioList = () => {
   const navigate = useNavigate();
@@ -52,21 +51,6 @@ export const PortfolioList = () => {
               
               <div className="text-sm text-gray-500 min-h-[2.5rem]">
                 {portfolio.description || 'لا يوجد وصف'}
-              </div>
-
-              <div className="flex justify-end">
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/portfolios/${portfolio.id}/projects/new`);
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                  إضافة مشروع
-                </Button>
               </div>
             </div>
           </Card>

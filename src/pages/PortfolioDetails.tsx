@@ -3,9 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const PortfolioDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   
   const { data: portfolio, isLoading } = useQuery({
     queryKey: ['portfolio', id],
@@ -47,7 +51,16 @@ const PortfolioDetails = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6" dir="rtl">
-      <h1 className="text-2xl font-bold">{portfolio.name}</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">{portfolio.name}</h1>
+        <Button 
+          onClick={() => navigate(`/portfolios/${id}/projects/new`)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          إضافة مشروع
+        </Button>
+      </div>
       
       <Card className="p-4">
         <h2 className="text-lg font-semibold mb-2">الوصف</h2>
