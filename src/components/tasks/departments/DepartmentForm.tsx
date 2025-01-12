@@ -38,15 +38,17 @@ export const DepartmentForm = ({ onSuccess, onClose }: DepartmentFormProps) => {
         throw new Error('لم يتم العثور على مساحة عمل صالحة في Asana');
       }
 
-      const workspace = workspaceResponse.data.data[0];
+      const workspaceGid = workspaceResponse.data.data[0].gid;
       
-      // Create folder in Asana
-      const folderResponse = await createFolder(workspace.gid, name);
+      // Create portfolio in Asana
+      const folderResponse = await createFolder(workspaceGid, name);
       console.log('Asana folder creation response:', folderResponse);
       
       if (!folderResponse?.data?.data?.gid) {
         throw new Error('فشل إنشاء المحفظة في Asana');
       }
+
+      const folderGid = folderResponse.data.data.gid;
 
       // Create department in database
       const { error: dbError } = await supabase
@@ -55,7 +57,7 @@ export const DepartmentForm = ({ onSuccess, onClose }: DepartmentFormProps) => {
           { 
             name, 
             description,
-            asana_folder_gid: folderResponse.data.data.gid
+            asana_folder_gid: folderGid
           }
         ]);
 
