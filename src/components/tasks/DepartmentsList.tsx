@@ -1,12 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Building2 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { DepartmentCard } from "./DepartmentCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useAsanaApi } from "@/hooks/useAsanaApi";
+import { toast } from "sonner";
 
 export const DepartmentsList = () => {
-  const { data: departments = [], isLoading } = useQuery({
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { getWorkspace, createFolder } = useAsanaApi();
+
+  const { data: departments = [], refetch } = useQuery({
     queryKey: ['departments'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -18,6 +30,58 @@ export const DepartmentsList = () => {
       return data || [];
     },
   });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      console.log('Creating new department:', { name, description });
+      
+      // Get Asana workspace
+      const workspaceResponse = await getWorkspace();
+      console.log('Asana workspace response:', workspaceResponse);
+      
+      if (!workspaceResponse?.data?.data?.[0]?.gid) {
+        throw new Error('No workspace found in Asana');
+      }
+      
+      const workspaceId = workspaceResponse.data.data[0].gid;
+      
+      // Create folder in Asana
+      const folderResponse = await createFolder(workspaceId, name);
+      console.log('Asana folder creation response:', folderResponse);
+      
+      if (!folderResponse?.data?.data?.gid) {
+        throw new Error('Failed to create folder in Asana');
+      }
+
+      // Create department in database
+      const { error: dbError } = await supabase
+        .from('departments')
+        .insert([
+          { 
+            name, 
+            description,
+            asana_folder_gid: folderResponse.data.data.gid
+          }
+        ]);
+
+      if (dbError) throw dbError;
+
+      toast.success("تم إنشاء الإدارة بنجاح");
+      setIsOpen(false);
+      setName("");
+      setDescription("");
+      refetch();
+
+    } catch (error) {
+      console.error('Error creating department:', error);
+      toast.error("حدث خطأ أثناء إنشاء الإدارة");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -32,10 +96,41 @@ export const DepartmentsList = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          إضافة إدارة جديدة
-        </Button>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              إضافة إدارة جديدة
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]" dir="rtl">
+            <DialogHeader>
+              <DialogTitle>إضافة إدارة جديدة</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">اسم الإدارة</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">الوصف</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "جاري الإنشاء..." : "إنشاء"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {departments.length === 0 ? (
