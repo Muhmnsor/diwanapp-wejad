@@ -4,6 +4,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -15,6 +16,11 @@ serve(async (req) => {
     if (!ASANA_ACCESS_TOKEN) {
       console.error('Missing ASANA_ACCESS_TOKEN')
       throw new Error('Configuration error: Missing Asana access token')
+    }
+
+    if (!portfolioGid) {
+      console.error('Missing portfolioGid')
+      throw new Error('Portfolio GID is required')
     }
 
     // Create project in Asana
@@ -30,25 +36,43 @@ serve(async (req) => {
           name,
           notes: description,
           workspace: portfolioGid,
-          start_date: startDate,
-          due_date: dueDate,
-          status,
-          public: isPublic
+          start_on: startDate,
+          due_on: dueDate,
+          current_status: status === 'not_started' ? 'on_track' : status,
+          public: isPublic === 'public'
         }
       })
     })
 
+    const responseData = await response.json()
+    console.log('Asana API response:', responseData)
+
     if (!response.ok) {
-      const error = await response.json()
-      console.error('Asana API error:', error)
-      throw new Error('Failed to create project in Asana')
+      console.error('Asana API error:', responseData)
+      throw new Error(responseData.errors?.[0]?.message || 'Failed to create project in Asana')
     }
 
-    const data = await response.json()
-    console.log('Successfully created Asana project:', data)
+    // Add project to portfolio
+    const addToPortfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioGid}/addItem`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        data: {
+          item: responseData.data.gid
+        }
+      })
+    })
+
+    if (!addToPortfolioResponse.ok) {
+      console.error('Failed to add project to portfolio:', await addToPortfolioResponse.json())
+      // Don't throw here, as the project was created successfully
+    }
 
     return new Response(
-      JSON.stringify(data.data),
+      JSON.stringify(responseData.data),
       { 
         headers: { 
           ...corsHeaders,

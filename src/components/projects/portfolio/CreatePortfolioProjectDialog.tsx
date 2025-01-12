@@ -85,7 +85,7 @@ export const CreatePortfolioProjectDialog = ({
           status: formData.status,
           due_date: formData.dueDate || null,
           workspace_id: portfolioId,
-          asana_gid: asanaData.gid // Store the Asana project GID
+          asana_gid: asanaData.gid
         }])
         .select()
         .single();
