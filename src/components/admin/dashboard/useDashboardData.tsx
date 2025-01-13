@@ -8,19 +8,38 @@ export const useDashboardData = (eventId: string) => {
     queryKey: ['event', eventId],
     queryFn: async () => {
       console.log('Fetching event details for dashboard:', eventId);
-      const { data, error } = await supabase
-        .from('events')
+      
+      // First try to fetch from portfolio_only_projects
+      const { data: portfolioProject, error: portfolioError } = await supabase
+        .from('portfolio_only_projects')
         .select('*')
         .eq('id', eventId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching event:', error);
-        throw error;
+      if (!portfolioError && portfolioProject) {
+        console.log('Found portfolio project:', portfolioProject);
+        return {
+          ...portfolioProject,
+          start_date: portfolioProject.start_date,
+          end_date: portfolioProject.due_date,
+          max_attendees: 0 // Portfolio projects don't have attendees
+        };
       }
 
-      console.log('Event data fetched:', data);
-      return data;
+      // If not found, try regular projects
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', eventId)
+        .maybeSingle();
+
+      if (projectError) {
+        console.error('Error fetching project:', projectError);
+        throw projectError;
+      }
+
+      console.log('Found regular project:', project);
+      return project;
     },
   });
 
