@@ -23,13 +23,39 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { workspaceId } = await req.json()
-    console.log('Fetching workspace details for ID:', workspaceId)
+    // First get the workspace ID from Asana
+    console.log('Fetching Asana workspaces...')
+    const workspacesResponse = await fetch(
+      'https://app.asana.com/api/1.0/workspaces', 
+      {
+        headers: {
+          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+          'Accept': 'application/json'
+        }
+      }
+    )
 
-    // First get portfolios from Asana
-    console.log('Making request to Asana API...')
+    if (!workspacesResponse.ok) {
+      const errorText = await workspacesResponse.text()
+      console.error('Error fetching workspaces:', errorText)
+      throw new Error(`Asana API error: ${errorText}`)
+    }
+
+    const workspacesData = await workspacesResponse.json()
+    console.log('Workspaces data:', workspacesData)
+
+    if (!workspacesData.data || workspacesData.data.length === 0) {
+      throw new Error('No workspaces found in Asana')
+    }
+
+    // Use the first workspace
+    const workspace = workspacesData.data[0]
+    console.log('Using workspace:', workspace)
+
+    // Then get portfolios for this workspace
+    console.log('Fetching portfolios for workspace:', workspace.gid)
     const portfoliosResponse = await fetch(
-      `https://app.asana.com/api/1.0/portfolios?workspace=${workspaceId}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes`, 
+      `https://app.asana.com/api/1.0/portfolios?workspace=${workspace.gid}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes`, 
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -76,7 +102,6 @@ serve(async (req) => {
         updated_at: new Date().toISOString()
       }
 
-      // Insert new portfolio
       const { error: insertError } = await supabase
         .from('portfolios')
         .insert(portfolioData)
