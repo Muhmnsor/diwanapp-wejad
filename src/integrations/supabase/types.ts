@@ -1786,6 +1786,54 @@ export type Database = {
           },
         ]
       }
+      task_history: {
+        Row: {
+          action: string
+          changed_by: string | null
+          created_at: string
+          field_name: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          task_id: string
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id: string
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_task_history_task"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_task_history_user"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_subtasks: {
         Row: {
           asana_gid: string | null
