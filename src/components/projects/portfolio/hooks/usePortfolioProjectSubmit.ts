@@ -22,11 +22,16 @@ export const usePortfolioProjectSubmit = (
         .from('portfolios')
         .select('id, asana_gid')
         .eq('id', portfolioId)
-        .single();
+        .maybeSingle();
 
-      if (portfolioError || !portfolioData) {
-        console.error('Error fetching portfolio or portfolio not found:', portfolioError);
-        throw new Error('المحفظة غير موجودة');
+      if (portfolioError) {
+        console.error('Error fetching portfolio:', portfolioError);
+        throw new Error('خطأ في جلب بيانات المحفظة');
+      }
+
+      if (!portfolioData) {
+        console.error('Portfolio not found for ID:', portfolioId);
+        throw new Error('لم يتم العثور على المحفظة');
       }
 
       console.log('Found portfolio:', portfolioData);
@@ -50,13 +55,17 @@ export const usePortfolioProjectSubmit = (
 
           if (asanaError) {
             console.error('Error creating Asana project:', asanaError);
+            // Don't throw here, just log the error and continue without Asana integration
           } else {
             console.log('Successfully created Asana project:', asanaData);
             asanaGid = asanaData.gid;
           }
         } catch (asanaError) {
           console.error('Error in Asana project creation:', asanaError);
+          // Don't throw here, just log the error and continue without Asana integration
         }
+      } else {
+        console.log('No Asana GID found for portfolio, skipping Asana integration');
       }
 
       // Create the portfolio project in database
