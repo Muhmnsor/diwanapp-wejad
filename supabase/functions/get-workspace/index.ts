@@ -16,25 +16,29 @@ serve(async (req) => {
     )
 
     const { workspaceId } = await req.json()
-    console.log('Fetching workspace details for ID:', workspaceId)
+    console.log('Fetching project details for ID:', workspaceId)
 
-    // First get the workspace details
-    const { data: workspace, error: workspaceError } = await supabase
-      .from('portfolio_workspaces')
-      .select('*')
+    // First get the portfolio project details
+    const { data: portfolioProject, error: projectError } = await supabase
+      .from('portfolio_projects')
+      .select(`
+        *,
+        portfolios!inner (*),
+        projects (*)
+      `)
       .eq('asana_gid', workspaceId)
       .single()
 
-    if (workspaceError) {
-      console.error('Error fetching workspace:', workspaceError)
-      throw workspaceError
+    if (projectError) {
+      console.error('Error fetching project:', projectError)
+      throw projectError
     }
 
-    if (!workspace) {
-      console.error('Workspace not found for ID:', workspaceId)
+    if (!portfolioProject) {
+      console.error('Project not found for ID:', workspaceId)
       return new Response(
         JSON.stringify({ 
-          name: 'مساحة عمل جديدة',
+          name: 'مشروع جديد',
           description: '',
           tasks: []
         }),
@@ -45,21 +49,7 @@ serve(async (req) => {
       )
     }
 
-    // Get associated project details
-    const { data: portfolioProject, error: projectError } = await supabase
-      .from('portfolio_projects')
-      .select(`
-        *,
-        projects (*)
-      `)
-      .eq('asana_gid', workspaceId)
-      .single()
-
-    if (projectError) {
-      console.error('Error fetching project:', projectError)
-    }
-
-    // Get tasks for this workspace with assigned user information
+    // Get tasks for this project with assigned user information
     const { data: tasks, error: tasksError } = await supabase
       .from('portfolio_tasks')
       .select(`
@@ -68,7 +58,7 @@ serve(async (req) => {
           email
         )
       `)
-      .eq('workspace_id', workspace.id)
+      .eq('workspace_id', portfolioProject.id)
       .order('created_at', { ascending: false })
 
     if (tasksError) {
@@ -84,10 +74,10 @@ serve(async (req) => {
 
     // Get Asana tasks if project has Asana integration
     let asanaTasks = []
-    if (workspace.asana_gid) {
+    if (portfolioProject.asana_gid) {
       try {
         const asanaResponse = await fetch(
-          `https://app.asana.com/api/1.0/projects/${workspace.asana_gid}/tasks`,
+          `https://app.asana.com/api/1.0/projects/${portfolioProject.asana_gid}/tasks`,
           {
             headers: {
               'Authorization': `Bearer ${Deno.env.get('ASANA_ACCESS_TOKEN')}`,
@@ -110,12 +100,15 @@ serve(async (req) => {
 
     // Combine response data
     const response = {
-      ...workspace,
-      project: portfolioProject?.projects || null,
+      id: portfolioProject.id,
+      name: portfolioProject.projects?.title || 'مشروع جديد',
+      description: portfolioProject.projects?.description || '',
+      portfolio: portfolioProject.portfolios,
+      project: portfolioProject.projects,
       tasks: [...transformedTasks, ...asanaTasks]
     }
 
-    console.log('Successfully fetched workspace data:', response)
+    console.log('Successfully fetched project data:', response)
     return new Response(
       JSON.stringify(response),
       { 

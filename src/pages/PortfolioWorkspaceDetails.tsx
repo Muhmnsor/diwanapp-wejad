@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { Footer } from '@/components/layout/Footer';
@@ -35,7 +36,7 @@ const PortfolioWorkspaceDetails = () => {
   }
 
   if (error || !workspace) {
-    toast.error('حدث خطأ أثناء تحميل بيانات مساحة العمل');
+    toast.error('حدث خطأ أثناء تحميل بيانات المشروع');
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
@@ -43,14 +44,14 @@ const PortfolioWorkspaceDetails = () => {
           <div className="container mx-auto px-4 py-8">
             <div className="text-center" dir="rtl">
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                لم يتم العثور على مساحة العمل
+                لم يتم العثور على المشروع
               </h2>
-              <button 
-                className="text-primary hover:underline"
+              <Button 
+                variant="outline" 
                 onClick={() => navigate(-1)}
               >
                 العودة
-              </button>
+              </Button>
             </div>
           </div>
         </main>
@@ -71,6 +72,12 @@ const PortfolioWorkspaceDetails = () => {
       <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
+            <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+              <span>{workspace.portfolio?.name}</span>
+              <span>/</span>
+              <span>{projectTitle}</span>
+            </div>
+
             <ProjectHeader 
               title={projectTitle}
               onAddTask={() => setIsAddTaskDialogOpen(true)} 
