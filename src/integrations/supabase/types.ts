@@ -949,8 +949,12 @@ export type Database = {
           asana_workspace_id: string | null
           created_at: string
           id: string
+          last_sync_at: string | null
           portfolio_id: string | null
           project_id: string | null
+          project_type: string | null
+          sync_error: string | null
+          sync_status: string | null
         }
         Insert: {
           asana_gid?: string | null
@@ -959,8 +963,12 @@ export type Database = {
           asana_workspace_id?: string | null
           created_at?: string
           id?: string
+          last_sync_at?: string | null
           portfolio_id?: string | null
           project_id?: string | null
+          project_type?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
         }
         Update: {
           asana_gid?: string | null
@@ -969,8 +977,12 @@ export type Database = {
           asana_workspace_id?: string | null
           created_at?: string
           id?: string
+          last_sync_at?: string | null
           portfolio_id?: string | null
           project_id?: string | null
+          project_type?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
         }
         Relationships: [
           {
@@ -1201,7 +1213,10 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          last_sync_at: string | null
           name: string
+          sync_enabled: boolean | null
+          sync_error: string | null
           updated_at: string
         }
         Insert: {
@@ -1211,7 +1226,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          last_sync_at?: string | null
           name: string
+          sync_enabled?: boolean | null
+          sync_error?: string | null
           updated_at?: string
         }
         Update: {
@@ -1221,7 +1239,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          last_sync_at?: string | null
           name?: string
+          sync_enabled?: boolean | null
+          sync_error?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -12,10 +12,16 @@ serve(async (req) => {
 
   try {
     const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
+    const ASANA_WORKSPACE_ID = Deno.env.get('ASANA_WORKSPACE_ID')
     
     if (!ASANA_ACCESS_TOKEN) {
-      console.error('Asana access token not configured')
+      console.error('❌ Asana access token not configured')
       throw new Error('Asana access token not configured')
+    }
+
+    if (!ASANA_WORKSPACE_ID) {
+      console.error('❌ Asana workspace ID not configured')
+      throw new Error('Asana workspace ID not configured')
     }
 
     const supabase = createClient(
@@ -23,37 +29,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // First get the workspace ID from Asana
-    console.log('Fetching Asana workspaces...')
-    const workspacesResponse = await fetch(
-      'https://app.asana.com/api/1.0/workspaces', 
-      {
-        headers: {
-          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-          'Accept': 'application/json'
-        }
-      }
-    )
-
-    if (!workspacesResponse.ok) {
-      const errorText = await workspacesResponse.text()
-      console.error('Error fetching workspaces:', errorText)
-      throw new Error(`Asana API error: ${errorText}`)
-    }
-
-    const workspacesData = await workspacesResponse.json()
-    console.log('Workspaces data:', workspacesData)
-
-    if (!workspacesData.data || workspacesData.data.length === 0) {
-      throw new Error('No workspaces found in Asana')
-    }
-
-    // Use the first workspace
-    const workspace = workspacesData.data[0]
-    console.log('Using workspace:', workspace)
-
-    // Then get portfolios for this workspace with expanded fields
-    console.log('Fetching portfolios for workspace:', workspace.gid)
+    console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
     
     // Define all required fields explicitly
     const optFields = [
@@ -63,6 +39,7 @@ serve(async (req) => {
       'current_status',
       'due_on',
       'members',
+      'owner',
       'owner.name',
       'owner.email',
       'permalink_url',
@@ -78,7 +55,7 @@ serve(async (req) => {
     ].join(',')
 
     const portfoliosResponse = await fetch(
-      `https://app.asana.com/api/1.0/portfolios?workspace=${workspace.gid}&opt_fields=${optFields}`, 
+      `https://app.asana.com/api/1.0/portfolios?workspace=${ASANA_WORKSPACE_ID}&opt_fields=${optFields}`, 
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -89,32 +66,32 @@ serve(async (req) => {
 
     if (!portfoliosResponse.ok) {
       const errorText = await portfoliosResponse.text()
-      console.error('Error response from Asana:', errorText)
+      console.error('❌ Error response from Asana:', errorText)
       throw new Error(`Asana API error: ${errorText}`)
     }
 
     const portfoliosData = await portfoliosResponse.json()
-    console.log('Successfully fetched portfolios from Asana:', portfoliosData)
+    console.log('✅ Successfully fetched portfolios from Asana:', portfoliosData)
 
     if (!portfoliosData.data) {
-      console.error('No data returned from Asana')
+      console.error('❌ No data returned from Asana')
       throw new Error('No data returned from Asana')
     }
 
     // Delete all existing portfolios that are synced from Asana
-    console.log('Deleting existing Asana-synced portfolios...')
+    console.log('🗑️ Deleting existing Asana-synced portfolios...')
     const { error: deleteError } = await supabase
       .from('portfolios')
       .delete()
       .not('asana_gid', 'is', null)
 
     if (deleteError) {
-      console.error('Error deleting old portfolios:', deleteError)
+      console.error('❌ Error deleting old portfolios:', deleteError)
       throw deleteError
     }
 
     // For each portfolio from Asana
-    console.log('Inserting new portfolios...')
+    console.log('📝 Inserting new portfolios...')
     for (const portfolio of portfoliosData.data) {
       const portfolioData = {
         name: portfolio.name,
@@ -122,7 +99,9 @@ serve(async (req) => {
         asana_gid: portfolio.gid,
         asana_sync_enabled: true,
         created_at: new Date(portfolio.created_at).toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        sync_enabled: true,
+        last_sync_at: new Date().toISOString()
       }
 
       const { error: insertError } = await supabase
@@ -130,7 +109,7 @@ serve(async (req) => {
         .insert(portfolioData)
 
       if (insertError) {
-        console.error('Error inserting portfolio:', insertError, portfolioData)
+        console.error('❌ Error inserting portfolio:', insertError, portfolioData)
         throw insertError
       }
     }
@@ -142,11 +121,11 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
 
     if (dbError) {
-      console.error('Error fetching updated portfolios:', dbError)
+      console.error('❌ Error fetching updated portfolios:', dbError)
       throw dbError
     }
 
-    console.log('Successfully synced portfolios:', updatedPortfolios)
+    console.log('✅ Successfully synced portfolios:', updatedPortfolios)
     return new Response(
       JSON.stringify({
         portfolios: updatedPortfolios
@@ -158,7 +137,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in get-workspace function:', error)
+    console.error('❌ Error in get-workspace function:', error)
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'An unknown error occurred'
