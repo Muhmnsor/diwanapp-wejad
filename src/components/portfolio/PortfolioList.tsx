@@ -11,8 +11,9 @@ export const PortfolioList = () => {
   const { data: portfolios, isLoading } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
+      console.log('Fetching portfolios from database');
       const { data, error } = await supabase
-        .from('portfolio_workspaces')
+        .from('portfolios')  // Changed from portfolio_workspaces to portfolios
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -21,6 +22,7 @@ export const PortfolioList = () => {
         throw error;
       }
 
+      console.log('Fetched portfolios:', data);
       return data;
     }
   });
