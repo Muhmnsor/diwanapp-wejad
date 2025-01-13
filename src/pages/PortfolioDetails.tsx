@@ -82,6 +82,11 @@ const PortfolioDetails = () => {
     }
   };
 
+  const handlePortfolioWorkspaceClick = (workspaceId: string) => {
+    console.log('Navigating to workspace details:', workspaceId);
+    navigate(`/portfolio-workspaces/${workspaceId}`);
+  };
+
   if (error) {
     toast.error('حدث خطأ أثناء تحميل بيانات المحفظة');
   }
