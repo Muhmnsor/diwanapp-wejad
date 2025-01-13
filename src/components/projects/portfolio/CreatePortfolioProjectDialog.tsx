@@ -76,26 +76,26 @@ export const CreatePortfolioProjectDialog = ({
 
       console.log('Successfully created Asana project:', asanaData);
 
-      // Then create the project in our database
-      const { data: projectData, error: projectError } = await supabase
+      // Create the portfolio project directly in portfolio_tasks
+      const { data: taskData, error: taskError } = await supabase
         .from('portfolio_tasks')
         .insert([{
+          workspace_id: portfolioId,
           title: formData.name,
           description: formData.description,
           status: formData.status,
           due_date: formData.dueDate || null,
-          workspace_id: portfolioId,
           asana_gid: asanaData.gid
         }])
         .select()
         .single();
 
-      if (projectError) {
-        console.error('Error creating portfolio project in database:', projectError);
-        throw projectError;
+      if (taskError) {
+        console.error('Error creating portfolio task:', taskError);
+        throw taskError;
       }
 
-      console.log('Successfully created project in database:', projectData);
+      console.log('Successfully created portfolio task:', taskData);
 
       toast.success("تم إنشاء المشروع بنجاح");
       onSuccess?.();
