@@ -6,6 +6,7 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -16,11 +17,16 @@ serve(async (req) => {
 
     console.log('Fetching portfolio with ID:', portfolioId)
 
+    if (!portfolioId) {
+      console.error('No portfolio ID provided')
+      throw new Error('معرف المحفظة مطلوب')
+    }
+
     const { data: portfolio, error } = await supabase
       .from('portfolios')
       .select('*')
       .eq('id', portfolioId)
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.error('Database error:', error)
@@ -29,7 +35,15 @@ serve(async (req) => {
 
     if (!portfolio) {
       console.error('Portfolio not found:', portfolioId)
-      throw new Error('Portfolio not found')
+      return new Response(
+        JSON.stringify({ 
+          error: 'لم يتم العثور على المحفظة' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404
+        }
+      )
     }
 
     console.log('Successfully fetched portfolio:', portfolio)
@@ -37,22 +51,18 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(portfolio),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
     )
   } catch (error) {
     console.error('Error in get-portfolio function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'حدث خطأ أثناء جلب بيانات المحفظة'
+      }),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 
       }
     )
