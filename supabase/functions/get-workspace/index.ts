@@ -46,12 +46,12 @@ serve(async (req) => {
       )
     }
 
-    // Then get the tasks for this workspace
+    // Then get the tasks for this workspace with assigned user information
     const { data: tasks, error: tasksError } = await supabase
       .from('portfolio_tasks')
       .select(`
         *,
-        assigned_to (
+        profiles:assigned_to (
           email
         )
       `)
@@ -63,9 +63,15 @@ serve(async (req) => {
       throw tasksError
     }
 
+    // Transform the response to match the expected format
+    const transformedTasks = tasks?.map(task => ({
+      ...task,
+      assigned_to: task.profiles
+    })) || []
+
     const response = {
       ...workspace,
-      tasks: tasks || []
+      tasks: transformedTasks
     }
 
     console.log('Successfully fetched workspace data:', response)

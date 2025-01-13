@@ -1101,6 +1101,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "portfolio_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "portfolio_tasks_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
