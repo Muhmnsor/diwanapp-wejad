@@ -14,6 +14,7 @@ serve(async (req) => {
     const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
     
     if (!ASANA_ACCESS_TOKEN) {
+      console.error('Asana access token not configured')
       throw new Error('Asana access token not configured')
     }
 
@@ -26,22 +27,33 @@ serve(async (req) => {
     console.log('Fetching workspace details for ID:', workspaceId)
 
     // First get portfolios from Asana
-    const portfoliosResponse = await fetch(`https://app.asana.com/api/1.0/portfolios?workspace=${workspaceId}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes`, {
-      headers: {
-        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Accept': 'application/json'
+    console.log('Making request to Asana API...')
+    const portfoliosResponse = await fetch(
+      `https://app.asana.com/api/1.0/portfolios?workspace=${workspaceId}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes`, 
+      {
+        headers: {
+          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+          'Accept': 'application/json'
+        }
       }
-    })
+    )
 
     if (!portfoliosResponse.ok) {
-      console.error('Error fetching portfolios:', await portfoliosResponse.text())
-      throw new Error('فشل في جلب المحافظ من Asana')
+      const errorText = await portfoliosResponse.text()
+      console.error('Error response from Asana:', errorText)
+      throw new Error(`Asana API error: ${errorText}`)
     }
 
     const portfoliosData = await portfoliosResponse.json()
-    console.log('Asana portfolios:', portfoliosData)
+    console.log('Successfully fetched portfolios from Asana:', portfoliosData)
+
+    if (!portfoliosData.data) {
+      console.error('No data returned from Asana')
+      throw new Error('No data returned from Asana')
+    }
 
     // Delete all existing portfolios that are synced from Asana
+    console.log('Deleting existing Asana-synced portfolios...')
     const { error: deleteError } = await supabase
       .from('portfolios')
       .delete()
@@ -53,6 +65,7 @@ serve(async (req) => {
     }
 
     // For each portfolio from Asana
+    console.log('Inserting new portfolios...')
     for (const portfolio of portfoliosData.data) {
       const portfolioData = {
         name: portfolio.name,
@@ -69,7 +82,8 @@ serve(async (req) => {
         .insert(portfolioData)
 
       if (insertError) {
-        console.error('Error inserting portfolio:', insertError)
+        console.error('Error inserting portfolio:', insertError, portfolioData)
+        throw insertError
       }
     }
 
