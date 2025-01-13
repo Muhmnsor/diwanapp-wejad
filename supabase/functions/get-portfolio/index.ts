@@ -22,9 +22,23 @@ serve(async (req) => {
       throw new Error('معرف المحفظة مطلوب')
     }
 
+    // Fetch portfolio with related data
     const { data: portfolio, error } = await supabase
       .from('portfolios')
-      .select('*')
+      .select(`
+        *,
+        portfolio_projects (
+          id,
+          project:projects (
+            id,
+            title,
+            description,
+            start_date,
+            end_date,
+            status
+          )
+        )
+      `)
       .eq('id', portfolioId)
       .maybeSingle()
 
