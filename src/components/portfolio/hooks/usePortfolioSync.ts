@@ -8,23 +8,23 @@ export const usePortfolioSync = () => {
     queryFn: async () => {
       console.log('🔄 Starting portfolio synchronization...');
       
-      const { data: dbPortfolios, error: dbError } = await supabase
-        .from('portfolios')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (dbError) {
-        console.error('❌ Database error:', dbError);
-        throw dbError;
-      }
-
-      console.log('📊 Portfolios from database:', dbPortfolios);
-
       try {
+        const { data: dbPortfolios, error: dbError } = await supabase
+          .from('portfolios')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (dbError) {
+          console.error('❌ Database error:', dbError);
+          throw dbError;
+        }
+
+        console.log('📊 Portfolios from database:', dbPortfolios);
+
         // Get workspace data from Asana
         console.log('🔍 Fetching Asana workspace data...');
         const response = await supabase.functions.invoke('get-workspace', {
-          body: { workspaceId: '1209131947656687' } // Asana workspace ID
+          body: {} // No need to specify workspaceId, it will be fetched from API
         });
 
         if (response.error) {
@@ -36,14 +36,15 @@ export const usePortfolioSync = () => {
         console.log('✅ Asana sync successful:', response.data);
         toast.success('تم تحديث البيانات بنجاح');
         
-        // Return the updated portfolios from the response
         return response.data.portfolios || dbPortfolios;
-      } catch (asanaError) {
-        console.error('❌ Error syncing with Asana:', asanaError);
+      } catch (error) {
+        console.error('❌ Error syncing with Asana:', error);
         toast.error('حدث خطأ أثناء الاتصال مع Asana');
-        return dbPortfolios;
+        throw error;
       }
-    }
+    },
+    retry: 1,
+    retryDelay: 1000
   });
 
   const handleSync = async () => {

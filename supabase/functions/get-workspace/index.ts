@@ -54,8 +54,31 @@ serve(async (req) => {
 
     // Then get portfolios for this workspace with expanded fields
     console.log('Fetching portfolios for workspace:', workspace.gid)
+    
+    // Define all required fields explicitly
+    const optFields = [
+      'name',
+      'color',
+      'created_at',
+      'current_status',
+      'due_on',
+      'members',
+      'owner.name',
+      'owner.email',
+      'permalink_url',
+      'public',
+      'start_on',
+      'workspace',
+      'gid',
+      'resource_type',
+      'custom_fields',
+      'custom_field_settings',
+      'workspace_name',
+      'html_notes'
+    ].join(',')
+
     const portfoliosResponse = await fetch(
-      `https://app.asana.com/api/1.0/portfolios?workspace=${workspace.gid}&opt_fields=name,color,created_at,current_status,due_on,members,owner.name,owner.email,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes`, 
+      `https://app.asana.com/api/1.0/portfolios?workspace=${workspace.gid}&opt_fields=${optFields}`, 
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
