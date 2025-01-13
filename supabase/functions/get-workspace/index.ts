@@ -26,7 +26,7 @@ serve(async (req) => {
     console.log('Fetching workspace details for ID:', workspaceId)
 
     // First get portfolios from Asana
-    const portfoliosResponse = await fetch(`https://app.asana.com/api/1.0/portfolios?workspace=${workspaceId}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type`, {
+    const portfoliosResponse = await fetch(`https://app.asana.com/api/1.0/portfolios?workspace=${workspaceId}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
         'Accept': 'application/json'
@@ -41,50 +41,35 @@ serve(async (req) => {
     const portfoliosData = await portfoliosResponse.json()
     console.log('Asana portfolios:', portfoliosData)
 
+    // Delete all existing portfolios that are synced from Asana
+    const { error: deleteError } = await supabase
+      .from('portfolios')
+      .delete()
+      .not('asana_gid', 'is', null)
+
+    if (deleteError) {
+      console.error('Error deleting old portfolios:', deleteError)
+      throw deleteError
+    }
+
     // For each portfolio from Asana
     for (const portfolio of portfoliosData.data) {
-      // Check if portfolio exists in database
-      const { data: existingPortfolio, error: findError } = await supabase
-        .from('portfolios')
-        .select('*')
-        .eq('asana_gid', portfolio.gid)
-        .maybeSingle()
-
-      if (findError) {
-        console.error('Error checking portfolio:', findError)
-        continue
-      }
-
       const portfolioData = {
         name: portfolio.name,
-        description: portfolio.current_status?.text || '',
+        description: portfolio.html_notes || portfolio.current_status?.text || '',
         asana_gid: portfolio.gid,
         asana_sync_enabled: true,
+        created_at: new Date(portfolio.created_at).toISOString(),
         updated_at: new Date().toISOString()
       }
 
-      if (!existingPortfolio) {
-        // Insert new portfolio
-        const { error: insertError } = await supabase
-          .from('portfolios')
-          .insert({
-            ...portfolioData,
-            created_at: new Date().toISOString()
-          })
+      // Insert new portfolio
+      const { error: insertError } = await supabase
+        .from('portfolios')
+        .insert(portfolioData)
 
-        if (insertError) {
-          console.error('Error inserting portfolio:', insertError)
-        }
-      } else {
-        // Update existing portfolio
-        const { error: updateError } = await supabase
-          .from('portfolios')
-          .update(portfolioData)
-          .eq('asana_gid', portfolio.gid)
-
-        if (updateError) {
-          console.error('Error updating portfolio:', updateError)
-        }
+      if (insertError) {
+        console.error('Error inserting portfolio:', insertError)
       }
     }
 

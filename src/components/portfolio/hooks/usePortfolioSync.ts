@@ -24,7 +24,7 @@ export const usePortfolioSync = () => {
         // Get workspace data from Asana
         console.log('🔍 Fetching Asana workspace data...');
         const response = await supabase.functions.invoke('get-workspace', {
-          body: { workspaceId: process.env.VITE_ASANA_WORKSPACE_ID }
+          body: { workspaceId: '1209131947656687' } // Asana workspace ID
         });
 
         if (response.error) {
