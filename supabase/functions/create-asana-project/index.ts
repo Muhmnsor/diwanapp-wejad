@@ -28,7 +28,8 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         data: {
@@ -38,7 +39,8 @@ serve(async (req) => {
           due_on: dueDate,
           public: isPublic,
           archived: false,
-          color: 'light-green'
+          color: 'light-green',
+          workspace: portfolioGid
         }
       })
     });
@@ -59,7 +61,8 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         data: {
@@ -80,7 +83,8 @@ serve(async (req) => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           data: {
