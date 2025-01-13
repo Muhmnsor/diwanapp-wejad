@@ -1,75 +1,13 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { ListChecks, Calendar, User, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { AddTaskDialog } from './tasks/AddTaskDialog';
+import { useWorkspaceTasks } from './tasks/useWorkspaceTasks';
+import { TaskList } from './tasks/TaskList';
 
 export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
-
-  const { data: tasks, isLoading, refetch } = useQuery({
-    queryKey: ['portfolio-tasks', workspaceId],
-    queryFn: async () => {
-      console.log('Fetching tasks for workspace:', workspaceId);
-      
-      // First get the workspace UUID from Asana GID
-      let { data: workspace, error: workspaceError } = await supabase
-        .from('portfolio_workspaces')
-        .select('id')
-        .eq('asana_gid', workspaceId)
-        .maybeSingle();
-
-      if (workspaceError) {
-        console.error('Error fetching workspace:', workspaceError);
-        throw workspaceError;
-      }
-
-      if (!workspace) {
-        console.log('Workspace not found, creating new workspace');
-        const { data: newWorkspace, error: createError } = await supabase
-          .from('portfolio_workspaces')
-          .insert([
-            { 
-              asana_gid: workspaceId,
-              name: 'مساحة عمل جديدة'
-            }
-          ])
-          .select('id')
-          .single();
-
-        if (createError) {
-          console.error('Error creating workspace:', createError);
-          throw createError;
-        }
-
-        workspace = newWorkspace;
-      }
-
-      console.log('Using workspace ID:', workspace.id);
-
-      const { data, error } = await supabase
-        .from('portfolio_tasks')
-        .select(`
-          *,
-          assigned_to (
-            email
-          )
-        `)
-        .eq('workspace_id', workspace.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        throw error;
-      }
-
-      console.log('Fetched tasks:', data);
-      return data;
-    },
-    refetchInterval: 5000 // Refresh every 5 seconds to catch new tasks
-  });
+  const { data: tasks, isLoading, refetch } = useWorkspaceTasks(workspaceId);
 
   const handleTaskAdded = async () => {
     await refetch();
@@ -93,32 +31,7 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
         </Button>
       </div>
 
-      <div className="grid gap-4">
-        {tasks?.map((task) => (
-          <Card key={task.id} className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ListChecks className="h-5 w-5 text-primary" />
-                <span className="font-medium">{task.title}</span>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                {task.due_date && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(task.due_date).toLocaleDateString('ar-SA')}</span>
-                  </div>
-                )}
-                {task.assigned_to && (
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    <span>{task.assigned_to.email}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <TaskList tasks={tasks || []} />
 
       <AddTaskDialog
         open={isAddTaskDialogOpen}
