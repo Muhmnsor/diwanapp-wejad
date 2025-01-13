@@ -1129,8 +1129,13 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          last_sync_at: string | null
+          parent_task_id: string | null
           priority: string | null
+          project_id: string | null
           status: string | null
+          sync_error: string | null
+          sync_status: string | null
           title: string
           updated_at: string
           workspace_id: string | null
@@ -1142,8 +1147,13 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          last_sync_at?: string | null
+          parent_task_id?: string | null
           priority?: string | null
+          project_id?: string | null
           status?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
           title: string
           updated_at?: string
           workspace_id?: string | null
@@ -1155,8 +1165,13 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          last_sync_at?: string | null
+          parent_task_id?: string | null
           priority?: string | null
+          project_id?: string | null
           status?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
           title?: string
           updated_at?: string
           workspace_id?: string | null
@@ -1170,10 +1185,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "portfolio_tasks_workspace_id_fkey"
-            columns: ["workspace_id"]
+            foreignKeyName: "portfolio_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
             isOneToOne: false
-            referencedRelation: "portfolio_workspaces"
+            referencedRelation: "portfolio_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_only_projects"
             referencedColumns: ["id"]
           },
         ]
