@@ -9,11 +9,13 @@ import { toast } from 'sonner';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { Footer } from '@/components/layout/Footer';
 import { Progress } from '@/components/ui/progress';
+import { PortfolioBreadcrumb } from '@/components/portfolio/PortfolioBreadcrumb';
 
 const PortfolioProjectDetails = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
 
+  // Fetch project details
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['portfolio-project', projectId],
     queryFn: async () => {
@@ -23,7 +25,8 @@ const PortfolioProjectDetails = () => {
         .from('portfolio_projects')
         .select(`
           *,
-          project:projects(*)
+          project:projects(*),
+          portfolio:portfolios(*)
         `)
         .eq('id', projectId)
         .single();
@@ -115,6 +118,12 @@ const PortfolioProjectDetails = () => {
       <TopHeader />
       <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
+          <PortfolioBreadcrumb 
+            portfolioName={project.portfolio?.name || ''}
+            portfolioId={project.portfolio?.id || ''}
+            projectName={project.project?.title}
+          />
+          
           <div className="space-y-6" dir="rtl">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">{project.project?.title}</h1>

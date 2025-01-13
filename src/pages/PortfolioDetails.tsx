@@ -11,6 +11,7 @@ import { Footer } from '@/components/layout/Footer';
 import { CreatePortfolioProjectDialog } from '@/components/projects/portfolio/CreatePortfolioProjectDialog';
 import { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
+import { PortfolioBreadcrumb } from '@/components/portfolio/PortfolioBreadcrumb';
 
 const PortfolioDetails = () => {
   const { id: portfolioId } = useParams();
@@ -85,11 +86,6 @@ const PortfolioDetails = () => {
     toast.error('حدث خطأ أثناء تحميل بيانات المحفظة');
   }
 
-  const handlePortfolioWorkspaceClick = (workspaceId: string) => {
-    console.log('Navigating to portfolio workspace details:', workspaceId);
-    navigate(`/portfolio-workspaces/${workspaceId}`);
-  };
-
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -107,7 +103,7 @@ const PortfolioDetails = () => {
           <p className="text-gray-600 mb-4">عذراً، لا يمكن العثور على المحفظة المطلوبة</p>
           <Button 
             variant="outline" 
-            onClick={() => navigate('/portfolios')}
+            onClick={() => navigate('/tasks')}
           >
             العودة إلى المحافظ
           </Button>
@@ -175,6 +171,12 @@ const PortfolioDetails = () => {
       <TopHeader />
       <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
+          {portfolio && (
+            <PortfolioBreadcrumb 
+              portfolioName={portfolio.name}
+              portfolioId={portfolioId!}
+            />
+          )}
           {renderContent()}
         </div>
       </main>
