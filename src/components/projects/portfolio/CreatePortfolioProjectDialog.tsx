@@ -39,10 +39,10 @@ export const CreatePortfolioProjectDialog = ({
       
       // First get the portfolio's Asana GID
       const { data: portfolioData, error: portfolioError } = await supabase
-        .from('portfolio_workspaces')
+        .from('portfolios')
         .select('asana_gid')
         .eq('id', portfolioId)
-        .single();
+        .maybeSingle();
 
       if (portfolioError) {
         console.error('Error fetching portfolio:', portfolioError);
@@ -76,48 +76,28 @@ export const CreatePortfolioProjectDialog = ({
 
       console.log('Successfully created Asana project:', asanaData);
 
-      // Create the project with portfolio_project type
+      // Create the portfolio project directly in portfolio_only_projects
       const { data: projectData, error: projectError } = await supabase
-        .from('projects')
+        .from('portfolio_only_projects')
         .insert([{
-          title: formData.name,
+          name: formData.name,
           description: formData.description,
-          start_date: formData.startDate || new Date().toISOString(),
-          end_date: formData.dueDate || null,
-          max_attendees: 0,
-          image_url: '/placeholder.svg',
-          event_type: 'in-person',
-          beneficiary_type: 'both',
-          event_path: 'environment',
-          event_category: 'social',
-          project_type: 'portfolio_project', // Explicitly set project type
-          is_visible: formData.privacy === 'public'
+          start_date: formData.startDate || null,
+          due_date: formData.dueDate || null,
+          status: formData.status,
+          privacy: formData.privacy,
+          portfolio_id: portfolioId,
+          asana_gid: asanaData.gid
         }])
         .select()
         .single();
 
       if (projectError) {
-        console.error('Error creating project:', projectError);
+        console.error('Error creating portfolio project:', projectError);
         throw projectError;
       }
 
-      console.log('Successfully created project:', projectData);
-
-      // Create the portfolio project association
-      const { error: portfolioProjectError } = await supabase
-        .from('portfolio_projects')
-        .insert([{
-          portfolio_id: portfolioId,
-          project_id: projectData.id,
-          asana_gid: asanaData.gid
-        }]);
-
-      if (portfolioProjectError) {
-        console.error('Error creating portfolio project:', portfolioProjectError);
-        throw portfolioProjectError;
-      }
-
-      console.log('Successfully created portfolio project association');
+      console.log('Successfully created portfolio project:', projectData);
 
       toast.success("تم إنشاء المشروع بنجاح");
       onSuccess?.();
