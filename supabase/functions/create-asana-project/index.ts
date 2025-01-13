@@ -10,8 +10,8 @@ serve(async (req) => {
   }
 
   try {
-    const { portfolioGid, name, description, startDate, dueDate, status, public: isPublic } = await req.json()
-    console.log('Creating Asana project with data:', { portfolioGid, name, description, startDate, dueDate, status, isPublic })
+    const { portfolioGid, folderGid, name, description, startDate, dueDate, status, public: isPublic } = await req.json()
+    console.log('Creating Asana project with data:', { portfolioGid, folderGid, name, description, startDate, dueDate, status, isPublic })
 
     if (!ASANA_ACCESS_TOKEN) {
       console.error('Missing ASANA_ACCESS_TOKEN')
@@ -23,74 +23,36 @@ serve(async (req) => {
       throw new Error('Portfolio GID is required')
     }
 
-    // First get the portfolio details to get the workspace
-    const portfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioGid}`, {
-      headers: {
-        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Accept': 'application/json'
-      }
-    });
-
-    if (!portfolioResponse.ok) {
-      console.error('Failed to fetch portfolio:', await portfolioResponse.json())
-      throw new Error('Failed to fetch portfolio details')
-    }
-
-    const portfolioData = await portfolioResponse.json()
-    const workspaceGid = portfolioData.data.workspace.gid
-
-    console.log('Found workspace GID:', workspaceGid)
-
-    // Get the team for this workspace
-    const teamsResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/teams`, {
-      headers: {
-        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Accept': 'application/json'
-      }
-    });
-
-    if (!teamsResponse.ok) {
-      console.error('Failed to fetch teams:', await teamsResponse.json())
-      throw new Error('Failed to fetch workspace teams')
-    }
-
-    const teamsData = await teamsResponse.json()
-    if (!teamsData.data || teamsData.data.length === 0) {
-      console.error('No teams found in workspace')
-      throw new Error('No teams found in workspace')
-    }
-
-    const teamGid = teamsData.data[0].gid
-    console.log('Using team GID:', teamGid)
-
-    // Create project in Asana workspace
-    const response = await fetch('https://app.asana.com/api/1.0/projects', {
+    // Create project in Asana
+    const createProjectResponse = await fetch('https://app.asana.com/api/1.0/projects', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         data: {
           name,
           notes: description,
-          workspace: workspaceGid,
-          team: teamGid,
           start_on: startDate,
           due_on: dueDate,
-          public: isPublic === 'public'
+          public: isPublic,
+          archived: false,
+          color: 'light-green'
         }
       })
-    })
+    });
 
-    const responseData = await response.json()
-    console.log('Asana API response:', responseData)
-
-    if (!response.ok) {
-      console.error('Asana API error:', responseData)
-      throw new Error(responseData.errors?.[0]?.message || 'Failed to create project in Asana')
+    if (!createProjectResponse.ok) {
+      const error = await createProjectResponse.json()
+      console.error('Failed to create Asana project:', error)
+      throw new Error('Failed to create project in Asana')
     }
+
+    const projectData = await createProjectResponse.json()
+    const projectGid = projectData.data.gid
+
+    console.log('Successfully created Asana project:', projectData)
 
     // Add project to portfolio
     const addToPortfolioResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolioGid}/addItem`, {
@@ -101,18 +63,40 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         data: {
-          item: responseData.data.gid
+          item: projectGid
         }
       })
     })
 
     if (!addToPortfolioResponse.ok) {
-      console.error('Failed to add project to portfolio:', await addToPortfolioResponse.json())
-      // Don't throw here, as the project was created successfully
+      const error = await addToPortfolioResponse.json()
+      console.error('Failed to add project to portfolio:', error)
+      throw new Error('Failed to add project to portfolio')
+    }
+
+    // If folder GID is provided, add project to folder
+    if (folderGid) {
+      const addToFolderResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${folderGid}/addItem`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          data: {
+            item: projectGid
+          }
+        })
+      })
+
+      if (!addToFolderResponse.ok) {
+        console.error('Failed to add project to folder:', await addToFolderResponse.json())
+        // Don't throw here, just log the error as this is optional
+      }
     }
 
     return new Response(
-      JSON.stringify(responseData.data),
+      JSON.stringify({ gid: projectGid }),
       { 
         headers: { 
           ...corsHeaders,

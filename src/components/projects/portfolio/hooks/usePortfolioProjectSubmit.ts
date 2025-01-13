@@ -17,10 +17,10 @@ export const usePortfolioProjectSubmit = (
       console.log('Creating portfolio project with data:', formData);
       console.log('Portfolio ID:', portfolioId);
 
-      // First verify that the portfolio exists
+      // First verify that the portfolio exists and get its Asana details
       const { data: portfolioData, error: portfolioError } = await supabase
         .from('portfolios')
-        .select('id, asana_gid')
+        .select('id, asana_gid, asana_folder_gid')
         .eq('id', portfolioId)
         .maybeSingle();
 
@@ -37,13 +37,14 @@ export const usePortfolioProjectSubmit = (
       console.log('Found portfolio:', portfolioData);
       let asanaGid = null;
 
-      // If portfolio has Asana GID, try to create Asana project
+      // If portfolio has Asana GID, create Asana project
       if (portfolioData.asana_gid) {
         console.log('Found portfolio Asana GID:', portfolioData.asana_gid);
         try {
           const { data: asanaData, error: asanaError } = await supabase.functions.invoke('create-asana-project', {
             body: {
               portfolioGid: portfolioData.asana_gid,
+              folderGid: portfolioData.asana_folder_gid,
               name: formData.name,
               description: formData.description,
               startDate: formData.startDate || null,
@@ -55,14 +56,15 @@ export const usePortfolioProjectSubmit = (
 
           if (asanaError) {
             console.error('Error creating Asana project:', asanaError);
-            // Don't throw here, just log the error and continue without Asana integration
-          } else {
+            toast.error('حدث خطأ أثناء إنشاء المشروع في Asana');
+          } else if (asanaData) {
             console.log('Successfully created Asana project:', asanaData);
             asanaGid = asanaData.gid;
+            toast.success('تم إنشاء المشروع في Asana بنجاح');
           }
         } catch (asanaError) {
           console.error('Error in Asana project creation:', asanaError);
-          // Don't throw here, just log the error and continue without Asana integration
+          toast.error('حدث خطأ أثناء الاتصال بـ Asana');
         }
       } else {
         console.log('No Asana GID found for portfolio, skipping Asana integration');
