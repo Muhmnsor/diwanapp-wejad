@@ -36,7 +36,7 @@ const NewPortfolioProject = () => {
     try {
       console.log('Creating new portfolio project:', { portfolioId, title, description });
       
-      // First create the project
+      // First create the project with correct project_type
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert([{
@@ -50,7 +50,7 @@ const NewPortfolioProject = () => {
           beneficiary_type: 'both',
           event_path: 'environment',
           event_category: 'social',
-          project_type: 'portfolio_project'
+          project_type: 'portfolio_project' // تحديد نوع المشروع بشكل صحيح
         }])
         .select()
         .single();
