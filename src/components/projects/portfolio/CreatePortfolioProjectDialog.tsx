@@ -37,7 +37,9 @@ export const CreatePortfolioProjectDialog = ({
     try {
       console.log('Creating portfolio project with data:', formData);
       
-      // First get the portfolio's Asana GID
+      let asanaGid = null;
+
+      // First try to get the portfolio's Asana GID
       const { data: portfolioData, error: portfolioError } = await supabase
         .from('portfolios')
         .select('asana_gid')
@@ -46,37 +48,39 @@ export const CreatePortfolioProjectDialog = ({
 
       if (portfolioError) {
         console.error('Error fetching portfolio:', portfolioError);
-        throw new Error('خطأ في جلب بيانات المحفظة');
+        // Don't throw error, just continue without Asana integration
       }
 
-      if (!portfolioData?.asana_gid) {
-        console.error('Portfolio has no Asana GID:', portfolioId);
-        throw new Error('المحفظة غير مرتبطة بمنصة Asana');
-      }
+      // If portfolio has Asana GID, try to create Asana project
+      if (portfolioData?.asana_gid) {
+        console.log('Found portfolio Asana GID:', portfolioData.asana_gid);
+        try {
+          const { data: asanaData, error: asanaError } = await supabase.functions.invoke('create-asana-project', {
+            body: {
+              portfolioGid: portfolioData.asana_gid,
+              name: formData.name,
+              description: formData.description,
+              startDate: formData.startDate || null,
+              dueDate: formData.dueDate || null,
+              status: formData.status,
+              public: formData.privacy === 'public'
+            }
+          });
 
-      console.log('Found portfolio Asana GID:', portfolioData.asana_gid);
-
-      // Create the project in Asana first
-      const { data: asanaData, error: asanaError } = await supabase.functions.invoke('create-asana-project', {
-        body: {
-          portfolioGid: portfolioData.asana_gid,
-          name: formData.name,
-          description: formData.description,
-          startDate: formData.startDate || null,
-          dueDate: formData.dueDate || null,
-          status: formData.status,
-          public: formData.privacy === 'public'
+          if (asanaError) {
+            console.error('Error creating Asana project:', asanaError);
+            // Don't throw error, just continue without Asana integration
+          } else {
+            console.log('Successfully created Asana project:', asanaData);
+            asanaGid = asanaData.gid;
+          }
+        } catch (asanaError) {
+          console.error('Error in Asana project creation:', asanaError);
+          // Don't throw error, just continue without Asana integration
         }
-      });
-
-      if (asanaError) {
-        console.error('Error creating Asana project:', asanaError);
-        throw new Error('حدث خطأ أثناء إنشاء المشروع في منصة Asana');
       }
 
-      console.log('Successfully created Asana project:', asanaData);
-
-      // Create the portfolio project directly in portfolio_only_projects
+      // Create the portfolio project in database regardless of Asana status
       const { data: projectData, error: projectError } = await supabase
         .from('portfolio_only_projects')
         .insert([{
@@ -87,7 +91,7 @@ export const CreatePortfolioProjectDialog = ({
           status: formData.status,
           privacy: formData.privacy,
           portfolio_id: portfolioId,
-          asana_gid: asanaData.gid
+          asana_gid: asanaGid
         }])
         .select()
         .single();
@@ -99,6 +103,7 @@ export const CreatePortfolioProjectDialog = ({
 
       console.log('Successfully created portfolio project:', projectData);
 
+      // Show success message and close dialog
       toast.success("تم إنشاء المشروع بنجاح");
       onSuccess?.();
       onOpenChange(false);
