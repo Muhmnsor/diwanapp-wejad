@@ -93,17 +93,29 @@ serve(async (req) => {
     // For each portfolio from Asana
     console.log('📝 Inserting new portfolios...')
     for (const portfolio of portfoliosData.data) {
+      // Ensure we have valid dates
+      const createdAt = portfolio.created_at ? new Date(portfolio.created_at) : new Date()
+      const now = new Date()
+
+      // Validate dates before using them
+      if (isNaN(createdAt.getTime())) {
+        console.warn('⚠️ Invalid created_at date for portfolio:', portfolio.gid)
+        createdAt = now
+      }
+
       const portfolioData = {
         name: portfolio.name,
         description: portfolio.notes || '',
         asana_gid: portfolio.gid,
         asana_sync_enabled: true,
-        created_at: new Date(portfolio.created_at).toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: createdAt.toISOString(),
+        updated_at: now.toISOString(),
         sync_enabled: true,
-        last_sync_at: new Date().toISOString(),
-        owner_gid: workspaceData.data.gid // Use workspace gid instead of owner
+        last_sync_at: now.toISOString(),
+        owner_gid: workspaceData.data.gid
       }
+
+      console.log('📄 Inserting portfolio:', portfolioData)
 
       const { error: insertError } = await supabase
         .from('portfolios')
