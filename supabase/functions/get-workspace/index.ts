@@ -16,45 +16,48 @@ serve(async (req) => {
     )
 
     const { workspaceId } = await req.json()
-    console.log('Fetching project details for ID:', workspaceId)
+    console.log('Fetching project details for Asana GID:', workspaceId)
 
-    // First get the portfolio project details
+    // First get the portfolio project that matches this Asana GID
     const { data: portfolioProject, error: projectError } = await supabase
       .from('portfolio_projects')
       .select(`
-        *,
-        portfolios!inner (*),
-        projects (*)
+        id,
+        portfolio:portfolios (
+          id,
+          name,
+          description
+        ),
+        project:projects (
+          id,
+          title,
+          description,
+          start_date,
+          end_date,
+          max_attendees
+        )
       `)
       .eq('asana_gid', workspaceId)
       .single()
 
     if (projectError) {
-      console.error('Error fetching project:', projectError)
+      console.error('Error fetching portfolio project:', projectError)
       throw projectError
     }
 
     if (!portfolioProject) {
-      console.error('Project not found for ID:', workspaceId)
-      return new Response(
-        JSON.stringify({ 
-          name: 'مشروع جديد',
-          description: '',
-          tasks: []
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      )
+      console.error('Portfolio project not found for Asana GID:', workspaceId)
+      throw new Error('Portfolio project not found')
     }
 
-    // Get tasks for this project with assigned user information
+    console.log('Found portfolio project:', portfolioProject)
+
+    // Get tasks for this project
     const { data: tasks, error: tasksError } = await supabase
       .from('portfolio_tasks')
       .select(`
         *,
-        profiles:assigned_to (
+        assigned_to:profiles (
           email
         )
       `)
@@ -66,18 +69,12 @@ serve(async (req) => {
       throw tasksError
     }
 
-    // Transform tasks to include assignee info
-    const transformedTasks = tasks?.map(task => ({
-      ...task,
-      assigned_to: task.profiles
-    })) || []
-
     // Get Asana tasks if project has Asana integration
     let asanaTasks = []
-    if (portfolioProject.asana_gid) {
+    if (workspaceId) {
       try {
         const asanaResponse = await fetch(
-          `https://app.asana.com/api/1.0/projects/${portfolioProject.asana_gid}/tasks`,
+          `https://app.asana.com/api/1.0/projects/${workspaceId}/tasks`,
           {
             headers: {
               'Authorization': `Bearer ${Deno.env.get('ASANA_ACCESS_TOKEN')}`,
@@ -88,7 +85,14 @@ serve(async (req) => {
         
         if (asanaResponse.ok) {
           const asanaData = await asanaResponse.json()
-          asanaTasks = asanaData.data
+          asanaTasks = asanaData.data.map((task: any) => ({
+            id: task.gid,
+            title: task.name,
+            description: task.notes,
+            status: task.completed ? 'completed' : 'pending',
+            due_date: task.due_on,
+            gid: task.gid
+          }))
           console.log('Fetched Asana tasks:', asanaTasks)
         } else {
           console.error('Error fetching Asana tasks:', await asanaResponse.text())
@@ -101,11 +105,11 @@ serve(async (req) => {
     // Combine response data
     const response = {
       id: portfolioProject.id,
-      name: portfolioProject.projects?.title || 'مشروع جديد',
-      description: portfolioProject.projects?.description || '',
-      portfolio: portfolioProject.portfolios,
-      project: portfolioProject.projects,
-      tasks: [...transformedTasks, ...asanaTasks]
+      name: portfolioProject.project?.title || 'مشروع جديد',
+      description: portfolioProject.project?.description || '',
+      portfolio: portfolioProject.portfolio,
+      project: portfolioProject.project,
+      tasks: [...(tasks || []), ...asanaTasks]
     }
 
     console.log('Successfully fetched project data:', response)
