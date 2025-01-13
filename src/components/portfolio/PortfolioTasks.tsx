@@ -15,7 +15,7 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
       console.log('Fetching tasks for workspace:', workspaceId);
       
       // First get the workspace UUID from Asana GID
-      const { data: workspace, error: workspaceError } = await supabase
+      let { data: workspace, error: workspaceError } = await supabase
         .from('portfolio_workspaces')
         .select('id')
         .eq('asana_gid', workspaceId)
