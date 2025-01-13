@@ -31,6 +31,27 @@ serve(async (req) => {
 
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
     
+    // First get the workspace details to get the owner
+    console.log('🔍 Fetching workspace details...')
+    const workspaceResponse = await fetch(
+      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+          'Accept': 'application/json'
+        }
+      }
+    )
+
+    if (!workspaceResponse.ok) {
+      const errorText = await workspaceResponse.text()
+      console.error('❌ Error fetching workspace:', errorText)
+      throw new Error(`Asana API error: ${errorText}`)
+    }
+
+    const workspaceData = await workspaceResponse.json()
+    console.log('✅ Workspace details:', workspaceData)
+
     // Define all required fields explicitly
     const optFields = [
       'name',
@@ -101,7 +122,8 @@ serve(async (req) => {
         created_at: new Date(portfolio.created_at).toISOString(),
         updated_at: new Date().toISOString(),
         sync_enabled: true,
-        last_sync_at: new Date().toISOString()
+        last_sync_at: new Date().toISOString(),
+        owner_gid: portfolio.owner?.gid || workspaceData.data?.owner?.gid // Fallback to workspace owner
       }
 
       const { error: insertError } = await supabase
