@@ -8,10 +8,11 @@ import { useNavigate } from 'react-router-dom';
 export const PortfolioList = () => {
   const navigate = useNavigate();
 
-  const { data: portfolios, isLoading } = useQuery({
+  const { data: portfolios, isLoading, error } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
-      console.log('Fetching portfolios from database');
+      console.log('Starting portfolio fetch from database...');
+      
       const { data, error } = await supabase
         .from('portfolios')
         .select('*')
@@ -23,13 +24,25 @@ export const PortfolioList = () => {
         throw error;
       }
 
-      console.log('Fetched Asana portfolios:', data);
+      console.log('Raw portfolios data from database:', data);
+      console.log('Number of portfolios found:', data?.length);
+      console.log('Portfolios with Asana GIDs:', data?.filter(p => p.asana_gid));
+      
       return data;
     }
   });
 
+  if (error) {
+    console.error('Query error:', error);
+    return <div className="p-4 text-red-500">حدث خطأ أثناء تحميل المحافظ</div>;
+  }
+
   if (isLoading) {
     return <div className="p-4">جاري التحميل...</div>;
+  }
+
+  if (!portfolios?.length) {
+    return <div className="p-4">لم يتم العثور على محافظ</div>;
   }
 
   return (
