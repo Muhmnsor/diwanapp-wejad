@@ -46,7 +46,19 @@ serve(async (req) => {
     if (!workspaceResponse.ok) {
       const errorText = await workspaceResponse.text()
       console.error('❌ Error fetching workspace:', errorText)
-      throw new Error(`Asana API error: ${errorText}`)
+      return new Response(
+        JSON.stringify({ 
+          error: `Asana API error: ${errorText}`,
+          details: {
+            status: workspaceResponse.status,
+            statusText: workspaceResponse.statusText
+          }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: workspaceResponse.status
+        }
+      )
     }
 
     const workspaceData = await workspaceResponse.json()
@@ -55,7 +67,7 @@ serve(async (req) => {
     // Get portfolios (projects at workspace level)
     console.log('🔍 Fetching workspace projects...')
     const portfoliosResponse = await fetch(
-      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/projects`, 
+      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/projects?opt_fields=name,notes,created_at,gid`, 
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -67,7 +79,19 @@ serve(async (req) => {
     if (!portfoliosResponse.ok) {
       const errorText = await portfoliosResponse.text()
       console.error('❌ Error response from Asana:', errorText)
-      throw new Error(`Asana API error: ${errorText}`)
+      return new Response(
+        JSON.stringify({ 
+          error: `Asana API error: ${errorText}`,
+          details: {
+            status: portfoliosResponse.status,
+            statusText: portfoliosResponse.statusText
+          }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: portfoliosResponse.status
+        }
+      )
     }
 
     const portfoliosData = await portfoliosResponse.json()
@@ -75,7 +99,16 @@ serve(async (req) => {
 
     if (!portfoliosData.data) {
       console.error('❌ No data returned from Asana')
-      throw new Error('No data returned from Asana')
+      return new Response(
+        JSON.stringify({ 
+          error: 'No data returned from Asana',
+          details: { portfoliosData }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      )
     }
 
     // Delete all existing portfolios that are synced from Asana
@@ -87,47 +120,75 @@ serve(async (req) => {
 
     if (deleteError) {
       console.error('❌ Error deleting old portfolios:', deleteError)
-      throw deleteError
+      return new Response(
+        JSON.stringify({ 
+          error: 'Database error while deleting portfolios',
+          details: deleteError
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      )
     }
 
     // For each portfolio from Asana
     console.log('📝 Inserting new portfolios...')
+    const insertedPortfolios = []
     for (const portfolio of portfoliosData.data) {
-      // Get current timestamp
-      const now = new Date()
-      
-      // Parse and validate created_at date
-      let portfolioCreatedAt = now
-      if (portfolio.created_at) {
-        const parsedDate = new Date(portfolio.created_at)
-        if (!isNaN(parsedDate.getTime())) {
-          portfolioCreatedAt = parsedDate
-        } else {
-          console.warn('⚠️ Invalid created_at date for portfolio:', portfolio.gid)
+      try {
+        // Get current timestamp
+        const now = new Date()
+        
+        // Parse and validate created_at date
+        let portfolioCreatedAt = now
+        if (portfolio.created_at) {
+          const parsedDate = new Date(portfolio.created_at)
+          if (!isNaN(parsedDate.getTime())) {
+            portfolioCreatedAt = parsedDate
+          } else {
+            console.warn('⚠️ Invalid created_at date for portfolio:', portfolio.gid)
+          }
         }
-      }
 
-      const portfolioData = {
-        name: portfolio.name,
-        description: portfolio.notes || '',
-        asana_gid: portfolio.gid,
-        asana_sync_enabled: true,
-        created_at: portfolioCreatedAt.toISOString(),
-        updated_at: now.toISOString(),
-        sync_enabled: true,
-        last_sync_at: now.toISOString(),
-        owner_gid: workspaceData.data.gid
-      }
+        // Validate required fields
+        if (!portfolio.gid) {
+          console.error('❌ Missing gid for portfolio:', portfolio)
+          continue
+        }
 
-      console.log('📄 Inserting portfolio:', portfolioData)
+        if (!portfolio.name) {
+          console.error('❌ Missing name for portfolio:', portfolio.gid)
+          continue
+        }
 
-      const { error: insertError } = await supabase
-        .from('portfolios')
-        .insert(portfolioData)
+        const portfolioData = {
+          name: portfolio.name,
+          description: portfolio.notes || '',
+          asana_gid: portfolio.gid,
+          asana_sync_enabled: true,
+          created_at: portfolioCreatedAt.toISOString(),
+          updated_at: now.toISOString(),
+          sync_enabled: true,
+          last_sync_at: now.toISOString(),
+          owner_gid: workspaceData.data.gid
+        }
 
-      if (insertError) {
-        console.error('❌ Error inserting portfolio:', insertError, portfolioData)
-        throw insertError
+        console.log('📄 Inserting portfolio:', portfolioData)
+
+        const { error: insertError } = await supabase
+          .from('portfolios')
+          .insert(portfolioData)
+
+        if (insertError) {
+          console.error('❌ Error inserting portfolio:', insertError, portfolioData)
+          continue
+        }
+
+        insertedPortfolios.push(portfolioData)
+      } catch (error) {
+        console.error('❌ Error processing portfolio:', portfolio.gid, error)
+        continue
       }
     }
 
@@ -139,13 +200,26 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('❌ Error fetching updated portfolios:', dbError)
-      throw dbError
+      return new Response(
+        JSON.stringify({ 
+          error: 'Database error while fetching portfolios',
+          details: dbError
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      )
     }
 
     console.log('✅ Successfully synced portfolios:', updatedPortfolios)
     return new Response(
       JSON.stringify({
-        portfolios: updatedPortfolios
+        portfolios: updatedPortfolios,
+        details: {
+          inserted: insertedPortfolios.length,
+          total: updatedPortfolios.length
+        }
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -157,7 +231,8 @@ serve(async (req) => {
     console.error('❌ Error in get-workspace function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'An unknown error occurred'
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+        details: error
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
