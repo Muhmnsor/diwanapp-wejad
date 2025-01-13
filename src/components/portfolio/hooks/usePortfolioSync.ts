@@ -6,7 +6,7 @@ export const usePortfolioSync = () => {
   const { data: portfolios, isLoading, error, refetch } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
-      console.log('Starting portfolio fetch from database...');
+      console.log('🔄 Starting portfolio synchronization...');
       
       const { data: dbPortfolios, error: dbError } = await supabase
         .from('portfolios')
@@ -15,31 +15,36 @@ export const usePortfolioSync = () => {
         .order('created_at', { ascending: false });
 
       if (dbError) {
-        console.error('Database error:', dbError);
+        console.error('❌ Database error:', dbError);
         throw dbError;
       }
 
-      console.log('Raw portfolios data from database:', dbPortfolios);
-      console.log('Number of portfolios found:', dbPortfolios?.length);
-      console.log('Portfolios with Asana GIDs:', dbPortfolios?.filter(p => p.asana_gid));
+      console.log('📊 Portfolios from database:', dbPortfolios);
 
       try {
+        // Get workspace data from Asana
+        console.log('🔍 Fetching Asana workspace data...');
         const response = await supabase.functions.invoke('get-workspace', {
           body: { workspaceId: dbPortfolios?.[0]?.asana_gid }
         });
 
         if (response.error) {
-          console.error('Asana sync failed:', response.error);
+          console.error('❌ Asana sync failed:', response.error);
           toast.error('فشل في مزامنة البيانات مع Asana');
           return dbPortfolios;
         }
 
-        const asanaData = response.data;
-        console.log('Asana workspace data:', asanaData);
+        console.log('✅ Asana workspace data:', response.data);
+        console.log('📂 Expected portfolios:', [
+          'وحدة التطوع',
+          'الإدارة التنفيذية',
+          'الإدارة المالية',
+          'بليسيلسبيل'
+        ]);
         
         return dbPortfolios;
       } catch (asanaError) {
-        console.error('Error syncing with Asana:', asanaError);
+        console.error('❌ Error syncing with Asana:', asanaError);
         toast.error('حدث خطأ أثناء الاتصال مع Asana');
         return dbPortfolios;
       }
@@ -52,7 +57,7 @@ export const usePortfolioSync = () => {
       await refetch();
       toast.success('تم تحديث البيانات بنجاح');
     } catch (error) {
-      console.error('Sync error:', error);
+      console.error('❌ Sync error:', error);
       toast.error('فشل في تحديث البيانات');
     }
   };
