@@ -21,15 +21,9 @@ serve(async (req) => {
     // First get the workspace details
     const { data: workspace, error: workspaceError } = await supabase
       .from('portfolio_workspaces')
-      .select(`
-        *,
-        portfolio_projects!inner (
-          *,
-          projects (*)
-        )
-      `)
+      .select('*')
       .eq('asana_gid', workspaceId)
-      .maybeSingle()
+      .single()
 
     if (workspaceError) {
       console.error('Error fetching workspace:', workspaceError)
@@ -49,6 +43,20 @@ serve(async (req) => {
           status: 200
         }
       )
+    }
+
+    // Get associated project details
+    const { data: portfolioProject, error: projectError } = await supabase
+      .from('portfolio_projects')
+      .select(`
+        *,
+        projects (*)
+      `)
+      .eq('asana_gid', workspaceId)
+      .single()
+
+    if (projectError) {
+      console.error('Error fetching project:', projectError)
     }
 
     // Get tasks for this workspace with assigned user information
@@ -76,28 +84,34 @@ serve(async (req) => {
 
     // Get Asana tasks if project has Asana integration
     let asanaTasks = []
-    if (workspace.portfolio_projects?.[0]?.asana_gid) {
-      const asanaResponse = await fetch(
-        `https://app.asana.com/api/1.0/projects/${workspace.portfolio_projects[0].asana_gid}/tasks`,
-        {
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get('ASANA_ACCESS_TOKEN')}`,
-            'Accept': 'application/json'
+    if (workspace.asana_gid) {
+      try {
+        const asanaResponse = await fetch(
+          `https://app.asana.com/api/1.0/projects/${workspace.asana_gid}/tasks`,
+          {
+            headers: {
+              'Authorization': `Bearer ${Deno.env.get('ASANA_ACCESS_TOKEN')}`,
+              'Accept': 'application/json'
+            }
           }
+        )
+        
+        if (asanaResponse.ok) {
+          const asanaData = await asanaResponse.json()
+          asanaTasks = asanaData.data
+          console.log('Fetched Asana tasks:', asanaTasks)
+        } else {
+          console.error('Error fetching Asana tasks:', await asanaResponse.text())
         }
-      )
-      
-      if (asanaResponse.ok) {
-        const asanaData = await asanaResponse.json()
-        asanaTasks = asanaData.data
-        console.log('Fetched Asana tasks:', asanaTasks)
+      } catch (error) {
+        console.error('Error calling Asana API:', error)
       }
     }
 
     // Combine response data
     const response = {
       ...workspace,
-      project: workspace.portfolio_projects?.[0]?.projects || null,
+      project: portfolioProject?.projects || null,
       tasks: [...transformedTasks, ...asanaTasks]
     }
 
