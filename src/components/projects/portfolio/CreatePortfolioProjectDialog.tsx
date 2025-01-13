@@ -36,23 +36,25 @@ export const CreatePortfolioProjectDialog = ({
     
     try {
       console.log('Creating portfolio project with data:', formData);
-      
-      let asanaGid = null;
+      console.log('Portfolio ID:', portfolioId);
 
-      // First try to get the portfolio's Asana GID
+      // First verify that the portfolio exists
       const { data: portfolioData, error: portfolioError } = await supabase
         .from('portfolios')
-        .select('asana_gid')
+        .select('id, asana_gid')
         .eq('id', portfolioId)
-        .maybeSingle();
+        .single();
 
-      if (portfolioError) {
-        console.error('Error fetching portfolio:', portfolioError);
-        // Don't throw error, just continue without Asana integration
+      if (portfolioError || !portfolioData) {
+        console.error('Error fetching portfolio or portfolio not found:', portfolioError);
+        throw new Error('المحفظة غير موجودة');
       }
 
+      console.log('Found portfolio:', portfolioData);
+      let asanaGid = null;
+
       // If portfolio has Asana GID, try to create Asana project
-      if (portfolioData?.asana_gid) {
+      if (portfolioData.asana_gid) {
         console.log('Found portfolio Asana GID:', portfolioData.asana_gid);
         try {
           const { data: asanaData, error: asanaError } = await supabase.functions.invoke('create-asana-project', {
@@ -69,18 +71,16 @@ export const CreatePortfolioProjectDialog = ({
 
           if (asanaError) {
             console.error('Error creating Asana project:', asanaError);
-            // Don't throw error, just continue without Asana integration
           } else {
             console.log('Successfully created Asana project:', asanaData);
             asanaGid = asanaData.gid;
           }
         } catch (asanaError) {
           console.error('Error in Asana project creation:', asanaError);
-          // Don't throw error, just continue without Asana integration
         }
       }
 
-      // Create the portfolio project in database regardless of Asana status
+      // Create the portfolio project in database
       const { data: projectData, error: projectError } = await supabase
         .from('portfolio_only_projects')
         .insert([{
@@ -103,7 +103,6 @@ export const CreatePortfolioProjectDialog = ({
 
       console.log('Successfully created portfolio project:', projectData);
 
-      // Show success message and close dialog
       toast.success("تم إنشاء المشروع بنجاح");
       onSuccess?.();
       onOpenChange(false);
