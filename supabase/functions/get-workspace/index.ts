@@ -31,7 +31,7 @@ serve(async (req) => {
 
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
     
-    // First get the workspace details to get the owner
+    // First get the workspace details
     console.log('🔍 Fetching workspace details...')
     const workspaceResponse = await fetch(
       `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}`,
@@ -52,31 +52,10 @@ serve(async (req) => {
     const workspaceData = await workspaceResponse.json()
     console.log('✅ Workspace details:', workspaceData)
 
-    // Define all required fields explicitly
-    const optFields = [
-      'name',
-      'color',
-      'created_at',
-      'current_status',
-      'due_on',
-      'members',
-      'owner',
-      'owner.name',
-      'owner.email',
-      'permalink_url',
-      'public',
-      'start_on',
-      'workspace',
-      'gid',
-      'resource_type',
-      'custom_fields',
-      'custom_field_settings',
-      'workspace_name',
-      'html_notes'
-    ].join(',')
-
+    // Get portfolios (projects at workspace level)
+    console.log('🔍 Fetching workspace projects...')
     const portfoliosResponse = await fetch(
-      `https://app.asana.com/api/1.0/portfolios?workspace=${ASANA_WORKSPACE_ID}&opt_fields=${optFields}`, 
+      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/projects`, 
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -116,14 +95,14 @@ serve(async (req) => {
     for (const portfolio of portfoliosData.data) {
       const portfolioData = {
         name: portfolio.name,
-        description: portfolio.html_notes || portfolio.current_status?.text || '',
+        description: portfolio.notes || '',
         asana_gid: portfolio.gid,
         asana_sync_enabled: true,
         created_at: new Date(portfolio.created_at).toISOString(),
         updated_at: new Date().toISOString(),
         sync_enabled: true,
         last_sync_at: new Date().toISOString(),
-        owner_gid: portfolio.owner?.gid || workspaceData.data?.owner?.gid // Fallback to workspace owner
+        owner_gid: workspaceData.data.gid // Use workspace gid instead of owner
       }
 
       const { error: insertError } = await supabase
