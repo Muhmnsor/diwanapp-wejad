@@ -33,19 +33,17 @@ export const PortfolioList = () => {
 
       // Now try to sync with Asana
       try {
-        const response = await fetch('/functions/v1/get-workspace', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
+        const response = await supabase.functions.invoke('get-workspace', {
+          body: { workspaceId: dbPortfolios?.[0]?.asana_gid }
         });
 
-        if (!response.ok) {
-          console.error('Asana sync failed:', await response.text());
+        if (response.error) {
+          console.error('Asana sync failed:', response.error);
           toast.error('فشل في مزامنة البيانات مع Asana');
           return dbPortfolios;
         }
 
-        const asanaData = await response.json();
+        const asanaData = response.data;
         console.log('Asana workspace data:', asanaData);
         
         return dbPortfolios;
