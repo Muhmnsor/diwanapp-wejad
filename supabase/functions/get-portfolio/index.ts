@@ -29,7 +29,7 @@ serve(async (req) => {
       .from('portfolios')
       .select('*')
       .eq('id', portfolioId)
-      .single()
+      .maybeSingle()
 
     if (dbError) {
       console.error('Database error:', dbError)
@@ -58,7 +58,15 @@ serve(async (req) => {
 
         if (!asanaResponse.ok) {
           console.error('Asana API error:', await asanaResponse.text())
-          throw new Error('خطأ في الاتصال مع Asana')
+          // Don't throw here, just log the error and continue with database data
+          console.warn('Continuing with database data only')
+          return new Response(
+            JSON.stringify(portfolio),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200 
+            }
+          )
         }
 
         const asanaData = await asanaResponse.json()
@@ -77,7 +85,15 @@ serve(async (req) => {
         )
       } catch (asanaError) {
         console.error('Error fetching from Asana:', asanaError)
-        throw new Error('حدث خطأ أثناء جلب البيانات من Asana')
+        // Don't throw here, just log the error and continue with database data
+        console.warn('Continuing with database data only')
+        return new Response(
+          JSON.stringify(portfolio),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        )
       }
     }
 
