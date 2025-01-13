@@ -1,36 +1,72 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Folder } from 'lucide-react';
+import { Folder, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { AddPortfolioDialog } from './AddPortfolioDialog';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export const PortfolioList = () => {
   const navigate = useNavigate();
 
-  const { data: portfolios, isLoading, error } = useQuery({
+  const { data: portfolios, isLoading, error, refetch } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
       console.log('Starting portfolio fetch from database...');
       
-      const { data, error } = await supabase
+      // First get portfolios from database
+      const { data: dbPortfolios, error: dbError } = await supabase
         .from('portfolios')
         .select('*')
-        .not('asana_gid', 'is', null) // Only get portfolios with Asana IDs
+        .not('asana_gid', 'is', null)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching portfolios:', error);
-        throw error;
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw dbError;
       }
 
-      console.log('Raw portfolios data from database:', data);
-      console.log('Number of portfolios found:', data?.length);
-      console.log('Portfolios with Asana GIDs:', data?.filter(p => p.asana_gid));
-      
-      return data;
+      console.log('Raw portfolios data from database:', dbPortfolios);
+      console.log('Number of portfolios found:', dbPortfolios?.length);
+      console.log('Portfolios with Asana GIDs:', dbPortfolios?.filter(p => p.asana_gid));
+
+      // Now try to sync with Asana
+      try {
+        const response = await fetch('/functions/v1/get-workspace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+
+        if (!response.ok) {
+          console.error('Asana sync failed:', await response.text());
+          toast.error('فشل في مزامنة البيانات مع Asana');
+          return dbPortfolios;
+        }
+
+        const asanaData = await response.json();
+        console.log('Asana workspace data:', asanaData);
+        
+        return dbPortfolios;
+      } catch (asanaError) {
+        console.error('Error syncing with Asana:', asanaError);
+        toast.error('حدث خطأ أثناء الاتصال مع Asana');
+        return dbPortfolios;
+      }
     }
   });
+
+  const handleSync = async () => {
+    toast.loading('جاري مزامنة البيانات مع Asana...');
+    try {
+      await refetch();
+      toast.success('تم تحديث البيانات بنجاح');
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast.error('فشل في تحديث البيانات');
+    }
+  };
 
   if (error) {
     console.error('Query error:', error);
@@ -49,7 +85,17 @@ export const PortfolioList = () => {
     <div className="space-y-4" dir="rtl">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">المحافظ</h2>
-        <AddPortfolioDialog />
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleSync}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            مزامنة مع Asana
+          </Button>
+          <AddPortfolioDialog />
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
