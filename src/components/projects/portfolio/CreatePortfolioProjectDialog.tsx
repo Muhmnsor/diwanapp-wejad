@@ -76,26 +76,48 @@ export const CreatePortfolioProjectDialog = ({
 
       console.log('Successfully created Asana project:', asanaData);
 
-      // Create the portfolio project directly in portfolio_tasks
-      const { data: taskData, error: taskError } = await supabase
-        .from('portfolio_tasks')
+      // Create the project with portfolio_project type
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
         .insert([{
-          workspace_id: portfolioId,
           title: formData.name,
           description: formData.description,
-          status: formData.status,
-          due_date: formData.dueDate || null,
-          asana_gid: asanaData.gid
+          start_date: formData.startDate || new Date().toISOString(),
+          end_date: formData.dueDate || null,
+          max_attendees: 0,
+          image_url: '/placeholder.svg',
+          event_type: 'in-person',
+          beneficiary_type: 'both',
+          event_path: 'environment',
+          event_category: 'social',
+          project_type: 'portfolio_project', // Explicitly set project type
+          is_visible: formData.privacy === 'public'
         }])
         .select()
         .single();
 
-      if (taskError) {
-        console.error('Error creating portfolio task:', taskError);
-        throw taskError;
+      if (projectError) {
+        console.error('Error creating project:', projectError);
+        throw projectError;
       }
 
-      console.log('Successfully created portfolio task:', taskData);
+      console.log('Successfully created project:', projectData);
+
+      // Create the portfolio project association
+      const { error: portfolioProjectError } = await supabase
+        .from('portfolio_projects')
+        .insert([{
+          portfolio_id: portfolioId,
+          project_id: projectData.id,
+          asana_gid: asanaData.gid
+        }]);
+
+      if (portfolioProjectError) {
+        console.error('Error creating portfolio project:', portfolioProjectError);
+        throw portfolioProjectError;
+      }
+
+      console.log('Successfully created portfolio project association');
 
       toast.success("تم إنشاء المشروع بنجاح");
       onSuccess?.();
