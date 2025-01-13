@@ -93,14 +93,18 @@ serve(async (req) => {
     // For each portfolio from Asana
     console.log('📝 Inserting new portfolios...')
     for (const portfolio of portfoliosData.data) {
-      // Ensure we have valid dates
-      const createdAt = portfolio.created_at ? new Date(portfolio.created_at) : new Date()
+      // Get current timestamp
       const now = new Date()
-
-      // Validate dates before using them
-      if (isNaN(createdAt.getTime())) {
-        console.warn('⚠️ Invalid created_at date for portfolio:', portfolio.gid)
-        createdAt = now
+      
+      // Parse and validate created_at date
+      let portfolioCreatedAt = now
+      if (portfolio.created_at) {
+        const parsedDate = new Date(portfolio.created_at)
+        if (!isNaN(parsedDate.getTime())) {
+          portfolioCreatedAt = parsedDate
+        } else {
+          console.warn('⚠️ Invalid created_at date for portfolio:', portfolio.gid)
+        }
       }
 
       const portfolioData = {
@@ -108,7 +112,7 @@ serve(async (req) => {
         description: portfolio.notes || '',
         asana_gid: portfolio.gid,
         asana_sync_enabled: true,
-        created_at: createdAt.toISOString(),
+        created_at: portfolioCreatedAt.toISOString(),
         updated_at: now.toISOString(),
         sync_enabled: true,
         last_sync_at: now.toISOString(),
