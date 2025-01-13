@@ -47,6 +47,7 @@ export const usePortfolioSync = () => {
   });
 
   const handleSync = async () => {
+    console.log('🔄 Starting manual sync...');
     toast.loading('جاري مزامنة البيانات مع Asana...');
     try {
       await refetch();
