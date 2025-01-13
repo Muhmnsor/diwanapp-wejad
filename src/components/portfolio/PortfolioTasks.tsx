@@ -19,7 +19,7 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
         .from('portfolio_workspaces')
         .select('id')
         .eq('asana_gid', workspaceId)
-        .single();
+        .maybeSingle();
 
       if (workspaceError) {
         console.error('Error fetching workspace:', workspaceError);
@@ -27,9 +27,27 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
       }
 
       if (!workspace) {
-        console.error('Workspace not found');
-        return [];
+        console.log('Workspace not found, creating new workspace');
+        const { data: newWorkspace, error: createError } = await supabase
+          .from('portfolio_workspaces')
+          .insert([
+            { 
+              asana_gid: workspaceId,
+              name: 'مساحة عمل جديدة'
+            }
+          ])
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating workspace:', createError);
+          throw createError;
+        }
+
+        workspace = newWorkspace;
       }
+
+      console.log('Using workspace ID:', workspace.id);
 
       const { data, error } = await supabase
         .from('portfolio_tasks')
@@ -49,7 +67,8 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
 
       console.log('Fetched tasks:', data);
       return data;
-    }
+    },
+    refetchInterval: 5000 // Refresh every 5 seconds to catch new tasks
   });
 
   const handleTaskAdded = async () => {
