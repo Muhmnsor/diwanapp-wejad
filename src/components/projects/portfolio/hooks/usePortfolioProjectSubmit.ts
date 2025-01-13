@@ -17,12 +17,11 @@ export const usePortfolioProjectSubmit = (
       console.log('Creating portfolio project with data:', formData);
       console.log('Portfolio ID:', portfolioId);
 
-      // First verify that the portfolio exists and get its Asana details
+      // First verify that the portfolio exists using the get-portfolio function
       const { data: portfolioData, error: portfolioError } = await supabase
-        .from('portfolios')
-        .select('id, asana_gid, asana_folder_gid')
-        .eq('id', portfolioId)
-        .maybeSingle();
+        .functions.invoke('get-portfolio', {
+          body: { portfolioId }
+        });
 
       if (portfolioError) {
         console.error('Error fetching portfolio:', portfolioError);
@@ -56,15 +55,17 @@ export const usePortfolioProjectSubmit = (
 
           if (asanaError) {
             console.error('Error creating Asana project:', asanaError);
-            toast.error('حدث خطأ أثناء إنشاء المشروع في Asana');
-          } else if (asanaData) {
+            throw new Error('حدث خطأ أثناء إنشاء المشروع في Asana');
+          }
+
+          if (asanaData) {
             console.log('Successfully created Asana project:', asanaData);
             asanaGid = asanaData.gid;
             toast.success('تم إنشاء المشروع في Asana بنجاح');
           }
         } catch (asanaError) {
           console.error('Error in Asana project creation:', asanaError);
-          toast.error('حدث خطأ أثناء الاتصال بـ Asana');
+          throw new Error('حدث خطأ أثناء الاتصال بـ Asana');
         }
       } else {
         console.log('No Asana GID found for portfolio, skipping Asana integration');
@@ -88,7 +89,7 @@ export const usePortfolioProjectSubmit = (
 
       if (projectError) {
         console.error('Error creating portfolio project:', projectError);
-        throw projectError;
+        throw new Error('حدث خطأ أثناء حفظ المشروع في قاعدة البيانات');
       }
 
       console.log('Successfully created portfolio project:', projectData);
@@ -96,7 +97,7 @@ export const usePortfolioProjectSubmit = (
       toast.success("تم إنشاء المشروع بنجاح");
       onSuccess?.();
       onOpenChange?.(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in project creation:', error);
       toast.error(error.message || "حدث خطأ أثناء إنشاء المشروع");
     } finally {
