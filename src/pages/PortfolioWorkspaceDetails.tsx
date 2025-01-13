@@ -62,6 +62,9 @@ const PortfolioWorkspaceDetails = () => {
   const taskProgress = workspace.tasks ? 
     Math.round((workspace.tasks.filter(task => task.status === 'completed').length / workspace.tasks.length) * 100) : 0;
 
+  const projectTitle = workspace.project?.title || workspace.name;
+  const projectDescription = workspace.project?.description || workspace.description;
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
@@ -69,16 +72,20 @@ const PortfolioWorkspaceDetails = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <ProjectHeader 
-              title={workspace.name} 
+              title={projectTitle}
               onAddTask={() => setIsAddTaskDialogOpen(true)} 
             />
 
             <ProjectDetails 
-              description={workspace.description} 
+              description={projectDescription}
               taskProgress={taskProgress}
+              project={workspace.project}
             />
 
-            <TasksList tasks={workspace.tasks || []} />
+            <TasksList 
+              tasks={workspace.tasks || []} 
+              projectId={workspace.project?.id}
+            />
           </div>
         </div>
       </main>

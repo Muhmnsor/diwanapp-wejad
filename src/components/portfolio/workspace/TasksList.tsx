@@ -10,10 +10,12 @@ interface Task {
   assigned_to?: {
     email: string;
   };
+  gid?: string; // For Asana tasks
 }
 
 interface TasksListProps {
   tasks: Task[];
+  projectId?: string;
 }
 
 export const TasksList = ({ tasks }: TasksListProps) => {
@@ -23,7 +25,7 @@ export const TasksList = ({ tasks }: TasksListProps) => {
       {tasks?.length > 0 ? (
         <div className="grid gap-4">
           {tasks.map((task) => (
-            <Card key={task.id} className="p-4">
+            <Card key={task.id || task.gid} className="p-4">
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">

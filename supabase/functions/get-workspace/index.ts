@@ -5,7 +5,6 @@ import { corsHeaders } from '../_shared/cors.ts'
 console.log("Get workspace function running")
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -19,10 +18,16 @@ serve(async (req) => {
     const { workspaceId } = await req.json()
     console.log('Fetching workspace details for ID:', workspaceId)
 
-    // First get the workspace details from portfolio_workspaces
+    // First get the workspace details
     const { data: workspace, error: workspaceError } = await supabase
       .from('portfolio_workspaces')
-      .select('*')
+      .select(`
+        *,
+        portfolio_projects!inner (
+          *,
+          projects (*)
+        )
+      `)
       .eq('asana_gid', workspaceId)
       .maybeSingle()
 
@@ -46,7 +51,7 @@ serve(async (req) => {
       )
     }
 
-    // Then get the tasks for this workspace with assigned user information
+    // Get tasks for this workspace with assigned user information
     const { data: tasks, error: tasksError } = await supabase
       .from('portfolio_tasks')
       .select(`
@@ -63,15 +68,37 @@ serve(async (req) => {
       throw tasksError
     }
 
-    // Transform the response to match the expected format
+    // Transform tasks to include assignee info
     const transformedTasks = tasks?.map(task => ({
       ...task,
       assigned_to: task.profiles
     })) || []
 
+    // Get Asana tasks if project has Asana integration
+    let asanaTasks = []
+    if (workspace.portfolio_projects?.[0]?.asana_gid) {
+      const asanaResponse = await fetch(
+        `https://app.asana.com/api/1.0/projects/${workspace.portfolio_projects[0].asana_gid}/tasks`,
+        {
+          headers: {
+            'Authorization': `Bearer ${Deno.env.get('ASANA_ACCESS_TOKEN')}`,
+            'Accept': 'application/json'
+          }
+        }
+      )
+      
+      if (asanaResponse.ok) {
+        const asanaData = await asanaResponse.json()
+        asanaTasks = asanaData.data
+        console.log('Fetched Asana tasks:', asanaTasks)
+      }
+    }
+
+    // Combine response data
     const response = {
       ...workspace,
-      tasks: transformedTasks
+      project: workspace.portfolio_projects?.[0]?.projects || null,
+      tasks: [...transformedTasks, ...asanaTasks]
     }
 
     console.log('Successfully fetched workspace data:', response)
