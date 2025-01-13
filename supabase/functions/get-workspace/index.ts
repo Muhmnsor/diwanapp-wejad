@@ -12,6 +12,11 @@ serve(async (req) => {
 
   try {
     const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
+    
+    if (!ASANA_ACCESS_TOKEN) {
+      throw new Error('Asana access token not configured')
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -21,7 +26,7 @@ serve(async (req) => {
     console.log('Fetching workspace details for ID:', workspaceId)
 
     // First get portfolios from Asana
-    const portfoliosResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${workspaceId}/portfolios`, {
+    const portfoliosResponse = await fetch(`https://app.asana.com/api/1.0/portfolios?workspace=${workspaceId}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type`, {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
         'Accept': 'application/json'
@@ -50,15 +55,21 @@ serve(async (req) => {
         continue
       }
 
+      const portfolioData = {
+        name: portfolio.name,
+        description: portfolio.current_status?.text || '',
+        asana_gid: portfolio.gid,
+        asana_sync_enabled: true,
+        updated_at: new Date().toISOString()
+      }
+
       if (!existingPortfolio) {
         // Insert new portfolio
         const { error: insertError } = await supabase
           .from('portfolios')
           .insert({
-            name: portfolio.name,
-            description: portfolio.notes || '',
-            asana_gid: portfolio.gid,
-            asana_sync_enabled: true
+            ...portfolioData,
+            created_at: new Date().toISOString()
           })
 
         if (insertError) {
@@ -68,11 +79,7 @@ serve(async (req) => {
         // Update existing portfolio
         const { error: updateError } = await supabase
           .from('portfolios')
-          .update({
-            name: portfolio.name,
-            description: portfolio.notes || '',
-            updated_at: new Date().toISOString()
-          })
+          .update(portfolioData)
           .eq('asana_gid', portfolio.gid)
 
         if (updateError) {

@@ -11,7 +11,6 @@ export const usePortfolioSync = () => {
       const { data: dbPortfolios, error: dbError } = await supabase
         .from('portfolios')
         .select('*')
-        .not('asana_gid', 'is', null)
         .order('created_at', { ascending: false });
 
       if (dbError) {
@@ -25,7 +24,7 @@ export const usePortfolioSync = () => {
         // Get workspace data from Asana
         console.log('🔍 Fetching Asana workspace data...');
         const response = await supabase.functions.invoke('get-workspace', {
-          body: { workspaceId: dbPortfolios?.[0]?.asana_gid?.split('/')[0] }
+          body: { workspaceId: process.env.VITE_ASANA_WORKSPACE_ID }
         });
 
         if (response.error) {
@@ -35,6 +34,7 @@ export const usePortfolioSync = () => {
         }
 
         console.log('✅ Asana sync successful:', response.data);
+        toast.success('تم تحديث البيانات بنجاح');
         
         // Return the updated portfolios from the response
         return response.data.portfolios || dbPortfolios;
@@ -50,7 +50,6 @@ export const usePortfolioSync = () => {
     toast.loading('جاري مزامنة البيانات مع Asana...');
     try {
       await refetch();
-      toast.success('تم تحديث البيانات بنجاح');
     } catch (error) {
       console.error('❌ Sync error:', error);
       toast.error('فشل في تحديث البيانات');
