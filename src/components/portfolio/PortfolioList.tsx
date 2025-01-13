@@ -13,8 +13,9 @@ export const PortfolioList = () => {
     queryFn: async () => {
       console.log('Fetching portfolios from database');
       const { data, error } = await supabase
-        .from('portfolios')  // Changed from portfolio_workspaces to portfolios
+        .from('portfolios')
         .select('*')
+        .not('asana_gid', 'is', null) // Only get portfolios with Asana IDs
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -22,7 +23,7 @@ export const PortfolioList = () => {
         throw error;
       }
 
-      console.log('Fetched portfolios:', data);
+      console.log('Fetched Asana portfolios:', data);
       return data;
     }
   });
