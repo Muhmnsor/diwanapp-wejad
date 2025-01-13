@@ -25,7 +25,7 @@ export const usePortfolioSync = () => {
         // Get workspace data from Asana
         console.log('🔍 Fetching Asana workspace data...');
         const response = await supabase.functions.invoke('get-workspace', {
-          body: { workspaceId: dbPortfolios?.[0]?.asana_gid }
+          body: { workspaceId: dbPortfolios?.[0]?.asana_gid?.split('/')[0] }
         });
 
         if (response.error) {
@@ -34,15 +34,10 @@ export const usePortfolioSync = () => {
           return dbPortfolios;
         }
 
-        console.log('✅ Asana workspace data:', response.data);
-        console.log('📂 Expected portfolios:', [
-          'وحدة التطوع',
-          'الإدارة التنفيذية',
-          'الإدارة المالية',
-          'بليسيلسبيل'
-        ]);
+        console.log('✅ Asana sync successful:', response.data);
         
-        return dbPortfolios;
+        // Return the updated portfolios from the response
+        return response.data.portfolios || dbPortfolios;
       } catch (asanaError) {
         console.error('❌ Error syncing with Asana:', asanaError);
         toast.error('حدث خطأ أثناء الاتصال مع Asana');

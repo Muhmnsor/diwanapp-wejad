@@ -11,6 +11,7 @@ serve(async (req) => {
   }
 
   try {
+    const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -19,64 +20,83 @@ serve(async (req) => {
     const { workspaceId } = await req.json()
     console.log('Fetching workspace details for ID:', workspaceId)
 
-    // First get the workspace details from portfolio_workspaces
-    const { data: workspace, error: workspaceError } = await supabase
-      .from('portfolio_workspaces')
-      .select('*')
-      .eq('asana_gid', workspaceId)
-      .maybeSingle()
+    // First get portfolios from Asana
+    const portfoliosResponse = await fetch(`https://app.asana.com/api/1.0/workspaces/${workspaceId}/portfolios`, {
+      headers: {
+        'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+        'Accept': 'application/json'
+      }
+    })
 
-    if (workspaceError) {
-      console.error('Error fetching workspace:', workspaceError)
-      throw workspaceError
+    if (!portfoliosResponse.ok) {
+      console.error('Error fetching portfolios:', await portfoliosResponse.text())
+      throw new Error('فشل في جلب المحافظ من Asana')
     }
 
-    if (!workspace) {
-      console.error('Workspace not found for ID:', workspaceId)
-      return new Response(
-        JSON.stringify({ 
-          name: 'مساحة عمل جديدة',
-          description: '',
-          tasks: []
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
+    const portfoliosData = await portfoliosResponse.json()
+    console.log('Asana portfolios:', portfoliosData)
+
+    // For each portfolio from Asana
+    for (const portfolio of portfoliosData.data) {
+      // Check if portfolio exists in database
+      const { data: existingPortfolio, error: findError } = await supabase
+        .from('portfolios')
+        .select('*')
+        .eq('asana_gid', portfolio.gid)
+        .maybeSingle()
+
+      if (findError) {
+        console.error('Error checking portfolio:', findError)
+        continue
+      }
+
+      if (!existingPortfolio) {
+        // Insert new portfolio
+        const { error: insertError } = await supabase
+          .from('portfolios')
+          .insert({
+            name: portfolio.name,
+            description: portfolio.notes || '',
+            asana_gid: portfolio.gid,
+            asana_sync_enabled: true
+          })
+
+        if (insertError) {
+          console.error('Error inserting portfolio:', insertError)
         }
-      )
+      } else {
+        // Update existing portfolio
+        const { error: updateError } = await supabase
+          .from('portfolios')
+          .update({
+            name: portfolio.name,
+            description: portfolio.notes || '',
+            updated_at: new Date().toISOString()
+          })
+          .eq('asana_gid', portfolio.gid)
+
+        if (updateError) {
+          console.error('Error updating portfolio:', updateError)
+        }
+      }
     }
 
-    // Then get the tasks for this workspace with assigned user information
-    const { data: tasks, error: tasksError } = await supabase
-      .from('portfolio_tasks')
-      .select(`
-        *,
-        profiles:assigned_to (
-          email
-        )
-      `)
-      .eq('workspace_id', workspace.id)
+    // Get updated portfolios from database
+    const { data: updatedPortfolios, error: dbError } = await supabase
+      .from('portfolios')
+      .select('*')
       .order('created_at', { ascending: false })
 
-    if (tasksError) {
-      console.error('Error fetching tasks:', tasksError)
-      throw tasksError
+    if (dbError) {
+      console.error('Error fetching updated portfolios:', dbError)
+      throw dbError
     }
 
-    // Transform the response to match the expected format
-    const transformedTasks = tasks?.map(task => ({
-      ...task,
-      assigned_to: task.profiles
-    })) || []
-
-    const response = {
-      ...workspace,
-      tasks: transformedTasks
-    }
-
-    console.log('Successfully fetched workspace data:', response)
+    console.log('Successfully synced portfolios:', updatedPortfolios)
     return new Response(
-      JSON.stringify(response),
+      JSON.stringify({
+        portfolios: updatedPortfolios
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
