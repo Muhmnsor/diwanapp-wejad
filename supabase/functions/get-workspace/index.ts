@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 console.log("Get workspace function running")
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -16,162 +17,71 @@ serve(async (req) => {
     )
 
     const { workspaceId } = await req.json()
-    console.log('Fetching Asana project details for GID:', workspaceId)
+    console.log('Fetching workspace details for ID:', workspaceId)
 
-    // First try to get the Asana project details
-    try {
-      const asanaResponse = await fetch(
-        `https://app.asana.com/api/1.0/projects/${workspaceId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get('ASANA_ACCESS_TOKEN')}`,
-            'Accept': 'application/json'
-          }
-        }
-      )
+    // First get the workspace details from portfolio_workspaces
+    const { data: workspace, error: workspaceError } = await supabase
+      .from('portfolio_workspaces')
+      .select('*')
+      .eq('asana_gid', workspaceId)
+      .maybeSingle()
 
-      if (!asanaResponse.ok) {
-        throw new Error('Failed to fetch Asana project')
-      }
+    if (workspaceError) {
+      console.error('Error fetching workspace:', workspaceError)
+      throw workspaceError
+    }
 
-      const asanaProject = await asanaResponse.json()
-      console.log('Fetched Asana project:', asanaProject.data)
-
-      // Get or create portfolio project mapping
-      let { data: portfolioProject, error: projectError } = await supabase
-        .from('portfolio_projects')
-        .select(`
-          id,
-          portfolio:portfolios (
-            id,
-            name,
-            description
-          ),
-          project:projects (
-            id,
-            title,
-            description,
-            start_date,
-            end_date,
-            max_attendees
-          )
-        `)
-        .eq('asana_gid', workspaceId)
-        .single()
-
-      if (projectError || !portfolioProject) {
-        console.log('Portfolio project not found, creating new mapping...')
-        
-        // Create new project
-        const { data: newProject, error: createError } = await supabase
-          .from('projects')
-          .insert({
-            title: asanaProject.data.name,
-            description: asanaProject.data.notes || '',
-            start_date: new Date().toISOString(),
-            end_date: asanaProject.data.due_on || new Date().toISOString(),
-            max_attendees: 0,
-            image_url: '/placeholder.svg',
-            event_type: 'in-person',
-            beneficiary_type: 'both',
-            event_path: 'environment',
-            event_category: 'social'
-          })
-          .select()
-          .single()
-
-        if (createError) throw createError
-
-        // Create portfolio project mapping
-        const { data: newPortfolioProject, error: mappingError } = await supabase
-          .from('portfolio_projects')
-          .insert({
-            project_id: newProject.id,
-            asana_gid: workspaceId
-          })
-          .select(`
-            id,
-            portfolio:portfolios (
-              id,
-              name,
-              description
-            ),
-            project:projects (
-              id,
-              title,
-              description,
-              start_date,
-              end_date,
-              max_attendees
-            )
-          `)
-          .single()
-
-        if (mappingError) throw mappingError
-        portfolioProject = newPortfolioProject
-      }
-
-      // Get tasks from Asana
-      const tasksResponse = await fetch(
-        `https://app.asana.com/api/1.0/projects/${workspaceId}/tasks`,
-        {
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get('ASANA_ACCESS_TOKEN')}`,
-            'Accept': 'application/json'
-          }
-        }
-      )
-
-      let asanaTasks = []
-      if (tasksResponse.ok) {
-        const tasksData = await tasksResponse.json()
-        asanaTasks = tasksData.data.map((task: any) => ({
-          id: task.gid,
-          title: task.name,
-          description: task.notes,
-          status: task.completed ? 'completed' : 'pending',
-          due_date: task.due_on,
-          gid: task.gid
-        }))
-        console.log('Fetched Asana tasks:', asanaTasks)
-      }
-
-      // Get local tasks
-      const { data: localTasks, error: tasksError } = await supabase
-        .from('portfolio_tasks')
-        .select(`
-          *,
-          assigned_to:profiles (
-            email
-          )
-        `)
-        .eq('workspace_id', portfolioProject.id)
-
-      if (tasksError) throw tasksError
-
-      // Combine response data
-      const response = {
-        id: portfolioProject.id,
-        name: portfolioProject.project?.title || asanaProject.data.name,
-        description: portfolioProject.project?.description || asanaProject.data.notes || '',
-        portfolio: portfolioProject.portfolio,
-        project: portfolioProject.project,
-        tasks: [...(localTasks || []), ...asanaTasks]
-      }
-
-      console.log('Successfully prepared response:', response)
+    if (!workspace) {
+      console.error('Workspace not found for ID:', workspaceId)
       return new Response(
-        JSON.stringify(response),
+        JSON.stringify({ 
+          name: 'مساحة عمل جديدة',
+          description: '',
+          tasks: []
+        }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
+          status: 200
         }
       )
-
-    } catch (asanaError) {
-      console.error('Error with Asana:', asanaError)
-      throw asanaError
     }
+
+    // Then get the tasks for this workspace with assigned user information
+    const { data: tasks, error: tasksError } = await supabase
+      .from('portfolio_tasks')
+      .select(`
+        *,
+        profiles:assigned_to (
+          email
+        )
+      `)
+      .eq('workspace_id', workspace.id)
+      .order('created_at', { ascending: false })
+
+    if (tasksError) {
+      console.error('Error fetching tasks:', tasksError)
+      throw tasksError
+    }
+
+    // Transform the response to match the expected format
+    const transformedTasks = tasks?.map(task => ({
+      ...task,
+      assigned_to: task.profiles
+    })) || []
+
+    const response = {
+      ...workspace,
+      tasks: transformedTasks
+    }
+
+    console.log('Successfully fetched workspace data:', response)
+    return new Response(
+      JSON.stringify(response),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
+    )
 
   } catch (error) {
     console.error('Error in get-workspace function:', error)
