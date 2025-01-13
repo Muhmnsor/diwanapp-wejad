@@ -52,10 +52,10 @@ serve(async (req) => {
     const workspace = workspacesData.data[0]
     console.log('Using workspace:', workspace)
 
-    // Then get portfolios for this workspace
+    // Then get portfolios for this workspace with expanded fields
     console.log('Fetching portfolios for workspace:', workspace.gid)
     const portfoliosResponse = await fetch(
-      `https://app.asana.com/api/1.0/portfolios?workspace=${workspace.gid}&opt_fields=name,color,created_at,current_status,due_on,members,owner,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes,owner.name`, 
+      `https://app.asana.com/api/1.0/portfolios?workspace=${workspace.gid}&opt_fields=name,color,created_at,current_status,due_on,members,owner.name,owner.email,permalink_url,public,start_on,workspace,gid,resource_type,custom_fields,custom_field_settings,workspace_name,html_notes`, 
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -137,7 +137,9 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in get-workspace function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400
