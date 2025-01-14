@@ -9,6 +9,7 @@ interface PortfolioHeaderProps {
 
 export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -32,7 +33,10 @@ export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
           <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
           مزامنة مع Asana
         </Button>
-        <AddPortfolioDialog />
+        <AddPortfolioDialog 
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+        />
       </div>
     </div>
   );

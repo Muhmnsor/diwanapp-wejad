@@ -31,43 +31,10 @@ serve(async (req) => {
 
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
     
-    // First get the workspace details
-    console.log('🔍 Fetching workspace details...')
-    const workspaceResponse = await fetch(
-      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-          'Accept': 'application/json'
-        }
-      }
-    )
-
-    if (!workspaceResponse.ok) {
-      const errorText = await workspaceResponse.text()
-      console.error('❌ Error fetching workspace:', errorText)
-      return new Response(
-        JSON.stringify({ 
-          error: `Asana API error: ${errorText}`,
-          details: {
-            status: workspaceResponse.status,
-            statusText: workspaceResponse.statusText
-          }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: workspaceResponse.status
-        }
-      )
-    }
-
-    const workspaceData = await workspaceResponse.json()
-    console.log('✅ Workspace details:', workspaceData)
-
-    // Get portfolios (projects at workspace level)
-    console.log('🔍 Fetching workspace projects...')
+    // First get all portfolios from Asana
+    console.log('🔍 Fetching Asana portfolios...')
     const portfoliosResponse = await fetch(
-      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/projects?opt_fields=name,notes,created_at,gid`, 
+      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/portfolios`, 
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -78,147 +45,87 @@ serve(async (req) => {
 
     if (!portfoliosResponse.ok) {
       const errorText = await portfoliosResponse.text()
-      console.error('❌ Error response from Asana:', errorText)
-      return new Response(
-        JSON.stringify({ 
-          error: `Asana API error: ${errorText}`,
-          details: {
-            status: portfoliosResponse.status,
-            statusText: portfoliosResponse.statusText
-          }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: portfoliosResponse.status
-        }
-      )
+      console.error('❌ Error fetching portfolios:', errorText)
+      throw new Error(`Asana API error: ${errorText}`)
     }
 
     const portfoliosData = await portfoliosResponse.json()
     console.log('✅ Successfully fetched portfolios from Asana:', portfoliosData)
 
-    if (!portfoliosData.data) {
-      console.error('❌ No data returned from Asana')
-      return new Response(
-        JSON.stringify({ 
-          error: 'No data returned from Asana',
-          details: { portfoliosData }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      )
-    }
-
-    // Delete all existing portfolios that are synced from Asana
-    console.log('🗑️ Deleting existing Asana-synced portfolios...')
-    const { error: deleteError } = await supabase
+    // Get existing portfolios from database
+    const { data: existingPortfolios, error: dbError } = await supabase
       .from('portfolios')
-      .delete()
-      .not('asana_gid', 'is', null)
+      .select('*')
 
-    if (deleteError) {
-      console.error('❌ Error deleting old portfolios:', deleteError)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Database error while deleting portfolios',
-          details: deleteError
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      )
+    if (dbError) {
+      console.error('❌ Error fetching existing portfolios:', dbError)
+      throw dbError
     }
 
-    // For each portfolio from Asana
-    console.log('📝 Inserting new portfolios...')
-    const insertedPortfolios = []
+    // Create a map of existing portfolios by Asana GID
+    const existingPortfoliosMap = new Map(
+      existingPortfolios?.map(p => [p.asana_gid, p]) || []
+    )
+
+    // Process each portfolio from Asana
+    const processedPortfolios = []
     for (const portfolio of portfoliosData.data) {
       try {
-        // Get current timestamp
-        const now = new Date()
-        
-        // Parse and validate created_at date
-        let portfolioCreatedAt = now
-        if (portfolio.created_at) {
-          const parsedDate = new Date(portfolio.created_at)
-          if (!isNaN(parsedDate.getTime())) {
-            portfolioCreatedAt = parsedDate
-          } else {
-            console.warn('⚠️ Invalid created_at date for portfolio:', portfolio.gid)
-          }
-        }
-
-        // Validate required fields
-        if (!portfolio.gid) {
-          console.error('❌ Missing gid for portfolio:', portfolio)
-          continue
-        }
-
-        if (!portfolio.name) {
-          console.error('❌ Missing name for portfolio:', portfolio.gid)
-          continue
-        }
+        const existingPortfolio = existingPortfoliosMap.get(portfolio.gid)
+        const now = new Date().toISOString()
 
         const portfolioData = {
           name: portfolio.name,
           description: portfolio.notes || '',
           asana_gid: portfolio.gid,
           asana_sync_enabled: true,
-          created_at: portfolioCreatedAt.toISOString(),
-          updated_at: now.toISOString(),
           sync_enabled: true,
-          last_sync_at: now.toISOString(),
-          owner_gid: workspaceData.data.gid
+          last_sync_at: now,
+          updated_at: now
         }
 
-        console.log('📄 Inserting portfolio:', portfolioData)
+        let result
+        if (existingPortfolio) {
+          // Update existing portfolio
+          const { error: updateError } = await supabase
+            .from('portfolios')
+            .update(portfolioData)
+            .eq('asana_gid', portfolio.gid)
 
-        const { error: insertError } = await supabase
-          .from('portfolios')
-          .insert(portfolioData)
+          if (updateError) {
+            console.error('❌ Error updating portfolio:', updateError)
+            continue
+          }
+          result = { ...existingPortfolio, ...portfolioData }
+        } else {
+          // Insert new portfolio
+          const { data: newPortfolio, error: insertError } = await supabase
+            .from('portfolios')
+            .insert({ ...portfolioData, created_at: now })
+            .select()
+            .single()
 
-        if (insertError) {
-          console.error('❌ Error inserting portfolio:', insertError, portfolioData)
-          continue
+          if (insertError) {
+            console.error('❌ Error inserting portfolio:', insertError)
+            continue
+          }
+          result = newPortfolio
         }
 
-        insertedPortfolios.push(portfolioData)
+        processedPortfolios.push(result)
       } catch (error) {
         console.error('❌ Error processing portfolio:', portfolio.gid, error)
         continue
       }
     }
 
-    // Get updated portfolios from database
-    const { data: updatedPortfolios, error: dbError } = await supabase
-      .from('portfolios')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (dbError) {
-      console.error('❌ Error fetching updated portfolios:', dbError)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Database error while fetching portfolios',
-          details: dbError
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      )
-    }
-
-    console.log('✅ Successfully synced portfolios:', updatedPortfolios)
+    console.log('✅ Successfully synced portfolios:', processedPortfolios)
     return new Response(
       JSON.stringify({
-        portfolios: updatedPortfolios,
+        portfolios: processedPortfolios,
         details: {
-          inserted: insertedPortfolios.length,
-          total: updatedPortfolios.length
+          total: processedPortfolios.length,
+          asana_total: portfoliosData.data.length
         }
       }),
       { 
