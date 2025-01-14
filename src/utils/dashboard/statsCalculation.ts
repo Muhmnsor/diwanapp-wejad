@@ -1,4 +1,4 @@
-import { ChartData, EventStats } from "@/types/dashboard";
+import { ChartData } from "@/types/dashboard";
 
 export const calculateTotalStats = (allEvents: any[]) => {
   const now = new Date();
