@@ -12,6 +12,7 @@ interface TaskCardProps {
     } | null;
     status: string;
     priority: string;
+    updated_at: string; // Added this property
   };
 }
 
