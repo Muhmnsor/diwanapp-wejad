@@ -51,10 +51,30 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
+
+    // First get user info to use as owner
+    const userResponse = await fetchWithRetry(
+      'https://app.asana.com/api/1.0/users/me',
+      {
+        headers: {
+          'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+          'Accept': 'application/json'
+        }
+      }
+    )
+
+    if (!userResponse.ok) {
+      const errorText = await userResponse.text()
+      console.error('❌ Error fetching user info from Asana:', errorText)
+      throw new Error(`Asana API error: ${errorText}`)
+    }
+
+    const userData = await userResponse.json()
+    const userId = userData.data.gid
     
-    // Get portfolios from Asana with retry mechanism
+    // Get portfolios from Asana with retry mechanism and owner parameter
     const asanaResponse = await fetchWithRetry(
-      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/portfolios`,
+      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/portfolios?owner=${userId}`,
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
