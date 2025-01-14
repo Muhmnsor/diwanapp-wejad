@@ -9,6 +9,9 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { data: tasks, isLoading, refetch } = useWorkspaceTasks(workspaceId);
 
+  console.log('📊 Portfolio Tasks - Workspace ID:', workspaceId);
+  console.log('📊 Portfolio Tasks - Tasks Data:', tasks);
+
   const handleTaskAdded = async () => {
     await refetch();
   };

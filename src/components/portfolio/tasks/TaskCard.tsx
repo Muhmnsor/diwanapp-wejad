@@ -18,6 +18,8 @@ interface TaskCardProps {
 }
 
 export const TaskCard = ({ task }: TaskCardProps) => {
+  console.log('📋 Rendering task card with data:', task);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
