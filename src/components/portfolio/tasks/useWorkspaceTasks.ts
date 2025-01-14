@@ -43,7 +43,44 @@ export const useWorkspaceTasks = (workspaceId: string) => {
 
       console.log('Using workspace ID:', workspace.id);
 
-      // 3. نقوم بجلب المهام من قاعدة البيانات مع معلومات المستخدم المسند إليه
+      // 3. نقوم بمزامنة المهام مع Asana أولاً
+      const { data: syncedTasks, error: syncError } = await supabase
+        .functions.invoke('get-workspace', {
+          body: { workspaceId }
+        });
+
+      if (syncError) {
+        console.error('Error syncing with Asana:', syncError);
+        // نستمر بإرجاع المهام المحلية حتى لو فشلت المزامنة
+      } else {
+        console.log('Successfully synced tasks from Asana:', syncedTasks);
+        
+        // تحديث المهام في قاعدة البيانات
+        if (syncedTasks?.tasks?.length > 0) {
+          const { error: upsertError } = await supabase
+            .from('portfolio_tasks')
+            .upsert(
+              syncedTasks.tasks.map((task: any) => ({
+                workspace_id: workspace.id,
+                title: task.name,
+                description: task.notes,
+                status: task.completed ? 'completed' : 'pending',
+                priority: task.priority || 'medium',
+                due_date: task.due_date,
+                asana_gid: task.gid,
+                assigned_to: task.assignee?.gid,
+                updated_at: new Date().toISOString()
+              })),
+              { onConflict: 'asana_gid' }
+            );
+
+          if (upsertError) {
+            console.error('Error upserting tasks:', upsertError);
+          }
+        }
+      }
+
+      // 4. نقوم بجلب المهام المحدثة من قاعدة البيانات
       const { data: tasks, error: tasksError } = await supabase
         .from('portfolio_tasks')
         .select(`
@@ -60,20 +97,7 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         throw tasksError;
       }
 
-      // 4. نقوم بمزامنة المهام مع Asana
-      const { data: syncedTasks, error: syncError } = await supabase
-        .functions.invoke('get-workspace', {
-          body: { workspaceId }
-        });
-
-      if (syncError) {
-        console.error('Error syncing with Asana:', syncError);
-        // نستمر بإرجاع المهام المحلية حتى لو فشلت المزامنة
-      }
-
-      console.log('Fetched tasks:', tasks);
-      console.log('Synced tasks from Asana:', syncedTasks);
-
+      console.log('Fetched tasks from database:', tasks);
       return tasks || [];
     },
     refetchInterval: 5000 // تحديث كل 5 ثواني

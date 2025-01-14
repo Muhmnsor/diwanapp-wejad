@@ -12,7 +12,7 @@ interface TaskCardProps {
     } | null;
     status: string;
     priority: string;
-    updated_at: string; // Added this property
+    updated_at: string;
   };
 }
 
@@ -41,6 +41,11 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     }
   };
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleDateString('ar-SA');
+  };
+
   return (
     <Card key={task.id} className="p-4 hover:shadow-md transition-all duration-200">
       <div className="space-y-3">
@@ -64,7 +69,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
             {task.due_date && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                <span>{new Date(task.due_date).toLocaleDateString('ar-SA')}</span>
+                <span>{formatDate(task.due_date)}</span>
               </div>
             )}
             {task.assigned_to && (
@@ -76,7 +81,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           </div>
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            <span>تم التحديث {new Date(task.updated_at).toLocaleDateString('ar-SA')}</span>
+            <span>تم التحديث {formatDate(task.updated_at)}</span>
           </div>
         </div>
       </div>
