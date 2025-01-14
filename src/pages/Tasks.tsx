@@ -4,6 +4,8 @@ import { PortfolioList } from "@/components/portfolio/PortfolioList";
 import { PortfolioHeader } from "@/components/portfolio/components/PortfolioHeader";
 import { useState } from "react";
 import { AddPortfolioDialog } from "@/components/portfolio/AddPortfolioDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Tasks = () => {
   const [isAddPortfolioDialogOpen, setIsAddPortfolioDialogOpen] = useState(false);
