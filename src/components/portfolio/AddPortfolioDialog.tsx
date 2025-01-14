@@ -1,25 +1,86 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { PortfolioForm } from './PortfolioForm';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useState } from "react";
+import { PortfolioForm } from "./PortfolioForm";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
-export const AddPortfolioDialog = () => {
-  const [open, setOpen] = useState(false);
+interface AddPortfolioDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export const AddPortfolioDialog = ({ 
+  open, 
+  onOpenChange 
+}: AddPortfolioDialogProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleSubmit = async (formData: {
+    name: string;
+    description: string;
+  }) => {
+    setIsSubmitting(true);
+    try {
+      console.log('Creating portfolio with data:', formData);
+
+      // First create portfolio in Asana
+      const { data: asanaResponse, error: asanaError } = await supabase.functions.invoke('create-portfolio', {
+        body: formData
+      });
+
+      if (asanaError) {
+        console.error('Error creating portfolio in Asana:', asanaError);
+        throw asanaError;
+      }
+
+      console.log('Successfully created portfolio in Asana:', asanaResponse);
+
+      // Then create in our database
+      const { error: createError } = await supabase
+        .from('portfolios')
+        .insert([
+          {
+            name: formData.name,
+            description: formData.description,
+            asana_gid: asanaResponse.gid,
+            asana_sync_enabled: true,
+            sync_enabled: true
+          }
+        ]);
+
+      if (createError) {
+        console.error('Error creating portfolio:', createError);
+        throw createError;
+      }
+
+      toast.success('تم إنشاء المحفظة بنجاح');
+      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      toast.error('حدث خطأ أثناء إنشاء المحفظة');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة محفظة
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle>إضافة محفظة جديدة</DialogTitle>
-        </DialogHeader>
-        <PortfolioForm onSuccess={() => setOpen(false)} />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]" dir="rtl">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold">إضافة محفظة جديدة</h2>
+            <p className="text-sm text-gray-500">أدخل تفاصيل المحفظة</p>
+          </div>
+
+          <PortfolioForm
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            onCancel={() => onOpenChange(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
