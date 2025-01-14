@@ -86,6 +86,7 @@ serve(async (req) => {
         let result
         if (existingPortfolio) {
           // Update existing portfolio
+          console.log('📝 Updating existing portfolio:', portfolioData)
           const { error: updateError } = await supabase
             .from('portfolios')
             .update(portfolioData)
