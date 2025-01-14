@@ -64,12 +64,12 @@ export const useWorkspaceTasks = (workspaceId: string) => {
               syncedTasks.tasks.map((task: any) => ({
                 workspace_id: workspace.id,
                 title: task.name,
-                description: task.notes,
+                description: task.notes || null, // تأكد من أن الوصف null إذا لم يكن موجوداً
                 status: task.completed ? 'completed' : 'pending',
                 priority: task.priority || 'medium',
-                due_date: task.due_date,
+                due_date: task.due_date ? new Date(task.due_date).toISOString() : null,
                 asana_gid: task.gid,
-                assigned_to: task.assignee?.gid,
+                assigned_to: task.assignee?.gid || null,
                 updated_at: new Date().toISOString()
               })),
               { onConflict: 'asana_gid' }
@@ -90,10 +90,15 @@ export const useWorkspaceTasks = (workspaceId: string) => {
       const { data: tasks, error: tasksError } = await supabase
         .from('portfolio_tasks')
         .select(`
-          *,
-          assigned_to (
-            email
-          )
+          id,
+          title,
+          description,
+          status,
+          priority,
+          due_date,
+          assigned_to,
+          updated_at,
+          asana_gid
         `)
         .eq('workspace_id', workspace.id)
         .order('created_at', { ascending: false });
