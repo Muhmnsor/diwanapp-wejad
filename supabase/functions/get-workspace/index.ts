@@ -1,11 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 
 console.log("Get workspace function running")
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -23,11 +22,6 @@ serve(async (req) => {
       console.error('❌ Asana workspace ID not configured')
       throw new Error('Asana workspace ID not configured')
     }
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
 
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
     
@@ -51,6 +45,11 @@ serve(async (req) => {
 
     const portfoliosData = await portfoliosResponse.json()
     console.log('✅ Successfully fetched portfolios from Asana:', portfoliosData)
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
     // Get existing portfolios from database
     const { data: existingPortfolios, error: dbError } = await supabase
