@@ -4,8 +4,31 @@ import { corsHeaders } from '../_shared/cors.ts'
 
 console.log("Get workspace function running")
 
+const MAX_RETRIES = 3
+const RETRY_DELAY = 1000 // 1 second
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+const fetchWithRetry = async (url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
+  try {
+    const response = await fetch(url, options)
+    if (!response.ok && retries > 0) {
+      console.log(`Retrying request, ${retries} attempts remaining`)
+      await sleep(RETRY_DELAY)
+      return fetchWithRetry(url, options, retries - 1)
+    }
+    return response
+  } catch (error) {
+    if (retries > 0) {
+      console.log(`Request failed, retrying... ${retries} attempts remaining`)
+      await sleep(RETRY_DELAY)
+      return fetchWithRetry(url, options, retries - 1)
+    }
+    throw error
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -26,14 +49,12 @@ serve(async (req) => {
       throw new Error('Missing Supabase configuration')
     }
 
-    // Initialize Supabase client with service role key for admin access
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
     
-    // Get portfolios from Asana
-    const asanaResponse = await fetch(
-      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/portfolios`, 
+    // Get portfolios from Asana with retry mechanism
+    const asanaResponse = await fetchWithRetry(
+      `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/portfolios`,
       {
         headers: {
           'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
@@ -61,12 +82,10 @@ serve(async (req) => {
       throw dbError
     }
 
-    // Create a map of existing portfolios by Asana GID
+    // Create maps for efficient lookup
     const existingPortfoliosMap = new Map(
       existingPortfolios?.map(p => [p.asana_gid, p]) || []
     )
-
-    // Create a map of Asana portfolios by GID
     const asanaPortfoliosMap = new Map(
       asanaData.data?.map(p => [p.gid, p]) || []
     )
@@ -86,12 +105,12 @@ serve(async (req) => {
           asana_sync_enabled: true,
           sync_enabled: true,
           last_sync_at: now,
-          updated_at: now
+          updated_at: now,
+          sync_error: null // Clear any previous errors
         }
 
         let result
         if (existingPortfolio) {
-          // Update existing portfolio
           console.log('📝 Updating existing portfolio:', portfolioData)
           const { data: updatedPortfolio, error: updateError } = await supabase
             .from('portfolios')
@@ -106,7 +125,6 @@ serve(async (req) => {
           }
           result = updatedPortfolio
         } else {
-          // Insert new portfolio from Asana
           console.log('📝 Creating new portfolio from Asana:', portfolioData)
           const { data: newPortfolio, error: insertError } = await supabase
             .from('portfolios')
@@ -131,58 +149,32 @@ serve(async (req) => {
     // Handle portfolios that exist in database but not in Asana
     for (const [asanaGid, portfolio] of existingPortfoliosMap) {
       if (!asanaPortfoliosMap.has(asanaGid) && asanaGid) {
-        console.log('🗑️ Portfolio exists in database but not in Asana:', portfolio.name)
+        console.log('⚠️ Portfolio exists in database but not in Asana:', portfolio.name)
         try {
-          // Create portfolio in Asana
-          const createResponse = await fetch(
-            `https://app.asana.com/api/1.0/portfolios`, 
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({
-                data: {
-                  name: portfolio.name,
-                  workspace: ASANA_WORKSPACE_ID,
-                  notes: portfolio.description || ''
-                }
-              })
-            }
-          )
-
-          if (!createResponse.ok) {
-            const errorText = await createResponse.text()
-            console.error('❌ Error creating portfolio in Asana:', errorText)
-            continue
-          }
-
-          const newAsanaPortfolio = await createResponse.json()
-          console.log('✅ Successfully created portfolio in Asana:', newAsanaPortfolio)
-
-          // Update the database record with the new Asana GID
+          // Update portfolio status in database
           const { error: updateError } = await supabase
             .from('portfolios')
             .update({
-              asana_gid: newAsanaPortfolio.data.gid,
+              sync_enabled: false,
+              asana_sync_enabled: false,
+              sync_error: 'Portfolio not found in Asana',
               last_sync_at: now
             })
             .eq('id', portfolio.id)
 
           if (updateError) {
-            console.error('❌ Error updating portfolio with Asana GID:', updateError)
+            console.error('❌ Error updating portfolio sync status:', updateError)
             continue
           }
 
           processedPortfolios.push({
             ...portfolio,
-            asana_gid: newAsanaPortfolio.data.gid,
+            sync_enabled: false,
+            asana_sync_enabled: false,
             last_sync_at: now
           })
         } catch (error) {
-          console.error('❌ Error syncing portfolio to Asana:', error)
+          console.error('❌ Error handling missing portfolio:', error)
           continue
         }
       }
@@ -194,7 +186,8 @@ serve(async (req) => {
         portfolios: processedPortfolios,
         details: {
           total: processedPortfolios.length,
-          asana_total: asanaData.data.length
+          asana_total: asanaData.data.length,
+          sync_time: now
         }
       }),
       { 
