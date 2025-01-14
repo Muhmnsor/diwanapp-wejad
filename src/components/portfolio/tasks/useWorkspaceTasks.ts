@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { getOrCreateWorkspace, syncTasksWithAsana, fetchWorkspaceTasks } from './api/workspaceApi';
+import { upsertTasks } from './api/taskApi';
 
 export const useWorkspaceTasks = (workspaceId: string) => {
   return useQuery({
@@ -7,110 +8,21 @@ export const useWorkspaceTasks = (workspaceId: string) => {
     queryFn: async () => {
       console.log('🔄 Starting task fetch process for workspace:', workspaceId);
       
-      // 1. أولاً، نتحقق من وجود مساحة العمل في قاعدة البيانات
-      let { data: workspace, error: workspaceError } = await supabase
-        .from('portfolio_workspaces')
-        .select('id')
-        .eq('asana_gid', workspaceId)
-        .maybeSingle();
-
-      if (workspaceError) {
-        console.error('❌ Error fetching workspace:', workspaceError);
-        throw workspaceError;
-      }
-
-      // 2. إذا لم تكن موجودة، نقوم بإنشائها
-      if (!workspace) {
-        console.log('⚠️ Workspace not found, creating new workspace');
-        const { data: newWorkspace, error: createError } = await supabase
-          .from('portfolio_workspaces')
-          .insert([
-            { 
-              asana_gid: workspaceId,
-              name: 'مساحة عمل جديدة'
-            }
-          ])
-          .select('id')
-          .single();
-
-        if (createError) {
-          console.error('❌ Error creating workspace:', createError);
-          throw createError;
-        }
-
-        workspace = newWorkspace;
-      }
-
+      // 1. التحقق من وجود مساحة العمل أو إنشائها
+      const workspace = await getOrCreateWorkspace(workspaceId);
       console.log('✅ Using workspace ID:', workspace.id);
 
-      // 3. نقوم بمزامنة المهام مع Asana أولاً
-      console.log('🔄 Syncing tasks with Asana...');
-      const { data: syncedTasks, error: syncError } = await supabase
-        .functions.invoke('get-workspace', {
-          body: { workspaceId }
-        });
-
-      if (syncError) {
-        console.error('❌ Error syncing with Asana:', syncError);
-      } else {
-        console.log('✅ Successfully synced tasks from Asana:', syncedTasks);
-        
-        // تحديث المهام في قاعدة البيانات
-        if (syncedTasks?.tasks?.length > 0) {
-          console.log('📝 Updating tasks in database:', syncedTasks.tasks.length, 'tasks');
-          const { error: upsertError } = await supabase
-            .from('portfolio_tasks')
-            .upsert(
-              syncedTasks.tasks.map((task: any) => ({
-                workspace_id: workspace.id,
-                title: task.name,
-                description: task.notes || null, // تأكد من أن الوصف null إذا لم يكن موجوداً
-                status: task.completed ? 'completed' : 'pending',
-                priority: task.priority || 'medium',
-                due_date: task.due_date ? new Date(task.due_date).toISOString() : null,
-                asana_gid: task.gid,
-                assigned_to: task.assignee?.gid || null,
-                updated_at: new Date().toISOString()
-              })),
-              { onConflict: 'asana_gid' }
-            );
-
-          if (upsertError) {
-            console.error('❌ Error upserting tasks:', upsertError);
-          } else {
-            console.log('✅ Successfully updated tasks in database');
-          }
-        } else {
-          console.log('ℹ️ No tasks to sync from Asana');
-        }
+      // 2. مزامنة المهام مع Asana
+      const syncedTasks = await syncTasksWithAsana(workspaceId);
+      
+      // 3. تحديث المهام في قاعدة البيانات
+      if (syncedTasks) {
+        await upsertTasks(syncedTasks, workspace.id);
       }
 
-      // 4. نقوم بجلب المهام المحدثة من قاعدة البيانات
-      console.log('🔍 Fetching tasks from database for workspace:', workspace.id);
-      const { data: tasks, error: tasksError } = await supabase
-        .from('portfolio_tasks')
-        .select(`
-          id,
-          title,
-          description,
-          status,
-          priority,
-          due_date,
-          assigned_to,
-          updated_at,
-          asana_gid
-        `)
-        .eq('workspace_id', workspace.id)
-        .order('created_at', { ascending: false });
-
-      if (tasksError) {
-        console.error('❌ Error fetching tasks:', tasksError);
-        throw tasksError;
-      }
-
-      console.log('✅ Successfully fetched tasks from database:', tasks);
-      return tasks || [];
+      // 4. جلب المهام المحدثة
+      return await fetchWorkspaceTasks(workspace.id);
     },
-    refetchInterval: 5000 // تحديث كل 5 ثواني
+    refetchInterval: 5000
   });
 };
