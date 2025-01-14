@@ -26,7 +26,7 @@ serve(async (req) => {
       throw new Error('Missing Supabase configuration')
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role key for admin access
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
