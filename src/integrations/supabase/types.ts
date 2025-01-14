@@ -933,6 +933,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_portfolio_only_projects_portfolio"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "portfolio_only_projects_portfolio_id_fkey"
             columns: ["portfolio_id"]
             isOneToOne: false
