@@ -1,30 +1,30 @@
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { PortfolioList } from "@/components/portfolio/PortfolioList";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { PortfolioHeader } from "@/components/portfolio/components/PortfolioHeader";
 import { useState } from "react";
 import { AddPortfolioDialog } from "@/components/portfolio/AddPortfolioDialog";
 
 const Tasks = () => {
   const [isAddPortfolioDialogOpen, setIsAddPortfolioDialogOpen] = useState(false);
 
+  const handleSync = async () => {
+    console.log('Syncing with Asana...');
+    const { error } = await supabase.functions.invoke('get-workspace');
+    if (error) {
+      console.error('Error syncing with Asana:', error);
+      toast.error('فشل في المزامنة مع Asana');
+      return;
+    }
+    toast.success('تم المزامنة بنجاح');
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">المحافظ</h1>
-          <Button 
-            onClick={() => setIsAddPortfolioDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            إضافة محفظة
-          </Button>
-        </div>
-
+        <PortfolioHeader onSync={handleSync} />
         <PortfolioList />
 
         <AddPortfolioDialog
