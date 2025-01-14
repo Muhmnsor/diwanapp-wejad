@@ -6,6 +6,7 @@ interface TaskCardProps {
   task: {
     id: string;
     title: string;
+    description: string | null;
     due_date: string | null;
     assigned_to: {
       email: string;
@@ -46,8 +47,34 @@ export const TaskCard = ({ task }: TaskCardProps) => {
     return new Date(dateString).toLocaleDateString('ar-SA');
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'مكتمل';
+      case 'in_progress':
+        return 'قيد التنفيذ';
+      case 'pending':
+        return 'معلق';
+      default:
+        return status;
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'عالي';
+      case 'medium':
+        return 'متوسط';
+      case 'low':
+        return 'منخفض';
+      default:
+        return priority;
+    }
+  };
+
   return (
-    <Card key={task.id} className="p-4 hover:shadow-md transition-all duration-200">
+    <Card className="p-4 hover:shadow-md transition-all duration-200">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -56,13 +83,17 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           </div>
           <div className="flex gap-2">
             <Badge className={getStatusColor(task.status)}>
-              {task.status === 'completed' ? 'مكتمل' : 'قيد التنفيذ'}
+              {getStatusLabel(task.status)}
             </Badge>
             <Badge className={getPriorityColor(task.priority)}>
-              {task.priority === 'high' ? 'عالي' : task.priority === 'medium' ? 'متوسط' : 'منخفض'}
+              {getPriorityLabel(task.priority)}
             </Badge>
           </div>
         </div>
+
+        {task.description && (
+          <p className="text-sm text-gray-600 mt-2">{task.description}</p>
+        )}
 
         <div className="flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center gap-4">
