@@ -1,8 +1,8 @@
-export interface TaskStats {
+export interface EventStats {
   title: string;
-  count?: number;
-  status?: string;
-  dueDate?: string;
+  registrations?: number;
+  rating?: number;
+  attendanceRate?: number;
 }
 
 export interface ChartData {
@@ -11,26 +11,25 @@ export interface ChartData {
 }
 
 export interface DashboardData {
-  // Portfolio Stats
-  totalPortfolios: number;
-  activePortfolios: number;
-  completedPortfolios: number;
-  syncedPortfolios: number;
-  
-  // Task Stats
-  totalTasks: number;
-  completedTasks: number;
-  inProgressTasks: number;
-  overdueTasks: number;
-  
-  // Task Rankings
-  highPriorityTasks: TaskStats;
-  recentlyCompletedTasks: TaskStats;
-  upcomingDeadlines: TaskStats;
-  
-  // Charts Data
-  tasksByStatus: ChartData[];
-  tasksByPriority: ChartData[];
-  tasksByPortfolio: ChartData[];
-  tasksByMonth: ChartData[];
+  totalEvents: number;
+  eventsCount: number;
+  projectsCount: number;
+  upcomingEvents: number;
+  pastEvents: number;
+  totalRegistrations: number;
+  totalRevenue: number;
+  totalAttendance: number;
+  averageAttendanceRate: number;
+  averageRating: number;
+  mostRegisteredEvent: EventStats;
+  leastRegisteredEvent: EventStats;
+  highestRatedEvent: EventStats;
+  lowestRatedEvent: EventStats;
+  highestAttendanceEvent: EventStats;
+  lowestAttendanceEvent: EventStats;
+  eventsByType: ChartData[];
+  eventsByBeneficiary: ChartData[];
+  eventsByBeneficiaryType: ChartData[];
+  eventsByPrice: ChartData[];
+  eventsByMonth: ChartData[];
 }
