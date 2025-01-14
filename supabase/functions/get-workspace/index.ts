@@ -13,22 +13,26 @@ serve(async (req) => {
   try {
     const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
     const ASANA_WORKSPACE_ID = Deno.env.get('ASANA_WORKSPACE_ID')
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
-    if (!ASANA_ACCESS_TOKEN) {
-      console.error('❌ Asana access token not configured')
-      throw new Error('Asana access token not configured')
+    if (!ASANA_ACCESS_TOKEN || !ASANA_WORKSPACE_ID) {
+      console.error('❌ Missing required environment variables')
+      throw new Error('Missing required environment variables')
     }
 
-    if (!ASANA_WORKSPACE_ID) {
-      console.error('❌ Asana workspace ID not configured')
-      throw new Error('Asana workspace ID not configured')
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('❌ Missing Supabase configuration')
+      throw new Error('Missing Supabase configuration')
     }
+
+    // Initialize Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     console.log('🔍 Fetching portfolios from Asana workspace:', ASANA_WORKSPACE_ID)
     
-    // First get all portfolios from Asana
-    console.log('🔍 Fetching Asana portfolios...')
-    const portfoliosResponse = await fetch(
+    // Get portfolios from Asana
+    const asanaResponse = await fetch(
       `https://app.asana.com/api/1.0/workspaces/${ASANA_WORKSPACE_ID}/portfolios`, 
       {
         headers: {
@@ -38,25 +42,14 @@ serve(async (req) => {
       }
     )
 
-    if (!portfoliosResponse.ok) {
-      const errorText = await portfoliosResponse.text()
-      console.error('❌ Error fetching portfolios:', errorText)
+    if (!asanaResponse.ok) {
+      const errorText = await asanaResponse.text()
+      console.error('❌ Error fetching portfolios from Asana:', errorText)
       throw new Error(`Asana API error: ${errorText}`)
     }
 
-    const portfoliosData = await portfoliosResponse.json()
-    console.log('✅ Successfully fetched portfolios from Asana:', portfoliosData)
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    const asanaData = await asanaResponse.json()
+    console.log('✅ Successfully fetched portfolios from Asana:', asanaData)
 
     // Get existing portfolios from database
     const { data: existingPortfolios, error: dbError } = await supabase
@@ -75,7 +68,7 @@ serve(async (req) => {
 
     // Process each portfolio from Asana
     const processedPortfolios = []
-    for (const portfolio of portfoliosData.data) {
+    for (const portfolio of asanaData.data) {
       try {
         const existingPortfolio = existingPortfoliosMap.get(portfolio.gid)
         const now = new Date().toISOString()
@@ -104,7 +97,8 @@ serve(async (req) => {
           }
           result = { ...existingPortfolio, ...portfolioData }
         } else {
-          // Insert new portfolio
+          // Insert new portfolio from Asana
+          console.log('📝 Creating new portfolio from Asana:', portfolioData)
           const { data: newPortfolio, error: insertError } = await supabase
             .from('portfolios')
             .insert({ ...portfolioData, created_at: now })
@@ -131,7 +125,7 @@ serve(async (req) => {
         portfolios: processedPortfolios,
         details: {
           total: processedPortfolios.length,
-          asana_total: portfoliosData.data.length
+          asana_total: asanaData.data.length
         }
       }),
       { 
