@@ -5,7 +5,7 @@ export const useWorkspaceTasks = (workspaceId: string) => {
   return useQuery({
     queryKey: ['portfolio-tasks', workspaceId],
     queryFn: async () => {
-      console.log('Fetching tasks for workspace:', workspaceId);
+      console.log('🔄 Starting task fetch process for workspace:', workspaceId);
       
       // 1. أولاً، نتحقق من وجود مساحة العمل في قاعدة البيانات
       let { data: workspace, error: workspaceError } = await supabase
@@ -15,13 +15,13 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         .maybeSingle();
 
       if (workspaceError) {
-        console.error('Error fetching workspace:', workspaceError);
+        console.error('❌ Error fetching workspace:', workspaceError);
         throw workspaceError;
       }
 
       // 2. إذا لم تكن موجودة، نقوم بإنشائها
       if (!workspace) {
-        console.log('Workspace not found, creating new workspace');
+        console.log('⚠️ Workspace not found, creating new workspace');
         const { data: newWorkspace, error: createError } = await supabase
           .from('portfolio_workspaces')
           .insert([
@@ -34,29 +34,30 @@ export const useWorkspaceTasks = (workspaceId: string) => {
           .single();
 
         if (createError) {
-          console.error('Error creating workspace:', createError);
+          console.error('❌ Error creating workspace:', createError);
           throw createError;
         }
 
         workspace = newWorkspace;
       }
 
-      console.log('Using workspace ID:', workspace.id);
+      console.log('✅ Using workspace ID:', workspace.id);
 
       // 3. نقوم بمزامنة المهام مع Asana أولاً
+      console.log('🔄 Syncing tasks with Asana...');
       const { data: syncedTasks, error: syncError } = await supabase
         .functions.invoke('get-workspace', {
           body: { workspaceId }
         });
 
       if (syncError) {
-        console.error('Error syncing with Asana:', syncError);
-        // نستمر بإرجاع المهام المحلية حتى لو فشلت المزامنة
+        console.error('❌ Error syncing with Asana:', syncError);
       } else {
-        console.log('Successfully synced tasks from Asana:', syncedTasks);
+        console.log('✅ Successfully synced tasks from Asana:', syncedTasks);
         
         // تحديث المهام في قاعدة البيانات
         if (syncedTasks?.tasks?.length > 0) {
+          console.log('📝 Updating tasks in database:', syncedTasks.tasks.length, 'tasks');
           const { error: upsertError } = await supabase
             .from('portfolio_tasks')
             .upsert(
@@ -75,12 +76,17 @@ export const useWorkspaceTasks = (workspaceId: string) => {
             );
 
           if (upsertError) {
-            console.error('Error upserting tasks:', upsertError);
+            console.error('❌ Error upserting tasks:', upsertError);
+          } else {
+            console.log('✅ Successfully updated tasks in database');
           }
+        } else {
+          console.log('ℹ️ No tasks to sync from Asana');
         }
       }
 
       // 4. نقوم بجلب المهام المحدثة من قاعدة البيانات
+      console.log('🔍 Fetching tasks from database for workspace:', workspace.id);
       const { data: tasks, error: tasksError } = await supabase
         .from('portfolio_tasks')
         .select(`
@@ -93,11 +99,11 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         .order('created_at', { ascending: false });
 
       if (tasksError) {
-        console.error('Error fetching tasks:', tasksError);
+        console.error('❌ Error fetching tasks:', tasksError);
         throw tasksError;
       }
 
-      console.log('Fetched tasks from database:', tasks);
+      console.log('✅ Successfully fetched tasks from database:', tasks);
       return tasks || [];
     },
     refetchInterval: 5000 // تحديث كل 5 ثواني
