@@ -10,26 +10,42 @@ export interface ChartData {
   value: number;
 }
 
+export interface TaskStats {
+  total: number;
+  completed: number;
+  inProgress: number;
+  overdue: number;
+  completionRate: number;
+}
+
+export interface PortfolioStats {
+  total: number;
+  active: number;
+  completed: number;
+  synced: number;
+  syncRate: number;
+}
+
 export interface DashboardData {
-  totalEvents: number;
-  eventsCount: number;
-  projectsCount: number;
-  upcomingEvents: number;
-  pastEvents: number;
-  totalRegistrations: number;
-  totalRevenue: number;
-  totalAttendance: number;
-  averageAttendanceRate: number;
-  averageRating: number;
-  mostRegisteredEvent: EventStats;
-  leastRegisteredEvent: EventStats;
-  highestRatedEvent: EventStats;
-  lowestRatedEvent: EventStats;
-  highestAttendanceEvent: EventStats;
-  lowestAttendanceEvent: EventStats;
-  eventsByType: ChartData[];
-  eventsByBeneficiary: ChartData[];
-  eventsByBeneficiaryType: ChartData[];
-  eventsByPrice: ChartData[];
-  eventsByMonth: ChartData[];
+  // Portfolio Statistics
+  portfolioStats: PortfolioStats;
+  taskStats: TaskStats;
+  
+  // Task Progress Charts
+  tasksByStatus: ChartData[];
+  tasksByPriority: ChartData[];
+  tasksByPortfolio: ChartData[];
+  tasksByMonth: ChartData[];
+  
+  // Top Performers
+  mostActivePortfolio: {
+    name: string;
+    taskCount: number;
+    completionRate: number;
+  };
+  mostProductiveUser: {
+    name: string;
+    completedTasks: number;
+    completionRate: number;
+  };
 }

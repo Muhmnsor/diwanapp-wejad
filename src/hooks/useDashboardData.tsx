@@ -1,68 +1,159 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardData } from "@/types/dashboard";
-import { calculateEventStats } from "@/utils/dashboard/eventProcessing";
-import { calculateTotalStats, calculateEventRankings } from "@/utils/dashboard/statsCalculation";
-import { calculateChartData } from "@/utils/dashboard/chartData";
 
 export const useDashboardData = () => {
   return useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["portfolio-dashboard-stats"],
     queryFn: async (): Promise<DashboardData> => {
       console.log("🔄 جاري تحميل إحصائيات لوحة المعلومات...");
 
-      // Get standalone events (not project activities)
-      const { data: events, error: eventsError } = await supabase
-        .from("events")
-        .select(`
-          *,
-          registrations (count),
-          event_feedback (overall_rating),
-          attendance_records!attendance_records_event_id_fkey (status)
-        `)
-        .eq('is_project_activity', false)
-        .eq('is_visible', true);
+      // Get portfolios data
+      const { data: portfolios, error: portfoliosError } = await supabase
+        .from("portfolios")
+        .select("*");
 
-      if (eventsError) {
-        console.error("Error fetching events:", eventsError);
-        throw eventsError;
+      if (portfoliosError) {
+        console.error("Error fetching portfolios:", portfoliosError);
+        throw portfoliosError;
       }
 
-      // Get projects
-      const { data: projects, error: projectsError } = await supabase
-        .from("projects")
+      // Get tasks data
+      const { data: tasks, error: tasksError } = await supabase
+        .from("portfolio_tasks")
         .select(`
           *,
-          registrations (count),
-          events!project_id (
-            id,
-            title,
-            event_feedback (overall_rating),
-            attendance_records!attendance_records_event_id_fkey (status)
+          portfolio_projects (
+            portfolio_id
           )
-        `)
-        .eq('is_visible', true);
+        `);
 
-      if (projectsError) {
-        console.error("Error fetching projects:", projectsError);
-        throw projectsError;
+      if (tasksError) {
+        console.error("Error fetching tasks:", tasksError);
+        throw tasksError;
       }
 
-      console.log("Raw events data:", events);
-      console.log("Raw projects data:", projects);
+      console.log("📊 Calculating dashboard statistics...");
 
-      const allEvents = calculateEventStats(events, projects);
-      const totalStats = calculateTotalStats(allEvents);
-      const rankings = calculateEventRankings(allEvents);
-      const chartData = calculateChartData(allEvents);
+      // Calculate portfolio stats
+      const portfolioStats = {
+        total: portfolios.length,
+        active: portfolios.filter(p => p.sync_enabled).length,
+        completed: portfolios.filter(p => !p.sync_enabled).length,
+        synced: portfolios.filter(p => p.last_sync_at).length,
+        syncRate: portfolios.length > 0 
+          ? (portfolios.filter(p => p.last_sync_at).length / portfolios.length) * 100 
+          : 0
+      };
+
+      // Calculate task stats
+      const taskStats = {
+        total: tasks.length,
+        completed: tasks.filter(t => t.status === 'completed').length,
+        inProgress: tasks.filter(t => t.status === 'in_progress').length,
+        overdue: tasks.filter(t => {
+          const dueDate = new Date(t.due_date);
+          return dueDate < new Date() && t.status !== 'completed';
+        }).length,
+        completionRate: tasks.length > 0 
+          ? (tasks.filter(t => t.status === 'completed').length / tasks.length) * 100 
+          : 0
+      };
+
+      // Calculate tasks by status chart data
+      const tasksByStatus: ChartData[] = [
+        { name: 'مكتملة', value: taskStats.completed },
+        { name: 'قيد التنفيذ', value: taskStats.inProgress },
+        { name: 'متأخرة', value: taskStats.overdue }
+      ];
+
+      // Calculate tasks by priority
+      const tasksByPriority = Object.entries(
+        tasks.reduce((acc: Record<string, number>, task) => {
+          acc[task.priority] = (acc[task.priority] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value }));
+
+      // Calculate tasks by portfolio
+      const tasksByPortfolio = Object.entries(
+        tasks.reduce((acc: Record<string, number>, task) => {
+          const portfolioId = task.portfolio_projects?.portfolio_id;
+          if (portfolioId) {
+            acc[portfolioId] = (acc[portfolioId] || 0) + 1;
+          }
+          return acc;
+        }, {})
+      ).map(([portfolioId, value]) => {
+        const portfolio = portfolios.find(p => p.id === portfolioId);
+        return { 
+          name: portfolio?.name || 'غير معروف', 
+          value 
+        };
+      });
+
+      // Calculate tasks by month
+      const tasksByMonth = Object.entries(
+        tasks.reduce((acc: Record<string, number>, task) => {
+          const month = new Date(task.created_at).toLocaleString('ar-SA', { month: 'long' });
+          acc[month] = (acc[month] || 0) + 1;
+          return acc;
+        }, {})
+      ).map(([name, value]) => ({ name, value }));
+
+      // Find most active portfolio
+      const portfolioActivity = portfolios.map(portfolio => {
+        const portfolioTasks = tasks.filter(t => 
+          t.portfolio_projects?.portfolio_id === portfolio.id
+        );
+        return {
+          name: portfolio.name,
+          taskCount: portfolioTasks.length,
+          completionRate: portfolioTasks.length > 0
+            ? (portfolioTasks.filter(t => t.status === 'completed').length / portfolioTasks.length) * 100
+            : 0
+        };
+      });
+
+      const mostActivePortfolio = portfolioActivity.reduce((prev, current) => 
+        (current.taskCount > prev.taskCount) ? current : prev
+      , portfolioActivity[0] || { name: 'لا يوجد', taskCount: 0, completionRate: 0 });
+
+      // Find most productive user
+      const userActivity = Object.entries(
+        tasks.reduce((acc: Record<string, { completed: number, total: number }>, task) => {
+          if (task.assigned_to) {
+            if (!acc[task.assigned_to]) {
+              acc[task.assigned_to] = { completed: 0, total: 0 };
+            }
+            acc[task.assigned_to].total++;
+            if (task.status === 'completed') {
+              acc[task.assigned_to].completed++;
+            }
+          }
+          return acc;
+        }, {})
+      ).map(([userId, stats]) => ({
+        name: userId, // يمكن استبدالها باسم المستخدم من جدول الملفات الشخصية
+        completedTasks: stats.completed,
+        completionRate: (stats.completed / stats.total) * 100
+      }));
+
+      const mostProductiveUser = userActivity.reduce((prev, current) => 
+        (current.completedTasks > prev.completedTasks) ? current : prev
+      , userActivity[0] || { name: 'لا يوجد', completedTasks: 0, completionRate: 0 });
+
+      console.log("✅ تم حساب إحصائيات لوحة المعلومات");
 
       return {
-        totalEvents: allEvents.length,
-        eventsCount: events?.length || 0,
-        projectsCount: projects?.length || 0,
-        ...totalStats,
-        ...rankings,
-        ...chartData
+        portfolioStats,
+        taskStats,
+        tasksByStatus,
+        tasksByPriority,
+        tasksByPortfolio,
+        tasksByMonth,
+        mostActivePortfolio,
+        mostProductiveUser
       };
     }
   });
