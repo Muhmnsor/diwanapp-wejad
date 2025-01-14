@@ -66,13 +66,19 @@ serve(async (req) => {
       existingPortfolios?.map(p => [p.asana_gid, p]) || []
     )
 
-    // Process each portfolio from Asana
+    // Create a map of Asana portfolios by GID
+    const asanaPortfoliosMap = new Map(
+      asanaData.data?.map(p => [p.gid, p]) || []
+    )
+
     const processedPortfolios = []
-    for (const portfolio of asanaData.data) {
+    const now = new Date().toISOString()
+
+    // Process portfolios from Asana
+    for (const portfolio of asanaData.data || []) {
       try {
         const existingPortfolio = existingPortfoliosMap.get(portfolio.gid)
-        const now = new Date().toISOString()
-
+        
         const portfolioData = {
           name: portfolio.name,
           description: portfolio.notes || '',
@@ -87,16 +93,18 @@ serve(async (req) => {
         if (existingPortfolio) {
           // Update existing portfolio
           console.log('📝 Updating existing portfolio:', portfolioData)
-          const { error: updateError } = await supabase
+          const { data: updatedPortfolio, error: updateError } = await supabase
             .from('portfolios')
             .update(portfolioData)
             .eq('asana_gid', portfolio.gid)
+            .select()
+            .single()
 
           if (updateError) {
             console.error('❌ Error updating portfolio:', updateError)
             continue
           }
-          result = { ...existingPortfolio, ...portfolioData }
+          result = updatedPortfolio
         } else {
           // Insert new portfolio from Asana
           console.log('📝 Creating new portfolio from Asana:', portfolioData)
@@ -117,6 +125,66 @@ serve(async (req) => {
       } catch (error) {
         console.error('❌ Error processing portfolio:', portfolio.gid, error)
         continue
+      }
+    }
+
+    // Handle portfolios that exist in database but not in Asana
+    for (const [asanaGid, portfolio] of existingPortfoliosMap) {
+      if (!asanaPortfoliosMap.has(asanaGid) && asanaGid) {
+        console.log('🗑️ Portfolio exists in database but not in Asana:', portfolio.name)
+        try {
+          // Create portfolio in Asana
+          const createResponse = await fetch(
+            `https://app.asana.com/api/1.0/portfolios`, 
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                data: {
+                  name: portfolio.name,
+                  workspace: ASANA_WORKSPACE_ID,
+                  notes: portfolio.description || ''
+                }
+              })
+            }
+          )
+
+          if (!createResponse.ok) {
+            const errorText = await createResponse.text()
+            console.error('❌ Error creating portfolio in Asana:', errorText)
+            continue
+          }
+
+          const newAsanaPortfolio = await createResponse.json()
+          console.log('✅ Successfully created portfolio in Asana:', newAsanaPortfolio)
+
+          // Update the database record with the new Asana GID
+          const { error: updateError } = await supabase
+            .from('portfolios')
+            .update({
+              asana_gid: newAsanaPortfolio.data.gid,
+              last_sync_at: now
+            })
+            .eq('id', portfolio.id)
+
+          if (updateError) {
+            console.error('❌ Error updating portfolio with Asana GID:', updateError)
+            continue
+          }
+
+          processedPortfolios.push({
+            ...portfolio,
+            asana_gid: newAsanaPortfolio.data.gid,
+            last_sync_at: now
+          })
+        } catch (error) {
+          console.error('❌ Error syncing portfolio to Asana:', error)
+          continue
+        }
       }
     }
 
