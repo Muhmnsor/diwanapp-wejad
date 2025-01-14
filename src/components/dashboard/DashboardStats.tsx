@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, TrendingUp, TrendingDown, DollarSign, Percent, Star, UserCheck, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Users, Calendar, TrendingUp, TrendingDown, DollarSign, Percent, Star, UserCheck } from "lucide-react";
 import { DashboardData } from "@/types/dashboard";
 
 interface DashboardStatsProps {
@@ -7,119 +7,160 @@ interface DashboardStatsProps {
 }
 
 export const DashboardStats = ({ data }: DashboardStatsProps) => {
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'in_progress':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-blue-500" />;
-    }
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">المرحلة الحالية</CardTitle>
-          {getStatusIcon('in_progress')}
+          <CardTitle className="text-sm font-medium">إجمالي الأحداث</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">المرحلة الثالثة</div>
+          <div className="text-2xl font-bold">{data.totalEvents}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            تطوير واجهة المستخدم
+            {data.projectsCount} مشروع | {data.eventsCount} فعالية
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.upcomingEvents} حدث قادم | {data.pastEvents} حدث سابق
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">المراحل المكتملة</CardTitle>
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <CardTitle className="text-sm font-medium">إجمالي المسجلين</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">2 من 6</div>
+          <div className="text-2xl font-bold">{data.totalRegistrations}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            نسبة الإكمال: 33%
+            معدل {(data.totalRegistrations / data.totalEvents).toFixed(1)} لكل حدث
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">المهام المنجزة</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">إجمالي الإيرادات</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.completedTasks || 8}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            من أصل {data.totalTasks || 24} مهمة
-          </div>
+          <div className="text-2xl font-bold">{data.totalRevenue} ريال</div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">المحافظ النشطة</CardTitle>
+          <CardTitle className="text-sm font-medium">إجمالي الحضور</CardTitle>
           <UserCheck className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{data.activePortfolios || 3}</div>
+          <div className="text-2xl font-bold">{data.totalAttendance}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            تمت المزامنة: {data.syncedPortfolios || 2}
+            معدل {(data.totalAttendance / data.totalRegistrations * 100).toFixed(1)}% من المسجلين
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">حالة المرحلة الثانية</CardTitle>
+          <CardTitle className="text-sm font-medium">أعلى حدث تسجيلاً</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">تم إنجاز 80%</div>
+          <div className="text-lg font-bold">{data.mostRegisteredEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            متبقي: تحسين الفهرسة والعلاقات
+            {data.mostRegisteredEvent.registrations} مسجل
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">حالة المرحلة الثالثة</CardTitle>
-          <Clock className="h-4 w-4 text-yellow-500" />
+          <CardTitle className="text-sm font-medium">أقل حدث تسجيلاً</CardTitle>
+          <TrendingDown className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">قيد التنفيذ</div>
+          <div className="text-lg font-bold">{data.leastRegisteredEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            تم إنجاز: تطوير الواجهات الأساسية
+            {data.leastRegisteredEvent.registrations} مسجل
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">المراحل القادمة</CardTitle>
-          <AlertCircle className="h-4 w-4 text-blue-500" />
+          <CardTitle className="text-sm font-medium">أعلى حدث تقييماً</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-lg font-bold">المرحلة الرابعة</div>
+          <div className="text-lg font-bold">{data.highestRatedEvent.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            تطوير نظام المزامنة الجديد
+            {data.highestRatedEvent.rating} من 5
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">نسبة الإنجاز الكلية</CardTitle>
+          <CardTitle className="text-sm font-medium">أقل حدث تقييماً</CardTitle>
+          <TrendingDown className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.lowestRatedEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.lowestRatedEvent.rating} من 5
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">متوسط التقييم</CardTitle>
+          <Star className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{data.averageRating.toFixed(1)}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            من أصل 5 نجوم
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">أعلى حدث حضوراً</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.highestAttendanceEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.highestAttendanceEvent.attendanceRate}% نسبة الحضور
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">أقل حدث حضوراً</CardTitle>
+          <TrendingDown className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-lg font-bold">{data.lowestAttendanceEvent.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {data.lowestAttendanceEvent.attendanceRate}% نسبة الحضور
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">متوسط نسبة الحضور</CardTitle>
           <Percent className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">45%</div>
+          <div className="text-2xl font-bold">{data.averageAttendanceRate.toFixed(1)}%</div>
           <div className="text-xs text-muted-foreground mt-1">
-            من إجمالي المشروع
+            لجميع الأحداث
           </div>
         </CardContent>
       </Card>
