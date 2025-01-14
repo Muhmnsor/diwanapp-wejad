@@ -1,9 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardData } from "@/types/dashboard";
-import { calculateEventStats } from "@/utils/dashboard/eventProcessing";
-import { calculateTotalStats, calculateEventRankings } from "@/utils/dashboard/statsCalculation";
-import { calculateChartData } from "@/utils/dashboard/chartData";
+import type { DashboardData } from "@/types/dashboard";
 
 export const useDashboardData = () => {
   return useQuery({
@@ -11,58 +8,93 @@ export const useDashboardData = () => {
     queryFn: async (): Promise<DashboardData> => {
       console.log("🔄 جاري تحميل إحصائيات لوحة المعلومات...");
 
-      // Get standalone events (not project activities)
-      const { data: events, error: eventsError } = await supabase
-        .from("events")
-        .select(`
-          *,
-          registrations (count),
-          event_feedback (overall_rating),
-          attendance_records!attendance_records_event_id_fkey (status)
-        `)
-        .eq('is_project_activity', false)
-        .eq('is_visible', true);
+      // Get portfolios
+      const { data: portfolios, error: portfoliosError } = await supabase
+        .from("portfolios")
+        .select("*");
 
-      if (eventsError) {
-        console.error("Error fetching events:", eventsError);
-        throw eventsError;
+      if (portfoliosError) {
+        console.error("Error fetching portfolios:", portfoliosError);
+        throw portfoliosError;
       }
 
-      // Get projects
-      const { data: projects, error: projectsError } = await supabase
-        .from("projects")
-        .select(`
-          *,
-          registrations (count),
-          events!project_id (
-            id,
-            title,
-            event_feedback (overall_rating),
-            attendance_records!attendance_records_event_id_fkey (status)
-          )
-        `)
-        .eq('is_visible', true);
+      // Get tasks
+      const { data: tasks, error: tasksError } = await supabase
+        .from("portfolio_tasks")
+        .select("*");
 
-      if (projectsError) {
-        console.error("Error fetching projects:", projectsError);
-        throw projectsError;
+      if (tasksError) {
+        console.error("Error fetching tasks:", tasksError);
+        throw tasksError;
       }
 
-      console.log("Raw events data:", events);
-      console.log("Raw projects data:", projects);
+      console.log("Raw portfolios data:", portfolios);
+      console.log("Raw tasks data:", tasks);
 
-      const allEvents = calculateEventStats(events, projects);
-      const totalStats = calculateTotalStats(allEvents);
-      const rankings = calculateEventRankings(allEvents);
-      const chartData = calculateChartData(allEvents);
+      // Calculate portfolio stats
+      const activePortfolios = portfolios?.filter(p => p.sync_enabled).length || 0;
+      const completedPortfolios = portfolios?.filter(p => !p.sync_enabled).length || 0;
+      const syncedPortfolios = portfolios?.filter(p => p.last_sync_at).length || 0;
+
+      // Calculate task stats
+      const completedTasks = tasks?.filter(t => t.status === 'completed').length || 0;
+      const inProgressTasks = tasks?.filter(t => t.status === 'in_progress').length || 0;
+      const overdueTasks = tasks?.filter(t => {
+        if (!t.due_date) return false;
+        return new Date(t.due_date) < new Date() && t.status !== 'completed';
+      }).length || 0;
+
+      // Prepare chart data
+      const tasksByStatus = [
+        { name: 'مكتمل', value: completedTasks },
+        { name: 'قيد التنفيذ', value: inProgressTasks },
+        { name: 'متأخر', value: overdueTasks }
+      ];
+
+      const tasksByPriority = [
+        { name: 'عالي', value: tasks?.filter(t => t.priority === 'high').length || 0 },
+        { name: 'متوسط', value: tasks?.filter(t => t.priority === 'medium').length || 0 },
+        { name: 'منخفض', value: tasks?.filter(t => t.priority === 'low').length || 0 }
+      ];
+
+      // Group tasks by portfolio
+      const tasksByPortfolio = portfolios?.map(p => ({
+        name: p.name,
+        value: tasks?.filter(t => t.workspace_id === p.id).length || 0
+      })) || [];
+
+      // Group tasks by month
+      const monthNames = [
+        'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
+        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      ];
+
+      const tasksByMonth = monthNames.map(month => ({
+        name: month,
+        value: tasks?.filter(t => {
+          if (!t.created_at) return false;
+          return new Date(t.created_at).getMonth() === monthNames.indexOf(month);
+        }).length || 0
+      }));
 
       return {
-        totalEvents: allEvents.length,
-        eventsCount: events?.length || 0,
-        projectsCount: projects?.length || 0,
-        ...totalStats,
-        ...rankings,
-        ...chartData
+        // Portfolio stats
+        totalPortfolios: portfolios?.length || 0,
+        activePortfolios,
+        completedPortfolios,
+        syncedPortfolios,
+
+        // Task stats
+        totalTasks: tasks?.length || 0,
+        completedTasks,
+        inProgressTasks,
+        overdueTasks,
+
+        // Charts
+        tasksByStatus,
+        tasksByPriority,
+        tasksByPortfolio,
+        tasksByMonth
       };
     }
   });
