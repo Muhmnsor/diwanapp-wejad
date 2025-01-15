@@ -76,7 +76,7 @@ export const PortfolioList = () => {
                 value={portfolio.sync_enabled ? 100 : 0} 
                 className="h-2"
               />
-              <div className="text-xs text-gray-500 text-right">
+              <div className="text-xs text-gray-500 text-left">
                 {portfolio.sync_enabled ? 'متزامن مع Asana' : 'غير متزامن'}
               </div>
             </div>
