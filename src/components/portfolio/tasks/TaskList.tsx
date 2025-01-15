@@ -5,9 +5,7 @@ interface Task {
   title: string;
   description: string | null;
   due_date: string | null;
-  assigned_to: {
-    email: string;
-  } | null;
+  assigned_to: string | null;
   status: string;
   priority: string;
   updated_at: string;
