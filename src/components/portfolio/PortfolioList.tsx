@@ -32,9 +32,8 @@ export const PortfolioList = () => {
         .from('portfolios')
         .select(`
           *,
-          portfolio_projects (
-            count
-          )
+          portfolio_projects:portfolio_projects(count),
+          portfolio_only_projects:portfolio_only_projects(count)
         `)
         .order('created_at', { ascending: false });
 
@@ -76,64 +75,71 @@ export const PortfolioList = () => {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {portfolios?.map((portfolio) => (
-          <Card 
-            key={portfolio.id} 
-            className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={(e) => handleCardClick(e, portfolio.id)}
-          >
-            <div className="space-y-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium text-lg mb-1">{portfolio.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    {portfolio.description || 'لا يوجد وصف'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPortfolioToEdit(portfolio);
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPortfolioToDelete({
-                        id: portfolio.id,
-                        name: portfolio.name,
-                        asanaGid: portfolio.asana_gid
-                      });
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
+        {portfolios?.map((portfolio) => {
+          // Calculate total projects by summing both types
+          const totalProjects = 
+            (portfolio.portfolio_projects?.[0]?.count || 0) + 
+            (portfolio.portfolio_only_projects?.[0]?.count || 0);
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>المشاريع</span>
-                  <span>{portfolio.portfolio_projects?.[0]?.count || 0}</span>
+          return (
+            <Card 
+              key={portfolio.id} 
+              className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={(e) => handleCardClick(e, portfolio.id)}
+            >
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium text-lg mb-1">{portfolio.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      {portfolio.description || 'لا يوجد وصف'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPortfolioToEdit(portfolio);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPortfolioToDelete({
+                          id: portfolio.id,
+                          name: portfolio.name,
+                          asanaGid: portfolio.asana_gid
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
-                <Progress 
-                  value={portfolio.sync_enabled ? 100 : 0} 
-                  className="h-2"
-                />
-                <div className="text-xs text-gray-500 text-right">
-                  {portfolio.sync_enabled ? 'متزامن مع Asana' : 'غير متزامن'}
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>المشاريع</span>
+                    <span>{totalProjects}</span>
+                  </div>
+                  <Progress 
+                    value={portfolio.sync_enabled ? 100 : 0} 
+                    className="h-2"
+                  />
+                  <div className="text-xs text-gray-500 text-right">
+                    {portfolio.sync_enabled ? 'متزامن مع Asana' : 'غير متزامن'}
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
 
         {portfolios?.length === 0 && (
           <div className="col-span-full text-center py-8 text-gray-500">
