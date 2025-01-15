@@ -15,7 +15,7 @@ export const TopHeader = () => {
   
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
-                      location.pathname.includes('/dashboard') ||
+                      location.pathname === '/dashboard' ||
                       location.pathname.includes('/create-project') ||
                       location.pathname.includes('/projects') ||
                       location.pathname === '/settings';
@@ -43,11 +43,13 @@ export const TopHeader = () => {
             </div>
           </div>
 
-          {/* Admin Actions Bar */}
-          <AdminActions 
-            isAuthenticated={isAuthenticated}
-            isEventsPage={isEventsPage}
-          />
+          {/* Admin Actions Bar - Only show on events pages and NOT on tasks pages */}
+          {isEventsPage && !isTasksPage && (
+            <AdminActions 
+              isAuthenticated={isAuthenticated}
+              isEventsPage={isEventsPage}
+            />
+          )}
 
           {/* Tasks Secondary Header - Only show on tasks pages */}
           {isTasksPage && (
