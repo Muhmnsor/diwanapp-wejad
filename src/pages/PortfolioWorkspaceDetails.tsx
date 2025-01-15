@@ -19,7 +19,8 @@ const PortfolioWorkspaceDetails = () => {
   const navigate = useNavigate();
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
 
-  const { data: workspace, isLoading, error, refetch } = useQuery({
+  // Fetch workspace and portfolio details
+  const { data: workspace, isLoading, error } = useQuery({
     queryKey: ['portfolio-workspace', workspaceId],
     queryFn: async () => {
       console.log('Fetching workspace details for ID:', workspaceId);
@@ -34,8 +35,20 @@ const PortfolioWorkspaceDetails = () => {
         throw new Error(fetchError.message || 'حدث خطأ أثناء تحميل بيانات مساحة العمل');
       }
 
-      console.log('Successfully fetched workspace data:', workspaceData);
-      return workspaceData;
+      // Also fetch the portfolio details
+      const { data: portfolioData, error: portfolioError } = await supabase
+        .from('portfolios')
+        .select('*')
+        .single();
+
+      if (portfolioError) {
+        throw portfolioError;
+      }
+
+      return {
+        ...workspaceData,
+        portfolio: portfolioData
+      };
     },
     retry: 1,
     meta: {
@@ -92,8 +105,8 @@ const PortfolioWorkspaceDetails = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <PortfolioBreadcrumb 
-              portfolioName="المحفظة"
-              portfolioId="1"
+              portfolioName={workspace.portfolio?.name || "المحفظة"}
+              portfolioId={workspace.portfolio?.id || "1"}
               workspaceName={workspace.name}
             />
             
@@ -133,7 +146,10 @@ const PortfolioWorkspaceDetails = () => {
         open={isAddTaskDialogOpen}
         onOpenChange={setIsAddTaskDialogOpen}
         workspaceId={workspaceId!}
-        onSuccess={refetch}
+        onSuccess={() => {
+          // Refresh data after adding task
+          window.location.reload();
+        }}
       />
     </div>
   );
