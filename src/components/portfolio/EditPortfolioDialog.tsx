@@ -86,12 +86,11 @@ export const EditPortfolioDialog = ({
         </DialogHeader>
         <PortfolioForm
           onSubmit={handleSubmit}
-          isSubmitting={isLoading}
+          isLoading={isLoading}
           initialData={{
             name: portfolio.name,
             description: portfolio.description || '',
           }}
-          onCancel={() => onOpenChange(false)}
         />
       </DialogContent>
     </Dialog>
