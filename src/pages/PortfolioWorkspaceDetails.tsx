@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { AddTaskDialog } from '@/components/portfolio/tasks/AddTaskDialog';
 import { useState } from 'react';
 import { PortfolioTasks } from '@/components/portfolio/PortfolioTasks';
+import { PortfolioBreadcrumb } from '@/components/portfolio/PortfolioBreadcrumb';
 
 const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
@@ -90,6 +91,12 @@ const PortfolioWorkspaceDetails = () => {
       <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
+            <PortfolioBreadcrumb 
+              portfolioName="المحفظة"
+              portfolioId="1"
+              workspaceName={workspace.name}
+            />
+            
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">{workspace.name}</h1>
               <Button 
@@ -116,7 +123,6 @@ const PortfolioWorkspaceDetails = () => {
               </div>
             </Card>
 
-            {/* عرض المهام باستخدام مكون PortfolioTasks */}
             <PortfolioTasks workspaceId={workspaceId!} />
           </div>
         </div>
