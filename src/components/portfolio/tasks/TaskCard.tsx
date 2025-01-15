@@ -81,20 +81,32 @@ export const TaskCard = ({ task }: TaskCardProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ListChecks className="h-5 w-5 text-primary" />
-            <span className="font-medium">{task.title}</span>
+            <div>
+              <span className="text-sm text-gray-500">اسم المهمة:</span>
+              <span className="font-medium mr-1">{task.title}</span>
+            </div>
           </div>
           <div className="flex gap-2">
-            <Badge className={getStatusColor(task.status)}>
-              {getStatusLabel(task.status)}
-            </Badge>
-            <Badge className={getPriorityColor(task.priority)}>
-              {getPriorityLabel(task.priority)}
-            </Badge>
+            <div>
+              <span className="text-sm text-gray-500 ml-1">الحالة:</span>
+              <Badge className={getStatusColor(task.status)}>
+                {getStatusLabel(task.status)}
+              </Badge>
+            </div>
+            <div>
+              <span className="text-sm text-gray-500 ml-1">الأولوية:</span>
+              <Badge className={getPriorityColor(task.priority)}>
+                {getPriorityLabel(task.priority)}
+              </Badge>
+            </div>
           </div>
         </div>
 
         {task.description && (
-          <p className="text-sm text-gray-600 mt-2">{task.description}</p>
+          <div>
+            <span className="text-sm text-gray-500 block mb-1">الوصف:</span>
+            <p className="text-sm text-gray-600">{task.description}</p>
+          </div>
         )}
 
         <div className="flex items-center justify-between text-sm text-gray-500">
@@ -102,19 +114,22 @@ export const TaskCard = ({ task }: TaskCardProps) => {
             {task.due_date && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
+                <span className="text-gray-500">تاريخ التنفيذ:</span>
                 <span>{formatDate(task.due_date)}</span>
               </div>
             )}
             {task.assigned_to && (
               <div className="flex items-center gap-1">
                 <User className="h-4 w-4" />
+                <span className="text-gray-500">المسؤول:</span>
                 <span>{task.assigned_to.email}</span>
               </div>
             )}
           </div>
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
-            <span>تم التحديث {formatDate(task.updated_at)}</span>
+            <span className="text-gray-500">آخر تحديث:</span>
+            <span>{formatDate(task.updated_at)}</span>
           </div>
         </div>
       </div>
