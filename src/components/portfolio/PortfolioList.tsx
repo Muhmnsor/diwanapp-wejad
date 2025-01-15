@@ -28,23 +28,55 @@ export const PortfolioList = () => {
     queryKey: ['portfolios'],
     queryFn: async () => {
       console.log('Fetching portfolios...');
-      const { data: portfolios, error } = await supabase
+      
+      // First, get all portfolios
+      const { data: portfoliosData, error: portfoliosError } = await supabase
         .from('portfolios')
-        .select(`
-          *,
-          portfolio_projects (
-            count
-          )
-        `)
-        .order('created_at', { ascending: false });
+        .select('*');
 
-      if (error) {
-        console.error('Error fetching portfolios:', error);
-        throw error;
+      if (portfoliosError) {
+        console.error('Error fetching portfolios:', portfoliosError);
+        throw portfoliosError;
       }
 
-      console.log('Fetched portfolios:', portfolios);
-      return portfolios;
+      // For each portfolio, get the project counts
+      const portfoliosWithCounts = await Promise.all(
+        portfoliosData.map(async (portfolio) => {
+          // Get count of portfolio_projects
+          const { count: regularProjectsCount, error: regularError } = await supabase
+            .from('portfolio_projects')
+            .select('*', { count: 'exact', head: true })
+            .eq('portfolio_id', portfolio.id);
+
+          if (regularError) {
+            console.error('Error counting regular projects:', regularError);
+            throw regularError;
+          }
+
+          // Get count of portfolio_only_projects
+          const { count: onlyProjectsCount, error: onlyError } = await supabase
+            .from('portfolio_only_projects')
+            .select('*', { count: 'exact', head: true })
+            .eq('portfolio_id', portfolio.id);
+
+          if (onlyError) {
+            console.error('Error counting portfolio only projects:', onlyError);
+            throw onlyError;
+          }
+
+          // Calculate total projects
+          const totalProjects = (regularProjectsCount || 0) + (onlyProjectsCount || 0);
+          console.log(`Portfolio ${portfolio.name} has ${totalProjects} total projects`);
+
+          return {
+            ...portfolio,
+            total_projects: totalProjects
+          };
+        })
+      );
+
+      console.log('Fetched portfolios with counts:', portfoliosWithCounts);
+      return portfoliosWithCounts;
     }
   });
 
@@ -121,7 +153,7 @@ export const PortfolioList = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>المشاريع</span>
-                  <span>{portfolio.portfolio_projects?.[0]?.count || 0}</span>
+                  <span>{portfolio.total_projects}</span>
                 </div>
                 <Progress 
                   value={portfolio.sync_enabled ? 100 : 0} 
