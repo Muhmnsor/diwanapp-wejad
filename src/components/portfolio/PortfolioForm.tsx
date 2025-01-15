@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PortfolioFormProps {
   onSubmit: (formData: {
@@ -11,15 +11,27 @@ interface PortfolioFormProps {
   }) => Promise<void>;
   isSubmitting: boolean;
   onCancel: () => void;
+  initialData?: {
+    name: string;
+    description: string | null;
+  };
 }
 
 export const PortfolioForm = ({ 
   onSubmit, 
   isSubmitting, 
-  onCancel 
+  onCancel,
+  initialData 
 }: PortfolioFormProps) => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(initialData?.name || "");
+  const [description, setDescription] = useState(initialData?.description || "");
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name);
+      setDescription(initialData.description || "");
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +62,7 @@ export const PortfolioForm = ({
 
       <div className="flex justify-start gap-2 mt-6">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "جاري الإنشاء..." : "إنشاء المحفظة"}
+          {isSubmitting ? "جاري الحفظ..." : "حفظ التغييرات"}
         </Button>
         <Button
           type="button"
