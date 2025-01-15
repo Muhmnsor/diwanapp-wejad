@@ -46,10 +46,7 @@ export const PortfolioBreadcrumb = ({
             {portfolioName}
           </Link>
           <ChevronLeft className="h-4 w-4" />
-          <span className="text-gray-900 flex items-center gap-1">
-            <Folder className="h-4 w-4" />
-            {projectName}
-          </span>
+          <span className="text-gray-900">{projectName}</span>
         </>
       ) : (
         <span className="text-gray-900 flex items-center gap-1">
