@@ -1,9 +1,9 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PortfolioForm } from "./PortfolioForm";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EditPortfolioDialogProps {
   open: boolean;
@@ -18,25 +18,47 @@ interface EditPortfolioDialogProps {
 export const EditPortfolioDialog = ({
   open,
   onOpenChange,
-  portfolio
+  portfolio,
 }: EditPortfolioDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
-  const handleSubmit = async (formData: {
-    name: string;
-    description: string;
-  }) => {
-    setIsSubmitting(true);
-    try {
-      console.log('Updating portfolio with data:', formData);
+  const handleSubmit = async (values: { name: string; description: string }) => {
+    setIsLoading(true);
+    console.log('Updating portfolio:', values);
 
+    try {
+      // First update in Asana if the portfolio has an Asana ID
+      const { data: portfolioData } = await supabase
+        .from('portfolios')
+        .select('asana_gid')
+        .eq('id', portfolio.id)
+        .single();
+
+      if (portfolioData?.asana_gid) {
+        console.log('Updating portfolio in Asana:', portfolioData.asana_gid);
+        const response = await supabase.functions.invoke('update-portfolio', {
+          body: {
+            portfolioId: portfolio.id,
+            asanaGid: portfolioData.asana_gid,
+            name: values.name,
+            description: values.description
+          }
+        });
+
+        if (response.error) {
+          console.error('Error updating portfolio in Asana:', response.error);
+          throw new Error('فشل في تحديث المحفظة في Asana');
+        }
+      }
+
+      // Then update in our database
       const { error: updateError } = await supabase
         .from('portfolios')
         .update({
-          name: formData.name,
-          description: formData.description,
-          updated_at: new Date().toISOString()
+          name: values.name,
+          description: values.description,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', portfolio.id);
 
@@ -45,33 +67,31 @@ export const EditPortfolioDialog = ({
         throw updateError;
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['portfolios'] });
       toast.success('تم تحديث المحفظة بنجاح');
-      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
       onOpenChange(false);
     } catch (error) {
       console.error('Error in handleSubmit:', error);
-      toast.error('حدث خطأ أثناء تحديث المحفظة');
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء تحديث المحفظة');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]" dir="rtl">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold">تعديل المحفظة</h2>
-            <p className="text-sm text-gray-500">قم بتعديل تفاصيل المحفظة</p>
-          </div>
-
-          <PortfolioForm
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            onCancel={() => onOpenChange(false)}
-            initialData={portfolio}
-          />
-        </div>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>تعديل المحفظة</DialogTitle>
+        </DialogHeader>
+        <PortfolioForm
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          initialData={{
+            name: portfolio.name,
+            description: portfolio.description || '',
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
