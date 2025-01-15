@@ -11,6 +11,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Progress } from '@/components/ui/progress';
 import { AddTaskDialog } from '@/components/portfolio/tasks/AddTaskDialog';
 import { useState } from 'react';
+import { PortfolioTasks } from '@/components/portfolio/PortfolioTasks';
 
 const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
@@ -109,40 +110,14 @@ const PortfolioWorkspaceDetails = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>تقدم المهام</span>
-                  <span>{workspace.tasks ? Math.round((workspace.tasks.filter(task => task.status === 'completed').length / workspace.tasks.length) * 100) : 0}%</span>
+                  <span>{workspace.tasks ? Math.round((workspace.tasks.filter(task => task.completed).length / workspace.tasks.length) * 100) : 0}%</span>
                 </div>
-                <Progress value={workspace.tasks ? Math.round((workspace.tasks.filter(task => task.status === 'completed').length / workspace.tasks.length) * 100) : 0} className="h-2" />
+                <Progress value={workspace.tasks ? Math.round((workspace.tasks.filter(task => task.completed).length / workspace.tasks.length) * 100) : 0} className="h-2" />
               </div>
             </Card>
 
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">المهام</h2>
-              {workspace.tasks?.length > 0 ? (
-                <div className="grid gap-4">
-                  {workspace.tasks.map((task) => (
-                    <Card key={task.id} className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium">{task.title}</h3>
-                          <p className="text-sm text-gray-500">
-                            {task.description || 'لا يوجد وصف'}
-                          </p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-sm ${
-                          task.status === 'completed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {task.status === 'completed' ? 'مكتمل' : 'قيد التنفيذ'}
-                        </span>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-8">لا توجد مهام في مساحة العمل هذه</p>
-              )}
-            </div>
+            {/* عرض المهام باستخدام مكون PortfolioTasks */}
+            <PortfolioTasks workspaceId={workspaceId!} />
           </div>
         </div>
       </main>
