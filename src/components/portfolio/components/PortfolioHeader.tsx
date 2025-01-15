@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Link } from 'lucide-react';
+import { RefreshCw, Link, Plus } from 'lucide-react';
 import { AddPortfolioDialog } from '../AddPortfolioDialog';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,6 +66,13 @@ export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
         >
           <RefreshCw className={`h-4 w-4 ml-2 ${isSyncing ? 'animate-spin' : ''}`} />
           مزامنة مع Asana
+        </Button>
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4 ml-2" />
+          إضافة محفظة
         </Button>
         <AddPortfolioDialog 
           open={isDialogOpen}
