@@ -30,8 +30,8 @@ export const PortfolioList = () => {
         .from('portfolios')
         .select(`
           *,
-          portfolio_projects:portfolio_projects(count),
-          portfolio_only_projects:portfolio_only_projects(count)
+          portfolio_projects(count),
+          portfolio_only_projects!portfolio_only_projects_portfolio_id_fkey(count)
         `);
 
       if (portfoliosError) {
