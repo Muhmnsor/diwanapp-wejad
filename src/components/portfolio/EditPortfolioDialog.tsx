@@ -28,19 +28,13 @@ export const EditPortfolioDialog = ({
     console.log('Updating portfolio:', values);
 
     try {
-      // First get the portfolio's Asana ID
-      const { data: portfolioData, error: fetchError } = await supabase
+      // First update in Asana if the portfolio has an Asana ID
+      const { data: portfolioData } = await supabase
         .from('portfolios')
         .select('asana_gid')
         .eq('id', portfolio.id)
         .single();
 
-      if (fetchError) {
-        console.error('Error fetching portfolio:', fetchError);
-        throw fetchError;
-      }
-
-      // If portfolio has an Asana ID, update it in Asana first
       if (portfolioData?.asana_gid) {
         console.log('Updating portfolio in Asana:', portfolioData.asana_gid);
         const response = await supabase.functions.invoke('update-portfolio', {
@@ -56,8 +50,6 @@ export const EditPortfolioDialog = ({
           console.error('Error updating portfolio in Asana:', response.error);
           throw new Error('فشل في تحديث المحفظة في Asana');
         }
-
-        console.log('Successfully updated portfolio in Asana:', response.data);
       }
 
       // Then update in our database

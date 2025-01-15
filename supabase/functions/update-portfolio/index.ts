@@ -4,7 +4,6 @@ import { corsHeaders } from '../_shared/cors.ts'
 const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -24,7 +23,6 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
       body: JSON.stringify({
         data: {
