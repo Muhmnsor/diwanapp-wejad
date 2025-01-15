@@ -1,6 +1,8 @@
 import { Calendar, ListChecks, User, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TaskCardProps {
   task: {
@@ -8,9 +10,7 @@ interface TaskCardProps {
     title: string;
     description: string | null;
     due_date: string | null;
-    assigned_to: {
-      email: string;
-    } | null;
+    assigned_to: string | null;
     status: string;
     priority: string;
     updated_at: string;
@@ -19,6 +19,27 @@ interface TaskCardProps {
 
 export const TaskCard = ({ task }: TaskCardProps) => {
   console.log('📋 Rendering task card with data:', task);
+
+  const { data: assignedUser } = useQuery({
+    queryKey: ['profile', task.assigned_to],
+    queryFn: async () => {
+      if (!task.assigned_to) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', task.assigned_to)
+        .single();
+
+      if (error) {
+        console.error('Error fetching assigned user:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!task.assigned_to
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -118,11 +139,11 @@ export const TaskCard = ({ task }: TaskCardProps) => {
                 <span>{formatDate(task.due_date)}</span>
               </div>
             )}
-            {task.assigned_to && (
+            {task.assigned_to && assignedUser && (
               <div className="flex items-center gap-1">
                 <User className="h-4 w-4" />
                 <span className="text-gray-500">المسؤول:</span>
-                <span>{task.assigned_to.email}</span>
+                <span>{assignedUser.email}</span>
               </div>
             )}
           </div>
