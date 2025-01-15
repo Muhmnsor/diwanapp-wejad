@@ -24,7 +24,8 @@ export const TopHeader = () => {
                                  location.pathname.includes('/projects/');
 
   const isTasksPage = location.pathname.includes('/tasks') ||
-                     location.pathname.includes('/portfolios');
+                     location.pathname.includes('/portfolios') ||
+                     location.pathname.includes('/portfolio-workspaces');
 
   return (
     <div className="w-full bg-white border-b">
