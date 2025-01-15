@@ -1,15 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { DeletePortfolioDialog } from "./DeletePortfolioDialog";
 import { EditPortfolioDialog } from "./EditPortfolioDialog";
+import { PortfolioCard } from "./components/PortfolioCard";
+import { LoadingState } from "./components/LoadingState";
 
 export const PortfolioList = () => {
   const navigate = useNavigate();
@@ -29,7 +26,6 @@ export const PortfolioList = () => {
     queryFn: async () => {
       console.log('Fetching portfolios...');
       
-      // First, get all portfolios
       const { data: portfoliosData, error: portfoliosError } = await supabase
         .from('portfolios')
         .select(`
@@ -43,7 +39,6 @@ export const PortfolioList = () => {
         throw portfoliosError;
       }
 
-      // Process the data to calculate total projects
       const portfoliosWithCounts = portfoliosData.map(portfolio => {
         const regularProjectsCount = portfolio.portfolio_projects[0]?.count || 0;
         const onlyProjectsCount = portfolio.portfolio_only_projects[0]?.count || 0;
@@ -67,7 +62,6 @@ export const PortfolioList = () => {
   });
 
   const handleCardClick = (e: React.MouseEvent, portfolioId: string) => {
-    // Only navigate if the click wasn't on a button
     if (!(e.target as HTMLElement).closest('button')) {
       navigate(`/portfolios/${portfolioId}`);
     }
@@ -78,79 +72,20 @@ export const PortfolioList = () => {
   }
 
   if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="p-4">
-            <Skeleton className="h-6 w-1/3 mb-4" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-2/3" />
-          </Card>
-        ))}
-      </div>
-    );
+    return <LoadingState />;
   }
 
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {portfolios?.map((portfolio) => (
-          <Card 
-            key={portfolio.id} 
-            className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={(e) => handleCardClick(e, portfolio.id)}
-          >
-            <div className="space-y-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium text-lg mb-1">{portfolio.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    {portfolio.description || 'لا يوجد وصف'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPortfolioToEdit(portfolio);
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPortfolioToDelete({
-                        id: portfolio.id,
-                        name: portfolio.name,
-                        asanaGid: portfolio.asana_gid
-                      });
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>المشاريع</span>
-                  <span>{portfolio.total_projects}</span>
-                </div>
-                <Progress 
-                  value={portfolio.sync_enabled ? 100 : 0} 
-                  className="h-2"
-                />
-                <div className="text-xs text-gray-500 text-right">
-                  {portfolio.sync_enabled ? 'متزامن مع Asana' : 'غير متزامن'}
-                </div>
-              </div>
-            </div>
-          </Card>
+          <PortfolioCard
+            key={portfolio.id}
+            portfolio={portfolio}
+            onEdit={setPortfolioToEdit}
+            onDelete={setPortfolioToDelete}
+            onClick={handleCardClick}
+          />
         ))}
 
         {portfolios?.length === 0 && (
