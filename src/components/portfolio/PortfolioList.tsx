@@ -32,50 +32,36 @@ export const PortfolioList = () => {
       // First, get all portfolios
       const { data: portfoliosData, error: portfoliosError } = await supabase
         .from('portfolios')
-        .select('*');
+        .select(`
+          *,
+          portfolio_projects:portfolio_projects(count),
+          portfolio_only_projects:portfolio_only_projects(count)
+        `);
 
       if (portfoliosError) {
         console.error('Error fetching portfolios:', portfoliosError);
         throw portfoliosError;
       }
 
-      // For each portfolio, get the project counts
-      const portfoliosWithCounts = await Promise.all(
-        portfoliosData.map(async (portfolio) => {
-          // Get count of portfolio_projects
-          const { count: regularProjectsCount, error: regularError } = await supabase
-            .from('portfolio_projects')
-            .select('*', { count: 'exact', head: true })
-            .eq('portfolio_id', portfolio.id);
+      // Process the data to calculate total projects
+      const portfoliosWithCounts = portfoliosData.map(portfolio => {
+        const regularProjectsCount = portfolio.portfolio_projects[0]?.count || 0;
+        const onlyProjectsCount = portfolio.portfolio_only_projects[0]?.count || 0;
+        const totalProjects = regularProjectsCount + onlyProjectsCount;
 
-          if (regularError) {
-            console.error('Error counting regular projects:', regularError);
-            throw regularError;
-          }
+        console.log(`Portfolio ${portfolio.name} has:`, {
+          regularProjects: regularProjectsCount,
+          onlyProjects: onlyProjectsCount,
+          total: totalProjects
+        });
 
-          // Get count of portfolio_only_projects
-          const { count: onlyProjectsCount, error: onlyError } = await supabase
-            .from('portfolio_only_projects')
-            .select('*', { count: 'exact', head: true })
-            .eq('portfolio_id', portfolio.id);
+        return {
+          ...portfolio,
+          total_projects: totalProjects
+        };
+      });
 
-          if (onlyError) {
-            console.error('Error counting portfolio only projects:', onlyError);
-            throw onlyError;
-          }
-
-          // Calculate total projects
-          const totalProjects = (regularProjectsCount || 0) + (onlyProjectsCount || 0);
-          console.log(`Portfolio ${portfolio.name} has ${totalProjects} total projects`);
-
-          return {
-            ...portfolio,
-            total_projects: totalProjects
-          };
-        })
-      );
-
-      console.log('Fetched portfolios with counts:', portfoliosWithCounts);
+      console.log('Processed portfolios with counts:', portfoliosWithCounts);
       return portfoliosWithCounts;
     }
   });
