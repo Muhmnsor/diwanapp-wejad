@@ -1,174 +1,53 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { useNavigate } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { DeletePortfolioDialog } from "./DeletePortfolioDialog";
 import { EditPortfolioDialog } from "./EditPortfolioDialog";
+import { usePortfolioList } from "./hooks/usePortfolioList";
+import { PortfolioListContent } from "./components/PortfolioListContent";
+import { PortfolioListLoading } from "./components/PortfolioListLoading";
 
 export const PortfolioList = () => {
-  const navigate = useNavigate();
-  const [portfolioToDelete, setPortfolioToDelete] = useState<{
-    id: string;
-    name: string;
-    asanaGid: string | null;
-  } | null>(null);
-  const [portfolioToEdit, setPortfolioToEdit] = useState<{
-    id: string;
-    name: string;
-    description: string | null;
-  } | null>(null);
+  const [portfolioToEdit, setPortfolioToEdit] = useState<any>(null);
+  const [portfolioToDelete, setPortfolioToDelete] = useState<any>(null);
   
-  const { data: portfolios, isLoading, error } = useQuery({
-    queryKey: ['portfolios'],
-    queryFn: async () => {
-      console.log('Fetching portfolios...');
-      const { data: portfolios, error } = await supabase
-        .from('portfolios')
-        .select(`
-          *,
-          portfolio_projects (
-            count
-          ),
-          portfolio_only_projects (
-            count
-          )
-        `)
-        .order('created_at', { ascending: false });
+  const { data: portfolios, isLoading, refetch } = usePortfolioList();
 
-      if (error) {
-        console.error('Error fetching portfolios:', error);
-        throw error;
-      }
+  console.log('📂 PortfolioList - Current portfolios:', portfolios);
 
-      console.log('Fetched portfolios:', portfolios);
-      return portfolios;
-    }
-  });
-
-  const handleCardClick = (e: React.MouseEvent, portfolioId: string) => {
-    // Only navigate if the click wasn't on a button
-    if (!(e.target as HTMLElement).closest('button')) {
-      navigate(`/portfolios/${portfolioId}`);
-    }
+  const handleEditSuccess = async () => {
+    setPortfolioToEdit(null);
+    await refetch();
   };
 
-  if (error) {
-    toast.error('حدث خطأ أثناء تحميل المحافظ');
-  }
+  const handleDeleteSuccess = async () => {
+    setPortfolioToDelete(null);
+    await refetch();
+  };
 
   if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="p-4">
-            <Skeleton className="h-6 w-1/3 mb-4" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-2/3" />
-          </Card>
-        ))}
-      </div>
-    );
+    return <PortfolioListLoading />;
   }
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {portfolios?.map((portfolio) => {
-          // Calculate total projects by summing both types
-          const portfolioProjectsCount = portfolio.portfolio_projects?.[0]?.count || 0;
-          const portfolioOnlyProjectsCount = portfolio.portfolio_only_projects?.[0]?.count || 0;
-          const totalProjects = portfolioProjectsCount + portfolioOnlyProjectsCount;
+      <PortfolioListContent
+        portfolios={portfolios}
+        onEdit={setPortfolioToEdit}
+        onDelete={setPortfolioToDelete}
+      />
 
-          return (
-            <Card 
-              key={portfolio.id} 
-              className="p-4 hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={(e) => handleCardClick(e, portfolio.id)}
-            >
-              <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium text-lg mb-1">{portfolio.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {portfolio.description || 'لا يوجد وصف'}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPortfolioToEdit(portfolio);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPortfolioToDelete({
-                          id: portfolio.id,
-                          name: portfolio.name,
-                          asanaGid: portfolio.asana_gid
-                        });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                </div>
+      <EditPortfolioDialog
+        portfolio={portfolioToEdit}
+        open={!!portfolioToEdit}
+        onOpenChange={(open) => !open && setPortfolioToEdit(null)}
+        onSuccess={handleEditSuccess}
+      />
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>المشاريع</span>
-                    <span>{totalProjects}</span>
-                  </div>
-                  <Progress 
-                    value={portfolio.sync_enabled ? 100 : 0} 
-                    className="h-2"
-                  />
-                  <div className="text-xs text-gray-500 text-right">
-                    {portfolio.sync_enabled ? 'متزامن مع Asana' : 'غير متزامن'}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-
-        {portfolios?.length === 0 && (
-          <div className="col-span-full text-center py-8 text-gray-500">
-            لا توجد محافظ. قم بإضافة محفظة جديدة للبدء.
-          </div>
-        )}
-      </div>
-
-      {portfolioToDelete && (
-        <DeletePortfolioDialog
-          open={!!portfolioToDelete}
-          onOpenChange={() => setPortfolioToDelete(null)}
-          portfolioId={portfolioToDelete.id}
-          portfolioName={portfolioToDelete.name}
-          asanaGid={portfolioToDelete.asanaGid}
-        />
-      )}
-
-      {portfolioToEdit && (
-        <EditPortfolioDialog
-          open={!!portfolioToEdit}
-          onOpenChange={() => setPortfolioToEdit(null)}
-          portfolio={portfolioToEdit}
-        />
-      )}
+      <DeletePortfolioDialog
+        portfolio={portfolioToDelete}
+        open={!!portfolioToDelete}
+        onOpenChange={(open) => !open && setPortfolioToDelete(null)}
+        onSuccess={handleDeleteSuccess}
+      />
     </>
   );
 };
