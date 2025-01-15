@@ -41,7 +41,29 @@ export const DeletePortfolioDialog = ({
         }
       }
 
-      // Delete from database
+      // First delete all related portfolio_only_projects
+      const { error: projectsError } = await supabase
+        .from('portfolio_only_projects')
+        .delete()
+        .eq('portfolio_id', portfolioId);
+
+      if (projectsError) {
+        console.error('Error deleting related projects:', projectsError);
+        throw projectsError;
+      }
+
+      // Then delete all related portfolio_projects
+      const { error: portfolioProjectsError } = await supabase
+        .from('portfolio_projects')
+        .delete()
+        .eq('portfolio_id', portfolioId);
+
+      if (portfolioProjectsError) {
+        console.error('Error deleting portfolio projects:', portfolioProjectsError);
+        throw portfolioProjectsError;
+      }
+
+      // Finally delete the portfolio itself
       const { error: deleteError } = await supabase
         .from('portfolios')
         .delete()
