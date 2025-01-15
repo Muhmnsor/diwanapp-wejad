@@ -30,7 +30,7 @@ export const PortfolioList = () => {
         .from('portfolios')
         .select(`
           *,
-          portfolio_projects(count),
+          portfolio_projects!portfolio_projects_portfolio_id_fkey(count),
           portfolio_only_projects!portfolio_only_projects_portfolio_id_fkey(count)
         `);
 
@@ -39,12 +39,12 @@ export const PortfolioList = () => {
         throw portfoliosError;
       }
 
-      const portfoliosWithCounts = portfoliosData.map(portfolio => {
+      const portfoliosWithCounts = portfoliosData?.map(portfolio => {
         const regularProjectsCount = portfolio.portfolio_projects[0]?.count || 0;
         const onlyProjectsCount = portfolio.portfolio_only_projects[0]?.count || 0;
         const totalProjects = regularProjectsCount + onlyProjectsCount;
 
-        console.log(`Portfolio ${portfolio.name} has:`, {
+        console.log(`Portfolio ${portfolio.name} counts:`, {
           regularProjects: regularProjectsCount,
           onlyProjects: onlyProjectsCount,
           total: totalProjects
@@ -54,7 +54,7 @@ export const PortfolioList = () => {
           ...portfolio,
           total_projects: totalProjects
         };
-      });
+      }) || [];
 
       console.log('Processed portfolios with counts:', portfoliosWithCounts);
       return portfoliosWithCounts;
