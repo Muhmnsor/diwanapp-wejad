@@ -22,7 +22,7 @@ const Tasks = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">

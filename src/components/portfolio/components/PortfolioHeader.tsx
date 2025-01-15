@@ -55,7 +55,7 @@ export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
           disabled={isSettingUpWebhook}
           className="flex items-center gap-2"
         >
-          <Link className="h-4 w-4" />
+          <Link className="h-4 w-4 ml-2" />
           {isSettingUpWebhook ? 'جاري الإعداد...' : 'إعداد Webhook'}
         </Button>
         <Button 
@@ -64,7 +64,7 @@ export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
           disabled={isSyncing}
           className="flex items-center gap-2"
         >
-          <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ml-2 ${isSyncing ? 'animate-spin' : ''}`} />
           مزامنة مع Asana
         </Button>
         <AddPortfolioDialog 
