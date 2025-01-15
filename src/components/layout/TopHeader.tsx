@@ -53,7 +53,7 @@ export const TopHeader = () => {
 
           {/* Tasks Secondary Header - Only show on tasks pages */}
           {isTasksPage && (
-            <div className="flex items-center justify-between py-3 border-t">
+            <div className="flex items-center justify-center py-3 border-t">
               <div className="flex items-center gap-4">
                 <Link to="/tasks">
                   <Button
