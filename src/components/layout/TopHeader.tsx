@@ -13,7 +13,6 @@ export const TopHeader = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
   
-  // Check if we're on an events-related page
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
                       location.pathname.includes('/dashboard') ||
@@ -24,7 +23,6 @@ export const TopHeader = () => {
   const isEventOrProjectDetails = location.pathname.includes('/events/') || 
                                  location.pathname.includes('/projects/');
 
-  // Check if we're on a tasks-related page
   const isTasksPage = location.pathname.includes('/tasks') ||
                      location.pathname.includes('/portfolios');
 

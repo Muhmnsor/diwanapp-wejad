@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Documents from "./pages/Documents";
 import Tasks from "./pages/Tasks";
+import TasksDashboard from "./pages/TasksDashboard";
 import Ideas from "./pages/Ideas";
 import Finance from "./pages/Finance";
 import PortfolioDetails from "./pages/PortfolioDetails";
@@ -47,6 +48,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Tasks />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/tasks/dashboard" 
+        element={
+          <ProtectedRoute>
+            <TasksDashboard />
           </ProtectedRoute>
         } 
       />
