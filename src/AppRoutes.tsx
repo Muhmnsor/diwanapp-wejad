@@ -50,14 +50,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/dashboardtasks" 
-        element={
-          <ProtectedRoute>
-            <Tasks />
-          </ProtectedRoute>
-        } 
-      />
       <Route path="/ideas" element={<Ideas />} />
       <Route 
         path="/finance" 
