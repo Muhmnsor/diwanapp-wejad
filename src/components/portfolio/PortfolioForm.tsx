@@ -4,12 +4,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 
-interface PortfolioFormProps {
+export interface PortfolioFormProps {
   onSubmit: (formData: {
     name: string;
     description: string;
   }) => Promise<void>;
-  isSubmitting: boolean;
+  isSubmitting?: boolean;
   onCancel: () => void;
   initialData?: {
     name: string;
@@ -19,7 +19,7 @@ interface PortfolioFormProps {
 
 export const PortfolioForm = ({ 
   onSubmit, 
-  isSubmitting, 
+  isSubmitting = false,
   onCancel,
   initialData 
 }: PortfolioFormProps) => {

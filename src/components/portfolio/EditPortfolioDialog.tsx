@@ -20,11 +20,11 @@ export const EditPortfolioDialog = ({
   onOpenChange,
   portfolio,
 }: EditPortfolioDialogProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
   const handleSubmit = async (values: { name: string; description: string }) => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     console.log('Updating portfolio:', values);
 
     try {
@@ -74,7 +74,7 @@ export const EditPortfolioDialog = ({
       console.error('Error in handleSubmit:', error);
       toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء تحديث المحفظة');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -86,7 +86,8 @@ export const EditPortfolioDialog = ({
         </DialogHeader>
         <PortfolioForm
           onSubmit={handleSubmit}
-          isLoading={isLoading}
+          isSubmitting={isSubmitting}
+          onCancel={() => onOpenChange(false)}
           initialData={{
             name: portfolio.name,
             description: portfolio.description || '',
