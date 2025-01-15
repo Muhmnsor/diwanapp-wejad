@@ -17,7 +17,11 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
   };
 
   if (isLoading) {
-    return <div className="p-4">جاري التحميل...</div>;
+    return (
+      <div className="p-4 text-center">
+        <div className="animate-pulse">جاري التحميل...</div>
+      </div>
+    );
   }
 
   return (
