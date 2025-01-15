@@ -5,6 +5,9 @@ import { useAuthStore } from "@/store/authStore";
 import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
+import { Button } from "@/components/ui/button";
+import { FolderKanban, LayoutDashboard } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const TopHeader = () => {
   const location = useLocation();
@@ -20,6 +23,10 @@ export const TopHeader = () => {
 
   const isEventOrProjectDetails = location.pathname.includes('/events/') || 
                                  location.pathname.includes('/projects/');
+
+  // Check if we're on a tasks-related page
+  const isTasksPage = location.pathname.includes('/tasks') ||
+                     location.pathname.includes('/portfolios');
 
   return (
     <div className="w-full bg-white border-b">
@@ -43,6 +50,34 @@ export const TopHeader = () => {
             isAuthenticated={isAuthenticated}
             isEventsPage={isEventsPage}
           />
+
+          {/* Tasks Secondary Header - Only show on tasks pages */}
+          {isTasksPage && (
+            <div className="flex items-center justify-between py-3 border-t">
+              <div className="flex items-center gap-4">
+                <Link to="/tasks">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <FolderKanban className="h-4 w-4" />
+                    المحافظ
+                  </Button>
+                </Link>
+                <Link to="/tasks/dashboard">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    لوحة المعلومات
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
