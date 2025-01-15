@@ -128,13 +128,6 @@ const PortfolioDetails = () => {
             إضافة مشروع
           </Button>
         </div>
-        
-        <Card className="p-4">
-          <h2 className="text-lg font-semibold mb-2">الوصف</h2>
-          <p className="text-gray-600">
-            {portfolio.description || 'لا يوجد وصف'}
-          </p>
-        </Card>
 
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">المشاريع</h2>
