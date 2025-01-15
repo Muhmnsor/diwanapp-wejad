@@ -31,7 +31,7 @@ export const PortfolioBreadcrumb = ({
             className="hover:text-primary transition-colors flex items-center gap-1"
           >
             <Folder className="h-4 w-4" />
-            الإدارة التنفيذية
+            {portfolioName}
           </Link>
           <ChevronLeft className="h-4 w-4" />
           <span className="text-gray-900">{workspaceName}</span>
@@ -43,7 +43,7 @@ export const PortfolioBreadcrumb = ({
             className="hover:text-primary transition-colors flex items-center gap-1"
           >
             <Folder className="h-4 w-4" />
-            الإدارة التنفيذية
+            {portfolioName}
           </Link>
           <ChevronLeft className="h-4 w-4" />
           <span className="text-gray-900">{projectName}</span>
@@ -51,7 +51,7 @@ export const PortfolioBreadcrumb = ({
       ) : (
         <span className="text-gray-900 flex items-center gap-1">
           <Folder className="h-4 w-4" />
-          الإدارة التنفيذية
+          {portfolioName}
         </span>
       )}
     </nav>
