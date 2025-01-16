@@ -1,21 +1,4 @@
 project_id = "ynibjnazouypdvwgozih"
 
-[send-notification]
-verify_jwt = true
-max_retries = 3
-
-[schedule-notifications]
-verify_jwt = true
-max_retries = 3
-
-[setup-asana-webhook]
-verify_jwt = true
-max_retries = 3
-
-[create-asana-task]
-verify_jwt = true
-max_retries = 3
-
-[get-asana-users]
-verify_jwt = true
-max_retries = 3
+[api]
+enabled = true

@@ -19,8 +19,26 @@ serve(async (req) => {
       throw new Error('Asana access token not configured')
     }
 
-    // Fetch users from Asana
-    const response = await fetch(`https://app.asana.com/api/1.0/workspaces/${workspaceId}/users`, {
+    // First get the actual workspace ID from the project
+    const projectResponse = await fetch(`https://app.asana.com/api/1.0/projects/${workspaceId}`, {
+      headers: {
+        'Authorization': `Bearer ${asanaAccessToken}`,
+        'Accept': 'application/json'
+      }
+    })
+
+    const projectData = await projectResponse.json()
+    
+    if (!projectResponse.ok) {
+      console.error('Asana API error fetching project:', projectData)
+      throw new Error(projectData.errors?.[0]?.message || 'Failed to fetch project details')
+    }
+
+    const workspaceGid = projectData.data.workspace.gid
+    console.log('Found workspace GID:', workspaceGid)
+
+    // Now fetch users from the workspace
+    const response = await fetch(`https://app.asana.com/api/1.0/workspaces/${workspaceGid}/users`, {
       headers: {
         'Authorization': `Bearer ${asanaAccessToken}`,
         'Accept': 'application/json'
