@@ -14,6 +14,8 @@ export const PortfolioBreadcrumb = ({
   projectName,
   workspaceName
 }: PortfolioBreadcrumbProps) => {
+  console.log('📊 Breadcrumb Props:', { portfolioName, portfolioId, projectName, workspaceName });
+  
   return (
     <nav className="flex items-center gap-2 mb-6 text-sm text-gray-600" dir="rtl">
       <Link 
@@ -23,7 +25,9 @@ export const PortfolioBreadcrumb = ({
         <Folder className="h-4 w-4" />
         المحافظ
       </Link>
+
       <ChevronLeft className="h-4 w-4" />
+
       {workspaceName ? (
         <>
           <Link 
@@ -34,7 +38,10 @@ export const PortfolioBreadcrumb = ({
             {portfolioName}
           </Link>
           <ChevronLeft className="h-4 w-4" />
-          <span className="text-gray-900">{workspaceName}</span>
+          <div className="flex items-center gap-1 text-gray-900">
+            <Folder className="h-4 w-4" />
+            {workspaceName}
+          </div>
         </>
       ) : projectName ? (
         <>
@@ -46,13 +53,16 @@ export const PortfolioBreadcrumb = ({
             {portfolioName}
           </Link>
           <ChevronLeft className="h-4 w-4" />
-          <span className="text-gray-900">{projectName}</span>
+          <div className="flex items-center gap-1 text-gray-900">
+            <Folder className="h-4 w-4" />
+            {projectName}
+          </div>
         </>
       ) : (
-        <span className="text-gray-900 flex items-center gap-1">
+        <div className="flex items-center gap-1 text-gray-900">
           <Folder className="h-4 w-4" />
           {portfolioName}
-        </span>
+        </div>
       )}
     </nav>
   );
