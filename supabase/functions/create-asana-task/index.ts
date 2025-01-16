@@ -10,8 +10,8 @@ serve(async (req) => {
   }
 
   try {
-    const { workspaceId, title, description, dueDate, priority } = await req.json()
-    console.log('Received request with data:', { workspaceId, title, description, dueDate, priority })
+    const { workspaceId, title, description, dueDate, priority, assignedTo } = await req.json()
+    console.log('Received request with data:', { workspaceId, title, description, dueDate, priority, assignedTo })
 
     // Validate required fields
     if (!workspaceId || !title) {
@@ -48,8 +48,8 @@ serve(async (req) => {
           projects: [workspaceId],
           name: title,
           notes: description || '',
-          due_on: dueDate || null
-          // Removed the custom field priority since it's not configured in Asana
+          due_on: dueDate || null,
+          assignee: assignedTo || null
         }
       })
     })

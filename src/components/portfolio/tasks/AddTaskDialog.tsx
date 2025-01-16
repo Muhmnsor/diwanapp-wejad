@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { TaskForm } from "./components/TaskForm";
 import { submitTask } from "./utils/taskSubmission";
@@ -23,6 +23,7 @@ export const AddTaskDialog = ({
     description: string;
     dueDate: string;
     priority: string;
+    assignedTo: string;
   }) => {
     setIsSubmitting(true);
     try {
@@ -42,16 +43,15 @@ export const AddTaskDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]" dir="rtl">
+        <DialogTitle>إضافة مهمة جديدة</DialogTitle>
         <div className="space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold">إضافة مهمة جديدة</h2>
-            <p className="text-sm text-gray-500">أدخل تفاصيل المهمة</p>
-          </div>
+          <p className="text-sm text-gray-500">أدخل تفاصيل المهمة</p>
 
           <TaskForm
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             onCancel={() => onOpenChange(false)}
+            workspaceId={workspaceId}
           />
         </div>
       </DialogContent>

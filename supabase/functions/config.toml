@@ -11,3 +11,11 @@ max_retries = 3
 [setup-asana-webhook]
 verify_jwt = true
 max_retries = 3
+
+[create-asana-task]
+verify_jwt = true
+max_retries = 3
+
+[get-asana-users]
+verify_jwt = true
+max_retries = 3

@@ -3,6 +3,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskFormFieldsProps {
   title: string;
@@ -13,6 +15,9 @@ interface TaskFormFieldsProps {
   setDueDate: (value: string) => void;
   priority: string;
   setPriority: (value: string) => void;
+  assignedTo: string;
+  setAssignedTo: (value: string) => void;
+  workspaceId: string;
 }
 
 export const TaskFormFields = ({
@@ -23,8 +28,28 @@ export const TaskFormFields = ({
   dueDate,
   setDueDate,
   priority,
-  setPriority
+  setPriority,
+  assignedTo,
+  setAssignedTo,
+  workspaceId
 }: TaskFormFieldsProps) => {
+  // Fetch Asana users
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['asana-users', workspaceId],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('get-asana-users', {
+        body: { workspaceId }
+      });
+
+      if (error) {
+        console.error('Error fetching Asana users:', error);
+        throw error;
+      }
+
+      return data.data || [];
+    }
+  });
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -69,6 +94,22 @@ export const TaskFormFields = ({
             <SelectItem value="low">منخفضة</SelectItem>
             <SelectItem value="medium">متوسطة</SelectItem>
             <SelectItem value="high">عالية</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>المسؤول</Label>
+        <Select value={assignedTo} onValueChange={setAssignedTo}>
+          <SelectTrigger>
+            <SelectValue placeholder="اختر المسؤول" />
+          </SelectTrigger>
+          <SelectContent>
+            {users.map((user: any) => (
+              <SelectItem key={user.gid} value={user.gid}>
+                {user.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
