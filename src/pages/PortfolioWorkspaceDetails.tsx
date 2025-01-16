@@ -92,9 +92,9 @@ const PortfolioWorkspaceDetails = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <PortfolioBreadcrumb 
-              portfolioName="المحفظة"
-              portfolioId="1"
-              workspaceName={workspace.name}
+              portfolioName={workspace.portfolio?.name || "المحفظة"}
+              portfolioId={workspace.portfolio?.id || "1"}
+              portfolioProjectName={workspace.name}
             />
             
             <div className="flex justify-between items-center">
