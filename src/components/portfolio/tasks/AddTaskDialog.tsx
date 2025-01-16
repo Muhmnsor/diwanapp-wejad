@@ -23,6 +23,7 @@ export const AddTaskDialog = ({
     description: string;
     dueDate: string;
     priority: string;
+    assignedTo: string;
   }) => {
     setIsSubmitting(true);
     try {
