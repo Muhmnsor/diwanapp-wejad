@@ -3,8 +3,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface TaskFormFieldsProps {
   title: string;
@@ -15,8 +13,6 @@ interface TaskFormFieldsProps {
   setDueDate: (value: string) => void;
   priority: string;
   setPriority: (value: string) => void;
-  assignedTo: string;
-  setAssignedTo: (value: string) => void;
 }
 
 export const TaskFormFields = ({
@@ -27,29 +23,8 @@ export const TaskFormFields = ({
   dueDate,
   setDueDate,
   priority,
-  setPriority,
-  assignedTo,
-  setAssignedTo
+  setPriority
 }: TaskFormFieldsProps) => {
-  // Fetch users from profiles table
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['profiles'],
-    queryFn: async () => {
-      console.log('Fetching profiles for task assignment...');
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email');
-      
-      if (error) {
-        console.error('Error fetching profiles:', error);
-        throw error;
-      }
-      
-      console.log('Fetched profiles:', data);
-      return data || [];
-    }
-  });
-
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -82,22 +57,6 @@ export const TaskFormFields = ({
             onChange={(e) => setDueDate(e.target.value)}
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>المسؤول</Label>
-        <Select value={assignedTo} onValueChange={setAssignedTo}>
-          <SelectTrigger>
-            <SelectValue placeholder="اختر المسؤول" />
-          </SelectTrigger>
-          <SelectContent>
-            {users.map((user) => (
-              <SelectItem key={user.id} value={user.id}>
-                {user.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="space-y-2">

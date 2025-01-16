@@ -7,7 +7,6 @@ interface TaskData {
   description: string;
   dueDate: string;
   priority: string;
-  assignedTo: string;
 }
 
 export const submitTask = async (taskData: TaskData) => {
@@ -51,7 +50,6 @@ export const submitTask = async (taskData: TaskData) => {
     description: taskData.description,
     due_date: taskData.dueDate,
     priority: taskData.priority,
-    assigned_to: taskData.assignedTo,
     asana_gid: asanaResponse.gid
   });
 
@@ -66,7 +64,6 @@ export const submitTask = async (taskData: TaskData) => {
         due_date: taskData.dueDate,
         priority: taskData.priority,
         status: 'pending',
-        assigned_to: taskData.assignedTo || null,
         asana_gid: asanaResponse.gid
       }
     ]);
