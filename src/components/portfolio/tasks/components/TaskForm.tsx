@@ -25,7 +25,7 @@ export const TaskForm = ({ onSubmit, isSubmitting, onCancel, workspaceId }: Task
     e.preventDefault();
     await onSubmit({ 
       title, 
-      description: "", // Send empty string since we removed description field
+      description: "", // إرسال قيمة فارغة للوصف
       dueDate, 
       priority, 
       assignedTo 
