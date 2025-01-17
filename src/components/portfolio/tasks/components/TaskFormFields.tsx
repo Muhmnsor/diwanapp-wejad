@@ -1,5 +1,4 @@
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
@@ -9,8 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 interface TaskFormFieldsProps {
   title: string;
   setTitle: (value: string) => void;
-  description: string;
-  setDescription: (value: string) => void;
   dueDate: string;
   setDueDate: (value: string) => void;
   priority: string;
@@ -23,8 +20,6 @@ interface TaskFormFieldsProps {
 export const TaskFormFields = ({
   title,
   setTitle,
-  description,
-  setDescription,
   dueDate,
   setDueDate,
   priority,
@@ -59,16 +54,6 @@ export const TaskFormFields = ({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="أدخل عنوان المهمة"
           required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>الوصف</Label>
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="أدخل وصف المهمة"
-          className="h-32"
         />
       </div>
 
