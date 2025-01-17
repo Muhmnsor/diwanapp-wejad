@@ -17,14 +17,19 @@ interface TaskFormProps {
 
 export const TaskForm = ({ onSubmit, isSubmitting, onCancel, workspaceId }: TaskFormProps) => {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState("medium");
   const [assignedTo, setAssignedTo] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit({ title, description, dueDate, priority, assignedTo });
+    await onSubmit({ 
+      title, 
+      description: "", // Send empty string since we removed description field
+      dueDate, 
+      priority, 
+      assignedTo 
+    });
   };
 
   return (
@@ -32,8 +37,6 @@ export const TaskForm = ({ onSubmit, isSubmitting, onCancel, workspaceId }: Task
       <TaskFormFields
         title={title}
         setTitle={setTitle}
-        description={description}
-        setDescription={setDescription}
         dueDate={dueDate}
         setDueDate={setDueDate}
         priority={priority}
