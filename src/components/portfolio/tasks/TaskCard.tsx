@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { TaskHeader } from './components/TaskHeader';
+import { TaskDescription } from './components/TaskDescription';
 import { TaskMetadata } from './components/TaskMetadata';
 
 interface TaskCardProps {
@@ -26,6 +27,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           status={task.status}
           priority={task.priority}
         />
+
+        <TaskDescription description={task.description} />
 
         <TaskMetadata 
           dueDate={task.due_date}
