@@ -109,11 +109,6 @@ const PortfolioWorkspaceDetails = () => {
             </div>
 
             <Card className="p-4">
-              <h2 className="text-lg font-semibold mb-2">الوصف</h2>
-              <p className="text-gray-600 mb-4">
-                {workspace.description || 'لا يوجد وصف'}
-              </p>
-              
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>تقدم المهام</span>
