@@ -99,13 +99,6 @@ const PortfolioWorkspaceDetails = () => {
             
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold">{workspace.name}</h1>
-              <Button 
-                onClick={() => setIsAddTaskDialogOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                إضافة مهمة
-              </Button>
             </div>
 
             <Card className="p-4">
