@@ -1,25 +1,20 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { Footer } from '@/components/layout/Footer';
-import { Progress } from '@/components/ui/progress';
-import { AddTaskDialog } from '@/components/portfolio/tasks/AddTaskDialog';
-import { useState } from 'react';
 import { PortfolioTasks } from '@/components/portfolio/PortfolioTasks';
-import { PortfolioBreadcrumb } from '@/components/portfolio/PortfolioBreadcrumb';
+import { WorkspaceHeader } from '@/components/portfolio/workspace/WorkspaceHeader';
+import { WorkspaceProgress } from '@/components/portfolio/workspace/WorkspaceProgress';
 
 const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
-  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
 
-  const { data: workspace, isLoading, error, refetch } = useQuery({
+  const { data: workspace, isLoading, error } = useQuery({
     queryKey: ['portfolio-workspace', workspaceId],
     queryFn: async () => {
       console.log('Fetching workspace details for ID:', workspaceId);
@@ -91,38 +86,19 @@ const PortfolioWorkspaceDetails = () => {
       <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
-            <PortfolioBreadcrumb 
+            <WorkspaceHeader 
               portfolioName="المحفظة"
               portfolioId="1"
               workspaceName={workspace.name}
             />
             
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">{workspace.name}</h1>
-            </div>
-
-            <Card className="p-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>تقدم المهام</span>
-                  <span>{workspace.tasks ? Math.round((workspace.tasks.filter(task => task.completed).length / workspace.tasks.length) * 100) : 0}%</span>
-                </div>
-                <Progress value={workspace.tasks ? Math.round((workspace.tasks.filter(task => task.completed).length / workspace.tasks.length) * 100) : 0} className="h-2" />
-              </div>
-            </Card>
+            <WorkspaceProgress tasks={workspace.tasks} />
 
             <PortfolioTasks workspaceId={workspaceId!} />
           </div>
         </div>
       </main>
       <Footer />
-
-      <AddTaskDialog
-        open={isAddTaskDialogOpen}
-        onOpenChange={setIsAddTaskDialogOpen}
-        workspaceId={workspaceId!}
-        onSuccess={refetch}
-      />
     </div>
   );
 };
