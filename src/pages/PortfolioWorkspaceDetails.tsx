@@ -14,16 +14,25 @@ const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
 
-  // Fetch workspace details
+  // Fetch workspace details with portfolio_id
   const { data: workspace, isLoading: isWorkspaceLoading, error: workspaceError } = useQuery({
     queryKey: ['portfolio-workspace', workspaceId],
     queryFn: async () => {
       console.log('Fetching workspace details for ID:', workspaceId);
       
       const { data: workspaceData, error: fetchError } = await supabase
-        .functions.invoke('get-workspace', {
-          body: { workspaceId }
-        });
+        .from('portfolio_tasks')
+        .select(`
+          *,
+          workspace:portfolio_workspaces!inner (
+            id,
+            name,
+            portfolio_id
+          )
+        `)
+        .eq('workspace:portfolio_workspaces.id', workspaceId)
+        .limit(1)
+        .single();
 
       if (fetchError) {
         console.error('Error fetching workspace:', fetchError);
@@ -31,7 +40,7 @@ const PortfolioWorkspaceDetails = () => {
       }
 
       console.log('Successfully fetched workspace data:', workspaceData);
-      return workspaceData;
+      return workspaceData?.workspace;
     },
     retry: 1,
     meta: {
@@ -49,7 +58,7 @@ const PortfolioWorkspaceDetails = () => {
         .from('portfolios')
         .select('*')
         .eq('id', workspace?.portfolio_id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching portfolio:', error);
