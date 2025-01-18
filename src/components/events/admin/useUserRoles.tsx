@@ -7,7 +7,14 @@ export const useUserRoles = () => {
     queryKey: ['user-roles'],
     queryFn: async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // First get the current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('Error getting current user:', userError);
+          throw userError;
+        }
+        
         console.log('Current user:', user?.id);
         
         if (!user) {
@@ -16,7 +23,8 @@ export const useUserRoles = () => {
         }
 
         // Get user roles with a single query that joins the roles table
-        const { data: userRolesData, error } = await supabase
+        console.log('Fetching roles for user:', user.id);
+        const { data: userRolesData, error: rolesError } = await supabase
           .from('user_roles')
           .select(`
             user_id,
@@ -28,9 +36,9 @@ export const useUserRoles = () => {
           `)
           .eq('user_id', user.id);
 
-        if (error) {
-          console.error('Error fetching user roles:', error);
-          throw error;
+        if (rolesError) {
+          console.error('Error fetching user roles:', rolesError);
+          throw rolesError;
         }
 
         console.log('Raw user roles data:', userRolesData);
