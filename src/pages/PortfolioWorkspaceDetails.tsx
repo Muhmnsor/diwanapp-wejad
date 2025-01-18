@@ -14,7 +14,8 @@ const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
 
-  const { data: workspace, isLoading, error } = useQuery({
+  // Fetch workspace details
+  const { data: workspace, isLoading: isWorkspaceLoading, error: workspaceError } = useQuery({
     queryKey: ['portfolio-workspace', workspaceId],
     queryFn: async () => {
       console.log('Fetching workspace details for ID:', workspaceId);
@@ -38,11 +39,34 @@ const PortfolioWorkspaceDetails = () => {
     }
   });
 
-  if (isLoading) {
+  // Fetch portfolio details
+  const { data: portfolio, isLoading: isPortfolioLoading } = useQuery({
+    queryKey: ['portfolio-details', workspace?.portfolio_id],
+    queryFn: async () => {
+      console.log('Fetching portfolio details for ID:', workspace?.portfolio_id);
+      
+      const { data, error } = await supabase
+        .from('portfolios')
+        .select('*')
+        .eq('id', workspace?.portfolio_id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching portfolio:', error);
+        throw error;
+      }
+
+      console.log('Successfully fetched portfolio data:', data);
+      return data;
+    },
+    enabled: !!workspace?.portfolio_id
+  });
+
+  if (isWorkspaceLoading || isPortfolioLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <main className="flex-grow bg-gray-50">
+        <main className="flex-grow">
           <div className="container mx-auto px-4 py-8">
             <div className="p-4 space-y-4" dir="rtl">
               <Skeleton className="h-8 w-1/3" />
@@ -55,12 +79,12 @@ const PortfolioWorkspaceDetails = () => {
     );
   }
 
-  if (error || !workspace) {
+  if (workspaceError || !workspace) {
     toast.error('حدث خطأ أثناء تحميل بيانات مساحة العمل');
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <main className="flex-grow bg-gray-50">
+        <main className="flex-grow">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center" dir="rtl">
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
@@ -83,12 +107,12 @@ const PortfolioWorkspaceDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <main className="flex-grow bg-gray-50">
+      <main className="flex-grow">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <WorkspaceHeader 
-              portfolioName="المحفظة"
-              portfolioId="1"
+              portfolioName={portfolio?.name || 'المحفظة'}
+              portfolioId={portfolio?.id || ''}
               workspaceName={workspace.name}
             />
             
