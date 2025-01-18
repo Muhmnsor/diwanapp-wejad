@@ -14,25 +14,15 @@ const PortfolioWorkspaceDetails = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
 
-  // Fetch workspace details with portfolio_id
-  const { data: workspace, isLoading: isWorkspaceLoading, error: workspaceError } = useQuery({
+  const { data: workspace, isLoading, error } = useQuery({
     queryKey: ['portfolio-workspace', workspaceId],
     queryFn: async () => {
       console.log('Fetching workspace details for ID:', workspaceId);
       
       const { data: workspaceData, error: fetchError } = await supabase
-        .from('portfolio_tasks')
-        .select(`
-          *,
-          workspace:portfolio_workspaces!inner (
-            id,
-            name,
-            portfolio_id
-          )
-        `)
-        .eq('workspace:portfolio_workspaces.id', workspaceId)
-        .limit(1)
-        .single();
+        .functions.invoke('get-workspace', {
+          body: { workspaceId }
+        });
 
       if (fetchError) {
         console.error('Error fetching workspace:', fetchError);
@@ -40,7 +30,7 @@ const PortfolioWorkspaceDetails = () => {
       }
 
       console.log('Successfully fetched workspace data:', workspaceData);
-      return workspaceData?.workspace;
+      return workspaceData;
     },
     retry: 1,
     meta: {
@@ -48,34 +38,11 @@ const PortfolioWorkspaceDetails = () => {
     }
   });
 
-  // Fetch portfolio details
-  const { data: portfolio, isLoading: isPortfolioLoading } = useQuery({
-    queryKey: ['portfolio-details', workspace?.portfolio_id],
-    queryFn: async () => {
-      console.log('Fetching portfolio details for ID:', workspace?.portfolio_id);
-      
-      const { data, error } = await supabase
-        .from('portfolios')
-        .select('*')
-        .eq('id', workspace?.portfolio_id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching portfolio:', error);
-        throw error;
-      }
-
-      console.log('Successfully fetched portfolio data:', data);
-      return data;
-    },
-    enabled: !!workspace?.portfolio_id
-  });
-
-  if (isWorkspaceLoading || isPortfolioLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <main className="flex-grow">
+        <main className="flex-grow bg-gray-50">
           <div className="container mx-auto px-4 py-8">
             <div className="p-4 space-y-4" dir="rtl">
               <Skeleton className="h-8 w-1/3" />
@@ -88,12 +55,12 @@ const PortfolioWorkspaceDetails = () => {
     );
   }
 
-  if (workspaceError || !workspace) {
+  if (error || !workspace) {
     toast.error('حدث خطأ أثناء تحميل بيانات مساحة العمل');
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <main className="flex-grow">
+        <main className="flex-grow bg-gray-50">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center" dir="rtl">
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
@@ -116,12 +83,12 @@ const PortfolioWorkspaceDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <main className="flex-grow">
+      <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <WorkspaceHeader 
-              portfolioName={portfolio?.name || 'المحفظة'}
-              portfolioId={portfolio?.id || ''}
+              portfolioName="المحفظة"
+              portfolioId="1"
               workspaceName={workspace.name}
             />
             
