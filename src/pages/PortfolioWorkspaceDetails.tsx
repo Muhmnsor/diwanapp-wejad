@@ -42,7 +42,7 @@ const PortfolioWorkspaceDetails = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <main className="flex-grow bg-background">
+        <main className="flex-grow bg-gray-50">
           <div className="container mx-auto px-4 py-8">
             <div className="p-4 space-y-4" dir="rtl">
               <Skeleton className="h-8 w-1/3" />
@@ -60,7 +60,7 @@ const PortfolioWorkspaceDetails = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <main className="flex-grow bg-background">
+        <main className="flex-grow bg-gray-50">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center" dir="rtl">
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
@@ -83,7 +83,7 @@ const PortfolioWorkspaceDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <main className="flex-grow bg-background">
+      <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6" dir="rtl">
             <WorkspaceHeader 
