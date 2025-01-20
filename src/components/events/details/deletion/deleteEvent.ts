@@ -4,7 +4,7 @@ export const deleteEvent = async (eventId: string) => {
   try {
     console.log('Starting project deletion process for:', eventId);
 
-    // 1. First delete project registration fields
+    // 1. Delete project registration fields
     console.log('Deleting project registration fields...');
     const { error: fieldsError } = await supabase
       .from('project_registration_fields')
