@@ -18,7 +18,7 @@ export const EventDashboard = ({ eventId }: EventDashboardProps) => {
       try {
         console.log('Fetching details for dashboard:', eventId);
         
-        // First try to find it as a project
+        // First try to find it as a regular project
         const { data: projectResult, error: projectError } = await supabase
           .from('projects')
           .select('*')
@@ -26,8 +26,30 @@ export const EventDashboard = ({ eventId }: EventDashboardProps) => {
           .maybeSingle();
 
         if (projectResult) {
-          console.log('Found project:', projectResult);
+          console.log('Found regular project:', projectResult);
           setData(projectResult);
+          setIsProject(true);
+          setLoading(false);
+          return;
+        }
+
+        // If not found as regular project, try portfolio project
+        const { data: portfolioResult, error: portfolioError } = await supabase
+          .from('portfolio_only_projects')
+          .select('*')
+          .eq('id', eventId)
+          .maybeSingle();
+
+        if (portfolioResult) {
+          console.log('Found portfolio project:', portfolioResult);
+          setData({
+            ...portfolioResult,
+            start_date: portfolioResult.start_date,
+            end_date: portfolioResult.due_date,
+            event_path: 'portfolio',
+            event_category: 'portfolio',
+            max_attendees: 0
+          });
           setIsProject(true);
           setLoading(false);
           return;
