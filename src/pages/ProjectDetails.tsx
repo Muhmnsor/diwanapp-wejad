@@ -67,18 +67,31 @@ const ProjectDetails = () => {
     if (!confirmed) return;
 
     try {
-      // First, delete related project_events
-      const { error: eventsError } = await supabase
-        .from("project_events")
+      console.log('Starting project deletion process...');
+
+      // First delete attendance records
+      const { error: attendanceError } = await supabase
+        .from("attendance_records")
         .delete()
         .eq("project_id", id);
 
-      if (eventsError) {
-        console.error("Error deleting project events:", eventsError);
-        throw eventsError;
+      if (attendanceError) {
+        console.error("Error deleting attendance records:", attendanceError);
+        throw attendanceError;
       }
 
-      // Then, delete related registrations
+      // Delete project activities (events linked to this project)
+      const { error: activitiesError } = await supabase
+        .from("events")
+        .delete()
+        .eq("project_id", id);
+
+      if (activitiesError) {
+        console.error("Error deleting project activities:", activitiesError);
+        throw activitiesError;
+      }
+
+      // Delete project registrations
       const { error: registrationsError } = await supabase
         .from("registrations")
         .delete()
