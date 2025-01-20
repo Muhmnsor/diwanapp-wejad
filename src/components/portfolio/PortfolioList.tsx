@@ -24,7 +24,22 @@ export const PortfolioList = () => {
   const { data: portfolios, isLoading, error } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
-      console.log('Fetching portfolios...');
+      console.log('Starting portfolios fetch...');
+      
+      // First check if we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Failed to validate session');
+      }
+
+      if (!session) {
+        console.error('No active session found');
+        throw new Error('No active session');
+      }
+
+      console.log('Session validated, fetching portfolios...');
       
       const { data: portfoliosData, error: portfoliosError } = await supabase
         .from('portfolios')
@@ -39,7 +54,12 @@ export const PortfolioList = () => {
         throw portfoliosError;
       }
 
-      const portfoliosWithCounts = portfoliosData?.map(portfolio => {
+      if (!portfoliosData) {
+        console.log('No portfolios data returned');
+        return [];
+      }
+
+      const portfoliosWithCounts = portfoliosData.map(portfolio => {
         const regularProjectsCount = portfolio.portfolio_projects[0]?.count || 0;
         const onlyProjectsCount = portfolio.portfolio_only_projects[0]?.count || 0;
         const totalProjects = regularProjectsCount + onlyProjectsCount;
@@ -54,10 +74,15 @@ export const PortfolioList = () => {
           ...portfolio,
           total_projects: totalProjects
         };
-      }) || [];
+      });
 
-      console.log('Processed portfolios with counts:', portfoliosWithCounts);
+      console.log('Successfully processed portfolios:', portfoliosWithCounts);
       return portfoliosWithCounts;
+    },
+    retry: 2,
+    retryDelay: 1000,
+    meta: {
+      errorMessage: 'Failed to load portfolios'
     }
   });
 
@@ -68,7 +93,8 @@ export const PortfolioList = () => {
   };
 
   if (error) {
-    toast.error('حدث خطأ أثناء تحميل المحافظ');
+    console.error('Portfolio fetch error:', error);
+    toast.error('حدث خطأ أثناء تحميل المحافظ. يرجى تحديث الصفحة أو تسجيل الدخول مرة أخرى.');
   }
 
   if (isLoading) {
