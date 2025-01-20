@@ -25,9 +25,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         console.log('Token refreshed successfully');
       }
 
-      if (event === 'SIGNED_OUT') {
-        console.log('User signed out, redirecting to login');
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        console.log('User signed out or deleted, redirecting to login');
         await logout();
+        return;
       }
     });
 
@@ -40,7 +41,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         
         if (error) {
           console.error('Session check error:', error);
-          if (error.message.includes('session_not_found') || error.message.includes('refresh_token_not_found')) {
+          if (error.message.includes('session_not_found') || 
+              error.message.includes('refresh_token_not_found') ||
+              error.message.includes('Invalid Refresh Token')) {
+            console.log('Invalid or expired session, logging out');
             toast.error('انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى');
             await logout();
           }
@@ -58,11 +62,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       }
     };
 
+    // Initial session check
     checkSession();
+
+    // Set up periodic session checks
+    const sessionCheckInterval = setInterval(checkSession, 60000); // Check every minute
 
     return () => {
       console.log("ProtectedRoute: Cleaning up auth state listener");
       isSubscribed = false;
+      clearInterval(sessionCheckInterval);
       subscription.unsubscribe();
     };
   }, [logout]);
@@ -75,7 +84,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   // Check for admin-only routes
-  const adminOnlyRoutes = ['/settings'];
+  const adminOnlyRoutes = ['/settings', '/admin/dashboard'];
   if (adminOnlyRoutes.includes(location.pathname) && !user?.isAdmin) {
     console.log('User is not admin, redirecting from:', location.pathname);
     return <Navigate to="/" replace />;
