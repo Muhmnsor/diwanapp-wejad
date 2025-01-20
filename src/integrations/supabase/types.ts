@@ -1205,6 +1205,13 @@ export type Database = {
             referencedRelation: "portfolio_only_projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "portfolio_tasks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_workspaces"
+            referencedColumns: ["id"]
+          },
         ]
       }
       portfolio_workspaces: {
