@@ -31,7 +31,7 @@ export const deleteEvent = async (eventId: string) => {
     // 3. Delete project activities (events)
     console.log('Deleting project activities...');
     const { error: activitiesError } = await supabase
-      .from('events')
+      .from('events')  // Changed from project_events to events
       .delete()
       .eq('project_id', eventId);
 
