@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const deleteEvent = async (eventId: string) => {
   try {
@@ -31,7 +32,7 @@ export const deleteEvent = async (eventId: string) => {
     // 3. Delete project activities (events)
     console.log('Deleting project activities...');
     const { error: activitiesError } = await supabase
-      .from('events')  // Changed from project_events to events
+      .from('events')
       .delete()
       .eq('project_id', eventId);
 
@@ -65,8 +66,10 @@ export const deleteEvent = async (eventId: string) => {
     }
 
     console.log('Project deletion completed successfully');
+    toast.success('تم حذف المشروع بنجاح');
   } catch (error) {
     console.error('Error in deleteEvent:', error);
+    toast.error('حدث خطأ أثناء حذف المشروع');
     throw error;
   }
 };
