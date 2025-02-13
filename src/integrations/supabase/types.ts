@@ -440,6 +440,7 @@ export type Database = {
         Row: {
           content_rating: number | null
           created_at: string
+          error_details: string | null
           event_id: string | null
           feedback_text: string | null
           id: string
@@ -452,6 +453,7 @@ export type Database = {
         Insert: {
           content_rating?: number | null
           created_at?: string
+          error_details?: string | null
           event_id?: string | null
           feedback_text?: string | null
           id?: string
@@ -464,6 +466,7 @@ export type Database = {
         Update: {
           content_rating?: number | null
           created_at?: string
+          error_details?: string | null
           event_id?: string | null
           feedback_text?: string | null
           id?: string
@@ -660,6 +663,7 @@ export type Database = {
       }
       events: {
         Row: {
+          attendees: number | null
           beneficiary_type: string
           certificate_type: string | null
           created_at: string
@@ -686,6 +690,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          attendees?: number | null
           beneficiary_type?: string
           certificate_type?: string | null
           created_at?: string
@@ -712,6 +717,7 @@ export type Database = {
           title: string
         }
         Update: {
+          attendees?: number | null
           beneficiary_type?: string
           certificate_type?: string | null
           created_at?: string
@@ -1610,6 +1616,7 @@ export type Database = {
           event_id: string | null
           gender: string | null
           id: string
+          name: string | null
           national_id: string | null
           phone: string
           project_id: string | null
@@ -1627,6 +1634,7 @@ export type Database = {
           event_id?: string | null
           gender?: string | null
           id?: string
+          name?: string | null
           national_id?: string | null
           phone: string
           project_id?: string | null
@@ -1644,6 +1652,7 @@ export type Database = {
           event_id?: string | null
           gender?: string | null
           id?: string
+          name?: string | null
           national_id?: string | null
           phone?: string
           project_id?: string | null
