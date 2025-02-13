@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventFormFields } from "../EventFormFields";
@@ -27,7 +28,6 @@ export const CreateEventFormContainer = () => {
     registration_start_date: null,
     registration_end_date: null,
     attendees: 0,
-    beneficiaryType: "both",
     event_hours: null,
     registration_fields: {
       arabic_name: true,
@@ -66,7 +66,7 @@ export const CreateEventFormContainer = () => {
       // Insert event data
       const { data: eventData, error: eventError } = await supabase
         .from('events')
-        .insert([{
+        .insert({
           title: formData.title,
           description: formData.description,
           date: formData.date,
@@ -74,7 +74,7 @@ export const CreateEventFormContainer = () => {
           location: formData.location,
           image_url: formData.image_url,
           event_type: formData.event_type,
-          price: formData.price === null ? null : formData.price,
+          price: typeof formData.price === 'string' ? (formData.price === 'free' ? null : Number(formData.price)) : formData.price,
           max_attendees: formData.max_attendees,
           beneficiary_type: formData.beneficiary_type,
           certificate_type: formData.certificate_type,
@@ -83,7 +83,7 @@ export const CreateEventFormContainer = () => {
           registration_start_date: formData.registration_start_date,
           registration_end_date: formData.registration_end_date,
           event_hours: formData.event_hours
-        }])
+        })
         .select()
         .single();
 
@@ -92,24 +92,26 @@ export const CreateEventFormContainer = () => {
       console.log('Event created successfully:', eventData);
 
       // Insert registration fields
-      const { error: fieldsError } = await supabase
-        .from('event_registration_fields')
-        .insert([{
-          event_id: eventData.id,
-          arabic_name: formData.registration_fields.arabic_name,
-          english_name: formData.registration_fields.english_name,
-          education_level: formData.registration_fields.education_level,
-          birth_date: formData.registration_fields.birth_date,
-          national_id: formData.registration_fields.national_id,
-          email: formData.registration_fields.email,
-          phone: formData.registration_fields.phone,
-          gender: formData.registration_fields.gender,
-          work_status: formData.registration_fields.work_status
-        }]);
+      if (formData.registration_fields) {
+        const { error: fieldsError } = await supabase
+          .from('event_registration_fields')
+          .insert({
+            event_id: eventData.id,
+            arabic_name: formData.registration_fields.arabic_name,
+            english_name: formData.registration_fields.english_name,
+            education_level: formData.registration_fields.education_level,
+            birth_date: formData.registration_fields.birth_date,
+            national_id: formData.registration_fields.national_id,
+            email: formData.registration_fields.email,
+            phone: formData.registration_fields.phone,
+            gender: formData.registration_fields.gender,
+            work_status: formData.registration_fields.work_status
+          });
 
-      if (fieldsError) {
-        console.error('Error inserting registration fields:', fieldsError);
-        throw fieldsError;
+        if (fieldsError) {
+          console.error('Error inserting registration fields:', fieldsError);
+          throw fieldsError;
+        }
       }
 
       console.log('Registration fields saved successfully');
