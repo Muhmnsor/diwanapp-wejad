@@ -8,7 +8,7 @@ export const useProjectRating = (projectId: string) => {
     queryFn: async () => {
       console.log('Fetching ratings for project:', projectId);
       
-      // Get all activities for this project
+      // Get all events for this project that are not activities
       const { data: events, error: eventsError } = await supabase
         .from('events')
         .select(`
@@ -65,11 +65,7 @@ export const useProjectRating = (projectId: string) => {
 
       const finalRating = totalFeedbackCount > 0 ? totalRating / totalFeedbackCount : 0;
       
-      console.log('Final project events rating:', {
-        totalRating,
-        totalFeedbackCount,
-        finalRating: finalRating.toFixed(1)
-      });
+      console.log('Final project rating:', finalRating);
 
       return finalRating;
     }

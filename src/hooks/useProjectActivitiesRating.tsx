@@ -64,13 +64,9 @@ export const useProjectActivitiesRating = (projectId: string) => {
 
       const finalRating = totalFeedbackCount > 0 ? totalRating / totalFeedbackCount : 0;
       
-      console.log('Final project activities rating:', {
-        totalRating,
-        totalFeedbackCount,
-        finalRating: finalRating.toFixed(1)
-      });
+      console.log('Final activities rating:', finalRating);
 
-      return Number(finalRating.toFixed(1));
+      return finalRating;
     }
   });
 };
