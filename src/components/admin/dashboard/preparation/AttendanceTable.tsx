@@ -1,3 +1,4 @@
+
 import { FC } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,25 +15,25 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="text-right">الاسم</TableHead>
-            <TableHead className="text-right">رقم التسجيل</TableHead>
-            <TableHead className="text-right">الحالة</TableHead>
-            <TableHead className="text-right">الإجراءات</TableHead>
+            <TableHead className="text-center">الاسم</TableHead>
+            <TableHead className="text-center">رقم التسجيل</TableHead>
+            <TableHead className="text-center">الحالة</TableHead>
+            <TableHead className="text-center">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {registrations.map((registration: any) => (
             <TableRow key={registration.id}>
-              <TableCell>{registration.arabic_name}</TableCell>
-              <TableCell>{registration.registration_number}</TableCell>
-              <TableCell>
+              <TableCell className="text-center">{registration.arabic_name}</TableCell>
+              <TableCell className="text-center">{registration.registration_number}</TableCell>
+              <TableCell className="text-center">
                 {registration.attendance_records?.[0]?.status === 'present' ? (
-                  <span className="text-green-600 flex items-center gap-1">
+                  <span className="text-green-600 flex items-center gap-1 justify-center">
                     <CheckCircle className="h-4 w-4" />
                     حاضر
                   </span>
                 ) : registration.attendance_records?.[0]?.status === 'absent' ? (
-                  <span className="text-red-600 flex items-center gap-1">
+                  <span className="text-red-600 flex items-center gap-1 justify-center">
                     <XCircle className="h-4 w-4" />
                     غائب
                   </span>
@@ -40,8 +41,8 @@ export const AttendanceTable: FC<AttendanceTableProps> = ({ registrations, onAtt
                   <span className="text-gray-500">لم يتم التحضير</span>
                 )}
               </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
+              <TableCell className="text-center">
+                <div className="flex gap-2 justify-center">
                   <Button
                     variant="outline"
                     size="sm"
