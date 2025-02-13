@@ -20,6 +20,7 @@ export interface Project {
   is_visible?: boolean;
   attendance_requirement_type?: string;
   project_type?: string;
+  event_hours?: number;
   registration_fields?: {
     arabic_name: boolean;
     email: boolean;
