@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 
 interface RatingsDisplayProps {
@@ -24,7 +25,7 @@ export const RatingsDisplay = ({ ratings }: RatingsDisplayProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
       {Object.entries(ratings).map(([key, value]) => (
         <Card key={key} className={`p-4 ${getRatingColor(value)}`}>
           <div className="flex flex-col items-center justify-center text-center">
