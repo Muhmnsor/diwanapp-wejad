@@ -9,11 +9,17 @@ export const useProjectRating = (projectId: string) => {
       console.log('Fetching ratings for project:', projectId);
       
       // Get all activities for this project
-      const { data: activities, error: activitiesError } = await supabase
+      const { data: projectActivities, error: activitiesError } = await supabase
         .from('events')
         .select(`
           id,
           title,
+          event_feedback (
+            overall_rating,
+            content_rating,
+            organization_rating,
+            presenter_rating
+          ),
           activity_feedback (
             overall_rating,
             content_rating,
@@ -29,9 +35,9 @@ export const useProjectRating = (projectId: string) => {
         throw activitiesError;
       }
 
-      console.log('Found activities:', activities?.length);
+      console.log('Found activities:', projectActivities?.length);
 
-      if (!activities?.length) {
+      if (!projectActivities?.length) {
         console.log('No activities found for project');
         return 0;
       }
@@ -39,13 +45,19 @@ export const useProjectRating = (projectId: string) => {
       let totalRating = 0;
       let totalFeedbackCount = 0;
 
-      activities.forEach(activity => {
-        if (!activity.activity_feedback?.length) {
+      projectActivities.forEach(activity => {
+        // Check both feedback types
+        const feedbacks = [
+          ...(activity.event_feedback || []),
+          ...(activity.activity_feedback || [])
+        ];
+
+        if (!feedbacks.length) {
           console.log(`No feedback for activity: ${activity.title}`);
           return;
         }
 
-        activity.activity_feedback.forEach(feedback => {
+        feedbacks.forEach(feedback => {
           const ratings = [
             feedback.overall_rating,
             feedback.content_rating,
