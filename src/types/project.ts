@@ -1,3 +1,4 @@
+
 import { EventPathType, EventCategoryType } from "./event";
 
 export interface Project {
@@ -17,7 +18,7 @@ export interface Project {
   registration_start_date: string | null;
   registration_end_date: string | null;
   is_visible?: boolean;
-  event_hours?: number;  // Added this property
+  event_hours?: number;
   registration_fields?: {
     arabic_name: boolean;
     english_name: boolean;
@@ -29,4 +30,5 @@ export interface Project {
     gender: boolean;
     work_status: boolean;
   };
+  attendance_requirement_type?: string;
 }

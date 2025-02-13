@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Registration } from "../types";
@@ -9,25 +10,24 @@ export const useDashboardData = (eventId: string) => {
     queryFn: async () => {
       console.log('Fetching event details for dashboard:', eventId);
       
-      // First try to fetch from portfolio_only_projects
-      const { data: portfolioProject, error: portfolioError } = await supabase
-        .from('portfolio_only_projects')
+      // First try to fetch from events table
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
         .select('*')
         .eq('id', eventId)
         .maybeSingle();
 
-      if (!portfolioError && portfolioProject) {
-        console.log('Found portfolio project:', portfolioProject);
+      if (!eventError && eventData) {
+        console.log('Found event:', eventData);
         return {
-          ...portfolioProject,
-          start_date: portfolioProject.start_date,
-          end_date: portfolioProject.due_date,
-          max_attendees: 0 // Portfolio projects don't have attendees
+          ...eventData,
+          start_date: eventData.date,
+          end_date: eventData.end_date || eventData.date
         };
       }
 
-      // If not found, try regular projects
-      const { data: project, error: projectError } = await supabase
+      // If not found, try projects table
+      const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .select('*')
         .eq('id', eventId)
@@ -38,8 +38,8 @@ export const useDashboardData = (eventId: string) => {
         throw projectError;
       }
 
-      console.log('Found regular project:', project);
-      return project;
+      console.log('Found project:', projectData);
+      return projectData;
     },
   });
 
@@ -75,9 +75,8 @@ export const useDashboardData = (eventId: string) => {
       registrationCount,
       remainingSeats,
       occupancyRate,
-      eventDate: event.date,
-      eventTime: event.time,
-      registrations: registrations
+      event,
+      registrations
     });
 
     return {

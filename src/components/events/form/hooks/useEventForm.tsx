@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Event } from "@/store/eventStore";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,25 +7,31 @@ import { toast } from "sonner";
 export const useEventForm = (eventId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Event>({
-    id: "",
     title: "",
     description: "",
     date: "",
     time: "",
     location: "",
     event_type: "in-person",
+    eventType: "in-person",
     price: null,
     max_attendees: 0,
     image_url: "",
     beneficiary_type: "both",
+    beneficiaryType: "both",
     certificate_type: "none",
+    certificateType: "none",
     event_path: "environment",
+    eventPath: "environment",
     event_category: "social",
+    eventCategory: "social",
     registration_start_date: null,
     registration_end_date: null,
+    registrationStartDate: null,
+    registrationEndDate: null,
     attendees: 0,
-    beneficiaryType: "both",
     event_hours: null,
+    eventHours: null,
     registration_fields: {
       arabic_name: true,
       english_name: false,
@@ -66,6 +73,14 @@ export const useEventForm = (eventId?: string) => {
 
         setFormData({
           ...eventData,
+          beneficiaryType: eventData.beneficiary_type,
+          eventType: eventData.event_type,
+          certificateType: eventData.certificate_type,
+          eventHours: eventData.event_hours,
+          eventPath: eventData.event_path,
+          eventCategory: eventData.event_category,
+          registrationStartDate: eventData.registration_start_date,
+          registrationEndDate: eventData.registration_end_date,
           registration_fields: fieldsData ? {
             arabic_name: fieldsData.arabic_name,
             english_name: fieldsData.english_name,

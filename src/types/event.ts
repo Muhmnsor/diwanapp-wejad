@@ -1,3 +1,4 @@
+
 export type BeneficiaryType = 'men' | 'women' | 'both';
 
 export type EventPathType = 'environment' | 'community' | 'content';
@@ -21,7 +22,7 @@ export interface EventType {
   max_attendees: number;
   event_type: "online" | "in-person";
   eventType: "online" | "in-person";
-  price: number | "free";
+  price: number | null;
   beneficiaryType: BeneficiaryType;
   beneficiary_type: BeneficiaryType;
   registrationStartDate?: string | null;
@@ -36,4 +37,15 @@ export interface EventType {
   event_path: EventPathType;
   eventCategory: EventCategoryType;
   event_category: EventCategoryType;
+  registration_fields?: {
+    arabic_name: boolean;
+    english_name: boolean;
+    education_level: boolean;
+    birth_date: boolean;
+    national_id: boolean;
+    email: boolean;
+    phone: boolean;
+    gender: boolean;
+    work_status: boolean;
+  };
 }
