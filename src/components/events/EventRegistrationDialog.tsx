@@ -1,11 +1,13 @@
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Event } from "@/store/eventStore";
+import { Event } from "@/types/event";
 import { RegistrationForm } from "./RegistrationForm";
+import { getEventStatus } from "@/utils/eventUtils";
 
 interface EventRegistrationDialogProps {
   open: boolean;
@@ -18,36 +20,24 @@ export const EventRegistrationDialog = ({
   onOpenChange,
   event,
 }: EventRegistrationDialogProps) => {
-  console.log('📋 EventRegistrationDialog - Event:', event);
+  const handleSubmit = () => {
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={onOpenChange}
-      modal={true}
-    >
-      <DialogContent 
-        className="sm:max-w-[425px] rtl"
-        onPointerDownOutside={(e) => {
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          e.preventDefault();
-        }}
-      >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
+          <DialogTitle className="text-right">التسجيل في {event.title}</DialogTitle>
         </DialogHeader>
-        <div className="rtl" dir="rtl">
-          <RegistrationForm
-            eventTitle={event.title}
-            eventPrice={event.price}
-            eventDate={event.date}
-            eventTime={event.time}
-            eventLocation={event.location}
-            onSubmit={() => onOpenChange(false)}
-          />
-        </div>
+        <RegistrationForm
+          eventTitle={event.title}
+          eventPrice={event.price}
+          eventDate={event.date}
+          eventTime={event.time}
+          eventLocation={event.location}
+          onSubmit={handleSubmit}
+        />
       </DialogContent>
     </Dialog>
   );
