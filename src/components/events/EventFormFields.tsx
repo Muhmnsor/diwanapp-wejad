@@ -1,4 +1,5 @@
-import { Event } from "@/store/eventStore";
+
+import { Event } from "@/types/event";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { BasicEventFields } from "./form/fields/BasicEventFields";
 import { EventTypeFields } from "./form/fields/EventTypeFields";
@@ -31,7 +32,7 @@ export const EventFormFields = ({ formData, setFormData, onImageChange }: EventF
               <label className="text-sm font-medium block mb-1.5">صورة الفعالية</label>
               <ImageUpload
                 onChange={onImageChange}
-                value={formData.imageUrl || formData.image_url}
+                value={formData.image_url}
               />
             </div>
           )}

@@ -1,6 +1,7 @@
+
 import { arabicToEnglishNum } from "@/utils/eventUtils";
 import { createCalendarUrl } from "@/utils/calendarUtils";
-import { Event } from "@/store/eventStore";
+import { Event } from "@/types/event";
 import { toast } from "sonner";
 
 export const handleAddToCalendar = (event: Event) => {

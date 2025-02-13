@@ -1,26 +1,26 @@
 
-import { EventType, BeneficiaryType, EventPathType, EventCategoryType } from './event';
+import { BeneficiaryType, EventType, EventPathType, EventCategoryType } from "./event";
 
 export interface Project {
   id: string;
   title: string;
   description?: string;
   start_date: string;
-  end_date: string;
+  end_date?: string;
+  image_url: string;
   max_attendees: number;
   price: number | null;
-  image_url: string;
+  registration_start_date?: string | null;
+  registration_end_date?: string | null;
   event_type: EventType;
   beneficiary_type: BeneficiaryType;
-  certificate_type: string;
+  certificate_type?: string;
   event_path: EventPathType;
   event_category: EventCategoryType;
-  registration_start_date: string | null;
-  registration_end_date: string | null;
   is_visible?: boolean;
   attendance_requirement_type?: string;
-  project_type?: string;
-  event_hours?: number;
+  required_activities_count?: number;
+  required_attendance_percentage?: number;
   registration_fields?: {
     arabic_name: boolean;
     email: boolean;

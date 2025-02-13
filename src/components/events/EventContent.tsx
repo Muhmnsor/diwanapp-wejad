@@ -1,4 +1,5 @@
-import { Event } from "@/store/eventStore";
+
+import { Event } from "@/types/event";
 import { EventInfo } from "./EventInfo";
 import { EventDescription } from "./EventDescription";
 import { EventRegisterButton } from "./EventRegisterButton";
@@ -23,8 +24,8 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
       title: event.title,
       date: event.date,
       registrationDates: {
-        start: event.registrationStartDate,
-        end: event.registrationEndDate
+        start: event.registration_start_date,
+        end: event.registration_end_date
       },
       attendees: currentAttendees,
       maxAttendees: event.max_attendees,
@@ -47,8 +48,8 @@ export const EventContent = ({ event, onRegister }: EventContentProps) => {
     setEventStatus(newStatus);
   }, [
     event.date, 
-    event.registrationStartDate, 
-    event.registrationEndDate,
+    event.registration_start_date, 
+    event.registration_end_date,
     event.max_attendees,
     event.certificate_type,
     event.event_hours,
