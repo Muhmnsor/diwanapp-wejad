@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,7 @@ import { Project } from "@/types/project";
 import { ProjectFormFields } from "@/components/projects/ProjectFormFields";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
 import { toast } from "sonner";
+import { EventType, BeneficiaryType, EventPathType, EventCategoryType } from "@/types/event";
 
 const EditProject = () => {
   const { id } = useParams();
@@ -24,7 +26,31 @@ const EditProject = () => {
           .single();
 
         if (error) throw error;
-        setProject(data);
+
+        // Cast the data to match Project type
+        const typedData: Project = {
+          ...data,
+          event_type: data.event_type as EventType,
+          beneficiary_type: data.beneficiary_type as BeneficiaryType,
+          event_path: data.event_path as EventPathType,
+          event_category: data.event_category as EventCategoryType,
+          price: data.price || null,
+          registration_start_date: data.registration_start_date || null,
+          registration_end_date: data.registration_end_date || null,
+          registration_fields: data.registration_fields || {
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false,
+          }
+        };
+        
+        setProject(typedData);
       } catch (error) {
         console.error("Error fetching project:", error);
         toast.error("حدث خطأ أثناء تحميل بيانات المشروع");
@@ -79,22 +105,24 @@ const EditProject = () => {
       if (projectError) throw projectError;
 
       // Update registration fields
-      const { error: fieldsError } = await supabase
-        .from('project_registration_fields')
-        .upsert({
-          project_id: id,
-          arabic_name: project.registration_fields?.arabic_name ?? true,
-          email: project.registration_fields?.email ?? true,
-          phone: project.registration_fields?.phone ?? true,
-          english_name: project.registration_fields?.english_name ?? false,
-          education_level: project.registration_fields?.education_level ?? false,
-          birth_date: project.registration_fields?.birth_date ?? false,
-          national_id: project.registration_fields?.national_id ?? false,
-          gender: project.registration_fields?.gender ?? false,
-          work_status: project.registration_fields?.work_status ?? false
-        });
+      if (project.registration_fields) {
+        const { error: fieldsError } = await supabase
+          .from('project_registration_fields')
+          .upsert({
+            project_id: id,
+            arabic_name: project.registration_fields.arabic_name,
+            email: project.registration_fields.email,
+            phone: project.registration_fields.phone,
+            english_name: project.registration_fields.english_name,
+            education_level: project.registration_fields.education_level,
+            birth_date: project.registration_fields.birth_date,
+            national_id: project.registration_fields.national_id,
+            gender: project.registration_fields.gender,
+            work_status: project.registration_fields.work_status
+          });
 
-      if (fieldsError) throw fieldsError;
+        if (fieldsError) throw fieldsError;
+      }
 
       toast.success("تم تحديث المشروع بنجاح");
       navigate(`/projects/${id}`);
