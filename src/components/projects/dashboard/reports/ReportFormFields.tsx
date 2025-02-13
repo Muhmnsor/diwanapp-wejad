@@ -4,7 +4,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ProjectReportPhotoUpload } from "./components/ProjectReportPhotoUpload";
 import { ReportPhoto } from "@/types/projectReport";
-
 interface ReportFormFieldsProps {
   project: any;
   activities: any[];
@@ -22,7 +21,6 @@ interface ReportFormFieldsProps {
   photos: ReportPhoto[];
   setPhotos: (photos: ReportPhoto[]) => void;
 }
-
 export const ReportFormFields = ({
   project,
   activities,
@@ -33,12 +31,10 @@ export const ReportFormFields = ({
   attendanceCount,
   selectedActivityDetails,
   photos,
-  setPhotos,
+  setPhotos
 }: ReportFormFieldsProps) => {
   console.log('ReportFormFields - Current photos:', photos);
-  
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium mb-2">اسم البرنامج/المشروع</label>
         <Input value={project?.title} disabled />
@@ -46,33 +42,24 @@ export const ReportFormFields = ({
 
       <div>
         <label className="block text-sm font-medium mb-2">النشاط</label>
-        <ActivitySelector
-          activities={activities}
-          selectedActivity={selectedActivity}
-          onActivityChange={(value) => setSelectedActivity(value)}
-        />
+        <ActivitySelector activities={activities} selectedActivity={selectedActivity} onActivityChange={value => setSelectedActivity(value)} />
       </div>
 
-      {selectedActivity && (
-        <>
+      {selectedActivity && <>
           <div>
-            <label className="block text-sm font-medium mb-2">اسم التقرير</label>
-            <Input
-              value={formData.reportName}
-              onChange={(e) => setFormData({ ...formData, reportName: e.target.value })}
-              placeholder="اسم التقرير"
-              required
-            />
+            <label className="block text-sm font-medium mb-2">اسم المقدم / المتحدث / المنظم / وتسميته ( دكتور- استاذ....)</label>
+            <Input value={formData.reportName} onChange={e => setFormData({
+          ...formData,
+          reportName: e.target.value
+        })} placeholder="اسم التقرير" required />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">تقرير النشاط</label>
-            <Textarea
-              value={formData.reportText}
-              onChange={(e) => setFormData({ ...formData, reportText: e.target.value })}
-              placeholder="وصف النشاط"
-              className="min-h-[100px]"
-            />
+            <Textarea value={formData.reportText} onChange={e => setFormData({
+          ...formData,
+          reportText: e.target.value
+        })} placeholder="وصف النشاط" className="min-h-[100px]" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -89,34 +76,26 @@ export const ReportFormFields = ({
 
           <div>
             <label className="block text-sm font-medium mb-2">أهداف النشاط</label>
-            <Textarea
-              value={formData.objectives}
-              onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
-              placeholder="أهداف النشاط"
-            />
+            <Textarea value={formData.objectives} onChange={e => setFormData({
+          ...formData,
+          objectives: e.target.value
+        })} placeholder="أهداف النشاط" />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">آثار النشاط</label>
-            <Textarea
-              value={formData.impact}
-              onChange={(e) => setFormData({ ...formData, impact: e.target.value })}
-              placeholder="آثار النشاط على المشاركين"
-            />
+            <Textarea value={formData.impact} onChange={e => setFormData({
+          ...formData,
+          impact: e.target.value
+        })} placeholder="آثار النشاط على المشاركين" />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">صور النشاط</label>
-            <ProjectReportPhotoUpload
-              photos={photos}
-              onPhotosChange={setPhotos}
-              maxPhotos={6}
-            />
+            <ProjectReportPhotoUpload photos={photos} onPhotosChange={setPhotos} maxPhotos={6} />
           </div>
 
           <Button type="submit" className="w-full">حفظ التقرير</Button>
-        </>
-      )}
-    </div>
-  );
+        </>}
+    </div>;
 };
