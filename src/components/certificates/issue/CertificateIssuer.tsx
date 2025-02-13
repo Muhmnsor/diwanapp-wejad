@@ -27,6 +27,7 @@ export const CertificateIssuer = ({
   const [template, setTemplate] = useState<any>(null);
   const [registrationData, setRegistrationData] = useState<any>(null);
 
+  // Fetch template and registration data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -42,15 +43,7 @@ export const CertificateIssuer = ({
         if (templateError) throw templateError;
         
         setTemplate(templateData);
-        
-        // Convert fields to string values for the form
-        if (templateData.fields && typeof templateData.fields === 'object') {
-          const initialFields: Record<string, string> = {};
-          Object.entries(templateData.fields).forEach(([key, value]) => {
-            initialFields[key] = String(value || '');
-          });
-          setCertificateData(initialFields);
-        }
+        setCertificateData(templateData.fields || {});
 
         // Fetch registration data
         const { data: regData, error: regError } = await supabase

@@ -1,29 +1,30 @@
-
 import { useState, useEffect } from "react";
-import { Event, EventType, BeneficiaryType, EventPathType, EventCategoryType } from "@/types/event";
+import { Event } from "@/store/eventStore";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const useEventForm = (eventId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Event>({
+    id: "",
     title: "",
     description: "",
     date: "",
     time: "",
     location: "",
-    image_url: "",
-    attendees: 0,
-    max_attendees: 0,
     event_type: "in-person",
     price: null,
+    max_attendees: 0,
+    image_url: "",
     beneficiary_type: "both",
-    registration_start_date: null,
-    registration_end_date: null,
     certificate_type: "none",
-    event_hours: null,
     event_path: "environment",
     event_category: "social",
+    registration_start_date: null,
+    registration_end_date: null,
+    attendees: 0,
+    beneficiaryType: "both",
+    event_hours: null,
     registration_fields: {
       arabic_name: true,
       english_name: false,
@@ -42,6 +43,7 @@ export const useEventForm = (eventId?: string) => {
       if (!eventId) return;
       
       try {
+        // Fetch event data
         const { data: eventData, error: eventError } = await supabase
           .from('events')
           .select('*')
@@ -50,6 +52,7 @@ export const useEventForm = (eventId?: string) => {
 
         if (eventError) throw eventError;
 
+        // Fetch registration fields
         const { data: fieldsData, error: fieldsError } = await supabase
           .from('event_registration_fields')
           .select('*')
@@ -58,27 +61,23 @@ export const useEventForm = (eventId?: string) => {
 
         if (fieldsError) throw fieldsError;
 
-        if (eventData) {
-          setFormData({
-            ...formData,
-            ...eventData,
-            event_type: eventData.event_type as EventType,
-            beneficiary_type: eventData.beneficiary_type as BeneficiaryType,
-            event_path: eventData.event_path as EventPathType,
-            event_category: eventData.event_category as EventCategoryType,
-            registration_fields: fieldsData ? {
-              arabic_name: fieldsData.arabic_name,
-              english_name: fieldsData.english_name,
-              education_level: fieldsData.education_level,
-              birth_date: fieldsData.birth_date,
-              national_id: fieldsData.national_id,
-              email: fieldsData.email,
-              phone: fieldsData.phone,
-              gender: fieldsData.gender,
-              work_status: fieldsData.work_status,
-            } : formData.registration_fields
-          });
-        }
+        console.log('Fetched event data:', eventData);
+        console.log('Fetched registration fields:', fieldsData);
+
+        setFormData({
+          ...eventData,
+          registration_fields: fieldsData ? {
+            arabic_name: fieldsData.arabic_name,
+            english_name: fieldsData.english_name,
+            education_level: fieldsData.education_level,
+            birth_date: fieldsData.birth_date,
+            national_id: fieldsData.national_id,
+            email: fieldsData.email,
+            phone: fieldsData.phone,
+            gender: fieldsData.gender,
+            work_status: fieldsData.work_status,
+          } : formData.registration_fields
+        });
       } catch (error) {
         console.error('Error fetching event data:', error);
         toast.error("حدث خطأ أثناء تحميل بيانات الفعالية");

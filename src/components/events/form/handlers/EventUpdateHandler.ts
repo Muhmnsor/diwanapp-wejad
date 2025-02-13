@@ -1,4 +1,3 @@
-
 import { Event } from "@/store/eventStore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,7 +18,7 @@ export const handleEventUpdate = async (formData: Event, eventId?: string) => {
         location: formData.location,
         image_url: formData.image_url,
         event_type: formData.event_type,
-        price: typeof formData.price === 'string' ? (formData.price === 'free' ? null : Number(formData.price)) : formData.price,
+        price: formData.price === null ? null : formData.price,
         max_attendees: formData.max_attendees,
         beneficiary_type: formData.beneficiary_type,
         certificate_type: formData.certificate_type,
@@ -35,26 +34,24 @@ export const handleEventUpdate = async (formData: Event, eventId?: string) => {
     if (eventError) throw eventError;
 
     // Update registration fields
-    if (formData.registration_fields) {
-      const { error: fieldsError } = await supabase
-        .from('event_registration_fields')
-        .update({
-          arabic_name: formData.registration_fields.arabic_name,
-          english_name: formData.registration_fields.english_name,
-          education_level: formData.registration_fields.education_level,
-          birth_date: formData.registration_fields.birth_date,
-          national_id: formData.registration_fields.national_id,
-          email: formData.registration_fields.email,
-          phone: formData.registration_fields.phone,
-          gender: formData.registration_fields.gender,
-          work_status: formData.registration_fields.work_status
-        })
-        .eq('event_id', eventId);
+    const { error: fieldsError } = await supabase
+      .from('event_registration_fields')
+      .update({
+        arabic_name: formData.registration_fields.arabic_name,
+        english_name: formData.registration_fields.english_name,
+        education_level: formData.registration_fields.education_level,
+        birth_date: formData.registration_fields.birth_date,
+        national_id: formData.registration_fields.national_id,
+        email: formData.registration_fields.email,
+        phone: formData.registration_fields.phone,
+        gender: formData.registration_fields.gender,
+        work_status: formData.registration_fields.work_status
+      })
+      .eq('event_id', eventId);
 
-      if (fieldsError) {
-        console.error('Error updating registration fields:', fieldsError);
-        throw fieldsError;
-      }
+    if (fieldsError) {
+      console.error('Error updating registration fields:', fieldsError);
+      throw fieldsError;
     }
 
     console.log('Event and registration fields updated successfully');

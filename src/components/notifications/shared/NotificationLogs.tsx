@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,29 +12,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 interface NotificationLogsProps {
   eventId?: string;
   projectId?: string;
-}
-
-interface NotificationLog {
-  id: string;
-  event_id: string | null;
-  registration_id: string | null;
-  template_id: string | null;
-  sent_at: string;
-  notification_type: string;
-  status: string;
-  recipient_phone: string | null;
-  message_content: string | null;
-  message_id: string | null;
-  retry_count: number | null;
-  last_retry: string | null;
-  last_error: string | null;
-  registrations?: {
-    arabic_name: string;
-    phone: string;
-  };
-  whatsapp_templates?: {
-    name: string;
-  };
 }
 
 const StatusBadge = ({ status, errorDetails }: { status: string; errorDetails?: string }) => {
@@ -103,7 +79,7 @@ export const NotificationLogs = ({ eventId, projectId }: NotificationLogsProps) 
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as NotificationLog[];
+      return data;
     },
     refetchInterval: 30000 // Refresh every 30 seconds
   });
@@ -190,7 +166,7 @@ export const NotificationLogs = ({ eventId, projectId }: NotificationLogsProps) 
                 </TableCell>
                 <TableCell>{log.whatsapp_templates?.name}</TableCell>
                 <TableCell>
-                  <StatusBadge status={log.status} errorDetails={log.last_error || undefined} />
+                  <StatusBadge status={log.status} errorDetails={log.error_details} />
                 </TableCell>
                 <TableCell>{format(new Date(log.sent_at), 'yyyy-MM-dd HH:mm')}</TableCell>
               </TableRow>

@@ -6,10 +6,9 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectDetailsView } from "@/components/projects/ProjectDetailsView";
 import { useAuthStore } from "@/store/authStore";
-import { Project } from "@/types/project";
 
 const ProjectDetails = () => {
-  const [project, setProject] = useState<Project | null>(null);
+  const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { id } = useParams();
@@ -25,14 +24,11 @@ const ProjectDetails = () => {
         }
 
         console.log("Fetching project with ID:", id);
-        const { data: projectData, error: fetchError } = await supabase
+        const { data, error: fetchError } = await supabase
           .from("projects")
-          .select(`
-            *,
-            events (*)
-          `)
+          .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
           console.error("Error fetching project:", fetchError);
@@ -40,23 +36,14 @@ const ProjectDetails = () => {
           return;
         }
 
-        if (!projectData) {
+        if (!data) {
           console.log("No project found with ID:", id);
           setError("المشروع غير موجود");
           return;
         }
 
-        // Cast the data to match Project type
-        const typedProject: Project = {
-          ...projectData,
-          event_type: projectData.event_type as EventType,
-          beneficiary_type: projectData.beneficiary_type as BeneficiaryType,
-          event_path: projectData.event_path as EventPathType,
-          event_category: projectData.event_category as EventCategoryType,
-        };
-
-        console.log("Fetched project:", typedProject);
-        setProject(typedProject);
+        console.log("Fetched project:", data);
+        setProject(data);
       } catch (err) {
         console.error("Error in fetchProject:", err);
         setError("حدث خطأ غير متوقع");
@@ -80,9 +67,9 @@ const ProjectDetails = () => {
     if (!confirmed) return;
 
     try {
-      // First, delete related project events
+      // First, delete related project_events
       const { error: eventsError } = await supabase
-        .from("events")
+        .from("project_events")
         .delete()
         .eq("project_id", id);
 

@@ -1,10 +1,9 @@
-
-import { Event } from "@/types/event";
+import { EventType } from "@/types/event";
 import { EventTitle } from "../EventTitle";
 import { EventImage } from "../EventImage";
 
 interface EventDetailsHeaderProps {
-  event: Event;
+  event: EventType;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -18,9 +17,11 @@ export const EventDetailsHeader = ({
   onDelete,
   onAddToCalendar
 }: EventDetailsHeaderProps) => {
+  const imageUrl = event.imageUrl || event.image_url;
+
   return (
     <div className="bg-white rounded-t-2xl overflow-hidden">
-      <EventImage imageUrl={event.image_url} title={event.title} />
+      <EventImage imageUrl={imageUrl} title={event.title} />
       <EventTitle
         title={event.title}
         isAdmin={isAdmin}

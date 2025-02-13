@@ -1,44 +1,26 @@
-
 import { useState } from "react";
 import { validateRegistrationData } from "../validation/registrationValidation";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RegistrationData {
-  email: string;
-  phone: string;
-  arabicName: string;
-  englishName?: string;
-  educationLevel?: string;
-  birthDate?: string | null;
-  nationalId?: string;
-  gender?: string;
-  workStatus?: string;
-  cardNumber?: string;
-  expiryDate?: string;
-  cvv?: string;
-}
-
 export const useRegistrationState = (onSubmit: () => void) => {
-  const [formData, setFormData] = useState<RegistrationData>({
+  const [formData, setFormData] = useState({
     email: "",
     phone: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
     arabicName: "",
     englishName: "",
     educationLevel: "",
-    birthDate: null,
+    birthDate: "",
     nationalId: "",
-    gender: "",
-    workStatus: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent, eventId: string) => {
+  const handleSubmit = async (e: React.FormEvent, eventPrice: number | "free" | null) => {
     e.preventDefault();
     console.log("Starting registration process...");
     
@@ -53,24 +35,12 @@ export const useRegistrationState = (onSubmit: () => void) => {
     setErrors({});
 
     try {
-      const registrationNumber = `REG-${Date.now()}`;
-      const registrationData = {
-        event_id: eventId,
-        email: formData.email,
-        phone: formData.phone,
-        arabic_name: formData.arabicName,
-        english_name: formData.englishName || null,
-        education_level: formData.educationLevel || null,
-        birth_date: formData.birthDate || null,
-        national_id: formData.nationalId || null,
-        gender: formData.gender || null,
-        work_status: formData.workStatus || null,
-        registration_number: registrationNumber
-      };
-
-      const { data: registrationResult, error: registrationError } = await supabase
+      const { data: registrationData, error: registrationError } = await supabase
         .from('registrations')
-        .insert(registrationData)
+        .insert({
+          ...formData,
+          eventPrice,
+        })
         .select()
         .single();
 
