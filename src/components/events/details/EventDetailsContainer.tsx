@@ -51,7 +51,7 @@ export const EventDetailsContainer = ({
           <EventTitle title={event.title} isAdmin={isAdmin} onEdit={onEdit} onDelete={() => setShowDeleteDialog(true)} onAddToCalendar={onAddToCalendar} isVisible={visibility} onVisibilityChange={handleVisibilityChange} />
 
           {isAdmin ? <Tabs defaultValue="details" className="w-full">
-              <TabsList className="w-full justify-start border-b rounded-none bg-white" dir="rtl">
+              <TabsList dir="rtl" className="w-full justify-start border-b rounded-none bg-white px-[34px]">
                 <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
                 <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
               </TabsList>
