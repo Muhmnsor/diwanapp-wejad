@@ -36,10 +36,10 @@ export const ReportsTable = ({
       if (!attendeesCount) return 0;
       if (typeof attendeesCount === 'number') return attendeesCount;
       if (typeof attendeesCount === 'string') {
-        if (attendeesCount.includes('[') || attendeesCount.includes('{')) {
-          // إذا كانت القيمة مصفوفة من الكائنات
-          const attendees = attendeesCount.split('},{').length;
-          return attendees;
+        if (attendeesCount.includes('[object Object]')) {
+          // إذا كانت القيمة سلسلة من الكائنات، نقوم بحساب عدد المرات التي تظهر فيها
+          const count = (attendeesCount.match(/\[object Object\]/g) || []).length;
+          return count;
         }
         const parsed = parseInt(attendeesCount);
         return isNaN(parsed) ? 0 : parsed;
