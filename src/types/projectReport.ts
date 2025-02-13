@@ -12,7 +12,7 @@ export interface ProjectReport {
   attendees_count?: string | null;
   activity_objectives: string;
   impact_on_participants?: string | null;
-  photos?: ReportPhoto[] | null;
+  photos: ReportPhoto[];
   created_at: string;
   video_links?: string[];
   additional_links?: string[];
