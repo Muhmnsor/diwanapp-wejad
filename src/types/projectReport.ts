@@ -1,4 +1,3 @@
-
 export interface ProjectReport {
   id: string;
   project_id: string | null;
@@ -12,14 +11,13 @@ export interface ProjectReport {
   attendees_count?: string | null;
   activity_objectives: string;
   impact_on_participants?: string | null;
-  photos: ReportPhoto[];
+  photos?: ReportPhoto[] | null;
   created_at: string;
   video_links?: string[];
   additional_links?: string[];
   files?: string[];
   comments?: string[];
   satisfaction_level?: number | null;
-  author_name?: string | null;
   activity?: {
     id: string;
     title: string;

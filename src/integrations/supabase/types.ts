@@ -1314,7 +1314,6 @@ export type Database = {
           activity_objectives: string | null
           additional_links: string[] | null
           attendees_count: string | null
-          author_name: string | null
           comments: string[] | null
           created_at: string
           detailed_description: string | null
@@ -1337,7 +1336,6 @@ export type Database = {
           activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
-          author_name?: string | null
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
@@ -1360,7 +1358,6 @@ export type Database = {
           activity_objectives?: string | null
           additional_links?: string[] | null
           attendees_count?: string | null
-          author_name?: string | null
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null

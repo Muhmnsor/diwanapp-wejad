@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -38,8 +37,6 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
   const { data: attendanceRecords = [], refetch: refetchAttendance } = useQuery({
     queryKey: ['activity-attendance', selectedActivity],
     queryFn: async () => {
-      if (!selectedActivity) return [];
-      
       console.log("Fetching attendance records for activity:", selectedActivity);
       const { data, error } = await supabase
         .from('attendance_records')
@@ -61,9 +58,9 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
 
   const stats = {
     total: registrations.length,
-    present: Array.isArray(attendanceRecords) ? attendanceRecords.filter(record => record.status === 'present').length : 0,
-    absent: Array.isArray(attendanceRecords) ? attendanceRecords.filter(record => record.status === 'absent').length : 0,
-    notRecorded: registrations.length - (Array.isArray(attendanceRecords) ? attendanceRecords.length : 0)
+    present: attendanceRecords.filter(record => record.status === 'present').length,
+    absent: attendanceRecords.filter(record => record.status === 'absent').length,
+    notRecorded: registrations.length - attendanceRecords.length
   };
 
   const handleBarcodeScanned = async (code: string) => {
@@ -129,7 +126,7 @@ export const ProjectPreparationTab = ({ projectId, activities }: ProjectPreparat
               onBarcodeScanned={handleBarcodeScanned}
               onGroupAttendance={handleGroupAttendanceClick}
               registrations={registrations}
-              attendanceRecords={Array.isArray(attendanceRecords) ? attendanceRecords : []}
+              attendanceRecords={attendanceRecords}
               onAttendanceChange={async (registrationId, status) => {
                 await handleAttendanceChange(registrationId, status, selectedActivity);
                 refetchAttendance();

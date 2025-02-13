@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportForm } from "../ReportForm";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
-import { downloadProjectReport } from "@/utils/reports/downloadProjectReport";
+import { downloadReport } from "@/components/reports/project-reports/handlers/projectReportHandlers";
 import { useToast } from "@/hooks/use-toast";
 import { ReportsHeader } from "../components/ReportsHeader";
 import { ReportsTable } from "../components/ReportsTable";
@@ -30,16 +30,6 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
           *,
           events:activity_id (
             title
-          ),
-          activity:activity_id (
-            id,
-            title,
-            activity_feedback (
-              overall_rating,
-              content_rating,
-              organization_rating,
-              presenter_rating
-            )
           )
         `)
         .eq('project_id', projectId)
@@ -96,7 +86,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
 
   const handleDownload = async (report: any) => {
     try {
-      await downloadProjectReport(report);
+      await downloadReport(report);
       toast({
         title: "تم تحميل التقرير بنجاح",
         variant: "default",
