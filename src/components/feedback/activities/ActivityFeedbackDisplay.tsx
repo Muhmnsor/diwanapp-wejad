@@ -1,6 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackLink } from "@/components/events/feedback/FeedbackLink";
 import { RatingsDisplay } from "../shared/RatingsDisplay";
+import { CalendarDays, Users } from "lucide-react";
 
 interface ActivityFeedback {
   overall_rating: number;
@@ -41,54 +43,61 @@ export const ActivityFeedbackDisplay = ({
   };
 
   return (
-    <Card className="p-6">
-      <CardHeader className="px-0 pt-0">
-        <div className="flex justify-between items-center mb-4">
-          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-          <div className="text-sm text-muted-foreground">{date}</div>
+    <Card className="transition-all duration-200 hover:shadow-lg">
+      <CardHeader className="pb-2">
+        <div className="flex flex-col space-y-2">
+          <CardTitle className="text-xl font-bold">{title}</CardTitle>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <CalendarDays className="h-4 w-4" />
+              <span>{date}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              <span>{feedback.length} مشارك</span>
+            </div>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="px-0 space-y-6">
-        <div className="mb-6">
+
+      <CardContent className="space-y-6">
+        <div className="rounded-lg bg-muted/30 p-4">
           <h4 className="text-sm font-medium mb-2">رابط التقييم</h4>
           <FeedbackLink eventId={id} isActivity={true} />
         </div>
         
         {feedback.length > 0 ? (
           <div className="space-y-6">
-            <div className="bg-muted/20 p-4 rounded-lg mb-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-medium">نتائج التقييم</h3>
-                <span className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
-                  عدد المقيمين: {feedback.length}
-                </span>
-              </div>
-            </div>
-
             <RatingsDisplay ratings={averages} />
 
             {feedback.some(f => f.feedback_text) && (
               <div className="space-y-4">
-                <h4 className="text-sm font-medium">التعليقات</h4>
-                {feedback
-                  .filter(f => f.feedback_text)
-                  .map((item, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                      <p className="text-gray-700">{item.feedback_text}</p>
-                      {(item.name || item.phone) && (
-                        <div className="text-sm text-gray-500 flex gap-2 mt-2 border-t pt-2">
-                          {item.name && <span>الاسم: {item.name}</span>}
-                          {item.name && item.phone && <span>•</span>}
-                          {item.phone && <span>الجوال: {item.phone}</span>}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <h4 className="text-sm font-medium">التعليقات والملاحظات</h4>
+                <div className="grid gap-4">
+                  {feedback
+                    .filter(f => f.feedback_text)
+                    .map((item, index) => (
+                      <div 
+                        key={index} 
+                        className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
+                      >
+                        <p className="text-sm text-card-foreground leading-relaxed">
+                          {item.feedback_text}
+                        </p>
+                        {(item.name || item.phone) && (
+                          <div className="mt-3 pt-3 border-t border-border/50 flex gap-3 text-xs text-muted-foreground">
+                            {item.name && <span>الاسم: {item.name}</span>}
+                            {item.phone && <span>الجوال: {item.phone}</span>}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-muted-foreground text-center py-4">
+          <div className="text-center py-8 text-muted-foreground">
             لا توجد تقييمات لهذا النشاط
           </div>
         )}
