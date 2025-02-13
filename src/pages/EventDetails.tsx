@@ -1,121 +1,135 @@
-
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { EventDetailsView } from "@/components/events/EventDetailsView";
-import { EventLoadingState } from "@/components/events/EventLoadingState";
-import { EventNotFound } from "@/components/events/EventNotFound";
+import { Event } from "@/types/event";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
+import { EventDetailsView } from "@/components/events/EventDetailsView";
 import { useAuthStore } from "@/store/authStore";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { CreateEventFormContainer } from "@/components/events/form/CreateEventFormContainer";
-import { Separator } from "@/components/ui/separator";
-import { Event } from "@/types/event";
 
 const EventDetails = () => {
+  const [event, setEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { id } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuthStore();
-  console.log('Fetching event with ID:', id);
+  const navigate = useNavigate();
 
-  // Skip fetching if we're on the create page
-  const isCreatePage = id === 'create';
-  
-  const { data: event, isLoading, error } = useQuery({
-    queryKey: ['event', id],
-    queryFn: async () => {
-      if (isCreatePage) {
-        return null;
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (!id) return;
+
+      try {
+        // First fetch event data
+        const { data: eventData, error: eventError } = await supabase
+          .from("events")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (eventError) throw eventError;
+
+        // Then fetch registration fields
+        const { data: fieldsData, error: fieldsError } = await supabase
+          .from("event_registration_fields")
+          .select("*")
+          .eq("event_id", id)
+          .single();
+
+        if (fieldsError && fieldsError.code !== 'PGRST116') { // Ignore not found error
+          throw fieldsError;
+        }
+
+        const eventWithFields: Event = {
+          ...eventData,
+          registration_fields: fieldsData || {
+            arabic_name: true,
+            email: true,
+            phone: true,
+            english_name: false,
+            education_level: false,
+            birth_date: false,
+            national_id: false,
+            gender: false,
+            work_status: false,
+          }
+        };
+
+        setEvent(eventWithFields);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching event:", error);
+        setError("حدث خطأ في جلب بيانات الفعالية");
+        setLoading(false);
       }
+    };
 
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching event:', error);
-        throw error;
-      }
-
-      if (!data) return null;
-
-      // Transform the data to match the Event type
-      const eventData: Event = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        time: data.time,
-        location: data.location,
-        location_url: data.location_url,
-        image_url: data.image_url,
-        attendees: data.attendees || 0,
-        max_attendees: data.max_attendees,
-        event_type: data.event_type as Event['event_type'],
-        price: data.price,
-        beneficiary_type: data.beneficiary_type as Event['beneficiary_type'],
-        registration_start_date: data.registration_start_date,
-        registration_end_date: data.registration_end_date,
-        certificate_type: data.certificate_type,
-        event_hours: data.event_hours,
-        event_path: data.event_path as Event['event_path'],
-        event_category: data.event_category as Event['event_category'],
-        registration_fields: data.registration_fields
-      };
-
-      return eventData;
-    },
-    enabled: !isCreatePage
-  });
+    fetchEvent();
+  }, [id]);
 
   const handleEdit = () => {
-    console.log('Edit event:', id);
+    navigate(`/events/${id}/edit`);
   };
 
-  const handleDelete = () => {
-    console.log('Delete event:', id);
-    navigate('/');
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    const confirmed = window.confirm("هل أنت متأكد من حذف هذه الفعالية؟");
+    if (!confirmed) return;
+
+    try {
+      // First delete related registrations
+      const { error: registrationsError } = await supabase
+        .from("registrations")
+        .delete()
+        .eq("event_id", id);
+
+      if (registrationsError) throw registrationsError;
+
+      // Then delete registration fields
+      const { error: fieldsError } = await supabase
+        .from("event_registration_fields")
+        .delete()
+        .eq("event_id", id);
+
+      if (fieldsError) throw fieldsError;
+
+      // Finally delete the event
+      const { error: eventError } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", id);
+
+      if (eventError) throw eventError;
+
+      toast.success("تم حذف الفعالية بنجاح");
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("حدث خطأ أثناء حذف الفعالية");
+    }
   };
 
-  const handleAddToCalendar = () => {
-    console.log('Add to calendar:', id);
-    toast.success('تمت إضافة الفعالية إلى التقويم');
-  };
-
-  if (isCreatePage) {
+  if (loading) {
     return (
-      <div className="min-h-screen" dir="rtl">
+      <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-4">إنشاء فعالية جديدة</h1>
-          <Separator className="my-6" />
-          <CreateEventFormContainer />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
         <Footer />
       </div>
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <TopHeader />
-        <EventLoadingState />
-        <Footer />
-      </div>
-    );
-  }
-
   if (error) {
-    console.error('Error in event details:', error);
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <EventNotFound />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-red-500">{error}</div>
+        </div>
         <Footer />
       </div>
     );
@@ -123,28 +137,32 @@ const EventDetails = () => {
 
   if (!event) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen flex flex-col">
         <TopHeader />
-        <EventNotFound />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-500">الفعالية غير موجودة</div>
+        </div>
         <Footer />
       </div>
     );
   }
 
-  // Check if user is admin
-  const isAdmin = user?.email?.endsWith('@admin.com') || false;
+  const isAdmin = user?.isAdmin;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <EventDetailsView 
-        event={event}
-        isAdmin={isAdmin}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onAddToCalendar={handleAddToCalendar}
-        id={id || ''}
-      />
+      <main className="flex-1 py-12">
+        <EventDetailsView
+          event={event}
+          isAdmin={isAdmin}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddToCalendar={() => {}}
+          onRegister={() => {}}
+          id={id}
+        />
+      </main>
       <Footer />
     </div>
   );
