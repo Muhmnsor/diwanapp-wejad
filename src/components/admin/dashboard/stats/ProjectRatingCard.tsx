@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -72,7 +73,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">مستوى تقييم أنشطة المشروع</CardTitle>
+        <CardTitle className="text-sm font-medium">متوسط تقييم أنشطة المشروع</CardTitle>
         <Star className={`h-4 w-4 ${getRatingColor(averageRating)}`} />
       </CardHeader>
       <CardContent>
@@ -80,7 +81,7 @@ export const ProjectRatingCard = ({ projectId }: ProjectRatingCardProps) => {
           {averageRating.toFixed(1)}
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          متوسط تقييم الأنشطة
+          متوسط تقييمات المستفيدين لأنشطة المشروع
         </p>
       </CardContent>
     </Card>
