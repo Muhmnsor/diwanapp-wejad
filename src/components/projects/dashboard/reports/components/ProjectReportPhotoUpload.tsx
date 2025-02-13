@@ -1,14 +1,25 @@
+
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
 import { ReportPhoto } from "@/types/projectReport";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
 
 interface ProjectReportPhotoUploadProps {
   photos: ReportPhoto[];
   onPhotosChange: (photos: ReportPhoto[]) => void;
   maxPhotos?: number;
 }
+
+const photoPlaceholders = [
+  "صورة المقدم وخلفه الشاشة او مايدل على النشاط",
+  "تفاعل المقدم مع المستفيدين",
+  "الضيافة ان وجدت قبل استهلاكها",
+  "تفاعل المستفيدين او الجمهور",
+  "صورة جماعية",
+  "صورة فردية لمستفيد متفاعل"
+];
 
 export const ProjectReportPhotoUpload = ({
   photos,
@@ -56,44 +67,51 @@ export const ProjectReportPhotoUpload = ({
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {Array(maxPhotos)
-        .fill(null)
-        .map((_, index) => (
-          <div
-            key={index}
-            className="relative aspect-square border rounded-lg overflow-hidden"
-          >
-            {photos[index]?.url ? (
-              <div className="relative h-full">
-                <img
-                  src={photos[index].url}
-                  alt={`صورة ${index + 1}`}
-                  className="object-cover w-full h-full"
-                />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={() => handleRemovePhoto(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array(maxPhotos)
+          .fill(null)
+          .map((_, index) => (
+            <Card key={index} className="p-4 space-y-4">
+              <div className="text-sm text-muted-foreground">
+                {photoPlaceholders[index]}
               </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center h-full cursor-pointer bg-muted hover:bg-muted/80 transition-colors">
-                <ImagePlus className="h-8 w-8 mb-2" />
-                <span className="text-sm">إضافة صورة</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handlePhotoUpload(e, index)}
-                />
-              </label>
-            )}
-          </div>
-        ))}
+
+              <div
+                className="relative aspect-square border rounded-lg overflow-hidden"
+              >
+                {photos[index]?.url ? (
+                  <div className="relative h-full">
+                    <img
+                      src={photos[index].url}
+                      alt={`صورة ${index + 1}`}
+                      className="object-cover w-full h-full"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => handleRemovePhoto(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center h-full cursor-pointer bg-muted hover:bg-muted/80 transition-colors">
+                    <ImagePlus className="h-8 w-8 mb-2" />
+                    <span className="text-sm">إضافة صورة</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handlePhotoUpload(e, index)}
+                    />
+                  </label>
+                )}
+              </div>
+            </Card>
+          ))}
+      </div>
     </div>
   );
 };
