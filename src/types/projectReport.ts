@@ -1,3 +1,4 @@
+
 export interface ProjectReport {
   id: string;
   project_id: string | null;
@@ -18,6 +19,7 @@ export interface ProjectReport {
   files?: string[];
   comments?: string[];
   satisfaction_level?: number | null;
+  author_name?: string | null;
   activity?: {
     id: string;
     title: string;

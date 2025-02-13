@@ -41,7 +41,7 @@ function generateReportText(report: ProjectReport): string {
 معلومات أساسية:
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
-اسم المقدم/المنظم: ${report.author_name || report.report_name}
+اسم المقدم/المنظم: ${report.report_name}
 مدة النشاط: ${report.activity_duration} ساعات
 عدد الحضور: ${report.attendees_count || 0}
 
@@ -154,7 +154,7 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     
     // Generate filename based on report name and date
     const date = new Date().toISOString().split('T')[0];
-    const filename = `تقرير-${report.author_name || report.report_name}-${date}.zip`;
+    const filename = `تقرير-${report.report_name}-${date}.zip`;
     
     // Download the zip file
     console.log('Downloading zip file:', filename);
