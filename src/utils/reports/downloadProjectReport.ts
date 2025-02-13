@@ -25,9 +25,9 @@ function formatRating(rating: number | null): string {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text with data:', report);
-  console.log('Activity feedback:', report.activity?.event_feedback);
+  console.log('Activity feedback:', report.activity?.activity_feedback);
   
-  const activityFeedback = report.activity?.event_feedback?.[0];
+  const activityFeedback = report.activity?.activity_feedback?.[0];
   
   let reportText = `
 تقرير النشاط
