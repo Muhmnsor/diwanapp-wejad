@@ -1,4 +1,5 @@
-import { PathCategoryCard } from "./PathCategoryCard";
+
+import { ProjectRatingCard } from "./ProjectRatingCard";
 import { RegistrationStatsSection } from "./cards/RegistrationStatsSection";
 import { ActivitiesStatsSection } from "./cards/ActivitiesStatsSection";
 import { AttendanceStatsSection } from "./cards/AttendanceStatsSection";
@@ -75,7 +76,7 @@ export const DashboardStatsContent = ({
         occupancyRate={occupancyRate}
       />
       
-      <PathCategoryCard eventId={event.id} />
+      <ProjectRatingCard projectId={event.id} />
 
       {activities && (
         <ActivitiesStatsSection
