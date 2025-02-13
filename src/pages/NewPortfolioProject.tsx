@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -37,21 +38,23 @@ const NewPortfolioProject = () => {
       console.log('Creating new portfolio project:', { portfolioId, title, description });
       
       // First create the project
-      const { data: projectData, error: projectError } = await supabase
+      const projectData = {
+        title,
+        description,
+        start_date: new Date().toISOString(),
+        end_date: new Date().toISOString(),
+        max_attendees: 0,
+        image_url: '/placeholder.svg',
+        event_type: 'in-person' as const,
+        beneficiary_type: 'both' as const,
+        event_path: 'environment' as const,
+        event_category: 'social' as const,
+        project_type: 'portfolio_project'
+      };
+
+      const { data: newProject, error: projectError } = await supabase
         .from('projects')
-        .insert([{
-          title,
-          description,
-          start_date: new Date(),
-          end_date: new Date(),
-          max_attendees: 0,
-          image_url: '/placeholder.svg',
-          event_type: 'in-person',
-          beneficiary_type: 'both',
-          event_path: 'environment',
-          event_category: 'social',
-          project_type: 'portfolio_project'
-        }])
+        .insert([projectData])
         .select()
         .single();
 
@@ -62,7 +65,7 @@ const NewPortfolioProject = () => {
         .from('portfolio_projects')
         .insert([{
           portfolio_id: portfolioId,
-          project_id: projectData.id
+          project_id: newProject.id
         }]);
 
       if (portfolioProjectError) throw portfolioProjectError;
