@@ -1,5 +1,4 @@
-
-import { Event } from "@/types/event";
+import { Event } from "@/store/eventStore";
 import { EventFormFields } from "@/components/events/EventFormFields";
 import { EditEventFormActions } from "@/components/events/form/EditEventFormActions";
 

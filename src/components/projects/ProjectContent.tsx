@@ -1,4 +1,3 @@
-
 import { Project } from "@/types/project";
 import { ProjectInfo } from "./ProjectInfo";
 import { ProjectDescription } from "./ProjectDescription";
@@ -7,7 +6,7 @@ import { EventRegisterButton } from "../events/EventRegisterButton";
 import { ProjectRegistrationDialog } from "./registration/ProjectRegistrationDialog";
 import { useState } from "react";
 import { getEventStatus } from "@/utils/eventUtils";
-import { Event } from "@/types/event";
+import { EventPathType, EventCategoryType } from "@/types/event";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,31 +31,29 @@ export const ProjectContent = ({ project }: ProjectContentProps) => {
     },
   });
 
-  // Convert project to event format for status check
-  const eventData: Event = {
+  // Convert project dates to event format for status check
+  const eventFormatData = {
     id: project.id,
     title: project.title,
-    description: project.description || "",
+    description: project.description,
     date: project.start_date,
     time: "00:00",
     location: "",
-    image_url: project.image_url,
-    attendees: registrations.length,
-    max_attendees: project.max_attendees,
     event_type: project.event_type,
-    price: project.price,
-    beneficiary_type: project.beneficiary_type,
-    registration_start_date: project.registration_start_date,
-    registration_end_date: project.registration_end_date,
+    price: project.price || 0,
+    max_attendees: project.max_attendees,
+    registrationStartDate: project.registration_start_date,
+    registrationEndDate: project.registration_end_date,
+    beneficiaryType: project.beneficiary_type,
     certificate_type: project.certificate_type || "none",
-    event_hours: null,
-    event_path: project.event_path,
-    event_category: project.event_category,
-    is_visible: project.is_visible,
-    registration_fields: project.registration_fields
+    event_hours: 0,
+    attendees: registrations.length,
+    imageUrl: project.image_url,
+    event_path: project.event_path as EventPathType,
+    event_category: project.event_category as EventCategoryType
   };
 
-  const status = getEventStatus(eventData);
+  const status = getEventStatus(eventFormatData);
   console.log('Project registration status:', status);
 
   return (

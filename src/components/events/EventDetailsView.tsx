@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { Event } from "@/types/event";
+import { Event } from "@/store/eventStore";
 import { EditEventDialog } from "./EditEventDialog";
 import { EventRegistrationDialog } from "./EventRegistrationDialog";
 import { useAuthStore } from "@/store/authStore";
@@ -14,7 +13,7 @@ interface EventDetailsViewProps {
   event: Event;
   isAdmin: boolean;
   onEdit: () => void;
-  onDelete: () => Promise<void>;
+  onDelete: () => void;
   onAddToCalendar: () => void;
   id: string;
 }

@@ -2,16 +2,16 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { Event } from "@/types/event";
+import { Event as CustomEvent } from "@/store/eventStore";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EditEventHeader } from "./EditEventHeader";
 import { EditEventFormContainer } from "./form/EditEventFormContainer";
 
 interface EditEventDialogProps {
-  event: Event;
+  event: CustomEvent;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (updatedEvent: Event) => void;
+  onSave: (updatedEvent: CustomEvent) => void;
 }
 
 export const EditEventDialog = ({ 
@@ -22,7 +22,7 @@ export const EditEventDialog = ({
 }: EditEventDialogProps) => {
   console.log('Event data in EditEventDialog:', event);
 
-  const handleSave = async (updatedEvent: Event) => {
+  const handleSave = async (updatedEvent: CustomEvent) => {
     await onSave(updatedEvent);
     onOpenChange(false);
   };

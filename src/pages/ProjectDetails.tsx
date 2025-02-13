@@ -7,7 +7,6 @@ import { Footer } from "@/components/layout/Footer";
 import { ProjectDetailsView } from "@/components/projects/ProjectDetailsView";
 import { useAuthStore } from "@/store/authStore";
 import { Project } from "@/types/project";
-import { EventType, BeneficiaryType, EventPathType, EventCategoryType } from "@/types/event";
 
 const ProjectDetails = () => {
   const [project, setProject] = useState<Project | null>(null);

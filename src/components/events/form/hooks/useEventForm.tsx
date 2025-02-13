@@ -7,7 +7,6 @@ import { toast } from "sonner";
 export const useEventForm = (eventId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Event>({
-    id: eventId || crypto.randomUUID(), // Generate a random ID if none provided
     title: "",
     description: "",
     date: "",
@@ -16,15 +15,15 @@ export const useEventForm = (eventId?: string) => {
     image_url: "",
     attendees: 0,
     max_attendees: 0,
-    event_type: "in-person" as EventType,
+    event_type: "in-person",
     price: null,
-    beneficiary_type: "both" as BeneficiaryType,
+    beneficiary_type: "both",
     registration_start_date: null,
     registration_end_date: null,
     certificate_type: "none",
     event_hours: null,
-    event_path: "environment" as EventPathType,
-    event_category: "social" as EventCategoryType,
+    event_path: "environment",
+    event_category: "social",
     registration_fields: {
       arabic_name: true,
       english_name: false,

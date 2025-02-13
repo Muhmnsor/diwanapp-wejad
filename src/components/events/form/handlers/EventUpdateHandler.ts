@@ -1,5 +1,5 @@
 
-import { Event } from "@/types/event";
+import { Event } from "@/store/eventStore";
 import { supabase } from "@/integrations/supabase/client";
 
 export const handleEventUpdate = async (formData: Event, eventId?: string) => {

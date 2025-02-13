@@ -1,5 +1,4 @@
 
-// Update the Event interface to include all required fields
 export type BeneficiaryType = 'men' | 'women' | 'both';
 export type EventType = 'online' | 'in-person';
 export type EventPathType = 'environment' | 'community' | 'content';
@@ -9,7 +8,7 @@ export type EventCategoryType =
   | 'spiritual' | 'cultural' | 'behavioral' | 'skill' | 'health' | 'diverse'; // for content
 
 export interface Event {
-  id: string;
+  id?: string;
   title: string;
   description: string;
   date: string;
@@ -32,7 +31,7 @@ export interface Event {
   is_visible?: boolean;
   is_project_activity?: boolean;
   project_id?: string;
-  registration_fields: {
+  registration_fields?: {
     arabic_name: boolean;
     email: boolean;
     phone: boolean;
