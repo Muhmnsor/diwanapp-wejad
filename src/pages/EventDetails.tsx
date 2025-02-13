@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Event } from "@/types/event";
+import { Event, EventType, BeneficiaryType, EventPathType, EventCategoryType } from "@/types/event";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { EventDetailsView } from "@/components/events/EventDetailsView";
@@ -35,15 +36,30 @@ const EventDetails = () => {
           .from("event_registration_fields")
           .select("*")
           .eq("event_id", id)
-          .single();
+          .maybeSingle();
 
         if (fieldsError && fieldsError.code !== 'PGRST116') { // Ignore not found error
           throw fieldsError;
         }
 
-        const eventWithFields: Event = {
+        // Cast and transform the data to match Event type
+        const typedEvent: Event = {
           ...eventData,
-          registration_fields: fieldsData || {
+          event_type: eventData.event_type as EventType,
+          beneficiary_type: eventData.beneficiary_type as BeneficiaryType,
+          event_path: eventData.event_path as EventPathType,
+          event_category: eventData.event_category as EventCategoryType,
+          registration_fields: fieldsData ? {
+            arabic_name: !!fieldsData.arabic_name,
+            english_name: !!fieldsData.english_name,
+            education_level: !!fieldsData.education_level,
+            birth_date: !!fieldsData.birth_date,
+            national_id: !!fieldsData.national_id,
+            email: !!fieldsData.email,
+            phone: !!fieldsData.phone,
+            gender: !!fieldsData.gender,
+            work_status: !!fieldsData.work_status,
+          } : {
             arabic_name: true,
             email: true,
             phone: true,
@@ -56,7 +72,7 @@ const EventDetails = () => {
           }
         };
 
-        setEvent(eventWithFields);
+        setEvent(typedEvent);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching event:", error);
@@ -159,7 +175,6 @@ const EventDetails = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onAddToCalendar={() => {}}
-          onRegister={() => {}}
           id={id}
         />
       </main>
