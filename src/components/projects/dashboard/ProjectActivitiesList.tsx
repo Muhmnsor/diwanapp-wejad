@@ -67,43 +67,46 @@ export const ProjectActivitiesList = ({
   };
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-lg border bg-white shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead className="font-bold">النشاط</TableHead>
-            <TableHead className="font-bold">التاريخ</TableHead>
-            <TableHead className="font-bold">الوقت</TableHead>
-            <TableHead className="font-bold">المكان</TableHead>
-            <TableHead className="font-bold">ساعات النشاط</TableHead>
-            <TableHead className="font-bold text-center">الإجراءات</TableHead>
+          <TableRow className="bg-muted/50">
+            <TableHead className="font-bold text-primary">النشاط</TableHead>
+            <TableHead className="font-bold text-primary">التاريخ</TableHead>
+            <TableHead className="font-bold text-primary">الوقت</TableHead>
+            <TableHead className="font-bold text-primary">المكان</TableHead>
+            <TableHead className="font-bold text-primary">ساعات النشاط</TableHead>
+            <TableHead className="font-bold text-primary text-center">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {projectActivities.map((activity) => (
-            <TableRow key={activity.id}>
-              <TableCell className="font-medium">{activity.title}</TableCell>
-              <TableCell>{activity.date}</TableCell>
-              <TableCell>{activity.time}</TableCell>
-              <TableCell>{activity.location}</TableCell>
-              <TableCell>{activity.event_hours}</TableCell>
+            <TableRow 
+              key={activity.id}
+              className="transition-colors hover:bg-muted/30"
+            >
+              <TableCell className="font-medium text-primary/80">{activity.title}</TableCell>
+              <TableCell className="text-gray-600">{activity.date}</TableCell>
+              <TableCell className="text-gray-600">{activity.time}</TableCell>
+              <TableCell className="text-gray-600">{activity.location}</TableCell>
+              <TableCell className="text-gray-600">{activity.event_hours}</TableCell>
               <TableCell>
-                <div className="flex justify-center gap-2">
+                <div className="flex justify-center gap-3">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
                     onClick={() => handleEditClick(activity)}
                     disabled={isLoading}
-                    className="h-8 w-8"
+                    className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
                     onClick={() => handleDeleteClick(activity)}
                     disabled={isLoading}
-                    className="h-8 w-8"
+                    className="h-8 w-8 hover:bg-red-100 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
