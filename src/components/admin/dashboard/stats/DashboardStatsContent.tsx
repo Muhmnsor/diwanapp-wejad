@@ -69,39 +69,37 @@ export const DashboardStatsContent = ({
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <RegistrationStatsSection
-          registrationCount={registrationCount}
-          remainingSeats={remainingSeats}
-          occupancyRate={occupancyRate}
-        />
-        
-        <ProjectRatingCard projectId={event.id} />
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <RegistrationStatsSection
+        registrationCount={registrationCount}
+        remainingSeats={remainingSeats}
+        occupancyRate={occupancyRate}
+      />
+      
+      <ProjectRatingCard projectId={event.id} />
 
-        {activities && (
-          <ActivitiesStatsSection
-            activities={{
-              total: activities.total,
-              completed: activities.completed
-            }}
-            averageAttendance={activities.averageAttendance}
-          />
-        )}
-      </div>
+      {activities && (
+        <ActivitiesStatsSection
+          activities={{
+            total: activities.total,
+            completed: activities.completed
+          }}
+          averageAttendance={activities.averageAttendance}
+        />
+      )}
       
       {activities && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <AttendanceStatsSection
-            highestAttendance={activities.highestAttendance}
-            lowestAttendance={activities.lowestAttendance}
-          />
-          
-          <RatingStatsSection
-            highestRated={activities.highestRated}
-            lowestRated={activities.lowestRated}
-          />
-        </div>
+        <AttendanceStatsSection
+          highestAttendance={activities.highestAttendance}
+          lowestAttendance={activities.lowestAttendance}
+        />
+      )}
+      
+      {activities && (
+        <RatingStatsSection
+          highestRated={activities.highestRated}
+          lowestRated={activities.lowestRated}
+        />
       )}
     </div>
   );
