@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
 import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
@@ -7,7 +8,7 @@ import { DashboardActivitiesTab } from "@/components/admin/dashboard/tabs/Dashbo
 import { DashboardFeedbackTab } from "@/components/admin/dashboard/tabs/DashboardFeedbackTab";
 import { DashboardReportsTab } from "@/components/projects/dashboard/reports/tabs/DashboardReportsTab";
 import { useProjectDashboard } from "@/hooks/useProjectDashboard";
-import { ProjectRatingCard } from "./stats/ProjectRatingCard";
+import { ProjectActivitiesRatingCard } from "./stats/ProjectActivitiesRatingCard";
 
 interface ProjectDashboardTabsProps {
   project: {
@@ -47,7 +48,7 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           activities={metrics.activitiesStats}
         />
         <div className="mt-4">
-          <ProjectRatingCard projectId={project.id} />
+          <ProjectActivitiesRatingCard projectId={project.id} />
         </div>
       </TabsContent>
 
