@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
 import { ProjectPreparationTab } from "@/components/admin/dashboard/preparation/ProjectPreparationTab";
@@ -5,6 +6,7 @@ import { ProjectTabsList } from "@/components/admin/dashboard/tabs/ProjectTabsLi
 import { DashboardOverviewTab } from "@/components/admin/dashboard/tabs/DashboardOverviewTab";
 import { DashboardActivitiesTab } from "@/components/admin/dashboard/tabs/DashboardActivitiesTab";
 import { DashboardFeedbackTab } from "@/components/admin/dashboard/tabs/DashboardFeedbackTab";
+import { DashboardReportsTab } from "@/components/projects/dashboard/reports/tabs/DashboardReportsTab";
 import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 interface ProjectDashboardTabsProps {
@@ -63,6 +65,10 @@ export const ProjectDashboardTabs = ({ project }: ProjectDashboardTabsProps) => 
           projectId={project.id}
           activities={projectActivities}
         />
+      </TabsContent>
+
+      <TabsContent value="reports" className="mt-6">
+        <DashboardReportsTab projectId={project.id} />
       </TabsContent>
     </Tabs>
   );
