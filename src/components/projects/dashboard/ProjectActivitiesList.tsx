@@ -71,13 +71,13 @@ export const ProjectActivitiesList = ({
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead className="font-bold text-primary">النشاط</TableHead>
-            <TableHead className="font-bold text-primary">التاريخ</TableHead>
-            <TableHead className="font-bold text-primary">الوقت</TableHead>
-            <TableHead className="font-bold text-primary">المكان</TableHead>
-            <TableHead className="font-bold text-primary">رابط الموقع</TableHead>
-            <TableHead className="font-bold text-primary">الاحتياجات الخاصة</TableHead>
-            <TableHead className="font-bold text-primary">ساعات النشاط</TableHead>
+            <TableHead className="font-bold text-primary text-center">النشاط</TableHead>
+            <TableHead className="font-bold text-primary text-center">التاريخ</TableHead>
+            <TableHead className="font-bold text-primary text-center">الوقت</TableHead>
+            <TableHead className="font-bold text-primary text-center">المكان</TableHead>
+            <TableHead className="font-bold text-primary text-center">رابط الموقع</TableHead>
+            <TableHead className="font-bold text-primary text-center">الاحتياجات الخاصة</TableHead>
+            <TableHead className="font-bold text-primary text-center">ساعات النشاط</TableHead>
             <TableHead className="font-bold text-primary text-center">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
@@ -87,17 +87,17 @@ export const ProjectActivitiesList = ({
               key={activity.id}
               className="transition-colors hover:bg-muted/30"
             >
-              <TableCell className="font-medium text-primary/80">{activity.title}</TableCell>
-              <TableCell className="text-gray-600">{activity.date}</TableCell>
-              <TableCell className="text-gray-600">{activity.time}</TableCell>
-              <TableCell className="text-gray-600">{activity.location}</TableCell>
-              <TableCell className="text-gray-600">
+              <TableCell className="font-medium text-primary/80 text-center">{activity.title}</TableCell>
+              <TableCell className="text-gray-600 text-center">{activity.date}</TableCell>
+              <TableCell className="text-gray-600 text-center">{activity.time}</TableCell>
+              <TableCell className="text-gray-600 text-center">{activity.location}</TableCell>
+              <TableCell className="text-gray-600 text-center">
                 {activity.location_url ? (
                   <a
                     href={activity.location_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-primary hover:underline"
+                    className="flex items-center gap-1 text-primary hover:underline justify-center"
                   >
                     <Link className="h-4 w-4" />
                     رابط الموقع
@@ -106,10 +106,10 @@ export const ProjectActivitiesList = ({
                   "-"
                 )}
               </TableCell>
-              <TableCell className="text-gray-600">
+              <TableCell className="text-gray-600 text-center">
                 {activity.special_requirements || "-"}
               </TableCell>
-              <TableCell className="text-gray-600">{activity.event_hours}</TableCell>
+              <TableCell className="text-gray-600 text-center">{activity.event_hours}</TableCell>
               <TableCell>
                 <div className="flex justify-center gap-3">
                   <Button
