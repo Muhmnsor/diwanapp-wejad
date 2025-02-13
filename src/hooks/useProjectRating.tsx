@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,18 +8,12 @@ export const useProjectRating = (projectId: string) => {
       console.log('Fetching ratings for project:', projectId);
       
       // Get all activities for this project
-      const { data: projectActivities, error: activitiesError } = await supabase
+      const { data: activities, error: activitiesError } = await supabase
         .from('events')
         .select(`
           id,
           title,
           event_feedback (
-            overall_rating,
-            content_rating,
-            organization_rating,
-            presenter_rating
-          ),
-          activity_feedback (
             overall_rating,
             content_rating,
             organization_rating,
@@ -35,9 +28,9 @@ export const useProjectRating = (projectId: string) => {
         throw activitiesError;
       }
 
-      console.log('Found activities:', projectActivities?.length);
+      console.log('Found activities:', activities?.length);
 
-      if (!projectActivities?.length) {
+      if (!activities?.length) {
         console.log('No activities found for project');
         return 0;
       }
@@ -45,19 +38,13 @@ export const useProjectRating = (projectId: string) => {
       let totalRating = 0;
       let totalFeedbackCount = 0;
 
-      projectActivities.forEach(activity => {
-        // Check both feedback types
-        const feedbacks = [
-          ...(activity.event_feedback || []),
-          ...(activity.activity_feedback || [])
-        ];
-
-        if (!feedbacks.length) {
+      activities.forEach(activity => {
+        if (!activity.event_feedback?.length) {
           console.log(`No feedback for activity: ${activity.title}`);
           return;
         }
 
-        feedbacks.forEach(feedback => {
+        activity.event_feedback.forEach(feedback => {
           const ratings = [
             feedback.overall_rating,
             feedback.content_rating,
@@ -83,7 +70,7 @@ export const useProjectRating = (projectId: string) => {
         finalRating: finalRating.toFixed(1)
       });
 
-      return Number(finalRating.toFixed(1));
+      return finalRating;
     }
   });
 };
