@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { ReportForm } from "../ReportForm";
 
 interface DashboardReportsTabProps {
   projectId: string;
@@ -23,7 +22,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const { data: reports = [], isLoading, refetch } = useQuery({
+  const { data: reports = [], isLoading } = useQuery({
     queryKey: ['project-reports', projectId],
     queryFn: async () => {
       console.log("Fetching reports for project:", projectId);
@@ -65,20 +64,6 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
           إضافة تقرير
         </Button>
       </div>
-
-      {isFormOpen && (
-        <ReportForm 
-          projectId={projectId}
-          onSuccess={() => {
-            setIsFormOpen(false);
-            refetch();
-            toast({
-              title: "تم إضافة التقرير بنجاح",
-              variant: "default",
-            });
-          }}
-        />
-      )}
 
       <div className="rounded-md border">
         <Table>
