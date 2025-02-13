@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CreateEventFormContainer } from "@/components/events/form/CreateEventFormContainer";
 import { Separator } from "@/components/ui/separator";
+import { Event } from "@/types/event";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -39,24 +41,47 @@ const EventDetails = () => {
         throw error;
       }
 
-      return data;
+      if (!data) return null;
+
+      // Transform the data to match the Event type
+      const eventData: Event = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        time: data.time,
+        location: data.location,
+        location_url: data.location_url,
+        image_url: data.image_url,
+        attendees: data.attendees || 0,
+        max_attendees: data.max_attendees,
+        event_type: data.event_type as Event['event_type'],
+        price: data.price,
+        beneficiary_type: data.beneficiary_type as Event['beneficiary_type'],
+        registration_start_date: data.registration_start_date,
+        registration_end_date: data.registration_end_date,
+        certificate_type: data.certificate_type,
+        event_hours: data.event_hours,
+        event_path: data.event_path as Event['event_path'],
+        event_category: data.event_category as Event['event_category'],
+        registration_fields: data.registration_fields
+      };
+
+      return eventData;
     },
-    enabled: !isCreatePage // Don't run the query if we're on create page
+    enabled: !isCreatePage
   });
 
   const handleEdit = () => {
-    // Handle edit functionality
     console.log('Edit event:', id);
   };
 
   const handleDelete = () => {
-    // Handle delete functionality
     console.log('Delete event:', id);
     navigate('/');
   };
 
   const handleAddToCalendar = () => {
-    // Handle add to calendar functionality
     console.log('Add to calendar:', id);
     toast.success('تمت إضافة الفعالية إلى التقويم');
   };

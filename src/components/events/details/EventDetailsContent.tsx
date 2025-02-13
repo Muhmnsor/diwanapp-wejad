@@ -1,4 +1,5 @@
-import { EventType } from "@/types/event";
+
+import { Event } from "@/types/event";
 import { EventInfo } from "../EventInfo";
 import { EventDescription } from "../EventDescription";
 import { EventRegisterButton } from "../EventRegisterButton";
@@ -6,23 +7,20 @@ import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect, useState } from "react";
 
 interface EventDetailsContentProps {
-  event: EventType;
+  event: Event;
   onRegister: () => void;
 }
 
 export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentProps) => {
-  const [eventStatus, setEventStatus] = useState(() => getEventStatus({
-    ...event,
-    max_attendees: event.max_attendees
-  }));
+  const [eventStatus, setEventStatus] = useState(() => getEventStatus(event));
 
   useEffect(() => {
     console.log('Event data in details content:', {
       title: event.title,
       date: event.date,
       registrationDates: {
-        start: event.registrationStartDate,
-        end: event.registrationEndDate
+        start: event.registration_start_date,
+        end: event.registration_end_date
       },
       attendees: event.attendees,
       maxAttendees: event.max_attendees,
@@ -30,25 +28,19 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
       eventCategory: event.event_category
     });
 
-    const newStatus = getEventStatus({
-      ...event,
-      max_attendees: event.max_attendees
-    });
+    const newStatus = getEventStatus(event);
     console.log('Event status updated to:', newStatus);
     setEventStatus(newStatus);
   }, [
     event.date, 
-    event.registrationStartDate, 
-    event.registrationEndDate,
+    event.registration_start_date, 
+    event.registration_end_date,
     event.attendees,
     event.max_attendees
   ]);
 
   const handleRegister = () => {
-    const status = getEventStatus({
-      ...event,
-      max_attendees: event.max_attendees
-    });
+    const status = getEventStatus(event);
     console.log('Attempting registration with status:', status);
     
     if (status === 'available') {
@@ -69,11 +61,11 @@ export const EventDetailsContent = ({ event, onRegister }: EventDetailsContentPr
           location_url={event.location_url}
           attendees={event.attendees}
           maxAttendees={event.max_attendees}
-          eventType={event.eventType}
+          eventType={event.event_type}
           price={event.price}
-          beneficiaryType={event.beneficiaryType}
-          certificateType={event.certificateType}
-          eventHours={event.eventHours}
+          beneficiaryType={event.beneficiary_type}
+          certificateType={event.certificate_type}
+          eventHours={event.event_hours}
           eventPath={event.event_path}
           eventCategory={event.event_category}
           showBadges={true}
