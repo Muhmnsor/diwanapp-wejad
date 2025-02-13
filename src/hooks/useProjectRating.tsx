@@ -68,6 +68,8 @@ export const useProjectRating = (projectId: string) => {
       console.log('Final project rating:', finalRating);
 
       return finalRating;
-    }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!projectId
   });
 };
