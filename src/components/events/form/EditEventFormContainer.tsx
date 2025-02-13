@@ -1,9 +1,10 @@
-import { Event } from "@/store/eventStore";
+
+import { Event } from "@/types/event";
 import { EventFormFields } from "../EventFormFields";
 import { handleImageUpload } from "./EventImageUpload";
+import { handleEventUpdate } from "./handlers/EventUpdateHandler";
 import { toast } from "sonner";
 import { useEventForm } from "./hooks/useEventForm";
-import { handleEventUpdate } from "./handlers/EventUpdateHandler";
 import { EditEventFormActions } from "./EditEventFormActions";
 
 interface EditEventFormContainerProps {

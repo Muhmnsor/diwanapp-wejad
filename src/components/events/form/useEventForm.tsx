@@ -1,133 +1,94 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { useState, useEffect } from "react";
+import { Event } from "@/types/event";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Event } from "@/store/eventStore";
-import { useQueryClient } from "@tanstack/react-query";
 
-export const useEventForm = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [isUploading, setIsUploading] = useState(false);
-  
+export const useEventForm = (eventId?: string) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Event>({
+    id: eventId || crypto.randomUUID(),
     title: "",
     description: "",
     date: "",
     time: "",
     location: "",
-    certificate_type: "none",
-    certificateType: "none",
-    event_hours: 0,
-    eventHours: 0,
-    price: "free",
-    max_attendees: 0,
-    beneficiaryType: "both",
-    event_type: "in-person",
-    eventType: "in-person",
-    attendees: 0,
-    imageUrl: "",
     image_url: "",
-    registrationStartDate: "",
-    registrationEndDate: "",
-    registration_start_date: "",
-    registration_end_date: "",
+    attendees: 0,
+    max_attendees: 0,
+    event_type: "in-person",
+    price: null,
+    beneficiary_type: "both",
+    registration_start_date: null,
+    registration_end_date: null,
+    certificate_type: "none",
+    event_hours: null,
     event_path: "environment",
     event_category: "social",
     registration_fields: {
       arabic_name: true,
-      email: true,
-      phone: true,
       english_name: false,
       education_level: false,
       birth_date: false,
       national_id: false,
+      email: true,
+      phone: true,
       gender: false,
-      work_status: false
+      work_status: false,
     }
   });
 
-  const handleImageChange = async (file: File | null) => {
-    if (file) {
-      setIsUploading(true);
-      try {
-        const fileName = `event-images/${Date.now()}.${file.name.split('.').pop()}`;
-        const { error: uploadError } = await supabase.storage
-          .from('event-images')
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('event-images')
-          .getPublicUrl(fileName);
-
-        setFormData(prev => ({
-          ...prev,
-          imageUrl: publicUrl,
-          image_url: publicUrl
-        }));
-
-        toast.success("تم رفع الصورة بنجاح");
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        toast.error("حدث خطأ أثناء رفع الصورة");
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUploading(true);
-    
-    try {
-      console.log('Creating event with data:', formData);
+  useEffect(() => {
+    const fetchEventData = async () => {
+      if (!eventId) return;
       
-      const { data: eventData, error: eventError } = await supabase
-        .from("events")
-        .insert([{
-          title: formData.title,
-          description: formData.description,
-          date: formData.date,
-          time: formData.time,
-          location: formData.location,
-          certificate_type: formData.certificateType,
-          event_hours: formData.eventHours,
-          price: formData.price === "free" ? null : formData.price,
-          max_attendees: formData.max_attendees,
-          beneficiary_type: formData.beneficiaryType,
-          event_type: formData.eventType,
-          image_url: formData.image_url || formData.imageUrl,
-          registration_start_date: formData.registrationStartDate || formData.registration_start_date,
-          registration_end_date: formData.registrationEndDate || formData.registration_end_date,
-          event_path: formData.event_path,
-          event_category: formData.event_category,
-          location_url: formData.location_url
-        }])
-        .select()
-        .single();
+      try {
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single();
 
-      if (eventError) throw eventError;
+        if (eventError) throw eventError;
 
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
+        const { data: fieldsData, error: fieldsError } = await supabase
+          .from('event_registration_fields')
+          .select('*')
+          .eq('event_id', eventId)
+          .maybeSingle();
 
-      toast.success("تم إنشاء الفعالية بنجاح");
-      navigate("/");
-    } catch (error) {
-      console.error('Error creating event:', error);
-      toast.error("حدث خطأ أثناء إنشاء الفعالية");
-    } finally {
-      setIsUploading(false);
-    }
-  };
+        if (fieldsError) throw fieldsError;
+
+        if (eventData) {
+          setFormData(prev => ({
+            ...prev,
+            ...eventData,
+            registration_fields: fieldsData ? {
+              arabic_name: fieldsData.arabic_name,
+              english_name: fieldsData.english_name,
+              education_level: fieldsData.education_level,
+              birth_date: fieldsData.birth_date,
+              national_id: fieldsData.national_id,
+              email: fieldsData.email,
+              phone: fieldsData.phone,
+              gender: fieldsData.gender,
+              work_status: fieldsData.work_status,
+            } : prev.registration_fields
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching event data:', error);
+        toast.error("حدث خطأ أثناء تحميل بيانات الفعالية");
+      }
+    };
+
+    fetchEventData();
+  }, [eventId]);
 
   return {
     formData,
     setFormData,
-    isUploading,
-    handleImageChange,
-    handleSubmit
+    isLoading,
+    setIsLoading
   };
 };

@@ -1,6 +1,6 @@
+
+import { Event } from "@/types/event";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Event } from "@/store/eventStore";
-import { BeneficiaryType } from "@/types/event";
 
 interface EventTypeFieldsProps {
   formData: Event;
@@ -9,13 +9,13 @@ interface EventTypeFieldsProps {
 
 export const EventTypeFields = ({ formData, setFormData }: EventTypeFieldsProps) => {
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label className="text-sm font-medium block mb-1.5">نوع الفعالية</label>
         <Select
-          value={formData.eventType}
-          onValueChange={(value: "online" | "in-person") => 
-            setFormData({ ...formData, eventType: value })
+          value={formData.event_type}
+          onValueChange={(value: 'online' | 'in-person') => 
+            setFormData({ ...formData, event_type: value })
           }
         >
           <SelectTrigger className="text-right">
@@ -27,12 +27,13 @@ export const EventTypeFields = ({ formData, setFormData }: EventTypeFieldsProps)
           </SelectContent>
         </Select>
       </div>
+
       <div>
         <label className="text-sm font-medium block mb-1.5">نوع المستفيدين</label>
         <Select
-          value={formData.beneficiaryType}
-          onValueChange={(value: BeneficiaryType) => 
-            setFormData({ ...formData, beneficiaryType: value })
+          value={formData.beneficiary_type}
+          onValueChange={(value: 'men' | 'women' | 'both') => 
+            setFormData({ ...formData, beneficiary_type: value })
           }
         >
           <SelectTrigger className="text-right">
@@ -45,6 +46,6 @@ export const EventTypeFields = ({ formData, setFormData }: EventTypeFieldsProps)
           </SelectContent>
         </Select>
       </div>
-    </>
+    </div>
   );
 };
