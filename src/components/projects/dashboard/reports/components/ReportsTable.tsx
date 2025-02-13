@@ -65,7 +65,13 @@ export const ReportsTable = ({
                   {report.events?.title || 'النشاط غير موجود'}
                 </TableCell>
                 <TableCell className="text-center">{report.attendees_count}</TableCell>
-                <TableCell className="text-center">{formatDate(report.created_at)}</TableCell>
+                <TableCell className="text-center">
+                  {new Date(report.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                  })}
+                </TableCell>
                 <TableCell className="text-center">
                   <ProjectReportActions
                     onEdit={() => onEdit(report)}
