@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,7 +13,7 @@ export const useProjectRating = (projectId: string) => {
         .select(`
           id,
           title,
-          activity_feedback (
+          event_feedback (
             overall_rating,
             content_rating,
             organization_rating,
@@ -40,12 +39,12 @@ export const useProjectRating = (projectId: string) => {
       let totalFeedbackCount = 0;
 
       activities.forEach(activity => {
-        if (!activity.activity_feedback?.length) {
+        if (!activity.event_feedback?.length) {
           console.log(`No feedback for activity: ${activity.title}`);
           return;
         }
 
-        activity.activity_feedback.forEach(feedback => {
+        activity.event_feedback.forEach(feedback => {
           const ratings = [
             feedback.overall_rating,
             feedback.content_rating,
