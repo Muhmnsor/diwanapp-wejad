@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Link } from "lucide-react";
 import { EditActivityDialog } from "../activities/dialogs/EditActivityDialog";
 import { DeleteActivityDialog } from "../activities/dialogs/DeleteActivityDialog";
 import { useState } from "react";
@@ -75,6 +75,8 @@ export const ProjectActivitiesList = ({
             <TableHead className="font-bold text-primary">التاريخ</TableHead>
             <TableHead className="font-bold text-primary">الوقت</TableHead>
             <TableHead className="font-bold text-primary">المكان</TableHead>
+            <TableHead className="font-bold text-primary">رابط الموقع</TableHead>
+            <TableHead className="font-bold text-primary">الاحتياجات الخاصة</TableHead>
             <TableHead className="font-bold text-primary">ساعات النشاط</TableHead>
             <TableHead className="font-bold text-primary text-center">الإجراءات</TableHead>
           </TableRow>
@@ -89,6 +91,24 @@ export const ProjectActivitiesList = ({
               <TableCell className="text-gray-600">{activity.date}</TableCell>
               <TableCell className="text-gray-600">{activity.time}</TableCell>
               <TableCell className="text-gray-600">{activity.location}</TableCell>
+              <TableCell className="text-gray-600">
+                {activity.location_url ? (
+                  <a
+                    href={activity.location_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <Link className="h-4 w-4" />
+                    رابط الموقع
+                  </a>
+                ) : (
+                  "-"
+                )}
+              </TableCell>
+              <TableCell className="text-gray-600">
+                {activity.special_requirements || "-"}
+              </TableCell>
               <TableCell className="text-gray-600">{activity.event_hours}</TableCell>
               <TableCell>
                 <div className="flex justify-center gap-3">
