@@ -32,7 +32,6 @@ function formatRating(rating: number | null): string {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text with data:', report);
-  const activityRating = report.activity?.activity_feedback?.[0];
   
   let reportText = `
 تقرير النشاط
@@ -61,25 +60,24 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  if (activityRating) {
-    console.log('Activity rating found:', activityRating);
+  if (report.activity?.activity_feedback && report.activity.activity_feedback.length > 0) {
+    const feedback = report.activity.activity_feedback[0];
     reportText += `
-التقييم العام: ${formatRating(activityRating.overall_rating)}
-تقييم المحتوى: ${formatRating(activityRating.content_rating)}
-تقييم التنظيم: ${formatRating(activityRating.organization_rating)}
-تقييم المقدم: ${formatRating(activityRating.presenter_rating)}
+التقييم العام: ${formatRating(feedback.overall_rating)}
+تقييم المحتوى: ${formatRating(feedback.content_rating)}
+تقييم التنظيم: ${formatRating(feedback.organization_rating)}
+تقييم المقدم: ${formatRating(feedback.presenter_rating)}
 `;
   } else {
-    console.log('No activity rating found');
     reportText += 'لم يتم تقييم النشاط بعد\n';
   }
 
   reportText += `
 الصور المرفقة:
-------------\n`;
+------------
+`;
 
   if (report.photos && report.photos.length > 0) {
-    console.log('Processing photos:', report.photos);
     report.photos.forEach((photo, index) => {
       if (photo && photo.url) {
         reportText += `${index + 1}. ${photo.description || 'صورة بدون وصف'}\n`;
@@ -119,7 +117,7 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     
     // Add report text file
     const reportContent = generateReportText(report);
-    zip.file('التقرير.txt', reportContent);
+    zip.file('التقرير.txt', reportContent, { binary: false });
     
     // Create images folder
     const imagesFolder = zip.folder('الصور');
@@ -140,7 +138,6 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
             imagesFolder.file(fileName, imageBlob);
           } catch (error) {
             console.error(`Failed to fetch image ${index + 1}:`, error);
-            throw error;
           }
         }
       });
