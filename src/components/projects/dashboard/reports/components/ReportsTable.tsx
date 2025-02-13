@@ -30,6 +30,27 @@ export const ReportsTable = ({
   selectedReport,
   formatDate,
 }: ReportsTableProps) => {
+  // دالة مساعدة لحساب عدد الحضور
+  const getAttendeesCount = (attendeesCount: any): number => {
+    try {
+      if (!attendeesCount) return 0;
+      if (typeof attendeesCount === 'number') return attendeesCount;
+      if (typeof attendeesCount === 'string') {
+        if (attendeesCount.includes('[') || attendeesCount.includes('{')) {
+          // إذا كانت القيمة مصفوفة من الكائنات
+          const attendees = attendeesCount.split('},{').length;
+          return attendees;
+        }
+        const parsed = parseInt(attendeesCount);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error parsing attendees count:', error);
+      return 0;
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -65,7 +86,7 @@ export const ReportsTable = ({
                   {report.events?.title || 'النشاط غير موجود'}
                 </TableCell>
                 <TableCell className="text-center">
-                  {report.attendees_count ? parseInt(report.attendees_count) : 0}
+                  {getAttendeesCount(report.attendees_count)}
                 </TableCell>
                 <TableCell className="text-center">
                   {new Date(report.created_at).toLocaleDateString('en-US', {

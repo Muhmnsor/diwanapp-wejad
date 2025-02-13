@@ -1,4 +1,3 @@
-
 import { saveAs } from 'file-saver';
 import { ProjectReport } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -44,6 +43,26 @@ function formatRating(rating: number | null): string {
   return `${rating} من 5`;
 }
 
+const getAttendeesCount = (attendeesCount: any): number => {
+  try {
+    if (!attendeesCount) return 0;
+    if (typeof attendeesCount === 'number') return attendeesCount;
+    if (typeof attendeesCount === 'string') {
+      if (attendeesCount.includes('[') || attendeesCount.includes('{')) {
+        // إذا كانت القيمة مصفوفة من الكائنات
+        const attendees = attendeesCount.split('},{').length;
+        return attendees;
+      }
+      const parsed = parseInt(attendeesCount);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  } catch (error) {
+    console.error('Error parsing attendees count:', error);
+    return 0;
+  }
+};
+
 function generateReportText(report: ProjectReport): string {
   let reportText = `
 تقرير النشاط
@@ -54,7 +73,7 @@ function generateReportText(report: ProjectReport): string {
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
 مدة النشاط: ${report.activity_duration} ساعات
-عدد الحضور: ${report.attendees_count ? parseInt(report.attendees_count) : 0}
+عدد الحضور: ${getAttendeesCount(report.attendees_count)}
 
 تفاصيل النشاط:
 --------------
