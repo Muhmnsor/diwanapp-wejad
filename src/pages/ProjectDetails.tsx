@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,9 +7,10 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectDetailsView } from "@/components/projects/ProjectDetailsView";
 import { useAuthStore } from "@/store/authStore";
+import { Project } from "@/types/project";
 
 const ProjectDetails = () => {
-  const [project, setProject] = useState<any>(null);
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { id } = useParams();
@@ -24,11 +26,14 @@ const ProjectDetails = () => {
         }
 
         console.log("Fetching project with ID:", id);
-        const { data, error: fetchError } = await supabase
+        const { data: projectData, error: fetchError } = await supabase
           .from("projects")
-          .select("*")
+          .select(`
+            *,
+            events (*)
+          `)
           .eq("id", id)
-          .maybeSingle();
+          .single();
 
         if (fetchError) {
           console.error("Error fetching project:", fetchError);
@@ -36,14 +41,14 @@ const ProjectDetails = () => {
           return;
         }
 
-        if (!data) {
+        if (!projectData) {
           console.log("No project found with ID:", id);
           setError("المشروع غير موجود");
           return;
         }
 
-        console.log("Fetched project:", data);
-        setProject(data);
+        console.log("Fetched project:", projectData);
+        setProject(projectData);
       } catch (err) {
         console.error("Error in fetchProject:", err);
         setError("حدث خطأ غير متوقع");
@@ -67,9 +72,9 @@ const ProjectDetails = () => {
     if (!confirmed) return;
 
     try {
-      // First, delete related project_events
+      // First, delete related project events
       const { error: eventsError } = await supabase
-        .from("project_events")
+        .from("events")
         .delete()
         .eq("project_id", id);
 
