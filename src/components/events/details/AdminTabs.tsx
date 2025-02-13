@@ -1,7 +1,8 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventContent } from "../EventContent";
 import { EventDashboard } from "@/components/admin/EventDashboard";
-import { Event } from "@/store/eventStore";
+import { Event } from "@/types/event";
 
 interface AdminTabsProps {
   event: Event;

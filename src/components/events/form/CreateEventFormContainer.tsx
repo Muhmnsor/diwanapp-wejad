@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Event } from "@/store/eventStore";
+import { Event } from "@/types/event";
 import { EventFormFields } from "../EventFormFields";
 import { handleImageUpload } from "./EventImageUpload";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +74,7 @@ export const CreateEventFormContainer = () => {
           location: formData.location,
           image_url: formData.image_url,
           event_type: formData.event_type,
-          price: typeof formData.price === 'string' ? (formData.price === 'free' ? null : Number(formData.price)) : formData.price,
+          price: formData.price,
           max_attendees: formData.max_attendees,
           beneficiary_type: formData.beneficiary_type,
           certificate_type: formData.certificate_type,
