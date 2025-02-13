@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -34,10 +35,10 @@ export const ReportsTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="text-right">اسم التقرير</TableHead>
-            <TableHead className="text-right">النشاط</TableHead>
-            <TableHead className="text-right">عدد الحضور</TableHead>
-            <TableHead className="text-right">تاريخ الإنشاء</TableHead>
+            <TableHead className="text-center">اسم التقرير</TableHead>
+            <TableHead className="text-center">النشاط</TableHead>
+            <TableHead className="text-center">عدد الحضور</TableHead>
+            <TableHead className="text-center">تاريخ الإنشاء</TableHead>
             <TableHead className="text-center">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
@@ -57,15 +58,15 @@ export const ReportsTable = ({
           ) : (
             reports.map((report: any) => (
               <TableRow key={report.id}>
-                <TableCell className="font-medium">
+                <TableCell className="text-center font-medium">
                   {report.report_name}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                   {report.events?.title || 'النشاط غير موجود'}
                 </TableCell>
-                <TableCell>{report.attendees_count}</TableCell>
-                <TableCell>{formatDate(report.created_at)}</TableCell>
-                <TableCell>
+                <TableCell className="text-center">{report.attendees_count}</TableCell>
+                <TableCell className="text-center">{formatDate(report.created_at)}</TableCell>
+                <TableCell className="text-center">
                   <ProjectReportActions
                     onEdit={() => onEdit(report)}
                     onDelete={() => onDelete(report)}
