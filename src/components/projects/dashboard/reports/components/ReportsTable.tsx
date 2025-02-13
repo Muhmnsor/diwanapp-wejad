@@ -64,7 +64,9 @@ export const ReportsTable = ({
                 <TableCell className="text-center">
                   {report.events?.title || 'النشاط غير موجود'}
                 </TableCell>
-                <TableCell className="text-center">{report.attendees_count}</TableCell>
+                <TableCell className="text-center">
+                  {report.attendees_count ? parseInt(report.attendees_count) : 0}
+                </TableCell>
                 <TableCell className="text-center">
                   {new Date(report.created_at).toLocaleDateString('en-US', {
                     year: 'numeric',

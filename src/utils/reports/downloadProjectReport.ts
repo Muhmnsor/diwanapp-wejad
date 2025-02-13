@@ -54,7 +54,7 @@ function generateReportText(report: ProjectReport): string {
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
 مدة النشاط: ${report.activity_duration} ساعات
-عدد الحضور: ${report.attendees_count || 0}
+عدد الحضور: ${report.attendees_count ? parseInt(report.attendees_count) : 0}
 
 تفاصيل النشاط:
 --------------
