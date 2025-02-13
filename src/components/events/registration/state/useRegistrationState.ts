@@ -53,6 +53,7 @@ export const useRegistrationState = (onSubmit: () => void) => {
     setErrors({});
 
     try {
+      const registrationNumber = `REG-${Date.now()}`;
       const registrationData = {
         event_id: eventId,
         email: formData.email,
@@ -63,12 +64,13 @@ export const useRegistrationState = (onSubmit: () => void) => {
         birth_date: formData.birthDate || null,
         national_id: formData.nationalId || null,
         gender: formData.gender || null,
-        work_status: formData.workStatus || null
+        work_status: formData.workStatus || null,
+        registration_number: registrationNumber
       };
 
       const { data: registrationResult, error: registrationError } = await supabase
         .from('registrations')
-        .insert([registrationData])
+        .insert(registrationData)
         .select()
         .single();
 
