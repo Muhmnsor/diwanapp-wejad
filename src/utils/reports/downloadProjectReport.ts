@@ -5,12 +5,9 @@ import JSZip from 'jszip';
 
 async function fetchImageAsBlob(url: string): Promise<Blob> {
   try {
-    console.log('Fetching image from URL:', url);
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Failed to fetch image: ${url}`);
-    const blob = await response.blob();
-    console.log('Successfully fetched image, size:', blob.size);
-    return blob;
+    return await response.blob();
   } catch (error) {
     console.error('Error fetching image:', error);
     throw error;
@@ -19,7 +16,7 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
 
 function getImageFileName(index: number, description: string): string {
   const sanitizedDescription = description
-    .replace(/[^\u0621-\u064A0-9\s]/g, '') // Keep Arabic letters, numbers, and spaces
+    .replace(/[^\u0621-\u064A0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '-');
   return `${(index + 1).toString().padStart(2, '0')}-${sanitizedDescription || 'صورة'}.jpg`;
@@ -31,8 +28,6 @@ function formatRating(rating: number | null): string {
 }
 
 function generateReportText(report: ProjectReport): string {
-  console.log('Generating report text with data:', report);
-  
   let reportText = `
 تقرير النشاط
 =============
@@ -112,12 +107,13 @@ ${report.additional_links.join('\n')}
 
 export const downloadProjectReport = async (report: ProjectReport): Promise<void> => {
   try {
-    console.log('Starting report download with data:', report);
     const zip = new JSZip();
     
-    // Add report text file
+    // Add report text file with UTF-8 encoding
     const reportContent = generateReportText(report);
-    zip.file('التقرير.txt', reportContent, { binary: false });
+    const textEncoder = new TextEncoder();
+    const encodedContent = textEncoder.encode(reportContent);
+    zip.file('التقرير.txt', encodedContent, { binary: true });
     
     // Create images folder
     const imagesFolder = zip.folder('الصور');
@@ -127,34 +123,37 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     
     // Add images if they exist
     if (report.photos && report.photos.length > 0) {
-      console.log(`Processing ${report.photos.length} photos`);
-      const imagePromises = report.photos.map(async (photo, index) => {
+      console.log('Processing photos:', report.photos);
+      
+      // Process images sequentially to avoid overwhelming the server
+      for (let i = 0; i < report.photos.length; i++) {
+        const photo = report.photos[i];
         if (photo && photo.url) {
           try {
-            console.log(`Fetching image ${index + 1}:`, photo.url);
+            console.log(`Fetching image ${i + 1}:`, photo.url);
             const imageBlob = await fetchImageAsBlob(photo.url);
-            const fileName = getImageFileName(index, photo.description || '');
+            const fileName = getImageFileName(i, photo.description || '');
             console.log(`Adding image to zip: ${fileName}`);
-            imagesFolder.file(fileName, imageBlob);
+            imagesFolder.file(fileName, imageBlob, { binary: true });
           } catch (error) {
-            console.error(`Failed to fetch image ${index + 1}:`, error);
+            console.error(`Failed to fetch image ${i + 1}:`, error);
           }
         }
-      });
-      
-      await Promise.all(imagePromises);
+      }
     }
     
     // Generate zip file
-    console.log('Generating zip file...');
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const zipBlob = await zip.generateAsync({ 
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 9 }
+    });
     
     // Generate filename based on report name and date
     const date = new Date().toISOString().split('T')[0];
     const filename = `تقرير-${report.report_name}-${date}.zip`;
     
     // Download the zip file
-    console.log('Downloading zip file:', filename);
     saveAs(zipBlob, filename);
   } catch (error) {
     console.error('Error downloading report:', error);
