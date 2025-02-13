@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,8 +46,17 @@ const ProjectDetails = () => {
           return;
         }
 
-        console.log("Fetched project:", projectData);
-        setProject(projectData);
+        // Cast the data to match Project type
+        const typedProject: Project = {
+          ...projectData,
+          event_type: projectData.event_type as EventType,
+          beneficiary_type: projectData.beneficiary_type as BeneficiaryType,
+          event_path: projectData.event_path as EventPathType,
+          event_category: projectData.event_category as EventCategoryType,
+        };
+
+        console.log("Fetched project:", typedProject);
+        setProject(typedProject);
       } catch (err) {
         console.error("Error in fetchProject:", err);
         setError("حدث خطأ غير متوقع");
