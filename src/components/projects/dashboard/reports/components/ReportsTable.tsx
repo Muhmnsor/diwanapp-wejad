@@ -35,7 +35,7 @@ export const ReportsTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="text-center">اسم التقرير</TableHead>
+            <TableHead className="text-center">معد التقرير</TableHead>
             <TableHead className="text-center">النشاط</TableHead>
             <TableHead className="text-center">عدد الحضور</TableHead>
             <TableHead className="text-center">تاريخ الإنشاء</TableHead>
