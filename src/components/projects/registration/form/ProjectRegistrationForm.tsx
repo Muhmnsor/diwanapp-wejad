@@ -1,3 +1,4 @@
+
 import { FormEvent } from "react";
 import { ProjectRegistrationFields } from "../fields/ProjectRegistrationFields";
 import { ProjectRegistrationButton } from "../components/ProjectRegistrationButton";
@@ -39,8 +40,29 @@ export const ProjectRegistrationForm = ({
     e.preventDefault();
     
     try {
-      // Generate registration number
-      const registrationNumber = `REG-${Date.now()}`;
+      // التحقق من آخر رقم تسجيل تم استخدامه
+      const { data: lastRegistration, error: countError } = await supabase
+        .from('registrations')
+        .select('registration_number')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (countError) {
+        console.error('Error getting last registration number:', countError);
+        throw countError;
+      }
+
+      // إنشاء رقم تسجيل جديد
+      let newRegNumber = 1;
+      if (lastRegistration && lastRegistration.length > 0) {
+        const lastNumber = parseInt(lastRegistration[0].registration_number.split('-')[1]);
+        if (!isNaN(lastNumber)) {
+          newRegNumber = lastNumber + 1;
+        }
+      }
+      
+      // تنسيق رقم التسجيل بشكل موحد (مثال: REG-001)
+      const registrationNumber = `REG-${newRegNumber.toString().padStart(3, '0')}`;
       
       // Get project ID from URL
       const projectId = window.location.pathname.split('/').pop();
