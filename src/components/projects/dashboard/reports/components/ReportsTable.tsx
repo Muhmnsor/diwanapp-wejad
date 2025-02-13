@@ -59,7 +59,7 @@ export const ReportsTable = ({
             reports.map((report: any) => (
               <TableRow key={report.id}>
                 <TableCell className="text-center font-medium">
-                  {report.report_name}
+                  {report.author_name || 'غير محدد'}
                 </TableCell>
                 <TableCell className="text-center">
                   {report.events?.title || 'النشاط غير موجود'}
