@@ -27,8 +27,6 @@ import { useAuthStore } from "@/store/authStore";
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
 
-  console.log('AppRoutes - Current auth state:', { isAuthenticated });
-
   return (
     <Routes>
       <Route path="/" element={<Index />} />
@@ -102,8 +100,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
-      {/* Catch all route - must be last */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 };
