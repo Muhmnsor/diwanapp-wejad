@@ -4,6 +4,7 @@ import { ProjectReport } from '@/types/projectReport';
 import JSZip from 'jszip';
 
 async function fetchImageAsBlob(url: string): Promise<Blob> {
+  console.log('Fetching image from URL:', url);
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch image: ${url}`);
   return await response.blob();
@@ -18,12 +19,15 @@ function getImageFileName(index: number, description: string): string {
 }
 
 function formatRating(rating: number | null): string {
-  if (rating === null) return 'لم يتم التقييم';
-  return `${rating} من 5`;
+  if (rating === null || rating === undefined) return 'لم يتم التقييم';
+  return `${rating.toFixed(1)} من 5`;
 }
 
 function generateReportText(report: ProjectReport): string {
-  const activityRating = report.activity?.activity_feedback?.[0];
+  console.log('Generating report text with data:', report);
+  console.log('Activity feedback:', report.activity?.event_feedback);
+  
+  const activityFeedback = report.activity?.event_feedback?.[0];
   
   let reportText = `
 تقرير النشاط
@@ -52,12 +56,13 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  if (activityRating) {
+  if (activityFeedback) {
+    console.log('Adding feedback to report:', activityFeedback);
     reportText += `
-التقييم العام: ${formatRating(activityRating.overall_rating)}
-تقييم المحتوى: ${formatRating(activityRating.content_rating)}
-تقييم التنظيم: ${formatRating(activityRating.organization_rating)}
-تقييم المقدم: ${formatRating(activityRating.presenter_rating)}
+التقييم العام: ${formatRating(activityFeedback.overall_rating)}
+تقييم المحتوى: ${formatRating(activityFeedback.content_rating)}
+تقييم التنظيم: ${formatRating(activityFeedback.organization_rating)}
+تقييم المقدم: ${formatRating(activityFeedback.presenter_rating)}
 `;
   } else {
     reportText += 'لم يتم تقييم النشاط بعد\n';
@@ -68,6 +73,7 @@ ${report.impact_on_participants || ''}
 ------------\n`;
 
   if (report.photos && report.photos.length > 0) {
+    console.log('Adding photos to report text:', report.photos);
     report.photos.forEach((photo, index) => {
       if (photo && photo.url) {
         reportText += `${index + 1}. ${photo.description || 'صورة بدون وصف'}\n`;
@@ -101,6 +107,8 @@ ${report.additional_links.join('\n')}
 }
 
 export const downloadProjectReport = async (report: ProjectReport): Promise<void> => {
+  console.log('Starting report download with data:', report);
+  
   try {
     const zip = new JSZip();
     
@@ -113,11 +121,15 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     
     // Add images if they exist
     if (report.photos && report.photos.length > 0) {
+      console.log('Processing photos:', report.photos);
+      
       const imagePromises = report.photos.map(async (photo, index) => {
         if (photo && photo.url) {
           try {
+            console.log('Fetching image:', photo.url);
             const imageBlob = await fetchImageAsBlob(photo.url);
             const fileName = getImageFileName(index, photo.description || '');
+            console.log('Adding image to zip:', fileName);
             imagesFolder.file(fileName, imageBlob);
           } catch (error) {
             console.error(`Failed to fetch image ${index + 1}:`, error);
@@ -126,9 +138,11 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       });
       
       await Promise.all(imagePromises);
+      console.log('All images processed');
     }
     
     // Generate zip file
+    console.log('Generating zip file...');
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     
     // Generate filename based on report name and date
@@ -136,6 +150,7 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     const filename = `تقرير-${report.report_name}-${date}.zip`;
     
     // Download the zip file
+    console.log('Initiating download:', filename);
     saveAs(zipBlob, filename);
   } catch (error) {
     console.error('Error downloading report:', error);
