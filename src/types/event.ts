@@ -32,7 +32,7 @@ export interface Event {
   is_visible?: boolean;
   is_project_activity?: boolean;
   project_id?: string;
-  registration_fields?: {
+  registration_fields: {
     arabic_name: boolean;
     email: boolean;
     phone: boolean;

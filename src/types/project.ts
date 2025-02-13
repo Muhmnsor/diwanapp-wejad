@@ -23,7 +23,7 @@ export interface Project {
   required_activities_count?: number;
   required_attendance_percentage?: number;
   created_at?: string;
-  registration_fields?: {
+  registration_fields: {
     arabic_name: boolean;
     email: boolean;
     phone: boolean;
