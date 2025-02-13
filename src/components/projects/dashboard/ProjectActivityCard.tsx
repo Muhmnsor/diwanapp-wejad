@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { ProjectActivity } from "@/types/activity";
@@ -49,21 +48,15 @@ export const ProjectActivityCard = ({
 
   return (
     <>
-      <Card className="group transition-all duration-200 hover:shadow-lg">
-        <div className="p-4 space-y-4">
+      <Card className="p-4">
+        <div className="space-y-2">
           <ActivityCardHeader
             activity={activity}
             isLoading={isLoading}
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
-            className="pb-4 border-b"
           />
-          <div className="bg-muted/20 rounded-lg p-4">
-            <ActivityCardContent 
-              activity={activity} 
-              className="space-y-3"
-            />
-          </div>
+          <ActivityCardContent activity={activity} />
         </div>
       </Card>
 
