@@ -11,7 +11,7 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
 
 function getImageFileName(index: number, description: string): string {
   const sanitizedDescription = description
-    .replace(/[^\u0621-\u064A0-9\s]/g, '') // Keep Arabic letters, numbers, and spaces
+    .replace(/[^\u0621-\u064A0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '-');
   return `${(index + 1).toString().padStart(2, '0')}-${sanitizedDescription || 'صورة'}.jpg`;
@@ -68,11 +68,14 @@ ${report.impact_on_participants || ''}
 ------------\n`;
 
   if (report.photos && report.photos.length > 0) {
-    report.photos.forEach((photo, index) => {
-      if (photo && photo.url) {
+    const validPhotos = report.photos.filter(photo => photo && photo.url && photo.description);
+    if (validPhotos.length > 0) {
+      validPhotos.forEach((photo, index) => {
         reportText += `${index + 1}. ${photo.description || 'صورة بدون وصف'}\n`;
-      }
-    });
+      });
+    } else {
+      reportText += 'لا توجد صور مرفقة\n';
+    }
   } else {
     reportText += 'لا توجد صور مرفقة\n';
   }
@@ -113,12 +116,19 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     
     // Add images if they exist
     if (report.photos && report.photos.length > 0) {
-      const imagePromises = report.photos.map(async (photo, index) => {
+      console.log('Processing photos:', report.photos);
+      
+      const validPhotos = report.photos.filter(photo => photo && photo.url);
+      console.log('Valid photos:', validPhotos);
+
+      const imagePromises = validPhotos.map(async (photo, index) => {
         if (photo && photo.url) {
           try {
+            console.log('Fetching image:', photo.url);
             const imageBlob = await fetchImageAsBlob(photo.url);
             const fileName = getImageFileName(index, photo.description || '');
-            imagesFolder.file(fileName, imageBlob);
+            console.log('Adding image to zip:', fileName);
+            imagesFolder?.file(fileName, imageBlob);
           } catch (error) {
             console.error(`Failed to fetch image ${index + 1}:`, error);
           }

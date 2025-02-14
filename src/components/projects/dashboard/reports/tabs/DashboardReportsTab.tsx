@@ -29,7 +29,13 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         .select(`
           *,
           events:activity_id (
-            title
+            title,
+            activity_feedback (
+              overall_rating,
+              content_rating,
+              organization_rating,
+              presenter_rating
+            )
           )
         `)
         .eq('project_id', projectId)
