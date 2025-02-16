@@ -18,6 +18,7 @@ interface EditActivityFormProps {
     location_url?: string;
     special_requirements?: string;
     activity_duration: number;
+    event_id?: string; // إضافة خاصية event_id
   } | null;
   onSuccess?: () => void;
   onCancel?: () => void;
