@@ -31,6 +31,9 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
           events:activity_id (
             id,
             title
+          ),
+          author:author_id (
+            email
           )
         `)
         .eq('project_id', projectId)

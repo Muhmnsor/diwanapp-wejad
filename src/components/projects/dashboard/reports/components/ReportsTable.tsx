@@ -59,18 +59,14 @@ export const ReportsTable = ({
             reports.map((report: any) => (
               <TableRow key={report.id}>
                 <TableCell className="text-center font-medium">
-                  {report.report_name}
+                  {report.author?.email || 'غير معروف'}
                 </TableCell>
                 <TableCell className="text-center">
                   {report.events?.title || 'النشاط غير موجود'}
                 </TableCell>
                 <TableCell className="text-center">{report.attendees_count}</TableCell>
                 <TableCell className="text-center">
-                  {new Date(report.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                  })}
+                  {formatDate(report.created_at)}
                 </TableCell>
                 <TableCell className="text-center">
                   <ProjectReportActions
