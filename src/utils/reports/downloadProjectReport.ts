@@ -28,28 +28,6 @@ function getImageFileName(index: number, description: string): string {
   return `${(index + 1).toString().padStart(2, '0')}-${sanitizedDescription || 'صورة'}.jpg`;
 }
 
-function calculateAverageRatings(feedback: any[]) {
-  if (!feedback || feedback.length === 0) return null;
-
-  let validRatings = {
-    overall: feedback.filter(f => f.overall_rating !== null).map(f => f.overall_rating),
-    content: feedback.filter(f => f.content_rating !== null).map(f => f.content_rating),
-    organization: feedback.filter(f => f.organization_rating !== null).map(f => f.organization_rating),
-    presenter: feedback.filter(f => f.presenter_rating !== null).map(f => f.presenter_rating)
-  };
-
-  const calculateAverage = (ratings: number[]) => 
-    ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
-
-  return {
-    overall_rating: calculateAverage(validRatings.overall),
-    content_rating: calculateAverage(validRatings.content),
-    organization_rating: calculateAverage(validRatings.organization),
-    presenter_rating: calculateAverage(validRatings.presenter),
-    count: feedback.length
-  };
-}
-
 function formatRating(rating: number | null): string {
   if (rating === null || rating === undefined) return 'لم يتم التقييم';
   return `${rating.toFixed(1)} من 5`;
@@ -72,12 +50,11 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
   
-  // نحصل على التقييمات من activity_feedback مباشرة
-  const activityFeedback = report.activity?.activity_feedback || [];
-  const ratings = calculateAverageRatings(activityFeedback);
-  
-  console.log('Activity feedback:', activityFeedback);
-  console.log('Calculated ratings:', ratings);
+  // التحقق من وجود activity_feedback ومعالجتها
+  if (!report.activity?.activity_feedback) {
+    console.error('No activity_feedback found in report:', report);
+    return 'خطأ في تحميل بيانات التقييم';
+  }
 
   let reportText = `
 تقرير النشاط
@@ -107,18 +84,22 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  if (activityFeedback.length > 0 && ratings) {
-    console.log('Adding ratings to report:', ratings);
+  const feedback = report.activity.activity_feedback;
+  
+  if (feedback && feedback.length > 0) {
+    console.log('Processing feedback for report:', feedback);
+    
+    // نستخدم نفس الحسابات الموجودة في الواجهة
     reportText += `
-عدد المقيمين: ${ratings.count}
+عدد المقيمين: ${feedback.length}
 
-التقييم العام: ${formatRating(ratings.overall_rating)}
-تقييم المحتوى: ${formatRating(ratings.content_rating)}
-تقييم التنظيم: ${formatRating(ratings.organization_rating)}
-تقييم المقدم: ${formatRating(ratings.presenter_rating)}
+التقييم العام: ${formatRating(report.activity.averageRatings?.overall_rating)}
+تقييم المحتوى: ${formatRating(report.activity.averageRatings?.content_rating)}
+تقييم التنظيم: ${formatRating(report.activity.averageRatings?.organization_rating)}
+تقييم المقدم: ${formatRating(report.activity.averageRatings?.presenter_rating)}
 `;
   } else {
-    console.log('No ratings found for report');
+    console.log('No feedback found for report');
     reportText += 'لم يتم تقييم النشاط بعد\n';
   }
 
