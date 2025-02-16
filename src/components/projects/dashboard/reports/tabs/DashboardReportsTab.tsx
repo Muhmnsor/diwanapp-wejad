@@ -8,6 +8,8 @@ import { downloadReport } from "@/components/reports/project-reports/handlers/pr
 import { useToast } from "@/hooks/use-toast";
 import { ReportsHeader } from "@/components/projects/dashboard/reports/components/ReportsHeader";
 import { ReportsTable } from "@/components/projects/dashboard/reports/components/ReportsTable";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 interface DashboardReportsTabProps {
   projectId: string;
@@ -169,7 +171,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         onDownload={handleDownload}
         isDeleting={isDeleting}
         selectedReport={selectedReport}
-        formatDate={(date) => new Date(date).toLocaleDateString('ar-SA')}
+        formatDate={(date) => format(new Date(date), 'dd/MM/yyyy', { locale: ar })}
       />
 
       <ReportDeleteDialog
