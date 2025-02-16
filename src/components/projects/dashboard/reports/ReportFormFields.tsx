@@ -1,9 +1,11 @@
+
 import { ActivitySelector } from "@/components/admin/dashboard/preparation/ActivitySelector";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ProjectReportPhotoUpload } from "./components/ProjectReportPhotoUpload";
 import { ReportPhoto } from "@/types/projectReport";
+
 interface ReportFormFieldsProps {
   project: any;
   activities: any[];
@@ -21,6 +23,7 @@ interface ReportFormFieldsProps {
   photos: ReportPhoto[];
   setPhotos: (photos: ReportPhoto[]) => void;
 }
+
 export const ReportFormFields = ({
   project,
   activities,
@@ -51,7 +54,7 @@ export const ReportFormFields = ({
             <Input value={formData.reportName} onChange={e => setFormData({
           ...formData,
           reportName: e.target.value
-        })} placeholder="اسم التقرير" required />
+        })} placeholder="اسم المقدم / المتحدث / المنظم / وتسميته ( دكتور- استاذ....)" required />
           </div>
 
           <div>
