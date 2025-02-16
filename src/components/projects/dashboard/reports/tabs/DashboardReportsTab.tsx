@@ -32,7 +32,9 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
           *,
           events:activity_id (
             id,
-            title
+            title,
+            event_hours,
+            is_project_activity
           ),
           profiles:author_id (
             email
