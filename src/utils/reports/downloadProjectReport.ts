@@ -153,7 +153,7 @@ ${report.additional_links.join('\n')}
 
 export const downloadProjectReport = async (report: ProjectReport): Promise<void> => {
   try {
-    console.log('Starting report download process for:', report.report_name);
+    console.log('Starting report download process for:', report);
     const zip = new JSZip();
     
     // Add report text file
@@ -174,7 +174,6 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       const parsedPhotos = parsePhotos(report.photos);
       console.log('Valid photos to process:', parsedPhotos.length);
 
-      // نرتب الصور حسب ترتيبها الأصلي
       const sortedPhotos = [...parsedPhotos].sort((a, b) => {
         const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
         const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
@@ -205,9 +204,11 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     console.log('Generating final zip file');
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     
-    // Generate filename based on report name and date
-    const date = new Date().toISOString().split('T')[0];
-    const filename = `تقرير-${report.report_name}-${date}.zip`;
+    // Generate filename based on activity title and date
+    const date = new Date(report.created_at).toISOString().split('T')[0];
+    const activityTitle = report.events?.title || 'نشاط';
+    const sanitizedActivityTitle = activityTitle.replace(/[^\u0621-\u064A0-9\s]/g, '').trim().replace(/\s+/g, '-');
+    const filename = `${sanitizedActivityTitle}-${date}.zip`;
     
     // Download the zip file
     console.log('Initiating download of:', filename);
