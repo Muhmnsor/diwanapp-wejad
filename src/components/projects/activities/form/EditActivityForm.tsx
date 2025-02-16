@@ -67,64 +67,46 @@ export const EditActivityForm = ({
         location: data.location,
         location_url: data.location_url,
         special_requirements: data.special_requirements,
-        activity_duration: Number(data.activity_duration),
-        project_id: projectId,
+        activity_duration: data.activity_duration
       };
 
       if (activity?.id) {
         // تحديث النشاط الموجود
-        const { data: updatedActivity, error: updateError } = await supabase
+        const { error: updateError } = await supabase
           .from('project_activities')
           .update(updateData)
-          .eq('id', activity.id)
-          .select()
-          .maybeSingle();
+          .eq('id', activity.id);
 
         if (updateError) {
           console.error('Error updating activity:', updateError);
           throw updateError;
         }
 
-        if (!updatedActivity) {
-          throw new Error('لم يتم العثور على النشاط المطلوب تحديثه');
-        }
-
-        console.log('Activity updated successfully:', updatedActivity);
+        toast.success('تم تحديث النشاط بنجاح');
         
-        // تنفيذ onSuccess فقط بعد نجاح التحديث
-        if (onSuccess) {
-          await onSuccess();
-          toast.success('تم تحديث النشاط بنجاح');
-          onCancel?.();
-        }
+        // تأكد من تنفيذ onSuccess قبل إغلاق النموذج
+        await onSuccess?.();
+        onCancel?.();
       } else {
         // إنشاء نشاط جديد
-        const { data: newActivity, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from('project_activities')
           .insert([{
             ...updateData,
+            project_id: projectId,
             is_visible: true
-          }])
-          .select()
-          .maybeSingle();
+          }]);
 
         if (insertError) {
           console.error('Error creating activity:', insertError);
           throw insertError;
         }
 
-        if (!newActivity) {
-          throw new Error('فشل في إنشاء النشاط الجديد');
-        }
-
-        console.log('Activity created successfully:', newActivity);
+        toast.success('تم إضافة النشاط بنجاح');
         
-        // تنفيذ onSuccess فقط بعد نجاح الإضافة
-        if (onSuccess) {
-          await onSuccess();
-          toast.success('تم إضافة النشاط بنجاح');
-          onCancel?.();
-        }
+        // تأكد من تنفيذ onSuccess قبل إغلاق النموذج
+        await onSuccess?.();
+        onCancel?.();
       }
     } catch (error) {
       console.error('Error saving activity:', error);
