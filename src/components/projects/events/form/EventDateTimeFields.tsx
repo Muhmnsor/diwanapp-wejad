@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
@@ -36,12 +37,16 @@ export const EventDateTimeFields = ({ form }: EventDateTimeFieldsProps) => {
       />
       <FormField
         control={form.control}
-        name="event_hours"
+        name="activity_duration"
         render={({ field }) => (
           <FormItem>
             <FormLabel>مدة النشاط (بالساعات)</FormLabel>
             <FormControl>
-              <Input type="number" {...field} />
+              <Input 
+                type="number" 
+                {...field} 
+                onChange={e => field.onChange(Number(e.target.value))}
+              />
             </FormControl>
           </FormItem>
         )}

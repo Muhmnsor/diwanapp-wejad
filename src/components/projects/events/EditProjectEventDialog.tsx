@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -38,7 +39,7 @@ export const EditProjectEventDialog = ({
       location: activity.location || "",
       location_url: activity.location_url || "",
       special_requirements: activity.special_requirements || "",
-      event_hours: activity.event_hours || 0,
+      activity_duration: activity.activity_duration || 0,
     },
   });
 
@@ -54,7 +55,7 @@ export const EditProjectEventDialog = ({
           location: data.location,
           location_url: data.location_url,
           special_requirements: data.special_requirements,
-          event_hours: data.event_hours,
+          event_hours: data.activity_duration,
         })
         .eq('id', activity.id);
 
@@ -63,7 +64,8 @@ export const EditProjectEventDialog = ({
       toast.success("تم تحديث النشاط بنجاح");
       onSave({
         ...activity,
-        ...data
+        ...data,
+        activity_duration: data.activity_duration
       });
       onOpenChange(false);
     } catch (error) {
@@ -165,12 +167,16 @@ export const EditProjectEventDialog = ({
               />
               <FormField
                 control={form.control}
-                name="event_hours"
+                name="activity_duration"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>مدة النشاط (بالساعات)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input 
+                        type="number" 
+                        {...field} 
+                        onChange={e => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
