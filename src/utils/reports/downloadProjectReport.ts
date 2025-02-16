@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -56,7 +57,7 @@ function generateReportText(report: ProjectReport): string {
 
 معلومات أساسية:
 ---------------
-اسم البر��امج/المشروع: ${report.program_name || ''}
+اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
 مدة النشاط: ${report.activity_duration} ساعات
 عدد الحضور: ${report.attendees_count || 0}
@@ -78,10 +79,40 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  const activityRatings = report.activity?.averageRatings;
+  console.log('Activity object:', report.activity);
+  console.log('Activity feedback:', report.activity?.activity_feedback);
   
-  if (activityRatings) {
-    console.log('Processing activity ratings:', activityRatings);
+  // التحقق من وجود التقييمات في كلا الطريقتين
+  const activityRatings = report.activity?.averageRatings;
+  const feedback = report.activity?.activity_feedback;
+  
+  console.log('Activity ratings from averageRatings:', activityRatings);
+  console.log('Raw feedback:', feedback);
+
+  // إذا كان لدينا تقييمات مباشرة، نقوم بحسابها
+  if (feedback && feedback.length > 0) {
+    const calculatedRatings = {
+      overall_rating: feedback.reduce((sum, f) => sum + (f.overall_rating || 0), 0) / feedback.length,
+      content_rating: feedback.reduce((sum, f) => sum + (f.content_rating || 0), 0) / feedback.length,
+      organization_rating: feedback.reduce((sum, f) => sum + (f.organization_rating || 0), 0) / feedback.length,
+      presenter_rating: feedback.reduce((sum, f) => sum + (f.presenter_rating || 0), 0) / feedback.length,
+      count: feedback.length
+    };
+
+    console.log('Calculated ratings from feedback:', calculatedRatings);
+    
+    reportText += `
+عدد المقيمين: ${calculatedRatings.count}
+
+التقييم العام: ${formatRating(calculatedRatings.overall_rating)}
+تقييم المحتوى: ${formatRating(calculatedRatings.content_rating)}
+تقييم التنظيم: ${formatRating(calculatedRatings.organization_rating)}
+تقييم المقدم: ${formatRating(calculatedRatings.presenter_rating)}
+`;
+  } 
+  // إذا كان لدينا متوسط التقييمات مباشرة
+  else if (activityRatings) {
+    console.log('Using pre-calculated averageRatings:', activityRatings);
     
     reportText += `
 عدد المقيمين: ${activityRatings.count}
@@ -92,7 +123,7 @@ ${report.impact_on_participants || ''}
 تقييم المقدم: ${formatRating(activityRatings.presenter_rating)}
 `;
   } else {
-    console.log('No ratings found for report');
+    console.log('No ratings or feedback found');
     reportText += 'لم يتم تقييم النشاط بعد\n';
   }
 
