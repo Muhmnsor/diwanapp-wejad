@@ -74,12 +74,8 @@ function calculateAverageRatings(feedback: any[]) {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
-  const activityFeedback = report.activity?.activity_feedback || [];
-  console.log('Activity feedback:', activityFeedback);
-  
-  // حساب المتوسطات
-  const averageRatings = calculateAverageRatings(activityFeedback);
-  console.log('Calculated average ratings:', averageRatings);
+  const activityRatings = report.activity?.averageRatings;
+  console.log('Activity ratings:', activityRatings);
 
   let reportText = `
 تقرير النشاط
@@ -109,15 +105,15 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  if (activityFeedback && activityFeedback.length > 0 && averageRatings) {
-    console.log('Adding average ratings to report:', averageRatings);
+  if (activityRatings) {
+    console.log('Adding activity ratings to report:', activityRatings);
     reportText += `
-عدد المقيمين: ${activityFeedback.length}
+عدد المقيمين: ${activityRatings.count}
 
-التقييم العام: ${formatRating(averageRatings.overall_rating)}
-تقييم المحتوى: ${formatRating(averageRatings.content_rating)}
-تقييم التنظيم: ${formatRating(averageRatings.organization_rating)}
-تقييم المقدم: ${formatRating(averageRatings.presenter_rating)}
+التقييم العام: ${formatRating(activityRatings.overall_rating)}
+تقييم المحتوى: ${formatRating(activityRatings.content_rating)}
+تقييم التنظيم: ${formatRating(activityRatings.organization_rating)}
+تقييم المقدم: ${formatRating(activityRatings.presenter_rating)}
 `;
   } else {
     console.log('No ratings found for report');
