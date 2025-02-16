@@ -36,7 +36,7 @@ function formatRating(rating: number | null): string {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
-  const activityRating = report.events?.activity_feedback?.[0];
+  const activityRating = report.activity?.activity_feedback?.[0];
   
   let reportText = `
 تقرير النشاط
@@ -46,10 +46,9 @@ function generateReportText(report: ProjectReport): string {
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
-${report.author_name ? `معد التقرير: ${report.author_name}` : ''}
 مدة النشاط: ${report.activity_duration} ساعات
 عدد الحضور: ${report.attendees_count || 0}
-اسم النشاط: ${report.events?.title || 'غير محدد'}
+اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
 تفاصيل النشاط:
 --------------
