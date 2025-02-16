@@ -1,4 +1,3 @@
-
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -102,8 +101,12 @@ function calculateAverageRatings(feedback: any[]) {
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
   const activityFeedback = report.activity?.activity_feedback || [];
-  const averageRatings = report.activity?.averageRatings || calculateAverageRatings(activityFeedback);
+  console.log('Activity feedback:', activityFeedback);
   
+  // حساب المتوسطات
+  const averageRatings = calculateAverageRatings(activityFeedback);
+  console.log('Calculated average ratings:', averageRatings);
+
   let reportText = `
 تقرير النشاط
 =============
@@ -132,7 +135,7 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  if (averageRatings) {
+  if (activityFeedback && activityFeedback.length > 0 && averageRatings) {
     console.log('Adding average ratings to report:', averageRatings);
     reportText += `
 عدد المقيمين: ${activityFeedback.length}
