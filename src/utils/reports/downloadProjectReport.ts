@@ -60,7 +60,7 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
-  console.log('Activity duration from activity:', report?.activity?.event_hours);
+  console.log('Activity duration:', report.activity_duration);
   
   let reportText = `
 تقرير النشاط
@@ -70,7 +70,7 @@ function generateReportText(report: ProjectReport): string {
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
-مدة النشاط: ${report?.activity?.event_hours || 0} ساعات
+مدة النشاط: ${report.activity_duration || 0} ساعات
 عدد الحضور: ${report.attendees_count || 0}
 اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
