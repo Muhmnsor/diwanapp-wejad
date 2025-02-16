@@ -28,7 +28,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         .from('project_activity_reports')
         .select(`
           *,
-          events:activity_id (
+          activity:activity_id (
             id,
             title,
             event_hours
