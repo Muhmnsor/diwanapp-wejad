@@ -1,4 +1,3 @@
-
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -48,35 +47,6 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
   }).filter(Boolean);
 }
 
-function calculateAverageRatings(feedback: any[]) {
-  if (!feedback || feedback.length === 0) return null;
-
-  const sum = {
-    overall: 0,
-    content: 0,
-    organization: 0,
-    presenter: 0,
-    count: 0
-  };
-
-  feedback.forEach(f => {
-    if (f.overall_rating) sum.overall += f.overall_rating;
-    if (f.content_rating) sum.content += f.content_rating;
-    if (f.organization_rating) sum.organization += f.organization_rating;
-    if (f.presenter_rating) sum.presenter += f.presenter_rating;
-  });
-
-  const count = feedback.length;
-
-  return {
-    overall_rating: count > 0 ? sum.overall / count : null,
-    content_rating: count > 0 ? sum.content / count : null,
-    organization_rating: count > 0 ? sum.organization / count : null,
-    presenter_rating: count > 0 ? sum.presenter / count : null,
-    count
-  };
-}
-
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
   
@@ -86,7 +56,7 @@ function generateReportText(report: ProjectReport): string {
 
 معلومات أساسية:
 ---------------
-اسم البرنامج/المشروع: ${report.program_name || ''}
+اسم البر��امج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
 مدة النشاط: ${report.activity_duration} ساعات
 عدد الحضور: ${report.attendees_count || 0}
@@ -108,23 +78,21 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  const feedback = report.activity?.activity_feedback || [];
-  const ratings = calculateAverageRatings(feedback);
+  const activityRatings = report.activity?.averageRatings;
   
-  if (feedback.length > 0 && ratings) {
-    console.log('Processing feedback for report:', feedback);
-    console.log('Calculated ratings:', ratings);
+  if (activityRatings) {
+    console.log('Processing activity ratings:', activityRatings);
     
     reportText += `
-عدد المقيمين: ${ratings.count}
+عدد المقيمين: ${activityRatings.count}
 
-التقييم العام: ${formatRating(ratings.overall_rating)}
-تقييم المحتوى: ${formatRating(ratings.content_rating)}
-تقييم التنظيم: ${formatRating(ratings.organization_rating)}
-تقييم المقدم: ${formatRating(ratings.presenter_rating)}
+التقييم العام: ${formatRating(activityRatings.overall_rating)}
+تقييم المحتوى: ${formatRating(activityRatings.content_rating)}
+تقييم التنظيم: ${formatRating(activityRatings.organization_rating)}
+تقييم المقدم: ${formatRating(activityRatings.presenter_rating)}
 `;
   } else {
-    console.log('No feedback found for report');
+    console.log('No ratings found for report');
     reportText += 'لم يتم تقييم النشاط بعد\n';
   }
 
