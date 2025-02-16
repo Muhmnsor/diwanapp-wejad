@@ -1307,6 +1307,69 @@ export type Database = {
         }
         Relationships: []
       }
+      project_activities: {
+        Row: {
+          activity_duration: number | null
+          created_at: string
+          date: string
+          description: string | null
+          event_id: string | null
+          id: string
+          is_visible: boolean | null
+          location: string
+          location_url: string | null
+          project_id: string | null
+          special_requirements: string | null
+          time: string
+          title: string
+        }
+        Insert: {
+          activity_duration?: number | null
+          created_at?: string
+          date: string
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          is_visible?: boolean | null
+          location: string
+          location_url?: string | null
+          project_id?: string | null
+          special_requirements?: string | null
+          time: string
+          title: string
+        }
+        Update: {
+          activity_duration?: number | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          is_visible?: boolean | null
+          location?: string
+          location_url?: string | null
+          project_id?: string | null
+          special_requirements?: string | null
+          time?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activities_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_activities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_activity_reports: {
         Row: {
           activity_duration: string | null
@@ -1326,6 +1389,7 @@ export type Database = {
           objectives: string | null
           photos: string[] | null
           program_name: string | null
+          project_activity_id: string | null
           project_id: string | null
           report_name: string
           report_text: string
@@ -1350,6 +1414,7 @@ export type Database = {
           objectives?: string | null
           photos?: string[] | null
           program_name?: string | null
+          project_activity_id?: string | null
           project_id?: string | null
           report_name: string
           report_text: string
@@ -1374,6 +1439,7 @@ export type Database = {
           objectives?: string | null
           photos?: string[] | null
           program_name?: string | null
+          project_activity_id?: string | null
           project_id?: string | null
           report_name?: string
           report_text?: string
@@ -1400,6 +1466,13 @@ export type Database = {
             columns: ["executor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_activity_reports_project_activity_id_fkey"
+            columns: ["project_activity_id"]
+            isOneToOne: false
+            referencedRelation: "project_activities"
             referencedColumns: ["id"]
           },
           {

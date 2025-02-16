@@ -28,6 +28,16 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         .from('project_activity_reports')
         .select(`
           *,
+          project_activity:project_activity_id (
+            id,
+            title,
+            activity_duration,
+            event:event_id (
+              id,
+              title,
+              event_hours
+            )
+          ),
           activity:activity_id (
             id,
             title,
@@ -42,8 +52,22 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         throw error;
       }
 
-      console.log("Fetched reports:", data);
-      return data || [];
+      // Transform data to handle both old and new activity references
+      const transformedReports = data?.map(report => {
+        // Use project_activity data if available, fallback to legacy activity data
+        const activityData = report.project_activity || report.activity;
+        return {
+          ...report,
+          activity: {
+            id: activityData?.id,
+            title: activityData?.title,
+            event_hours: activityData?.activity_duration || activityData?.event_hours || report.project_activity?.event?.event_hours
+          }
+        };
+      });
+
+      console.log("Fetched reports:", transformedReports);
+      return transformedReports || [];
     },
   });
 
