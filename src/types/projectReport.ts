@@ -28,6 +28,13 @@ export interface ProjectReport {
       organization_rating: number | null;
       presenter_rating: number | null;
     }>;
+    averageRatings?: {
+      overall_rating: number | null;
+      content_rating: number | null;
+      organization_rating: number | null;
+      presenter_rating: number | null;
+      count: number;
+    };
   };
 }
 
