@@ -18,7 +18,6 @@ interface EditActivityFormProps {
     location_url?: string;
     special_requirements?: string;
     activity_duration: number;
-    event_id?: string; // إضافة خاصية event_id
   } | null;
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -57,21 +56,15 @@ export const EditActivityForm = ({
 
   const handleSubmit = async (data: ProjectActivityFormData) => {
     try {
-      console.log('Submitting form with data:', { ...data, projectId, activityId: activity?.id });
+      console.log('Submitting form with data:', { ...data, projectId });
       
       if (activity?.id) {
-        // تحديث النشاط الموجود في جدول project_activities
+        // Update existing activity
         const { error: updateError } = await supabase
           .from('project_activities')
           .update({
-            title: data.title,
-            description: data.description,
-            date: data.date,
-            time: data.time,
-            location: data.location,
-            location_url: data.location_url,
-            special_requirements: data.special_requirements,
-            activity_duration: data.activity_duration
+            ...data,
+            project_id: projectId,
           })
           .eq('id', activity.id);
 
@@ -79,38 +72,14 @@ export const EditActivityForm = ({
           console.error('Error updating activity:', updateError);
           throw updateError;
         }
-
-        // تحديث النشاط في جدول events أيضاً إذا كان موجوداً
-        if (activity.event_id) {
-          const { error: eventUpdateError } = await supabase
-            .from('events')
-            .update({
-              title: data.title,
-              description: data.description,
-              date: data.date,
-              time: data.time,
-              location: data.location,
-              location_url: data.location_url,
-              special_requirements: data.special_requirements,
-              event_hours: data.activity_duration
-            })
-            .eq('id', activity.event_id);
-
-          if (eventUpdateError) {
-            console.error('Error updating event:', eventUpdateError);
-            throw eventUpdateError;
-          }
-        }
-
         toast.success('تم تحديث النشاط بنجاح');
       } else {
-        // إنشاء نشاط جديد
+        // Create new activity
         const { error: insertError } = await supabase
           .from('project_activities')
           .insert([{
             ...data,
             project_id: projectId,
-            is_visible: true
           }]);
 
         if (insertError) {
@@ -121,6 +90,7 @@ export const EditActivityForm = ({
       }
 
       onSuccess?.();
+      onCancel?.();
     } catch (error) {
       console.error('Error saving activity:', error);
       toast.error('حدث خطأ أثناء حفظ النشاط');
