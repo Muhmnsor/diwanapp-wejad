@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { EventBasicFields } from "./form/EventBasicFields";
 import { EventDateTimeFields } from "./form/EventDateTimeFields";
 import { EventLocationFields } from "./form/EventLocationFields";
-import { ProjectActivityFormData } from "@/types/activity";
+import { ProjectActivityFormData } from "@/components/projects/activities/types";
 
 interface AddProjectEventDialogProps {
   open: boolean;
@@ -43,30 +43,39 @@ export const AddProjectEventDialog = ({
 
   const onSubmit = async (data: ProjectActivityFormData) => {
     try {
-      console.log('Creating new project activity:', data);
+      console.log('Creating new project event:', data);
       
-      // Create the activity directly with project_id
-      const { data: activityData, error: activityError } = await supabase
-        .from('project_activities')
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
         .insert([{
           ...data,
-          project_id: projectId,
+          event_path: project.event_path,
+          event_category: project.event_category,
+          event_type: 'in-person',
+          max_attendees: 0,
+          price: 0,
+          beneficiary_type: 'both',
+          certificate_type: 'none',
+          image_url: "/placeholder.svg",
+          is_project_activity: false,
           is_visible: true,
+          project_id: projectId,
+          event_hours: data.activity_duration
         }])
         .select()
         .single();
 
-      if (activityError) throw activityError;
+      if (eventError) throw eventError;
 
-      console.log('Activity created successfully:', activityData);
+      console.log('Event created successfully:', eventData);
 
-      toast.success('تم إضافة النشاط بنجاح');
+      toast.success('تم إضافة الفعالية بنجاح');
       onSuccess();
       onOpenChange(false);
       form.reset();
     } catch (error) {
-      console.error('Error creating project activity:', error);
-      toast.error('حدث خطأ أثناء إضافة النشاط');
+      console.error('Error creating event:', error);
+      toast.error('حدث خطأ أثناء إضافة الفعالية');
     }
   };
 
@@ -74,7 +83,7 @@ export const AddProjectEventDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة نشاط جديد</DialogTitle>
+          <DialogTitle>إضافة فعالية جديدة</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -84,7 +93,7 @@ export const AddProjectEventDialog = ({
             <EventLocationFields form={form} />
 
             <div className="flex justify-end gap-2 mt-6">
-              <Button type="submit">إضافة النشاط</Button>
+              <Button type="submit">إضافة الفعالية</Button>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 إلغاء
               </Button>

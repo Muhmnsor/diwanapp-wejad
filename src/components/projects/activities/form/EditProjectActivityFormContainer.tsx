@@ -1,11 +1,13 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { EventBasicFields } from "./EventBasicFields";
-import { EventDateTimeFields } from "./EventDateTimeFields";
-import { EventLocationFields } from "./EventLocationFields";
-import { ProjectActivity, ProjectActivityFormData } from "@/types/activity";
+import { ActivityBasicFields } from "./ActivityBasicFields";
+import { ActivityDateTimeFields } from "./ActivityDateTimeFields";
+import { ActivityLocationFields } from "./ActivityLocationFields";
+import { ProjectActivity } from "@/types/activity";
+import { ProjectActivityFormData } from "../types";
 
 interface EditProjectActivityFormContainerProps {
   activity: ProjectActivity;
@@ -33,7 +35,7 @@ export const EditProjectActivityFormContainer = ({
       location: activity.location,
       location_url: activity.location_url || "",
       special_requirements: activity.special_requirements || "",
-      event_hours: activity.event_hours,
+      activity_duration: activity.activity_duration,
     },
   });
 
@@ -52,9 +54,9 @@ export const EditProjectActivityFormContainer = ({
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      <EventBasicFields form={form} />
-      <EventDateTimeFields form={form} />
-      <EventLocationFields form={form} />
+      <ActivityBasicFields form={form} />
+      <ActivityDateTimeFields form={form} />
+      <ActivityLocationFields form={form} />
       
       <div className="flex justify-end gap-2">
         <Button onClick={onCancel} variant="outline" type="button">
