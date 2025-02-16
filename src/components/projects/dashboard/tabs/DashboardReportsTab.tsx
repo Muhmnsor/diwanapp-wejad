@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +29,9 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         .select(`
           *,
           events:activity_id (
-            title
+            id,
+            title,
+            event_hours
           )
         `)
         .eq('project_id', projectId)
@@ -43,14 +46,6 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
       return data || [];
     },
   });
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   const handleDelete = async () => {
     if (!selectedReport) return;
@@ -131,7 +126,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         onDownload={handleDownload}
         isDeleting={isDeleting}
         selectedReport={selectedReport}
-        formatDate={formatDate}
+        formatDate={(date) => new Date(date).toLocaleDateString('ar-SA')}
       />
 
       <ReportDeleteDialog
