@@ -25,13 +25,27 @@ function getImageFileName(index: number, description: string): string {
     .replace(/[^\u0621-\u064A0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-    .substring(0, 50); // تقييد طول اسم الملف
+    .substring(0, 50);
   return `${(index + 1).toString().padStart(2, '0')}-${sanitizedDescription || 'صورة'}.jpg`;
 }
 
 function formatRating(rating: number | null): string {
   if (rating === null || rating === undefined) return 'لم يتم التقييم';
   return `${rating.toFixed(1)} من 5`;
+}
+
+function parsePhotos(photos: any[]): ReportPhoto[] {
+  return photos.map(photo => {
+    if (typeof photo === 'string') {
+      try {
+        return JSON.parse(photo);
+      } catch (e) {
+        console.error('Error parsing photo JSON:', e);
+        return null;
+      }
+    }
+    return photo;
+  }).filter(Boolean);
 }
 
 function generateReportText(report: ProjectReport): string {
@@ -83,16 +97,13 @@ ${report.impact_on_participants || ''}
 الصور المرفقة:
 ------------\n`;
 
-  if (report.photos && report.photos.length > 0) {
-    const validPhotos = report.photos.filter(photo => photo && photo.url && photo.description);
-    console.log('Valid photos count:', validPhotos.length);
-    if (validPhotos.length > 0) {
-      validPhotos.forEach((photo, index) => {
-        reportText += `${index + 1}. ${photo.description || 'صورة بدون وصف'}\n`;
-      });
-    } else {
-      reportText += 'لا توجد صور مرفقة\n';
-    }
+  const parsedPhotos = report.photos ? parsePhotos(report.photos) : [];
+  console.log('Parsed photos:', parsedPhotos);
+
+  if (parsedPhotos.length > 0) {
+    parsedPhotos.forEach((photo, index) => {
+      reportText += `${index + 1}. ${photo.description || 'صورة بدون وصف'}\n`;
+    });
   } else {
     reportText += 'لا توجد صور مرفقة\n';
   }
@@ -136,14 +147,14 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       throw new Error('Failed to create images folder in zip');
     }
     
-    // Add images if they exist
+    // Parse and add images if they exist
     if (report.photos && report.photos.length > 0) {
       console.log('Processing photos:', report.photos.length, 'photos found');
       
-      const validPhotos = report.photos.filter(photo => photo && photo.url);
-      console.log('Valid photos to process:', validPhotos.length);
+      const parsedPhotos = parsePhotos(report.photos);
+      console.log('Valid photos to process:', parsedPhotos.length);
 
-      const imagePromises = validPhotos.map(async (photo, index) => {
+      const imagePromises = parsedPhotos.map(async (photo, index) => {
         if (photo && photo.url) {
           try {
             console.log(`Processing image ${index + 1}:`, photo.url);
@@ -153,7 +164,6 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
             imagesFolder.file(fileName, imageBlob);
           } catch (error) {
             console.error(`Failed to process image ${index + 1}:`, error);
-            // Continue with other images even if one fails
           }
         }
       });
