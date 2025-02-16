@@ -219,9 +219,10 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     console.log('Generating final zip file');
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     
-    // Generate filename based on report name and date
+    // Generate filename based on activity title and date
     const date = new Date().toISOString().split('T')[0];
-    const filename = `تقرير-${report.report_name}-${date}.zip`;
+    const activityTitle = report.activity?.title || 'نشاط';
+    const filename = `تقرير-${activityTitle}-${date}.zip`;
     
     // Download the zip file
     console.log('Initiating download of:', filename);
