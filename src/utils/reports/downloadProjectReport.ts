@@ -1,4 +1,3 @@
-
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -60,6 +59,7 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
+  console.log('Activity event hours:', report.activity?.event_hours);
   console.log('Activity duration:', report.activity_duration);
   console.log('Complete report object:', JSON.stringify(report, null, 2));
   
@@ -71,7 +71,7 @@ function generateReportText(report: ProjectReport): string {
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
-مدة النشاط: ${report.activity_duration} ساعات
+مدة النشاط: ${report.activity?.event_hours || report.activity_duration || 0} ساعات
 عدد الحضور: ${report.attendees_count || 0}
 اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
