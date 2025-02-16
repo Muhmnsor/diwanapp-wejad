@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -57,9 +58,24 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
   }).filter(Boolean);
 }
 
+function getActivityDuration(report: ProjectReport): number {
+  if (report.activity) {
+    // إذا كان نشاط مشروع
+    if (report.activity.activity_duration !== undefined) {
+      return report.activity.activity_duration;
+    }
+    // إذا كان فعالية منفردة
+    if (report.activity.event_hours !== undefined) {
+      return report.activity.event_hours;
+    }
+  }
+  return 0;
+}
+
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
-  console.log('Activity duration:', report?.activity?.activity_duration);
+  
+  const duration = getActivityDuration(report);
   
   let reportText = `
 تقرير النشاط
@@ -69,7 +85,7 @@ function generateReportText(report: ProjectReport): string {
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
-مدة النشاط: ${report?.activity?.activity_duration || 0} ساعات
+مدة النشاط: ${duration} ساعات
 عدد الحضور: ${report.attendees_count || 0}
 اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
