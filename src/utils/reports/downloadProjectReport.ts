@@ -78,7 +78,7 @@ ${report.report_text || ''}
 
 الأهداف:
 -------
-${report.objectives || report.activity_objectives || ''}
+${report.activity_objectives || ''}
 
 الأثر على المشاركين:
 ------------------
