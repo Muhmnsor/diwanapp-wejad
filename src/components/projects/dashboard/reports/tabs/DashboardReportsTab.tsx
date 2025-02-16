@@ -32,7 +32,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
             id,
             title
           ),
-          author:author_id (
+          profiles:author_id (
             email
           )
         `)
