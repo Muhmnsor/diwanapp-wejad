@@ -1,6 +1,5 @@
-
 import { saveAs } from 'file-saver';
-import { ProjectReport } from '@/types/projectReport';
+import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
 
 async function fetchImageAsBlob(url: string): Promise<Blob> {
