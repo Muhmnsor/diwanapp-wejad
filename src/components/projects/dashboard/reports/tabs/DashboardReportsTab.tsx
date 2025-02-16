@@ -28,7 +28,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         .from('project_activity_reports')
         .select(`
           *,
-          activity:activity_id (
+          events:activity_id (
             id,
             title
           )
@@ -44,7 +44,6 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
       const reportsWithFeedback = await Promise.all(
         reportsData.map(async (report) => {
           if (report.activity_id) {
-            // تغيير من activity_feedback إلى event_feedback
             const { data: feedbackData, error: feedbackError } = await supabase
               .from('event_feedback')
               .select('*')
@@ -73,7 +72,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
             return {
               ...report,
               activity: {
-                ...report.activity,
+                ...report.events,
                 activity_feedback: feedbackData,
                 averageRatings
               }
@@ -87,14 +86,6 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
       return reportsWithFeedback || [];
     },
   });
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   const handleDelete = async () => {
     if (!selectedReport) return;
@@ -175,7 +166,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         onDownload={handleDownload}
         isDeleting={isDeleting}
         selectedReport={selectedReport}
-        formatDate={formatDate}
+        formatDate={(date) => new Date(date).toLocaleDateString('ar-SA')}
       />
 
       <ReportDeleteDialog
