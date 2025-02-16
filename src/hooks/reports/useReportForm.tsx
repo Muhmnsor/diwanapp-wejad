@@ -1,13 +1,14 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { ReportPhoto } from "@/types/projectReport";
+import { useReportPhotos } from "./useReportPhotos";
 
 export const useReportForm = (projectId: string, report?: any, onSuccess?: () => void) => {
   const [selectedActivity, setSelectedActivity] = useState<string | null>(report?.activity_id || null);
-  const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos || []);
+  const { photos, setPhotos } = useReportPhotos(report?.photos);
   const [formData, setFormData] = useState({
     reportName: report?.report_name || '',
     reportText: report?.report_text || '',
@@ -91,9 +92,9 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
         report_text: formData.reportText,
         objectives: formData.objectives,
         impact_on_participants: formData.impact,
-        photos,
+        photos: photos.filter(Boolean), // Filter out null values
         attendees_count: attendanceCount.toString(),
-        author_id: userId // Add the author_id here
+        author_id: userId
       };
 
       if (report?.id) {

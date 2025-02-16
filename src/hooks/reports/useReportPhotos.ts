@@ -7,22 +7,35 @@ export const useReportPhotos = (initialPhotos?: any[]) => {
 
   useEffect(() => {
     if (initialPhotos && Array.isArray(initialPhotos)) {
+      console.log('Initial photos received:', initialPhotos);
+      
       const initialPhotoArray = Array(6).fill(null);
       
       initialPhotos.forEach((photo: any) => {
         try {
           // تحويل النص إلى كائن إذا كان نصياً
-          const photoObj = typeof photo === 'string' ? JSON.parse(photo) : photo;
+          let photoObj: ReportPhoto;
+          
+          if (typeof photo === 'string') {
+            photoObj = JSON.parse(photo);
+          } else {
+            photoObj = photo;
+          }
           
           if (photoObj && photoObj.url && typeof photoObj.index !== 'undefined') {
-            initialPhotoArray[photoObj.index] = photoObj;
+            console.log('Processing photo:', photoObj);
+            initialPhotoArray[photoObj.index] = {
+              url: photoObj.url,
+              description: photoObj.description || '',
+              index: photoObj.index
+            };
           }
         } catch (e) {
-          console.error('Error parsing photo:', e);
+          console.error('Error processing photo:', e);
         }
       });
 
-      console.log('useReportPhotos - Initialized photos array:', initialPhotoArray);
+      console.log('Final photos array:', initialPhotoArray);
       setPhotos(initialPhotoArray);
     }
   }, [initialPhotos]);
