@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -99,12 +100,16 @@ export const ActivityFormFields = ({ form }: ActivityFormFieldsProps) => {
 
       <FormField
         control={form.control}
-        name="event_hours"
+        name="activity_duration"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>عدد الساعات</FormLabel>
+            <FormLabel>مدة النشاط (بالساعات)</FormLabel>
             <FormControl>
-              <Input type="number" min="0" {...field} />
+              <Input 
+                type="number" 
+                {...field} 
+                onChange={e => field.onChange(Number(e.target.value))}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

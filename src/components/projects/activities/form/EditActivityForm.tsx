@@ -1,3 +1,4 @@
+
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { ProjectActivityFormData } from "@/types/activity";
@@ -16,7 +17,7 @@ interface EditActivityFormProps {
     location: string;
     location_url?: string;
     special_requirements?: string;
-    event_hours: number;
+    activity_duration: number;
   } | null;
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -40,7 +41,7 @@ export const EditActivityForm = ({
       location: activity.location,
       location_url: activity.location_url || "",
       special_requirements: activity.special_requirements || "",
-      event_hours: activity.event_hours,
+      activity_duration: activity.activity_duration,
     } : {
       title: "",
       description: "",
@@ -49,7 +50,7 @@ export const EditActivityForm = ({
       location: "",
       location_url: "",
       special_requirements: "",
-      event_hours: 0,
+      activity_duration: 0,
     }
   });
 
@@ -57,25 +58,14 @@ export const EditActivityForm = ({
     try {
       console.log('Submitting form with data:', { ...data, projectId });
       
-      const eventData = {
-        ...data,
-        project_id: projectId,
-        is_project_activity: true,
-        event_type: 'in-person',
-        image_url: '/placeholder.svg',
-        beneficiary_type: 'both',
-        certificate_type: 'none',
-        event_path: 'environment',
-        event_category: 'educational',
-        max_attendees: 0,
-        end_date: data.date, // Setting end_date same as date for single-day activities
-      };
-
       if (activity?.id) {
         // Update existing activity
         const { error: updateError } = await supabase
-          .from('events')
-          .update(eventData)
+          .from('project_activities')
+          .update({
+            ...data,
+            project_id: projectId,
+          })
           .eq('id', activity.id);
 
         if (updateError) {
@@ -86,8 +76,11 @@ export const EditActivityForm = ({
       } else {
         // Create new activity
         const { error: insertError } = await supabase
-          .from('events')
-          .insert([eventData]);
+          .from('project_activities')
+          .insert([{
+            ...data,
+            project_id: projectId,
+          }]);
 
         if (insertError) {
           console.error('Error creating activity:', insertError);
@@ -96,7 +89,6 @@ export const EditActivityForm = ({
         toast.success('تم إضافة النشاط بنجاح');
       }
 
-      // Call onSuccess and onCancel to close the dialog
       onSuccess?.();
       onCancel?.();
     } catch (error) {

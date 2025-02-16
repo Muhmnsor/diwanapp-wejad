@@ -1,15 +1,18 @@
+
 export interface ProjectActivity {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   date: string;
   time: string;
   location: string;
   location_url?: string;
-  event_hours: number;
+  activity_duration: number;
   special_requirements?: string;
   project_id: string;
-  is_project_activity: boolean;
+  event_id?: string;
+  is_visible?: boolean;
+  created_at?: string;
 }
 
 export interface ProjectActivityFormData {
@@ -17,8 +20,8 @@ export interface ProjectActivityFormData {
   description: string;
   date: string;
   time: string;
+  activity_duration: number;
   location: string;
   location_url?: string;
-  event_hours: number;
   special_requirements?: string;
 }
