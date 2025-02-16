@@ -60,8 +60,6 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
-  console.log('Activity duration:', report.activity_duration);
-  console.log('Complete report object:', JSON.stringify(report, null, 2));
   
   let reportText = `
 تقرير النشاط
@@ -71,7 +69,7 @@ function generateReportText(report: ProjectReport): string {
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
-مدة النشاط: ${report.activity_duration || (report.activity?.duration ? `${report.activity.duration} ساعات` : '0')} ساعات
+مدة النشاط: ${report.activity_duration} ساعات
 عدد الحضور: ${report.attendees_count || 0}
 اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
@@ -114,6 +112,7 @@ ${report.impact_on_participants || ''}
   console.log('Parsed photos:', parsedPhotos);
 
   if (parsedPhotos.length > 0) {
+    // نرتب الصور حسب ترتيبها الأصلي
     const sortedPhotos = [...parsedPhotos].sort((a, b) => {
       const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
       const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
@@ -154,7 +153,7 @@ ${report.additional_links.join('\n')}
 
 export const downloadProjectReport = async (report: ProjectReport): Promise<void> => {
   try {
-    console.log('Starting report download process for:', report);
+    console.log('Starting report download process for:', report.report_name);
     const zip = new JSZip();
     
     // Add report text file
@@ -175,6 +174,7 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       const parsedPhotos = parsePhotos(report.photos);
       console.log('Valid photos to process:', parsedPhotos.length);
 
+      // نرتب الصور حسب ترتيبها الأصلي
       const sortedPhotos = [...parsedPhotos].sort((a, b) => {
         const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
         const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
@@ -205,11 +205,9 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     console.log('Generating final zip file');
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     
-    // Generate filename based on activity title and date
-    const date = new Date(report.created_at).toISOString().split('T')[0];
-    const activityTitle = report.activity?.title || 'نشاط';
-    const sanitizedActivityTitle = activityTitle.replace(/[^\u0621-\u064A0-9\s]/g, '').trim().replace(/\s+/g, '-');
-    const filename = `${sanitizedActivityTitle}-${date}.zip`;
+    // Generate filename based on report name and date
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `تقرير-${report.report_name}-${date}.zip`;
     
     // Download the zip file
     console.log('Initiating download of:', filename);

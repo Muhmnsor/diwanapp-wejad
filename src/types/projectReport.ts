@@ -22,7 +22,6 @@ export interface ProjectReport {
   activity?: {
     id: string;
     title: string;
-    duration: number;
     activity_feedback?: Array<{
       overall_rating: number | null;
       content_rating: number | null;
