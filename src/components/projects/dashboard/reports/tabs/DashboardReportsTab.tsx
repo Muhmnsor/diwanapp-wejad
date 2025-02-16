@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,10 +44,11 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
       const reportsWithFeedback = await Promise.all(
         reportsData.map(async (report) => {
           if (report.activity_id) {
+            // تغيير من activity_feedback إلى event_feedback
             const { data: feedbackData, error: feedbackError } = await supabase
-              .from('activity_feedback')
+              .from('event_feedback')
               .select('*')
-              .eq('activity_id', report.activity_id);
+              .eq('event_id', report.activity_id);
 
             if (feedbackError) {
               console.error("Error fetching feedback:", feedbackError);
