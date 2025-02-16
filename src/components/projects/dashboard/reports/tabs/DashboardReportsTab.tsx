@@ -2,12 +2,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportForm } from "../ReportForm";
+import { ReportForm } from "../reports/ReportForm";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
 import { downloadReport } from "@/components/reports/project-reports/handlers/projectReportHandlers";
 import { useToast } from "@/hooks/use-toast";
-import { ReportsHeader } from "../components/ReportsHeader";
-import { ReportsTable } from "../components/ReportsTable";
+import { ReportsHeader } from "../reports/components/ReportsHeader";
+import { ReportsTable } from "../reports/components/ReportsTable";
 
 interface DashboardReportsTabProps {
   projectId: string;
@@ -41,7 +41,7 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         throw reportsError;
       }
 
-      // Fetch feedback data separately for each activity
+      // جلب بيانات التقييمات بنفس طريقة صفحة التقييمات (باستخدام INNER JOIN)
       const reportsWithFeedback = await Promise.all(
         reportsData.map(async (report) => {
           if (report.activity_id) {
@@ -55,11 +55,28 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
               return report;
             }
 
+            // حساب متوسطات التقييم فقط للقيم غير الفارغة
+            const validFeedback = feedbackData.filter(f => 
+              f.overall_rating !== null || 
+              f.content_rating !== null || 
+              f.organization_rating !== null || 
+              f.presenter_rating !== null
+            );
+
+            const averageRatings = validFeedback.length > 0 ? {
+              overall_rating: validFeedback.reduce((sum, f) => sum + (f.overall_rating || 0), 0) / validFeedback.filter(f => f.overall_rating !== null).length,
+              content_rating: validFeedback.reduce((sum, f) => sum + (f.content_rating || 0), 0) / validFeedback.filter(f => f.content_rating !== null).length,
+              organization_rating: validFeedback.reduce((sum, f) => sum + (f.organization_rating || 0), 0) / validFeedback.filter(f => f.organization_rating !== null).length,
+              presenter_rating: validFeedback.reduce((sum, f) => sum + (f.presenter_rating || 0), 0) / validFeedback.filter(f => f.presenter_rating !== null).length,
+              count: validFeedback.length
+            } : null;
+
             return {
               ...report,
               activity: {
                 ...report.activity,
-                activity_feedback: feedbackData
+                activity_feedback: feedbackData,
+                averageRatings
               }
             };
           }
