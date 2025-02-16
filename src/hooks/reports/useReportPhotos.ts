@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ReportPhoto } from "@/types/projectReport";
 
@@ -8,11 +9,13 @@ export const useReportPhotos = (initialPhotos?: any[]) => {
     if (initialPhotos && Array.isArray(initialPhotos)) {
       const initialPhotoArray = Array(6).fill(null);
       
-      initialPhotos.forEach((photoStr: string, index: number) => {
+      initialPhotos.forEach((photo: any) => {
         try {
-          const photo = JSON.parse(photoStr);
-          if (photo && photo.url) {
-            initialPhotoArray[index] = photo;
+          // تحويل النص إلى كائن إذا كان نصياً
+          const photoObj = typeof photo === 'string' ? JSON.parse(photo) : photo;
+          
+          if (photoObj && photoObj.url && typeof photoObj.index !== 'undefined') {
+            initialPhotoArray[photoObj.index] = photoObj;
           }
         } catch (e) {
           console.error('Error parsing photo:', e);
