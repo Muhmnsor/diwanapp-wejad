@@ -29,14 +29,14 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
   }
 }
 
-function getImageFileName(index: number): string {
-  const description = photoPlaceholders[index] || `صورة ${index + 1}`;
+function getImageFileName(photo: ReportPhoto): string {
+  const description = photo.index !== undefined ? photoPlaceholders[photo.index] : 'صورة إضافية';
   const sanitizedDescription = description
     .replace(/[^\u0621-\u064A0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '-')
     .substring(0, 50);
-  return `${(index + 1).toString().padStart(2, '0')}-${sanitizedDescription}.jpg`;
+  return `${(photo.index !== undefined ? photo.index + 1 : 0).toString().padStart(2, '0')}-${sanitizedDescription}.jpg`;
 }
 
 function formatRating(rating: number | null): string {
@@ -112,9 +112,17 @@ ${report.impact_on_participants || ''}
   console.log('Parsed photos:', parsedPhotos);
 
   if (parsedPhotos.length > 0) {
-    parsedPhotos.forEach((photo, index) => {
-      const description = photoPlaceholders[index] || 'صورة إضافية';
-      reportText += `${index + 1}. ${description}\n`;
+    // نرتب الصور حسب ترتيبها الأصلي
+    const sortedPhotos = [...parsedPhotos].sort((a, b) => {
+      const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
+      const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
+      return indexA - indexB;
+    });
+
+    sortedPhotos.forEach((photo) => {
+      const description = photo.index !== undefined ? photoPlaceholders[photo.index] : 'صورة إضافية';
+      const number = photo.index !== undefined ? photo.index + 1 : sortedPhotos.indexOf(photo) + 1;
+      reportText += `${number}. ${description}\n`;
     });
   } else {
     reportText += 'لا توجد صور مرفقة\n';
@@ -166,16 +174,23 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       const parsedPhotos = parsePhotos(report.photos);
       console.log('Valid photos to process:', parsedPhotos.length);
 
-      const imagePromises = parsedPhotos.map(async (photo, index) => {
+      // نرتب الصور حسب ترتيبها الأصلي
+      const sortedPhotos = [...parsedPhotos].sort((a, b) => {
+        const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
+        const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
+        return indexA - indexB;
+      });
+
+      const imagePromises = sortedPhotos.map(async (photo) => {
         if (photo && photo.url) {
           try {
-            console.log(`Processing image ${index + 1}:`, photo.url);
+            console.log(`Processing image with index ${photo.index}:`, photo.url);
             const imageBlob = await fetchImageAsBlob(photo.url);
-            const fileName = getImageFileName(index);
+            const fileName = getImageFileName(photo);
             console.log('Adding image to zip:', fileName, 'size:', imageBlob.size);
             imagesFolder.file(fileName, imageBlob);
           } catch (error) {
-            console.error(`Failed to process image ${index + 1}:`, error);
+            console.error(`Failed to process image:`, error);
           }
         }
       });
