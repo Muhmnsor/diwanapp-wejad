@@ -51,50 +51,24 @@ function calculateAverageRatings(feedback: any[]) {
   console.log("Calculating average ratings for feedback:", feedback);
   if (!feedback || feedback.length === 0) return null;
 
-  const sums = {
-    overall: { total: 0, count: 0 },
-    content: { total: 0, count: 0 },
-    organization: { total: 0, count: 0 },
-    presenter: { total: 0, count: 0 }
+  let validRatings = {
+    overall: feedback.filter(f => f.overall_rating !== null).map(f => f.overall_rating),
+    content: feedback.filter(f => f.content_rating !== null).map(f => f.content_rating),
+    organization: feedback.filter(f => f.organization_rating !== null).map(f => f.organization_rating),
+    presenter: feedback.filter(f => f.presenter_rating !== null).map(f => f.presenter_rating)
   };
 
-  feedback.forEach(f => {
-    if (f.overall_rating !== null) {
-      sums.overall.total += f.overall_rating;
-      sums.overall.count++;
-    }
-    if (f.content_rating !== null) {
-      sums.content.total += f.content_rating;
-      sums.content.count++;
-    }
-    if (f.organization_rating !== null) {
-      sums.organization.total += f.organization_rating;
-      sums.organization.count++;
-    }
-    if (f.presenter_rating !== null) {
-      sums.presenter.total += f.presenter_rating;
-      sums.presenter.count++;
-    }
-  });
+  console.log("Valid ratings:", validRatings);
 
-  console.log("Calculated sums:", sums);
-
-  // Get the maximum count of valid ratings
-  const maxCount = Math.max(
-    sums.overall.count,
-    sums.content.count,
-    sums.organization.count,
-    sums.presenter.count
-  );
-
-  if (maxCount === 0) return null;
+  const calculateAverage = (ratings: number[]) => 
+    ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
 
   return {
-    overall_rating: sums.overall.count > 0 ? sums.overall.total / sums.overall.count : null,
-    content_rating: sums.content.count > 0 ? sums.content.total / sums.content.count : null,
-    organization_rating: sums.organization.count > 0 ? sums.organization.total / sums.organization.count : null,
-    presenter_rating: sums.presenter.count > 0 ? sums.presenter.total / sums.presenter.count : null,
-    count: maxCount
+    overall_rating: calculateAverage(validRatings.overall),
+    content_rating: calculateAverage(validRatings.content),
+    organization_rating: calculateAverage(validRatings.organization),
+    presenter_rating: calculateAverage(validRatings.presenter),
+    count: feedback.length
   };
 }
 
