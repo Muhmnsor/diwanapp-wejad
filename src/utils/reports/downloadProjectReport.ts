@@ -102,7 +102,7 @@ function calculateAverageRatings(feedback: any[]) {
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
   const activityFeedback = report.activity?.activity_feedback || [];
-  const averageRatings = calculateAverageRatings(activityFeedback);
+  const averageRatings = report.activity?.averageRatings || calculateAverageRatings(activityFeedback);
   
   let reportText = `
 تقرير النشاط
