@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ interface FeedbackLinkProps {
 
 export const FeedbackLink = ({ eventId, isActivity = false }: FeedbackLinkProps) => {
   const [copied, setCopied] = useState(false);
-  const path = isActivity ? 'activity' : 'event';
+  const path = isActivity ? 'activities' : 'event';
   const feedbackUrl = `${window.location.origin}/${path}/${eventId}/feedback`;
 
   console.log(`Generating feedback URL for ${isActivity ? 'activity' : 'event'}:`, eventId);
