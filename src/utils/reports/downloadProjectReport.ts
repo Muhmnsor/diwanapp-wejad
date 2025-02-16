@@ -49,23 +49,53 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
 }
 
 function calculateAverageRatings(feedback: any[]) {
+  console.log("Calculating average ratings for feedback:", feedback);
   if (!feedback || feedback.length === 0) return null;
 
-  const totalRatings = feedback.reduce((acc, curr) => {
-    return {
-      overall: acc.overall + (curr.overall_rating || 0),
-      content: acc.content + (curr.content_rating || 0),
-      organization: acc.organization + (curr.organization_rating || 0),
-      presenter: acc.presenter + (curr.presenter_rating || 0),
-      count: acc.count + 1
-    };
-  }, { overall: 0, content: 0, organization: 0, presenter: 0, count: 0 });
+  const sums = {
+    overall: { total: 0, count: 0 },
+    content: { total: 0, count: 0 },
+    organization: { total: 0, count: 0 },
+    presenter: { total: 0, count: 0 }
+  };
+
+  feedback.forEach(f => {
+    if (f.overall_rating !== null) {
+      sums.overall.total += f.overall_rating;
+      sums.overall.count++;
+    }
+    if (f.content_rating !== null) {
+      sums.content.total += f.content_rating;
+      sums.content.count++;
+    }
+    if (f.organization_rating !== null) {
+      sums.organization.total += f.organization_rating;
+      sums.organization.count++;
+    }
+    if (f.presenter_rating !== null) {
+      sums.presenter.total += f.presenter_rating;
+      sums.presenter.count++;
+    }
+  });
+
+  console.log("Calculated sums:", sums);
+
+  // Get the maximum count of valid ratings
+  const maxCount = Math.max(
+    sums.overall.count,
+    sums.content.count,
+    sums.organization.count,
+    sums.presenter.count
+  );
+
+  if (maxCount === 0) return null;
 
   return {
-    overall_rating: totalRatings.overall / totalRatings.count,
-    content_rating: totalRatings.content / totalRatings.count,
-    organization_rating: totalRatings.organization / totalRatings.count,
-    presenter_rating: totalRatings.presenter / totalRatings.count
+    overall_rating: sums.overall.count > 0 ? sums.overall.total / sums.overall.count : null,
+    content_rating: sums.content.count > 0 ? sums.content.total / sums.content.count : null,
+    organization_rating: sums.organization.count > 0 ? sums.organization.total / sums.organization.count : null,
+    presenter_rating: sums.presenter.count > 0 ? sums.presenter.total / sums.presenter.count : null,
+    count: maxCount
   };
 }
 
