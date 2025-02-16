@@ -84,10 +84,10 @@ function generateReportText(report: ProjectReport): string {
 معلومات أساسية:
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
+اسم النشاط: ${report.activity?.title || 'غير محدد'}
 اسم المقدم/المنظم: ${report.report_name}
 مدة النشاط: ${duration} ساعات
 عدد الحضور: ${report.attendees_count || 0}
-اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
 تفاصيل النشاط:
 --------------
