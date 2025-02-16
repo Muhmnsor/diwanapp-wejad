@@ -78,11 +78,15 @@ export const EditActivityForm = ({
           .update(updateData)
           .eq('id', activity.id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (updateError) {
           console.error('Error updating activity:', updateError);
           throw updateError;
+        }
+
+        if (!updatedActivity) {
+          throw new Error('لم يتم العثور على النشاط المطلوب تحديثه');
         }
 
         console.log('Activity updated successfully:', updatedActivity);
@@ -102,11 +106,15 @@ export const EditActivityForm = ({
             is_visible: true
           }])
           .select()
-          .single();
+          .maybeSingle();
 
         if (insertError) {
           console.error('Error creating activity:', insertError);
           throw insertError;
+        }
+
+        if (!newActivity) {
+          throw new Error('فشل في إنشاء النشاط الجديد');
         }
 
         console.log('Activity created successfully:', newActivity);
