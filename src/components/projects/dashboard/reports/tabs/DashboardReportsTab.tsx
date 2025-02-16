@@ -24,31 +24,51 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
     queryKey: ['project-reports', projectId],
     queryFn: async () => {
       console.log("Fetching reports for project:", projectId);
-      const { data, error } = await supabase
+      const { data: reportsData, error: reportsError } = await supabase
         .from('project_activity_reports')
         .select(`
           *,
           activity:activity_id (
             id,
-            title,
-            activity_feedback (
-              overall_rating,
-              content_rating,
-              organization_rating,
-              presenter_rating
-            )
+            title
           )
         `)
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching reports:", error);
-        throw error;
+      if (reportsError) {
+        console.error("Error fetching reports:", reportsError);
+        throw reportsError;
       }
 
-      console.log("Fetched reports:", data);
-      return data || [];
+      // Fetch feedback data separately for each activity
+      const reportsWithFeedback = await Promise.all(
+        reportsData.map(async (report) => {
+          if (report.activity_id) {
+            const { data: feedbackData, error: feedbackError } = await supabase
+              .from('activity_feedback')
+              .select('*')
+              .eq('activity_id', report.activity_id);
+
+            if (feedbackError) {
+              console.error("Error fetching feedback:", feedbackError);
+              return report;
+            }
+
+            return {
+              ...report,
+              activity: {
+                ...report.activity,
+                activity_feedback: feedbackData
+              }
+            };
+          }
+          return report;
+        })
+      );
+
+      console.log("Fetched reports with feedback:", reportsWithFeedback);
+      return reportsWithFeedback || [];
     },
   });
 
