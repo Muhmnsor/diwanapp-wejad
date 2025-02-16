@@ -206,7 +206,7 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
     
     // Generate filename based on activity title and date
     const date = new Date(report.created_at).toISOString().split('T')[0];
-    const activityTitle = report.events?.title || 'نشاط';
+    const activityTitle = report.activity?.title || 'نشاط';
     const sanitizedActivityTitle = activityTitle.replace(/[^\u0621-\u064A0-9\s]/g, '').trim().replace(/\s+/g, '-');
     const filename = `${sanitizedActivityTitle}-${date}.zip`;
     
