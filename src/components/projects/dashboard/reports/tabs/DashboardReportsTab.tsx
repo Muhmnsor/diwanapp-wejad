@@ -1,13 +1,12 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportForm } from "../reports/ReportForm";
+import { ReportForm } from "@/components/projects/dashboard/reports/ReportForm";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
 import { downloadReport } from "@/components/reports/project-reports/handlers/projectReportHandlers";
 import { useToast } from "@/hooks/use-toast";
-import { ReportsHeader } from "../reports/components/ReportsHeader";
-import { ReportsTable } from "../reports/components/ReportsTable";
+import { ReportsHeader } from "@/components/projects/dashboard/reports/components/ReportsHeader";
+import { ReportsTable } from "@/components/projects/dashboard/reports/components/ReportsTable";
 
 interface DashboardReportsTabProps {
   projectId: string;
@@ -41,7 +40,6 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         throw reportsError;
       }
 
-      // جلب بيانات التقييمات بنفس طريقة صفحة التقييمات (باستخدام INNER JOIN)
       const reportsWithFeedback = await Promise.all(
         reportsData.map(async (report) => {
           if (report.activity_id) {
@@ -55,7 +53,6 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
               return report;
             }
 
-            // حساب متوسطات التقييم فقط للقيم غير الفارغة
             const validFeedback = feedbackData.filter(f => 
               f.overall_rating !== null || 
               f.content_rating !== null || 
