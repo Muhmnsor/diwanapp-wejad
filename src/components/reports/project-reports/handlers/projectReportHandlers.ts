@@ -1,7 +1,9 @@
+
 import { ProjectReport } from '@/types/projectReport';
 import { downloadProjectReport } from '@/utils/reports/downloadProjectReport';
 
 export const downloadReport = async (report: ProjectReport): Promise<void> => {
+  console.log("Downloading report with data:", report);
   return downloadProjectReport(report);
 };
 
