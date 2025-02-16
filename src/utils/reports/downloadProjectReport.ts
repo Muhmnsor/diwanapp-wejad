@@ -60,6 +60,7 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
 
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
+  console.log('Activity duration from activity:', report?.activity?.event_hours);
   
   let reportText = `
 تقرير النشاط
@@ -69,7 +70,7 @@ function generateReportText(report: ProjectReport): string {
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
-مدة النشاط: ${report.activity_duration} ساعات
+مدة النشاط: ${report?.activity?.event_hours || 0} ساعات
 عدد الحضور: ${report.attendees_count || 0}
 اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
@@ -112,7 +113,6 @@ ${report.impact_on_participants || ''}
   console.log('Parsed photos:', parsedPhotos);
 
   if (parsedPhotos.length > 0) {
-    // نرتب الصور حسب ترتيبها الأصلي
     const sortedPhotos = [...parsedPhotos].sort((a, b) => {
       const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
       const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
@@ -153,7 +153,7 @@ ${report.additional_links.join('\n')}
 
 export const downloadProjectReport = async (report: ProjectReport): Promise<void> => {
   try {
-    console.log('Starting report download process for:', report.report_name);
+    console.log('Starting report download process for:', report);
     const zip = new JSZip();
     
     // Add report text file
@@ -174,7 +174,6 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
       const parsedPhotos = parsePhotos(report.photos);
       console.log('Valid photos to process:', parsedPhotos.length);
 
-      // نرتب الصور حسب ترتيبها الأصلي
       const sortedPhotos = [...parsedPhotos].sort((a, b) => {
         const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
         const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
