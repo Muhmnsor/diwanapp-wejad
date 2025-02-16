@@ -31,56 +31,69 @@ export const ReportsTable = ({
   formatDate,
 }: ReportsTableProps) => {
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-center">معد التقرير</TableHead>
-            <TableHead className="text-center">النشاط</TableHead>
-            <TableHead className="text-center">عدد الحضور</TableHead>
-            <TableHead className="text-center">تاريخ الإنشاء</TableHead>
-            <TableHead className="text-center">الإجراءات</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-4">
-                جاري التحميل...
-              </TableCell>
+    <div className="bg-white rounded-lg shadow-sm">
+      <div className="overflow-hidden border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="text-center py-4 text-gray-700 font-semibold">معد التقرير</TableHead>
+              <TableHead className="text-center py-4 text-gray-700 font-semibold">النشاط</TableHead>
+              <TableHead className="text-center py-4 text-gray-700 font-semibold">عدد الحضور</TableHead>
+              <TableHead className="text-center py-4 text-gray-700 font-semibold">تاريخ الإنشاء</TableHead>
+              <TableHead className="text-center py-4 text-gray-700 font-semibold">الإجراءات</TableHead>
             </TableRow>
-          ) : reports.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-4">
-                لا توجد تقارير بعد
-              </TableCell>
-            </TableRow>
-          ) : (
-            reports.map((report: any) => (
-              <TableRow key={report.id}>
-                <TableCell className="text-center font-medium">
-                  {report.profiles?.email || 'غير معروف'}
-                </TableCell>
-                <TableCell className="text-center">
-                  {report.events?.title || 'النشاط غير موجود'}
-                </TableCell>
-                <TableCell className="text-center">{report.attendees_count}</TableCell>
-                <TableCell className="text-center">
-                  {formatDate(report.created_at)}
-                </TableCell>
-                <TableCell className="text-center">
-                  <ProjectReportActions
-                    onEdit={() => onEdit(report)}
-                    onDelete={() => onDelete(report)}
-                    onDownload={() => onDownload(report)}
-                    isDeleting={isDeleting && selectedReport?.id === report.id}
-                  />
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  <div className="flex items-center justify-center text-gray-500">
+                    <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    </svg>
+                    جاري التحميل...
+                  </div>
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : reports.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  <div className="text-gray-500">لا توجد تقارير بعد</div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              reports.map((report: any) => (
+                <TableRow 
+                  key={report.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <TableCell className="text-center py-4 text-gray-700">
+                    {report.profiles?.email || 'غير معروف'}
+                  </TableCell>
+                  <TableCell className="text-center py-4 text-gray-700">
+                    {report.events?.title || 'النشاط غير موجود'}
+                  </TableCell>
+                  <TableCell className="text-center py-4 text-gray-700">
+                    {report.attendees_count}
+                  </TableCell>
+                  <TableCell className="text-center py-4 text-gray-700">
+                    {formatDate(report.created_at)}
+                  </TableCell>
+                  <TableCell className="text-center py-4">
+                    <ProjectReportActions
+                      onEdit={() => onEdit(report)}
+                      onDelete={() => onDelete(report)}
+                      onDownload={() => onDownload(report)}
+                      isDeleting={isDeleting && selectedReport?.id === report.id}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
