@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -47,15 +48,38 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
   }).filter(Boolean);
 }
 
+function calculateAverageRatings(feedback: any[]) {
+  if (!feedback || feedback.length === 0) return null;
+
+  const sum = {
+    overall: 0,
+    content: 0,
+    organization: 0,
+    presenter: 0,
+    count: 0
+  };
+
+  feedback.forEach(f => {
+    if (f.overall_rating) sum.overall += f.overall_rating;
+    if (f.content_rating) sum.content += f.content_rating;
+    if (f.organization_rating) sum.organization += f.organization_rating;
+    if (f.presenter_rating) sum.presenter += f.presenter_rating;
+  });
+
+  const count = feedback.length;
+
+  return {
+    overall_rating: count > 0 ? sum.overall / count : null,
+    content_rating: count > 0 ? sum.content / count : null,
+    organization_rating: count > 0 ? sum.organization / count : null,
+    presenter_rating: count > 0 ? sum.presenter / count : null,
+    count
+  };
+}
+
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
   
-  // التحقق من وجود activity_feedback ومعالجتها
-  if (!report.activity?.activity_feedback) {
-    console.error('No activity_feedback found in report:', report);
-    return 'خطأ في تحميل بيانات التقييم';
-  }
-
   let reportText = `
 تقرير النشاط
 =============
@@ -84,19 +108,20 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  const feedback = report.activity.activity_feedback;
+  const feedback = report.activity?.activity_feedback || [];
+  const ratings = calculateAverageRatings(feedback);
   
-  if (feedback && feedback.length > 0) {
+  if (feedback.length > 0 && ratings) {
     console.log('Processing feedback for report:', feedback);
+    console.log('Calculated ratings:', ratings);
     
-    // نستخدم نفس الحسابات الموجودة في الواجهة
     reportText += `
-عدد المقيمين: ${feedback.length}
+عدد المقيمين: ${ratings.count}
 
-التقييم العام: ${formatRating(report.activity.averageRatings?.overall_rating)}
-تقييم المحتوى: ${formatRating(report.activity.averageRatings?.content_rating)}
-تقييم التنظيم: ${formatRating(report.activity.averageRatings?.organization_rating)}
-تقييم المقدم: ${formatRating(report.activity.averageRatings?.presenter_rating)}
+التقييم العام: ${formatRating(ratings.overall_rating)}
+تقييم المحتوى: ${formatRating(ratings.content_rating)}
+تقييم التنظيم: ${formatRating(ratings.organization_rating)}
+تقييم المقدم: ${formatRating(ratings.presenter_rating)}
 `;
   } else {
     console.log('No feedback found for report');
