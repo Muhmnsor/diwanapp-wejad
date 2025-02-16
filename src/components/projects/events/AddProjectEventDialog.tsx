@@ -1,4 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -36,7 +37,7 @@ export const AddProjectEventDialog = ({
       location: "",
       location_url: "",
       special_requirements: "",
-      event_hours: 0
+      activity_duration: 0
     }
   });
 
@@ -45,28 +46,19 @@ export const AddProjectEventDialog = ({
       console.log('Creating new project activity:', data);
       
       // Create the activity directly with project_id
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
+      const { data: activityData, error: activityError } = await supabase
+        .from('project_activities')
         .insert([{
           ...data,
-          event_path: project.event_path,
-          event_category: project.event_category,
-          event_type: 'in-person',
-          max_attendees: 0,
-          price: 0,
-          beneficiary_type: 'both',
-          certificate_type: 'none',
-          image_url: "/placeholder.svg",
-          is_project_activity: true,
+          project_id: projectId,
           is_visible: true,
-          project_id: projectId // Add project_id directly to the activity
         }])
         .select()
         .single();
 
-      if (eventError) throw eventError;
+      if (activityError) throw activityError;
 
-      console.log('Activity created successfully:', eventData);
+      console.log('Activity created successfully:', activityData);
 
       toast.success('تم إضافة النشاط بنجاح');
       onSuccess();

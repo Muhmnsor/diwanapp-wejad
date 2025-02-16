@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +40,7 @@ export const ActivityLocationFields = ({ form }: ActivityLocationFieldsProps) =>
 
       <FormField
         control={form.control}
-        name="event_hours"
+        name="activity_duration"
         render={({ field }) => (
           <FormItem>
             <FormLabel>مدة النشاط (بالساعات)</FormLabel>

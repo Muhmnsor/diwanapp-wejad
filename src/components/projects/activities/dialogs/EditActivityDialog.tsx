@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,7 @@ export const EditActivityDialog = ({
     location: activity.location,
     location_url: activity.location_url,
     special_requirements: activity.special_requirements,
-    event_hours: activity.event_hours
+    activity_duration: activity.activity_duration
   } : null;
 
   return (

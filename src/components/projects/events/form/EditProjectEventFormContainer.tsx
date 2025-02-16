@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -33,7 +34,7 @@ export const EditProjectEventFormContainer = ({
       location: activity.location,
       location_url: activity.location_url || "",
       special_requirements: activity.special_requirements || "",
-      event_hours: activity.event_hours,
+      activity_duration: activity.activity_duration,
     },
   });
 

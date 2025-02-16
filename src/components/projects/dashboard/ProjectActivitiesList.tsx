@@ -109,7 +109,7 @@ export const ProjectActivitiesList = ({
               <TableCell className="text-gray-600 text-center">
                 {activity.special_requirements || "-"}
               </TableCell>
-              <TableCell className="text-gray-600 text-center">{activity.event_hours}</TableCell>
+              <TableCell className="text-gray-600 text-center">{activity.activity_duration}</TableCell>
               <TableCell>
                 <div className="flex justify-center gap-3">
                   <Button
