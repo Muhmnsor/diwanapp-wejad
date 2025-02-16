@@ -11,6 +11,7 @@ export interface ProjectReport {
   activity_duration: string;
   attendees_count?: string | null;
   activity_objectives: string;
+  objectives: string;
   impact_on_participants?: string | null;
   photos?: ReportPhoto[] | null;
   created_at: string;
@@ -22,6 +23,7 @@ export interface ProjectReport {
   activity?: {
     id: string;
     title: string;
+    description?: string;
     event_hours?: number;
     activity_duration?: number;
     activity_feedback?: Array<{
