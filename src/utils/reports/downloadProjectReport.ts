@@ -3,6 +3,15 @@ import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
 
+const photoPlaceholders = [
+  "صورة المقدم وخلفه الشاشة او مايدل على النشاط",
+  "تفاعل المقدم مع المستفيدين",
+  "الضيافة ان وجدت قبل استهلاكها",
+  "تفاعل المستفيدين او الجمهور",
+  "صورة جماعية",
+  "صورة فردية لمستفيد متفاعل"
+];
+
 async function fetchImageAsBlob(url: string): Promise<Blob> {
   try {
     console.log('Attempting to fetch image from:', url);
@@ -20,13 +29,14 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
   }
 }
 
-function getImageFileName(index: number, description: string): string {
+function getImageFileName(index: number): string {
+  const description = photoPlaceholders[index] || `صورة ${index + 1}`;
   const sanitizedDescription = description
     .replace(/[^\u0621-\u064A0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '-')
     .substring(0, 50);
-  return `${(index + 1).toString().padStart(2, '0')}-${sanitizedDescription || 'صورة'}.jpg`;
+  return `${(index + 1).toString().padStart(2, '0')}-${sanitizedDescription}.jpg`;
 }
 
 function formatRating(rating: number | null): string {
@@ -79,41 +89,9 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  console.log('Activity object:', report.activity);
-  console.log('Activity feedback:', report.activity?.activity_feedback);
-  
-  // التحقق من وجود التقييمات في كلا الطريقتين
   const activityRatings = report.activity?.averageRatings;
-  const feedback = report.activity?.activity_feedback;
   
-  console.log('Activity ratings from averageRatings:', activityRatings);
-  console.log('Raw feedback:', feedback);
-
-  // إذا كان لدينا تقييمات مباشرة، نقوم بحسابها
-  if (feedback && feedback.length > 0) {
-    const calculatedRatings = {
-      overall_rating: feedback.reduce((sum, f) => sum + (f.overall_rating || 0), 0) / feedback.length,
-      content_rating: feedback.reduce((sum, f) => sum + (f.content_rating || 0), 0) / feedback.length,
-      organization_rating: feedback.reduce((sum, f) => sum + (f.organization_rating || 0), 0) / feedback.length,
-      presenter_rating: feedback.reduce((sum, f) => sum + (f.presenter_rating || 0), 0) / feedback.length,
-      count: feedback.length
-    };
-
-    console.log('Calculated ratings from feedback:', calculatedRatings);
-    
-    reportText += `
-عدد المقيمين: ${calculatedRatings.count}
-
-التقييم العام: ${formatRating(calculatedRatings.overall_rating)}
-تقييم المحتوى: ${formatRating(calculatedRatings.content_rating)}
-تقييم التنظيم: ${formatRating(calculatedRatings.organization_rating)}
-تقييم المقدم: ${formatRating(calculatedRatings.presenter_rating)}
-`;
-  } 
-  // إذا كان لدينا متوسط التقييمات مباشرة
-  else if (activityRatings) {
-    console.log('Using pre-calculated averageRatings:', activityRatings);
-    
+  if (activityRatings) {
     reportText += `
 عدد المقيمين: ${activityRatings.count}
 
@@ -123,7 +101,6 @@ ${report.impact_on_participants || ''}
 تقييم المقدم: ${formatRating(activityRatings.presenter_rating)}
 `;
   } else {
-    console.log('No ratings or feedback found');
     reportText += 'لم يتم تقييم النشاط بعد\n';
   }
 
@@ -136,7 +113,8 @@ ${report.impact_on_participants || ''}
 
   if (parsedPhotos.length > 0) {
     parsedPhotos.forEach((photo, index) => {
-      reportText += `${index + 1}. ${photo.description || 'صورة بدون وصف'}\n`;
+      const description = photoPlaceholders[index] || 'صورة إضافية';
+      reportText += `${index + 1}. ${description}\n`;
     });
   } else {
     reportText += 'لا توجد صور مرفقة\n';
@@ -193,7 +171,7 @@ export const downloadProjectReport = async (report: ProjectReport): Promise<void
           try {
             console.log(`Processing image ${index + 1}:`, photo.url);
             const imageBlob = await fetchImageAsBlob(photo.url);
-            const fileName = getImageFileName(index, photo.description || '');
+            const fileName = getImageFileName(index);
             console.log('Adding image to zip:', fileName, 'size:', imageBlob.size);
             imagesFolder.file(fileName, imageBlob);
           } catch (error) {
