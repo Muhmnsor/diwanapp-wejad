@@ -1,4 +1,3 @@
-
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -69,7 +68,7 @@ function generateReportText(report: ProjectReport): string {
 ---------------
 اسم البرنامج/المشروع: ${report.program_name || ''}
 اسم المقدم/المنظم: ${report.report_name}
-مدة النشاط: ${report.activity_duration} ساعات
+مدة النشاط: ${report.activity_duration || '-'} ساعات
 عدد الحضور: ${report.attendees_count || 0}
 اسم النشاط: ${report.activity?.title || 'غير محدد'}
 
@@ -112,7 +111,6 @@ ${report.impact_on_participants || ''}
   console.log('Parsed photos:', parsedPhotos);
 
   if (parsedPhotos.length > 0) {
-    // نرتب الصور حسب ترتيبها الأصلي
     const sortedPhotos = [...parsedPhotos].sort((a, b) => {
       const indexA = a.index !== undefined ? a.index : Number.MAX_SAFE_INTEGER;
       const indexB = b.index !== undefined ? b.index : Number.MAX_SAFE_INTEGER;
