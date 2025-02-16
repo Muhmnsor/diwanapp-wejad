@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import { ProjectReport, ReportPhoto } from '@/types/projectReport';
 import JSZip from 'jszip';
@@ -47,9 +48,31 @@ function parsePhotos(photos: any[]): ReportPhoto[] {
   }).filter(Boolean);
 }
 
+function calculateAverageRatings(feedback: any[]) {
+  if (!feedback || feedback.length === 0) return null;
+
+  const totalRatings = feedback.reduce((acc, curr) => {
+    return {
+      overall: acc.overall + (curr.overall_rating || 0),
+      content: acc.content + (curr.content_rating || 0),
+      organization: acc.organization + (curr.organization_rating || 0),
+      presenter: acc.presenter + (curr.presenter_rating || 0),
+      count: acc.count + 1
+    };
+  }, { overall: 0, content: 0, organization: 0, presenter: 0, count: 0 });
+
+  return {
+    overall_rating: totalRatings.overall / totalRatings.count,
+    content_rating: totalRatings.content / totalRatings.count,
+    organization_rating: totalRatings.organization / totalRatings.count,
+    presenter_rating: totalRatings.presenter / totalRatings.count
+  };
+}
+
 function generateReportText(report: ProjectReport): string {
   console.log('Generating report text for:', report);
-  const activityRating = report.activity?.activity_feedback?.[0];
+  const activityFeedback = report.activity?.activity_feedback || [];
+  const averageRatings = calculateAverageRatings(activityFeedback);
   
   let reportText = `
 تقرير النشاط
@@ -79,13 +102,15 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  if (activityRating) {
-    console.log('Adding ratings to report:', activityRating);
+  if (averageRatings) {
+    console.log('Adding average ratings to report:', averageRatings);
     reportText += `
-التقييم العام: ${formatRating(activityRating.overall_rating)}
-تقييم المحتوى: ${formatRating(activityRating.content_rating)}
-تقييم التنظيم: ${formatRating(activityRating.organization_rating)}
-تقييم المقدم: ${formatRating(activityRating.presenter_rating)}
+عدد المقيمين: ${activityFeedback.length}
+
+التقييم العام: ${formatRating(averageRatings.overall_rating)}
+تقييم المحتوى: ${formatRating(averageRatings.content_rating)}
+تقييم التنظيم: ${formatRating(averageRatings.organization_rating)}
+تقييم المقدم: ${formatRating(averageRatings.presenter_rating)}
 `;
   } else {
     console.log('No ratings found for report');
