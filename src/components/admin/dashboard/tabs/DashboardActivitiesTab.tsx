@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,10 +18,9 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
     queryFn: async () => {
       console.log('Fetching project activities:', projectId);
       const { data, error } = await supabase
-        .from("events")
+        .from("project_activities")
         .select("*")
         .eq("project_id", projectId)
-        .eq("is_project_activity", true)
         .order("date", { ascending: true });
 
       if (error) {
