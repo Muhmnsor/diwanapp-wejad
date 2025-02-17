@@ -20,20 +20,26 @@ export const useProjectMetrics = (
       return activityDate < new Date();
     });
 
-    // Calculate average attendance
-    const averageAttendance = completedActivities.reduce((sum, activity) => {
+    // Calculate total attendance and total possible attendance
+    const totalAttendance = completedActivities.reduce((sum, activity) => {
       const presentCount = activity.attendance_records?.filter(
         record => record.status === 'present'
       ).length || 0;
-      
-      return sum + ((presentCount / registrationCount) * 100);
-    }, 0) / (completedActivities.length || 1);
+      return sum + presentCount;
+    }, 0);
+
+    const totalPossibleAttendance = completedActivities.length * registrationCount;
+
+    // Calculate average attendance percentage
+    const averageAttendance = totalPossibleAttendance > 0 
+      ? Math.round((totalAttendance / totalPossibleAttendance) * 100)
+      : 0;
 
     // Calculate activity stats
     const activityStats = {
       total: projectActivities.length,
       completed: completedActivities.length,
-      averageAttendance: Math.round(averageAttendance),
+      averageAttendance: averageAttendance,
       highestAttendance: null as any,
       lowestAttendance: null as any,
       highestRated: null as any,
