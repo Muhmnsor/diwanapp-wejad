@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,8 +26,8 @@ export const ActivityFeedbackFormContainer = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('event_feedback').insert({
-        event_id: id,
+      const { error } = await supabase.from('activity_feedback').insert({
+        project_activity_id: id,
         overall_rating: formData.overallRating,
         content_rating: formData.contentRating,
         organization_rating: formData.organizationRating,
