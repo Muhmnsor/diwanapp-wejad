@@ -18,17 +18,15 @@ export const useProjectActivities = (projectId: string) => {
             registration_id,
             created_at
           ),
-          events!event_id (
-            activity_feedback (
-              id,
-              overall_rating,
-              content_rating,
-              organization_rating,
-              presenter_rating,
-              feedback_text,
-              name,
-              phone
-            )
+          activity_feedback!project_activity_id (
+            id,
+            overall_rating,
+            content_rating,
+            organization_rating,
+            presenter_rating,
+            feedback_text,
+            name,
+            phone
           )
         `)
         .eq('project_id', projectId)
@@ -39,14 +37,8 @@ export const useProjectActivities = (projectId: string) => {
         throw error;
       }
       
-      // Transform the data to match the expected structure
-      const transformedData = data?.map(activity => ({
-        ...activity,
-        activity_feedback: activity.events?.activity_feedback || []
-      }));
-      
-      console.log('Fetched activities:', transformedData);
-      return (transformedData || []) as ProjectActivity[];
+      console.log('Fetched activities:', data);
+      return (data || []) as ProjectActivity[];
     },
   });
 

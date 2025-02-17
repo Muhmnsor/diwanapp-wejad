@@ -21,6 +21,7 @@ export type Database = {
           overall_rating: number | null
           phone: string | null
           presenter_rating: number | null
+          project_activity_id: string | null
         }
         Insert: {
           activity_id?: string | null
@@ -33,6 +34,7 @@ export type Database = {
           overall_rating?: number | null
           phone?: string | null
           presenter_rating?: number | null
+          project_activity_id?: string | null
         }
         Update: {
           activity_id?: string | null
@@ -45,6 +47,7 @@ export type Database = {
           overall_rating?: number | null
           phone?: string | null
           presenter_rating?: number | null
+          project_activity_id?: string | null
         }
         Relationships: [
           {
@@ -52,6 +55,13 @@ export type Database = {
             columns: ["activity_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_feedback_project_activity_id_fkey"
+            columns: ["project_activity_id"]
+            isOneToOne: false
+            referencedRelation: "project_activities"
             referencedColumns: ["id"]
           },
         ]
