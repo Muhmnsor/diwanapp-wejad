@@ -6,16 +6,27 @@ export const handleActivityDelete = async (activityId: string) => {
   console.log("Confirming deletion for activity:", activityId);
   
   try {
-    // First delete feedback records
-    console.log('Deleting feedback records...');
-    const { error: feedbackError } = await supabase
+    // First delete both types of feedback records
+    console.log('Deleting activity feedback records...');
+    const { error: activityFeedbackError } = await supabase
       .from('activity_feedback')
       .delete()
       .eq('project_activity_id', activityId);
 
-    if (feedbackError) {
-      console.error('Error deleting feedback:', feedbackError);
-      throw feedbackError;
+    if (activityFeedbackError) {
+      console.error('Error deleting activity feedback:', activityFeedbackError);
+      throw activityFeedbackError;
+    }
+
+    console.log('Deleting event feedback records...');
+    const { error: eventFeedbackError } = await supabase
+      .from('event_feedback')
+      .delete()
+      .eq('event_id', activityId);
+
+    if (eventFeedbackError) {
+      console.error('Error deleting event feedback:', eventFeedbackError);
+      throw eventFeedbackError;
     }
 
     // Delete attendance records
@@ -55,6 +66,7 @@ export const handleActivityDelete = async (activityId: string) => {
     }
 
     // Finally try to delete from events if it exists there
+    console.log('Deleting from events...');
     const { error: eventError } = await supabase
       .from('events')
       .delete()
