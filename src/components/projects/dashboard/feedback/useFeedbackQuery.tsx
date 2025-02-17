@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -8,20 +9,19 @@ export const useFeedbackQuery = (projectId: string) => {
       console.log('Fetching activities feedback for project:', projectId);
       
       const { data: activities, error } = await supabase
-        .from('events')
+        .from('project_activities')
         .select(`
           id,
           title,
           date,
-          event_feedback (
+          activity_feedback (
             overall_rating,
             content_rating,
             organization_rating,
             presenter_rating
           )
         `)
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true);
+        .eq('project_id', projectId);
 
       if (error) {
         console.error('Error fetching activities feedback:', error);
@@ -34,7 +34,7 @@ export const useFeedbackQuery = (projectId: string) => {
         id: activity.id,
         title: activity.title,
         date: activity.date,
-        feedback: activity.event_feedback || []
+        feedback: activity.activity_feedback || []
       })) || [];
     }
   });
