@@ -37,10 +37,10 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
     queryKey: ['project-activities', projectId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('events')
+        .from('project_activities')
         .select('*')
         .eq('project_id', projectId)
-        .eq('is_project_activity', true);
+        .eq('is_visible', true);
 
       if (error) throw error;
       return data || [];
@@ -61,10 +61,10 @@ export const useReportForm = (projectId: string, report?: any, onSuccess?: () =>
 
       // Get activity details
       const { data: activityData } = await supabase
-        .from('events')
+        .from('project_activities')
         .select('*')
         .eq('id', selectedActivity)
-        .single();
+        .maybeSingle();
 
       setSelectedActivityDetails(activityData);
 
