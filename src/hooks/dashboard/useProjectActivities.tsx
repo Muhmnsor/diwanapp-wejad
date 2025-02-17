@@ -16,10 +16,9 @@ export const useProjectActivities = (projectId: string) => {
             id,
             status,
             registration_id,
-            activity_id,
             created_at
           ),
-          activity_feedback (
+          activity_feedback!activity_id (
             id,
             overall_rating,
             content_rating,
