@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { EventsSection } from "@/components/events/EventsSection";
 import { useEffect } from "react";
@@ -23,7 +24,6 @@ export const EventsTabs = ({
 }: EventsTabsProps) => {
   const isMobile = useIsMobile();
 
-  // Set upcoming events as default tab on component mount
   useEffect(() => {
     setActiveTab("upcoming");
   }, []);
@@ -41,55 +41,70 @@ export const EventsTabs = ({
 
   return (
     <div className="container mx-auto px-4 mt-12" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-6 mb-12 space-y-3 md:space-y-0">
-        <Button
-          variant={activeTab === "upcoming" ? "default" : "outline"}
-          onClick={() => setActiveTab("upcoming")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات القادمة" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <Calendar className="h-4 w-4 mr-2" />
-              الفعاليات القادمة
-            </>
-          ) : (
-            "الفعاليات القادمة"
-          )}
-        </Button>
-        <Button
-          variant={activeTab === "all" ? "default" : "outline"}
-          onClick={() => setActiveTab("all")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "جميع الفعاليات" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <CalendarRange className="h-4 w-4 mr-2" />
-              جميع الفعاليات
-            </>
-          ) : (
-            "جميع الفعاليات"
-          )}
-        </Button>
-        <Button
-          variant={activeTab === "past" ? "default" : "outline"}
-          onClick={() => setActiveTab("past")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات السابقة" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <History className="h-4 w-4 mr-2" />
-              الفعاليات السابقة
-            </>
-          ) : (
-            "الفعاليات السابقة"
-          )}
-        </Button>
+      <div className="relative">
+        <div className="flex justify-center mb-12">
+          <div className="inline-flex p-1 bg-muted rounded-lg">
+            <Button
+              variant="ghost"
+              onClick={() => setActiveTab("upcoming")}
+              className={`
+                relative px-6 py-2 rounded-md transition-all
+                ${activeTab === "upcoming" ? 
+                  'text-primary-foreground shadow-sm' : 
+                  'hover:text-primary hover:bg-transparent'
+                }
+              `}
+            >
+              <span className={`flex items-center gap-2 relative z-10 ${activeTab === "upcoming" ? 'text-white' : ''}`}>
+                <Calendar className="h-4 w-4" />
+                {isMobile ? "" : "الفعاليات القادمة"}
+              </span>
+              {activeTab === "upcoming" && (
+                <span className="absolute inset-0 bg-primary rounded-md"></span>
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={() => setActiveTab("all")}
+              className={`
+                relative px-6 py-2 rounded-md transition-all
+                ${activeTab === "all" ? 
+                  'text-primary-foreground shadow-sm' : 
+                  'hover:text-primary hover:bg-transparent'
+                }
+              `}
+            >
+              <span className={`flex items-center gap-2 relative z-10 ${activeTab === "all" ? 'text-white' : ''}`}>
+                <CalendarRange className="h-4 w-4" />
+                {isMobile ? "" : "جميع الفعاليات"}
+              </span>
+              {activeTab === "all" && (
+                <span className="absolute inset-0 bg-primary rounded-md"></span>
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={() => setActiveTab("past")}
+              className={`
+                relative px-6 py-2 rounded-md transition-all
+                ${activeTab === "past" ? 
+                  'text-primary-foreground shadow-sm' : 
+                  'hover:text-primary hover:bg-transparent'
+                }
+              `}
+            >
+              <span className={`flex items-center gap-2 relative z-10 ${activeTab === "past" ? 'text-white' : ''}`}>
+                <History className="h-4 w-4" />
+                {isMobile ? "" : "الفعاليات السابقة"}
+              </span>
+              {activeTab === "past" && (
+                <span className="absolute inset-0 bg-primary rounded-md"></span>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
 
       <EventsSection
