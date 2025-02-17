@@ -12,7 +12,23 @@ export const useProjectActivities = (projectId: string) => {
         .from('project_activities')
         .select(`
           *,
-          attendance_records!attendance_records_activity_id_fkey(*)
+          attendance_records (
+            id,
+            status,
+            registration_id,
+            activity_id,
+            created_at
+          ),
+          activity_feedback (
+            id,
+            overall_rating,
+            content_rating,
+            organization_rating,
+            presenter_rating,
+            feedback_text,
+            name,
+            phone
+          )
         `)
         .eq('project_id', projectId)
         .order('date', { ascending: true });

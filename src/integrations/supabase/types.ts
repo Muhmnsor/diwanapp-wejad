@@ -124,7 +124,7 @@ export type Database = {
             foreignKeyName: "attendance_records_activity_id_fkey"
             columns: ["activity_id"]
             isOneToOne: false
-            referencedRelation: "events"
+            referencedRelation: "project_activities"
             referencedColumns: ["id"]
           },
           {
