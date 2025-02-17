@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -55,17 +56,16 @@ export const useActivityManagement = (projectId: string, refetchActivities: () =
         throw reportsError;
       }
 
-      // Finally delete the event itself
-      const { error: eventError } = await supabase
-        .from('events')
+      // Finally delete the activity from project_activities table
+      const { error: deleteError } = await supabase
+        .from('project_activities')
         .delete()
         .eq('id', selectedEvent.id)
-        .eq('project_id', projectId)
-        .eq('is_project_activity', true);
+        .eq('project_id', projectId);
 
-      if (eventError) {
-        console.error('Error deleting event:', eventError);
-        throw eventError;
+      if (deleteError) {
+        console.error('Error deleting activity:', deleteError);
+        throw deleteError;
       }
 
       toast.success('تم حذف النشاط بنجاح');
