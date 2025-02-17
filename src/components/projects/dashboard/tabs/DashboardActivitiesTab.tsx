@@ -1,10 +1,9 @@
 
 import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { ActivityListHeader } from "@/components/projects/activities/list/ActivityListHeader";
 import { ProjectActivitiesList } from "@/components/projects/dashboard/ProjectActivitiesList";
 import { useActivityManagement } from "@/components/projects/activities/hooks/useActivityManagement";
+import { useProjectActivities } from "@/hooks/dashboard/useProjectActivities";
 
 interface DashboardActivitiesTabProps {
   projectId: string;
@@ -13,25 +12,7 @@ interface DashboardActivitiesTabProps {
 export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProps) => {
   console.log('DashboardActivitiesTab - projectId:', projectId);
   
-  const { data: activities = [], refetch: refetchActivities } = useQuery({
-    queryKey: ['project-activities', projectId],
-    queryFn: async () => {
-      console.log('Fetching project activities:', projectId);
-      const { data, error } = await supabase
-        .from("project_activities")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("date", { ascending: true });
-
-      if (error) {
-        console.error('Error fetching activities:', error);
-        throw error;
-      }
-      
-      console.log('Fetched activities:', data);
-      return data || [];
-    },
-  });
+  const { projectActivities, refetchActivities } = useProjectActivities(projectId);
 
   const handleRefetch = async () => {
     await refetchActivities();
@@ -60,7 +41,7 @@ export const DashboardActivitiesTab = ({ projectId }: DashboardActivitiesTabProp
 
       <Card className="p-6">
         <ProjectActivitiesList
-          projectActivities={activities}
+          projectActivities={projectActivities}
           onEdit={handleEditEvent}
           onDelete={handleDeleteEvent}
           onEditSuccess={handleRefetch}

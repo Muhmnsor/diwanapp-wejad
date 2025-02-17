@@ -1,5 +1,7 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectActivity } from "@/types/activity";
 
 export const useProjectActivities = (projectId: string) => {
   const { data: projectActivities = [], refetch: refetchActivities } = useQuery({
@@ -7,14 +9,12 @@ export const useProjectActivities = (projectId: string) => {
     queryFn: async () => {
       console.log('Fetching project activities:', projectId);
       const { data, error } = await supabase
-        .from('events')
+        .from('project_activities')
         .select(`
           *,
-          attendance_records!attendance_records_activity_id_fkey(*),
-          activity_feedback(*)
+          attendance_records!attendance_records_activity_id_fkey(*)
         `)
         .eq('project_id', projectId)
-        .eq('is_project_activity', true)
         .order('date', { ascending: true });
 
       if (error) {
@@ -22,8 +22,8 @@ export const useProjectActivities = (projectId: string) => {
         throw error;
       }
       
-      console.log('Fetched activities with attendance:', data);
-      return data || [];
+      console.log('Fetched activities:', data);
+      return (data || []) as ProjectActivity[];
     },
   });
 
