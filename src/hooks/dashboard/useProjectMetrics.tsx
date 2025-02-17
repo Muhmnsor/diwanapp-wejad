@@ -1,17 +1,11 @@
-import { useMemo } from 'react';
 
-interface Activity {
-  id: string;
-  title: string;
-  date: string;
-  attendance_records: any[];
-  activity_feedback: any[];
-}
+import { useMemo } from 'react';
+import { ProjectActivity } from '@/types/activity';
 
 export const useProjectMetrics = (
   projectData: any,
   registrations: any[],
-  projectActivities: Activity[]
+  projectActivities: ProjectActivity[]
 ) => {
   return useMemo(() => {
     console.log("Calculating project metrics");

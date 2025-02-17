@@ -13,6 +13,23 @@ export interface ProjectActivity {
   event_id?: string;
   is_visible?: boolean;
   created_at?: string;
+  attendance_records?: Array<{
+    id: string;
+    status: string;
+    registration_id: string;
+    activity_id: string;
+    created_at?: string;
+  }>;
+  activity_feedback?: Array<{
+    id: string;
+    overall_rating: number;
+    content_rating: number;
+    organization_rating: number;
+    presenter_rating: number;
+    feedback_text?: string;
+    name?: string;
+    phone?: string;
+  }>;
 }
 
 export interface ProjectActivityFormData {
