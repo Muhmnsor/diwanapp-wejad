@@ -1,103 +1,58 @@
-import { Button } from "@/components/ui/button";
-import { EventsSection } from "@/components/events/EventsSection";
-import { useEffect } from "react";
-import { Calendar, CalendarRange, History } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventsTabContent } from "./tabs/EventsTabContent";
 
 interface EventsTabsProps {
   events: any[];
   upcomingEvents: any[];
   pastEvents: any[];
   activeTab: "all" | "upcoming" | "past";
-  setActiveTab: (tab: "all" | "upcoming" | "past") => void;
-  registrations: { [key: string]: number };
+  setActiveTab: (value: "all" | "upcoming" | "past") => void;
+  registrations: Record<string, number>;
 }
 
-export const EventsTabs = ({ 
-  events, 
-  upcomingEvents, 
-  pastEvents, 
-  activeTab, 
+export const EventsTabs = ({
+  events,
+  upcomingEvents,
+  pastEvents,
+  activeTab,
   setActiveTab,
-  registrations 
+  registrations,
 }: EventsTabsProps) => {
-  const isMobile = useIsMobile();
-
-  // Set upcoming events as default tab on component mount
-  useEffect(() => {
-    setActiveTab("upcoming");
-  }, []);
-
-  const getTitle = (tab: "all" | "upcoming" | "past") => {
-    switch (tab) {
-      case "all":
-        return "جميع الفعاليات";
-      case "upcoming":
-        return "الفعاليات القادمة";
-      case "past":
-        return "الفعاليات السابقة";
-    }
-  };
-
   return (
-    <div className="container mx-auto px-4 mt-12" dir="rtl">
-      <div className="flex flex-col md:flex-row justify-center gap-3 md:gap-6 mb-12 space-y-3 md:space-y-0">
-        <Button
-          variant={activeTab === "upcoming" ? "default" : "outline"}
-          onClick={() => setActiveTab("upcoming")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات القادمة" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <Calendar className="h-4 w-4 mr-2" />
-              الفعاليات القادمة
-            </>
-          ) : (
-            "الفعاليات القادمة"
-          )}
-        </Button>
-        <Button
-          variant={activeTab === "all" ? "default" : "outline"}
-          onClick={() => setActiveTab("all")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "جميع الفعاليات" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <CalendarRange className="h-4 w-4 mr-2" />
-              جميع الفعاليات
-            </>
-          ) : (
-            "جميع الفعاليات"
-          )}
-        </Button>
-        <Button
-          variant={activeTab === "past" ? "default" : "outline"}
-          onClick={() => setActiveTab("past")}
-          className={`flex items-center gap-2 w-full md:w-auto shadow-sm hover:shadow-md transition-all ${isMobile ? 'justify-center' : ''}`}
-          size={isMobile ? "default" : "default"}
-          title={isMobile ? "الفعاليات السابقة" : undefined}
-        >
-          {isMobile ? (
-            <>
-              <History className="h-4 w-4 mr-2" />
-              الفعاليات السابقة
-            </>
-          ) : (
-            "الفعاليات السابقة"
-          )}
-        </Button>
-      </div>
-
-      <EventsSection
-        title={getTitle(activeTab)}
-        events={activeTab === "all" ? events : activeTab === "upcoming" ? upcomingEvents : pastEvents}
-        registrations={registrations}
-        isPastEvents={activeTab === "past"}
-      />
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">الفعاليات</h2>
+      <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+        <div className="relative">
+          <TabsList className="w-full md:w-fit justify-start border-b rounded-none bg-white p-0 h-12">
+            <TabsTrigger 
+              value="upcoming"
+              className="flex-1 md:flex-none data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8 relative data-[state=active]:shadow-none data-[state=active]:bg-transparent h-12"
+            >
+              القادمة
+            </TabsTrigger>
+            <TabsTrigger 
+              value="all" 
+              className="flex-1 md:flex-none data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8 relative data-[state=active]:shadow-none data-[state=active]:bg-transparent h-12"
+            >
+              الجميع
+            </TabsTrigger>
+            <TabsTrigger 
+              value="past"
+              className="flex-1 md:flex-none data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-8 relative data-[state=active]:shadow-none data-[state=active]:bg-transparent h-12"
+            >
+              السابقة
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <EventsTabContent 
+          events={events}
+          upcomingEvents={upcomingEvents}
+          pastEvents={pastEvents}
+          activeTab={activeTab}
+          registrations={registrations}
+        />
+      </Tabs>
     </div>
   );
 };
