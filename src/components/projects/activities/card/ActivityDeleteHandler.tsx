@@ -6,6 +6,16 @@ export const handleActivityDelete = async (activityId: string) => {
   console.log("Confirming deletion for activity:", activityId);
   
   try {
+    // Check if this is an event-linked activity
+    const { data: activityData } = await supabase
+      .from('project_activities')
+      .select('event_id')
+      .eq('id', activityId)
+      .maybeSingle();
+
+    const isEventActivity = activityData?.event_id !== null;
+    console.log('Is event activity:', isEventActivity);
+
     // First delete both types of feedback records
     console.log('Deleting activity feedback records...');
     const { error: activityFeedbackError } = await supabase
@@ -18,15 +28,18 @@ export const handleActivityDelete = async (activityId: string) => {
       throw activityFeedbackError;
     }
 
-    console.log('Deleting event feedback records...');
-    const { error: eventFeedbackError } = await supabase
-      .from('event_feedback')
-      .delete()
-      .eq('event_id', activityId);
+    // Only try to delete event feedback if this is an event activity
+    if (isEventActivity) {
+      console.log('Deleting event feedback records...');
+      const { error: eventFeedbackError } = await supabase
+        .from('event_feedback')
+        .delete()
+        .eq('event_id', activityData.event_id);
 
-    if (eventFeedbackError) {
-      console.error('Error deleting event feedback:', eventFeedbackError);
-      throw eventFeedbackError;
+      if (eventFeedbackError) {
+        console.error('Error deleting event feedback:', eventFeedbackError);
+        throw eventFeedbackError;
+      }
     }
 
     // Delete attendance records
@@ -65,16 +78,19 @@ export const handleActivityDelete = async (activityId: string) => {
       throw projectActivityError;
     }
 
-    // Finally try to delete from events if it exists there
-    console.log('Deleting from events...');
-    const { error: eventError } = await supabase
-      .from('events')
-      .delete()
-      .eq('id', activityId);
+    // Only try to delete from events if it was an event activity
+    if (isEventActivity) {
+      console.log('Deleting from events...');
+      const { error: eventError } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', activityData.event_id);
 
-    // We don't throw on event error since not all activities are events
-    if (eventError) {
-      console.log('Note: Activity was not found in events table or already deleted');
+      if (eventError) {
+        console.error('Error deleting from events:', eventError);
+        // Don't throw here as the main activity is already deleted
+        console.log('Note: Event deletion failed but activity was deleted');
+      }
     }
 
     console.log('Activity deleted successfully');
