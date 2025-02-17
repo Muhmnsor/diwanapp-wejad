@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -8,9 +9,9 @@ export const handleActivityDelete = async (activityId: string) => {
     // First delete feedback records
     console.log('Deleting feedback records...');
     const { error: feedbackError } = await supabase
-      .from('event_feedback')
+      .from('activity_feedback')
       .delete()
-      .eq('event_id', activityId);
+      .eq('project_activity_id', activityId);
 
     if (feedbackError) {
       console.error('Error deleting feedback:', feedbackError);
@@ -41,17 +42,27 @@ export const handleActivityDelete = async (activityId: string) => {
       throw reportsError;
     }
 
-    // Finally delete the activity
-    console.log('Deleting activity...');
-    const { error: deleteError } = await supabase
+    // Delete from project_activities first
+    console.log('Deleting from project_activities...');
+    const { error: projectActivityError } = await supabase
+      .from('project_activities')
+      .delete()
+      .eq('id', activityId);
+
+    if (projectActivityError) {
+      console.error('Error deleting from project_activities:', projectActivityError);
+      throw projectActivityError;
+    }
+
+    // Finally try to delete from events if it exists there
+    const { error: eventError } = await supabase
       .from('events')
       .delete()
-      .eq('id', activityId)
-      .eq('is_project_activity', true);
+      .eq('id', activityId);
 
-    if (deleteError) {
-      console.error('Error deleting activity:', deleteError);
-      throw deleteError;
+    // We don't throw on event error since not all activities are events
+    if (eventError) {
+      console.log('Note: Activity was not found in events table or already deleted');
     }
 
     console.log('Activity deleted successfully');
