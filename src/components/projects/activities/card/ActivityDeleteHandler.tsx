@@ -9,7 +9,7 @@ export const handleActivityDelete = async (activityId: string) => {
     // First check if activity exists
     const { data: activityData, error: activityCheckError } = await supabase
       .from('project_activities')
-      .select('event_id')
+      .select('*')
       .eq('id', activityId)
       .maybeSingle();
 
@@ -23,9 +23,6 @@ export const handleActivityDelete = async (activityId: string) => {
       throw new Error('Activity not found');
     }
 
-    const isEventActivity = activityData.event_id !== null;
-    console.log('Is event activity:', isEventActivity);
-
     // First delete feedback records
     console.log('Deleting activity feedback records...');
     const { error: activityFeedbackError } = await supabase
@@ -36,20 +33,6 @@ export const handleActivityDelete = async (activityId: string) => {
     if (activityFeedbackError) {
       console.error('Error deleting activity feedback:', activityFeedbackError);
       throw activityFeedbackError;
-    }
-
-    // Only try to delete event feedback if this is an event activity
-    if (isEventActivity && activityData.event_id) {
-      console.log('Deleting event feedback records...');
-      const { error: eventFeedbackError } = await supabase
-        .from('event_feedback')
-        .delete()
-        .eq('event_id', activityData.event_id);
-
-      if (eventFeedbackError) {
-        console.error('Error deleting event feedback:', eventFeedbackError);
-        throw eventFeedbackError;
-      }
     }
 
     // Delete attendance records
@@ -86,21 +69,6 @@ export const handleActivityDelete = async (activityId: string) => {
     if (projectActivityError) {
       console.error('Error deleting from project_activities:', projectActivityError);
       throw projectActivityError;
-    }
-
-    // Only try to delete from events if it was an event activity
-    if (isEventActivity && activityData.event_id) {
-      console.log('Deleting from events...');
-      const { error: eventError } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', activityData.event_id);
-
-      if (eventError) {
-        console.error('Error deleting from events:', eventError);
-        toast.error('تم حذف النشاط ولكن حدث خطأ أثناء حذف الفعالية المرتبطة به');
-        return true; // Still return true as the activity was deleted
-      }
     }
 
     console.log('Activity deleted successfully');

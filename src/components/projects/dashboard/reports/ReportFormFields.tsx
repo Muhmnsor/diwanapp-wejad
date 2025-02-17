@@ -38,9 +38,6 @@ export const ReportFormFields = ({
 }: ReportFormFieldsProps) => {
   console.log('ReportFormFields - Current photos:', photos);
 
-  // Get activity duration from either event_hours or activity_duration
-  const activityDuration = selectedActivityDetails?.event_hours || selectedActivityDetails?.activity_duration || '';
-
   return <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium mb-2">اسم البرنامج/المشروع</label>
@@ -77,7 +74,7 @@ export const ReportFormFields = ({
 
             <div>
               <label className="block text-sm font-medium mb-2">مدة النشاط (ساعات)</label>
-              <Input value={activityDuration} disabled />
+              <Input value={selectedActivityDetails?.activity_duration || ''} disabled />
             </div>
           </div>
 

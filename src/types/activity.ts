@@ -10,7 +10,6 @@ export interface ProjectActivity {
   activity_duration: number;
   special_requirements?: string;
   project_id: string;
-  event_id?: string;
   is_visible?: boolean;
   created_at?: string;
   attendance_records?: Array<{

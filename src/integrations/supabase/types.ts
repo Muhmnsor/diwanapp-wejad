@@ -1319,11 +1319,10 @@ export type Database = {
       }
       project_activities: {
         Row: {
-          activity_duration: number | null
+          activity_duration: number
           created_at: string
           date: string
           description: string | null
-          event_id: string | null
           id: string
           is_visible: boolean | null
           location: string
@@ -1334,11 +1333,10 @@ export type Database = {
           title: string
         }
         Insert: {
-          activity_duration?: number | null
+          activity_duration?: number
           created_at?: string
           date: string
           description?: string | null
-          event_id?: string | null
           id?: string
           is_visible?: boolean | null
           location: string
@@ -1349,11 +1347,10 @@ export type Database = {
           title: string
         }
         Update: {
-          activity_duration?: number | null
+          activity_duration?: number
           created_at?: string
           date?: string
           description?: string | null
-          event_id?: string | null
           id?: string
           is_visible?: boolean | null
           location?: string
@@ -1364,13 +1361,6 @@ export type Database = {
           title?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "project_activities_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "project_activities_project_id_fkey"
             columns: ["project_id"]
