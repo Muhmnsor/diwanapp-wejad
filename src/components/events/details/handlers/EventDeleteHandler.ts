@@ -24,8 +24,10 @@ async function deleteInBatches(tableName: string, columnName: string, eventId: s
       throw error;
     }
 
-    deletedCount += (data?.length || 0);
-    hasMore = (data?.length || 0) === batchSize;
+    // التعامل مع القيم التي قد تكون null
+    const resultCount = Array.isArray(data) ? data.length : 0;
+    deletedCount += resultCount;
+    hasMore = resultCount === batchSize;
   }
 
   return deletedCount;

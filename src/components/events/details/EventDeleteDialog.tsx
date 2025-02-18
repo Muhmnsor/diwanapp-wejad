@@ -16,7 +16,7 @@ interface EventDeleteDialogProps {
   eventId: string;
   onOpenChange: (open: boolean) => void;
   isOpen: boolean;
-  onConfirmDelete: () => void;
+  onConfirm: () => Promise<void>;
   title?: string;
 }
 
@@ -24,7 +24,7 @@ export const EventDeleteDialog = ({
   eventId,
   onOpenChange,
   isOpen,
-  onConfirmDelete,
+  onConfirm,
   title,
 }: EventDeleteDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,7 +32,7 @@ export const EventDeleteDialog = ({
   const handleConfirm = async () => {
     setIsDeleting(true);
     try {
-      await onConfirmDelete();
+      await onConfirm();
     } catch (error) {
       console.error('Error during deletion:', error);
     }

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EditEventDialog } from "./EditEventDialog";
@@ -92,9 +93,11 @@ export const EventDetailsView = ({
       />
 
       <EventDeleteDialog
-        open={isDeleteDialogOpen}
+        eventId={id}
+        isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={handleDelete}
+        title={currentEvent.title}
       />
     </>
   );
