@@ -1,3 +1,4 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -49,12 +50,16 @@ const QRCodeSection = ({ registrationId, location_url, location }: { registratio
     hasLocationUrl: Boolean(location_url)
   });
   
-  const locationQRValue = location_url || 
-    (location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : '');
+  // تحسين المنطق: التحقق بشكل صريح من وجود location_url صالح
+  const locationQRValue = location_url && location_url.trim() !== '' 
+    ? location_url 
+    : location 
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+      : '';
   
   console.log('QRCodeSection - القيمة النهائية للموقع:', {
     locationQRValue,
-    isUsingLocationUrl: location_url === locationQRValue,
+    isUsingLocationUrl: Boolean(location_url && location_url.trim() !== ''),
     isUsingGoogleMaps: locationQRValue.includes('google.com/maps')
   });
   
