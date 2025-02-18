@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventFormFields } from "../EventFormFields";
@@ -16,6 +17,7 @@ export const CreateEventFormContainer = () => {
     date: "",
     time: "",
     location: "",
+    location_url: "",
     event_type: "in-person",
     price: null,
     max_attendees: 0,
@@ -72,6 +74,7 @@ export const CreateEventFormContainer = () => {
           date: formData.date,
           time: formData.time,
           location: formData.location,
+          location_url: formData.location_url,
           image_url: formData.image_url,
           event_type: formData.event_type,
           price: formData.price === null ? null : formData.price,
