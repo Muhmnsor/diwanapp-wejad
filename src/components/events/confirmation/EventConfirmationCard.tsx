@@ -1,3 +1,4 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -56,7 +57,7 @@ const QRCodeSection = ({ registrationId, locationUrl }: { registrationId: string
         <div className="text-sm text-gray-600">رقم التسجيل</div>
         <div className="font-mono text-xs mt-1">{registrationId}</div>
       </div>
-      {locationUrl && (
+      {locationUrl && typeof locationUrl === 'string' && locationUrl !== 'undefined' && (
         <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
           <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
             <QRCodeSVG 
