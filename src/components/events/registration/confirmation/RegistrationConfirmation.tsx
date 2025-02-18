@@ -25,12 +25,21 @@ export const RegistrationConfirmation = ({
   showConfirmation,
   setShowConfirmation
 }: RegistrationConfirmationProps) => {
-  console.log('RegistrationConfirmation render:', {
+  console.log('RegistrationConfirmation - بيانات كاملة:', {
     registrationId,
     eventTitle,
     eventLocation,
+    eventDate,
+    eventTime,
     location_url,
+    formData,
     showConfirmation
+  });
+
+  console.log('RegistrationConfirmation - معلومات الموقع:', {
+    location_url: location_url || 'غير محدد',
+    hasLocationUrl: Boolean(location_url),
+    locationUrlType: typeof location_url
   });
 
   return (
@@ -54,4 +63,3 @@ export const RegistrationConfirmation = ({
     />
   );
 };
-
