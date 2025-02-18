@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ShareButton } from "./ShareButton";
 import { CalendarDays, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
+import { EventDeleteDialog } from "./details/EventDeleteDialog";
 
 interface EventTitleProps {
   title: string;
@@ -24,8 +26,21 @@ export const EventTitle = ({
   onVisibilityChange,
 }: EventTitleProps) => {
   const isMobile = useIsMobile();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   console.log('EventTitle - isAdmin:', isAdmin);
   console.log('EventTitle - isVisible:', isVisible);
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Delete button clicked');
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    await onDelete();
+    setShowDeleteDialog(false);
+  };
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-8 py-6 border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10 gap-4" dir="rtl">
@@ -44,12 +59,7 @@ export const EventTitle = ({
             <Button 
               variant="outline" 
               size="icon"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Delete button clicked');
-                onDelete();
-              }}
+              onClick={handleDeleteClick}
               className="w-8 h-8"
               title="حذف الفعالية"
             >
@@ -82,6 +92,14 @@ export const EventTitle = ({
           <CalendarDays className="h-4 w-4" />
         </Button>
       </div>
+
+      <EventDeleteDialog
+        eventId={window.location.pathname.split('/').pop() || ''}
+        isOpen={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title={title}
+      />
     </div>
   );
 };
