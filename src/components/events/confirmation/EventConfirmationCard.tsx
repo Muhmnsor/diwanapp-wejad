@@ -39,16 +39,10 @@ const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; 
   </div>
 );
 
-const formatLocationUrl = (url?: string, location?: string) => {
-  if (url) return url;
-  if (location) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
-  return '';
-};
-
 const QRCodeSection = ({ registrationId, locationUrl, location }: { registrationId: string; locationUrl?: string; location?: string }) => {
   console.log('QRCodeSection - Props:', { registrationId, locationUrl, location });
   
-  const locationQRValue = formatLocationUrl(locationUrl, location);
+  const locationQRValue = locationUrl || (location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : '');
   
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
