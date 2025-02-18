@@ -2,15 +2,12 @@ import { useState, FormEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { EventRegistrationDialog } from "./registration/dialogs/EventRegistrationDialog";
 import { EventContent } from "./EventContent";
-import { EventHeader } from "./EventHeader";
-import { EventInfo } from "./EventInfo";
 import { EventDescription } from "./EventDescription";
 import { EventBadges } from "./badges/EventBadges";
 import { EventRegisterButton } from "./EventRegisterButton";
-import { EventFooter } from "./EventFooter";
 import { Event } from "@/store/eventStore";
-import { useAuthStore } from "@/store/authStore";
-import { useRegistrationCheck } from "@/hooks/useRegistrationCheck";
+import { EventStatus } from "@/types/eventStatus";
+import { getEventStatus } from "@/utils/eventUtils";
 
 interface EventContainerProps {
   event: Event;
@@ -30,8 +27,7 @@ export const EventContainer = ({
   onAddToCalendar,
 }: EventContainerProps) => {
   const [showRegistration, setShowRegistration] = useState(false);
-  const { user } = useAuthStore();
-  const { isRegistered } = useRegistrationCheck(id, user?.id);
+  const eventStatus = getEventStatus(event);
 
   console.log('🎯 EventContainer - Event:', {
     id,
@@ -50,31 +46,29 @@ export const EventContainer = ({
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <EventHeader event={event} />
-      
       <div className="p-6 space-y-6">
-        <EventContent>
-          <EventInfo event={event} />
-          <EventBadges event={event} />
+        <EventContent event={event} onRegister={handleRegister} />
+
+        <div className="py-8 px-[30px]">
+          <EventBadges 
+            eventType={event.event_type}
+            price={event.price}
+            beneficiaryType={event.beneficiary_type}
+            certificateType={event.certificate_type}
+            eventHours={event.event_hours}
+          />
+        </div>
+
+        <div className="py-8">
           <EventDescription description={event.description} />
-        </EventContent>
+        </div>
 
-        <EventRegisterButton
-          isRegistered={isRegistered}
-          onClick={handleRegister}
-          registrationDates={{
-            start: event.registration_start_date,
-            end: event.registration_end_date
-          }}
-        />
-
-        <EventFooter
-          event={event}
-          isAdmin={isAdmin}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onAddToCalendar={onAddToCalendar}
-        />
+        <div className="px-8 py-6">
+          <EventRegisterButton 
+            status={eventStatus} 
+            onRegister={handleRegister}
+          />
+        </div>
       </div>
 
       <EventRegistrationDialog
