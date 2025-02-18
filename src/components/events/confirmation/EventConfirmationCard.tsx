@@ -1,4 +1,3 @@
-
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -50,16 +49,12 @@ const QRCodeSection = ({ registrationId, location_url, location }: { registratio
     hasLocationUrl: Boolean(location_url)
   });
   
-  // تغيير المنطق هنا: إذا كان هناك رابط موقع، نستخدمه. وإلا نقوم بإنشاء رابط بحث جوجل
-  const locationQRValue = Boolean(location_url) 
-    ? location_url 
-    : location 
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
-      : '';
+  const locationQRValue = location_url || 
+    (location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : '');
   
   console.log('QRCodeSection - القيمة النهائية للموقع:', {
     locationQRValue,
-    isUsingLocationUrl: Boolean(location_url),
+    isUsingLocationUrl: location_url === locationQRValue,
     isUsingGoogleMaps: locationQRValue.includes('google.com/maps')
   });
   
