@@ -1,3 +1,4 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -40,9 +41,22 @@ const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; 
 );
 
 const QRCodeSection = ({ registrationId, locationUrl, location }: { registrationId: string; locationUrl?: string; location?: string }) => {
-  console.log('QRCodeSection - Props:', { registrationId, locationUrl, location });
+  console.log('QRCodeSection - تفاصيل المدخلات:', { 
+    registrationId, 
+    locationUrl, 
+    location,
+    locationUrlType: typeof locationUrl,
+    locationUrlValue: locationUrl || 'غير موجود',
+    hasLocationUrl: Boolean(locationUrl)
+  });
   
   const locationQRValue = locationUrl || (location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : '');
+  
+  console.log('QRCodeSection - القيمة النهائية للموقع:', {
+    locationQRValue,
+    isUsingLocationUrl: locationUrl === locationQRValue,
+    isUsingGoogleMaps: locationQRValue.includes('google.com/maps')
+  });
   
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
@@ -105,11 +119,14 @@ export const EventConfirmationCard = ({
   registrantInfo,
   eventDetails
 }: EventConfirmationCardProps) => {
-  console.log('EventConfirmationCard - Props:', {
+  console.log('EventConfirmationCard - البيانات الكاملة:', {
     eventTitle,
     registrationId,
     registrantInfo,
-    eventDetails
+    eventDetails,
+    locationUrl: eventDetails?.location_url,
+    hasLocationUrl: Boolean(eventDetails?.location_url),
+    locationUrlType: typeof eventDetails?.location_url
   });
 
   return (
@@ -144,3 +161,4 @@ export const EventConfirmationCard = ({
     </Card>
   );
 };
+
