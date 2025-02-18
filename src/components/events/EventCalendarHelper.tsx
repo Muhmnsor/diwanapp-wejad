@@ -1,58 +1,118 @@
-import { arabicToEnglishNum } from "@/utils/eventUtils";
-import { createCalendarUrl } from "@/utils/calendarUtils";
-import { Event } from "@/store/eventStore";
+
+import { CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { addToCalendar } from "@/utils/calendarUtils";
 import { toast } from "sonner";
 
-export const handleAddToCalendar = (event: Event) => {
-  try {
-    const dateStr = arabicToEnglishNum(event.date);
-    const timeStr = arabicToEnglishNum(event.time);
-    
-    console.log("Converting date and time:", { dateStr, timeStr });
-    
-    const cleanedTimeStr = timeStr.trim();
-    console.log("Cleaned time string:", cleanedTimeStr);
-    
-    const [year, month, day] = dateStr.split('-');
-    const [hours, minutes] = cleanedTimeStr.split(':');
-    
-    const eventDate = new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day),
-      parseInt(hours),
-      parseInt(minutes)
-    );
-    
-    if (isNaN(eventDate.getTime())) {
-      throw new Error('Invalid date conversion');
+interface EventCalendarHelperProps {
+  title: string;
+  description: string;
+  location: string;
+  startDate: Date;
+  endDate?: Date;
+}
+
+export const EventCalendarHelper = ({
+  title,
+  description,
+  location,
+  startDate,
+  endDate
+}: EventCalendarHelperProps) => {
+  const handleAddToCalendar = async () => {
+    try {
+      const result = await addToCalendar({
+        title,
+        description,
+        location,
+        startDate,
+        endDate
+      });
+
+      if (Array.isArray(result)) {
+        // نعرض قائمة الخيارات للمستخدم
+        return;
+      }
+
+      toast.success("تمت إضافة الفعالية إلى التقويم");
+    } catch (error) {
+      console.error('Error adding to calendar:', error);
+      toast.error("حدث خطأ أثناء إضافة الفعالية إلى التقويم");
     }
-    
-    console.log("Event date object:", eventDate);
-    
-    const endDate = new Date(eventDate.getTime() + (2 * 60 * 60 * 1000));
+  };
 
-    const calendarEvent = {
-      title: event.title,
-      description: event.description || '',
-      location: event.location || '',
-      startDate: eventDate.toISOString().replace(/[-:.]/g, '').slice(0, -4) + 'Z',
-      endDate: endDate.toISOString().replace(/[-:.]/g, '').slice(0, -4) + 'Z',
-    };
+  return (
+    <DropdownMenu dir="rtl">
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="w-8 h-8 hover:bg-purple-50"
+          onClick={handleAddToCalendar}
+        >
+          <CalendarDays className="h-4 w-4 text-purple-600" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="min-w-[200px] p-2 backdrop-blur-xl bg-white/95 border border-purple-100 shadow-lg rounded-xl"
+      >
+        <DropdownMenuItem
+          onClick={() => window.open(createGoogleCalendarUrl({
+            title,
+            description,
+            location,
+            startDate,
+            endDate
+          }), '_blank')}
+          className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
+        >
+          <img src="/google-calendar.png" alt="Google Calendar" className="w-4 h-4" />
+          <span className="text-gray-700">Google Calendar</span>
+        </DropdownMenuItem>
 
-    console.log("Calendar event data:", calendarEvent);
+        <DropdownMenuItem
+          onClick={() => window.open(createOutlookCalendarUrl({
+            title,
+            description,
+            location,
+            startDate,
+            endDate
+          }), '_blank')}
+          className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
+        >
+          <img src="/outlook-calendar.png" alt="Outlook Calendar" className="w-4 h-4" />
+          <span className="text-gray-700">Outlook Calendar</span>
+        </DropdownMenuItem>
 
-    const calendarUrl = createCalendarUrl(calendarEvent);
-    console.log("Generated calendar URL:", calendarUrl);
-
-    const win = window.open(calendarUrl, '_blank', 'noopener,noreferrer');
-    if (!win) {
-      window.location.href = calendarUrl;
-    }
-    
-    toast.success("تم فتح التقويم");
-  } catch (error) {
-    console.error('Error creating calendar event:', error);
-    toast.error("لم نتمكن من إضافة الفعالية إلى التقويم");
-  }
+        <DropdownMenuItem
+          onClick={() => {
+            const blob = new Blob(
+              [generateICSContent({ title, description, location, startDate, endDate })],
+              { type: 'text/calendar;charset=utf-8' }
+            );
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'event.ics';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            toast.success("تم تنزيل ملف التقويم");
+          }}
+          className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
+        >
+          <CalendarDays className="h-4 w-4 text-purple-600" />
+          <span className="text-gray-700">تنزيل ملف ICS</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 };
