@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "./ShareButton";
 import { CalendarDays, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
@@ -7,6 +6,7 @@ import { useState } from "react";
 import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
 import { useNavigate } from "react-router-dom";
+import { EventCalendarHelper } from "./EventCalendarHelper";
 
 interface EventTitleProps {
   title: string;
@@ -30,13 +30,10 @@ export const EventTitle = ({
   const isMobile = useIsMobile();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const navigate = useNavigate();
-  console.log('EventTitle - isAdmin:', isAdmin);
-  console.log('EventTitle - isVisible:', isVisible);
-
+  
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Delete button clicked');
     setShowDeleteDialog(true);
   };
 
@@ -95,15 +92,13 @@ export const EventTitle = ({
             )}
           </div>
         )}
+        <EventCalendarHelper 
+          title={title}
+          description=""
+          location=""
+          startDate={new Date()}
+        />
         <ShareButton url={window.location.href} title={title} />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onAddToCalendar}
-          className="w-8 h-8"
-        >
-          <CalendarDays className="h-4 w-4" />
-        </Button>
       </div>
 
       <EventDeleteDialog

@@ -31,28 +31,6 @@ export const EventCalendarHelper = ({
   startDate,
   endDate
 }: EventCalendarHelperProps) => {
-  const handleAddToCalendar = async () => {
-    try {
-      const result = await addToCalendar({
-        title,
-        description,
-        location,
-        startDate,
-        endDate
-      });
-
-      if (Array.isArray(result)) {
-        // نعرض قائمة الخيارات للمستخدم
-        return;
-      }
-
-      toast.success("تمت إضافة الفعالية إلى التقويم");
-    } catch (error) {
-      console.error('Error adding to calendar:', error);
-      toast.error("حدث خطأ أثناء إضافة الفعالية إلى التقويم");
-    }
-  };
-
   const eventData: CalendarEvent = {
     title,
     description,
@@ -68,6 +46,7 @@ export const EventCalendarHelper = ({
           variant="outline" 
           size="icon" 
           className="w-8 h-8 hover:bg-purple-50"
+          title="إضافة إلى التقويم"
         >
           <CalendarDays className="h-4 w-4 text-purple-600" />
         </Button>
@@ -77,19 +56,25 @@ export const EventCalendarHelper = ({
         className="min-w-[200px] p-2 backdrop-blur-xl bg-white/95 border border-purple-100 shadow-lg rounded-xl"
       >
         <DropdownMenuItem
-          onClick={() => window.open(createGoogleCalendarUrl(eventData), '_blank')}
+          onClick={() => {
+            window.open(createGoogleCalendarUrl(eventData), '_blank');
+            toast.success("تم فتح تقويم Google");
+          }}
           className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
         >
           <img src="/google-calendar.png" alt="Google Calendar" className="w-4 h-4" />
-          <span className="text-gray-700">Google Calendar</span>
+          <span className="text-gray-700">تقويم Google</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          onClick={() => window.open(createOutlookCalendarUrl(eventData), '_blank')}
+          onClick={() => {
+            window.open(createOutlookCalendarUrl(eventData), '_blank');
+            toast.success("تم فتح تقويم Outlook");
+          }}
           className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
         >
           <img src="/outlook-calendar.png" alt="Outlook Calendar" className="w-4 h-4" />
-          <span className="text-gray-700">Outlook Calendar</span>
+          <span className="text-gray-700">تقويم Outlook</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
