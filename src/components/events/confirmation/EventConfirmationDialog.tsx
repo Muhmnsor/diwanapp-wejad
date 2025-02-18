@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -42,12 +43,12 @@ export const EventConfirmationDialog = ({
   const [hasDownloaded, setHasDownloaded] = useState(false);
   const navigate = useNavigate();
 
-  console.log('EventConfirmationDialog - Rendering with:', {
+  console.log('EventConfirmationDialog - Props:', {
     registrationId,
     eventTitle,
-    formData,
-    open,
-    hasDownloaded
+    eventLocation,
+    location_url,
+    formData
   });
 
   const handleDownload = async () => {
@@ -62,13 +63,12 @@ export const EventConfirmationDialog = ({
       setHasDownloaded(true);
       toast.success('تم حفظ بطاقة التأكيد بنجاح');
       
-      // زيادة فترة التأخير قبل الإغلاق والتنقل
       setTimeout(() => {
         onOpenChange(false);
         setTimeout(() => {
           navigate('/');
-        }, 2000); // تأخير إضافي قبل التنقل
-      }, 3000); // تأخير أطول قبل الإغلاق
+        }, 2000);
+      }, 3000);
     } else {
       console.error('Failed to download card');
       toast.error('حدث خطأ أثناء حفظ البطاقة');
@@ -83,7 +83,6 @@ export const EventConfirmationDialog = ({
       if (!shouldClose) return;
     }
     
-    // إضافة تأخير قبل الإغلاق
     setTimeout(() => {
       onOpenChange(false);
     }, 500);

@@ -1,3 +1,4 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -41,40 +42,43 @@ const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; 
 
 const formatLocationUrl = (location: string, url?: string) => {
   if (url) return url;
-  
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
 };
 
-const QRCodeSection = ({ registrationId, locationUrl, location }: { registrationId: string; locationUrl?: string; location?: string }) => (
-  <div className="grid grid-cols-2 gap-4 mb-6">
-    <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
-      <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
-        <QRCodeSVG 
-          value={registrationId}
-          size={96}
-          level="H"
-          includeMargin={true}
-        />
-      </div>
-      <div className="text-sm text-gray-600">رقم التسجيل</div>
-      <div className="font-mono text-xs mt-1">{registrationId}</div>
-    </div>
-    {(locationUrl || location) && (
+const QRCodeSection = ({ registrationId, locationUrl, location }: { registrationId: string; locationUrl?: string; location?: string }) => {
+  console.log('QRCodeSection - Props:', { registrationId, locationUrl, location });
+  
+  return (
+    <div className="grid grid-cols-2 gap-4 mb-6">
       <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
         <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
           <QRCodeSVG 
-            value={locationUrl || (location ? formatLocationUrl(location) : '')}
+            value={registrationId}
             size={96}
             level="H"
             includeMargin={true}
           />
         </div>
-        <div className="text-sm text-gray-600">موقع الفعالية</div>
-        <div className="font-mono text-xs mt-1">امسح للوصول للخريطة</div>
+        <div className="text-sm text-gray-600">رقم التسجيل</div>
+        <div className="font-mono text-xs mt-1">{registrationId}</div>
       </div>
-    )}
-  </div>
-);
+      {(locationUrl || location) && (
+        <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
+          <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
+            <QRCodeSVG 
+              value={locationUrl || (location ? formatLocationUrl(location) : '')}
+              size={96}
+              level="H"
+              includeMargin={true}
+            />
+          </div>
+          <div className="text-sm text-gray-600">موقع الفعالية</div>
+          <div className="font-mono text-xs mt-1">امسح للوصول للخريطة</div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const EventDetails = ({ date, time, location }: { date?: string; time?: string; location?: string }) => (
   <div className="space-y-3">
@@ -105,7 +109,7 @@ export const EventConfirmationCard = ({
   registrantInfo,
   eventDetails
 }: EventConfirmationCardProps) => {
-  console.log('Rendering EventConfirmationCard with:', {
+  console.log('EventConfirmationCard - Props:', {
     eventTitle,
     registrationId,
     registrantInfo,
