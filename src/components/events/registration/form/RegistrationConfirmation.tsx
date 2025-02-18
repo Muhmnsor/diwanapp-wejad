@@ -1,3 +1,4 @@
+
 import { RegistrationFormData } from "../types/registration";
 import { EventConfirmationDialog } from "../../confirmation/EventConfirmationDialog";
 
@@ -14,6 +15,12 @@ export const RegistrationConfirmation = ({
   formData,
   showConfirmation
 }: RegistrationConfirmationProps) => {
+  console.log('RegistrationConfirmation render:', {
+    registrationId,
+    eventTitle,
+    showConfirmation
+  });
+
   return (
     <EventConfirmationDialog
       open={showConfirmation}

@@ -1,3 +1,4 @@
+
 import { FormEvent } from "react";
 import { toast } from "sonner";
 import { useRegistrationState } from "./useRegistrationState";
@@ -36,6 +37,7 @@ export const useRegistration = (
       const newRegistrationId = await submitRegistration(e, formData, setIsSubmitting);
       
       if (newRegistrationId) {
+        console.log('Registration successful, showing confirmation dialog');
         setRegistrationId(newRegistrationId);
         setShowConfirmation(true);
         setIsRegistered(true);

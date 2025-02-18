@@ -1,10 +1,11 @@
+
 import { FormEvent } from "react";
 import { useRegistration } from "../hooks/useRegistration";
+import { useRegistrationFields } from "../hooks/useRegistrationFields";
+import { useParams } from "react-router-dom";
 import { RegistrationFormFields } from "./RegistrationFormFields";
 import { RegistrationFormActions } from "./RegistrationFormActions";
 import { RegistrationConfirmation } from "./RegistrationConfirmation";
-import { useRegistrationFields } from "../hooks/useRegistrationFields";
-import { useParams } from "react-router-dom";
 import { LoadingState, ErrorState } from "../components/RegistrationFormStates";
 
 interface RegistrationFormContainerProps {
@@ -31,6 +32,9 @@ export const RegistrationFormContainer = ({
     formData,
     setFormData,
     isSubmitting,
+    showConfirmation,
+    setShowConfirmation,
+    registrationId,
     handleSubmit
   } = useRegistration(() => {
     if (onSubmit) {
@@ -43,6 +47,8 @@ export const RegistrationFormContainer = ({
 
   console.log('📝 Form Data:', formData);
   console.log('🔧 Registration Fields Config:', registrationFields);
+  console.log('✨ Show Confirmation:', showConfirmation);
+  console.log('🆔 Registration ID:', registrationId);
 
   if (isLoading) {
     return <LoadingState />;
@@ -61,19 +67,28 @@ export const RegistrationFormContainer = ({
   const isPaidEvent = eventPrice !== "free" && eventPrice !== null && eventPrice > 0;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-      <RegistrationFormFields
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <RegistrationFormFields
+          formData={formData}
+          setFormData={setFormData}
+          eventPrice={eventPrice}
+          showPaymentFields={isPaidEvent}
+          registrationFields={registrationFields}
+        />
+        <RegistrationFormActions
+          isSubmitting={isSubmitting}
+          isPaidEvent={isPaidEvent}
+          eventPrice={eventPrice}
+        />
+      </form>
+
+      <RegistrationConfirmation
+        registrationId={registrationId}
+        eventTitle={eventTitle}
         formData={formData}
-        setFormData={setFormData}
-        eventPrice={eventPrice}
-        showPaymentFields={isPaidEvent}
-        registrationFields={registrationFields}
+        showConfirmation={showConfirmation}
       />
-      <RegistrationFormActions
-        isSubmitting={isSubmitting}
-        isPaidEvent={isPaidEvent}
-        eventPrice={eventPrice}
-      />
-    </form>
+    </>
   );
 };
