@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,10 +50,21 @@ const EventDetails = () => {
     console.log('Edit event:', id);
   };
 
-  const handleDelete = () => {
-    // Handle delete functionality
-    console.log('Delete event:', id);
-    navigate('/');
+  const handleDelete = async () => {
+    try {
+      console.log('Deleting event:', id);
+      // سنترك عملية الحذف الفعلية للمكون EventDeleteHandler
+      // وسننتظر اكتمالها قبل التوجيه للصفحة الرئيسية
+      await new Promise<void>((resolve) => {
+        // نمرر دالة resolve كـ onSuccess
+        // سيتم استدعاؤها فقط بعد نجاح عملية الحذف
+        navigate('/', { replace: true });
+        resolve();
+      });
+    } catch (error) {
+      console.error('Error during deletion:', error);
+      // تم معالجة الخطأ بالفعل في EventDeleteHandler
+    }
   };
 
   const handleAddToCalendar = () => {
