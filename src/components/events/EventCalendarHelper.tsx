@@ -7,7 +7,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { addToCalendar } from "@/utils/calendarUtils";
+import { 
+  addToCalendar, 
+  createGoogleCalendarUrl, 
+  createOutlookCalendarUrl, 
+  generateICSContent,
+  type CalendarEvent 
+} from "@/utils/calendarUtils";
 import { toast } from "sonner";
 
 interface EventCalendarHelperProps {
@@ -47,6 +53,14 @@ export const EventCalendarHelper = ({
     }
   };
 
+  const eventData: CalendarEvent = {
+    title,
+    description,
+    location,
+    startDate,
+    endDate
+  };
+
   return (
     <DropdownMenu dir="rtl">
       <DropdownMenuTrigger asChild>
@@ -54,7 +68,6 @@ export const EventCalendarHelper = ({
           variant="outline" 
           size="icon" 
           className="w-8 h-8 hover:bg-purple-50"
-          onClick={handleAddToCalendar}
         >
           <CalendarDays className="h-4 w-4 text-purple-600" />
         </Button>
@@ -64,13 +77,7 @@ export const EventCalendarHelper = ({
         className="min-w-[200px] p-2 backdrop-blur-xl bg-white/95 border border-purple-100 shadow-lg rounded-xl"
       >
         <DropdownMenuItem
-          onClick={() => window.open(createGoogleCalendarUrl({
-            title,
-            description,
-            location,
-            startDate,
-            endDate
-          }), '_blank')}
+          onClick={() => window.open(createGoogleCalendarUrl(eventData), '_blank')}
           className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
         >
           <img src="/google-calendar.png" alt="Google Calendar" className="w-4 h-4" />
@@ -78,13 +85,7 @@ export const EventCalendarHelper = ({
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          onClick={() => window.open(createOutlookCalendarUrl({
-            title,
-            description,
-            location,
-            startDate,
-            endDate
-          }), '_blank')}
+          onClick={() => window.open(createOutlookCalendarUrl(eventData), '_blank')}
           className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
         >
           <img src="/outlook-calendar.png" alt="Outlook Calendar" className="w-4 h-4" />
@@ -94,7 +95,7 @@ export const EventCalendarHelper = ({
         <DropdownMenuItem
           onClick={() => {
             const blob = new Blob(
-              [generateICSContent({ title, description, location, startDate, endDate })],
+              [generateICSContent(eventData)],
               { type: 'text/calendar;charset=utf-8' }
             );
             const url = window.URL.createObjectURL(blob);

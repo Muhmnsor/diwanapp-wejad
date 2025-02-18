@@ -1,5 +1,5 @@
 
-interface CalendarEvent {
+export interface CalendarEvent {
   title: string;
   description: string;
   location: string;
@@ -7,11 +7,11 @@ interface CalendarEvent {
   endDate?: Date;
 }
 
-const formatDateForCalendar = (date: Date): string => {
+export const formatDateForCalendar = (date: Date): string => {
   return date.toISOString().replace(/[-:]|\.\d{3}/g, '').slice(0, 15) + 'Z';
 };
 
-const generateICSContent = (event: CalendarEvent): string => {
+export const generateICSContent = (event: CalendarEvent): string => {
   const endDate = event.endDate || new Date(event.startDate.getTime() + 60 * 60 * 1000); // Default 1 hour
   
   return [
@@ -28,7 +28,7 @@ const generateICSContent = (event: CalendarEvent): string => {
   ].join('\r\n');
 };
 
-const createGoogleCalendarUrl = (event: CalendarEvent): string => {
+export const createGoogleCalendarUrl = (event: CalendarEvent): string => {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: event.title,
@@ -40,7 +40,7 @@ const createGoogleCalendarUrl = (event: CalendarEvent): string => {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
 
-const createOutlookCalendarUrl = (event: CalendarEvent): string => {
+export const createOutlookCalendarUrl = (event: CalendarEvent): string => {
   const params = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
