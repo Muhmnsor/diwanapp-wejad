@@ -12,12 +12,15 @@ async function deleteInBatches(tableName: string, columnName: string, eventId: s
   let hasMore = true;
   let deletedCount = 0;
   
+  // تحديد عمود الترتيب بناءً على الجدول
+  const orderColumn = tableName === 'notification_logs' ? 'sent_at' : 'created_at';
+  
   while (hasMore) {
     const { data, error } = await supabase
       .from(tableName)
       .delete()
       .eq(columnName, eventId)
-      .order('created_at', { ascending: true })
+      .order(orderColumn, { ascending: true })
       .limit(batchSize)
       .select();
 
