@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "./ShareButton";
 import { CalendarDays, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
@@ -43,8 +44,14 @@ export const EventTitle = ({
             <Button 
               variant="outline" 
               size="icon"
-              onClick={onDelete}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Delete button clicked');
+                onDelete();
+              }}
               className="w-8 h-8"
+              title="حذف الفعالية"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
