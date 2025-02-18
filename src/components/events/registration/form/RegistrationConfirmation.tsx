@@ -7,13 +7,15 @@ interface RegistrationConfirmationProps {
   eventTitle: string;
   formData: RegistrationFormData;
   showConfirmation: boolean;
+  setShowConfirmation: (show: boolean) => void;
 }
 
 export const RegistrationConfirmation = ({
   registrationId,
   eventTitle,
   formData,
-  showConfirmation
+  showConfirmation,
+  setShowConfirmation
 }: RegistrationConfirmationProps) => {
   console.log('RegistrationConfirmation render:', {
     registrationId,
@@ -24,8 +26,9 @@ export const RegistrationConfirmation = ({
   return (
     <EventConfirmationDialog
       open={showConfirmation}
-      onOpenChange={() => {
-        console.log('Dialog state changed');
+      onOpenChange={(open) => {
+        console.log('Dialog state changed to:', open);
+        setShowConfirmation(open);
       }}
       registrationId={registrationId}
       eventTitle={eventTitle}

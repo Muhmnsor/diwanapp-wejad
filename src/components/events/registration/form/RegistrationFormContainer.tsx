@@ -88,6 +88,7 @@ export const RegistrationFormContainer = ({
         eventTitle={eventTitle}
         formData={formData}
         showConfirmation={showConfirmation}
+        setShowConfirmation={setShowConfirmation}
       />
     </>
   );

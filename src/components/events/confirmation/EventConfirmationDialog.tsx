@@ -47,7 +47,8 @@ export const EventConfirmationDialog = ({
     registrationId,
     eventTitle,
     formData,
-    open
+    open,
+    hasDownloaded
   });
 
   const handleDownload = async () => {
@@ -62,10 +63,13 @@ export const EventConfirmationDialog = ({
       setHasDownloaded(true);
       toast.success('تم حفظ بطاقة التأكيد بنجاح');
       
-      // التنقل للصفحة الرئيسية بعد تأخير قصير
+      // تأخير قبل التنقل للصفحة الرئيسية
       setTimeout(() => {
-        navigate('/');
-      }, 1500);
+        onOpenChange(false);
+        setTimeout(() => {
+          navigate('/');
+        }, 500);
+      }, 1000);
     } else {
       console.error('Failed to download card');
       toast.error('حدث خطأ أثناء حفظ البطاقة');
@@ -79,8 +83,6 @@ export const EventConfirmationDialog = ({
       );
       if (!shouldClose) return;
     }
-    
-    // نقوم فقط بإغلاق النافذة دون التنقل التلقائي
     onOpenChange(false);
   };
 
@@ -88,6 +90,7 @@ export const EventConfirmationDialog = ({
     <Dialog 
       open={open} 
       onOpenChange={handleClose}
+      modal={true}
     >
       <DialogContent 
         className="max-w-md mx-auto"
