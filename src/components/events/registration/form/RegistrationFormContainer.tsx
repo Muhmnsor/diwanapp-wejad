@@ -5,7 +5,7 @@ import { useRegistrationFields } from "../hooks/useRegistrationFields";
 import { useParams } from "react-router-dom";
 import { RegistrationFormFields } from "./RegistrationFormFields";
 import { RegistrationFormActions } from "./RegistrationFormActions";
-import { RegistrationConfirmation } from "./RegistrationConfirmation";
+import { RegistrationConfirmation } from "../confirmation/RegistrationConfirmation";
 import { LoadingState, ErrorState } from "../components/RegistrationFormStates";
 
 interface RegistrationFormContainerProps {
@@ -14,6 +14,7 @@ interface RegistrationFormContainerProps {
   eventDate: string;
   eventTime: string;
   eventLocation: string;
+  location_url?: string;
   onSubmit: (e: FormEvent) => void;
 }
 
@@ -23,6 +24,7 @@ export const RegistrationFormContainer = ({
   eventDate,
   eventTime,
   eventLocation,
+  location_url,
   onSubmit
 }: RegistrationFormContainerProps) => {
   const { id } = useParams();
@@ -49,6 +51,12 @@ export const RegistrationFormContainer = ({
   console.log('🔧 Registration Fields Config:', registrationFields);
   console.log('✨ Show Confirmation:', showConfirmation);
   console.log('🆔 Registration ID:', registrationId);
+  console.log('📍 Event Details:', {
+    eventLocation,
+    location_url,
+    eventDate,
+    eventTime
+  });
 
   if (isLoading) {
     return <LoadingState />;
@@ -86,6 +94,10 @@ export const RegistrationFormContainer = ({
       <RegistrationConfirmation
         registrationId={registrationId}
         eventTitle={eventTitle}
+        eventDate={eventDate}
+        eventTime={eventTime}
+        eventLocation={eventLocation}
+        location_url={location_url}
         formData={formData}
         showConfirmation={showConfirmation}
         setShowConfirmation={setShowConfirmation}
