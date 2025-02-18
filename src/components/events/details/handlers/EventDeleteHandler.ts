@@ -17,7 +17,8 @@ async function deleteInBatches(tableName: string, columnName: string, eventId: s
       .from(tableName)
       .delete()
       .eq(columnName, eventId)
-      .limit(batchSize);
+      .limit(batchSize)
+      .select();  // نضيف select() للحصول على البيانات المحذوفة
 
     if (error) {
       console.error(`Error deleting from ${tableName}:`, error);
