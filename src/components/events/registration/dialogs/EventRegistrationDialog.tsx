@@ -1,62 +1,48 @@
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FormEvent } from "react";
+import { RegistrationForm } from "../../RegistrationForm";
 import { Event } from "@/store/eventStore";
-import { getEventStatus } from "@/utils/eventUtils";
-import { EventRegistrationSystem } from "../EventRegistrationSystem";
-import { RegistrationStatusAlert } from "./RegistrationStatusAlert";
 
 interface EventRegistrationDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   event: Event;
+  showDialog: boolean;
+  onClose: () => void;
+  onSubmit: (e: FormEvent) => void;
 }
 
 export const EventRegistrationDialog = ({
-  open,
-  onOpenChange,
   event,
+  showDialog,
+  onClose,
+  onSubmit,
 }: EventRegistrationDialogProps) => {
-  const status = getEventStatus(event);
-  console.log('📋 EventRegistrationDialog - Event:', event);
-
-  if (status !== 'available' && open) {
-    console.log('Closing dialog because registration is not allowed');
-    onOpenChange(false);
-    return null;
-  }
+  console.log('📝 EventRegistrationDialog - Event:', {
+    title: event.title,
+    location: event.location,
+    location_url: event.location_url
+  });
 
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={onOpenChange}
-      modal={true}
-    >
-      <DialogContent 
-        className="sm:max-w-[425px] rtl"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
+    <Dialog open={showDialog} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-right">
-            تسجيل الحضور في {event.title}
-          </DialogTitle>
+          <DialogTitle className="text-right">التسجيل في {event.title}</DialogTitle>
         </DialogHeader>
-
-        {status !== 'available' ? (
-          <RegistrationStatusAlert status={status} />
-        ) : (
-          <div className="rtl" dir="rtl">
-            <EventRegistrationSystem 
-              event={event}
-              onClose={() => onOpenChange(false)}
-            />
-          </div>
-        )}
+        <RegistrationForm
+          eventTitle={event.title}
+          eventPrice={event.price}
+          eventDate={event.date}
+          eventTime={event.time}
+          eventLocation={event.location}
+          location_url={event.location_url}
+          onSubmit={onSubmit}
+        />
       </DialogContent>
     </Dialog>
   );
