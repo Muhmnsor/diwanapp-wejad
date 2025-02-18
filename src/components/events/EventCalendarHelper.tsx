@@ -1,5 +1,5 @@
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -62,7 +62,12 @@ export const EventCalendarHelper = ({
           }}
           className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
         >
-          <img src="/google-calendar.png" alt="Google Calendar" className="w-4 h-4" />
+          <svg viewBox="0 0 24 24" className="w-4 h-4">
+            <path 
+              d="M21.56 10.738l-9.042-8.07a.75.75 0 00-.995.004l-9.042 8.07a.75.75 0 00-.26.57V22.5a.75.75 0 00.75.75h6a.75.75 0 00.75-.75v-7.5a.75.75 0 01.75-.75h3.75a.75.75 0 01.75.75v7.5a.75.75 0 00.75.75h6a.75.75 0 00.75-.75V11.31a.75.75 0 00-.26-.572z" 
+              fill="#4285F4"
+            />
+          </svg>
           <span className="text-gray-700">تقويم Google</span>
         </DropdownMenuItem>
 
@@ -73,7 +78,7 @@ export const EventCalendarHelper = ({
           }}
           className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg hover:bg-purple-50 cursor-pointer"
         >
-          <img src="/outlook-calendar.png" alt="Outlook Calendar" className="w-4 h-4" />
+          <Mail className="h-4 w-4 text-[#0078D4]" />
           <span className="text-gray-700">تقويم Outlook</span>
         </DropdownMenuItem>
 
