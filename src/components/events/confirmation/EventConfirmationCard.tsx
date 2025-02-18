@@ -1,6 +1,8 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface EventConfirmationCardProps {
   eventTitle: string;
@@ -41,13 +43,27 @@ const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; 
 const QRCodeSection = ({ registrationId, locationUrl }: { registrationId: string; locationUrl?: string }) => (
   <div className="grid grid-cols-2 gap-4 mb-6">
     <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
-      <QrCode className="w-24 h-24 mx-auto mb-2 text-primary" />
+      <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
+        <QRCodeSVG 
+          value={registrationId}
+          size={96}
+          level="H"
+          includeMargin={true}
+        />
+      </div>
       <div className="text-sm text-gray-600">رقم التسجيل</div>
       <div className="font-mono text-xs mt-1">{registrationId}</div>
     </div>
     {locationUrl && (
       <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
-        <QrCode className="w-24 h-24 mx-auto mb-2 text-primary" />
+        <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
+          <QRCodeSVG 
+            value={locationUrl}
+            size={96}
+            level="H"
+            includeMargin={true}
+          />
+        </div>
         <div className="text-sm text-gray-600">موقع الفعالية</div>
         <div className="font-mono text-xs mt-1">امسح للوصول</div>
       </div>
