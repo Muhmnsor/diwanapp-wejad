@@ -1,4 +1,3 @@
-
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -40,7 +39,13 @@ const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; 
   </div>
 );
 
-const QRCodeSection = ({ registrationId, locationUrl }: { registrationId: string; locationUrl?: string }) => (
+const formatLocationUrl = (location: string, url?: string) => {
+  if (url) return url;
+  
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+};
+
+const QRCodeSection = ({ registrationId, locationUrl, location }: { registrationId: string; locationUrl?: string; location?: string }) => (
   <div className="grid grid-cols-2 gap-4 mb-6">
     <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
       <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
@@ -54,18 +59,18 @@ const QRCodeSection = ({ registrationId, locationUrl }: { registrationId: string
       <div className="text-sm text-gray-600">رقم التسجيل</div>
       <div className="font-mono text-xs mt-1">{registrationId}</div>
     </div>
-    {locationUrl && (
+    {location && (
       <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
         <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
           <QRCodeSVG 
-            value={locationUrl}
+            value={formatLocationUrl(location, locationUrl)}
             size={96}
             level="H"
             includeMargin={true}
           />
         </div>
         <div className="text-sm text-gray-600">موقع الفعالية</div>
-        <div className="font-mono text-xs mt-1">امسح للوصول</div>
+        <div className="font-mono text-xs mt-1">امسح للوصول للخريطة</div>
       </div>
     )}
   </div>
@@ -131,7 +136,8 @@ export const EventConfirmationCard = ({
         <ParticipantInfo {...registrantInfo} />
         <QRCodeSection 
           registrationId={registrationId} 
-          locationUrl={eventDetails?.location_url} 
+          locationUrl={eventDetails?.location_url}
+          location={eventDetails?.location}
         />
         <EventDetails {...eventDetails} />
       </div>
