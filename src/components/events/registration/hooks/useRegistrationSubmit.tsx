@@ -1,3 +1,4 @@
+
 import { FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -121,7 +122,12 @@ export const useRegistrationSubmit = ({
       }
 
       toast.success('تم التسجيل بنجاح');
-      onSubmit();
+      
+      // نؤخر استدعاء onSubmit لضمان ظهور رسالة التأكيد
+      setTimeout(() => {
+        onSubmit();
+      }, 5000); // تأخير 5 ثواني
+
       return registration.id;
     } catch (error) {
       console.error('Error in registration:', error);

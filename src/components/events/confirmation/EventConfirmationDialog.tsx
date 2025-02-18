@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -63,13 +62,13 @@ export const EventConfirmationDialog = ({
       setHasDownloaded(true);
       toast.success('تم حفظ بطاقة التأكيد بنجاح');
       
-      // تأخير قبل التنقل للصفحة الرئيسية
+      // زيادة فترة التأخير قبل الإغلاق والتنقل
       setTimeout(() => {
         onOpenChange(false);
         setTimeout(() => {
           navigate('/');
-        }, 500);
-      }, 1000);
+        }, 2000); // تأخير إضافي قبل التنقل
+      }, 3000); // تأخير أطول قبل الإغلاق
     } else {
       console.error('Failed to download card');
       toast.error('حدث خطأ أثناء حفظ البطاقة');
@@ -83,7 +82,11 @@ export const EventConfirmationDialog = ({
       );
       if (!shouldClose) return;
     }
-    onOpenChange(false);
+    
+    // إضافة تأخير قبل الإغلاق
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 500);
   };
 
   return (

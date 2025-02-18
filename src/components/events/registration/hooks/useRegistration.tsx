@@ -25,7 +25,10 @@ export const useRegistration = (
   const { handleSubmit: submitRegistration } = useRegistrationSubmit({
     eventTitle: "",
     eventPrice: null,
-    onSubmit: () => {}
+    onSubmit: () => {
+      console.log('Registration submission completed');
+      // لا نقوم باستدعاء onSuccess هنا لأننا نريد التحكم في توقيت إغلاق النافذة
+    }
   });
 
   const handleSubmit = async (e: FormEvent) => {
@@ -46,10 +49,6 @@ export const useRegistration = (
           registrationId: newRegistrationId,
           formData
         });
-        
-        if (onSuccess) {
-          onSuccess(newRegistrationId);
-        }
       }
     } catch (error) {
       console.error('useRegistration - Error in registration:', error);
