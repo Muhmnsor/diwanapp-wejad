@@ -41,18 +41,18 @@ export const EventDeleteDialog = ({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent dir="rtl" className="font-kufi">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
             تأكيد حذف الفعالية
           </AlertDialogTitle>
-          <AlertDialogDescription className="space-y-2">
+          <AlertDialogDescription className="space-y-2 text-right">
             <p>هل أنت متأكد من حذف الفعالية "{title}"؟</p>
             <p className="font-semibold text-destructive">
               سيتم حذف جميع البيانات المرتبطة بهذه الفعالية بما في ذلك:
             </p>
-            <ul className="list-disc list-inside space-y-1 mr-4">
+            <ul className="list-disc list-inside space-y-1 mr-4 text-right">
               <li>جميع التسجيلات</li>
               <li>سجلات الحضور</li>
               <li>التقييمات والتعليقات</li>
@@ -64,8 +64,7 @@ export const EventDeleteDialog = ({
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+        <AlertDialogFooter className="sm:flex-row-reverse">
           <AlertDialogAction 
             onClick={handleConfirm}
             disabled={isDeleting}
@@ -73,6 +72,7 @@ export const EventDeleteDialog = ({
           >
             {isDeleting ? "جاري الحذف..." : "تأكيد الحذف"}
           </AlertDialogAction>
+          <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
