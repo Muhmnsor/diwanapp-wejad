@@ -1,5 +1,6 @@
+
 import { EventCard } from "@/components/EventCard";
-import { History } from "lucide-react";
+import { History, Rocket } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 interface EventsSectionProps {
@@ -39,7 +40,17 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
           {isPastEvents && <History className="w-6 h-6 text-[#9F9EA1]" />}
         </div>
         <div className="text-center text-[#9F9EA1] p-8 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
-          {isPastEvents ? 'لا توجد فعاليات سابقة' : 'لا توجد فعاليات قادمة حالياً'}
+          <Rocket className="w-12 h-12 mx-auto mb-4 text-primary animate-bounce" />
+          <p className="text-lg mb-2">
+            {isPastEvents 
+              ? "لم تتم إضافة أي فعاليات سابقة بعد" 
+              : "لا توجد فعاليات حالية، ولكن هناك المزيد قادم!"}
+          </p>
+          <p className="text-sm opacity-75">
+            {isPastEvents 
+              ? "تابعنا لمشاهدة أرشيف الفعاليات السابقة" 
+              : "ترقبوا فعالياتنا القادمة المميزة"}
+          </p>
         </div>
       </section>
     );
