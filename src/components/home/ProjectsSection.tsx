@@ -1,6 +1,7 @@
+
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { useAuthStore } from "@/store/authStore";
-import { History } from "lucide-react";
+import { History, Rocket } from "lucide-react";
 
 interface ProjectsSectionProps {
   title: string;
@@ -33,7 +34,17 @@ export const ProjectsSection = ({ title, projects, isPastProjects = false }: Pro
           {isPastProjects && <History className="w-6 h-6 text-[#9F9EA1]" />}
         </div>
         <div className="text-center text-[#9F9EA1] p-8 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
-          {isPastProjects ? 'لا توجد مشاريع سابقة' : 'لا توجد مشاريع قادمة حالياً'}
+          <Rocket className="w-12 h-12 mx-auto mb-4 text-primary animate-bounce" />
+          <p className="text-lg mb-2">
+            {isPastProjects 
+              ? "لم تتم إضافة أي مشاريع سابقة بعد" 
+              : "لا توجد مشاريع حالية، ولكن هناك المزيد قادم!"}
+          </p>
+          <p className="text-sm opacity-75">
+            {isPastProjects 
+              ? "تابعنا لمشاهدة أرشيف المشاريع السابقة" 
+              : "ترقبوا مشاريعنا القادمة المميزة"}
+          </p>
         </div>
       </section>
     );
