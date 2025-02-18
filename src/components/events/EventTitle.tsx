@@ -5,6 +5,8 @@ import { CalendarDays, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { EventDeleteDialog } from "./details/EventDeleteDialog";
+import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
+import { useNavigate } from "react-router-dom";
 
 interface EventTitleProps {
   title: string;
@@ -27,6 +29,7 @@ export const EventTitle = ({
 }: EventTitleProps) => {
   const isMobile = useIsMobile();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const navigate = useNavigate();
   console.log('EventTitle - isAdmin:', isAdmin);
   console.log('EventTitle - isVisible:', isVisible);
 
@@ -38,8 +41,18 @@ export const EventTitle = ({
   };
 
   const handleConfirmDelete = async () => {
-    await onDelete();
-    setShowDeleteDialog(false);
+    try {
+      const eventId = window.location.pathname.split('/').pop() || '';
+      await handleEventDelete({
+        id: eventId,
+        onSuccess: () => {
+          setShowDeleteDialog(false);
+          navigate('/', { replace: true });
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    }
   };
 
   return (
