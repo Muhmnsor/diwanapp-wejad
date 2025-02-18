@@ -25,7 +25,7 @@ export const RegistrationConfirmation = ({
   showConfirmation,
   setShowConfirmation
 }: RegistrationConfirmationProps) => {
-  console.log('RegistrationConfirmation - Props:', {
+  console.log('RegistrationConfirmation render:', {
     registrationId,
     eventTitle,
     eventLocation,
@@ -42,9 +42,9 @@ export const RegistrationConfirmation = ({
       }}
       registrationId={registrationId}
       eventTitle={eventTitle}
+      eventLocation={eventLocation}
       eventDate={eventDate}
       eventTime={eventTime}
-      eventLocation={eventLocation}
       location_url={location_url}
       formData={{
         name: formData.arabicName,
