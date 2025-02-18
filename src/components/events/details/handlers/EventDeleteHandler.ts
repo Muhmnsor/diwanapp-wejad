@@ -17,15 +17,15 @@ async function deleteInBatches(tableName: string, columnName: string, eventId: s
       .from(tableName)
       .delete()
       .eq(columnName, eventId)
+      .order('created_at', { ascending: true })
       .limit(batchSize)
-      .select();  // نضيف select() للحصول على البيانات المحذوفة
+      .select();
 
     if (error) {
       console.error(`Error deleting from ${tableName}:`, error);
       throw error;
     }
 
-    // التعامل مع القيم التي قد تكون null بشكل آمن
     if (!data) {
       hasMore = false;
       continue;
@@ -48,15 +48,23 @@ async function getRelatedRecordsCount(eventId: string) {
 
   if (eventError) throw eventError;
 
-  // التأكد من أن الفعالية ليست نشاطاً في مشروع
   if (event?.is_project_activity) {
     throw new Error('لا يمكن حذف نشاط مرتبط بمشروع بشكل مباشر');
   }
 
   const counts = await Promise.all([
-    supabase.from('registrations').select('id', { count: 'exact' }).eq('event_id', eventId),
-    supabase.from('event_feedback').select('id', { count: 'exact' }).eq('event_id', eventId),
-    supabase.from('attendance_records').select('id', { count: 'exact' }).eq('event_id', eventId),
+    supabase.from('registrations')
+      .select('id', { count: 'exact' })
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true }),
+    supabase.from('event_feedback')
+      .select('id', { count: 'exact' })
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true }),
+    supabase.from('attendance_records')
+      .select('id', { count: 'exact' })
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true }),
   ]);
 
   return {
