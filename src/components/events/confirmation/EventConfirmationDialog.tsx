@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,11 @@ export const EventConfirmationDialog = ({
       console.log('Card downloaded successfully');
       setHasDownloaded(true);
       toast.success('تم حفظ بطاقة التأكيد بنجاح');
+      
+      // التنقل للصفحة الرئيسية بعد تأخير قصير
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
     } else {
       console.error('Failed to download card');
       toast.error('حدث خطأ أثناء حفظ البطاقة');
@@ -73,8 +79,9 @@ export const EventConfirmationDialog = ({
       );
       if (!shouldClose) return;
     }
+    
+    // نقوم فقط بإغلاق النافذة دون التنقل التلقائي
     onOpenChange(false);
-    navigate('/');
   };
 
   return (

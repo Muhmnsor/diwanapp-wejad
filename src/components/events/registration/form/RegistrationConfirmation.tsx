@@ -24,7 +24,9 @@ export const RegistrationConfirmation = ({
   return (
     <EventConfirmationDialog
       open={showConfirmation}
-      onOpenChange={() => {}}
+      onOpenChange={() => {
+        console.log('Dialog state changed');
+      }}
       registrationId={registrationId}
       eventTitle={eventTitle}
       formData={{
