@@ -12,7 +12,7 @@ interface FeedbackLinkProps {
 
 export const FeedbackLink = ({ eventId, isActivity = false }: FeedbackLinkProps) => {
   const [copied, setCopied] = useState(false);
-  const path = isActivity ? 'activities' : 'event';
+  const path = isActivity ? 'activities' : 'events';
   const feedbackUrl = `${window.location.origin}/${path}/${eventId}/feedback`;
 
   console.log(`Generating feedback URL for ${isActivity ? 'activity' : 'event'}:`, eventId);
