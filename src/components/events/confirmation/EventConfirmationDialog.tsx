@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -125,7 +124,7 @@ export const EventConfirmationDialog = ({
         <div className="space-y-2 mt-4">
           <Button 
             onClick={handleDownload}
-            className="w-full gap-2"
+            className="w-full gap-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-md"
             variant="secondary"
             size="lg"
           >
@@ -146,4 +145,3 @@ export const EventConfirmationDialog = ({
     </Dialog>
   );
 };
-
