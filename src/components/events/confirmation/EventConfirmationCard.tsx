@@ -120,7 +120,7 @@ const WhatsAppContact = () => (
     >
       <MessagesSquare className="w-4 h-4 text-primary" />
       <span className="text-sm font-medium text-gray-700 dir-ltr">
-        +966592544688
+        +966 59 254 4688
       </span>
     </a>
   </div>
