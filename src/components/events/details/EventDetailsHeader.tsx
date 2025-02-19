@@ -1,3 +1,4 @@
+
 import { EventType } from "@/types/event";
 import { EventTitle } from "../EventTitle";
 import { EventImage } from "../EventImage";
@@ -24,6 +25,7 @@ export const EventDetailsHeader = ({
       <EventImage imageUrl={imageUrl} title={event.title} />
       <EventTitle
         title={event.title}
+        event={event}
         isAdmin={isAdmin}
         onEdit={onEdit}
         onDelete={onDelete}
