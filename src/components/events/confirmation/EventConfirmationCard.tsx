@@ -100,23 +100,23 @@ const QRCodeSection = ({ registrationId, location_url }: {
 };
 
 const EventDetails = ({ date, time, location }: { date?: string; time?: string; location?: string }) => (
-  <div className="space-y-2">
+  <div className="grid grid-cols-3 gap-2">
     {date && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
-        <Calendar className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right text-sm">{date}</span>
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2">
+        <Calendar className="w-4 h-4 text-primary shrink-0" />
+        <span className="flex-1 text-right text-sm truncate">{date}</span>
       </div>
     )}
     {time && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
-        <Clock className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right text-sm">{time}</span>
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2">
+        <Clock className="w-4 h-4 text-primary shrink-0" />
+        <span className="flex-1 text-right text-sm truncate">{time}</span>
       </div>
     )}
     {location && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
-        <MapPin className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right text-sm">{location}</span>
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2">
+        <MapPin className="w-4 h-4 text-primary shrink-0" />
+        <span className="flex-1 text-right text-sm truncate">{location}</span>
       </div>
     )}
   </div>
