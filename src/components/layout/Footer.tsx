@@ -1,3 +1,4 @@
+
 import { Logo } from "@/components/Logo";
 import { Instagram, Linkedin, X } from "lucide-react";
 
@@ -7,9 +8,9 @@ export const Footer = () => {
       {/* Top Section - Social Media, Website Link, and Slogan */}
       <div className="border-t border-b border-[#C8C8C9] dark:border-[#2A2F3C] py-4">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between" dir="rtl">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-0 md:justify-between" dir="rtl">
             {/* Slogan - Right */}
-            <p className="text-primary text-lg font-semibold text-right">
+            <p className="text-primary text-lg font-semibold text-center md:text-right">
               ديوان .. شريك الشباب
             </p>
             
