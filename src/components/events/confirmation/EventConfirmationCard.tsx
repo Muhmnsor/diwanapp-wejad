@@ -1,5 +1,5 @@
 
-import { QrCode, User, MapPin, Calendar, Clock, MessageSquare } from 'lucide-react';
+import { QrCode, User, MapPin, Calendar, Clock, WhatsApp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
 import { formatTime12Hour } from '@/utils/dateTimeUtils';
@@ -118,7 +118,7 @@ const WhatsAppContact = () => (
       rel="noopener noreferrer"
       className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white rounded-lg hover:bg-gray-50 transition-colors"
     >
-      <MessageSquare className="w-4 h-4 text-[#25D366]" />
+      <WhatsApp className="w-4 h-4 text-[#25D366]" />
       <span dir="ltr" className="text-sm font-medium text-gray-700">
         +966 59 254 4688
       </span>
