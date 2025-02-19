@@ -1,4 +1,5 @@
-import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
+
+import { QrCode, User, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -18,23 +19,10 @@ interface EventConfirmationCardProps {
   };
 }
 
-const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; email: string }) => (
-  <div className="space-y-2">
-    <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
-      <User className="w-4 h-4 text-primary" />
-      <span className="text-base font-semibold flex-1 text-right">{name}</span>
-    </div>
-
-    <div className="grid grid-cols-1 gap-1.5">
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between gap-3">
-        <Phone className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right text-sm" dir="ltr">{phone}</span>
-      </div>
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between gap-3">
-        <Mail className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right text-sm" dir="ltr">{email}</span>
-      </div>
-    </div>
+const ParticipantInfo = ({ name }: { name: string }) => (
+  <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center gap-3">
+    <User className="w-4 h-4 text-primary shrink-0" />
+    <span className="text-base font-semibold flex-1 text-right">{name}</span>
   </div>
 );
 
@@ -98,23 +86,23 @@ const QRCodeSection = ({ registrationId, location_url }: {
 };
 
 const EventDetails = ({ date, time, location }: { date?: string; time?: string; location?: string }) => (
-  <div className="grid md:grid-cols-3 grid-cols-1 gap-1.5 max-w-full">
+  <div className="space-y-1.5">
     {date && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between gap-2 min-h-[40px] overflow-hidden">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center gap-2">
         <Calendar className="w-4 h-4 text-primary shrink-0" />
-        <span className="flex-1 text-right text-sm leading-normal break-words overflow-hidden">{date}</span>
+        <span className="flex-1 text-right text-sm">{date}</span>
       </div>
     )}
     {time && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between gap-2 min-h-[40px] overflow-hidden">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center gap-2">
         <Clock className="w-4 h-4 text-primary shrink-0" />
-        <span className="flex-1 text-right text-sm leading-normal break-words overflow-hidden">{time}</span>
+        <span className="flex-1 text-right text-sm">{time}</span>
       </div>
     )}
     {location && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between gap-2 min-h-[40px] overflow-hidden">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center gap-2">
         <MapPin className="w-4 h-4 text-primary shrink-0" />
-        <span className="flex-1 text-right text-sm leading-normal break-words overflow-hidden">{location}</span>
+        <span className="flex-1 text-right text-sm">{location}</span>
       </div>
     )}
   </div>
@@ -159,8 +147,8 @@ export const EventConfirmationCard = ({
       </div>
 
       {/* Content */}
-      <div className="p-3 pt-6 space-y-2 bg-gradient-to-b from-gray-50/50 to-white">
-        <ParticipantInfo {...registrantInfo} />
+      <div className="p-3 pt-6 space-y-3 bg-gradient-to-b from-gray-50/50 to-white">
+        <ParticipantInfo name={registrantInfo.name} />
         <EventDetails {...eventDetails} />
         <QRCodeSection 
           registrationId={registrationId} 
