@@ -15,14 +15,18 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
   console.log('EventsSection - User:', user);
   console.log('EventsSection - Events:', events);
 
+  // فلترة الفعاليات بناءً على الصلاحيات والنوع
   const visibleEvents = events.filter(event => {
+    // تجاهل الأنشطة التي تنتمي إلى مشاريع
     if (event.is_project_activity) {
       return false;
     }
     
+    // إذا كان المستخدم مشرف، اعرض جميع الفعاليات المستقلة
     if (user?.isAdmin) {
       return true;
     }
+    // للمستخدمين العاديين، اعرض فقط الفعاليات المرئية
     return event.is_visible !== false;
   });
 
@@ -30,12 +34,12 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
 
   if (visibleEvents.length === 0) {
     return (
-      <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-4 sm:p-6 shadow-sm">
-        <div className={`border-r-4 ${isPastEvents ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-4 flex items-center gap-2`}>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#403E43] dark:text-white">{title}</h2>
+      <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
+        <div className={`border-r-4 ${isPastEvents ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-8 flex items-center gap-2`}>
+          <h2 className="text-3xl font-bold text-[#403E43] dark:text-white">{title}</h2>
           {isPastEvents && <History className="w-6 h-6 text-[#9F9EA1]" />}
         </div>
-        <div className="text-center text-[#9F9EA1] p-4 sm:p-6 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
+        <div className="text-center text-[#9F9EA1] p-8 bg-[#F5F5F7] dark:bg-[#2A2F3C] rounded-2xl backdrop-blur-sm">
           <Rocket className="w-12 h-12 mx-auto mb-4 text-primary animate-bounce" />
           <p className="text-lg mb-2">
             {isPastEvents 
@@ -53,18 +57,19 @@ export const EventsSection = ({ title, events, registrations, isPastEvents = fal
   }
 
   return (
-    <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-4 sm:p-6 shadow-sm mb-6">
-      <div className={`border-r-4 ${isPastEvents ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-4 flex items-center gap-2`}>
-        <h2 className="text-2xl sm:text-3xl font-bold text-[#403E43] dark:text-white">{title}</h2>
+    <section className="rounded-2xl bg-gradient-to-b from-[#F5F5F7] to-white dark:from-[#2A2F3C] dark:to-[#1A1F2C] p-8 shadow-sm">
+      <div className={`border-r-4 ${isPastEvents ? 'border-[#9F9EA1]' : 'border-primary'} pr-4 mb-8 flex items-center gap-2`}>
+        <h2 className="text-3xl font-bold text-[#403E43] dark:text-white">{title}</h2>
         {isPastEvents && <History className="w-6 h-6 text-[#9F9EA1]" />}
       </div>
-      <div className="grid grid-cols-1 gap-4 max-w-[480px] mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {visibleEvents.map((event) => (
-          <EventCard 
-            key={event.id}
-            {...event}
-            className={!event.is_visible ? "opacity-50" : ""}
-          />
+          <div key={event.id} className="flex justify-center">
+            <EventCard 
+              {...event} 
+              className={!event.is_visible ? "opacity-50" : ""}
+            />
+          </div>
         ))}
       </div>
     </section>
