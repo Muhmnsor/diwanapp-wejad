@@ -139,7 +139,7 @@ export const EventConfirmationCard = ({
   return (
     <Card id="confirmation-card" className="max-w-md mx-auto overflow-hidden">
       {/* Header */}
-      <div className="relative bg-gradient-to-r from-primary/90 to-primary pt-10 pb-6">
+      <div className="relative bg-gradient-to-r from-primary/90 to-primary pt-6 pb-4">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
         </div>
@@ -147,9 +147,9 @@ export const EventConfirmationCard = ({
           <img 
             src="/lovable-uploads/04b9e098-8cb0-4654-a22c-1480658fc089.png" 
             alt="ديوان"
-            className="w-40 h-auto mx-auto mb-3 object-contain"
+            className="w-40 h-auto mx-auto mb-2 object-contain"
           />
-          <div className="text-xl font-bold mb-1">{eventTitle}</div>
+          <div className="text-xl font-bold mb-0.5">{eventTitle}</div>
           <div className="text-sm opacity-90">بطاقة تأكيد التسجيل</div>
         </div>
         <div className="absolute -bottom-6 left-0 right-0">
@@ -160,7 +160,7 @@ export const EventConfirmationCard = ({
       </div>
 
       {/* Content */}
-      <div className="p-4 pt-8 space-y-4 bg-gradient-to-b from-gray-50/50 to-white">
+      <div className="p-3 pt-6 space-y-3 bg-gradient-to-b from-gray-50/50 to-white">
         <ParticipantInfo {...registrantInfo} />
         <EventDetails {...eventDetails} />
         <QRCodeSection 
