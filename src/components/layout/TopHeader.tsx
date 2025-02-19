@@ -30,12 +30,12 @@ export const TopHeader = () => {
 
   return (
     <div className="w-full bg-white border-b">
-      <div className="container mx-auto px-4">
+      <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
         <div className="flex flex-col" dir="rtl">
           {/* Logo and Main Navigation */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center py-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center py-2 md:py-4">
             <Logo />
-            <div className="flex items-center justify-center gap-2 mt-4 md:mt-0">
+            <div className="flex items-center justify-center gap-2 mt-2 md:mt-0">
               <HomeButton 
                 isEventOrProjectDetails={isEventOrProjectDetails}
                 isAuthenticated={isAuthenticated}
@@ -47,31 +47,33 @@ export const TopHeader = () => {
 
           {/* Admin Actions Bar - Only show on events pages and NOT on tasks pages */}
           {isEventsPage && !isTasksPage && (
-            <AdminActions 
-              isAuthenticated={isAuthenticated}
-              isEventsPage={isEventsPage}
-            />
+            <div className="w-full">
+              <AdminActions 
+                isAuthenticated={isAuthenticated}
+                isEventsPage={isEventsPage}
+              />
+            </div>
           )}
 
           {/* Tasks Secondary Header - Only show on tasks pages */}
           {isTasksPage && (
-            <div className="flex items-center justify-center py-3 border-t">
-              <div className="flex items-center gap-4">
-                <Link to="/tasks">
+            <div className="flex items-center justify-center py-2 md:py-3 border-t w-full">
+              <div className="flex items-center gap-2 md:gap-4 w-full justify-center">
+                <Link to="/tasks" className="flex-1 md:flex-none">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="flex items-center gap-2"
+                    className="w-full md:w-auto flex items-center justify-center gap-2"
                   >
                     <FolderKanban className="h-4 w-4" />
                     المحافظ
                   </Button>
                 </Link>
-                <Link to="/tasks/dashboard">
+                <Link to="/tasks/dashboard" className="flex-1 md:flex-none">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="flex items-center gap-2"
+                    className="w-full md:w-auto flex items-center justify-center gap-2"
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     لوحة المعلومات
