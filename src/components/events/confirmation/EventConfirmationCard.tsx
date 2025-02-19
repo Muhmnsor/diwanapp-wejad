@@ -1,4 +1,3 @@
-
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -40,57 +39,78 @@ const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; 
   </div>
 );
 
-const QRCodeSection = ({ registrationId, location_url, location }: { registrationId: string; location_url?: string; location?: string }) => {
-  console.log('QRCodeSection - تفاصيل المدخلات:', { 
-    registrationId, 
-    location_url, 
-    location,
-    locationUrlType: typeof location_url,
-    locationUrlValue: location_url || 'غير موجود',
-    hasLocationUrl: Boolean(location_url)
-  });
-  
-  // تحسين المنطق: التحقق بشكل صريح من وجود location_url صالح
-  const locationQRValue = location_url && location_url.trim() !== '' 
-    ? location_url 
-    : location 
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
-      : '';
-  
-  console.log('QRCodeSection - القيمة النهائية للموقع:', {
-    locationQRValue,
-    isUsingLocationUrl: Boolean(location_url && location_url.trim() !== ''),
-    isUsingGoogleMaps: locationQRValue.includes('google.com/maps')
-  });
-  
-  return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
+const RegistrationQRCode = ({ registrationId }: { registrationId: string }) => (
+  <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
+    <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
+      <QRCodeSVG 
+        value={registrationId}
+        size={96}
+        level="H"
+        includeMargin={true}
+      />
+    </div>
+    <div className="text-sm text-gray-600">رقم التسجيل</div>
+    <div className="font-mono text-xs mt-1">{registrationId}</div>
+  </div>
+);
+
+const LocationQRCode = ({ location, locationUrl }: { location?: string; locationUrl?: string }) => {
+  if (locationUrl && typeof locationUrl === 'string' && locationUrl.trim()) {
+    console.log('Using direct location URL:', locationUrl);
+    return (
       <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
         <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
           <QRCodeSVG 
-            value={registrationId}
+            value={locationUrl}
             size={96}
             level="H"
             includeMargin={true}
           />
         </div>
-        <div className="text-sm text-gray-600">رقم التسجيل</div>
-        <div className="font-mono text-xs mt-1">{registrationId}</div>
+        <div className="text-sm text-gray-600">موقع الفعالية</div>
+        <div className="font-mono text-xs mt-1">امسح للوصول للموقع</div>
       </div>
-      {locationQRValue && (
-        <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
-          <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
-            <QRCodeSVG 
-              value={locationQRValue}
-              size={96}
-              level="H"
-              includeMargin={true}
-            />
-          </div>
-          <div className="text-sm text-gray-600">موقع الفعالية</div>
-          <div className="font-mono text-xs mt-1">امسح للوصول للخريطة</div>
+    );
+  }
+
+  if (location && typeof location === 'string' && location.trim()) {
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+    console.log('Using Google Maps URL:', googleMapsUrl);
+    return (
+      <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
+        <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
+          <QRCodeSVG 
+            value={googleMapsUrl}
+            size={96}
+            level="H"
+            includeMargin={true}
+          />
         </div>
-      )}
+        <div className="text-sm text-gray-600">موقع الفعالية</div>
+        <div className="font-mono text-xs mt-1">امسح للوصول للخريطة</div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+const QRCodeSection = ({ registrationId, location_url, location }: { 
+  registrationId: string; 
+  location_url?: string; 
+  location?: string 
+}) => {
+  console.log('QRCodeSection - المدخلات:', {
+    registrationId,
+    location_url: location_url || 'غير متوفر',
+    location: location || 'غير متوفر',
+    locationUrlType: typeof location_url
+  });
+
+  return (
+    <div className="grid grid-cols-2 gap-4 mb-6">
+      <RegistrationQRCode registrationId={registrationId} />
+      <LocationQRCode location={location} locationUrl={location_url} />
     </div>
   );
 };
@@ -124,13 +144,12 @@ export const EventConfirmationCard = ({
   registrantInfo,
   eventDetails
 }: EventConfirmationCardProps) => {
-  console.log('EventConfirmationCard - البيانات الكاملة:', {
+  console.log('EventConfirmationCard - البيانات:', {
     eventTitle,
     registrationId,
     registrantInfo,
     eventDetails,
     locationUrl: eventDetails?.location_url,
-    hasLocationUrl: Boolean(eventDetails?.location_url),
     locationUrlType: typeof eventDetails?.location_url
   });
 
