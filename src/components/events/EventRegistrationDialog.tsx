@@ -48,6 +48,7 @@ export const EventRegistrationDialog = ({
             eventLocation={event.location}
             location_url={event.location_url}
             onSubmit={() => onOpenChange(false)}
+            onCloseRegistration={() => onOpenChange(false)}
           />
         </div>
       </DialogContent>
