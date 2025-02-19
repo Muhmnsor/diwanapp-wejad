@@ -2135,6 +2135,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_next_registration_number: {
+        Args: {
+          event_id: string
+        }
+        Returns: string
+      }
       handle_user_management: {
         Args: {
           operation: string

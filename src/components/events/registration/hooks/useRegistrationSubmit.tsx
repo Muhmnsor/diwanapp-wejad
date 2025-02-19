@@ -36,16 +36,12 @@ export const useRegistrationSubmit = ({
     setIsSubmitting(true);
 
     try {
-      // Generate registration number
-      const registrationNumber = `REG-${Date.now()}`;
-
       // Format birth date properly if it exists
       const birthDate = formData.birthDate ? new Date(formData.birthDate).toISOString().split('T')[0] : null;
 
       // Prepare registration data
       const registrationData = {
         event_id: eventId,
-        registration_number: registrationNumber,
         arabic_name: formData.arabicName,
         english_name: formData.englishName || null,
         email: formData.email,
@@ -59,7 +55,7 @@ export const useRegistrationSubmit = ({
 
       console.log('Registration data being sent:', registrationData);
 
-      // Insert registration record
+      // Insert registration record - رقم التسجيل سيتم توليده تلقائياً من خلال الـ trigger
       const { data: registration, error: registrationError } = await supabase
         .from('registrations')
         .insert([registrationData])
@@ -123,10 +119,9 @@ export const useRegistrationSubmit = ({
 
       toast.success('تم التسجيل بنجاح');
       
-      // نؤخر استدعاء onSubmit لضمان ظهور رسالة التأكيد
       setTimeout(() => {
         onSubmit();
-      }, 5000); // تأخير 5 ثواني
+      }, 5000);
 
       return registration.id;
     } catch (error) {
