@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "./ShareButton";
 import { CalendarDays, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
@@ -7,9 +8,11 @@ import { EventDeleteDialog } from "./details/EventDeleteDialog";
 import { handleEventDelete } from "./details/handlers/EventDeleteHandler";
 import { useNavigate } from "react-router-dom";
 import { EventCalendarHelper } from "./EventCalendarHelper";
+import { Event } from "@/store/eventStore";
 
 interface EventTitleProps {
   title: string;
+  event: Event;
   isAdmin: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -20,6 +23,7 @@ interface EventTitleProps {
 
 export const EventTitle = ({
   title,
+  event,
   isAdmin,
   onEdit,
   onDelete,
@@ -93,10 +97,12 @@ export const EventTitle = ({
           </div>
         )}
         <EventCalendarHelper 
-          title={title}
-          description=""
-          location=""
-          startDate={new Date()}
+          title={event.title}
+          description={event.description || ''}
+          location={event.location}
+          startDate={event.date}
+          endDate={event.end_date}
+          time={event.time}
         />
         <ShareButton url={window.location.href} title={title} />
       </div>

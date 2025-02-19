@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventImage } from "../EventImage";
@@ -7,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDashboard } from "@/components/admin/EventDashboard";
+
 interface EventDetailsContainerProps {
   event: Event;
   isAdmin: boolean;
@@ -16,6 +18,7 @@ interface EventDetailsContainerProps {
   onRegister: () => void;
   id: string;
 }
+
 export const EventDetailsContainer = ({
   event,
   isAdmin,
@@ -27,14 +30,17 @@ export const EventDetailsContainer = ({
 }: EventDetailsContainerProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [visibility, setVisibility] = useState(event.is_visible);
+
   console.log('EventDetailsContainer - isAdmin:', isAdmin);
+  console.log('Event data:', event);
+
   const handleVisibilityChange = async (visible: boolean) => {
     try {
-      const {
-        error
-      } = await supabase.from('events').update({
-        is_visible: visible
-      }).eq('id', id);
+      const { error } = await supabase
+        .from('events')
+        .update({ is_visible: visible })
+        .eq('id', id);
+      
       if (error) throw error;
       setVisibility(visible);
       toast.success(visible ? 'تم إظهار الفعالية' : 'تم إخفاء الفعالية');
@@ -43,14 +49,26 @@ export const EventDetailsContainer = ({
       toast.error('حدث خطأ أثناء تحديث حالة الظهور');
     }
   };
-  return <div className="min-h-screen bg-gradient-to-b from-gray-50 via-gray-50/80 to-transparent pb-12 py-0 my-[27px]">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-gray-50/80 to-transparent pb-12 py-0 my-[27px]">
       <EventImage imageUrl={event.image_url} title={event.title} />
       
       <div className="container mx-auto px-4 -mt-10 relative z-10">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
-          <EventTitle title={event.title} isAdmin={isAdmin} onEdit={onEdit} onDelete={() => setShowDeleteDialog(true)} onAddToCalendar={onAddToCalendar} isVisible={visibility} onVisibilityChange={handleVisibilityChange} />
+          <EventTitle 
+            title={event.title} 
+            event={event}
+            isAdmin={isAdmin} 
+            onEdit={onEdit} 
+            onDelete={() => setShowDeleteDialog(true)} 
+            onAddToCalendar={onAddToCalendar}
+            isVisible={visibility}
+            onVisibilityChange={handleVisibilityChange}
+          />
 
-          {isAdmin ? <Tabs defaultValue="details" className="w-full">
+          {isAdmin ? (
+            <Tabs defaultValue="details" className="w-full">
               <TabsList dir="rtl" className="w-full justify-start border-b rounded-none bg-white mx-0 px-[37px]">
                 <TabsTrigger value="details">تفاصيل الفعالية</TabsTrigger>
                 <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
@@ -63,8 +81,12 @@ export const EventDetailsContainer = ({
               <TabsContent value="dashboard" className="mt-6 px-4 md:px-8 pb-8">
                 <EventDashboard eventId={id} />
               </TabsContent>
-            </Tabs> : <EventContent event={event} onRegister={onRegister} />}
+            </Tabs>
+          ) : (
+            <EventContent event={event} onRegister={onRegister} />
+          )}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
