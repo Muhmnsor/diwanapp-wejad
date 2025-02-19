@@ -1,3 +1,4 @@
+
 export const parseDate = (dateStr: string | null | undefined): Date | null => {
   if (!dateStr) return null;
   try {
@@ -14,7 +15,10 @@ export const parseDate = (dateStr: string | null | undefined): Date | null => {
 };
 
 export const getEventDateTime = (date: string, time: string = '00:00'): Date => {
-  const [year, month, day] = date.split('-').map(Number);
-  const [hours, minutes] = time.split(':').map(Number);
-  return new Date(year, month - 1, day, hours, minutes);
+  const [hours, minutes] = time ? time.split(':').map(Number) : [0, 0];
+  const eventDate = new Date(date);
+  eventDate.setHours(hours, minutes, 0, 0);
+  
+  console.log('Creating event date from:', { date, time, result: eventDate });
+  return eventDate;
 };

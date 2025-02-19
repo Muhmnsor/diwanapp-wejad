@@ -14,14 +14,16 @@ import {
   generateICSContent,
   type CalendarEvent 
 } from "@/utils/calendarUtils";
+import { getEventDateTime } from "@/utils/dateUtils";
 import { toast } from "sonner";
 
 interface EventCalendarHelperProps {
   title: string;
   description: string;
   location: string;
-  startDate: Date;
-  endDate?: Date;
+  startDate: Date | string;
+  endDate?: Date | string;
+  time?: string;
 }
 
 export const EventCalendarHelper = ({
@@ -29,14 +31,23 @@ export const EventCalendarHelper = ({
   description,
   location,
   startDate,
-  endDate
+  endDate,
+  time
 }: EventCalendarHelperProps) => {
+  // تحويل التاريخ والوقت إلى كائن Date صحيح
+  const eventStartDate = typeof startDate === 'string' ? getEventDateTime(startDate, time) : startDate;
+  const eventEndDate = endDate ? (typeof endDate === 'string' ? getEventDateTime(endDate as string, time) : endDate) : undefined;
+
+  console.log('Start Date:', startDate, 'Time:', time);
+  console.log('Parsed Event Start Date:', eventStartDate);
+  console.log('Parsed Event End Date:', eventEndDate);
+
   const eventData: CalendarEvent = {
     title,
     description,
     location,
-    startDate: new Date(startDate),
-    endDate: endDate ? new Date(endDate) : undefined
+    startDate: eventStartDate,
+    endDate: eventEndDate
   };
 
   console.log('Calendar Event Data:', eventData);
