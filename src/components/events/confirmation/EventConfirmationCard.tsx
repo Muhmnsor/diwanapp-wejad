@@ -21,58 +21,57 @@ interface EventConfirmationCardProps {
 }
 
 const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; email: string }) => (
-  <div className="space-y-4 mb-8">
-    <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 flex items-center justify-between gap-3">
-      <User className="w-5 h-5 text-primary" />
-      <span className="text-lg font-semibold flex-1 text-right">{name}</span>
+  <div className="space-y-3">
+    <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+      <User className="w-4 h-4 text-primary" />
+      <span className="text-base font-semibold flex-1 text-right">{name}</span>
     </div>
 
-    <div className="grid grid-cols-1 gap-3">
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+    <div className="grid grid-cols-1 gap-2">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
         <Phone className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right" dir="ltr">{phone}</span>
+        <span className="flex-1 text-right text-sm" dir="ltr">{phone}</span>
       </div>
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
         <Mail className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right" dir="ltr">{email}</span>
+        <span className="flex-1 text-right text-sm" dir="ltr">{email}</span>
       </div>
     </div>
   </div>
 );
 
 const RegistrationQRCode = ({ registrationId }: { registrationId: string }) => (
-  <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
+  <div className="bg-white/50 backdrop-blur-sm p-3 rounded-xl text-center">
     <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
       <QRCodeSVG 
         value={registrationId}
-        size={96}
+        size={84}
         level="H"
         includeMargin={true}
       />
     </div>
     <div className="text-sm text-gray-600">رقم التسجيل</div>
-    <div className="font-mono text-xs mt-1">{registrationId}</div>
+    <div className="font-mono text-xs mt-0.5">{registrationId}</div>
   </div>
 );
 
 const LocationQRCode = ({ locationUrl }: { locationUrl?: string | { _type: string; value: string } }) => {
-  // تحويل location_url إلى نص إذا كان object
   const url = typeof locationUrl === 'object' ? locationUrl?.value : locationUrl;
 
   if (url && typeof url === 'string' && url.trim() && url !== 'undefined') {
     console.log('Using location URL:', url);
     return (
-      <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
+      <div className="bg-white/50 backdrop-blur-sm p-3 rounded-xl text-center">
         <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
           <QRCodeSVG 
             value={url}
-            size={96}
+            size={84}
             level="H"
             includeMargin={true}
           />
         </div>
         <div className="text-sm text-gray-600">موقع الفعالية</div>
-        <div className="font-mono text-xs mt-1">امسح للوصول للموقع</div>
+        <div className="font-mono text-xs mt-0.5">امسح للوصول للموقع</div>
       </div>
     );
   }
@@ -93,7 +92,7 @@ const QRCodeSection = ({ registrationId, location_url }: {
   });
 
   return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
+    <div className="grid grid-cols-2 gap-3">
       <RegistrationQRCode registrationId={registrationId} />
       <LocationQRCode locationUrl={location_url} />
     </div>
@@ -101,23 +100,23 @@ const QRCodeSection = ({ registrationId, location_url }: {
 };
 
 const EventDetails = ({ date, time, location }: { date?: string; time?: string; location?: string }) => (
-  <div className="space-y-3">
+  <div className="space-y-2">
     {date && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
         <Calendar className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right">{date}</span>
+        <span className="flex-1 text-right text-sm">{date}</span>
       </div>
     )}
     {time && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
         <Clock className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right">{time}</span>
+        <span className="flex-1 text-right text-sm">{time}</span>
       </div>
     )}
     {location && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between gap-3">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-3">
         <MapPin className="w-4 h-4 text-primary" />
-        <span className="flex-1 text-right">{location}</span>
+        <span className="flex-1 text-right text-sm">{location}</span>
       </div>
     )}
   </div>
@@ -141,13 +140,13 @@ export const EventConfirmationCard = ({
   return (
     <Card id="confirmation-card" className="max-w-md mx-auto overflow-hidden">
       {/* Header */}
-      <div className="relative bg-gradient-to-r from-primary/90 to-primary pt-12 pb-8">
+      <div className="relative bg-gradient-to-r from-primary/90 to-primary pt-10 pb-6">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
         </div>
         <div className="relative px-6 text-center text-white">
-          <Logo className="w-16 h-16 mx-auto mb-4" />
-          <div className="text-2xl font-bold mb-1">{eventTitle}</div>
+          <Logo className="w-12 h-12 mx-auto mb-3" />
+          <div className="text-xl font-bold mb-1">{eventTitle}</div>
           <div className="text-sm opacity-90">بطاقة تأكيد التسجيل</div>
         </div>
         <div className="absolute -bottom-6 left-0 right-0">
@@ -158,13 +157,13 @@ export const EventConfirmationCard = ({
       </div>
 
       {/* Content */}
-      <div className="p-6 pt-8 space-y-6 bg-gradient-to-b from-gray-50/50 to-white">
+      <div className="p-4 pt-8 space-y-4 bg-gradient-to-b from-gray-50/50 to-white">
         <ParticipantInfo {...registrantInfo} />
+        <EventDetails {...eventDetails} />
         <QRCodeSection 
           registrationId={registrationId} 
           location_url={eventDetails?.location_url}
         />
-        <EventDetails {...eventDetails} />
       </div>
     </Card>
   );
