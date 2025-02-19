@@ -27,7 +27,6 @@ export const useRegistration = (
     eventPrice: null,
     onSubmit: () => {
       console.log('Registration submission completed');
-      // لا نحتاج إلى استدعاء onSuccess هنا بعد الآن
     }
   });
 
@@ -40,19 +39,25 @@ export const useRegistration = (
       const result = await submitRegistration(e, formData, setIsSubmitting);
       
       if (result) {
-        console.log('Registration successful:', result);
+        console.log('Registration successful, showing confirmation dialog');
+        // تعيين معرف التسجيل أولاً
         setRegistrationId(result.registrationNumber);
         setIsRegistered(true);
         
-        // استدعاء onSuccess قبل إظهار التأكيد مباشرة
-        if (onSuccess) {
-          onSuccess(result.registrationNumber);
-        }
+        // إظهار نافذة التأكيد أولاً
+        setShowConfirmation(true);
         
-        // تأخير قصير قبل إظهار التأكيد للسماح بإغلاق نافذة التسجيل
+        console.log('Showing confirmation dialog for registration:', {
+          registrationId: result.registrationNumber,
+          formData
+        });
+        
+        // إغلاق نافذة التسجيل بعد التأكد من ظهور نافذة التأكيد
         setTimeout(() => {
-          setShowConfirmation(true);
-        }, 100);
+          if (onSuccess) {
+            onSuccess(result.registrationNumber);
+          }
+        }, 500);
       }
     } catch (error) {
       console.error('useRegistration - Error in registration:', error);
