@@ -39,7 +39,7 @@ export const EventRegistrationDialog = ({
         <DialogHeader>
           <DialogTitle className="text-right">تسجيل الحضور في {event.title}</DialogTitle>
         </DialogHeader>
-        <div className="rtl px-4 sm:px-6" dir="rtl">
+        <div className="rtl" dir="rtl">
           <RegistrationForm
             eventTitle={event.title}
             eventPrice={event.price}
