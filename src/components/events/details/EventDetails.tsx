@@ -1,3 +1,4 @@
+
 import { CalendarDays, Clock, MapPin, Monitor, Users, Tag } from "lucide-react";
 import { formatTime12Hour, formatDateWithDay } from "@/utils/dateTimeUtils";
 import { useQuery } from "@tanstack/react-query";
@@ -104,7 +105,7 @@ export const EventDetails = ({
               rel="noopener noreferrer" 
               className="text-primary hover:underline"
             >
-              رابط تطبيقات الخرائط
+              رابط الوصول لموقع الفعالية
             </a>
             <Button 
               variant="ghost" 
