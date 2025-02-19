@@ -37,16 +37,17 @@ export const useRegistration = (
     
     try {
       setIsSubmitting(true);
-      const newRegistrationId = await submitRegistration(e, formData, setIsSubmitting);
+      const result = await submitRegistration(e, formData, setIsSubmitting);
       
-      if (newRegistrationId) {
+      if (result) {
         console.log('Registration successful, showing confirmation dialog');
-        setRegistrationId(newRegistrationId);
+        // Now we use the registration_number instead of the id
+        setRegistrationId(result.registrationNumber);
         setShowConfirmation(true);
         setIsRegistered(true);
         
         console.log('Registration successful:', {
-          registrationId: newRegistrationId,
+          registrationId: result.registrationNumber,
           formData
         });
       }
