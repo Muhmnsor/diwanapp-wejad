@@ -37,26 +37,53 @@ export const handleEventUpdate = async (formData: Event, eventId?: string) => {
       throw eventError;
     }
 
-    // Update registration fields
-    console.log('Updating registration fields:', formData.registration_fields);
-    
-    const { error: fieldsError } = await supabase
+    // First check if registration fields record exists
+    const { data: existingFields, error: fetchError } = await supabase
       .from('event_registration_fields')
-      .update({
-        arabic_name: formData.registration_fields.arabic_name,
-        english_name: formData.registration_fields.english_name,
-        education_level: formData.registration_fields.education_level,
-        birth_date: formData.registration_fields.birth_date,
-        national_id: formData.registration_fields.national_id,
-        email: formData.registration_fields.email,
-        phone: formData.registration_fields.phone,
-        gender: formData.registration_fields.gender,
-        work_status: formData.registration_fields.work_status
-      })
-      .eq('event_id', eventId);
+      .select('*')
+      .eq('event_id', eventId)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Error fetching registration fields:', fetchError);
+      throw fetchError;
+    }
+
+    console.log('Existing registration fields:', existingFields);
+    console.log('New registration fields:', formData.registration_fields);
+
+    // Prepare registration fields data
+    const registrationFieldsData = {
+      event_id: eventId,
+      arabic_name: formData.registration_fields.arabic_name,
+      english_name: formData.registration_fields.english_name,
+      education_level: formData.registration_fields.education_level,
+      birth_date: formData.registration_fields.birth_date,
+      national_id: formData.registration_fields.national_id,
+      email: formData.registration_fields.email,
+      phone: formData.registration_fields.phone,
+      gender: formData.registration_fields.gender,
+      work_status: formData.registration_fields.work_status
+    };
+
+    let fieldsError;
+    if (existingFields) {
+      // Update existing record
+      const { error } = await supabase
+        .from('event_registration_fields')
+        .update(registrationFieldsData)
+        .eq('event_id', eventId);
+      fieldsError = error;
+    } else {
+      // Insert new record
+      const { error } = await supabase
+        .from('event_registration_fields')
+        .insert(registrationFieldsData);
+      fieldsError = error;
+    }
 
     if (fieldsError) {
-      console.error('Error updating registration fields:', fieldsError);
+      console.error('Error updating/inserting registration fields:', fieldsError);
       throw fieldsError;
     }
 
