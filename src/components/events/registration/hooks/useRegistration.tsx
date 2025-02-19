@@ -27,7 +27,7 @@ export const useRegistration = (
     eventPrice: null,
     onSubmit: () => {
       console.log('Registration submission completed');
-      // لا نقوم باستدعاء onSuccess هنا لأننا نريد التحكم في توقيت إغلاق النافذة
+      // لا نحتاج إلى استدعاء onSuccess هنا بعد الآن
     }
   });
 
@@ -40,16 +40,19 @@ export const useRegistration = (
       const result = await submitRegistration(e, formData, setIsSubmitting);
       
       if (result) {
-        console.log('Registration successful, showing confirmation dialog');
-        // Now we use the registration_number instead of the id
+        console.log('Registration successful:', result);
         setRegistrationId(result.registrationNumber);
-        setShowConfirmation(true);
         setIsRegistered(true);
         
-        console.log('Registration successful:', {
-          registrationId: result.registrationNumber,
-          formData
-        });
+        // استدعاء onSuccess قبل إظهار التأكيد مباشرة
+        if (onSuccess) {
+          onSuccess(result.registrationNumber);
+        }
+        
+        // تأخير قصير قبل إظهار التأكيد للسماح بإغلاق نافذة التسجيل
+        setTimeout(() => {
+          setShowConfirmation(true);
+        }, 100);
       }
     } catch (error) {
       console.error('useRegistration - Error in registration:', error);
