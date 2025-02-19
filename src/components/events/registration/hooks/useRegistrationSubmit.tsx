@@ -55,11 +55,11 @@ export const useRegistrationSubmit = ({
 
       console.log('Registration data being sent:', registrationData);
 
-      // Insert registration record - رقم التسجيل سيتم توليده تلقائياً من خلال الـ trigger
+      // Insert registration record
       const { data: registration, error: registrationError } = await supabase
         .from('registrations')
         .insert([registrationData])
-        .select()
+        .select('*')
         .single();
 
       if (registrationError) {
@@ -121,7 +121,7 @@ export const useRegistrationSubmit = ({
       
       setTimeout(() => {
         onSubmit();
-      }, 5000);
+      }, 500);
 
       return registration.id;
     } catch (error) {
