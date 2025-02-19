@@ -1,4 +1,3 @@
-
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
@@ -50,7 +49,7 @@ const RegistrationQRCode = ({ registrationId }: { registrationId: string }) => (
       />
     </div>
     <div className="text-sm text-gray-600">رقم التسجيل</div>
-    <div className="font-mono text-xs mt-0.5">{registrationId}</div>
+    <div className="font-mono text-xs mt-0.5" dir="ltr">{registrationId.split('-')[1] || registrationId}</div>
   </div>
 );
 
@@ -171,4 +170,3 @@ export const EventConfirmationCard = ({
     </Card>
   );
 };
-
