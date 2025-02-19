@@ -119,7 +119,7 @@ const WhatsAppContact = () => (
       className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white rounded-lg hover:bg-gray-50 transition-colors"
     >
       <MessagesSquare className="w-4 h-4 text-primary" />
-      <span className="text-sm font-medium text-gray-700 dir-ltr">
+      <span dir="ltr" className="text-sm font-medium text-gray-700">
         +966 59 254 4688
       </span>
     </a>
