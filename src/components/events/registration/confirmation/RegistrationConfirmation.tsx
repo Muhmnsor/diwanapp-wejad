@@ -12,7 +12,6 @@ interface RegistrationConfirmationProps {
   formData: RegistrationFormData;
   showConfirmation: boolean;
   setShowConfirmation: (show: boolean) => void;
-  onCloseRegistration: () => void;
 }
 
 export const RegistrationConfirmation = ({
@@ -24,8 +23,7 @@ export const RegistrationConfirmation = ({
   location_url,
   formData,
   showConfirmation,
-  setShowConfirmation,
-  onCloseRegistration
+  setShowConfirmation
 }: RegistrationConfirmationProps) => {
   console.log('RegistrationConfirmation - بيانات كاملة:', {
     registrationId,
@@ -45,7 +43,6 @@ export const RegistrationConfirmation = ({
         console.log('Dialog state changed to:', open);
         setShowConfirmation(open);
       }}
-      onCloseRegistration={onCloseRegistration}
       registrationId={registrationId}
       eventTitle={eventTitle}
       eventLocation={eventLocation}

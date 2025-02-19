@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -16,7 +15,6 @@ import { exportCardAsImage } from "@/utils/cardExport";
 interface EventConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCloseRegistration: () => void;
   registrationId: string;
   eventTitle: string;
   eventDate?: string;
@@ -33,7 +31,6 @@ interface EventConfirmationDialogProps {
 export const EventConfirmationDialog = ({
   open,
   onOpenChange,
-  onCloseRegistration,
   registrationId,
   eventTitle,
   eventDate,
@@ -65,19 +62,12 @@ export const EventConfirmationDialog = ({
       setHasDownloaded(true);
       toast.success('تم حفظ بطاقة التأكيد بنجاح');
       
-      // إغلاق نافذة التأكيد أولاً
       setTimeout(() => {
         onOpenChange(false);
-        
-        // ثم إغلاق نافذة التسجيل
         setTimeout(() => {
-          onCloseRegistration();
-          // توجيه المستخدم للصفحة الرئيسية
-          setTimeout(() => {
-            navigate('/');
-          }, 500);
-        }, 500);
-      }, 500);
+          navigate('/');
+        }, 2000);
+      }, 3000);
     } else {
       console.error('Failed to download card');
       toast.error('حدث خطأ أثناء حفظ البطاقة');
@@ -92,13 +82,9 @@ export const EventConfirmationDialog = ({
       if (!shouldClose) return;
     }
     
-    // إغلاق نافذة التأكيد أولاً
-    onOpenChange(false);
-    
-    // ثم إغلاق نافذة التسجيل
     setTimeout(() => {
-      onCloseRegistration();
-    }, 300);
+      onOpenChange(false);
+    }, 500);
   };
 
   return (
