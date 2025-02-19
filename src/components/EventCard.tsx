@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { getEventStatus } from "@/utils/eventUtils";
 import { useEffect } from "react";
@@ -78,7 +79,7 @@ export const EventCard = ({
   }, [title, certificate_type, event_hours, max_attendees, registration_start_date, registration_end_date, beneficiary_type, currentAttendees, status, is_visible]);
 
   return (
-    <div className={`w-[600px] mx-auto relative ${className}`} dir="rtl">
+    <div className={`w-full max-w-[460px] mx-auto relative mb-4 ${className}`} dir="rtl">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow animate-fade-in h-full">
         <EventCardImage 
           imageUrl={image_url}
