@@ -1,7 +1,6 @@
 
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Logo } from '@/components/Logo';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface EventConfirmationCardProps {
@@ -145,7 +144,11 @@ export const EventConfirmationCard = ({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
         </div>
         <div className="relative px-6 text-center text-white">
-          <Logo className="w-12 h-12 mx-auto mb-3" />
+          <img 
+            src="/lovable-uploads/04b9e098-8cb0-4654-a22c-1480658fc089.png" 
+            alt="ديوان"
+            className="w-40 h-auto mx-auto mb-3 object-contain"
+          />
           <div className="text-xl font-bold mb-1">{eventTitle}</div>
           <div className="text-sm opacity-90">بطاقة تأكيد التسجيل</div>
         </div>
@@ -168,3 +171,4 @@ export const EventConfirmationCard = ({
     </Card>
   );
 };
+
