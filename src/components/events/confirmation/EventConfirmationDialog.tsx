@@ -95,7 +95,7 @@ export const EventConfirmationDialog = ({
       modal={true}
     >
       <DialogContent 
-        className="max-w-md mx-auto"
+        className="w-[95vw] max-w-lg mx-auto h-auto max-h-[90vh] overflow-y-auto p-4 md:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -108,17 +108,19 @@ export const EventConfirmationDialog = ({
           </div>
         </DialogHeader>
         
-        <EventConfirmationCard
-          eventTitle={eventTitle}
-          registrationId={registrationId}
-          registrantInfo={formData}
-          eventDetails={{
-            date: eventDate,
-            time: eventTime,
-            location: eventLocation,
-            location_url: location_url
-          }}
-        />
+        <div className="mt-4">
+          <EventConfirmationCard
+            eventTitle={eventTitle}
+            registrationId={registrationId}
+            registrantInfo={formData}
+            eventDetails={{
+              date: eventDate,
+              time: eventTime,
+              location: eventLocation,
+              location_url: location_url
+            }}
+          />
+        </div>
 
         <div className="space-y-2 mt-4">
           <Button 
@@ -144,3 +146,4 @@ export const EventConfirmationDialog = ({
     </Dialog>
   );
 };
+
