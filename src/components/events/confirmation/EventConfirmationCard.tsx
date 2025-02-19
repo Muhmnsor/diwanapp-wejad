@@ -1,7 +1,7 @@
-
 import { QrCode, User, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
+import { formatTime12Hour } from '@/utils/dateTimeUtils';
 
 interface EventConfirmationCardProps {
   eventTitle: string;
@@ -96,7 +96,7 @@ const EventDetails = ({ date, time, location }: { date?: string; time?: string; 
     {time && (
       <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2 flex items-center gap-2">
         <Clock className="w-4 h-4 text-primary shrink-0" />
-        <span className="flex-1 text-right text-sm">{time}</span>
+        <span className="flex-1 text-right text-sm">{formatTime12Hour(time)}</span>
       </div>
     )}
     {location && (
