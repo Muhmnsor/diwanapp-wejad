@@ -28,7 +28,7 @@ export const EventRegistrationDialog = ({
       modal={true}
     >
       <DialogContent 
-        className="w-[90%] sm:max-w-[425px] rtl rounded-xl mx-auto inset-0"
+        className="w-[90%] sm:max-w-[425px] rtl rounded-xl fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
         onPointerDownOutside={(e) => {
           e.preventDefault();
         }}
