@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Event } from "@/store/eventStore";
 import { RegistrationForm } from "./RegistrationForm";
+import { useState } from "react";
 
 interface EventRegistrationDialogProps {
   open: boolean;
@@ -20,16 +21,25 @@ export const EventRegistrationDialog = ({
   event,
 }: EventRegistrationDialogProps) => {
   console.log('📋 EventRegistrationDialog - Event:', event);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = () => {
     // عند اكتمال التسجيل، نغلق النافذة
-    onOpenChange(false);
+    setIsSubmitting(true);
+    setTimeout(() => {
+      onOpenChange(false);
+      setIsSubmitting(false);
+    }, 500);
   };
 
   return (
     <Dialog 
-      open={open} 
-      onOpenChange={onOpenChange}
+      open={open && !isSubmitting} 
+      onOpenChange={(value) => {
+        if (!isSubmitting) {
+          onOpenChange(value);
+        }
+      }}
       modal={true}
     >
       <DialogContent 
