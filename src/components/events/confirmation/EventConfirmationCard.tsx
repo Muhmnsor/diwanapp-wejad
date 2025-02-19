@@ -100,23 +100,23 @@ const QRCodeSection = ({ registrationId, location_url }: {
 };
 
 const EventDetails = ({ date, time, location }: { date?: string; time?: string; location?: string }) => (
-  <div className="grid md:grid-cols-3 grid-cols-1 gap-2">
+  <div className="grid md:grid-cols-3 grid-cols-1 gap-2 max-w-full">
     {date && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2 min-h-[44px]">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2 min-h-[44px] overflow-hidden">
         <Calendar className="w-4 h-4 text-primary shrink-0" />
-        <span className="flex-1 text-right text-sm leading-normal break-words">{date}</span>
+        <span className="flex-1 text-right text-sm leading-normal break-words overflow-hidden">{date}</span>
       </div>
     )}
     {time && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2 min-h-[44px]">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2 min-h-[44px] overflow-hidden">
         <Clock className="w-4 h-4 text-primary shrink-0" />
-        <span className="flex-1 text-right text-sm leading-normal break-words">{time}</span>
+        <span className="flex-1 text-right text-sm leading-normal break-words overflow-hidden">{time}</span>
       </div>
     )}
     {location && (
-      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2 min-h-[44px]">
+      <div className="bg-white/50 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between gap-2 min-h-[44px] overflow-hidden">
         <MapPin className="w-4 h-4 text-primary shrink-0" />
-        <span className="flex-1 text-right text-sm leading-normal break-words">{location}</span>
+        <span className="flex-1 text-right text-sm leading-normal break-words overflow-hidden">{location}</span>
       </div>
     )}
   </div>
