@@ -21,6 +21,11 @@ export const EventRegistrationDialog = ({
 }: EventRegistrationDialogProps) => {
   console.log('📋 EventRegistrationDialog - Event:', event);
 
+  const handleSubmit = () => {
+    // عند اكتمال التسجيل، نغلق النافذة
+    onOpenChange(false);
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -47,7 +52,7 @@ export const EventRegistrationDialog = ({
             eventTime={event.time}
             eventLocation={event.location}
             location_url={event.location_url}
-            onSubmit={() => onOpenChange(false)}
+            onSubmit={handleSubmit}
           />
         </div>
       </DialogContent>
