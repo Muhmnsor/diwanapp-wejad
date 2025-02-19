@@ -1,3 +1,4 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Logo } from '@/components/Logo';
@@ -15,7 +16,7 @@ interface EventConfirmationCardProps {
     date?: string;
     time?: string;
     location?: string;
-    location_url?: string;
+    location_url?: string | { _type: string; value: string };
   };
 }
 
@@ -54,14 +55,17 @@ const RegistrationQRCode = ({ registrationId }: { registrationId: string }) => (
   </div>
 );
 
-const LocationQRCode = ({ locationUrl }: { locationUrl?: string }) => {
-  if (locationUrl && typeof locationUrl === 'string' && locationUrl.trim()) {
-    console.log('Using location URL:', locationUrl);
+const LocationQRCode = ({ locationUrl }: { locationUrl?: string | { _type: string; value: string } }) => {
+  // تحويل location_url إلى نص إذا كان object
+  const url = typeof locationUrl === 'object' ? locationUrl?.value : locationUrl;
+
+  if (url && typeof url === 'string' && url.trim() && url !== 'undefined') {
+    console.log('Using location URL:', url);
     return (
       <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
         <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
           <QRCodeSVG 
-            value={locationUrl}
+            value={url}
             size={96}
             level="H"
             includeMargin={true}
@@ -73,17 +77,19 @@ const LocationQRCode = ({ locationUrl }: { locationUrl?: string }) => {
     );
   }
 
+  console.log('LocationQRCode: لا يوجد رابط صالح', { locationUrl, url });
   return null;
 };
 
 const QRCodeSection = ({ registrationId, location_url }: { 
   registrationId: string; 
-  location_url?: string;
+  location_url?: string | { _type: string; value: string };
 }) => {
   console.log('QRCodeSection - المدخلات:', {
     registrationId,
-    location_url: location_url || 'غير متوفر',
-    locationUrlType: typeof location_url
+    location_url,
+    location_url_type: typeof location_url,
+    location_url_value: typeof location_url === 'object' ? location_url?.value : location_url
   });
 
   return (
