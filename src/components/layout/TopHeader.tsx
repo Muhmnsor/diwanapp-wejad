@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
 import { useLocation } from "react-router-dom";
@@ -32,9 +33,9 @@ export const TopHeader = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col" dir="rtl">
           {/* Logo and Main Navigation */}
-          <div className="flex justify-between items-center py-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center py-4">
             <Logo />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2 mt-4 md:mt-0">
               <HomeButton 
                 isEventOrProjectDetails={isEventOrProjectDetails}
                 isAuthenticated={isAuthenticated}
