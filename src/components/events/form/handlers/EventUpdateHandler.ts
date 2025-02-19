@@ -1,3 +1,4 @@
+
 import { Event } from "@/store/eventStore";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,9 +32,14 @@ export const handleEventUpdate = async (formData: Event, eventId?: string) => {
       })
       .eq('id', eventId);
 
-    if (eventError) throw eventError;
+    if (eventError) {
+      console.error('Error updating event:', eventError);
+      throw eventError;
+    }
 
     // Update registration fields
+    console.log('Updating registration fields:', formData.registration_fields);
+    
     const { error: fieldsError } = await supabase
       .from('event_registration_fields')
       .update({
