@@ -35,9 +35,11 @@ export const EventCalendarHelper = ({
     title,
     description,
     location,
-    startDate,
-    endDate
+    startDate: new Date(startDate),
+    endDate: endDate ? new Date(endDate) : undefined
   };
+
+  console.log('Calendar Event Data:', eventData);
 
   return (
     <DropdownMenu dir="rtl">

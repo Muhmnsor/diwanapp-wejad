@@ -8,10 +8,17 @@ export interface CalendarEvent {
 }
 
 export const formatDateForCalendar = (date: Date): string => {
-  return date.toISOString().replace(/[-:]|\.\d{3}/g, '').slice(0, 15) + 'Z';
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  
+  return `${year}${month}${day}T${hours}${minutes}00`;
 };
 
 export const generateICSContent = (event: CalendarEvent): string => {
+  console.log('Generating ICS content for event:', event);
   const endDate = event.endDate || new Date(event.startDate.getTime() + 60 * 60 * 1000); // Default 1 hour
   
   return [
@@ -29,18 +36,24 @@ export const generateICSContent = (event: CalendarEvent): string => {
 };
 
 export const createGoogleCalendarUrl = (event: CalendarEvent): string => {
+  console.log('Creating Google Calendar URL for event:', event);
+  const endDate = event.endDate || new Date(event.startDate.getTime() + 60 * 60 * 1000);
+  
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: event.title,
     details: event.description,
     location: event.location,
-    dates: `${formatDateForCalendar(event.startDate)}/${formatDateForCalendar(event.endDate || new Date(event.startDate.getTime() + 60 * 60 * 1000))}`
+    dates: `${formatDateForCalendar(event.startDate)}/${formatDateForCalendar(endDate)}`
   });
   
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
 
 export const createOutlookCalendarUrl = (event: CalendarEvent): string => {
+  console.log('Creating Outlook Calendar URL for event:', event);
+  const endDate = event.endDate || new Date(event.startDate.getTime() + 60 * 60 * 1000);
+  
   const params = new URLSearchParams({
     path: '/calendar/action/compose',
     rru: 'addevent',
@@ -48,7 +61,7 @@ export const createOutlookCalendarUrl = (event: CalendarEvent): string => {
     body: event.description,
     location: event.location,
     startdt: event.startDate.toISOString(),
-    enddt: (event.endDate || new Date(event.startDate.getTime() + 60 * 60 * 1000)).toISOString()
+    enddt: endDate.toISOString()
   });
   
   return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
