@@ -54,9 +54,9 @@ const RegistrationQRCode = ({ registrationId }: { registrationId: string }) => (
   </div>
 );
 
-const LocationQRCode = ({ location, locationUrl }: { location?: string; locationUrl?: string }) => {
+const LocationQRCode = ({ locationUrl }: { locationUrl?: string }) => {
   if (locationUrl && typeof locationUrl === 'string' && locationUrl.trim()) {
-    console.log('Using direct location URL:', locationUrl);
+    console.log('Using location URL:', locationUrl);
     return (
       <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
         <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
@@ -73,44 +73,23 @@ const LocationQRCode = ({ location, locationUrl }: { location?: string; location
     );
   }
 
-  if (location && typeof location === 'string' && location.trim()) {
-    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
-    console.log('Using Google Maps URL:', googleMapsUrl);
-    return (
-      <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl text-center">
-        <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
-          <QRCodeSVG 
-            value={googleMapsUrl}
-            size={96}
-            level="H"
-            includeMargin={true}
-          />
-        </div>
-        <div className="text-sm text-gray-600">موقع الفعالية</div>
-        <div className="font-mono text-xs mt-1">امسح للوصول للخريطة</div>
-      </div>
-    );
-  }
-
   return null;
 };
 
-const QRCodeSection = ({ registrationId, location_url, location }: { 
+const QRCodeSection = ({ registrationId, location_url }: { 
   registrationId: string; 
-  location_url?: string; 
-  location?: string 
+  location_url?: string;
 }) => {
   console.log('QRCodeSection - المدخلات:', {
     registrationId,
     location_url: location_url || 'غير متوفر',
-    location: location || 'غير متوفر',
     locationUrlType: typeof location_url
   });
 
   return (
     <div className="grid grid-cols-2 gap-4 mb-6">
       <RegistrationQRCode registrationId={registrationId} />
-      <LocationQRCode location={location} locationUrl={location_url} />
+      <LocationQRCode locationUrl={location_url} />
     </div>
   );
 };
@@ -178,7 +157,6 @@ export const EventConfirmationCard = ({
         <QRCodeSection 
           registrationId={registrationId} 
           location_url={eventDetails?.location_url}
-          location={eventDetails?.location}
         />
         <EventDetails {...eventDetails} />
       </div>
