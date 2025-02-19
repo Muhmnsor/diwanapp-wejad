@@ -1,3 +1,4 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
@@ -144,7 +145,7 @@ export const EventConfirmationCard = ({
         </div>
         <div className="relative px-6 text-center text-white">
           <img 
-            src="/lovable-uploads/04b9e098-8cb0-4654-a22c-1480658fc089.png" 
+            src="/lovable-uploads/cdbe8500-c605-4cde-9981-0ed24e21991c.png"
             alt="ديوان"
             className="w-40 h-auto mx-auto mb-2 object-contain"
           />
@@ -170,3 +171,4 @@ export const EventConfirmationCard = ({
     </Card>
   );
 };
+
