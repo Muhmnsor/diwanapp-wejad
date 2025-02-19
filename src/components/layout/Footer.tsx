@@ -1,65 +1,38 @@
-import { Logo } from "@/components/Logo";
-import { Instagram, Linkedin, X } from "lucide-react";
+
+import { Logo } from "./header/Logo";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   return (
-    <footer className="mt-auto">
-      {/* Top Section - Social Media, Website Link, and Slogan */}
+    <footer className="bg-[#F9F9FA] dark:bg-[#1A1F2C] mt-auto" dir="rtl">
       <div className="border-t border-b border-[#C8C8C9] dark:border-[#2A2F3C] py-4">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between" dir="rtl">
-            {/* Slogan - Right */}
-            <p className="text-primary text-lg font-semibold text-right">
-              ديوان .. شريك الشباب
-            </p>
-            
-            {/* Website Link - Center */}
-            <a 
-              href="https://www.dfy.org.sa" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:text-primary/80 transition-colors"
-            >
-              www.dfy.org.sa
-            </a>
-            
-            {/* Social Media Icons - Left */}
-            <div className="flex items-center gap-4">
-              <a href="https://twitter.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
-                <X className="w-6 h-6" />
-              </a>
-              <a href="https://instagram.com/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
-                <Instagram className="w-6 h-6" />
-              </a>
-              <a href="https://linkedin.com/company/d4ymed" target="_blank" rel="noopener noreferrer" className="text-[#9F9EA1] hover:text-primary transition-colors">
-                <Linkedin className="w-6 h-6" />
-              </a>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
+            <div className="w-24 md:w-32">
+              <img
+                src="/lovable-uploads/cdbe8500-c605-4cde-9981-0ed24e21991c.png"
+                alt="ديوان"
+                className="w-full h-auto"
+              />
+            </div>
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-8 text-sm">
+              <Link to="/" className="text-[#4A4E57] dark:text-[#9DA3AE] hover:text-primary">
+                الرئيسية
+              </Link>
+              <Link to="/events" className="text-[#4A4E57] dark:text-[#9DA3AE] hover:text-primary">
+                الفعاليات
+              </Link>
+              <Link to="/projects" className="text-[#4A4E57] dark:text-[#9DA3AE] hover:text-primary">
+                المشاريع
+              </Link>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Bottom Section - Logo and Organization Details */}
-      <div className="py-8">
-        <div dir="rtl" className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            {/* Organization Details - Right */}
-            <div className="flex flex-col space-y-2 text-right">
-              <h3 className="font-bold text-xl mb-2 text-[#403E43] dark:text-white">جمعية ديوان الشبابية</h3>
-              <p className="text-[#9F9EA1]">المملكة العربية السعودية - المدينة المنورة</p>
-              <p className="text-[#9F9EA1]">رقم الترخيص 5531</p>
-            </div>
-            
-            {/* Logo - Left */}
-            <div className="order-first md:order-last">
-              <img 
-                src="/lovable-uploads/eca67883-2474-4656-a5b3-5abaf42f015b.png" 
-                alt="Diwan Logo" 
-                className="w-full h-auto max-w-xl"
-              />
-            </div>
-          </div>
-        </div>
+      <div className="container mx-auto px-4 py-4">
+        <p className="text-xs text-center text-[#4A4E57] dark:text-[#9DA3AE]">
+          جميع الحقوق محفوظة © 2024
+        </p>
       </div>
     </footer>
   );
