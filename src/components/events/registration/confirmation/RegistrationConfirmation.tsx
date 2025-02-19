@@ -36,12 +36,6 @@ export const RegistrationConfirmation = ({
     showConfirmation
   });
 
-  console.log('RegistrationConfirmation - معلومات الموقع:', {
-    location_url: location_url || 'غير محدد',
-    hasLocationUrl: Boolean(location_url),
-    locationUrlType: typeof location_url
-  });
-
   return (
     <EventConfirmationDialog
       open={showConfirmation}

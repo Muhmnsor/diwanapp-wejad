@@ -55,11 +55,11 @@ export const useRegistrationSubmit = ({
 
       console.log('Registration data being sent:', registrationData);
 
-      // Insert registration record
+      // Insert registration record and get both id and registration_number
       const { data: registration, error: registrationError } = await supabase
         .from('registrations')
         .insert([registrationData])
-        .select('*')
+        .select('id, registration_number')
         .single();
 
       if (registrationError) {
@@ -123,7 +123,10 @@ export const useRegistrationSubmit = ({
         onSubmit();
       }, 500);
 
-      return registration.id;
+      return {
+        id: registration.id,
+        registrationNumber: registration.registration_number
+      };
     } catch (error) {
       console.error('Error in registration:', error);
       toast.error('حدث خطأ أثناء التسجيل');
