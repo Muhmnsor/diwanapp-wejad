@@ -1,4 +1,4 @@
-import { QrCode, User, MapPin, Calendar, Clock } from 'lucide-react';
+import { QrCode, User, MapPin, Calendar, Clock, MessagesSquare } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
 import { formatTime12Hour } from '@/utils/dateTimeUtils';
@@ -108,6 +108,23 @@ const EventDetails = ({ date, time, location }: { date?: string; time?: string; 
   </div>
 );
 
+const WhatsAppContact = () => (
+  <div className="mt-3 bg-white/50 backdrop-blur-sm rounded-xl p-3 text-center">
+    <div className="text-sm text-gray-600 mb-1">للاستفسارات يرجى التواصل عبر</div>
+    <a 
+      href="https://wa.me/966592544688" 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white rounded-lg hover:bg-gray-50 transition-colors"
+    >
+      <MessagesSquare className="w-4 h-4 text-primary" />
+      <span className="text-sm font-medium text-gray-700 dir-ltr">
+        +966 59 254 4688
+      </span>
+    </a>
+  </div>
+);
+
 export const EventConfirmationCard = ({
   eventTitle,
   registrationId,
@@ -154,6 +171,7 @@ export const EventConfirmationCard = ({
           registrationId={registrationId} 
           location_url={eventDetails?.location_url}
         />
+        <WhatsAppContact />
       </div>
     </Card>
   );
