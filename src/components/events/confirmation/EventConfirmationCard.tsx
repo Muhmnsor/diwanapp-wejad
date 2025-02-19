@@ -1,3 +1,4 @@
+
 import { QrCode, User, MapPin, Calendar, Clock, MessagesSquare } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
@@ -141,7 +142,7 @@ export const EventConfirmationCard = ({
   });
 
   return (
-    <Card id="confirmation-card" className="max-w-md mx-auto overflow-hidden">
+    <Card id="confirmation-card" className="max-w-md mx-auto overflow-hidden" dir="rtl">
       {/* Header */}
       <div className="relative bg-gradient-to-r from-primary/90 to-primary pt-6 pb-4">
         <div className="absolute inset-0 opacity-10">
