@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,7 @@ export const EventRegistrationDialog = ({
             eventDate={event.date}
             eventTime={event.time}
             eventLocation={event.location}
+            location_url={event.location_url}
             onSubmit={() => onOpenChange(false)}
           />
         </div>
