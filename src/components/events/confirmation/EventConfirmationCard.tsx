@@ -1,3 +1,4 @@
+
 import { QrCode, User, Phone, Mail, MapPin, Calendar, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { QRCodeSVG } from 'qrcode.react';
@@ -38,20 +39,25 @@ const ParticipantInfo = ({ name, phone, email }: { name: string; phone: string; 
   </div>
 );
 
-const RegistrationQRCode = ({ registrationId }: { registrationId: string }) => (
-  <div className="bg-white/50 backdrop-blur-sm p-3 rounded-xl text-center">
-    <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
-      <QRCodeSVG 
-        value={registrationId}
-        size={84}
-        level="H"
-        includeMargin={true}
-      />
+const RegistrationQRCode = ({ registrationId }: { registrationId: string }) => {
+  // استخراج رقم التسجيل من معرف التسجيل
+  const shortNumber = registrationId.replace('REG-', '');
+  
+  return (
+    <div className="bg-white/50 backdrop-blur-sm p-3 rounded-xl text-center">
+      <div className="mx-auto mb-2 bg-white p-2 rounded-lg inline-block">
+        <QRCodeSVG 
+          value={registrationId}
+          size={84}
+          level="H"
+          includeMargin={true}
+        />
+      </div>
+      <div className="text-sm text-gray-600">رقم التسجيل</div>
+      <div className="font-mono text-xs mt-0.5" dir="ltr">{shortNumber}</div>
     </div>
-    <div className="text-sm text-gray-600">رقم التسجيل</div>
-    <div className="font-mono text-xs mt-0.5" dir="ltr">{registrationId.split('-')[1] || registrationId}</div>
-  </div>
-);
+  );
+};
 
 const LocationQRCode = ({ locationUrl }: { locationUrl?: string | { _type: string; value: string } }) => {
   const url = typeof locationUrl === 'object' ? locationUrl?.value : locationUrl;
