@@ -51,12 +51,6 @@ export const PersonalInfoFields = ({
       return false;
     }
 
-    // التحقق من طول الرقم
-    if (value.length > 10) {
-      setErrors(prev => ({ ...prev, phone: "يجب ألا يتجاوز رقم الجوال 10 أرقام" }));
-      return false;
-    }
-
     // إذا وصل الرقم إلى 10 أرقام، نتحقق من صحة التنسيق الكامل
     if (value.length === 10) {
       const phoneRegex = /^05\d{8}$/;
@@ -77,17 +71,19 @@ export const PersonalInfoFields = ({
         setFormData(prev => ({ ...prev, [field]: value }));
       }
     } else if (field === 'phone') {
+      // تجاهل الإدخال إذا كان الرقم أطول من 10 أرقام
+      if (value.length > 10) {
+        return;
+      }
+
       // السماح فقط بالأرقام
       if (!/^\d*$/.test(value)) {
         return;
       }
-      // التحقق من الرقم وتحديث القيمة إذا كان صحيحاً
-      if (validatePhone(value)) {
-        setFormData(prev => ({ ...prev, [field]: value }));
-      } else {
-        // تحديث القيمة حتى لو كان هناك خطأ لنتمكن من تتبع الإدخال
-        setFormData(prev => ({ ...prev, [field]: value }));
-      }
+
+      // التحقق من الرقم وتحديث القيمة
+      validatePhone(value);
+      setFormData(prev => ({ ...prev, [field]: value }));
     } else {
       // للحقول الأخرى مثل البريد الإلكتروني
       setFormData(prev => ({ ...prev, [field]: value }));
@@ -134,6 +130,7 @@ export const PersonalInfoFields = ({
             onChange={(e) => handleChange('phone', e.target.value)}
             placeholder="05xxxxxxxx"
             className={errors.phone ? "border-red-500" : ""}
+            maxLength={10}
             required
           />
           {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
