@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { ReportFeedbackComments } from "./components/ReportFeedbackComments";
 import { ReportFormActions } from "./components/ReportFormActions";
 import { EventReportFormValues, EventReportFormProps, Photo } from "./types";
 import { useQueryClient } from "@tanstack/react-query";
+import { photoPlaceholders } from "@/utils/reports/constants";
 
 export const EventReportForm: React.FC<EventReportFormProps> = ({ 
   eventId, 
@@ -19,7 +21,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   initialData,
   mode = 'create'
 }) => {
-  const [photos, setPhotos] = useState<Photo[]>(Array(6).fill({ url: "", description: "" }));
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -37,7 +39,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         satisfaction_level: 0,
         partners: "",
         links: "",
-        photos: Array(6).fill({ url: "", description: "" })
+        photos: []
       })
     }
   });
@@ -87,6 +89,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         return;
       }
 
+      // تحويل الصور إلى الشكل المطلوب لقاعدة البيانات
       const validPhotos = photos.filter(p => p.url);
       const reportData = {
         ...values,
