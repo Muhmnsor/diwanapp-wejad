@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { ReportPhotoUpload } from "./components/ReportPhotoUpload";
 import { ReportMetricsFields } from "./components/ReportMetricsFields";
+import { ReportFeedbackComments } from "./components/ReportFeedbackComments";
 import { EventReportFormValues, Photo } from "./types";
 import { useQuery } from "@tanstack/react-query";
 
@@ -192,6 +193,10 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         <ReportPhotoUpload 
           photos={photos}
           onPhotosChange={setPhotos}
+        />
+
+        <ReportFeedbackComments 
+          eventId={eventId}
         />
 
         <div className="flex justify-end gap-4">
