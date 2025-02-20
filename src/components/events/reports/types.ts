@@ -1,4 +1,6 @@
 
+import { UseFormReturn } from "react-hook-form";
+
 export interface EventReportFormValues {
   report_name: string;
   report_text: string;
@@ -10,6 +12,8 @@ export interface EventReportFormValues {
   satisfaction_level: number;
   partners: string;
   links: string;
+  photos?: string[];
+  photo_descriptions?: string[];
 }
 
 export interface Photo {
@@ -22,4 +26,9 @@ export interface EventReportFormProps {
   onClose: () => void;
   initialData?: EventReportFormValues & { id: string };
   mode?: 'create' | 'edit';
+}
+
+export interface FormSectionProps {
+  form: UseFormReturn<EventReportFormValues>;
+  eventId: string;
 }

@@ -1,148 +1,161 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { ReportPhoto } from "@/types/projectReport";
-import { useReportPhotos } from "./useReportPhotos";
+import { EventReportFormValues, Photo } from "@/components/events/reports/types";
+import { toast } from "sonner";
 
-export const useReportForm = (projectId: string, report?: any, onSuccess?: () => void) => {
-  const [selectedActivity, setSelectedActivity] = useState<string | null>(report?.activity_id || null);
-  const { photos, setPhotos } = useReportPhotos(report?.photos);
-  const [formData, setFormData] = useState({
-    reportName: report?.report_name || '',
-    reportText: report?.report_text || '',
-    objectives: report?.objectives || '',
-    impact: report?.impact_on_participants || '',
+export const useReportForm = (
+  eventId: string,
+  initialData?: EventReportFormValues & { id: string },
+  onClose?: () => void,
+  mode: 'create' | 'edit' = 'create'
+) => {
+  const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const form = useForm<EventReportFormValues>({
+    defaultValues: initialData || {
+      report_name: "",
+      report_text: "",
+      objectives: "",
+      impact_on_participants: "",
+      speaker_name: "",
+      attendees_count: 0,
+      absent_count: 0,
+      satisfaction_level: 0,
+      partners: "",
+      links: ""
+    }
   });
-  const { toast } = useToast();
-
-  // Fetch project details
-  const { data: project } = useQuery({
-    queryKey: ['project', projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', projectId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch project activities
-  const { data: activities = [] } = useQuery({
-    queryKey: ['project-activities', projectId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('project_activities')
-        .select('*')
-        .eq('project_id', projectId)
-        .eq('is_visible', true);
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Get attendance count for selected activity
-  const [attendanceCount, setAttendanceCount] = useState(0);
-  const [selectedActivityDetails, setSelectedActivityDetails] = useState<any>(null);
 
   useEffect(() => {
-    const fetchAttendanceCount = async () => {
-      if (!selectedActivity) {
-        setAttendanceCount(0);
-        setSelectedActivityDetails(null);
+    if (mode === 'edit' && initialData?.id) {
+      console.log('Initializing edit mode with data:', initialData);
+      if (initialData.photos && initialData.photo_descriptions) {
+        const newPhotos = Array(6).fill(null);
+        initialData.photos.forEach((url: string, index: number) => {
+          if (url) {
+            console.log('Setting photo at index:', index, 'URL:', url);
+            newPhotos[index] = {
+              url,
+              description: initialData.photo_descriptions[index] || ''
+            };
+          }
+        });
+        console.log('Setting photos state:', newPhotos);
+        setPhotos(newPhotos);
+      }
+    } else if (!initialData) {
+      const fetchEventTitle = async () => {
+        const { data: event } = await supabase
+          .from("events")
+          .select("title")
+          .eq("id", eventId)
+          .single();
+
+        if (event) {
+          form.setValue("report_name", `تقرير فعالية ${event.title}`);
+        }
+      };
+
+      fetchEventTitle();
+    }
+  }, [eventId, form, initialData, mode]);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser(user.id);
+      }
+    };
+
+    getCurrentUser();
+  }, []);
+
+  const onSubmit = async (values: EventReportFormValues) => {
+    try {
+      setIsSubmitting(true);
+      console.log("Starting report submission with user:", currentUser);
+      console.log("Current photos state:", photos);
+
+      if (!currentUser) {
+        console.error("No user found when submitting report");
+        toast.error("يجب تسجيل الدخول لإنشاء تقرير");
         return;
       }
 
-      // Get activity details
-      const { data: activityData } = await supabase
-        .from('project_activities')
-        .select('*')
-        .eq('id', selectedActivity)
-        .maybeSingle();
+      const { data: profileCheck, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('id', currentUser)
+        .single();
 
-      setSelectedActivityDetails(activityData);
-
-      // Get attendance count
-      const { count } = await supabase
-        .from('attendance_records')
-        .select('*', { count: 'exact', head: true })
-        .eq('activity_id', selectedActivity)
-        .eq('status', 'present');
-
-      setAttendanceCount(count || 0);
-    };
-
-    fetchAttendanceCount();
-  }, [selectedActivity]);
-
-  const handleSubmit = async (e: React.FormEvent, userId: string) => {
-    e.preventDefault();
-
-    try {
-      const reportData = {
-        project_id: projectId,
-        activity_id: selectedActivity,
-        report_name: formData.reportName,
-        report_text: formData.reportText,
-        objectives: formData.objectives,
-        impact_on_participants: formData.impact,
-        photos: photos.filter(Boolean), // Filter out null values
-        attendees_count: attendanceCount.toString(),
-        author_id: userId
-      };
-
-      if (report?.id) {
-        // Update existing report
-        const { error } = await supabase
-          .from('project_activity_reports')
-          .update(reportData)
-          .eq('id', report.id);
-
-        if (error) throw error;
-        toast({
-          title: "تم تحديث التقرير بنجاح",
-          variant: "default",
-        });
-      } else {
-        // Create new report
-        const { error } = await supabase
-          .from('project_activity_reports')
-          .insert([reportData]);
-
-        if (error) throw error;
-        toast({
-          title: "تم إنشاء التقرير بنجاح",
-          variant: "default",
-        });
+      if (profileError || !profileCheck) {
+        console.error("Profile check error:", profileError);
+        toast.error("حدث خطأ في التحقق من الملف الشخصي");
+        return;
       }
 
-      onSuccess?.();
+      const { data: eventData, error: eventError } = await supabase
+        .from("events")
+        .select("date, time")
+        .eq("id", eventId)
+        .single();
+
+      if (eventError) throw eventError;
+
+      const validPhotos = photos.filter(p => p && p.url);
+      console.log("Valid photos for submission:", validPhotos);
+
+      const reportData = {
+        ...values,
+        event_id: eventId,
+        executor_id: currentUser,
+        photos: validPhotos.map(p => p.url),
+        photo_descriptions: validPhotos.map(p => p.description),
+        execution_date: eventData.date,
+        execution_time: eventData.time,
+        links: values.links.split('\n').filter(Boolean),
+        partners: values.partners
+      };
+
+      if (mode === 'edit' && initialData?.id) {
+        const { error: updateError } = await supabase
+          .from("event_reports")
+          .update(reportData)
+          .eq('id', initialData.id);
+
+        if (updateError) throw updateError;
+        toast.success("تم تحديث التقرير بنجاح");
+      } else {
+        const { error: insertError } = await supabase
+          .from("event_reports")
+          .insert(reportData);
+
+        if (insertError) throw insertError;
+        toast.success("تم إضافة التقرير بنجاح");
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["event-reports", eventId] });
+      onClose?.();
     } catch (error) {
-      console.error('Error saving report:', error);
-      toast({
-        title: "حدث خطأ أثناء حفظ التقرير",
-        variant: "destructive",
-      });
+      console.error("Error submitting report:", error);
+      toast.error(mode === 'edit' ? "حدث خطأ أثناء تحديث التقرير" : "حدث خطأ أثناء إضافة التقرير");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return {
-    selectedActivity,
-    setSelectedActivity,
+    form,
     photos,
     setPhotos,
-    formData,
-    setFormData,
-    project,
-    activities,
-    attendanceCount,
-    selectedActivityDetails,
-    handleSubmit,
+    isSubmitting,
+    onSubmit: form.handleSubmit(onSubmit)
   };
 };
