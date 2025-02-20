@@ -54,6 +54,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("Current user:", user); // تسجيل معلومات المستخدم الحالي
       if (user) {
         setCurrentUser(user.id);
       }
@@ -65,9 +66,26 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
   const onSubmit = async (values: EventReportFormValues) => {
     try {
       setIsSubmitting(true);
+      console.log("Starting report submission with user:", currentUser); // تسجيل معرف المستخدم عند بدء الإرسال
 
       if (!currentUser) {
+        console.error("No user found when submitting report"); // تسجيل حالة عدم وجود مستخدم
         toast.error("يجب تسجيل الدخول لإنشاء تقرير");
+        return;
+      }
+
+      // التحقق من وجود المستخدم في جدول profiles
+      const { data: profileCheck, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('id', currentUser)
+        .single();
+
+      console.log("Profile check result:", profileCheck); // تسجيل نتيجة التحقق من الملف الشخصي
+
+      if (profileError || !profileCheck) {
+        console.error("Profile check error:", profileError); // تسجيل أي خطأ في التحقق من الملف الشخصي
+        toast.error("حدث خطأ في التحقق من الملف الشخصي");
         return;
       }
 
@@ -79,7 +97,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
 
       if (eventError) throw eventError;
 
-      const { error: insertError } = await supabase.from("event_reports").insert({
+      const reportData = {
         ...values,
         event_id: eventId,
         executor_id: currentUser,
@@ -87,7 +105,13 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         photo_descriptions: photos.filter(Boolean).map(p => p.description),
         execution_date: eventData.date,
         execution_time: eventData.time,
-      });
+      };
+
+      console.log("Submitting report with data:", reportData); // تسجيل بيانات التقرير قبل الإرسال
+
+      const { error: insertError } = await supabase
+        .from("event_reports")
+        .insert(reportData);
 
       if (insertError) {
         console.error("Error inserting report:", insertError);
