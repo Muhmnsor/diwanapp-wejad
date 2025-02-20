@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { EventReportDialog } from "@/components/events/reports/EventReportDialog";
+import { ReportsList } from "@/components/events/reports/components/ReportsList";
 
 interface ReportsTabProps {
   eventId: string;
@@ -25,11 +25,7 @@ export const ReportsTab = ({ eventId }: ReportsTabProps) => {
         </Button>
       </div>
 
-      <Card className="p-6">
-        <div className="text-center text-muted-foreground">
-          لا توجد تقارير حالياً
-        </div>
-      </Card>
+      <ReportsList eventId={eventId} />
 
       <EventReportDialog
         isOpen={isDialogOpen}

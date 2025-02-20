@@ -10,7 +10,6 @@ import { ReportBasicFields } from "./components/ReportBasicFields";
 import { ReportDescriptionFields } from "./components/ReportDescriptionFields";
 import { ReportFeedbackComments } from "./components/ReportFeedbackComments";
 import { ReportFormActions } from "./components/ReportFormActions";
-import { ReportsList } from "./components/ReportsList";
 import { EventReportFormValues, Photo } from "./types";
 
 interface EventReportFormProps {
@@ -94,7 +93,6 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         <ReportFeedbackComments eventId={eventId} />
         <ReportFormActions isSubmitting={isSubmitting} onClose={onClose} />
       </form>
-      <ReportsList eventId={eventId} />
     </Form>
   );
 };
