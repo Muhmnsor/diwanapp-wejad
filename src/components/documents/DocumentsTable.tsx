@@ -28,6 +28,7 @@ interface DocumentsTableProps {
   getStatusColor: (status: string) => string;
   handleDelete: (id: string, filePath?: string) => Promise<void>;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
+  onUpdate: () => void; // إضافة هذه الخاصية
 }
 
 const documentTypes = [
@@ -51,7 +52,8 @@ export const DocumentsTable = ({
   getRemainingDays,
   getStatusColor,
   handleDelete,
-  downloadFile
+  downloadFile,
+  onUpdate
 }: DocumentsTableProps) => {
   const [editOpen, setEditOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
@@ -90,15 +92,7 @@ export const DocumentsTable = ({
 
       toast.success('تم تحديث المستند بنجاح');
       setEditOpen(false);
-      
-      // تحديث القائمة مباشرة بدون إعادة تحميل الصفحة
-      const updatedDoc = {
-        ...editingDocument,
-        ...updatedFields
-      };
-      
-      // تحديث documents في الواجهة
-      window.location.reload();
+      onUpdate(); // استدعاء وظيفة التحديث بدلاً من تحديث الصفحة
       
     } catch (error) {
       console.error('Error updating document:', error);

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -178,6 +179,7 @@ const Documents = () => {
               getStatusColor={getStatusColor}
               handleDelete={(id, filePath) => handleDelete(id, filePath, fetchDocuments)}
               downloadFile={downloadFile}
+              onUpdate={fetchDocuments}
             />
           </TabsContent>
 
