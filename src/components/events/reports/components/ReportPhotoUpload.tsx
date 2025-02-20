@@ -39,16 +39,28 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      const newPhotos = [...photos];
-      // حفظ الصورة في موقعها المحدد مع الاحتفاظ بالفهرس الأصلي
-      newPhotos[index] = {
-        url: publicUrl,
-        description: photoPlaceholders[index],
-        index: index
-      };
+      // نسخ المصفوفة الحالية مع الحفاظ على المواقع الأصلية
+      let updatedPhotos = [...photos];
+      
+      // إضافة الصورة الجديدة في موقعها المحدد
+      if (!updatedPhotos.find(p => p?.index === index)) {
+        updatedPhotos.push({
+          url: publicUrl,
+          description: photoPlaceholders[index],
+          index: index
+        });
+      } else {
+        // تحديث الصورة الموجودة في نفس الموقع
+        updatedPhotos = updatedPhotos.map(p => 
+          p?.index === index ? {
+            url: publicUrl,
+            description: photoPlaceholders[index],
+            index: index
+          } : p
+        );
+      }
 
-      // تصفية الصور الفارغة مع الحفاظ على الفهارس الأصلية
-      onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
+      onPhotosChange(updatedPhotos);
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -57,14 +69,12 @@ export const ReportPhotoUpload = ({
   };
 
   const handleRemovePhoto = (index: number) => {
-    const newPhotos = [...photos];
-    // حذف الصورة مع الحفاظ على موقعها
-    newPhotos[index] = null;
-    // تصفية الصور الفارغة مع الحفاظ على الفهارس الأصلية
-    onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
+    // حذف الصورة مع الحفاظ على مواقع باقي الصور
+    const updatedPhotos = photos.filter(photo => photo.index !== index);
+    onPhotosChange(updatedPhotos);
   };
 
-  // تنظيم الصور في مواقعها الصحيحة
+  // تنظيم الصور في المواقع الصحيحة
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
     if (photo && typeof photo.index === 'number') {
@@ -91,6 +101,9 @@ export const ReportPhotoUpload = ({
       }
     }
   });
+
+  console.log('Current photos:', photos);
+  console.log('Organized photos:', organizedPhotos);
 
   return (
     <div className="space-y-4">
