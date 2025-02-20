@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -15,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EventReportFormValues } from "../types";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
 import { toast } from "sonner";
+import { EventReportDownloadButton } from "./EventReportDownloadButton";
 
 interface ReportsListProps {
   eventId: string;
