@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -94,15 +95,14 @@ export const EventConfirmationDialog = ({
       modal={true}
     >
       <DialogContent 
-        className="w-[95vw] max-w-lg mx-auto h-auto max-h-[90vh] overflow-y-auto p-4 md:p-6"
+        className="w-[95vw] max-w-lg mx-auto h-auto max-h-[90vh] overflow-y-auto p-4 md:p-6 text-right"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-center">تم التسجيل بنجاح!</DialogTitle>
-          <div className="text-center text-sm text-muted-foreground space-y-1">
-            <div>سيتم التواصل معك قريباً</div>
+          <div className="text-center text-sm text-muted-foreground">
             <div className="font-medium">يرجى حفظ هذا التأكيد أو تصويره قبل الإغلاق</div>
           </div>
         </DialogHeader>
