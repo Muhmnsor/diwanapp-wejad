@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { DashboardOverview } from "../DashboardOverview";
 import { DashboardRegistrations } from "../DashboardRegistrations";
@@ -5,6 +6,7 @@ import { DashboardPreparation } from "./DashboardPreparation";
 import { FeedbackTab } from "./FeedbackTab";
 import { EventTabsList } from "./tabs/EventTabsList";
 import { useEventStats } from "./stats/EventStats";
+import { ReportsTab } from "./tabs/ReportsTab";
 
 interface EventDashboardTabsProps {
   event: {
@@ -58,6 +60,10 @@ export const EventDashboardTabs = ({ event }: EventDashboardTabsProps) => {
 
       <TabsContent value="feedback" className="mt-6">
         <FeedbackTab eventId={event.id} />
+      </TabsContent>
+
+      <TabsContent value="reports" className="mt-6">
+        <ReportsTab eventId={event.id} />
       </TabsContent>
     </Tabs>
   );
