@@ -1,11 +1,11 @@
 
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { DashboardOverview } from "../DashboardOverview";
-import { DashboardRegistrations } from "../DashboardRegistrations";
-import { DashboardPreparation } from "./DashboardPreparation";
-import { FeedbackTab } from "./FeedbackTab";
-import { EventTabsList } from "./tabs/EventTabsList";
-import { useEventStats } from "./stats/EventStats";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
+import { DashboardRegistrations } from "@/components/admin/DashboardRegistrations";
+import { DashboardPreparation } from "@/components/admin/dashboard/DashboardPreparation";
+import { FeedbackTab } from "@/components/admin/dashboard/FeedbackTab";
+import { EventTabsList } from "@/components/admin/dashboard/tabs/EventTabsList";
+import { useEventStats } from "@/components/admin/dashboard/stats/EventStats";
 import { DashboardReportsTab } from "./tabs/DashboardReportsTab";
 
 interface EventDashboardTabsProps {
