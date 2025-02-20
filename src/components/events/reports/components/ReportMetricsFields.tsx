@@ -81,6 +81,13 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold">ملخص التقييمات</h3>
+        <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
+          عدد المقيمين: {feedback.length}
+        </span>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}
