@@ -644,6 +644,7 @@ export type Database = {
           detailed_description: string | null
           duration: string | null
           evaluators_count: number | null
+          event_hours: number | null
           event_id: string | null
           execution_date: string | null
           execution_time: string | null
@@ -675,6 +676,7 @@ export type Database = {
           detailed_description?: string | null
           duration?: string | null
           evaluators_count?: number | null
+          event_hours?: number | null
           event_id?: string | null
           execution_date?: string | null
           execution_time?: string | null
@@ -706,6 +708,7 @@ export type Database = {
           detailed_description?: string | null
           duration?: string | null
           evaluators_count?: number | null
+          event_hours?: number | null
           event_id?: string | null
           execution_date?: string | null
           execution_time?: string | null

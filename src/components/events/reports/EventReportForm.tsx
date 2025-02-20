@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportPhotoUpload } from "./components/ReportPhotoUpload";
 import { ReportMetricsFields } from "./components/ReportMetricsFields";
@@ -40,7 +41,8 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         partners: "",
         links: "",
         photos: [],
-        photo_descriptions: []
+        photo_descriptions: [],
+        event_hours: 0
       })
     }
   });
@@ -159,6 +161,44 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         <ReportDescriptionFields form={form} />
         
         <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="event_hours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>عدد ساعات الفعالية</FormLabel>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    type="number"
+                    min="0"
+                    placeholder="أدخل عدد ساعات الفعالية"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="report_text"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>توضيحات إضافية</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    {...field} 
+                    placeholder="أدخل أي توضيحات إضافية حول التقرير"
+                    className="resize-none"
+                    rows={3}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="partners"
