@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
 import { Photo } from "../types";
@@ -62,9 +61,8 @@ export const ReportPhotoUpload = ({
   // تنظيم الصور في مصفوفة بحجم ثابت
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
-    if (photo && typeof photo.index === 'number') {
-      // تأكد من أن الـ url هو سلسلة نصية
-      const photoUrl = typeof photo.url === 'object' && photo.url !== null ? photo.url.url : photo.url;
+    if (photo?.index !== undefined && photo.url) {
+      const photoUrl = typeof photo.url === 'object' ? photo.url.url : photo.url;
       organizedPhotos[photo.index] = {
         ...photo,
         url: photoUrl
