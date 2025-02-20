@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EventReportFormValues } from "../types";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
 import { toast } from "sonner";
+import { downloadProjectReport } from "@/utils/reports/downloadProjectReport";
 
 interface ReportsListProps {
   eventId: string;
@@ -38,6 +39,12 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
           *,
           profiles:executor_id (
             email
+          ),
+          events:event_id (
+            title,
+            event_hours,
+            description,
+            averageRatings: average_ratings
           )
         `)
         .eq("event_id", eventId)
@@ -104,6 +111,22 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
     }
   };
 
+  const handleDownload = async (report: any) => {
+    try {
+      const reportData = {
+        ...report,
+        activity: report.events,
+        program_name: "تقرير فعالية",
+      };
+      
+      await downloadProjectReport(reportData);
+      toast.success('جاري تحميل التقرير');
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      toast.error('حدث خطأ أثناء تحميل التقرير');
+    }
+  };
+
   const openDeleteDialog = (reportId: string) => {
     setReportToDelete(reportId);
     setIsDeleteDialogOpen(true);
@@ -163,7 +186,11 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="icon">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => handleDownload(report)}
+                      >
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
