@@ -82,8 +82,28 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
     }
   };
 
-  const handlePhotoUpload = (url: string) => {
-    setPhotos(prev => [...prev, { url, description: "" }]);
+  const handlePhotoUpload = async (file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(filePath);
+
+      setPhotos(prev => [...prev, { url: publicUrl, description: "" }]);
+      toast.success('تم رفع الصورة بنجاح');
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error('حدث خطأ أثناء رفع الصورة');
+    }
   };
 
   const handlePhotoDescriptionChange = (index: number, description: string) => {
