@@ -32,6 +32,8 @@ const Documents = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [newDocument, setNewDocument] = useState({
     name: "",
     type: "",
@@ -64,11 +66,30 @@ const Documents = () => {
   };
 
   const handleSearch = (query: string) => {
-    const filtered = documents.filter(doc => 
-      doc.name.toLowerCase().includes(query.toLowerCase()) ||
-      doc.type.toLowerCase().includes(query.toLowerCase()) ||
-      doc.issuer.toLowerCase().includes(query.toLowerCase())
-    );
+    setSearchQuery(query);
+    applyFilters(query, selectedStatuses);
+  };
+
+  const handleFilterStatusChange = (statuses: string[]) => {
+    setSelectedStatuses(statuses);
+    applyFilters(searchQuery, statuses);
+  };
+
+  const applyFilters = (query: string, statuses: string[]) => {
+    let filtered = documents;
+
+    if (query) {
+      filtered = filtered.filter(doc => 
+        doc.name.toLowerCase().includes(query.toLowerCase()) ||
+        doc.type.toLowerCase().includes(query.toLowerCase()) ||
+        doc.issuer.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    if (statuses.length > 0) {
+      filtered = filtered.filter(doc => statuses.includes(doc.status));
+    }
+
     setFilteredDocuments(filtered);
   };
 
@@ -101,7 +122,7 @@ const Documents = () => {
         fetchDocuments();
         setNewDocument({ name: "", type: "", expiry_date: "", issuer: "" });
         setSelectedFile(null);
-        setDialogOpen(false); // إغلاق النافذة بعد نجاح العملية
+        setDialogOpen(false);
       });
     } catch (error) {
       // Error already handled in handleFileUpload
@@ -146,7 +167,10 @@ const Documents = () => {
 
             <DocumentStats documents={documents} />
             
-            <DocumentControls onSearch={handleSearch} />
+            <DocumentControls 
+              onSearch={handleSearch}
+              onFilterStatusChange={handleFilterStatusChange}
+            />
 
             <DocumentsTable
               documents={filteredDocuments}
