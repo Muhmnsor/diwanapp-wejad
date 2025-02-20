@@ -21,7 +21,7 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["event-reports", eventId],
     queryFn: async () => {
-      console.log("Fetching reports for event:", eventId); // تسجيل معرف الفعالية
+      console.log("Fetching reports for event:", eventId);
 
       const { data, error } = await supabase
         .from("event_reports")
@@ -35,13 +35,16 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching reports:", error); // تسجيل أي خطأ في جلب التقارير
+        console.error("Error fetching reports:", error);
         throw error;
       }
 
-      console.log("Fetched reports:", data); // تسجيل التقارير التي تم جلبها
+      console.log("Fetched reports:", data);
       return data || [];
     },
+    // إضافة خيارات لتحسين تجربة المستخدم
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60, // البيانات تعتبر قديمة بعد دقيقة واحدة
   });
 
   if (isLoading) {
@@ -73,7 +76,7 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
                   id: report.id, 
                   executor_id: report.executor_id,
                   profiles: report.profiles 
-                }); // تسجيل معلومات كل تقرير
+                });
 
                 return (
                   <TableRow 

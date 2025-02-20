@@ -11,6 +11,7 @@ import { ReportDescriptionFields } from "./components/ReportDescriptionFields";
 import { ReportFeedbackComments } from "./components/ReportFeedbackComments";
 import { ReportFormActions } from "./components/ReportFormActions";
 import { EventReportFormValues, Photo } from "./types";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EventReportFormProps {
   eventId: string;
@@ -21,6 +22,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
   const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const form = useForm<EventReportFormValues>({
     defaultValues: {
@@ -54,7 +56,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log("Current user:", user); // تسجيل معلومات المستخدم الحالي
+      console.log("Current user:", user);
       if (user) {
         setCurrentUser(user.id);
       }
@@ -66,25 +68,24 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
   const onSubmit = async (values: EventReportFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("Starting report submission with user:", currentUser); // تسجيل معرف المستخدم عند بدء الإرسال
+      console.log("Starting report submission with user:", currentUser);
 
       if (!currentUser) {
-        console.error("No user found when submitting report"); // تسجيل حالة عدم وجود مستخدم
+        console.error("No user found when submitting report");
         toast.error("يجب تسجيل الدخول لإنشاء تقرير");
         return;
       }
 
-      // التحقق من وجود المستخدم في جدول profiles
       const { data: profileCheck, error: profileError } = await supabase
         .from('profiles')
         .select('id, email')
         .eq('id', currentUser)
         .single();
 
-      console.log("Profile check result:", profileCheck); // تسجيل نتيجة التحقق من الملف الشخصي
+      console.log("Profile check result:", profileCheck);
 
       if (profileError || !profileCheck) {
-        console.error("Profile check error:", profileError); // تسجيل أي خطأ في التحقق من الملف الشخصي
+        console.error("Profile check error:", profileError);
         toast.error("حدث خطأ في التحقق من الملف الشخصي");
         return;
       }
@@ -107,7 +108,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         execution_time: eventData.time,
       };
 
-      console.log("Submitting report with data:", reportData); // تسجيل بيانات التقرير قبل الإرسال
+      console.log("Submitting report with data:", reportData);
 
       const { error: insertError } = await supabase
         .from("event_reports")
@@ -118,6 +119,9 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         throw insertError;
       }
 
+      // تحديث القائمة بعد إضافة التقرير بنجاح
+      await queryClient.invalidateQueries({ queryKey: ["event-reports", eventId] });
+      
       toast.success("تم إضافة التقرير بنجاح");
       onClose();
     } catch (error) {
