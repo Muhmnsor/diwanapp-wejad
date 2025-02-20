@@ -78,8 +78,7 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
       satisfaction_level: report.satisfaction_level || 0,
       partners: report.partners || "",
       links: report.links?.join('\n') || "",
-      photos,
-      event_hours: report.event_hours || 0
+      photos
     };
     onEdit(formData);
   };
