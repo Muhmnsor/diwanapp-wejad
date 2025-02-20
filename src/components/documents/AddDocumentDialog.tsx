@@ -19,6 +19,8 @@ interface AddDocumentDialogProps {
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   newDocument: NewDocument;
   setNewDocument: (doc: NewDocument) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export const AddDocumentDialog = ({
@@ -26,10 +28,12 @@ export const AddDocumentDialog = ({
   handleSubmit,
   handleFileChange,
   newDocument,
-  setNewDocument
+  setNewDocument,
+  open,
+  onOpenChange
 }: AddDocumentDialogProps) => {
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button className="mb-6">
           <Upload className="ml-2 h-4 w-4" />

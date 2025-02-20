@@ -31,6 +31,7 @@ const Documents = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [newDocument, setNewDocument] = useState({
     name: "",
     type: "",
@@ -90,8 +91,7 @@ const Documents = () => {
         fetchDocuments();
         setNewDocument({ name: "", type: "", expiry_date: "", issuer: "" });
         setSelectedFile(null);
-        const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
-        if (closeButton) closeButton.click();
+        setDialogOpen(false); // إغلاق النافذة بعد نجاح العملية
       });
     } catch (error) {
       // Error already handled in handleFileUpload
@@ -130,6 +130,8 @@ const Documents = () => {
               handleFileChange={handleFileChange}
               newDocument={newDocument}
               setNewDocument={setNewDocument}
+              open={dialogOpen}
+              onOpenChange={setDialogOpen}
             />
 
             <DocumentStats documents={documents} />
