@@ -13,40 +13,39 @@ interface ReportMetricsFieldsProps {
 }
 
 export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps) => {
-  const { data: feedbackAverages } = useQuery({
-    queryKey: ['event-feedback-averages', eventId],
+  const { data: feedback = [] } = useQuery({
+    queryKey: ['event-feedback', eventId],
     queryFn: async () => {
-      console.log('Fetching feedback averages for event:', eventId);
+      console.log('Fetching feedback for event:', eventId);
       const { data, error } = await supabase
         .from('event_feedback')
-        .select('overall_rating, content_rating, organization_rating, presenter_rating')
+        .select('*')
         .eq('event_id', eventId);
 
       if (error) {
-        console.error('Error fetching ratings:', error);
+        console.error('Error fetching feedback:', error);
         throw error;
       }
-
-      const calculateAverage = (ratings: (number | null)[]) => {
-        const validRatings = ratings.filter((r): r is number => r !== null);
-        if (validRatings.length === 0) return 0;
-        return validRatings.reduce((sum, r) => sum + r, 0) / validRatings.length;
-      };
-
-      const averages = {
-        overall: calculateAverage(data.map(f => f.overall_rating)),
-        content: calculateAverage(data.map(f => f.content_rating)),
-        organization: calculateAverage(data.map(f => f.organization_rating)),
-        presenter: calculateAverage(data.map(f => f.presenter_rating))
-      };
-
-      console.log('Feedback averages calculated:', averages);
       
-      form.setValue('satisfaction_level', Math.round(averages.overall));
-      
-      return averages;
-    }
+      return data || [];
+    },
   });
+
+  const calculateAverage = (ratings: (number | null)[]) => {
+    const validRatings = ratings.filter((r): r is number => r !== null);
+    if (validRatings.length === 0) return 0;
+    return validRatings.reduce((a, b) => a + b, 0) / validRatings.length;
+  };
+
+  const averages = {
+    overall: calculateAverage(feedback.map(f => f.overall_rating)),
+    content: calculateAverage(feedback.map(f => f.content_rating)),
+    organization: calculateAverage(feedback.map(f => f.organization_rating)),
+    presenter: calculateAverage(feedback.map(f => f.presenter_rating)),
+  };
+
+  // Update form values with the calculated averages
+  form.setValue('satisfaction_level', Math.round(averages.overall));
 
   const { data: attendanceStats } = useQuery({
     queryKey: ['event-attendance', eventId],
@@ -125,41 +124,41 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
       </div>
 
       <div className="grid grid-cols-4 gap-2">
-        <Card className={`p-4 ${getRatingColor(feedbackAverages?.overall || 0)}`}>
+        <Card className={`p-4 ${getRatingColor(averages.overall)}`}>
           <div className="flex flex-col items-center justify-center text-center">
             <span className="text-sm font-medium mb-2">التقييم العام</span>
             <span className="text-2xl font-bold">
-              {feedbackAverages?.overall.toFixed(1) || '0.0'}
+              {averages.overall.toFixed(1)}
             </span>
             <span className="text-xs mt-1">من 5</span>
           </div>
         </Card>
 
-        <Card className={`p-4 ${getRatingColor(feedbackAverages?.content || 0)}`}>
+        <Card className={`p-4 ${getRatingColor(averages.content)}`}>
           <div className="flex flex-col items-center justify-center text-center">
             <span className="text-sm font-medium mb-2">تقييم المحتوى</span>
             <span className="text-2xl font-bold">
-              {feedbackAverages?.content.toFixed(1) || '0.0'}
+              {averages.content.toFixed(1)}
             </span>
             <span className="text-xs mt-1">من 5</span>
           </div>
         </Card>
 
-        <Card className={`p-4 ${getRatingColor(feedbackAverages?.organization || 0)}`}>
+        <Card className={`p-4 ${getRatingColor(averages.organization)}`}>
           <div className="flex flex-col items-center justify-center text-center">
             <span className="text-sm font-medium mb-2">تقييم التنظيم</span>
             <span className="text-2xl font-bold">
-              {feedbackAverages?.organization.toFixed(1) || '0.0'}
+              {averages.organization.toFixed(1)}
             </span>
             <span className="text-xs mt-1">من 5</span>
           </div>
         </Card>
 
-        <Card className={`p-4 ${getRatingColor(feedbackAverages?.presenter || 0)}`}>
+        <Card className={`p-4 ${getRatingColor(averages.presenter)}`}>
           <div className="flex flex-col items-center justify-center text-center">
             <span className="text-sm font-medium mb-2">تقييم المقدم</span>
             <span className="text-2xl font-bold">
-              {feedbackAverages?.presenter.toFixed(1) || '0.0'}
+              {averages.presenter.toFixed(1)}
             </span>
             <span className="text-xs mt-1">من 5</span>
           </div>
