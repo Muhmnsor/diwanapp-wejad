@@ -1,4 +1,3 @@
-
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -69,10 +68,11 @@ export const RegistrationTableRow = ({
 
   const translateWorkStatus = (status?: string) => {
     switch (status) {
-      case 'employed': return 'موظف';
-      case 'unemployed': return 'غير موظف';
-      case 'student': return 'طالب';
-      case 'retired': return 'متقاعد';
+      case 'student': return 'طالب/ة';
+      case 'employed': return 'موظف/ة';
+      case 'self_employed': return 'عمل حر';
+      case 'unemployed': return 'غير موظف/ة';
+      case 'retired': return 'متقاعد/ة';
       default: return '-';
     }
   };
