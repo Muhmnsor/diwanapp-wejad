@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -223,7 +222,6 @@ const Documents = () => {
           </TabsList>
 
           <TabsContent value="documents" className="mt-6">
-            {/* إضافة مستند جديد */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button className="mb-6">
@@ -293,7 +291,6 @@ const Documents = () => {
               </DialogContent>
             </Dialog>
 
-            {/* Dashboard Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardHeader className="pb-2">
@@ -335,7 +332,6 @@ const Documents = () => {
               </Card>
             </div>
 
-            {/* Search and Filter */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
@@ -355,37 +351,38 @@ const Documents = () => {
               </Button>
             </div>
 
-            {/* Documents Table */}
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-right">اسم المستند</TableHead>
-                    <TableHead className="text-right">النوع</TableHead>
-                    <TableHead className="text-right">تاريخ الانتهاء</TableHead>
-                    <TableHead className="text-right">الأيام المتبقية</TableHead>
-                    <TableHead className="text-right">الحالة</TableHead>
-                    <TableHead className="text-right">جهة الإصدار</TableHead>
-                    <TableHead className="text-right">الإجراءات</TableHead>
+                    <TableHead className="text-center">م</TableHead>
+                    <TableHead className="text-center">اسم المستند</TableHead>
+                    <TableHead className="text-center">النوع</TableHead>
+                    <TableHead className="text-center">تاريخ الانتهاء</TableHead>
+                    <TableHead className="text-center">الأيام المتبقية</TableHead>
+                    <TableHead className="text-center">الحالة</TableHead>
+                    <TableHead className="text-center">جهة الإصدار</TableHead>
+                    <TableHead className="text-center">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {documents.map((doc) => (
+                  {documents.map((doc, index) => (
                     <TableRow key={doc.id}>
-                      <TableCell className="font-medium">{doc.name}</TableCell>
-                      <TableCell>{doc.type}</TableCell>
-                      <TableCell dir="ltr" className="text-right">
+                      <TableCell className="text-center">{index + 1}</TableCell>
+                      <TableCell className="text-center font-medium">{doc.name}</TableCell>
+                      <TableCell className="text-center">{doc.type}</TableCell>
+                      <TableCell dir="ltr" className="text-center">
                         {format(new Date(doc.expiry_date), 'dd/MM/yyyy')}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         {getRemainingDays(doc.expiry_date)} يوم
                       </TableCell>
-                      <TableCell className={getStatusColor(doc.status)}>
+                      <TableCell className={`text-center ${getStatusColor(doc.status)}`}>
                         {doc.status}
                       </TableCell>
-                      <TableCell>{doc.issuer}</TableCell>
+                      <TableCell className="text-center">{doc.issuer}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
                           {doc.file_path && (
                             <Button
                               variant="ghost"
