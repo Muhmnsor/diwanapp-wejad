@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface Document {
   id: string;
@@ -35,10 +36,25 @@ export const DocumentsTable = ({
 }: DocumentsTableProps) => {
   const [editOpen, setEditOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
 
   const handleEdit = (document: Document) => {
     setEditingDocument(document);
     setEditOpen(true);
+  };
+
+  const handleDeleteClick = (document: Document) => {
+    setDocumentToDelete(document);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (documentToDelete) {
+      await handleDelete(documentToDelete.id, documentToDelete.file_path);
+      setDeleteDialogOpen(false);
+      setDocumentToDelete(null);
+    }
   };
 
   return (
@@ -96,7 +112,7 @@ export const DocumentsTable = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDelete(doc.id, doc.file_path)}
+                      onClick={() => handleDeleteClick(doc)}
                       title="حذف"
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
@@ -157,6 +173,25 @@ export const DocumentsTable = ({
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف المستند "{documentToDelete?.name}"؟
+              <br />
+              لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-500 hover:bg-red-600">
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
