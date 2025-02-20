@@ -32,24 +32,22 @@ ${report.objectives || report.activity_objectives || report.activity?.descriptio
 الأثر على المشاركين:
 ------------------
 ${report.impact_on_participants || ''}
+`;
 
+  // إضافة قسم التقييمات فقط إذا كان هناك تقييمات فعلية
+  const activityFeedback = report.activity?.activity_feedback || [];
+  
+  if (activityFeedback.length > 0) {
+    reportText += `
 تقييم النشاط:
 -----------
-`;
+عدد المقيمين: ${activityFeedback.length}
 
-  const activityRatings = report.activity?.averageRatings;
-  
-  if (activityRatings) {
-    reportText += `
-عدد المقيمين: ${activityRatings.count}
-
-التقييم العام: ${formatRating(activityRatings.overall_rating)}
-تقييم المحتوى: ${formatRating(activityRatings.content_rating)}
-تقييم التنظيم: ${formatRating(activityRatings.organization_rating)}
-تقييم المقدم: ${formatRating(activityRatings.presenter_rating)}
+التقييم العام: ${formatRating(report.activity?.averageRatings?.overall_rating)}
+تقييم المحتوى: ${formatRating(report.activity?.averageRatings?.content_rating)}
+تقييم التنظيم: ${formatRating(report.activity?.averageRatings?.organization_rating)}
+تقييم المقدم: ${formatRating(report.activity?.averageRatings?.presenter_rating)}
 `;
-  } else {
-    reportText += 'لم يتم تقييم النشاط بعد\n';
   }
 
   reportText += `
