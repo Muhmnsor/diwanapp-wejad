@@ -446,6 +446,51 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expiry_date: string | null
+          file_path: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          issuer: string | null
+          name: string
+          status: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expiry_date?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          issuer?: string | null
+          name: string
+          status?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expiry_date?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          issuer?: string | null
+          name?: string
+          status?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       event_feedback: {
         Row: {
           content_rating: number | null

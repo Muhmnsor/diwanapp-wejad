@@ -1,83 +1,141 @@
+
+import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { FileText, Archive, Filter, Download, Search } from "lucide-react";
+import { FileText, Archive, Filter, Download, Search, Upload, Trash2, Edit } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format, differenceInDays } from "date-fns";
-import { ar } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-// بيانات تجريبية للمستندات
-const documents = [
-  {
-    id: 1,
-    name: "رخصة تشغيل",
-    type: "رخصة",
-    expiryDate: "2024-12-31",
-    status: "ساري",
-    issuer: "وزارة التجارة"
-  },
-  {
-    id: 2,
-    name: "شهادة السعودة",
-    type: "شهادة",
-    expiryDate: "2024-06-15",
-    status: "قريب من الانتهاء",
-    issuer: "وزارة الموارد البشرية"
-  },
-  {
-    id: 3,
-    name: "سجل تجاري",
-    type: "سجل",
-    expiryDate: "2024-03-01",
-    status: "منتهي",
-    issuer: "وزارة التجارة"
-  },
-  {
-    id: 4,
-    name: "شهادة الزكاة",
-    type: "شهادة",
-    expiryDate: "2024-08-30",
-    status: "ساري",
-    issuer: "هيئة الزكاة والضريبة والجمارك"
-  },
-  {
-    id: 5,
-    name: "شهادة التأمينات",
-    type: "شهادة",
-    expiryDate: "2024-05-15",
-    status: "قريب من الانتهاء",
-    issuer: "المؤسسة العامة للتأمينات الاجتماعية"
-  },
-  {
-    id: 6,
-    name: "ترخيص الدفاع المدني",
-    type: "ترخيص",
-    expiryDate: "2024-11-20",
-    status: "ساري",
-    issuer: "المديرية العامة للدفاع المدني"
-  },
-  {
-    id: 7,
-    name: "رخصة البلدية",
-    type: "رخصة",
-    expiryDate: "2024-02-28",
-    status: "منتهي",
-    issuer: "أمانة المنطقة"
-  },
-  {
-    id: 8,
-    name: "شهادة الغرفة التجارية",
-    type: "شهادة",
-    expiryDate: "2024-09-10",
-    status: "ساري",
-    issuer: "الغرفة التجارية"
-  }
-];
+interface Document {
+  id: string;
+  name: string;
+  type: string;
+  expiry_date: string;
+  status: string;
+  issuer: string;
+  file_path?: string;
+  file_size?: number;
+}
 
 const Documents = () => {
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [newDocument, setNewDocument] = useState({
+    name: "",
+    type: "",
+    expiry_date: "",
+    issuer: "",
+  });
+
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast.error('حدث خطأ أثناء تحميل المستندات');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB
+        toast.error('حجم الملف يجب أن لا يتجاوز 10 ميجابايت');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      toast.error('الرجاء اختيار ملف');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // رفع الملف إلى Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const filePath = `${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // إضافة المستند إلى قاعدة البيانات
+      const { error: insertError } = await supabase
+        .from('documents')
+        .insert({
+          ...newDocument,
+          file_path: filePath,
+          file_size: selectedFile.size,
+          file_type: selectedFile.type,
+          status: 'ساري'
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success('تم إضافة المستند بنجاح');
+      fetchDocuments();
+      setNewDocument({ name: "", type: "", expiry_date: "", issuer: "" });
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Error adding document:', error);
+      toast.error('حدث خطأ أثناء إضافة المستند');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string, filePath?: string) => {
+    try {
+      if (filePath) {
+        await supabase.storage
+          .from('documents')
+          .remove([filePath]);
+      }
+
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success('تم حذف المستند بنجاح');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error('حدث خطأ أثناء حذف المستند');
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ساري":
@@ -94,6 +152,26 @@ const Documents = () => {
   const getRemainingDays = (expiryDate: string) => {
     const remaining = differenceInDays(new Date(expiryDate), new Date());
     return remaining;
+  };
+
+  const downloadFile = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(filePath);
+
+      if (error) throw error;
+
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error('حدث خطأ أثناء تحميل الملف');
+    }
   };
 
   return (
@@ -114,6 +192,76 @@ const Documents = () => {
           </TabsList>
 
           <TabsContent value="documents" className="mt-6">
+            {/* إضافة مستند جديد */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="mb-6">
+                  <Upload className="ml-2 h-4 w-4" />
+                  إضافة مستند جديد
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]" dir="rtl">
+                <DialogHeader>
+                  <DialogTitle>إضافة مستند جديد</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">اسم المستند</Label>
+                    <Input
+                      id="name"
+                      value={newDocument.name}
+                      onChange={(e) => setNewDocument({...newDocument, name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="type">نوع المستند</Label>
+                    <Input
+                      id="type"
+                      value={newDocument.type}
+                      onChange={(e) => setNewDocument({...newDocument, type: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="expiry_date">تاريخ الانتهاء</Label>
+                    <Input
+                      id="expiry_date"
+                      type="date"
+                      value={newDocument.expiry_date}
+                      onChange={(e) => setNewDocument({...newDocument, expiry_date: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="issuer">جهة الإصدار</Label>
+                    <Input
+                      id="issuer"
+                      value={newDocument.issuer}
+                      onChange={(e) => setNewDocument({...newDocument, issuer: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="file">الملف</Label>
+                    <Input
+                      id="file"
+                      type="file"
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      required
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      الحد الأقصى لحجم الملف: 10 ميجابايت
+                    </p>
+                  </div>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? 'جارٍ الرفع...' : 'رفع المستند'}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
             {/* Dashboard Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <Card>
@@ -187,6 +335,7 @@ const Documents = () => {
                     <TableHead className="text-right">الأيام المتبقية</TableHead>
                     <TableHead className="text-right">الحالة</TableHead>
                     <TableHead className="text-right">جهة الإصدار</TableHead>
+                    <TableHead className="text-right">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -195,15 +344,44 @@ const Documents = () => {
                       <TableCell className="font-medium">{doc.name}</TableCell>
                       <TableCell>{doc.type}</TableCell>
                       <TableCell dir="ltr" className="text-right">
-                        {format(new Date(doc.expiryDate), 'dd/MM/yyyy')}
+                        {format(new Date(doc.expiry_date), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell>
-                        {getRemainingDays(doc.expiryDate)} يوم
+                        {getRemainingDays(doc.expiry_date)} يوم
                       </TableCell>
                       <TableCell className={getStatusColor(doc.status)}>
                         {doc.status}
                       </TableCell>
                       <TableCell>{doc.issuer}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {doc.file_path && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => downloadFile(doc.file_path!, doc.name)}
+                              title="تحميل"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="تعديل"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(doc.id, doc.file_path)}
+                            title="حذف"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
