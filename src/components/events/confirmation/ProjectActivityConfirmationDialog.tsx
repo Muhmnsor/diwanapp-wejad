@@ -1,11 +1,9 @@
+
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { ProjectConfirmationHeader } from "../../projects/confirmation/ProjectConfirmationHeader";
 import { ProjectConfirmationCard } from "../../projects/confirmation/ProjectConfirmationCard";
 import { ProjectConfirmationActions } from "../../projects/confirmation/ProjectConfirmationActions";
@@ -37,82 +35,11 @@ export const ProjectActivityConfirmationDialog = ({
   formData,
   projectTitle,
 }: ProjectActivityConfirmationDialogProps) => {
+  const [hasDownloaded, setHasDownloaded] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const navigate = useNavigate();
 
-  // First fetch the registration to get the project_id
-  const { data: registration } = useQuery({
-    queryKey: ['registration', registrationId],
-    queryFn: async () => {
-      console.log('Fetching registration:', registrationId);
-      const { data, error } = await supabase
-        .from('registrations')
-        .select('project_id')
-        .eq('registration_number', registrationId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching registration:', error);
-        return null;
-      }
-
-      console.log('Fetched registration:', data);
-      return data;
-    },
-  });
-
-  // Then fetch the registration fields using the project_id
-  const { data: registrationFields } = useQuery({
-    queryKey: ['project-registration-fields', registration?.project_id],
-    queryFn: async () => {
-      if (!registration?.project_id) {
-        console.log('No project_id available yet');
-        return null;
-      }
-
-      console.log('Fetching project registration fields for project:', registration.project_id);
-      const { data, error } = await supabase
-        .from('project_registration_fields')
-        .select('*')
-        .eq('project_id', registration.project_id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching project registration fields:', error);
-        return null;
-      }
-
-      console.log('Fetched project registration fields:', data);
-      return data || {
-        arabic_name: true,
-        email: true,
-        phone: true
-      };
-    },
-    enabled: !!registration?.project_id,
-  });
-
-  useEffect(() => {
-    console.log('ProjectActivityConfirmationDialog - Component mounted with props:', {
-      open,
-      registrationId,
-      formData,
-      registrationFields
-    });
-    
-    return () => {
-      console.log('ProjectActivityConfirmationDialog - Component unmounting');
-    };
-  }, []);
-
-  const handleCloseDialog = () => {
-    console.log('handleCloseDialog called - Current state:', {
-      isClosing,
-      open,
-      formData,
-      registrationFields
-    });
-    
+  const handleClose = () => {
+    console.log('handleClose called');
     setIsClosing(true);
     onOpenChange(false);
   };
@@ -120,7 +47,7 @@ export const ProjectActivityConfirmationDialog = ({
   return (
     <Dialog 
       open={open} 
-      onOpenChange={handleCloseDialog}
+      onOpenChange={handleClose}
     >
       <DialogContent 
         className="max-w-md mx-auto"
@@ -142,7 +69,12 @@ export const ProjectActivityConfirmationDialog = ({
           }}
         />
 
-        <ProjectConfirmationActions onClose={handleCloseDialog} />
+        <ProjectConfirmationActions 
+          onClose={handleClose}
+          hasDownloaded={hasDownloaded}
+          setHasDownloaded={setHasDownloaded}
+          projectTitle={projectTitle || eventTitle}
+        />
       </DialogContent>
     </Dialog>
   );
