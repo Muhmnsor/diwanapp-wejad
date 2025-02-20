@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Event } from "@/store/eventStore";
 import { EventFormFields } from "../EventFormFields";
@@ -6,7 +5,6 @@ import { handleImageUpload } from "./EventImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
 export const CreateEventFormContainer = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -40,17 +38,22 @@ export const CreateEventFormContainer = () => {
       email: true,
       phone: true,
       gender: false,
-      work_status: false,
+      work_status: false
     }
   });
-
   const handleImageChange = async (file: File | null) => {
     if (!file) return;
     setIsLoading(true);
     try {
-      const { publicUrl, error } = await handleImageUpload(file);
+      const {
+        publicUrl,
+        error
+      } = await handleImageUpload(file);
       if (error) throw error;
-      setFormData(prev => ({ ...prev, image_url: publicUrl }));
+      setFormData(prev => ({
+        ...prev,
+        image_url: publicUrl
+      }));
       toast.success("تم رفع الصورة بنجاح");
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -59,62 +62,56 @@ export const CreateEventFormContainer = () => {
       setIsLoading(false);
     }
   };
-
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
       console.log('Creating event with data:', formData);
-      
+
       // Insert event data
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .insert([{
-          title: formData.title,
-          description: formData.description,
-          date: formData.date,
-          time: formData.time,
-          location: formData.location,
-          location_url: formData.location_url,
-          image_url: formData.image_url,
-          event_type: formData.event_type,
-          price: formData.price === null ? null : formData.price,
-          max_attendees: formData.max_attendees,
-          beneficiary_type: formData.beneficiary_type,
-          certificate_type: formData.certificate_type,
-          event_path: formData.event_path,
-          event_category: formData.event_category,
-          registration_start_date: formData.registration_start_date,
-          registration_end_date: formData.registration_end_date,
-          event_hours: formData.event_hours
-        }])
-        .select()
-        .single();
-
+      const {
+        data: eventData,
+        error: eventError
+      } = await supabase.from('events').insert([{
+        title: formData.title,
+        description: formData.description,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        location_url: formData.location_url,
+        image_url: formData.image_url,
+        event_type: formData.event_type,
+        price: formData.price === null ? null : formData.price,
+        max_attendees: formData.max_attendees,
+        beneficiary_type: formData.beneficiary_type,
+        certificate_type: formData.certificate_type,
+        event_path: formData.event_path,
+        event_category: formData.event_category,
+        registration_start_date: formData.registration_start_date,
+        registration_end_date: formData.registration_end_date,
+        event_hours: formData.event_hours
+      }]).select().single();
       if (eventError) throw eventError;
-
       console.log('Event created successfully:', eventData);
 
       // Insert registration fields
-      const { error: fieldsError } = await supabase
-        .from('event_registration_fields')
-        .insert([{
-          event_id: eventData.id,
-          arabic_name: formData.registration_fields.arabic_name,
-          english_name: formData.registration_fields.english_name,
-          education_level: formData.registration_fields.education_level,
-          birth_date: formData.registration_fields.birth_date,
-          national_id: formData.registration_fields.national_id,
-          email: formData.registration_fields.email,
-          phone: formData.registration_fields.phone,
-          gender: formData.registration_fields.gender,
-          work_status: formData.registration_fields.work_status
-        }]);
-
+      const {
+        error: fieldsError
+      } = await supabase.from('event_registration_fields').insert([{
+        event_id: eventData.id,
+        arabic_name: formData.registration_fields.arabic_name,
+        english_name: formData.registration_fields.english_name,
+        education_level: formData.registration_fields.education_level,
+        birth_date: formData.registration_fields.birth_date,
+        national_id: formData.registration_fields.national_id,
+        email: formData.registration_fields.email,
+        phone: formData.registration_fields.phone,
+        gender: formData.registration_fields.gender,
+        work_status: formData.registration_fields.work_status
+      }]);
       if (fieldsError) {
         console.error('Error inserting registration fields:', fieldsError);
         throw fieldsError;
       }
-
       console.log('Registration fields saved successfully');
       toast.success("تم إنشاء الفعالية بنجاح");
       navigate(`/events/${eventData.id}`);
@@ -125,34 +122,18 @@ export const CreateEventFormContainer = () => {
       setIsLoading(false);
     }
   };
-
   const handleCancel = () => {
     navigate(-1);
   };
-
-  return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
-      <EventFormFields
-        formData={formData}
-        setFormData={setFormData}
-        onImageChange={handleImageChange}
-      />
+  return <div className="bg-white rounded-lg p-6 shadow-sm px-[240px]">
+      <EventFormFields formData={formData} setFormData={setFormData} onImageChange={handleImageChange} />
       <div className="flex justify-start gap-2 mt-6 text-right" dir="rtl">
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
-        >
+        <button onClick={handleSubmit} disabled={isLoading} className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50">
           {isLoading ? "جاري الإنشاء..." : "إنشاء الفعالية"}
         </button>
-        <button
-          onClick={handleCancel}
-          disabled={isLoading}
-          className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
-        >
+        <button onClick={handleCancel} disabled={isLoading} className="border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50">
           إلغاء
         </button>
       </div>
-    </div>
-  );
+    </div>;
 };
