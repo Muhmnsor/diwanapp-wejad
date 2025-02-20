@@ -39,13 +39,20 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      const newPhotos = [...photos];
-      newPhotos[index] = {
+      const updatedPhotos = [...photos];
+      // تعيين الصورة في نفس الموقع المحدد
+      updatedPhotos[index] = {
         url: publicUrl,
         description: photoPlaceholders[index],
-        index: index
+        index
       };
-      onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
+
+      // تصفية القيم الفارغة مع الحفاظ على الترتيب
+      const cleanedPhotos = updatedPhotos.map((photo, i) => 
+        photo ? { ...photo, index: i } : null
+      ).filter((p): p is Photo => p !== null);
+
+      onPhotosChange(cleanedPhotos);
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -54,14 +61,25 @@ export const ReportPhotoUpload = ({
   };
 
   const handleRemovePhoto = (index: number) => {
-    const newPhotos = [...photos];
-    newPhotos[index] = null;
-    onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
+    const updatedPhotos = [...photos];
+    // حذف الصورة مع الحفاظ على المواقع
+    updatedPhotos[index] = null;
+    
+    // تنظيف المصفوفة مع الحفاظ على ترتيب الصور المتبقية
+    const cleanedPhotos = updatedPhotos
+      .filter((p): p is Photo => p !== null)
+      .map((photo, newIndex) => ({
+        ...photo,
+        index: photo.index // الحفاظ على الفهرس الأصلي
+      }));
+
+    onPhotosChange(cleanedPhotos);
   };
 
+  // تنظيم الصور في المواقع الصحيحة
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
-    if (photo && typeof photo.index !== 'undefined') {
+    if (photo && typeof photo.index === 'number') {
       let photoUrl: string;
       
       if (typeof photo.url === 'string') {
@@ -72,7 +90,7 @@ export const ReportPhotoUpload = ({
           photoUrl = photo.url;
         }
       } else if (photo.url && typeof photo.url === 'object' && 'url' in photo.url) {
-        photoUrl = photo.url.url;
+        photoUrl = (photo.url as { url: string }).url;
       } else {
         photoUrl = '';
       }
