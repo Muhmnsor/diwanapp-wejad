@@ -93,7 +93,18 @@ ${report.impact_on_participants || ''}
 
 تقييم الفعالية:
 -----------
-مستوى الرضا: ${report.satisfaction_level || 0} من 5
+عدد المقيمين: ${report.evaluators_count || 0} مشارك
+
+التقييم التفصيلي:
+---------------
+- التقييم العام: ${report.satisfaction_level || 0} من 5
+- تقييم المحتوى: ${report.content_rating || 0} من 5
+- تقييم التنظيم: ${report.organization_rating || 0} من 5
+- تقييم المقدم: ${report.presenter_rating || 0} من 5
+
+انطباعات المشاركين:
+----------------
+${report.feedback_text || 'لا توجد انطباعات مسجلة'}
 `;
 
   if (report.partners) {
