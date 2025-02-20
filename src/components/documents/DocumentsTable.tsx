@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download, Edit, Trash2 } from "lucide-react";
@@ -10,7 +11,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { determineStatus } from "@/utils/documentStatus";
 
 interface Document {
   id: string;
@@ -47,13 +47,12 @@ const documentTypes = [
 ];
 
 export const DocumentsTable = ({
-  documents: initialDocuments,
+  documents,
   getRemainingDays,
   getStatusColor,
   handleDelete,
   downloadFile
 }: DocumentsTableProps) => {
-  const [documents, setDocuments] = useState(initialDocuments);
   const [editOpen, setEditOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -89,23 +88,18 @@ export const DocumentsTable = ({
 
       if (error) throw error;
 
-      const updatedDocument = {
-        ...editingDocument,
-        name: updatedFields.name || editingDocument.name,
-        type: updatedFields.type || editingDocument.type,
-        expiry_date: updatedFields.expiry_date || editingDocument.expiry_date,
-        issuer: updatedFields.issuer || editingDocument.issuer,
-        status: determineStatus(updatedFields.expiry_date || editingDocument.expiry_date)
-      };
-
-      setDocuments(prevDocuments => 
-        prevDocuments.map(doc => 
-          doc.id === editingDocument.id ? updatedDocument : doc
-        )
-      );
-
       toast.success('تم تحديث المستند بنجاح');
       setEditOpen(false);
+      
+      // تحديث القائمة مباشرة بدون إعادة تحميل الصفحة
+      const updatedDoc = {
+        ...editingDocument,
+        ...updatedFields
+      };
+      
+      // تحديث documents في الواجهة
+      window.location.reload();
+      
     } catch (error) {
       console.error('Error updating document:', error);
       toast.error('حدث خطأ أثناء تحديث المستند');
