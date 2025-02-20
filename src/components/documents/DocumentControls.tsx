@@ -39,10 +39,10 @@ export const DocumentControls = ({ onSearch, onFilterStatusChange }: DocumentCon
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <div className="relative flex-1">
-        <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <Input
           placeholder="بحث في المستندات..."
-          className="pl-10 w-full"
+          className="pr-10 w-full"
           dir="rtl"
           value={searchQuery}
           onChange={handleSearchChange}
