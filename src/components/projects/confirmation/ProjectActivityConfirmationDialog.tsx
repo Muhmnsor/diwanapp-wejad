@@ -1,18 +1,27 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { EventConfirmationCard } from "../../events/confirmation/EventConfirmationCard";
+
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { useState } from "react";
+import { ProjectConfirmationHeader } from "./ProjectConfirmationHeader";
+import { ProjectConfirmationCard } from "./ProjectConfirmationCard";
+import { ProjectConfirmationActions } from "../../projects/registration/form/ProjectRegistrationActions";
 
 interface ProjectActivityConfirmationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   registrationId: string;
   eventTitle: string;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
   formData: {
     name: string;
     email: string;
     phone: string;
   };
+  projectTitle?: string;
 }
 
 export const ProjectActivityConfirmationDialog = ({
@@ -20,27 +29,52 @@ export const ProjectActivityConfirmationDialog = ({
   onOpenChange,
   registrationId,
   eventTitle,
+  eventDate,
+  eventTime,
+  eventLocation,
   formData,
+  projectTitle,
 }: ProjectActivityConfirmationDialogProps) => {
+  const [hasDownloaded, setHasDownloaded] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = () => {
+    console.log('handleClose called');
+    setIsClosing(true);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md mx-auto">
-        <div className="space-y-4">
-          <EventConfirmationCard
-            eventTitle={eventTitle}
-            registrationId={registrationId}
-            registrantInfo={formData}
-          />
-          
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="w-4 h-4 mr-2" />
-            إغلاق
-          </Button>
-        </div>
+    <Dialog 
+      open={open} 
+      onOpenChange={handleClose}
+    >
+      <DialogContent 
+        className="max-w-md mx-auto"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <ProjectConfirmationHeader />
+        
+        <ProjectConfirmationCard
+          eventTitle={eventTitle}
+          projectTitle={projectTitle}
+          registrationId={registrationId}
+          formData={formData}
+          eventDetails={{
+            date: eventDate,
+            time: eventTime,
+            location: eventLocation
+          }}
+        />
+
+        <ProjectConfirmationActions 
+          onClose={handleClose}
+          hasDownloaded={hasDownloaded}
+          setHasDownloaded={setHasDownloaded}
+          projectTitle={projectTitle || eventTitle}
+        />
       </DialogContent>
     </Dialog>
   );
