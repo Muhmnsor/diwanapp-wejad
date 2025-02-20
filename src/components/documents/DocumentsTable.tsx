@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Document {
   id: string;
@@ -26,6 +27,22 @@ interface DocumentsTableProps {
   handleDelete: (id: string, filePath?: string) => Promise<void>;
   downloadFile: (filePath: string, fileName: string) => Promise<void>;
 }
+
+const documentTypes = [
+  "ترخيص",
+  "شهادة",
+  "تصريح",
+  "اعتماد",
+  "خطاب",
+  "عقد",
+  "اتفاقية",
+  "سجل",
+  "وثيقة",
+  "تقرير",
+  "بيان",
+  "مذكرة",
+  "أخرى"
+];
 
 export const DocumentsTable = ({
   documents,
@@ -141,10 +158,18 @@ export const DocumentsTable = ({
               </div>
               <div>
                 <Label htmlFor="type">نوع المستند</Label>
-                <Input
-                  id="type"
-                  defaultValue={editingDocument.type}
-                />
+                <Select defaultValue={editingDocument.type}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="اختر نوع المستند" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="expiry_date">تاريخ الانتهاء</Label>
