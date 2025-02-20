@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -33,7 +32,9 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
       speaker_name: "",
       attendees_count: 0,
       absent_count: 0,
-      satisfaction_level: 0
+      satisfaction_level: 0,
+      partners: "",
+      links: ""
     }
   });
 
@@ -106,6 +107,8 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         photo_descriptions: photos.filter(Boolean).map(p => p.description),
         execution_date: eventData.date,
         execution_time: eventData.time,
+        links: values.links.split('\n').filter(Boolean),
+        partners: values.partners
       };
 
       console.log("Submitting report with data:", reportData);
@@ -119,7 +122,6 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         throw insertError;
       }
 
-      // تحديث القائمة بعد إضافة التقرير بنجاح
       await queryClient.invalidateQueries({ queryKey: ["event-reports", eventId] });
       
       toast.success("تم إضافة التقرير بنجاح");
@@ -137,6 +139,48 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <ReportBasicFields form={form} />
         <ReportDescriptionFields form={form} />
+        
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="partners"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>الشركاء (إن وجد)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    {...field} 
+                    placeholder="أدخل أسماء الشركاء المشاركين في الفعالية"
+                    className="resize-none"
+                    rows={3}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="links"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>روابط</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    {...field} 
+                    placeholder="أدخل الروابط (رابط واحد في كل سطر)"
+                    className="resize-none"
+                    rows={3}
+                    dir="ltr"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <ReportMetricsFields form={form} eventId={eventId} />
         <ReportPhotoUpload photos={photos} onPhotosChange={setPhotos} />
         <ReportFeedbackComments eventId={eventId} />

@@ -8,6 +8,8 @@ export interface EventReportFormValues {
   attendees_count: number;
   absent_count: number;
   satisfaction_level: number;
+  partners: string;
+  links: string;
 }
 
 export interface Photo {
