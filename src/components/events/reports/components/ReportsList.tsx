@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
   Table,
@@ -15,6 +15,8 @@ import { Pencil, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EventReportEditDialog } from "../dialogs/EventReportEditDialog";
 import { EventReportFormValues } from "../types";
+import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
+import { toast } from "sonner";
 
 interface ReportsListProps {
   eventId: string;
@@ -22,6 +24,9 @@ interface ReportsListProps {
 
 export const ReportsList = ({ eventId }: ReportsListProps) => {
   const [selectedReport, setSelectedReport] = useState<(EventReportFormValues & { id: string }) | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["event-reports", eventId],
@@ -52,13 +57,11 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
   });
 
   const handleEdit = (report: any) => {
-    // تحويل البيانات إلى الشكل المطلوب للنموذج
     const photos = report.photos?.map((url: string, index: number) => ({
       url,
       description: report.photo_descriptions?.[index] || ""
     })) || [];
 
-    // تأكد من أن المصفوفة تحتوي على 6 عناصر
     while (photos.length < 6) {
       photos.push({ url: "", description: "" });
     }
@@ -78,6 +81,33 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
       photos
     };
     setSelectedReport(formData);
+  };
+
+  const handleDelete = async () => {
+    if (!reportToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('event_reports')
+        .delete()
+        .eq('id', reportToDelete);
+
+      if (error) throw error;
+
+      toast.success('تم حذف التقرير بنجاح');
+      queryClient.invalidateQueries({ queryKey: ["event-reports", eventId] });
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast.error('حدث خطأ أثناء حذف التقرير');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setReportToDelete(null);
+    }
+  };
+
+  const openDeleteDialog = (reportId: string) => {
+    setReportToDelete(reportId);
+    setIsDeleteDialogOpen(true);
   };
 
   if (isLoading) {
@@ -127,7 +157,11 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="icon">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => openDeleteDialog(report.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="icon">
@@ -150,6 +184,12 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
           reportData={selectedReport}
         />
       )}
+
+      <ReportDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };
