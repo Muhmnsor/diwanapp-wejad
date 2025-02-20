@@ -52,7 +52,7 @@ export const downloadEventReport = async (report: any): Promise<void> => {
     
     // تحديد اسم الملف بناءً على عنوان الفعالية والتاريخ
     const date = format(new Date(), 'yyyy-MM-dd', { locale: ar });
-    const eventTitle = report.events?.title || 'فعالية';
+    const eventTitle = report.report_name || 'فعالية';
     const filename = `تقرير-${eventTitle}-${date}.zip`;
     
     // تنزيل الملف المضغوط
@@ -72,8 +72,7 @@ function generateEventReportText(report: any): string {
 
 معلومات أساسية:
 ---------------
-اسم الفعالية: ${report.events?.title || 'غير محدد'}
-اسم التقرير: ${report.report_name || ''}
+اسم الفعالية: ${report.report_name || 'غير محدد'}
 معد التقرير: ${report.profiles?.email || 'غير محدد'}
 مدة الفعالية: ${report.events?.event_hours || 0} ساعات
 عدد الحضور: ${report.attendees_count || 0}
