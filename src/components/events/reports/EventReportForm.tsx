@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -20,38 +19,32 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   initialData,
   mode = 'create'
 }) => {
-  const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
+  const [photos, setPhotos] = useState<Photo[]>(Array(6).fill({ url: "", description: "" }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<EventReportFormValues>({
-    defaultValues: initialData || {
-      report_name: "",
-      report_text: "",
-      objectives: "",
-      impact_on_participants: "",
-      speaker_name: "",
-      attendees_count: 0,
-      absent_count: 0,
-      satisfaction_level: 0,
-      partners: "",
-      links: ""
+    defaultValues: {
+      ...(initialData || {
+        report_name: "",
+        report_text: "",
+        objectives: "",
+        impact_on_participants: "",
+        speaker_name: "",
+        attendees_count: 0,
+        absent_count: 0,
+        satisfaction_level: 0,
+        partners: "",
+        links: "",
+        photos: Array(6).fill({ url: "", description: "" })
+      })
     }
   });
 
   useEffect(() => {
     if (initialData?.photos) {
-      const initialPhotos = Array(6).fill(null);
-      initialData.photos.forEach((photo, index) => {
-        if (photo) {
-          initialPhotos[index] = {
-            url: photo.url,
-            description: photo.description
-          };
-        }
-      });
-      setPhotos(initialPhotos);
+      setPhotos(initialData.photos);
     }
   }, [initialData]);
 
@@ -88,49 +81,21 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   const onSubmit = async (values: EventReportFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("Starting report submission with user:", currentUser);
-
+      
       if (!currentUser) {
-        console.error("No user found when submitting report");
         toast.error("يجب تسجيل الدخول لإنشاء تقرير");
         return;
       }
 
-      const { data: profileCheck, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('id', currentUser)
-        .single();
-
-      console.log("Profile check result:", profileCheck);
-
-      if (profileError || !profileCheck) {
-        console.error("Profile check error:", profileError);
-        toast.error("حدث خطأ في التحقق من الملف الشخصي");
-        return;
-      }
-
-      const { data: eventData, error: eventError } = await supabase
-        .from("events")
-        .select("date, time")
-        .eq("id", eventId)
-        .single();
-
-      if (eventError) throw eventError;
-
+      const validPhotos = photos.filter(p => p.url);
       const reportData = {
         ...values,
         event_id: eventId,
         executor_id: currentUser,
-        photos: photos.filter(Boolean).map(p => p.url),
-        photo_descriptions: photos.filter(Boolean).map(p => p.description),
-        execution_date: eventData.date,
-        execution_time: eventData.time,
-        links: values.links.split('\n').filter(Boolean),
-        partners: values.partners
+        photos: validPhotos.map(p => p.url),
+        photo_descriptions: validPhotos.map(p => p.description),
+        links: values.links.split('\n').filter(Boolean)
       };
-
-      console.log("Submitting report with data:", reportData);
 
       if (mode === 'edit' && initialData?.id) {
         const { error: updateError } = await supabase

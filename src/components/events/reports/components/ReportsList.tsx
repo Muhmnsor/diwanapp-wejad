@@ -52,6 +52,17 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
   });
 
   const handleEdit = (report: any) => {
+    // تحويل البيانات إلى الشكل المطلوب للنموذج
+    const photos = report.photos?.map((url: string, index: number) => ({
+      url,
+      description: report.photo_descriptions?.[index] || ""
+    })) || [];
+
+    // تأكد من أن المصفوفة تحتوي على 6 عناصر
+    while (photos.length < 6) {
+      photos.push({ url: "", description: "" });
+    }
+
     const formData: EventReportFormValues & { id: string } = {
       id: report.id,
       report_name: report.report_name,
@@ -64,10 +75,7 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
       satisfaction_level: report.satisfaction_level || 0,
       partners: report.partners || "",
       links: report.links?.join('\n') || "",
-      photos: report.photos?.map((url: string, index: number) => ({
-        url,
-        description: report.photo_descriptions?.[index] || ""
-      })) || [],
+      photos
     };
     setSelectedReport(formData);
   };
