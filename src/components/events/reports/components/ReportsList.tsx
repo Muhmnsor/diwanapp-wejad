@@ -39,9 +39,6 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
           *,
           profiles:executor_id (
             email
-          ),
-          events:event_id (
-            event_hours
           )
         `)
         .eq("event_id", eventId)
@@ -54,7 +51,9 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
 
       console.log("Fetched reports:", data);
       return data || [];
-    }
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60,
   });
 
   const handleEdit = (report: any) => {
@@ -123,7 +122,6 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
             <TableRow className="bg-gray-50">
               <TableHead className="text-center py-4 text-gray-700 font-semibold">معد التقرير</TableHead>
               <TableHead className="text-center py-4 text-gray-700 font-semibold">اسم التقرير</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">مدة الفعالية</TableHead>
               <TableHead className="text-center py-4 text-gray-700 font-semibold">تاريخ الإنشاء</TableHead>
               <TableHead className="text-center py-4 text-gray-700 font-semibold">إجراءات</TableHead>
             </TableRow>
@@ -131,7 +129,7 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
           <TableBody>
             {reports.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={4} className="text-center py-8">
                   <div className="text-gray-500">لا توجد تقارير بعد</div>
                 </TableCell>
               </TableRow>
@@ -144,18 +142,8 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
                   <TableCell className="text-center py-4 text-gray-700">
                     {report.profiles?.email || "غير معروف"}
                   </TableCell>
-                  <TableCell className="text-center py-4">
-                    <div>
-                      <div className="font-medium text-gray-900">{report.report_name}</div>
-                      {report.report_text && (
-                        <div className="text-sm text-gray-500 mt-1 line-clamp-2">
-                          {report.report_text}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
                   <TableCell className="text-center py-4 text-gray-700">
-                    {report.events?.event_hours || 0} ساعات
+                    {report.report_name}
                   </TableCell>
                   <TableCell className="text-center py-4 text-gray-700">
                     {format(new Date(report.created_at), "yyyy-MM-dd")}

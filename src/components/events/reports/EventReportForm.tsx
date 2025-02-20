@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportPhotoUpload } from "./components/ReportPhotoUpload";
 import { ReportMetricsFields } from "./components/ReportMetricsFields";
@@ -41,29 +40,10 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         partners: "",
         links: "",
         photos: [],
-        photo_descriptions: [],
-        event_hours: 0
+        photo_descriptions: []
       })
     }
   });
-
-  useEffect(() => {
-    if (!initialData) {
-      const fetchEventDetails = async () => {
-        const { data: event } = await supabase
-          .from("events")
-          .select("title")
-          .eq("id", eventId)
-          .single();
-
-        if (event) {
-          form.setValue("report_name", `تقرير فعالية ${event.title}`);
-        }
-      };
-
-      fetchEventDetails();
-    }
-  }, [eventId, form, initialData]);
 
   useEffect(() => {
     if (initialData?.photos?.length) {
@@ -95,6 +75,24 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
       setPhotos(processedPhotos);
     }
   }, [initialData]);
+
+  useEffect(() => {
+    if (!initialData) {
+      const fetchEventTitle = async () => {
+        const { data: event } = await supabase
+          .from("events")
+          .select("title")
+          .eq("id", eventId)
+          .single();
+
+        if (event) {
+          form.setValue("report_name", `تقرير فعالية ${event.title}`);
+        }
+      };
+
+      fetchEventTitle();
+    }
+  }, [eventId, form, initialData]);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -157,47 +155,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-4">
-          <ReportBasicFields form={form} />
-          <FormField
-            control={form.control}
-            name="report_text"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>توضيحات التقرير</FormLabel>
-                <FormControl>
-                  <Textarea 
-                    {...field} 
-                    placeholder="أدخل توضيحات التقرير"
-                    className="resize-none"
-                    rows={3}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="event_hours"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>مدة الفعالية (بالساعات)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number"
-                    min="0"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                    placeholder="أدخل مدة الفعالية"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
+        <ReportBasicFields form={form} />
         <ReportDescriptionFields form={form} />
         
         <div className="space-y-4">
