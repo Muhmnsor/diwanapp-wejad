@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Form } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportPhotoUpload } from "./components/ReportPhotoUpload";
 import { ReportMetricsFields } from "./components/ReportMetricsFields";
