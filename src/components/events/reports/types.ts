@@ -10,13 +10,14 @@ export interface EventReportFormValues {
   satisfaction_level: number;
   partners: string;
   links: string;
-  photos: Photo[];
+  photos: string[];
+  photo_descriptions?: string[];
 }
 
 export interface Photo {
   url: string;
   description: string;
-  index: number; // إضافة الترتيب للصورة
+  index: number;
 }
 
 export interface EventReportFormProps {

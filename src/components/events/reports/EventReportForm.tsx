@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -39,18 +38,18 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         satisfaction_level: 0,
         partners: "",
         links: "",
-        photos: []
+        photos: [],
+        photo_descriptions: []
       })
     }
   });
 
   useEffect(() => {
     if (initialData?.photos) {
-      // تحويل الصور المستردة إلى الشكل الجديد مع الترتيب
       const processedPhotos = initialData.photos.map((url, index) => ({
-        url,
-        description: photoPlaceholders[index],
-        index
+        url: url,
+        description: initialData.photo_descriptions?.[index] || photoPlaceholders[index],
+        index: index
       }));
       setPhotos(processedPhotos);
     }
@@ -95,17 +94,13 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         return;
       }
 
-      // تحويل الصور إلى الشكل المطلوب لقاعدة البيانات
       const validPhotos = photos.filter(p => p.url);
       const reportData = {
         ...values,
         event_id: eventId,
         executor_id: currentUser,
-        photos: validPhotos.map(p => ({
-          url: p.url,
-          description: p.description,
-          index: p.index
-        })),
+        photos: validPhotos.map(p => p.url),
+        photo_descriptions: validPhotos.map(p => p.description),
         links: values.links.split('\n').filter(Boolean)
       };
 

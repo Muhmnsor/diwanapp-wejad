@@ -44,7 +44,7 @@ export const ReportPhotoUpload = ({
       newPhotos[index] = {
         url: publicUrl,
         description: photoPlaceholders[index],
-        index: index // تخزين الترتيب مع الصورة
+        index: index
       };
       onPhotosChange(newPhotos.filter(Boolean));
       toast.success('تم رفع الصورة بنجاح');
