@@ -16,3 +16,10 @@ export interface Photo {
   url: string;
   description: string;
 }
+
+export interface EventReportFormProps {
+  eventId: string;
+  onClose: () => void;
+  initialData?: EventReportFormValues & { id: string };
+  mode?: 'create' | 'edit';
+}

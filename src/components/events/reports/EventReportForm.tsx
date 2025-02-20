@@ -11,22 +11,22 @@ import { ReportBasicFields } from "./components/ReportBasicFields";
 import { ReportDescriptionFields } from "./components/ReportDescriptionFields";
 import { ReportFeedbackComments } from "./components/ReportFeedbackComments";
 import { ReportFormActions } from "./components/ReportFormActions";
-import { EventReportFormValues, Photo } from "./types";
+import { EventReportFormValues, EventReportFormProps, Photo } from "./types";
 import { useQueryClient } from "@tanstack/react-query";
 
-interface EventReportFormProps {
-  eventId: string;
-  onClose: () => void;
-}
-
-export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClose }) => {
+export const EventReportForm: React.FC<EventReportFormProps> = ({ 
+  eventId, 
+  onClose,
+  initialData,
+  mode = 'create'
+}) => {
   const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<EventReportFormValues>({
-    defaultValues: {
+    defaultValues: initialData || {
       report_name: "",
       report_text: "",
       objectives: "",
@@ -41,20 +41,22 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
   });
 
   useEffect(() => {
-    const fetchEventTitle = async () => {
-      const { data: event } = await supabase
-        .from("events")
-        .select("title")
-        .eq("id", eventId)
-        .single();
+    if (!initialData) {
+      const fetchEventTitle = async () => {
+        const { data: event } = await supabase
+          .from("events")
+          .select("title")
+          .eq("id", eventId)
+          .single();
 
-      if (event) {
-        form.setValue("report_name", `تقرير فعالية ${event.title}`);
-      }
-    };
+        if (event) {
+          form.setValue("report_name", `تقرير فعالية ${event.title}`);
+        }
+      };
 
-    fetchEventTitle();
-  }, [eventId, form]);
+      fetchEventTitle();
+    }
+  }, [eventId, form, initialData]);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -115,22 +117,28 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
 
       console.log("Submitting report with data:", reportData);
 
-      const { error: insertError } = await supabase
-        .from("event_reports")
-        .insert(reportData);
+      if (mode === 'edit' && initialData?.id) {
+        const { error: updateError } = await supabase
+          .from("event_reports")
+          .update(reportData)
+          .eq('id', initialData.id);
 
-      if (insertError) {
-        console.error("Error inserting report:", insertError);
-        throw insertError;
+        if (updateError) throw updateError;
+        toast.success("تم تحديث التقرير بنجاح");
+      } else {
+        const { error: insertError } = await supabase
+          .from("event_reports")
+          .insert(reportData);
+
+        if (insertError) throw insertError;
+        toast.success("تم إضافة التقرير بنجاح");
       }
 
       await queryClient.invalidateQueries({ queryKey: ["event-reports", eventId] });
-      
-      toast.success("تم إضافة التقرير بنجاح");
       onClose();
     } catch (error) {
       console.error("Error submitting report:", error);
-      toast.error("حدث خطأ أثناء إضافة التقرير");
+      toast.error(mode === 'edit' ? "حدث خطأ أثناء تحديث التقرير" : "حدث خطأ أثناء إضافة التقرير");
     } finally {
       setIsSubmitting(false);
     }
@@ -186,7 +194,11 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
         <ReportMetricsFields form={form} eventId={eventId} />
         <ReportPhotoUpload photos={photos} onPhotosChange={setPhotos} />
         <ReportFeedbackComments eventId={eventId} />
-        <ReportFormActions isSubmitting={isSubmitting} onClose={onClose} />
+        <ReportFormActions 
+          isSubmitting={isSubmitting} 
+          onClose={onClose}
+          mode={mode} 
+        />
       </form>
     </Form>
   );

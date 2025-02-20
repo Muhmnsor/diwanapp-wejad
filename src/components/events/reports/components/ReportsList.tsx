@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -12,12 +13,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { EventReportEditDialog } from "../dialogs/EventReportEditDialog";
+import { EventReportFormValues } from "../types";
 
 interface ReportsListProps {
   eventId: string;
 }
 
 export const ReportsList = ({ eventId }: ReportsListProps) => {
+  const [selectedReport, setSelectedReport] = useState<(EventReportFormValues & { id: string }) | null>(null);
+
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["event-reports", eventId],
     queryFn: async () => {
@@ -42,10 +47,26 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
       console.log("Fetched reports:", data);
       return data || [];
     },
-    // إضافة خيارات لتحسين تجربة المستخدم
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60, // البيانات تعتبر قديمة بعد دقيقة واحدة
+    staleTime: 1000 * 60,
   });
+
+  const handleEdit = (report: any) => {
+    const formData: EventReportFormValues & { id: string } = {
+      id: report.id,
+      report_name: report.report_name,
+      report_text: report.report_text,
+      objectives: report.objectives || "",
+      impact_on_participants: report.impact_on_participants || "",
+      speaker_name: report.speaker_name || "",
+      attendees_count: report.attendees_count || 0,
+      absent_count: report.absent_count || 0,
+      satisfaction_level: report.satisfaction_level || 0,
+      partners: report.partners || "",
+      links: report.links?.join('\n') || "",
+    };
+    setSelectedReport(formData);
+  };
 
   if (isLoading) {
     return <div>جاري التحميل...</div>;
@@ -71,47 +92,52 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
                 </TableCell>
               </TableRow>
             ) : (
-              reports.map((report) => {
-                console.log("Rendering report:", { 
-                  id: report.id, 
-                  executor_id: report.executor_id,
-                  profiles: report.profiles 
-                });
-
-                return (
-                  <TableRow 
-                    key={report.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <TableCell className="text-center py-4 text-gray-700">
-                      {report.profiles?.email || "غير معروف"}
-                    </TableCell>
-                    <TableCell className="text-center py-4 text-gray-700">
-                      {report.report_name}
-                    </TableCell>
-                    <TableCell className="text-center py-4 text-gray-700">
-                      {format(new Date(report.created_at), "yyyy-MM-dd")}
-                    </TableCell>
-                    <TableCell className="text-center py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <Button variant="outline" size="icon">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
+              reports.map((report) => (
+                <TableRow 
+                  key={report.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <TableCell className="text-center py-4 text-gray-700">
+                    {report.profiles?.email || "غير معروف"}
+                  </TableCell>
+                  <TableCell className="text-center py-4 text-gray-700">
+                    {report.report_name}
+                  </TableCell>
+                  <TableCell className="text-center py-4 text-gray-700">
+                    {format(new Date(report.created_at), "yyyy-MM-dd")}
+                  </TableCell>
+                  <TableCell className="text-center py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => handleEdit(report)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      {selectedReport && (
+        <EventReportEditDialog
+          isOpen={!!selectedReport}
+          onClose={() => setSelectedReport(null)}
+          eventId={eventId}
+          reportData={selectedReport}
+        />
+      )}
     </div>
   );
 };
