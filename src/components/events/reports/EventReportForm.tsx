@@ -11,7 +11,7 @@ import { ReportBasicFields } from "./components/ReportBasicFields";
 import { ReportDescriptionFields } from "./components/ReportDescriptionFields";
 import { ReportFeedbackComments } from "./components/ReportFeedbackComments";
 import { ReportFormActions } from "./components/ReportFormActions";
-import { EventReportFormValues, EventReportFormProps, Photo } from "./types";
+import { EventReportFormValues, EventReportFormProps, Photo, PhotoData } from "./types";
 import { useQueryClient } from "@tanstack/react-query";
 import { photoPlaceholders } from "@/utils/reports/constants";
 
@@ -51,15 +51,17 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         .filter((photo): photo is NonNullable<typeof photo> => photo !== null)
         .map((photo, index) => {
           let url: string;
-          if (typeof photo === 'string') {
+          const photoData = photo as string | PhotoData;
+          
+          if (typeof photoData === 'string') {
             try {
-              const parsed = JSON.parse(photo);
+              const parsed = JSON.parse(photoData);
               url = parsed.url || '';
             } catch {
-              url = photo;
+              url = photoData;
             }
-          } else if (typeof photo === 'object' && photo !== null) {
-            url = 'url' in photo ? photo.url : '';
+          } else if (photoData && typeof photoData === 'object' && 'url' in photoData) {
+            url = typeof photoData.url === 'string' ? photoData.url : photoData.url.url;
           } else {
             url = '';
           }
@@ -70,7 +72,6 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
             index
           };
         });
-      console.log("Processed photos:", processedPhotos);
       setPhotos(processedPhotos);
     }
   }, [initialData]);

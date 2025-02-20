@@ -10,8 +10,12 @@ export interface EventReportFormValues {
   satisfaction_level: number;
   partners: string;
   links: string;
-  photos: string[];
+  photos: (string | PhotoData | null)[];
   photo_descriptions?: string[];
+}
+
+export interface PhotoData {
+  url: string | { url: string };
 }
 
 export interface Photo {

@@ -27,7 +27,7 @@ export const ReportPhotoUpload = ({
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('event-images')
         .upload(filePath, file);
 
@@ -61,7 +61,7 @@ export const ReportPhotoUpload = ({
 
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
-    if (photo && photo.index !== undefined) {
+    if (photo && typeof photo.index !== 'undefined') {
       let photoUrl: string;
       
       if (typeof photo.url === 'string') {
@@ -71,8 +71,8 @@ export const ReportPhotoUpload = ({
         } catch {
           photoUrl = photo.url;
         }
-      } else if (typeof photo.url === 'object' && photo.url !== null) {
-        photoUrl = 'url' in photo.url ? photo.url.url : '';
+      } else if (photo.url && typeof photo.url === 'object' && 'url' in photo.url) {
+        photoUrl = photo.url.url;
       } else {
         photoUrl = '';
       }
@@ -86,8 +86,6 @@ export const ReportPhotoUpload = ({
     }
   });
 
-  console.log("Organized photos:", organizedPhotos);
-
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -95,7 +93,6 @@ export const ReportPhotoUpload = ({
           .fill(null)
           .map((_, index) => {
             const photo = organizedPhotos[index];
-            console.log(`Rendering photo slot ${index}:`, photo);
             return (
               <Card key={index} className="p-4 space-y-4">
                 <div className="text-sm text-muted-foreground">
