@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { ImageUpload } from "@/components/ui/image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,25 +14,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
+import { ReportPhotoUpload } from "./components/ReportPhotoUpload";
+import { ReportMetricsFields } from "./components/ReportMetricsFields";
+import { EventReportFormValues, Photo } from "./types";
 
 interface EventReportFormProps {
   eventId: string;
   onClose: () => void;
 }
 
-interface EventReportFormValues {
-  report_name: string;
-  report_text: string;
-  objectives: string;
-  impact_on_participants: string;
-  speaker_name: string;
-  attendees_count: number;
-  absent_count: number;
-  satisfaction_level: number;
-}
-
 export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
-  const [photos, setPhotos] = useState<{ url: string; description: string }[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<EventReportFormValues>({
@@ -80,38 +71,6 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handlePhotoUpload = async (file: File) => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { data, error: uploadError } = await supabase.storage
-        .from('event-images')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(filePath);
-
-      setPhotos(prev => [...prev, { url: publicUrl, description: "" }]);
-      toast.success('تم رفع الصورة بنجاح');
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast.error('حدث خطأ أثناء رفع الصورة');
-    }
-  };
-
-  const handlePhotoDescriptionChange = (index: number, description: string) => {
-    setPhotos(prev => {
-      const newPhotos = [...prev];
-      newPhotos[index].description = description;
-      return newPhotos;
-    });
   };
 
   return (
@@ -187,71 +146,12 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
           )}
         />
 
-        <div className="grid grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="attendees_count"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>عدد الحضور</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="absent_count"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>عدد الغائبين</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="satisfaction_level"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>مستوى الرضا (1-5)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    min={1} 
-                    max={5} 
-                    {...field} 
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <FormLabel>صور الفعالية</FormLabel>
-          <ImageUpload onChange={handlePhotoUpload} />
-          
-          {photos.map((photo, index) => (
-            <div key={index} className="flex items-start gap-4">
-              <img src={photo.url} alt="" className="w-24 h-24 object-cover rounded" />
-              <Input
-                placeholder="وصف الصورة"
-                value={photo.description}
-                onChange={(e) => handlePhotoDescriptionChange(index, e.target.value)}
-              />
-            </div>
-          ))}
-        </div>
+        <ReportMetricsFields form={form} />
+        
+        <ReportPhotoUpload 
+          photos={photos}
+          onPhotosChange={setPhotos}
+        />
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={onClose}>
