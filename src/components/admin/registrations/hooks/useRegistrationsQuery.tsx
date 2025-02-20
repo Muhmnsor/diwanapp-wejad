@@ -37,7 +37,7 @@ export const useRegistrationsQuery = (eventId: string) => {
             project:projects(*)
           `)
           .eq(isProject ? 'project_id' : 'event_id', eventId)
-          .order('created_at', { ascending: false }); // Changed to descending order
+          .order('created_at', { ascending: true }); // تعديل الترتيب ليكون تصاعدياً
 
         if (registrationsError) {
           console.error('Error fetching registrations:', registrationsError);
@@ -45,8 +45,7 @@ export const useRegistrationsQuery = (eventId: string) => {
         }
 
         console.log('Fetched registrations:', registrationsData);
-        // Reverse the array to get oldest first
-        return (registrationsData || []).reverse();
+        return registrationsData || [];
       } catch (err) {
         console.error('Error in registration query:', err);
         throw err;
