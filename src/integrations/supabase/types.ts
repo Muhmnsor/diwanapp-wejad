@@ -1781,6 +1781,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sequential_ids: {
+        Row: {
+          created_at: string
+          id: string
+          sequential_number: number
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          sequential_number: number
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sequential_number?: number
+          type?: string
+        }
+        Relationships: []
+      }
       sync_status: {
         Row: {
           created_at: string
