@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { FileText, Archive, Filter, Download, Search, Upload, Trash2, Edit } from "lucide-react";
+import { Archive, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { format, differenceInDays } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/auth/authStore";
+import { DocumentsTable } from "@/components/documents/DocumentsTable";
+import { DocumentStats } from "@/components/documents/DocumentStats";
+import { DocumentControls } from "@/components/documents/DocumentControls";
+import { AddDocumentDialog } from "@/components/documents/AddDocumentDialog";
 
 interface Document {
   id: string;
@@ -222,199 +220,25 @@ const Documents = () => {
           </TabsList>
 
           <TabsContent value="documents" className="mt-6">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="mb-6">
-                  <Upload className="ml-2 h-4 w-4" />
-                  إضافة مستند جديد
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]" dir="rtl">
-                <DialogHeader>
-                  <DialogTitle>إضافة مستند جديد</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">اسم المستند</Label>
-                    <Input
-                      id="name"
-                      value={newDocument.name}
-                      onChange={(e) => setNewDocument({...newDocument, name: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="type">نوع المستند</Label>
-                    <Input
-                      id="type"
-                      value={newDocument.type}
-                      onChange={(e) => setNewDocument({...newDocument, type: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="expiry_date">تاريخ الانتهاء</Label>
-                    <Input
-                      id="expiry_date"
-                      type="date"
-                      value={newDocument.expiry_date}
-                      onChange={(e) => setNewDocument({...newDocument, expiry_date: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="issuer">جهة الإصدار</Label>
-                    <Input
-                      id="issuer"
-                      value={newDocument.issuer}
-                      onChange={(e) => setNewDocument({...newDocument, issuer: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="file">الملف</Label>
-                    <Input
-                      id="file"
-                      type="file"
-                      onChange={handleFileChange}
-                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                      required
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      الحد الأقصى لحجم الملف: 10 ميجابايت
-                    </p>
-                  </div>
-                  <Button type="submit" disabled={isLoading} className="w-full">
-                    {isLoading ? 'جارٍ الرفع...' : 'رفع المستند'}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <AddDocumentDialog
+              isLoading={isLoading}
+              handleSubmit={handleSubmit}
+              handleFileChange={handleFileChange}
+              newDocument={newDocument}
+              setNewDocument={setNewDocument}
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">إجمالي المستندات</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{documents.length}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">المستندات السارية</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {documents.filter(d => d.status === "ساري").length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">قريبة من الانتهاء</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {documents.filter(d => d.status === "قريب من الانتهاء").length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">المستندات المنتهية</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    {documents.filter(d => d.status === "منتهي").length}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <DocumentStats documents={documents} />
+            
+            <DocumentControls />
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="بحث في المستندات..."
-                  className="pl-10 w-full"
-                  dir="rtl"
-                />
-              </div>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                تصفية
-              </Button>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                تصدير
-              </Button>
-            </div>
-
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-center">م</TableHead>
-                    <TableHead className="text-center">اسم المستند</TableHead>
-                    <TableHead className="text-center">النوع</TableHead>
-                    <TableHead className="text-center">تاريخ الانتهاء</TableHead>
-                    <TableHead className="text-center">الأيام المتبقية</TableHead>
-                    <TableHead className="text-center">الحالة</TableHead>
-                    <TableHead className="text-center">جهة الإصدار</TableHead>
-                    <TableHead className="text-center">الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {documents.map((doc, index) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="text-center">{index + 1}</TableCell>
-                      <TableCell className="text-center font-medium">{doc.name}</TableCell>
-                      <TableCell className="text-center">{doc.type}</TableCell>
-                      <TableCell dir="ltr" className="text-center">
-                        {format(new Date(doc.expiry_date), 'dd/MM/yyyy')}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getRemainingDays(doc.expiry_date)} يوم
-                      </TableCell>
-                      <TableCell className={`text-center ${getStatusColor(doc.status)}`}>
-                        {doc.status}
-                      </TableCell>
-                      <TableCell className="text-center">{doc.issuer}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-2">
-                          {doc.file_path && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => downloadFile(doc.file_path!, doc.name)}
-                              title="تحميل"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="تعديل"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(doc.id, doc.file_path)}
-                            title="حذف"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <DocumentsTable
+              documents={documents}
+              getRemainingDays={getRemainingDays}
+              getStatusColor={getStatusColor}
+              handleDelete={handleDelete}
+              downloadFile={downloadFile}
+            />
           </TabsContent>
 
           <TabsContent value="archive" className="mt-6">
