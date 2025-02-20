@@ -25,7 +25,6 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [eventDuration, setEventDuration] = useState<number>(0);
   const queryClient = useQueryClient();
 
   const form = useForm<EventReportFormValues>({
@@ -42,7 +41,8 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         partners: "",
         links: "",
         photos: [],
-        photo_descriptions: []
+        photo_descriptions: [],
+        event_hours: 0
       })
     }
   });
@@ -52,13 +52,12 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
       const fetchEventDetails = async () => {
         const { data: event } = await supabase
           .from("events")
-          .select("title, event_hours")
+          .select("title")
           .eq("id", eventId)
           .single();
 
         if (event) {
           form.setValue("report_name", `تقرير فعالية ${event.title}`);
-          setEventDuration(event.event_hours || 0);
         }
       };
 
@@ -178,9 +177,25 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
               </FormItem>
             )}
           />
-          <div className="text-sm text-gray-600">
-            مدة الفعالية: {eventDuration} ساعات
-          </div>
+          <FormField
+            control={form.control}
+            name="event_hours"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>مدة الفعالية (بالساعات)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    placeholder="أدخل مدة الفعالية"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         
         <ReportDescriptionFields form={form} />
