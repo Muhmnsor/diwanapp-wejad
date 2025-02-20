@@ -4,7 +4,6 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Archive, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { differenceInDays } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/auth/authStore";
@@ -12,6 +11,8 @@ import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { DocumentStats } from "@/components/documents/DocumentStats";
 import { DocumentControls } from "@/components/documents/DocumentControls";
 import { AddDocumentDialog } from "@/components/documents/AddDocumentDialog";
+import { determineStatus, getStatusColor, getRemainingDays } from "@/utils/documentStatus";
+import { downloadFile, handleDelete, handleFileUpload } from "@/components/documents/DocumentOperations";
 
 interface Document {
   id: string;
@@ -37,18 +38,6 @@ const Documents = () => {
     issuer: "",
   });
 
-  const determineStatus = (expiryDate: string) => {
-    const remainingDays = differenceInDays(new Date(expiryDate), new Date());
-    
-    if (remainingDays < 0) {
-      return "منتهي";
-    } else if (remainingDays <= 30) {
-      return "قريب من الانتهاء";
-    } else {
-      return "ساري";
-    }
-  };
-
   const fetchDocuments = async () => {
     try {
       const { data, error } = await supabase
@@ -58,7 +47,6 @@ const Documents = () => {
 
       if (error) throw error;
 
-      // Update documents with calculated status
       const updatedDocuments = (data || []).map(doc => ({
         ...doc,
         status: determineStatus(doc.expiry_date)
@@ -98,110 +86,17 @@ const Documents = () => {
 
     try {
       setIsLoading(true);
-      
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, selectedFile);
-
-      if (uploadError) throw uploadError;
-
-      const status = determineStatus(newDocument.expiry_date);
-
-      const { error: insertError } = await supabase
-        .from('documents')
-        .insert({
-          ...newDocument,
-          file_path: filePath,
-          file_size: selectedFile.size,
-          file_type: selectedFile.type,
-          status: status,
-          created_by: user.id
-        });
-
-      if (insertError) {
-        await supabase.storage
-          .from('documents')
-          .remove([filePath]);
-        throw insertError;
-      }
-
-      toast.success('تم إضافة المستند بنجاح');
-      fetchDocuments();
-      setNewDocument({ name: "", type: "", expiry_date: "", issuer: "" });
-      setSelectedFile(null);
-      
-      const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
-      if (closeButton) closeButton.click();
-      
+      await handleFileUpload(selectedFile, user.id, newDocument, () => {
+        fetchDocuments();
+        setNewDocument({ name: "", type: "", expiry_date: "", issuer: "" });
+        setSelectedFile(null);
+        const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
+        if (closeButton) closeButton.click();
+      });
     } catch (error) {
-      console.error('Error adding document:', error);
-      toast.error('حدث خطأ أثناء إضافة المستند');
+      // Error already handled in handleFileUpload
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: string, filePath?: string) => {
-    try {
-      if (filePath) {
-        await supabase.storage
-          .from('documents')
-          .remove([filePath]);
-      }
-
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast.success('تم حذف المستند بنجاح');
-      fetchDocuments();
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      toast.error('حدث خطأ أثناء حذف المستند');
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ساري":
-        return "text-green-600";
-      case "قريب من الانتهاء":
-        return "text-yellow-600";
-      case "منتهي":
-        return "text-red-600";
-      default:
-        return "text-gray-600";
-    }
-  };
-
-  const getRemainingDays = (expiryDate: string) => {
-    return differenceInDays(new Date(expiryDate), new Date());
-  };
-
-  const downloadFile = async (filePath: string, fileName: string) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .download(filePath);
-
-      if (error) throw error;
-
-      const url = window.URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      toast.error('حدث خطأ أثناء تحميل الملف');
     }
   };
 
@@ -245,7 +140,7 @@ const Documents = () => {
               documents={documents}
               getRemainingDays={getRemainingDays}
               getStatusColor={getStatusColor}
-              handleDelete={handleDelete}
+              handleDelete={(id, filePath) => handleDelete(id, filePath, fetchDocuments)}
               downloadFile={downloadFile}
             />
           </TabsContent>
