@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -146,7 +145,10 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
           )}
         />
 
-        <ReportMetricsFields form={form} />
+        <ReportMetricsFields 
+          form={form} 
+          eventId={eventId}
+        />
         
         <ReportPhotoUpload 
           photos={photos}
