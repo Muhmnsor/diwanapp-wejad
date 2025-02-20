@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
 import { Photo } from "../types";
@@ -44,7 +45,7 @@ export const ReportPhotoUpload = ({
         description: photoPlaceholders[index],
         index: index
       };
-      onPhotosChange(newPhotos.filter(Boolean));
+      onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -55,14 +56,14 @@ export const ReportPhotoUpload = ({
   const handleRemovePhoto = (index: number) => {
     const newPhotos = [...photos];
     newPhotos[index] = null;
-    onPhotosChange(newPhotos.filter(Boolean));
+    onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
   };
 
   // تنظيم الصور في مصفوفة بحجم ثابت
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
-    if (photo?.index !== undefined && photo.url) {
-      const photoUrl = typeof photo.url === 'object' ? photo.url.url : photo.url;
+    if (photo?.index !== undefined && photo?.url) {
+      const photoUrl = typeof photo.url === 'object' && 'url' in photo.url ? photo.url.url : photo.url;
       organizedPhotos[photo.index] = {
         ...photo,
         url: photoUrl

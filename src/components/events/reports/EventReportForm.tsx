@@ -48,9 +48,9 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   useEffect(() => {
     if (initialData?.photos?.length) {
       const processedPhotos = initialData.photos
-        .filter((photo): photo is string | { url: string } => photo !== null)
+        .filter((photo): photo is NonNullable<typeof photo> => photo !== null)
         .map((photo, index) => {
-          const url = typeof photo === 'object' ? photo.url : photo;
+          const url = typeof photo === 'object' && 'url' in photo ? photo.url : photo;
           return {
             url,
             description: initialData.photo_descriptions?.[index] || photoPlaceholders[index],
