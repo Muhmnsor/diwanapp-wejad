@@ -651,7 +651,9 @@ export type Database = {
           files: string[] | null
           id: string
           impact_on_participants: string | null
+          links: string[] | null
           objectives: string | null
+          partners: string | null
           photo_descriptions: string[] | null
           photos: string[] | null
           program_name: string | null
@@ -680,7 +682,9 @@ export type Database = {
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
+          links?: string[] | null
           objectives?: string | null
+          partners?: string | null
           photo_descriptions?: string[] | null
           photos?: string[] | null
           program_name?: string | null
@@ -709,7 +713,9 @@ export type Database = {
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
+          links?: string[] | null
           objectives?: string | null
+          partners?: string | null
           photo_descriptions?: string[] | null
           photos?: string[] | null
           program_name?: string | null
