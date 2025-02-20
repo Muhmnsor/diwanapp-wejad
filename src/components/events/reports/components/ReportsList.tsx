@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -163,9 +162,7 @@ export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="icon">
-                        <Download className="h-4 w-4" />
-                      </Button>
+                      <EventReportDownloadButton report={report} />
                     </div>
                   </TableCell>
                 </TableRow>
