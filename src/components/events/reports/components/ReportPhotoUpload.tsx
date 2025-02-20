@@ -39,20 +39,16 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      const updatedPhotos = [...photos];
-      // تعيين الصورة في نفس الموقع المحدد
-      updatedPhotos[index] = {
+      const newPhotos = [...photos];
+      // حفظ الصورة في موقعها المحدد مع الاحتفاظ بالفهرس الأصلي
+      newPhotos[index] = {
         url: publicUrl,
         description: photoPlaceholders[index],
-        index
+        index: index
       };
 
-      // تصفية القيم الفارغة مع الحفاظ على الترتيب
-      const cleanedPhotos = updatedPhotos.map((photo, i) => 
-        photo ? { ...photo, index: i } : null
-      ).filter((p): p is Photo => p !== null);
-
-      onPhotosChange(cleanedPhotos);
+      // تصفية الصور الفارغة مع الحفاظ على الفهارس الأصلية
+      onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -61,22 +57,14 @@ export const ReportPhotoUpload = ({
   };
 
   const handleRemovePhoto = (index: number) => {
-    const updatedPhotos = [...photos];
-    // حذف الصورة مع الحفاظ على المواقع
-    updatedPhotos[index] = null;
-    
-    // تنظيف المصفوفة مع الحفاظ على ترتيب الصور المتبقية
-    const cleanedPhotos = updatedPhotos
-      .filter((p): p is Photo => p !== null)
-      .map((photo, newIndex) => ({
-        ...photo,
-        index: photo.index // الحفاظ على الفهرس الأصلي
-      }));
-
-    onPhotosChange(cleanedPhotos);
+    const newPhotos = [...photos];
+    // حذف الصورة مع الحفاظ على موقعها
+    newPhotos[index] = null;
+    // تصفية الصور الفارغة مع الحفاظ على الفهارس الأصلية
+    onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
   };
 
-  // تنظيم الصور في المواقع الصحيحة
+  // تنظيم الصور في مواقعها الصحيحة
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
     if (photo && typeof photo.index === 'number') {
