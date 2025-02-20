@@ -37,10 +37,10 @@ ${report.impact_on_participants || ''}
 -----------
 `;
 
-  const activityRatings = report.activity?.averageRatings;
-  
-  if (activityRatings) {
-    reportText += `
+  if (report.activity?.activity_feedback && report.activity.activity_feedback.length > 0) {
+    const activityRatings = report.activity.averageRatings;
+    if (activityRatings) {
+      reportText += `
 عدد المقيمين: ${activityRatings.count}
 
 التقييم العام: ${formatRating(activityRatings.overall_rating)}
@@ -48,8 +48,9 @@ ${report.impact_on_participants || ''}
 تقييم التنظيم: ${formatRating(activityRatings.organization_rating)}
 تقييم المقدم: ${formatRating(activityRatings.presenter_rating)}
 `;
+    }
   } else {
-    reportText += 'لم يتم تقييم النشاط بعد\n';
+    reportText += 'لم يتم تقييم النشاط\n';
   }
 
   reportText += `
@@ -97,3 +98,4 @@ ${report.additional_links.join('\n')}
 
   return reportText;
 }
+
