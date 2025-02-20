@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { Photo } from "../types";
+import { photoPlaceholders } from "@/utils/reports/constants";
 
 interface ReportPhotoUploadProps {
   photos: Photo[];
@@ -13,7 +14,7 @@ interface ReportPhotoUploadProps {
 }
 
 export const ReportPhotoUpload = ({ photos, onPhotosChange }: ReportPhotoUploadProps) => {
-  const handlePhotoUpload = async (file: File) => {
+  const handlePhotoUpload = async (file: File, index: number) => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
@@ -29,7 +30,9 @@ export const ReportPhotoUpload = ({ photos, onPhotosChange }: ReportPhotoUploadP
         .from('event-images')
         .getPublicUrl(filePath);
 
-      onPhotosChange([...photos, { url: publicUrl, description: "" }]);
+      const newPhotos = [...photos];
+      newPhotos[index] = { url: publicUrl, description: photoPlaceholders[index] };
+      onPhotosChange(newPhotos);
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -37,27 +40,33 @@ export const ReportPhotoUpload = ({ photos, onPhotosChange }: ReportPhotoUploadP
     }
   };
 
-  const handlePhotoDescriptionChange = (index: number, description: string) => {
-    const newPhotos = [...photos];
-    newPhotos[index].description = description;
-    onPhotosChange(newPhotos);
-  };
-
   return (
     <div className="space-y-4">
       <FormLabel>صور الفعالية</FormLabel>
-      <ImageUpload onChange={handlePhotoUpload} />
-      
-      {photos.map((photo, index) => (
-        <div key={index} className="flex items-start gap-4">
-          <img src={photo.url} alt="" className="w-24 h-24 object-cover rounded" />
-          <Input
-            placeholder="وصف الصورة"
-            value={photo.description}
-            onChange={(e) => handlePhotoDescriptionChange(index, e.target.value)}
-          />
-        </div>
-      ))}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {photoPlaceholders.map((placeholder, index) => (
+          <div key={index} className="space-y-2 bg-muted/30 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground">{placeholder}</p>
+            {photos[index]?.url ? (
+              <div className="relative">
+                <img 
+                  src={photos[index].url} 
+                  alt={placeholder} 
+                  className="w-full aspect-video object-cover rounded-lg"
+                />
+                <ImageUpload 
+                  value={photos[index].url}
+                  onChange={(file) => handlePhotoUpload(file, index)} 
+                />
+              </div>
+            ) : (
+              <ImageUpload 
+                onChange={(file) => handlePhotoUpload(file, index)} 
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

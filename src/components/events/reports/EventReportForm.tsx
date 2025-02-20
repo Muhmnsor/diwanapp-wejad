@@ -24,7 +24,7 @@ interface EventReportFormProps {
 }
 
 export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<EventReportFormValues>({
@@ -55,8 +55,8 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
       const { error: insertError } = await supabase.from("event_reports").insert({
         ...values,
         event_id: eventId,
-        photos: photos.map(p => p.url),
-        photo_descriptions: photos.map(p => p.description),
+        photos: photos.filter(Boolean).map(p => p.url),
+        photo_descriptions: photos.filter(Boolean).map(p => p.description),
         execution_date: eventData.date,
         execution_time: eventData.time,
       });
