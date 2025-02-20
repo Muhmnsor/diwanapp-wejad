@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format, differenceInDays } from "date-fns";
 import { ar } from "date-fns/locale";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 // بيانات تجريبية للمستندات
 const documents = [
@@ -38,21 +37,6 @@ const documents = [
     issuer: "وزارة التجارة"
   }
 ];
-
-// بيانات تجريبية للرسوم البيانية
-const typeData = [
-  { name: "رخصة", value: 10 },
-  { name: "شهادة", value: 15 },
-  { name: "سجل", value: 8 }
-];
-
-const statusData = [
-  { name: "ساري", value: 20 },
-  { name: "قريب من الانتهاء", value: 8 },
-  { name: "منتهي", value: 5 }
-];
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const Documents = () => {
   const getStatusColor = (status: string) => {
@@ -128,57 +112,6 @@ const Documents = () => {
                 <CardContent>
                   <div className="text-2xl font-bold text-red-600">
                     {documents.filter(d => d.status === "منتهي").length}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">توزيع المستندات حسب النوع</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={typeData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          label
-                        >
-                          {typeData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">توزيع المستندات حسب الحالة</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={statusData}>
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="value" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
