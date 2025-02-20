@@ -634,69 +634,90 @@ export type Database = {
       }
       event_reports: {
         Row: {
-          activity_duration: string | null
+          absent_count: number | null
+          activity_duration: number | null
           activity_objectives: string | null
           additional_links: string[] | null
-          attendees_count: string | null
+          attendees_count: number | null
           comments: string[] | null
           created_at: string
           detailed_description: string | null
           duration: string | null
+          evaluators_count: number | null
           event_id: string | null
+          execution_date: string | null
+          execution_time: string | null
           executor_id: string | null
           files: string[] | null
           id: string
           impact_on_participants: string | null
           objectives: string | null
+          photo_descriptions: string[] | null
           photos: string[] | null
           program_name: string | null
           report_name: string
           report_text: string
           satisfaction_level: number | null
+          speaker_name: string | null
+          updated_at: string | null
           video_links: string[] | null
         }
         Insert: {
-          activity_duration?: string | null
+          absent_count?: number | null
+          activity_duration?: number | null
           activity_objectives?: string | null
           additional_links?: string[] | null
-          attendees_count?: string | null
+          attendees_count?: number | null
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
           duration?: string | null
+          evaluators_count?: number | null
           event_id?: string | null
+          execution_date?: string | null
+          execution_time?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
           objectives?: string | null
+          photo_descriptions?: string[] | null
           photos?: string[] | null
           program_name?: string | null
           report_name: string
           report_text: string
           satisfaction_level?: number | null
+          speaker_name?: string | null
+          updated_at?: string | null
           video_links?: string[] | null
         }
         Update: {
-          activity_duration?: string | null
+          absent_count?: number | null
+          activity_duration?: number | null
           activity_objectives?: string | null
           additional_links?: string[] | null
-          attendees_count?: string | null
+          attendees_count?: number | null
           comments?: string[] | null
           created_at?: string
           detailed_description?: string | null
           duration?: string | null
+          evaluators_count?: number | null
           event_id?: string | null
+          execution_date?: string | null
+          execution_time?: string | null
           executor_id?: string | null
           files?: string[] | null
           id?: string
           impact_on_participants?: string | null
           objectives?: string | null
+          photo_descriptions?: string[] | null
           photos?: string[] | null
           program_name?: string | null
           report_name?: string
           report_text?: string
           satisfaction_level?: number | null
+          speaker_name?: string | null
+          updated_at?: string | null
           video_links?: string[] | null
         }
         Relationships: [
@@ -712,6 +733,13 @@ export type Database = {
             columns: ["executor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_event_reports_event"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
