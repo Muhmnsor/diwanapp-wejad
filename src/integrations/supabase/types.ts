@@ -2156,12 +2156,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_next_registration_number: {
-        Args: {
-          event_id: string
-        }
-        Returns: string
-      }
+      generate_next_registration_number:
+        | {
+            Args: {
+              event_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_type: string
+              p_id: string
+            }
+            Returns: string
+          }
       handle_user_management: {
         Args: {
           operation: string
