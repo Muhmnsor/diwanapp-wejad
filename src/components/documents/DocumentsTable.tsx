@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Document {
   id: string;
@@ -55,10 +57,55 @@ export const DocumentsTable = ({
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatedFields, setUpdatedFields] = useState<Partial<Document>>({});
 
   const handleEdit = (document: Document) => {
     setEditingDocument(document);
+    setUpdatedFields({});
     setEditOpen(true);
+  };
+
+  const handleFieldUpdate = (field: keyof Document, value: string) => {
+    setUpdatedFields(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDocument) return;
+
+    try {
+      setIsUpdating(true);
+      const { error } = await supabase
+        .from('documents')
+        .update({
+          name: updatedFields.name || editingDocument.name,
+          type: updatedFields.type || editingDocument.type,
+          expiry_date: updatedFields.expiry_date || editingDocument.expiry_date,
+          issuer: updatedFields.issuer || editingDocument.issuer,
+        })
+        .eq('id', editingDocument.id);
+
+      if (error) throw error;
+
+      toast.success('تم تحديث المستند بنجاح');
+      setEditOpen(false);
+      
+      // تحديث القائمة مباشرة بدون إعادة تحميل الصفحة
+      const updatedDoc = {
+        ...editingDocument,
+        ...updatedFields
+      };
+      
+      // تحديث documents في الواجهة
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Error updating document:', error);
+      toast.error('حدث خطأ أثناء تحديث المستند');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDeleteClick = (document: Document) => {
@@ -148,17 +195,21 @@ export const DocumentsTable = ({
             <DialogTitle>تعديل المستند</DialogTitle>
           </DialogHeader>
           {editingDocument && (
-            <form className="space-y-4">
+            <form onSubmit={handleUpdate} className="space-y-4">
               <div>
                 <Label htmlFor="name">اسم المستند</Label>
                 <Input
                   id="name"
                   defaultValue={editingDocument.name}
+                  onChange={(e) => handleFieldUpdate('name', e.target.value)}
                 />
               </div>
               <div>
                 <Label htmlFor="type">نوع المستند</Label>
-                <Select defaultValue={editingDocument.type}>
+                <Select 
+                  defaultValue={editingDocument.type}
+                  onValueChange={(value) => handleFieldUpdate('type', value)}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="اختر نوع المستند" />
                   </SelectTrigger>
@@ -177,6 +228,7 @@ export const DocumentsTable = ({
                   id="expiry_date"
                   type="date"
                   defaultValue={editingDocument.expiry_date}
+                  onChange={(e) => handleFieldUpdate('expiry_date', e.target.value)}
                 />
               </div>
               <div>
@@ -184,14 +236,15 @@ export const DocumentsTable = ({
                 <Input
                   id="issuer"
                   defaultValue={editingDocument.issuer}
+                  onChange={(e) => handleFieldUpdate('issuer', e.target.value)}
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditOpen(false)}>
                   إلغاء
                 </Button>
-                <Button type="submit">
-                  حفظ التغييرات
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}
                 </Button>
               </div>
             </form>
