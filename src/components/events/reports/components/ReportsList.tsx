@@ -51,7 +51,7 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
 
       console.log("Fetched reports:", data);
       return data || [];
-    },
+    }
   });
 
   const handleEdit = (report: any) => {
@@ -87,6 +87,9 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
     try {
       console.log("Attempting to delete report:", reportToDelete);
       
+      // إضافة تأخير صغير لمنع مشاكل التزامن
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const { error } = await supabase
         .from('event_reports')
         .delete()
@@ -97,14 +100,15 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
         throw error;
       }
 
+      // تحديث القائمة بعد الحذف
       await queryClient.invalidateQueries({ queryKey: ["event-reports", eventId] });
+      
       toast.success('تم حذف التقرير بنجاح');
+      setIsDeleteDialogOpen(false);
+      setReportToDelete(null);
     } catch (error) {
       console.error('Error deleting report:', error);
       toast.error('حدث خطأ أثناء حذف التقرير');
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setReportToDelete(null);
     }
   };
 
