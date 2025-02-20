@@ -43,7 +43,8 @@ export const ReportPhotoUpload = ({
       const newPhotos = [...photos];
       newPhotos[index] = {
         url: publicUrl,
-        description: photoPlaceholders[index]
+        description: photoPlaceholders[index],
+        index: index // تخزين الترتيب مع الصورة
       };
       onPhotosChange(newPhotos.filter(Boolean));
       toast.success('تم رفع الصورة بنجاح');
@@ -62,9 +63,8 @@ export const ReportPhotoUpload = ({
   // تنظيم الصور في مواقعها الصحيحة
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
-    const index = photoPlaceholders.findIndex(p => p === photo.description);
-    if (index !== -1) {
-      organizedPhotos[index] = photo;
+    if (photo && typeof photo.index === 'number') {
+      organizedPhotos[photo.index] = photo;
     }
   });
 

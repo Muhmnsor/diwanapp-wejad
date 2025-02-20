@@ -46,7 +46,13 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
 
   useEffect(() => {
     if (initialData?.photos) {
-      setPhotos(initialData.photos);
+      // تحويل الصور المستردة إلى الشكل الجديد مع الترتيب
+      const processedPhotos = initialData.photos.map((url, index) => ({
+        url,
+        description: photoPlaceholders[index],
+        index
+      }));
+      setPhotos(processedPhotos);
     }
   }, [initialData]);
 
@@ -95,8 +101,11 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
         ...values,
         event_id: eventId,
         executor_id: currentUser,
-        photos: validPhotos.map(p => p.url),
-        photo_descriptions: validPhotos.map(p => p.description),
+        photos: validPhotos.map(p => ({
+          url: p.url,
+          description: p.description,
+          index: p.index
+        })),
         links: values.links.split('\n').filter(Boolean)
       };
 

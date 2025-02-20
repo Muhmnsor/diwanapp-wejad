@@ -16,6 +16,7 @@ export interface EventReportFormValues {
 export interface Photo {
   url: string;
   description: string;
+  index: number; // إضافة الترتيب للصورة
 }
 
 export interface EventReportFormProps {
