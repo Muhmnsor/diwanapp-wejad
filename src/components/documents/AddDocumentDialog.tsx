@@ -35,7 +35,8 @@ const documentTypes = [
   "وثيقة",
   "تقرير",
   "بيان",
-  "مذكرة"
+  "مذكرة",
+  "أخرى"
 ];
 
 export const AddDocumentDialog = ({
