@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -29,6 +28,7 @@ interface Document {
 const Documents = () => {
   const { user } = useAuthStore();
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,12 +54,22 @@ const Documents = () => {
       }));
 
       setDocuments(updatedDocuments);
+      setFilteredDocuments(updatedDocuments);
     } catch (error) {
       console.error('Error fetching documents:', error);
       toast.error('حدث خطأ أثناء تحميل المستندات');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (query: string) => {
+    const filtered = documents.filter(doc => 
+      doc.name.toLowerCase().includes(query.toLowerCase()) ||
+      doc.type.toLowerCase().includes(query.toLowerCase()) ||
+      doc.issuer.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredDocuments(filtered);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,10 +146,10 @@ const Documents = () => {
 
             <DocumentStats documents={documents} />
             
-            <DocumentControls />
+            <DocumentControls onSearch={handleSearch} />
 
             <DocumentsTable
-              documents={documents}
+              documents={filteredDocuments}
               getRemainingDays={getRemainingDays}
               getStatusColor={getStatusColor}
               handleDelete={(id, filePath) => handleDelete(id, filePath, fetchDocuments)}
