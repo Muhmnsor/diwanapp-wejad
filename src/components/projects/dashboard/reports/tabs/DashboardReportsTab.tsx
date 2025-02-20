@@ -53,9 +53,9 @@ export const DashboardReportsTab = ({ projectId }: DashboardReportsTabProps) => 
         reportsData.map(async (report) => {
           if (report.activity_id) {
             const { data: feedbackData, error: feedbackError } = await supabase
-              .from('event_feedback')
+              .from('activity_feedback')
               .select('*')
-              .eq('event_id', report.activity_id);
+              .eq('activity_id', report.activity_id);
 
             if (feedbackError) {
               console.error("Error fetching feedback:", feedbackError);
