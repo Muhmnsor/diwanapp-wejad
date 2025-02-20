@@ -16,6 +16,7 @@ export const ReportFeedbackComments = ({ eventId }: ReportFeedbackCommentsProps)
         .select('feedback_text, name, phone')
         .eq('event_id', eventId)
         .not('feedback_text', 'is', null)
+        .not('feedback_text', 'eq', '') // تجاهل النصوص الفارغة
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -23,6 +24,7 @@ export const ReportFeedbackComments = ({ eventId }: ReportFeedbackCommentsProps)
     },
   });
 
+  // لا نعرض أي شيء إذا لم تكن هناك تعليقات
   if (feedback.length === 0) {
     return null;
   }
@@ -31,17 +33,19 @@ export const ReportFeedbackComments = ({ eventId }: ReportFeedbackCommentsProps)
     <div className="space-y-4">
       <h4 className="font-medium text-lg">انطباعات المشاركين</h4>
       <div className="grid gap-3">
-        {feedback.map((item, index) => (
-          <Card key={index} className="p-4 bg-muted/30">
-            <p className="text-gray-700 leading-relaxed">{item.feedback_text}</p>
-            {(item.name || item.phone) && (
-              <div className="mt-3 pt-3 border-t border-border/50 flex gap-3 text-sm text-muted-foreground">
-                {item.name && <span>الاسم: {item.name}</span>}
-                {item.phone && <span>الجوال: {item.phone}</span>}
-              </div>
-            )}
-          </Card>
-        ))}
+        {feedback
+          .filter(item => item.feedback_text?.trim()) // فلترة إضافية للتأكد من عدم وجود نصوص فارغة
+          .map((item, index) => (
+            <Card key={index} className="p-4 bg-muted/30">
+              <p className="text-gray-700 leading-relaxed">{item.feedback_text}</p>
+              {(item.name || item.phone) && (
+                <div className="mt-3 pt-3 border-t border-border/50 flex gap-3 text-sm text-muted-foreground">
+                  {item.name && <span>الاسم: {item.name}</span>}
+                  {item.phone && <span>الجوال: {item.phone}</span>}
+                </div>
+              )}
+            </Card>
+          ))}
       </div>
     </div>
   );
