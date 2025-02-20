@@ -33,29 +33,63 @@ export const PersonalInfoFields = ({
   };
 
   const validatePhone = (value: string) => {
-    const phoneRegex = /^05\d{8}$/;
-    if (value && !phoneRegex.test(value)) {
-      setErrors(prev => ({ ...prev, phone: "يجب أن يبدأ رقم الجوال ب 05 ويتكون من 10 أرقام" }));
+    // إذا كان الحقل فارغاً، لا نظهر أي خطأ
+    if (!value) {
+      setErrors(prev => ({ ...prev, phone: "" }));
+      return true;
+    }
+
+    // التحقق من أن القيمة تحتوي على أرقام فقط
+    if (!/^\d+$/.test(value)) {
+      setErrors(prev => ({ ...prev, phone: "يجب إدخال أرقام فقط" }));
       return false;
     }
+
+    // التحقق من أن الرقم يبدأ بـ 05 إذا كان طوله أكبر من رقمين
+    if (value.length >= 2 && !value.startsWith('05')) {
+      setErrors(prev => ({ ...prev, phone: "يجب أن يبدأ رقم الجوال بـ 05" }));
+      return false;
+    }
+
+    // التحقق من طول الرقم
+    if (value.length > 10) {
+      setErrors(prev => ({ ...prev, phone: "يجب ألا يتجاوز رقم الجوال 10 أرقام" }));
+      return false;
+    }
+
+    // إذا وصل الرقم إلى 10 أرقام، نتحقق من صحة التنسيق الكامل
+    if (value.length === 10) {
+      const phoneRegex = /^05\d{8}$/;
+      if (!phoneRegex.test(value)) {
+        setErrors(prev => ({ ...prev, phone: "يجب أن يتكون رقم الجوال من 10 أرقام ويبدأ بـ 05" }));
+        return false;
+      }
+    }
+
+    // إزالة رسالة الخطأ إذا كان الإدخال صحيحاً حتى الآن
     setErrors(prev => ({ ...prev, phone: "" }));
     return true;
   };
 
   const handleChange = (field: keyof RegistrationFormData, value: string) => {
-    let isValid = true;
-
     if (field === 'arabicName') {
-      isValid = validateArabicName(value);
+      if (validateArabicName(value)) {
+        setFormData(prev => ({ ...prev, [field]: value }));
+      }
     } else if (field === 'phone') {
-      // Only allow numbers and limit to 10 digits for phone
-      if (!/^\d*$/.test(value) || value.length > 10) {
+      // السماح فقط بالأرقام
+      if (!/^\d*$/.test(value)) {
         return;
       }
-      isValid = validatePhone(value);
-    }
-
-    if (isValid) {
+      // التحقق من الرقم وتحديث القيمة إذا كان صحيحاً
+      if (validatePhone(value)) {
+        setFormData(prev => ({ ...prev, [field]: value }));
+      } else {
+        // تحديث القيمة حتى لو كان هناك خطأ لنتمكن من تتبع الإدخال
+        setFormData(prev => ({ ...prev, [field]: value }));
+      }
+    } else {
+      // للحقول الأخرى مثل البريد الإلكتروني
       setFormData(prev => ({ ...prev, [field]: value }));
     }
   };
