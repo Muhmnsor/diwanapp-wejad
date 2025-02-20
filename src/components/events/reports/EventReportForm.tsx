@@ -41,34 +41,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   });
 
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      const initializePhotos = async () => {
-        try {
-          const { data: report } = await supabase
-            .from('event_reports')
-            .select('photos, photo_descriptions')
-            .eq('id', initialData.id)
-            .single();
-
-          if (report && report.photos && report.photo_descriptions) {
-            const newPhotos = Array(6).fill(null);
-            report.photos.forEach((url: string, index: number) => {
-              if (url) {
-                newPhotos[index] = {
-                  url,
-                  description: report.photo_descriptions[index] || ''
-                };
-              }
-            });
-            setPhotos(newPhotos);
-          }
-        } catch (error) {
-          console.error('Error loading photos:', error);
-        }
-      };
-
-      initializePhotos();
-    } else if (!initialData) {
+    if (!initialData) {
       const fetchEventTitle = async () => {
         const { data: event } = await supabase
           .from("events")
@@ -83,7 +56,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
 
       fetchEventTitle();
     }
-  }, [eventId, form, initialData, mode]);
+  }, [eventId, form, initialData]);
 
   useEffect(() => {
     const getCurrentUser = async () => {
