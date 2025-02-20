@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload } from "lucide-react";
-import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface NewDocument {
   name: string;
@@ -22,6 +22,21 @@ interface AddDocumentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const documentTypes = [
+  "ترخيص",
+  "شهادة",
+  "تصريح",
+  "اعتماد",
+  "خطاب",
+  "عقد",
+  "اتفاقية",
+  "سجل",
+  "وثيقة",
+  "تقرير",
+  "بيان",
+  "مذكرة"
+];
 
 export const AddDocumentDialog = ({
   isLoading,
@@ -56,12 +71,22 @@ export const AddDocumentDialog = ({
           </div>
           <div>
             <Label htmlFor="type">نوع المستند</Label>
-            <Input
-              id="type"
+            <Select
               value={newDocument.type}
-              onChange={(e) => setNewDocument({...newDocument, type: e.target.value})}
+              onValueChange={(value) => setNewDocument({...newDocument, type: value})}
               required
-            />
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="اختر نوع المستند" />
+              </SelectTrigger>
+              <SelectContent>
+                {documentTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="expiry_date">تاريخ الانتهاء</Label>
