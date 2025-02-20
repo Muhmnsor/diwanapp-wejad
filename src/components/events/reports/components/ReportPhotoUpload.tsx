@@ -63,7 +63,12 @@ export const ReportPhotoUpload = ({
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
     if (photo && typeof photo.index === 'number') {
-      organizedPhotos[photo.index] = photo;
+      // تأكد من أن الـ url هو سلسلة نصية
+      const photoUrl = typeof photo.url === 'object' && photo.url !== null ? photo.url.url : photo.url;
+      organizedPhotos[photo.index] = {
+        ...photo,
+        url: photoUrl
+      };
     }
   });
 

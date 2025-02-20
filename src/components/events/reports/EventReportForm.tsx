@@ -47,13 +47,17 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
 
   useEffect(() => {
     if (initialData?.photos?.length) {
-      const processedPhotos = initialData.photos.map((url, index) => ({
-        url,
-        description: initialData.photo_descriptions?.[index] || photoPlaceholders[index],
-        index
-      }));
+      const processedPhotos = initialData.photos.map((photo, index) => {
+        // إذا كان photo كائناً، نستخدم url منه مباشرة
+        const url = typeof photo === 'object' && photo !== null ? photo.url : photo;
+        return {
+          url: url,
+          description: initialData.photo_descriptions?.[index] || photoPlaceholders[index],
+          index
+        };
+      });
+      console.log("Processed photos:", processedPhotos);
       setPhotos(processedPhotos);
-      console.log("Initial photos loaded:", processedPhotos);
     }
   }, [initialData]);
 
