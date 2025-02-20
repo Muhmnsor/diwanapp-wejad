@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { LayoutDashboard, Settings, Calendar, Plus } from "lucide-react";
@@ -15,7 +16,7 @@ export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProp
   }
 
   return (
-    <div className="flex justify-center items-center gap-4 py-2 border-t">
+    <div className="flex justify-center items-center gap-2 md:gap-4 py-2 border-t">
       <Button
         variant="ghost"
         size="sm"
@@ -23,7 +24,7 @@ export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProp
         onClick={() => navigate("/dashboard")}
       >
         <LayoutDashboard className="h-4 w-4" />
-        <span>لوحة المعلومات</span>
+        <span className="hidden md:inline">لوحة المعلومات</span>
       </Button>
       
       <Button
@@ -33,7 +34,7 @@ export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProp
         onClick={() => navigate("/settings")}
       >
         <Settings className="h-4 w-4" />
-        <span>الإعدادات</span>
+        <span className="hidden md:inline">الإعدادات</span>
       </Button>
       
       <Button
@@ -43,7 +44,7 @@ export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProp
         onClick={() => navigate("/")}
       >
         <Calendar className="h-4 w-4" />
-        <span>الأحداث</span>
+        <span className="hidden md:inline">الأحداث</span>
       </Button>
       
       <Button
@@ -53,7 +54,7 @@ export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProp
         onClick={() => navigate("/events/create")}
       >
         <Plus className="h-4 w-4" />
-        <span>إنشاء فعالية</span>
+        <span className="hidden md:inline">إنشاء فعالية</span>
       </Button>
       
       <Button
@@ -63,7 +64,7 @@ export const AdminActions = ({ isAuthenticated, isEventsPage }: AdminActionsProp
         onClick={() => navigate("/create-project")}
       >
         <Plus className="h-4 w-4" />
-        <span>إنشاء مشروع</span>
+        <span className="hidden md:inline">إنشاء مشروع</span>
       </Button>
     </div>
   );
