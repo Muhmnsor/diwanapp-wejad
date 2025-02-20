@@ -39,28 +39,27 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      // نسخ المصفوفة الحالية مع الحفاظ على المواقع الأصلية
-      let updatedPhotos = [...photos];
+      // إنشاء مصفوفة منظمة جديدة
+      const organizedPhotos = Array(maxPhotos).fill(null);
       
-      // إضافة الصورة الجديدة في موقعها المحدد
-      if (!updatedPhotos.find(p => p?.index === index)) {
-        updatedPhotos.push({
-          url: publicUrl,
-          description: photoPlaceholders[index],
-          index: index
-        });
-      } else {
-        // تحديث الصورة الموجودة في نفس الموقع
-        updatedPhotos = updatedPhotos.map(p => 
-          p?.index === index ? {
-            url: publicUrl,
-            description: photoPlaceholders[index],
-            index: index
-          } : p
-        );
-      }
+      // نسخ الصور الحالية إلى مواقعها الصحيحة
+      photos.forEach(photo => {
+        if (photo && photo.index !== undefined) {
+          organizedPhotos[photo.index] = photo;
+        }
+      });
 
-      onPhotosChange(updatedPhotos);
+      // إضافة الصورة الجديدة في موقعها المحدد
+      organizedPhotos[index] = {
+        url: publicUrl,
+        description: photoPlaceholders[index],
+        index: index
+      };
+
+      // تحويل المصفوفة المنظمة إلى مصفوفة نهائية بدون القيم الفارغة
+      const finalPhotos = organizedPhotos.filter((photo): photo is Photo => photo !== null);
+      
+      onPhotosChange(finalPhotos);
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -69,9 +68,20 @@ export const ReportPhotoUpload = ({
   };
 
   const handleRemovePhoto = (index: number) => {
-    // حذف الصورة مع الحفاظ على مواقع باقي الصور
-    const updatedPhotos = photos.filter(photo => photo.index !== index);
-    onPhotosChange(updatedPhotos);
+    // إنشاء مصفوفة منظمة جديدة
+    const organizedPhotos = Array(maxPhotos).fill(null);
+    
+    // نسخ جميع الصور ما عدا الصورة المراد حذفها
+    photos.forEach(photo => {
+      if (photo && photo.index !== undefined && photo.index !== index) {
+        organizedPhotos[photo.index] = photo;
+      }
+    });
+
+    // تحويل المصفوفة المنظمة إلى مصفوفة نهائية بدون القيم الفارغة
+    const finalPhotos = organizedPhotos.filter((photo): photo is Photo => photo !== null);
+    
+    onPhotosChange(finalPhotos);
   };
 
   // تنظيم الصور في المواقع الصحيحة
