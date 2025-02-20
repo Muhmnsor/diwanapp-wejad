@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { downloadEventReport } from "@/utils/reports/downloadEventReport";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { photoPlaceholders } from "@/utils/reports/constants";
 
 interface EventReportDownloadButtonProps {
   report: any;
@@ -43,6 +44,29 @@ export const EventReportDownloadButton = ({ report }: EventReportDownloadButtonP
         .map(f => `- ${f.feedback_text}`)
         .join('\n');
 
+      // معالجة الصور وأوصافها
+      const processedPhotos = report.photos?.map((photo: any, index: number) => {
+        let url: string;
+        if (typeof photo === 'string') {
+          try {
+            const parsed = JSON.parse(photo);
+            url = parsed.url;
+          } catch {
+            url = photo;
+          }
+        } else if (photo && typeof photo === 'object') {
+          url = photo.url;
+        } else {
+          url = '';
+        }
+
+        return {
+          url,
+          description: photoPlaceholders[index] || `صورة ${index + 1}`,
+          index
+        };
+      }).filter((photo: any) => photo.url) || [];
+
       // دمج البيانات مع التقرير
       const enrichedReport = {
         ...report,
@@ -51,7 +75,9 @@ export const EventReportDownloadButton = ({ report }: EventReportDownloadButtonP
         organization_rating: Math.round(avgRatings.organization_rating),
         presenter_rating: Math.round(avgRatings.presenter_rating),
         satisfaction_level: Math.round(avgRatings.overall_rating),
-        feedback_text: feedbackTexts || 'لا توجد انطباعات مسجلة'
+        feedback_text: feedbackTexts || 'لا توجد انطباعات مسجلة',
+        photos: processedPhotos,
+        photo_descriptions: processedPhotos.map(p => p.description)
       };
 
       await downloadEventReport(enrichedReport);
