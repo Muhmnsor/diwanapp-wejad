@@ -1,4 +1,3 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { FileText, Archive, Filter, Download, Search } from "lucide-react";
@@ -35,6 +34,46 @@ const documents = [
     expiryDate: "2024-03-01",
     status: "منتهي",
     issuer: "وزارة التجارة"
+  },
+  {
+    id: 4,
+    name: "شهادة الزكاة",
+    type: "شهادة",
+    expiryDate: "2024-08-30",
+    status: "ساري",
+    issuer: "هيئة الزكاة والضريبة والجمارك"
+  },
+  {
+    id: 5,
+    name: "شهادة التأمينات",
+    type: "شهادة",
+    expiryDate: "2024-05-15",
+    status: "قريب من الانتهاء",
+    issuer: "المؤسسة العامة للتأمينات الاجتماعية"
+  },
+  {
+    id: 6,
+    name: "ترخيص الدفاع المدني",
+    type: "ترخيص",
+    expiryDate: "2024-11-20",
+    status: "ساري",
+    issuer: "المديرية العامة للدفاع المدني"
+  },
+  {
+    id: 7,
+    name: "رخصة البلدية",
+    type: "رخصة",
+    expiryDate: "2024-02-28",
+    status: "منتهي",
+    issuer: "أمانة المنطقة"
+  },
+  {
+    id: 8,
+    name: "شهادة الغرفة التجارية",
+    type: "شهادة",
+    expiryDate: "2024-09-10",
+    status: "ساري",
+    issuer: "الغرفة التجارية"
   }
 ];
 
