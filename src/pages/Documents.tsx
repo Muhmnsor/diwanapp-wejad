@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/store/auth/authStore";
 
 interface Document {
   id: string;
@@ -23,9 +24,11 @@ interface Document {
   issuer: string;
   file_path?: string;
   file_size?: number;
+  created_by?: string;
 }
 
 const Documents = () => {
+  const { user } = useAuthStore();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -54,8 +57,10 @@ const Documents = () => {
   };
 
   useEffect(() => {
-    fetchDocuments();
-  }, []);
+    if (user) {
+      fetchDocuments();
+    }
+  }, [user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,18 +80,31 @@ const Documents = () => {
       return;
     }
 
+    if (!user) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
     try {
       setIsLoading(true);
       
       // رفع الملف إلى Storage
       const fileExt = selectedFile.name.split('.').pop();
-      const filePath = `${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+      
+      console.log('Uploading file:', { filePath, fileSize: selectedFile.size, fileType: selectedFile.type });
       
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, selectedFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('File uploaded successfully, inserting document record');
 
       // إضافة المستند إلى قاعدة البيانات
       const { error: insertError } = await supabase
@@ -96,15 +114,28 @@ const Documents = () => {
           file_path: filePath,
           file_size: selectedFile.size,
           file_type: selectedFile.type,
-          status: 'ساري'
+          status: 'ساري',
+          created_by: user.id
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        // إذا فشل إدخال البيانات، نحذف الملف المرفوع
+        await supabase.storage
+          .from('documents')
+          .remove([filePath]);
+        throw insertError;
+      }
 
       toast.success('تم إضافة المستند بنجاح');
       fetchDocuments();
       setNewDocument({ name: "", type: "", expiry_date: "", issuer: "" });
       setSelectedFile(null);
+      
+      // إغلاق مربع الحوار
+      const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
+      if (closeButton) closeButton.click();
+      
     } catch (error) {
       console.error('Error adding document:', error);
       toast.error('حدث خطأ أثناء إضافة المستند');
@@ -255,7 +286,7 @@ const Documents = () => {
                       الحد الأقصى لحجم الملف: 10 ميجابايت
                     </p>
                   </div>
-                  <Button type="submit" disabled={isLoading}>
+                  <Button type="submit" disabled={isLoading} className="w-full">
                     {isLoading ? 'جارٍ الرفع...' : 'رفع المستند'}
                   </Button>
                 </form>
