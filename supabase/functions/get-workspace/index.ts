@@ -1,8 +1,13 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from "../_shared/cors.ts"
 
 const asanaAccessToken = Deno.env.get('ASANA_ACCESS_TOKEN')
+const supabaseUrl = Deno.env.get('SUPABASE_URL')
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function fetchProjectTasks(workspaceId: string) {
   console.log('🔍 Fetching project details from Asana for workspace:', workspaceId)
@@ -50,6 +55,52 @@ async function fetchProjectTasks(workspaceId: string) {
   }
 }
 
+async function saveTasksToDatabase(workspaceId: string, tasks: any[]) {
+  console.log('💾 Saving tasks to database...')
+  
+  try {
+    // أولاً نمسح المهام القديمة للمحفظة
+    const { error: deleteError } = await supabase
+      .from('portfolio_tasks')
+      .delete()
+      .eq('workspace_id', workspaceId)
+
+    if (deleteError) {
+      console.error('❌ Error deleting old tasks:', deleteError)
+      throw deleteError
+    }
+
+    // نقوم بتحويل مهام Asana إلى تنسيق قاعدة البيانات
+    const transformedTasks = tasks.map(task => ({
+      title: task.name,
+      description: task.notes,
+      due_date: task.due_on,
+      status: task.completed ? 'completed' : 'in_progress',
+      workspace_id: workspaceId,
+      asana_gid: task.gid,
+      created_at: task.created_at,
+      priority: 'medium', // قيمة افتراضية
+      assigned_to: task.assignee?.gid || null
+    }))
+
+    // نحفظ المهام الجديدة
+    const { error: insertError } = await supabase
+      .from('portfolio_tasks')
+      .insert(transformedTasks)
+
+    if (insertError) {
+      console.error('❌ Error inserting new tasks:', insertError)
+      throw insertError
+    }
+
+    console.log(`✅ Successfully saved ${transformedTasks.length} tasks`)
+    return transformedTasks
+  } catch (error) {
+    console.error('❌ Error in saveTasksToDatabase:', error)
+    throw error
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -67,10 +118,14 @@ serve(async (req) => {
       throw new Error('Asana access token not configured')
     }
 
+    // جلب المهام من Asana
     const tasks = await fetchProjectTasks(workspaceId)
+    
+    // حفظ المهام في قاعدة البيانات
+    const savedTasks = await saveTasksToDatabase(workspaceId, tasks)
 
     return new Response(
-      JSON.stringify(tasks),
+      JSON.stringify(savedTasks),
       { 
         headers: { 
           ...corsHeaders,
