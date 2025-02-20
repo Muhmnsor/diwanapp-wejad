@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -36,6 +37,18 @@ const Documents = () => {
     issuer: "",
   });
 
+  const determineStatus = (expiryDate: string) => {
+    const remainingDays = differenceInDays(new Date(expiryDate), new Date());
+    
+    if (remainingDays < 0) {
+      return "منتهي";
+    } else if (remainingDays <= 30) {
+      return "قريب من الانتهاء";
+    } else {
+      return "ساري";
+    }
+  };
+
   const fetchDocuments = async () => {
     try {
       const { data, error } = await supabase
@@ -44,7 +57,14 @@ const Documents = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDocuments(data || []);
+
+      // Update documents with calculated status
+      const updatedDocuments = (data || []).map(doc => ({
+        ...doc,
+        status: determineStatus(doc.expiry_date)
+      }));
+
+      setDocuments(updatedDocuments);
     } catch (error) {
       console.error('Error fetching documents:', error);
       toast.error('حدث خطأ أثناء تحميل المستندات');
@@ -52,12 +72,6 @@ const Documents = () => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (user) {
-      fetchDocuments();
-    }
-  }, [user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,25 +99,18 @@ const Documents = () => {
     try {
       setIsLoading(true);
       
-      // رفع الملف إلى Storage
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
-      
-      console.log('Uploading file:', { filePath, fileSize: selectedFile.size, fileType: selectedFile.type });
       
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, selectedFile);
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
-      console.log('File uploaded successfully, inserting document record');
+      const status = determineStatus(newDocument.expiry_date);
 
-      // إضافة المستند إلى قاعدة البيانات
       const { error: insertError } = await supabase
         .from('documents')
         .insert({
@@ -111,13 +118,11 @@ const Documents = () => {
           file_path: filePath,
           file_size: selectedFile.size,
           file_type: selectedFile.type,
-          status: 'ساري',
+          status: status,
           created_by: user.id
         });
 
       if (insertError) {
-        console.error('Insert error:', insertError);
-        // إذا فشل إدخال البيانات، نحذف الملف المرفوع
         await supabase.storage
           .from('documents')
           .remove([filePath]);
@@ -129,7 +134,6 @@ const Documents = () => {
       setNewDocument({ name: "", type: "", expiry_date: "", issuer: "" });
       setSelectedFile(null);
       
-      // إغلاق مربع الحوار
       const closeButton = document.querySelector('[data-dialog-close]') as HTMLButtonElement;
       if (closeButton) closeButton.click();
       
@@ -178,8 +182,7 @@ const Documents = () => {
   };
 
   const getRemainingDays = (expiryDate: string) => {
-    const remaining = differenceInDays(new Date(expiryDate), new Date());
-    return remaining;
+    return differenceInDays(new Date(expiryDate), new Date());
   };
 
   const downloadFile = async (filePath: string, fileName: string) => {
@@ -201,6 +204,12 @@ const Documents = () => {
       toast.error('حدث خطأ أثناء تحميل الملف');
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      fetchDocuments();
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen flex flex-col">
