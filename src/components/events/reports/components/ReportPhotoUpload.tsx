@@ -39,27 +39,29 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      // إنشاء مصفوفة منظمة جديدة
-      const organizedPhotos = Array(maxPhotos).fill(null);
-      
-      // نسخ الصور الحالية إلى مواقعها الصحيحة
-      photos.forEach(photo => {
-        if (photo && photo.index !== undefined) {
-          organizedPhotos[photo.index] = photo;
-        }
-      });
+      // نسخ المصفوفة الحالية
+      const newPhotos = [...photos];
 
-      // إضافة الصورة الجديدة في موقعها المحدد
-      organizedPhotos[index] = {
-        url: publicUrl,
-        description: photoPlaceholders[index],
-        index: index
-      };
-
-      // تحويل المصفوفة المنظمة إلى مصفوفة نهائية بدون القيم الفارغة
-      const finalPhotos = organizedPhotos.filter((photo): photo is Photo => photo !== null);
+      // البحث عن الصورة في الموقع المحدد
+      const existingPhotoIndex = newPhotos.findIndex(p => p.index === index);
       
-      onPhotosChange(finalPhotos);
+      // إذا وجدت صورة في هذا الموقع، نقوم بتحديثها
+      if (existingPhotoIndex !== -1) {
+        newPhotos[existingPhotoIndex] = {
+          url: publicUrl,
+          description: photoPlaceholders[index],
+          index: index
+        };
+      } else {
+        // إذا لم توجد صورة في هذا الموقع، نضيف صورة جديدة
+        newPhotos.push({
+          url: publicUrl,
+          description: photoPlaceholders[index],
+          index: index
+        });
+      }
+
+      onPhotosChange(newPhotos);
       toast.success('تم رفع الصورة بنجاح');
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -68,20 +70,9 @@ export const ReportPhotoUpload = ({
   };
 
   const handleRemovePhoto = (index: number) => {
-    // إنشاء مصفوفة منظمة جديدة
-    const organizedPhotos = Array(maxPhotos).fill(null);
-    
-    // نسخ جميع الصور ما عدا الصورة المراد حذفها
-    photos.forEach(photo => {
-      if (photo && photo.index !== undefined && photo.index !== index) {
-        organizedPhotos[photo.index] = photo;
-      }
-    });
-
-    // تحويل المصفوفة المنظمة إلى مصفوفة نهائية بدون القيم الفارغة
-    const finalPhotos = organizedPhotos.filter((photo): photo is Photo => photo !== null);
-    
-    onPhotosChange(finalPhotos);
+    // حذف الصورة مع الحفاظ على الفهارس الأصلية للصور الأخرى
+    const newPhotos = photos.filter(photo => photo.index !== index);
+    onPhotosChange(newPhotos);
   };
 
   // تنظيم الصور في المواقع الصحيحة
@@ -111,9 +102,6 @@ export const ReportPhotoUpload = ({
       }
     }
   });
-
-  console.log('Current photos:', photos);
-  console.log('Organized photos:', organizedPhotos);
 
   return (
     <div className="space-y-4">
