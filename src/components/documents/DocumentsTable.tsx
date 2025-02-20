@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download, Edit, Trash2 } from "lucide-react";
@@ -11,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { determineStatus } from "@/utils/documentStatus";
 
 interface Document {
   id: string;
@@ -89,7 +89,6 @@ export const DocumentsTable = ({
 
       if (error) throw error;
 
-      // تحديث المستند في القائمة المحلية
       const updatedDocument = {
         ...editingDocument,
         name: updatedFields.name || editingDocument.name,
