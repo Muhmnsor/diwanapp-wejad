@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ReportPhotoUpload } from "./components/ReportPhotoUpload";
 import { ReportMetricsFields } from "./components/ReportMetricsFields";
 import { EventReportFormValues, Photo } from "./types";
+import { useQuery } from "@tanstack/react-query";
 
 interface EventReportFormProps {
   eventId: string;
@@ -26,9 +28,38 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
   const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // جلب معلومات الفعالية وعدد التقارير الحالية
+  const { data: eventInfo } = useQuery({
+    queryKey: ['event-info', eventId],
+    queryFn: async () => {
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select('title')
+        .eq('id', eventId)
+        .single();
+
+      if (eventError) throw eventError;
+
+      const { count: reportsCount, error: countError } = await supabase
+        .from('event_reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', eventId);
+
+      if (countError) throw countError;
+
+      return {
+        title: eventData.title,
+        reportsCount: reportsCount || 0
+      };
+    }
+  });
+
+  // تهيئة النموذج مع الاسم التلقائي
   const form = useForm<EventReportFormValues>({
     defaultValues: {
-      report_name: "",
+      report_name: eventInfo ? 
+        `تقرير ${eventInfo.title}${eventInfo.reportsCount > 0 ? ` ${eventInfo.reportsCount + 1}` : ''}` : 
+        "",
       report_text: "",
       objectives: "",
       impact_on_participants: "",
@@ -38,6 +69,14 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
       satisfaction_level: 0,
     },
   });
+
+  // تحديث اسم التقرير عندما تتغير معلومات الفعالية
+  React.useEffect(() => {
+    if (eventInfo) {
+      const reportName = `تقرير ${eventInfo.title}${eventInfo.reportsCount > 0 ? ` ${eventInfo.reportsCount + 1}` : ''}`;
+      form.setValue('report_name', reportName);
+    }
+  }, [eventInfo, form]);
 
   const onSubmit = async (values: EventReportFormValues) => {
     try {
@@ -80,9 +119,9 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
           name="report_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>اسم التقرير</FormLabel>
+              <FormLabel>اسم التقرير (تلقائي)</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} readOnly className="bg-muted" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -167,3 +206,4 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
     </Form>
   );
 };
+
