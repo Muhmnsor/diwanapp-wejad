@@ -62,12 +62,18 @@ export const ReportPhotoUpload = ({
   // تنظيم الصور في مصفوفة بحجم ثابت
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
-    if (photo?.index !== undefined && photo?.url) {
-      const photoUrl = typeof photo.url === 'object' && 'url' in photo.url ? photo.url.url : photo.url;
-      organizedPhotos[photo.index] = {
-        ...photo,
-        url: photoUrl
-      };
+    if (photo && photo.index !== undefined) {
+      const safePhoto = photo as Photo;
+      const photoUrl = typeof safePhoto.url === 'object' && safePhoto.url && 'url' in safePhoto.url
+        ? safePhoto.url.url
+        : safePhoto.url;
+        
+      if (photoUrl) {
+        organizedPhotos[safePhoto.index] = {
+          ...safePhoto,
+          url: photoUrl
+        };
+      }
     }
   });
 

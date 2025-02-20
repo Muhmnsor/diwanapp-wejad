@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -49,14 +48,13 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
     if (initialData?.photos?.length) {
       const processedPhotos = initialData.photos
         .filter((photo): photo is NonNullable<typeof photo> => photo !== null)
-        .map((photo, index) => {
-          const url = typeof photo === 'object' && 'url' in photo ? photo.url : photo;
-          return {
-            url,
-            description: initialData.photo_descriptions?.[index] || photoPlaceholders[index],
-            index
-          };
-        });
+        .map((photo, index) => ({
+          url: typeof photo === 'object' && 'url' in photo 
+            ? (photo as { url: string }).url 
+            : String(photo),
+          description: initialData.photo_descriptions?.[index] || photoPlaceholders[index],
+          index
+        }));
       console.log("Processed photos:", processedPhotos);
       setPhotos(processedPhotos);
     }
