@@ -59,18 +59,27 @@ export const ReportPhotoUpload = ({
     onPhotosChange(newPhotos.filter((p): p is Photo => p !== null));
   };
 
-  // تنظيم الصور في مصفوفة بحجم ثابت
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
     if (photo && photo.index !== undefined) {
-      const safePhoto = photo as Photo;
-      const photoUrl = typeof safePhoto.url === 'object' && safePhoto.url && 'url' in safePhoto.url
-        ? safePhoto.url.url
-        : safePhoto.url;
-        
+      let photoUrl: string;
+      
+      if (typeof photo.url === 'string') {
+        try {
+          const parsed = JSON.parse(photo.url);
+          photoUrl = parsed.url || photo.url;
+        } catch {
+          photoUrl = photo.url;
+        }
+      } else if (typeof photo.url === 'object' && photo.url !== null) {
+        photoUrl = 'url' in photo.url ? photo.url.url : '';
+      } else {
+        photoUrl = '';
+      }
+
       if (photoUrl) {
-        organizedPhotos[safePhoto.index] = {
-          ...safePhoto,
+        organizedPhotos[photo.index] = {
+          ...photo,
           url: photoUrl
         };
       }
