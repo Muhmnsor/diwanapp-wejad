@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Button } from './button';
 import { Input } from './input';
@@ -32,22 +33,31 @@ export function ImageUpload({ onChange, value, className }: ImageUploadProps) {
         className="hidden"
         onChange={handleFileChange}
       />
-      <Button
-        type="button"
-        variant="outline"
-        onClick={handleClick}
-        className="w-full"
-      >
-        {value ? 'تغيير الصورة' : 'اختر صورة'}
-      </Button>
-      {value && (
-        <div className="relative aspect-video mt-2">
+      {value ? (
+        <div className="relative aspect-video">
           <img
             src={value}
             alt="Preview"
             className="rounded-lg object-cover w-full h-full"
           />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClick}
+            className="absolute bottom-2 right-2 bg-white/90"
+          >
+            تغيير الصورة
+          </Button>
         </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleClick}
+          className="w-full h-[160px]"
+        >
+          اختر صورة
+        </Button>
       )}
     </div>
   );

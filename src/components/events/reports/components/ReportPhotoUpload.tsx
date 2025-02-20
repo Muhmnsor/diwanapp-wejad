@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { Input } from "@/components/ui/input";
 import { FormLabel } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { Photo } from "../types";
@@ -20,7 +19,7 @@ export const ReportPhotoUpload = ({ photos, onPhotosChange }: ReportPhotoUploadP
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('event-images')
         .upload(filePath, file);
 
@@ -47,23 +46,11 @@ export const ReportPhotoUpload = ({ photos, onPhotosChange }: ReportPhotoUploadP
         {photoPlaceholders.map((placeholder, index) => (
           <div key={index} className="space-y-2 bg-muted/30 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">{placeholder}</p>
-            {photos[index]?.url ? (
-              <div className="relative">
-                <img 
-                  src={photos[index].url} 
-                  alt={placeholder} 
-                  className="w-full aspect-video object-cover rounded-lg"
-                />
-                <ImageUpload 
-                  value={photos[index].url}
-                  onChange={(file) => handlePhotoUpload(file, index)} 
-                />
-              </div>
-            ) : (
-              <ImageUpload 
-                onChange={(file) => handlePhotoUpload(file, index)} 
-              />
-            )}
+            <ImageUpload 
+              value={photos[index]?.url}
+              onChange={(file) => handlePhotoUpload(file, index)}
+              className="w-full"
+            />
           </div>
         ))}
       </div>
