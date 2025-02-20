@@ -12,6 +12,7 @@ export interface EventReportFormValues {
   links: string;
   photos: (string | PhotoData | null)[];
   photo_descriptions?: string[];
+  event_hours: number;
 }
 
 export interface PhotoData {
