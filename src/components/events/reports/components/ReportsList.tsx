@@ -25,7 +25,7 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
         .from("event_reports")
         .select(`
           *,
-          executor:executor_id (
+          profiles:executor_id (
             email
           )
         `)
@@ -67,7 +67,7 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
                   className="hover:bg-gray-50 transition-colors"
                 >
                   <TableCell className="text-center py-4 text-gray-700">
-                    {report.executor?.email || "غير معروف"}
+                    {report.profiles?.email || "غير معروف"}
                   </TableCell>
                   <TableCell className="text-center py-4 text-gray-700">
                     {report.report_name}
