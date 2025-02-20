@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { EventReportFormValues } from "../types";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
 
 interface ReportMetricsFieldsProps {
   form: UseFormReturn<EventReportFormValues>;
@@ -29,7 +30,7 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
       const calculateAverage = (ratings: (number | null)[]) => {
         const validRatings = ratings.filter((r): r is number => r !== null);
         if (validRatings.length === 0) return 0;
-        return Math.round(validRatings.reduce((sum, r) => sum + r, 0) / validRatings.length);
+        return validRatings.reduce((sum, r) => sum + r, 0) / validRatings.length;
       };
 
       const averages = {
@@ -41,13 +42,12 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
 
       console.log('Feedback averages calculated:', averages);
       
-      form.setValue('satisfaction_level', averages.overall);
+      form.setValue('satisfaction_level', Math.round(averages.overall));
       
       return averages;
     }
   });
 
-  // استعلام جديد لجلب إحصائيات الحضور
   const { data: attendanceStats } = useQuery({
     queryKey: ['event-attendance', eventId],
     queryFn: async () => {
@@ -67,7 +67,6 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
 
       console.log('Attendance stats calculated:', { present, absent });
       
-      // تحديث قيم النموذج تلقائياً
       form.setValue('attendees_count', present);
       form.setValue('absent_count', absent);
 
@@ -75,9 +74,15 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
     }
   });
 
+  const getRatingColor = (rating: number) => {
+    if (rating >= 4) return 'text-green-600 bg-green-50';
+    if (rating >= 3) return 'text-yellow-600 bg-yellow-50';
+    return 'text-red-600 bg-red-50';
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="attendees_count"
@@ -117,61 +122,48 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
             </FormItem>
           )}
         />
-
-        <FormField
-          control={form.control}
-          name="satisfaction_level"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>مستوى الرضا العام (تلقائي)</FormLabel>
-              <FormControl>
-                <Input 
-                  type="number" 
-                  min={1} 
-                  max={5} 
-                  {...field}
-                  readOnly
-                  className="bg-muted"
-                  value={feedbackAverages?.overall || 0}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </div>
 
-      <div className="bg-muted/30 p-4 rounded-lg space-y-4">
-        <h3 className="font-medium">تفاصيل التقييمات</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <FormLabel>تقييم المحتوى</FormLabel>
-            <Input 
-              type="number" 
-              readOnly 
-              className="bg-muted"
-              value={feedbackAverages?.content || 0}
-            />
+      <div className="grid grid-cols-4 gap-2">
+        <Card className={`p-4 ${getRatingColor(feedbackAverages?.overall || 0)}`}>
+          <div className="flex flex-col items-center justify-center text-center">
+            <span className="text-sm font-medium mb-2">التقييم العام</span>
+            <span className="text-2xl font-bold">
+              {feedbackAverages?.overall.toFixed(1) || '0.0'}
+            </span>
+            <span className="text-xs mt-1">من 5</span>
           </div>
-          <div>
-            <FormLabel>تقييم التنظيم</FormLabel>
-            <Input 
-              type="number" 
-              readOnly 
-              className="bg-muted"
-              value={feedbackAverages?.organization || 0}
-            />
+        </Card>
+
+        <Card className={`p-4 ${getRatingColor(feedbackAverages?.content || 0)}`}>
+          <div className="flex flex-col items-center justify-center text-center">
+            <span className="text-sm font-medium mb-2">تقييم المحتوى</span>
+            <span className="text-2xl font-bold">
+              {feedbackAverages?.content.toFixed(1) || '0.0'}
+            </span>
+            <span className="text-xs mt-1">من 5</span>
           </div>
-          <div>
-            <FormLabel>تقييم المقدم</FormLabel>
-            <Input 
-              type="number" 
-              readOnly 
-              className="bg-muted"
-              value={feedbackAverages?.presenter || 0}
-            />
+        </Card>
+
+        <Card className={`p-4 ${getRatingColor(feedbackAverages?.organization || 0)}`}>
+          <div className="flex flex-col items-center justify-center text-center">
+            <span className="text-sm font-medium mb-2">تقييم التنظيم</span>
+            <span className="text-2xl font-bold">
+              {feedbackAverages?.organization.toFixed(1) || '0.0'}
+            </span>
+            <span className="text-xs mt-1">من 5</span>
           </div>
-        </div>
+        </Card>
+
+        <Card className={`p-4 ${getRatingColor(feedbackAverages?.presenter || 0)}`}>
+          <div className="flex flex-col items-center justify-center text-center">
+            <span className="text-sm font-medium mb-2">تقييم المقدم</span>
+            <span className="text-2xl font-bold">
+              {feedbackAverages?.presenter.toFixed(1) || '0.0'}
+            </span>
+            <span className="text-xs mt-1">من 5</span>
+          </div>
+        </Card>
       </div>
     </div>
   );
