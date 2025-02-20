@@ -27,6 +27,22 @@ export const EventReportDownloadButton = ({ report }: EventReportDownloadButtonP
     }
   });
 
+  // جلب بيانات الفعالية
+  const { data: event } = useQuery({
+    queryKey: ['event', report.event_id],
+    queryFn: async () => {
+      console.log('Fetching event details:', report.event_id);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', report.event_id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const handleDownload = async () => {
     try {
       // حساب متوسطات التقييم
@@ -77,7 +93,8 @@ export const EventReportDownloadButton = ({ report }: EventReportDownloadButtonP
         satisfaction_level: Math.round(avgRatings.overall_rating),
         feedback_text: feedbackTexts || 'لا توجد انطباعات مسجلة',
         photos: processedPhotos,
-        photo_descriptions: processedPhotos.map(p => p.description)
+        photo_descriptions: processedPhotos.map(p => p.description),
+        event_title: event?.title // إضافة عنوان الفعالية
       };
 
       await downloadEventReport(enrichedReport);
