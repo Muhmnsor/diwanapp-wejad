@@ -20,7 +20,7 @@ export const EventReportDialog = ({
 }: EventReportDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle>إضافة تقرير جديد</DialogTitle>
         </DialogHeader>
