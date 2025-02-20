@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ interface EventReportFormProps {
   onClose: () => void;
 }
 
-export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
+export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClose }) => {
   const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,7 +71,7 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
   });
 
   // تحديث اسم التقرير عندما تتغير معلومات الفعالية
-  React.useEffect(() => {
+  useEffect(() => {
     if (eventInfo) {
       const reportName = `تقرير ${eventInfo.title}${eventInfo.reportsCount > 0 ? ` ${eventInfo.reportsCount + 1}` : ''}`;
       form.setValue('report_name', reportName);
@@ -206,4 +206,3 @@ export const EventReportForm = ({ eventId, onClose }: EventReportFormProps) => {
     </Form>
   );
 };
-
