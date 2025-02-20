@@ -39,27 +39,19 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      // نسخ المصفوفة الحالية
-      const newPhotos = [...photos];
-
-      // البحث عن الصورة في الموقع المحدد
-      const existingPhotoIndex = newPhotos.findIndex(p => p.index === index);
-      
-      // إذا وجدت صورة في هذا الموقع، نقوم بتحديثها
-      if (existingPhotoIndex !== -1) {
-        newPhotos[existingPhotoIndex] = {
-          url: publicUrl,
-          description: photoPlaceholders[index],
-          index: index
-        };
-      } else {
-        // إذا لم توجد صورة في هذا الموقع، نضيف صورة جديدة
-        newPhotos.push({
-          url: publicUrl,
-          description: photoPlaceholders[index],
-          index: index
-        });
-      }
+      // إنشاء نسخة جديدة من مصفوفة الصور مع الحفاظ على ترتيب الصور الموجودة
+      const newPhotos = Array(maxPhotos).fill(null).map((_, i) => {
+        if (i === index) {
+          // إضافة الصورة الجديدة في الموقع المحدد
+          return {
+            url: publicUrl,
+            description: photoPlaceholders[i],
+            index: i
+          };
+        }
+        // الحفاظ على الصور الموجودة في مواقعها
+        return photos.find(p => p.index === i) || null;
+      }).filter(Boolean); // إزالة القيم الفارغة
 
       onPhotosChange(newPhotos);
       toast.success('تم رفع الصورة بنجاح');
@@ -70,37 +62,23 @@ export const ReportPhotoUpload = ({
   };
 
   const handleRemovePhoto = (index: number) => {
-    // حذف الصورة مع الحفاظ على الفهارس الأصلية للصور الأخرى
     const newPhotos = photos.filter(photo => photo.index !== index);
     onPhotosChange(newPhotos);
   };
 
   // تنظيم الصور في المواقع الصحيحة
-  const organizedPhotos = Array(maxPhotos).fill(null);
-  photos.forEach(photo => {
-    if (photo && typeof photo.index === 'number') {
-      let photoUrl: string;
-      
-      if (typeof photo.url === 'string') {
-        try {
-          const parsed = JSON.parse(photo.url);
-          photoUrl = parsed.url || photo.url;
-        } catch {
-          photoUrl = photo.url;
-        }
-      } else if (photo.url && typeof photo.url === 'object' && 'url' in photo.url) {
-        photoUrl = (photo.url as { url: string }).url;
-      } else {
-        photoUrl = '';
-      }
+  const organizedPhotos = Array(maxPhotos).fill(null).map((_, index) => {
+    const photo = photos.find(p => p.index === index);
+    if (!photo) return null;
 
-      if (photoUrl) {
-        organizedPhotos[photo.index] = {
-          ...photo,
-          url: photoUrl
-        };
-      }
+    let photoUrl = '';
+    if (typeof photo.url === 'string') {
+      photoUrl = photo.url;
+    } else if (photo.url && typeof photo.url === 'object' && 'url' in photo.url) {
+      photoUrl = (photo.url as { url: string }).url;
     }
+
+    return photoUrl ? { ...photo, url: photoUrl } : null;
   });
 
   return (
