@@ -12,13 +12,13 @@ interface ReportMetricsFieldsProps {
 }
 
 export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps) => {
-  const { data: averageRating } = useQuery({
-    queryKey: ['event-feedback-average', eventId],
+  const { data: feedbackAverages } = useQuery({
+    queryKey: ['event-feedback-averages', eventId],
     queryFn: async () => {
-      console.log('Fetching average rating for event:', eventId);
+      console.log('Fetching feedback averages for event:', eventId);
       const { data, error } = await supabase
         .from('event_feedback')
-        .select('overall_rating')
+        .select('overall_rating, content_rating, organization_rating, presenter_rating')
         .eq('event_id', eventId);
 
       if (error) {
@@ -26,73 +26,114 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
         throw error;
       }
 
-      const ratings = data
-        .map(feedback => feedback.overall_rating)
-        .filter((rating): rating is number => rating !== null);
+      const calculateAverage = (ratings: (number | null)[]) => {
+        const validRatings = ratings.filter((r): r is number => r !== null);
+        if (validRatings.length === 0) return 0;
+        return Math.round(validRatings.reduce((sum, r) => sum + r, 0) / validRatings.length);
+      };
 
-      if (ratings.length === 0) return 0;
+      const averages = {
+        overall: calculateAverage(data.map(f => f.overall_rating)),
+        content: calculateAverage(data.map(f => f.content_rating)),
+        organization: calculateAverage(data.map(f => f.organization_rating)),
+        presenter: calculateAverage(data.map(f => f.presenter_rating))
+      };
 
-      const average = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-      console.log('Average rating calculated:', average);
+      console.log('Feedback averages calculated:', averages);
       
-      // تحديث قيمة مستوى الرضا في النموذج تلقائياً
-      form.setValue('satisfaction_level', Math.round(average));
+      // تحديث قيمة مستوى الرضا في النموذج تلقائياً باستخدام التقييم العام
+      form.setValue('satisfaction_level', averages.overall);
       
-      return Math.round(average);
+      return averages;
     }
   });
 
   return (
-    <div className="grid grid-cols-3 gap-4">
-      <FormField
-        control={form.control}
-        name="attendees_count"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>عدد الحضور</FormLabel>
-            <FormControl>
-              <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        <FormField
+          control={form.control}
+          name="attendees_count"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>عدد الحضور</FormLabel>
+              <FormControl>
+                <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="absent_count"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>عدد الغائبين</FormLabel>
-            <FormControl>
-              <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        <FormField
+          control={form.control}
+          name="absent_count"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>عدد الغائبين</FormLabel>
+              <FormControl>
+                <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="satisfaction_level"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>مستوى الرضا (تلقائي من التقييمات)</FormLabel>
-            <FormControl>
-              <Input 
-                type="number" 
-                min={1} 
-                max={5} 
-                {...field}
-                readOnly
-                className="bg-muted"
-                value={averageRating || 0}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        <FormField
+          control={form.control}
+          name="satisfaction_level"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>مستوى الرضا العام (تلقائي)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  min={1} 
+                  max={5} 
+                  {...field}
+                  readOnly
+                  className="bg-muted"
+                  value={feedbackAverages?.overall || 0}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="bg-muted/30 p-4 rounded-lg space-y-4">
+        <h3 className="font-medium">تفاصيل التقييمات</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <FormLabel>تقييم المحتوى</FormLabel>
+            <Input 
+              type="number" 
+              readOnly 
+              className="bg-muted"
+              value={feedbackAverages?.content || 0}
+            />
+          </div>
+          <div>
+            <FormLabel>تقييم التنظيم</FormLabel>
+            <Input 
+              type="number" 
+              readOnly 
+              className="bg-muted"
+              value={feedbackAverages?.organization || 0}
+            />
+          </div>
+          <div>
+            <FormLabel>تقييم المقدم</FormLabel>
+            <Input 
+              type="number" 
+              readOnly 
+              className="bg-muted"
+              value={feedbackAverages?.presenter || 0}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
