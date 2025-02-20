@@ -20,6 +20,7 @@ interface EventReportFormProps {
 export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClose }) => {
   const [photos, setPhotos] = useState<Photo[]>(Array(6).fill(null));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   const form = useForm<EventReportFormValues>({
     defaultValues: {
@@ -50,9 +51,25 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
     fetchEventTitle();
   }, [eventId, form]);
 
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser(user.id);
+      }
+    };
+
+    getCurrentUser();
+  }, []);
+
   const onSubmit = async (values: EventReportFormValues) => {
     try {
       setIsSubmitting(true);
+
+      if (!currentUser) {
+        toast.error("يجب تسجيل الدخول لإنشاء تقرير");
+        return;
+      }
 
       const { data: eventData, error: eventError } = await supabase
         .from("events")
@@ -65,13 +82,17 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({ eventId, onClo
       const { error: insertError } = await supabase.from("event_reports").insert({
         ...values,
         event_id: eventId,
+        executor_id: currentUser,
         photos: photos.filter(Boolean).map(p => p.url),
         photo_descriptions: photos.filter(Boolean).map(p => p.description),
         execution_date: eventData.date,
         execution_time: eventData.time,
       });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Error inserting report:", insertError);
+        throw insertError;
+      }
 
       toast.success("تم إضافة التقرير بنجاح");
       onClose();
