@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -19,9 +20,9 @@ export const EducationLevelField = ({ value, onChange }: EducationLevelFieldProp
           <SelectItem value="intermediate">متوسط</SelectItem>
           <SelectItem value="high_school">ثانوي</SelectItem>
           <SelectItem value="diploma">دبلوم</SelectItem>
-          <SelectItem value="bachelors">بكالوريوس</SelectItem>
-          <SelectItem value="masters">ماجستير</SelectItem>
-          <SelectItem value="doctorate">دكتوراه</SelectItem>
+          <SelectItem value="bachelor">بكالوريوس</SelectItem>
+          <SelectItem value="master">ماجستير</SelectItem>
+          <SelectItem value="phd">دكتوراه</SelectItem>
         </SelectContent>
       </Select>
     </div>

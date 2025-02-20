@@ -1,3 +1,4 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -58,6 +59,7 @@ export const RegistrationTableRow = ({
       case 'primary': return 'ابتدائي';
       case 'intermediate': return 'متوسط';
       case 'high_school': return 'ثانوي';
+      case 'diploma': return 'دبلوم';
       case 'bachelor': return 'بكالوريوس';
       case 'master': return 'ماجستير';
       case 'phd': return 'دكتوراه';
