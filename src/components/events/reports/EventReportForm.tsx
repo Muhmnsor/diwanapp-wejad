@@ -41,6 +41,21 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   });
 
   useEffect(() => {
+    if (initialData?.photos) {
+      const initialPhotos = Array(6).fill(null);
+      initialData.photos.forEach((photo, index) => {
+        if (photo) {
+          initialPhotos[index] = {
+            url: photo.url,
+            description: photo.description
+          };
+        }
+      });
+      setPhotos(initialPhotos);
+    }
+  }, [initialData]);
+
+  useEffect(() => {
     if (!initialData) {
       const fetchEventTitle = async () => {
         const { data: event } = await supabase

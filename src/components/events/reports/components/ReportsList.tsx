@@ -64,6 +64,10 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
       satisfaction_level: report.satisfaction_level || 0,
       partners: report.partners || "",
       links: report.links?.join('\n') || "",
+      photos: report.photos?.map((url: string, index: number) => ({
+        url,
+        description: report.photo_descriptions?.[index] || ""
+      })) || [],
     };
     setSelectedReport(formData);
   };
