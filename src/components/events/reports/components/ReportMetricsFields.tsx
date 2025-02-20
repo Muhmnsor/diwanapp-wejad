@@ -41,10 +41,37 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
 
       console.log('Feedback averages calculated:', averages);
       
-      // تحديث قيمة مستوى الرضا في النموذج تلقائياً باستخدام التقييم العام
       form.setValue('satisfaction_level', averages.overall);
       
       return averages;
+    }
+  });
+
+  // استعلام جديد لجلب إحصائيات الحضور
+  const { data: attendanceStats } = useQuery({
+    queryKey: ['event-attendance', eventId],
+    queryFn: async () => {
+      console.log('Fetching attendance stats for event:', eventId);
+      const { data: records, error } = await supabase
+        .from('attendance_records')
+        .select('status')
+        .eq('event_id', eventId);
+
+      if (error) {
+        console.error('Error fetching attendance:', error);
+        throw error;
+      }
+
+      const present = records?.filter(r => r.status === 'present').length || 0;
+      const absent = records?.filter(r => r.status === 'absent').length || 0;
+
+      console.log('Attendance stats calculated:', { present, absent });
+      
+      // تحديث قيم النموذج تلقائياً
+      form.setValue('attendees_count', present);
+      form.setValue('absent_count', absent);
+
+      return { present, absent };
     }
   });
 
@@ -56,9 +83,15 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
           name="attendees_count"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>عدد الحضور</FormLabel>
+              <FormLabel>عدد الحضور (تلقائي)</FormLabel>
               <FormControl>
-                <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                <Input 
+                  type="number" 
+                  {...field} 
+                  readOnly
+                  className="bg-muted"
+                  value={attendanceStats?.present || 0}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -70,9 +103,15 @@ export const ReportMetricsFields = ({ form, eventId }: ReportMetricsFieldsProps)
           name="absent_count"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>عدد الغائبين</FormLabel>
+              <FormLabel>عدد الغائبين (تلقائي)</FormLabel>
               <FormControl>
-                <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                <Input 
+                  type="number" 
+                  {...field} 
+                  readOnly
+                  className="bg-muted"
+                  value={attendanceStats?.absent || 0}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
