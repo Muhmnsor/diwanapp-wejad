@@ -39,26 +39,19 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      // نسخ المصفوفة الحالية مع الحفاظ على جميع المواقع
-      const newPhotos = [...photos];
-      
-      // إضافة أو تحديث الصورة في الموقع المحدد
-      const photoData = {
-        url: publicUrl,
-        description: photoPlaceholders[index],
-        index: index
-      };
-      
-      // البحث عن الصورة في نفس الموقع
-      const existingIndex = newPhotos.findIndex(p => p.index === index);
-      
-      if (existingIndex !== -1) {
-        // تحديث الصورة الموجودة
-        newPhotos[existingIndex] = photoData;
-      } else {
-        // إضافة الصورة الجديدة
-        newPhotos.push(photoData);
-      }
+      // إنشاء نسخة جديدة من مصفوفة الصور مع الحفاظ على ترتيب الصور الموجودة
+      const newPhotos = Array(maxPhotos).fill(null).map((_, i) => {
+        if (i === index) {
+          // إضافة الصورة الجديدة في الموقع المحدد
+          return {
+            url: publicUrl,
+            description: photoPlaceholders[i],
+            index: i
+          };
+        }
+        // الحفاظ على الصور الموجودة في مواقعها
+        return photos.find(p => p.index === i) || null;
+      }).filter(Boolean); // إزالة القيم الفارغة
 
       onPhotosChange(newPhotos);
       toast.success('تم رفع الصورة بنجاح');
@@ -69,12 +62,16 @@ export const ReportPhotoUpload = ({
   };
 
   const handleRemovePhoto = (index: number) => {
-    // حذف الصورة مع الاحتفاظ بمواقع باقي الصور كما هي
-    const newPhotos = photos.filter(photo => photo.index !== index);
+    // إنشاء نسخة جديدة من المصفوفة مع الحفاظ على المواقع
+    const newPhotos = Array(maxPhotos).fill(null).map((_, i) => {
+      if (i === index) return null; // حذف الصورة من الموقع المحدد
+      return photos.find(p => p.index === i) || null;
+    }).filter(Boolean); // إزالة القيم الفارغة
+
     onPhotosChange(newPhotos);
   };
 
-  // تنظيم الصور في مصفوفة ثابتة الطول بنفس طريقة تقارير المشاريع
+  // تنظيم الصور في المواقع الصحيحة
   const organizedPhotos = Array(maxPhotos).fill(null).map((_, index) => {
     const photo = photos.find(p => p.index === index);
     if (!photo) return null;
