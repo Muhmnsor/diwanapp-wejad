@@ -27,7 +27,7 @@ export const ReportPhotoUpload = ({
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('event-images')
         .upload(filePath, file);
 
@@ -39,7 +39,6 @@ export const ReportPhotoUpload = ({
         .from('event-images')
         .getPublicUrl(filePath);
 
-      // تحديث مصفوفة الصور مع الحفاظ على ترتيبها
       const newPhotos = [...photos];
       newPhotos[index] = {
         url: publicUrl,
@@ -60,13 +59,15 @@ export const ReportPhotoUpload = ({
     onPhotosChange(newPhotos.filter(Boolean));
   };
 
-  // تنظيم الصور في مواقعها الصحيحة
+  // تنظيم الصور في مصفوفة بحجم ثابت
   const organizedPhotos = Array(maxPhotos).fill(null);
   photos.forEach(photo => {
     if (photo && typeof photo.index === 'number') {
       organizedPhotos[photo.index] = photo;
     }
   });
+
+  console.log("Organized photos:", organizedPhotos);
 
   return (
     <div className="space-y-4">
@@ -75,6 +76,7 @@ export const ReportPhotoUpload = ({
           .fill(null)
           .map((_, index) => {
             const photo = organizedPhotos[index];
+            console.log(`Rendering photo slot ${index}:`, photo);
             return (
               <Card key={index} className="p-4 space-y-4">
                 <div className="text-sm text-muted-foreground">

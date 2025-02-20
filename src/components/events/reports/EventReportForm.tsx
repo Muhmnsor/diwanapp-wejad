@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,13 +46,14 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   });
 
   useEffect(() => {
-    if (initialData?.photos) {
+    if (initialData?.photos?.length) {
       const processedPhotos = initialData.photos.map((url, index) => ({
-        url: url,
+        url,
         description: initialData.photo_descriptions?.[index] || photoPlaceholders[index],
-        index: index
+        index
       }));
       setPhotos(processedPhotos);
+      console.log("Initial photos loaded:", processedPhotos);
     }
   }, [initialData]);
 
