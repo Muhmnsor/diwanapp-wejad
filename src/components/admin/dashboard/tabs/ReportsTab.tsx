@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
 import { EventReportForm } from "@/components/events/reports/EventReportForm";
 import { ReportsList } from "@/components/events/reports/components/ReportsList";
+import { EventReportFormValues } from "@/components/events/reports/types";
 
 interface ReportsTabProps {
   eventId: string;
@@ -11,13 +12,21 @@ interface ReportsTabProps {
 
 export const ReportsTab = ({ eventId }: ReportsTabProps) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<(EventReportFormValues & { id: string }) | null>(null);
 
   const toggleForm = () => {
     setIsFormVisible(!isFormVisible);
+    setSelectedReport(null); // Reset selected report when toggling form
   };
 
   const handleFormClose = () => {
     setIsFormVisible(false);
+    setSelectedReport(null);
+  };
+
+  const handleEdit = (report: EventReportFormValues & { id: string }) => {
+    setSelectedReport(report);
+    setIsFormVisible(true);
   };
 
   return (
@@ -49,12 +58,14 @@ export const ReportsTab = ({ eventId }: ReportsTabProps) => {
             <EventReportForm 
               eventId={eventId} 
               onClose={handleFormClose}
+              initialData={selectedReport}
+              mode={selectedReport ? "edit" : "create"}
             />
           </div>
         )}
 
         <div className={`transition-all duration-300 ${isFormVisible ? 'animate-in fade-in-50' : ''}`}>
-          <ReportsList eventId={eventId} />
+          <ReportsList eventId={eventId} onEdit={handleEdit} />
         </div>
       </div>
     </div>

@@ -13,17 +13,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { EventReportEditDialog } from "../dialogs/EventReportEditDialog";
 import { EventReportFormValues } from "../types";
 import { ReportDeleteDialog } from "@/components/reports/shared/components/ReportDeleteDialog";
 import { toast } from "sonner";
 
 interface ReportsListProps {
   eventId: string;
+  onEdit: (report: EventReportFormValues & { id: string }) => void;
 }
 
-export const ReportsList = ({ eventId }: ReportsListProps) => {
-  const [selectedReport, setSelectedReport] = useState<(EventReportFormValues & { id: string }) | null>(null);
+export const ReportsList = ({ eventId, onEdit }: ReportsListProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -80,7 +79,7 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
       links: report.links?.join('\n') || "",
       photos
     };
-    setSelectedReport(formData);
+    onEdit(formData);
   };
 
   const handleDelete = async () => {
@@ -175,15 +174,6 @@ export const ReportsList = ({ eventId }: ReportsListProps) => {
           </TableBody>
         </Table>
       </div>
-
-      {selectedReport && (
-        <EventReportEditDialog
-          isOpen={!!selectedReport}
-          onClose={() => setSelectedReport(null)}
-          eventId={eventId}
-          reportData={selectedReport}
-        />
-      )}
 
       <ReportDeleteDialog
         open={isDeleteDialogOpen}
