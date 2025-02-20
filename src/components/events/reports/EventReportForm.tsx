@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -41,33 +40,23 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
   });
 
   useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      const initializePhotos = async () => {
-        try {
-          const { data: report } = await supabase
-            .from('event_reports')
-            .select('photos, photo_descriptions')
-            .eq('id', initialData.id)
-            .single();
-
-          if (report && report.photos && report.photo_descriptions) {
-            const newPhotos = Array(6).fill(null);
-            report.photos.forEach((url: string, index: number) => {
-              if (url) {
-                newPhotos[index] = {
-                  url,
-                  description: report.photo_descriptions[index] || ''
-                };
-              }
-            });
-            setPhotos(newPhotos);
+    if (mode === 'edit' && initialData?.id) {
+      console.log('Initializing edit mode with data:', initialData);
+      // تهيئة الصور من البيانات الأولية مباشرة
+      if (initialData.photos && initialData.photo_descriptions) {
+        const newPhotos = Array(6).fill(null);
+        initialData.photos.forEach((url: string, index: number) => {
+          if (url) {
+            console.log('Setting photo at index:', index, 'URL:', url);
+            newPhotos[index] = {
+              url,
+              description: initialData.photo_descriptions[index] || ''
+            };
           }
-        } catch (error) {
-          console.error('Error loading photos:', error);
-        }
-      };
-
-      initializePhotos();
+        });
+        console.log('Setting photos state:', newPhotos);
+        setPhotos(newPhotos);
+      }
     } else if (!initialData) {
       const fetchEventTitle = async () => {
         const { data: event } = await supabase
@@ -101,6 +90,7 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
     try {
       setIsSubmitting(true);
       console.log("Starting report submission with user:", currentUser);
+      console.log("Current photos state:", photos);
 
       if (!currentUser) {
         console.error("No user found when submitting report");
@@ -130,12 +120,15 @@ export const EventReportForm: React.FC<EventReportFormProps> = ({
 
       if (eventError) throw eventError;
 
+      const validPhotos = photos.filter(p => p && p.url);
+      console.log("Valid photos for submission:", validPhotos);
+
       const reportData = {
         ...values,
         event_id: eventId,
         executor_id: currentUser,
-        photos: photos.filter(Boolean).map(p => p.url),
-        photo_descriptions: photos.filter(Boolean).map(p => p.description),
+        photos: validPhotos.map(p => p.url),
+        photo_descriptions: validPhotos.map(p => p.description),
         execution_date: eventData.date,
         execution_time: eventData.time,
         links: values.links.split('\n').filter(Boolean),
