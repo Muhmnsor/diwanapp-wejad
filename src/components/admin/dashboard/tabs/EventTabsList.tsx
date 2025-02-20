@@ -1,8 +1,9 @@
+
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const EventTabsList = () => {
   return (
-    <TabsList className="grid grid-cols-4 bg-secondary/20 p-1 rounded-xl">
+    <TabsList className="grid grid-cols-5 bg-secondary/20 p-1 rounded-xl">
       <TabsTrigger value="overview" className="data-[state=active]:bg-white">
         نظرة عامة
       </TabsTrigger>
@@ -14,6 +15,9 @@ export const EventTabsList = () => {
       </TabsTrigger>
       <TabsTrigger value="feedback" className="data-[state=active]:bg-white">
         التقييمات
+      </TabsTrigger>
+      <TabsTrigger value="reports" className="data-[state=active]:bg-white">
+        التقارير
       </TabsTrigger>
     </TabsList>
   );
