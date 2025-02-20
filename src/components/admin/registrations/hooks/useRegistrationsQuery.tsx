@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,7 +36,8 @@ export const useRegistrationsQuery = (eventId: string) => {
             event:events(*),
             project:projects(*)
           `)
-          .eq(isProject ? 'project_id' : 'event_id', eventId);
+          .eq(isProject ? 'project_id' : 'event_id', eventId)
+          .order('created_at', { ascending: true }); // Added order by created_at ascending
 
         if (registrationsError) {
           console.error('Error fetching registrations:', registrationsError);
