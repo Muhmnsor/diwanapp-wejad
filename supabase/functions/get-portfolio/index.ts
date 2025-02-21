@@ -1,57 +1,121 @@
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Asana } from "https://esm.sh/asana@1.0.2"
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-console.log('Hello from get-portfolio function!')
+const ASANA_ACCESS_TOKEN = Deno.env.get('ASANA_ACCESS_TOKEN')
+const ASANA_WORKSPACE_ID = Deno.env.get('ASANA_WORKSPACE_ID')
+const supabaseUrl = Deno.env.get('SUPABASE_URL')
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!)
     const { portfolioId } = await req.json()
-    console.log('Getting portfolio details for:', portfolioId)
 
-    const client = Asana.Client.create({
-      defaultHeaders: { 'Asana-Enable': 'new_project_templates,new_user_task_lists' },
-      logAsanaChangeWarnings: false
-    }).useAccessToken(Deno.env.get('ASANA_ACCESS_TOKEN'))
+    console.log('Fetching portfolio with ID:', portfolioId)
 
-    // جلب تفاصيل المحفظة من Asana
-    const portfolio = await client.portfolios.findById(portfolioId)
-    console.log('Portfolio details:', portfolio)
-
-    // جلب جميع المشاريع في المحفظة
-    const items = await client.portfolios.getItems(portfolioId, {
-      opt_fields: 'name,gid,resource_type,start_on,due_on,completed,owner,notes,status'
-    })
-    console.log('Portfolio items:', items)
-
-    // دمج المعلومات
-    const portfolioData = {
-      ...portfolio,
-      items: items.data
+    if (!portfolioId) {
+      console.error('No portfolio ID provided')
+      throw new Error('معرف المحفظة مطلوب')
     }
 
-    console.log('Final portfolio data:', portfolioData)
+    // First fetch portfolio from database
+    const { data: portfolio, error: dbError } = await supabase
+      .from('portfolios')
+      .select('*')
+      .eq('id', portfolioId)
+      .maybeSingle()
 
-    return new Response(JSON.stringify(portfolioData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    if (dbError) {
+      console.error('Database error:', dbError)
+      throw dbError
+    }
+
+    if (!portfolio) {
+      console.error('Portfolio not found in database:', portfolioId)
+      throw new Error('لم يتم العثور على المحفظة في قاعدة البيانات')
+    }
+
+    console.log('Found portfolio in database:', portfolio)
+
+    // If portfolio has Asana integration enabled and has an Asana GID
+    if (portfolio.asana_sync_enabled && portfolio.asana_gid) {
+      console.log('Fetching portfolio data from Asana:', portfolio.asana_gid)
+
+      try {
+        // Fetch portfolio projects from Asana
+        const asanaResponse = await fetch(`https://app.asana.com/api/1.0/portfolios/${portfolio.asana_gid}/items`, {
+          headers: {
+            'Authorization': `Bearer ${ASANA_ACCESS_TOKEN}`,
+            'Accept': 'application/json'
+          }
+        })
+
+        if (!asanaResponse.ok) {
+          console.error('Asana API error:', await asanaResponse.text())
+          // Don't throw here, just log the error and continue with database data
+          console.warn('Continuing with database data only')
+          return new Response(
+            JSON.stringify(portfolio),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200 
+            }
+          )
+        }
+
+        const asanaData = await asanaResponse.json()
+        console.log('Successfully fetched Asana portfolio data:', asanaData)
+
+        // Add Asana items to the response
+        return new Response(
+          JSON.stringify({
+            ...portfolio,
+            items: asanaData.data
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        )
+      } catch (asanaError) {
+        console.error('Error fetching from Asana:', asanaError)
+        // Don't throw here, just log the error and continue with database data
+        console.warn('Continuing with database data only')
+        return new Response(
+          JSON.stringify(portfolio),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        )
+      }
+    }
+
+    // If no Asana integration, just return the portfolio data
+    return new Response(
+      JSON.stringify(portfolio),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
+    )
 
   } catch (error) {
-    console.error('Error in get-portfolio:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    console.error('Error in get-portfolio function:', error)
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'حدث خطأ أثناء جلب بيانات المحفظة'
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400 
+      }
+    )
   }
 })

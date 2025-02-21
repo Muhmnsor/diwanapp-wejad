@@ -33,11 +33,7 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         const workspace = await getOrCreateWorkspace(workspaceId);
         console.log('✅ Workspace verified:', workspace);
 
-        // 2. مزامنة المهام مع Asana للحصول على أحدث البيانات
-        await syncTasksWithAsana(workspaceId);
-        console.log('✅ Tasks synced with Asana');
-        
-        // 3. جلب حالة المزامنة المحدثة
+        // 2. جلب حالة المزامنة
         const { data: syncStatus, error: syncError } = await supabase
           .from('workspace_sync_status')
           .select('*')
@@ -50,6 +46,10 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         }
 
         console.log('📊 Current sync status:', syncStatus);
+
+        // 3. مزامنة المهام مع Asana إذا لزم الأمر
+        const syncedTasks = await syncTasksWithAsana(workspaceId);
+        console.log('✅ Tasks synced:', syncedTasks);
         
         // 4. جلب المهام المحدثة
         const tasks = await fetchWorkspaceTasks(workspace.id);
@@ -65,8 +65,6 @@ export const useWorkspaceTasks = (workspaceId: string) => {
       }
     },
     retry: 2,
-    retryDelay: 1000,
-    // تحديث كل 30 ثانية للحصول على أحدث البيانات
-    refetchInterval: 30000
+    retryDelay: 1000
   });
 };

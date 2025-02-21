@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const getOrCreateWorkspace = async (workspaceId: string) => {
@@ -55,19 +54,13 @@ export const syncTasksWithAsana = async (workspaceId: string) => {
 
     if (syncError) {
       console.error('❌ Error syncing with Asana:', syncError);
-      // تحديث حالة المزامنة في حالة الخطأ
-      await updateSyncStatus(workspaceId, 'error', syncError.message);
       return null;
     }
 
-    // تحديث حالة المزامنة بعد النجاح
-    await updateSyncStatus(workspaceId, 'success');
     console.log('✅ Successfully synced tasks from Asana:', syncedTasks);
     return syncedTasks;
   } catch (error) {
     console.error('❌ Error in syncTasksWithAsana:', error);
-    // تحديث حالة المزامنة في حالة الخطأ غير المتوقع
-    await updateSyncStatus(workspaceId, 'error', error instanceof Error ? error.message : 'Unknown error');
     return null;
   }
 };
@@ -104,30 +97,3 @@ export const fetchWorkspaceTasks = async (workspaceId: string) => {
     throw error;
   }
 };
-
-// إضافة وظيفة جديدة لتحديث حالة المزامنة
-const updateSyncStatus = async (workspaceId: string, status: 'success' | 'error', errorMessage?: string) => {
-  console.log(`📝 Updating sync status for workspace ${workspaceId} to ${status}`);
-  
-  try {
-    const { error: updateError } = await supabase
-      .from('workspace_sync_status')
-      .upsert({
-        workspace_id: workspaceId,
-        last_sync_at: new Date().toISOString(),
-        last_sync_status: status,
-        sync_error: errorMessage || null
-      });
-
-    if (updateError) {
-      console.error('❌ Error updating sync status:', updateError);
-      throw updateError;
-    }
-
-    console.log('✅ Successfully updated sync status');
-  } catch (error) {
-    console.error('❌ Error in updateSyncStatus:', error);
-    throw error;
-  }
-};
-
