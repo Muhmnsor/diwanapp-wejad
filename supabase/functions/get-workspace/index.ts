@@ -9,49 +9,103 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    console.log('Starting Asana workspace fetch...')
+    console.log('Starting Asana workspace sync...')
     
     const client = Asana.Client.create({
       defaultHeaders: { 'Asana-Enable': 'new_project_templates,new_user_task_lists' },
       logAsanaChangeWarnings: false
     }).useAccessToken(Deno.env.get('ASANA_ACCESS_TOKEN'))
 
-    // جلب معرف مساحة العمل من المتغيرات البيئية
-    const workspaceId = Deno.env.get('ASANA_WORKSPACE_ID')
-    console.log('Workspace ID:', workspaceId)
+    // التحقق من وجود معرف مساحة العمل
+    const workspaceId = req.url.includes('workspaceId=') 
+      ? new URL(req.url).searchParams.get('workspaceId')
+      : Deno.env.get('ASANA_WORKSPACE_ID')
 
-    // جلب جميع المحافظ في مساحة العمل
-    const portfolios = await client.portfolios.findByWorkspace(workspaceId, {
-      opt_fields: 'name,gid,created_at,color,owner,workspace'
-    })
-    console.log('All portfolios in workspace:', portfolios.data)
-
-    // البحث عن محفظة محددة
-    const planningPortfolio = portfolios.data.find(p => p.name === 'وحدة التخطيط والجودة')
-    if (planningPortfolio) {
-      console.log('Found Planning Portfolio:', planningPortfolio)
-    } else {
-      console.log('Planning Portfolio not found in workspace')
+    if (!workspaceId) {
+      throw new Error('No workspace ID provided')
     }
 
-    return new Response(JSON.stringify({ 
-      portfolios: portfolios.data,
-      planningPortfolioFound: !!planningPortfolio 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
+    console.log('Using workspace ID:', workspaceId)
+
+    // جلب معلومات المحفظة من Asana
+    const portfoliosResponse = await client.portfolios.findByWorkspace(workspaceId, {
+      opt_fields: 'name,gid,color,owner,custom_field_settings,custom_fields,created_at,modified_at,workspace,permalink_url'
     })
 
+    console.log('Fetched portfolios:', portfoliosResponse.data)
+
+    // إنشاء عميل Supabase
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // تحديث أو إنشاء المحافظ في قاعدة البيانات
+    for (const portfolio of portfoliosResponse.data) {
+      const { data: existingPortfolio, error: checkError } = await supabaseClient
+        .from('portfolios')
+        .select('*')
+        .eq('asana_gid', portfolio.gid)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking portfolio:', checkError)
+        continue
+      }
+
+      if (!existingPortfolio) {
+        const { data: newPortfolio, error: insertError } = await supabaseClient
+          .from('portfolios')
+          .insert([{
+            name: portfolio.name,
+            asana_gid: portfolio.gid,
+            sync_enabled: true,
+          }])
+          .select()
+          .single()
+
+        if (insertError) {
+          console.error('Error inserting portfolio:', insertError)
+          continue
+        }
+
+        console.log('Created new portfolio:', newPortfolio)
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Workspace synced successfully',
+        portfolios: portfoliosResponse.data
+      }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+
   } catch (error) {
-    console.error('Error fetching workspace:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    console.error('Error in workspace sync:', error)
+    return new Response(
+      JSON.stringify({
+        error: error.message
+      }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 500
+      }
+    )
   }
 })
