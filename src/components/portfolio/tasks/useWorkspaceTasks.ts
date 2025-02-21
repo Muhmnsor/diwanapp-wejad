@@ -1,9 +1,29 @@
 
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { getOrCreateWorkspace, syncTasksWithAsana, fetchWorkspaceTasks } from './api/workspaceApi';
 
+export interface TasksData {
+  tasks: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    status: string;
+    priority: string;
+    due_date: string | null;
+    assigned_to: string | null;
+    updated_at: string;
+    asana_gid: string;
+  }>;
+  syncStatus: {
+    last_sync_at: string | null;
+    last_sync_status: string;
+    sync_error: string | null;
+  } | null;
+}
+
 export const useWorkspaceTasks = (workspaceId: string) => {
-  return useQuery({
+  return useQuery<TasksData>({
     queryKey: ['portfolio-tasks', workspaceId],
     queryFn: async () => {
       console.log('🔄 Starting task fetch process for workspace:', workspaceId);
@@ -14,11 +34,16 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         console.log('✅ Workspace verified:', workspace);
 
         // 2. جلب حالة المزامنة
-        const { data: syncStatus } = await supabase
+        const { data: syncStatus, error: syncError } = await supabase
           .from('workspace_sync_status')
           .select('*')
           .eq('workspace_id', workspaceId)
           .single();
+
+        if (syncError && syncError.code !== 'PGRST116') {
+          console.error('Error fetching sync status:', syncError);
+          throw syncError;
+        }
 
         console.log('📊 Current sync status:', syncStatus);
 
@@ -32,7 +57,7 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         
         return {
           tasks: tasks || [],
-          syncStatus: syncStatus || null
+          syncStatus: syncStatus
         };
       } catch (error) {
         console.error('❌ Error in useWorkspaceTasks:', error);

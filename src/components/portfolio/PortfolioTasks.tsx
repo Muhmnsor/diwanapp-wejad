@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,10 +8,10 @@ import { TaskList } from './tasks/TaskList';
 
 export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
-  const { data: tasks, isLoading, refetch } = useWorkspaceTasks(workspaceId);
+  const { data, isLoading, refetch } = useWorkspaceTasks(workspaceId);
 
   console.log('📊 Portfolio Tasks - Workspace ID:', workspaceId);
-  console.log('📊 Portfolio Tasks - Tasks Data:', tasks);
+  console.log('📊 Portfolio Tasks - Tasks Data:', data);
 
   const handleTaskAdded = async () => {
     await refetch();
@@ -38,7 +39,7 @@ export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
         </Button>
       </div>
 
-      <TaskList tasks={tasks || []} />
+      <TaskList tasks={data?.tasks || []} />
 
       <AddTaskDialog
         open={isAddTaskDialogOpen}
