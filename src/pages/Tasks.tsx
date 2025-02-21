@@ -12,24 +12,29 @@ const Tasks = () => {
   const [isAddPortfolioDialogOpen, setIsAddPortfolioDialogOpen] = useState(false);
 
   const handleSync = async () => {
-    console.log('🔄 Checking Asana portfolios...');
+    console.log('🔄 Starting Asana synchronization...');
     
     try {
       const { data, error } = await supabase.functions.invoke('get-workspace');
       
       if (error) {
-        console.error('❌ Error fetching Asana portfolios:', error);
-        toast.error('فشل في جلب المحافظ من Asana');
+        console.error('❌ Error during sync:', error);
+        toast.error('فشل في المزامنة مع Asana');
         return;
       }
 
-      // عرض معلومات المحافظ في وحدة التحكم للفحص
-      console.log('📊 Asana portfolios:', data.portfolios);
-      toast.success(`تم العثور على ${data.portfolios.length} محفظة في Asana`);
+      if (data.message === 'No changes since last sync') {
+        console.log('✨ No changes detected');
+        toast.success('لا توجد تغييرات جديدة');
+        return;
+      }
+
+      console.log('📊 Sync completed successfully:', data);
+      toast.success(`تم مزامنة ${data.portfolios.length} محفظة بنجاح`);
 
     } catch (error) {
       console.error('❌ Unexpected error:', error);
-      toast.error('حدث خطأ غير متوقع أثناء الفحص');
+      toast.error('حدث خطأ غير متوقع أثناء المزامنة');
     }
   };
 
