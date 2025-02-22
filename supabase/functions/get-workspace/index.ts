@@ -108,7 +108,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Portfolios synced successfully',
-        count: portfoliosResponse.data.length
+        count: portfoliosResponse.data.length,
+        portfolios: portfoliosResponse.data
       }),
       { 
         headers: { 
