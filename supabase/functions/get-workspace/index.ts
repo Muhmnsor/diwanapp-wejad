@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Asana } from "https://esm.sh/asana@1.0.2"
+import asana from 'https://esm.sh/asana@1.0.2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,30 +15,36 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting Asana workspace sync...')
+    console.log('🔄 Starting full portfolio sync...')
     
-    const client = Asana.Client.create({
+    // إنشاء عميل Asana
+    const client = asana.Client.create({
       defaultHeaders: { 'Asana-Enable': 'new_project_templates,new_user_task_lists' },
       logAsanaChangeWarnings: false
     }).useAccessToken(Deno.env.get('ASANA_ACCESS_TOKEN'))
 
-    // التحقق من وجود معرف مساحة العمل
-    const workspaceId = req.url.includes('workspaceId=') 
-      ? new URL(req.url).searchParams.get('workspaceId')
-      : Deno.env.get('ASANA_WORKSPACE_ID')
-
+    // جلب معرف مساحة العمل
+    const workspaceId = Deno.env.get('ASANA_WORKSPACE_ID')
     if (!workspaceId) {
-      throw new Error('No workspace ID provided')
+      throw new Error('ASANA_WORKSPACE_ID is not configured')
     }
 
-    console.log('Using workspace ID:', workspaceId)
+    console.log('📂 Fetching portfolios from Asana workspace:', workspaceId)
 
-    // جلب معلومات المحفظة من Asana
+    // جلب جميع المحافظ من Asana
     const portfoliosResponse = await client.portfolios.findByWorkspace(workspaceId, {
       opt_fields: 'name,gid,color,owner,custom_field_settings,custom_fields,created_at,modified_at,workspace,permalink_url'
     })
 
-    console.log('Fetched portfolios:', portfoliosResponse.data)
+    if (!portfoliosResponse.data || portfoliosResponse.data.length === 0) {
+      console.log('⚠️ No portfolios found in Asana workspace')
+      return new Response(
+        JSON.stringify({ message: 'No portfolios found in workspace' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log(`✅ Found ${portfoliosResponse.data.length} portfolios in Asana`)
 
     // إنشاء عميل Supabase
     const supabaseClient = createClient(
@@ -46,44 +52,63 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // تحديث أو إنشاء المحافظ في قاعدة البيانات
-    for (const portfolio of portfoliosResponse.data) {
-      const { data: existingPortfolio, error: checkError } = await supabaseClient
-        .from('portfolios')
-        .select('*')
-        .eq('asana_gid', portfolio.gid)
-        .single()
+    // جلب المحافظ الحالية من Supabase
+    const { data: existingPortfolios, error: fetchError } = await supabaseClient
+      .from('portfolios')
+      .select('*')
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking portfolio:', checkError)
-        continue
-      }
+    if (fetchError) {
+      console.error('❌ Error fetching existing portfolios:', fetchError)
+      throw fetchError
+    }
+
+    console.log('📊 Current portfolios in database:', existingPortfolios?.length || 0)
+
+    // تحديث أو إنشاء المحافظ
+    const syncOperations = []
+
+    for (const asanaPortfolio of portfoliosResponse.data) {
+      const existingPortfolio = existingPortfolios?.find(p => p.asana_gid === asanaPortfolio.gid)
 
       if (!existingPortfolio) {
-        const { data: newPortfolio, error: insertError } = await supabaseClient
-          .from('portfolios')
-          .insert([{
-            name: portfolio.name,
-            asana_gid: portfolio.gid,
-            sync_enabled: true,
-          }])
-          .select()
-          .single()
-
-        if (insertError) {
-          console.error('Error inserting portfolio:', insertError)
-          continue
-        }
-
-        console.log('Created new portfolio:', newPortfolio)
+        // إنشاء محفظة جديدة
+        console.log(`➕ Creating new portfolio: ${asanaPortfolio.name}`)
+        syncOperations.push(
+          supabaseClient
+            .from('portfolios')
+            .insert({
+              name: asanaPortfolio.name,
+              asana_gid: asanaPortfolio.gid,
+              description: '',
+              sync_enabled: true,
+              asana_sync_enabled: true,
+              last_sync_at: new Date().toISOString()
+            })
+        )
+      } else {
+        // تحديث المحفظة الموجودة
+        console.log(`🔄 Updating existing portfolio: ${asanaPortfolio.name}`)
+        syncOperations.push(
+          supabaseClient
+            .from('portfolios')
+            .update({
+              name: asanaPortfolio.name,
+              last_sync_at: new Date().toISOString()
+            })
+            .eq('asana_gid', asanaPortfolio.gid)
+        )
       }
     }
+
+    // تنفيذ عمليات المزامنة
+    await Promise.all(syncOperations)
+    console.log('✅ Portfolio sync completed successfully')
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Workspace synced successfully',
-        portfolios: portfoliosResponse.data
+        message: 'Portfolios synced successfully',
+        count: portfoliosResponse.data.length
       }),
       { 
         headers: { 
@@ -94,7 +119,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in workspace sync:', error)
+    console.error('❌ Error in portfolio sync:', error)
     return new Response(
       JSON.stringify({
         error: error.message
