@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DeletePortfolioDialog } from "./DeletePortfolioDialog";
 import { EditPortfolioDialog } from "./EditPortfolioDialog";
 import { PortfolioCard } from "./components/PortfolioCard";
