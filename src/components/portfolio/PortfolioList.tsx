@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +25,7 @@ export const PortfolioList = () => {
   const { data: portfolios, isLoading, error } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
-      console.log('Fetching portfolios...');
+      console.log('🔄 Fetching portfolios...');
       
       const { data: portfoliosData, error: portfoliosError } = await supabase
         .from('portfolios')
@@ -35,7 +36,7 @@ export const PortfolioList = () => {
         `);
 
       if (portfoliosError) {
-        console.error('Error fetching portfolios:', portfoliosError);
+        console.error('❌ Error fetching portfolios:', portfoliosError);
         throw portfoliosError;
       }
 
@@ -44,7 +45,7 @@ export const PortfolioList = () => {
         const onlyProjectsCount = portfolio.portfolio_only_projects[0]?.count || 0;
         const totalProjects = regularProjectsCount + onlyProjectsCount;
 
-        console.log(`Portfolio ${portfolio.name} counts:`, {
+        console.log(`📊 Portfolio ${portfolio.name} counts:`, {
           regularProjects: regularProjectsCount,
           onlyProjects: onlyProjectsCount,
           total: totalProjects
@@ -56,9 +57,17 @@ export const PortfolioList = () => {
         };
       }) || [];
 
-      console.log('Processed portfolios with counts:', portfoliosWithCounts);
+      console.log('✅ Processed portfolios with counts:', portfoliosWithCounts);
       return portfoliosWithCounts;
-    }
+    },
+    // تحديث كل 30 ثانية
+    refetchInterval: 30000,
+    // تحديث عند العودة للصفحة
+    refetchOnWindowFocus: true,
+    // تحديث عند إعادة الاتصال
+    refetchOnReconnect: true,
+    // التأكد من تحديث البيانات بعد المزامنة
+    staleTime: 0
   });
 
   const handleCardClick = (e: React.MouseEvent, portfolioId: string) => {
