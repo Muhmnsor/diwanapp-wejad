@@ -26,20 +26,24 @@ serve(async (req) => {
       throw new Error('ASANA_WORKSPACE_ID is not configured')
     }
 
-    console.log('📂 Fetching all portfolios and projects from Asana workspace:', workspaceId)
+    console.log('📂 Fetching portfolios from Asana workspace:', workspaceId)
 
-    // جلب المحافظ باستخدام API للمشاريع
-    const allPortfolios = await client.projects.findAll({
+    // جلب جميع المشاريع والمجلدات في مساحة العمل
+    const projects = await client.projects.findAll({
       workspace: workspaceId,
-      opt_fields: 'name,gid,notes,owner,created_at,modified_at,archived,public,resource_type,team,workspace',
-      archived: false,
-      resource_type: 'portfolio'
+      opt_fields: 'name,gid,notes,owner,created_at,modified_at,archived,color,team,workspace,custom_fields'
     })
 
-    const portfoliosData = []
-    for await (const portfolio of allPortfolios) {
-      if (portfolio.resource_type === 'portfolio') {
-        portfoliosData.push(portfolio)
+    let portfoliosData = []
+    for await (const project of projects) {
+      // تحقق مما إذا كان المشروع هو مجلد (محفظة)
+      const projectDetails = await client.projects.findById(project.gid, {
+        opt_fields: 'name,gid,notes,owner,created_at,modified_at,archived,color,team,workspace,custom_fields,html_notes'
+      })
+
+      if (!project.archived && projectDetails.team && projectDetails.team.name === "DFY") {
+        console.log(`📁 Found portfolio: ${project.name} (${project.gid})`)
+        portfoliosData.push(projectDetails)
       }
     }
 
@@ -91,7 +95,8 @@ serve(async (req) => {
             .from('portfolios')
             .insert(portfolioData)
         )
-      } else {
+      } else if (existingPortfolio.name !== asanaPortfolio.name || 
+                 existingPortfolio.description !== (asanaPortfolio.notes || '')) {
         console.log(`🔄 Updating existing portfolio: ${asanaPortfolio.name}`)
         syncOperations.push(
           supabaseClient
@@ -99,6 +104,8 @@ serve(async (req) => {
             .update(portfolioData)
             .eq('asana_gid', asanaPortfolio.gid)
         )
+      } else {
+        console.log(`✨ Portfolio already up to date: ${asanaPortfolio.name}`)
       }
 
       processedPortfolios.push({
@@ -107,14 +114,19 @@ serve(async (req) => {
       })
     }
 
-    // تنفيذ عمليات المزامنة بالتوازي
-    await Promise.all(syncOperations)
-    console.log('✅ Portfolio sync completed successfully')
+    // تنفيذ عمليات المزامنة
+    if (syncOperations.length > 0) {
+      console.log(`🔄 Executing ${syncOperations.length} sync operations...`)
+      await Promise.all(syncOperations)
+      console.log('✅ Portfolio sync completed successfully')
+    } else {
+      console.log('✨ All portfolios are up to date')
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Portfolios synced successfully',
+        message: syncOperations.length > 0 ? 'Portfolios synced successfully' : 'All portfolios are up to date',
         count: processedPortfolios.length,
         portfolios: processedPortfolios
       }),
