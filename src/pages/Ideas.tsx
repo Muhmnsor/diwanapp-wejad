@@ -6,6 +6,7 @@ import { Plus, FilterX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { AddIdeaDialog } from "@/components/ideas/AddIdeaDialog";
 
 interface Idea {
   id: string;
@@ -18,6 +19,7 @@ interface Idea {
 
 const Ideas = () => {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { data: ideas, isLoading } = useQuery({
     queryKey: ['ideas', filterStatus],
@@ -49,7 +51,7 @@ const Ideas = () => {
       <main className="flex-1 container mx-auto px-4 py-8" dir="rtl">
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">إدارة الأفكار</h1>
-          <Button onClick={() => console.log('Add new idea')}>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="ml-2 h-4 w-4" />
             إضافة فكرة
           </Button>
@@ -101,6 +103,11 @@ const Ideas = () => {
             ))}
           </div>
         )}
+
+        <AddIdeaDialog 
+          open={isAddDialogOpen} 
+          onOpenChange={setIsAddDialogOpen}
+        />
       </main>
 
       <Footer />
