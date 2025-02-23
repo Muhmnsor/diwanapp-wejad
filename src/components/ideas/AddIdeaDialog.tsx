@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,7 @@ import { DepartmentsSection } from "./form/DepartmentsSection";
 import { PartnersSection } from "./form/PartnersSection";
 import { CostsSection } from "./form/CostsSection";
 import { SimilarIdeasSection } from "./form/SimilarIdeasSection";
+import { SupportingFilesSection, SupportingFile } from "./form/SupportingFilesSection";
 import { AddIdeaDialogProps, Department, Partner, CostItem, SimilarIdea } from "./types";
 
 export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
@@ -29,8 +29,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [totalCost, setTotalCost] = useState(0);
   const [partners, setPartners] = useState<Partner[]>([{ name: "", contribution: "" }]);
   const [costs, setCosts] = useState<CostItem[]>([{ item: "", quantity: 0, total_cost: 0 }]);
-
-  const queryClient = useQueryClient();
+  const [supportingFiles, setSupportingFiles] = useState<SupportingFile[]>([{ name: "", file: null }]);
 
   useEffect(() => {
     const newTotal = costs.reduce((sum, cost) => sum + (cost.total_cost || 0), 0);
@@ -63,11 +62,39 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
     setSimilarIdeas(newIdeas);
   };
 
+  const handleFileChange = (index: number, field: keyof SupportingFile, value: any) => {
+    const newFiles = [...supportingFiles];
+    newFiles[index][field] = value;
+    setSupportingFiles(newFiles);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      const uploadedFiles = await Promise.all(
+        supportingFiles
+          .filter(file => file.name && file.file)
+          .map(async (file) => {
+            if (!file.file) return null;
+
+            const fileExt = file.file.name.split('.').pop();
+            const fileName = `${crypto.randomUUID()}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('idea-files')
+              .upload(fileName, file.file);
+
+            if (uploadError) throw uploadError;
+
+            return {
+              name: file.name,
+              file_path: fileName
+            };
+          })
+      );
+
       const { error } = await supabase
         .from('ideas')
         .insert([
@@ -85,6 +112,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             duration,
             idea_type: ideaType,
             similar_ideas: similarIdeas.filter(idea => idea.title || idea.link),
+            supporting_files: uploadedFiles.filter(Boolean),
             status: 'draft'
           }
         ]);
@@ -95,7 +123,6 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       onOpenChange(false);
       
-      // Reset form
       setTitle("");
       setDescription("");
       setOpportunity("");
@@ -105,10 +132,11 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       setRequiredResources("");
       setProposedDate("");
       setDuration("");
-      setIdeaType("تطويرية");
+      setIdeaType("برنامج");
       setSimilarIdeas([{ title: "", link: "" }]);
       setPartners([{ name: "", contribution: "" }]);
       setCosts([{ item: "", quantity: 0, total_cost: 0 }]);
+      setSupportingFiles([{ name: "", file: null }]);
     } catch (error) {
       console.error('Error adding idea:', error);
       toast.error("حدث خطأ أثناء إضافة الفكرة");
@@ -222,6 +250,16 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             } else {
               toast.error("لا يمكن إضافة أكثر من 10 أفكار مشابهة");
             }
+          }}
+        />
+
+        <SupportingFilesSection
+          files={supportingFiles}
+          onFileChange={handleFileChange}
+          onAddFile={() => setSupportingFiles([...supportingFiles, { name: "", file: null }])}
+          onRemoveFile={(index) => {
+            const newFiles = supportingFiles.filter((_, i) => i !== index);
+            setSupportingFiles(newFiles.length ? newFiles : [{ name: "", file: null }]);
           }}
         />
 
