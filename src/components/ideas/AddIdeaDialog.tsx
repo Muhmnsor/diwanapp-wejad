@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +31,8 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [partners, setPartners] = useState<Partner[]>([{ name: "", contribution: "" }]);
   const [costs, setCosts] = useState<CostItem[]>([{ item: "", quantity: 0, total_cost: 0 }]);
   const [supportingFiles, setSupportingFiles] = useState<SupportingFile[]>([{ name: "", file: null }]);
+  const [discussionPeriodDays, setDiscussionPeriodDays] = useState("7");
+  const [discussionPeriodHours, setDiscussionPeriodHours] = useState("0");
 
   useEffect(() => {
     const newTotal = costs.reduce((sum, cost) => sum + (cost.total_cost || 0), 0);
@@ -97,6 +98,8 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
           })
       );
 
+      const discussionPeriod = `${discussionPeriodDays} days ${discussionPeriodHours} hours`;
+
       const { error } = await supabase
         .from('ideas')
         .insert([
@@ -115,6 +118,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             idea_type: ideaType,
             similar_ideas: similarIdeas.filter(idea => idea.title || idea.link),
             supporting_files: uploadedFiles.filter(Boolean),
+            discussion_period: discussionPeriod,
             status: 'draft'
           }
         ]);
@@ -125,7 +129,6 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       onOpenChange(false);
       
-      // Reset form
       setTitle("");
       setDescription("");
       setOpportunity("");
@@ -140,6 +143,8 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       setPartners([{ name: "", contribution: "" }]);
       setCosts([{ item: "", quantity: 0, total_cost: 0 }]);
       setSupportingFiles([{ name: "", file: null }]);
+      setDiscussionPeriodDays("7");
+      setDiscussionPeriodHours("0");
     } catch (error) {
       console.error('Error adding idea:', error);
       toast.error("حدث خطأ أثناء إضافة الفكرة");
@@ -192,6 +197,39 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
               onChange={(e) => setDuration(e.target.value)}
               className="text-right"
               placeholder="مثال: 3 أشهر"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="discussionPeriodDays" className="text-right block text-sm font-medium">
+              مدة المناقشة (أيام)
+            </label>
+            <Input
+              type="number"
+              id="discussionPeriodDays"
+              value={discussionPeriodDays}
+              onChange={(e) => setDiscussionPeriodDays(e.target.value)}
+              className="text-right"
+              min="0"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="discussionPeriodHours" className="text-right block text-sm font-medium">
+              مدة المناقشة (ساعات)
+            </label>
+            <Input
+              type="number"
+              id="discussionPeriodHours"
+              value={discussionPeriodHours}
+              onChange={(e) => setDiscussionPeriodHours(e.target.value)}
+              className="text-right"
+              min="0"
+              max="23"
               required
             />
           </div>
