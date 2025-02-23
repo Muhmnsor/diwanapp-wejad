@@ -59,13 +59,27 @@ const Ideas = () => {
     }
   });
 
-  const calculateRemainingDays = (proposedDate: string) => {
+  const calculateRemainingTime = (proposedDate: string) => {
     if (!proposedDate) return "لم يتم تحديد موعد";
-    const today = new Date();
+    
+    const now = new Date();
     const proposedDay = new Date(proposedDate);
-    const diffTime = proposedDay.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? `${diffDays} يوم` : "انتهى الموعد";
+    const diffTime = proposedDay.getTime() - now.getTime();
+    
+    if (diffTime <= 0) {
+      return "انتهى الموعد";
+    }
+
+    const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) {
+      return `${days} يوم و ${hours} ساعة`;
+    } else if (hours > 0) {
+      return `${hours} ساعة`;
+    } else {
+      return "أقل من ساعة";
+    }
   };
 
   const getStatusDisplay = (status: string) => {
@@ -131,7 +145,7 @@ const Ideas = () => {
                     تاريخ الإنشاء
                   </TableHead>
                   <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
-                    الأيام المتبقية للمناقشة
+                    الوقت المتبقي للمناقشة
                   </TableHead>
                   <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
                     الحالة
@@ -169,7 +183,7 @@ const Ideas = () => {
                       <TableCell className="font-medium">{idea.title}</TableCell>
                       <TableCell>{idea.profiles?.email}</TableCell>
                       <TableCell>{new Date(idea.created_at).toLocaleDateString('ar-SA')}</TableCell>
-                      <TableCell>{calculateRemainingDays(idea.proposed_execution_date)}</TableCell>
+                      <TableCell>{calculateRemainingTime(idea.proposed_execution_date)}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(idea.status)}`}>
                           {getStatusDisplay(idea.status)}
