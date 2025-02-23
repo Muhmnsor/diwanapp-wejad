@@ -16,6 +16,7 @@ interface AddIdeaDialogProps {
 export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [opportunity, setOpportunity] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -30,6 +31,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
           {
             title,
             description,
+            opportunity,
             status: 'draft'
           }
         ]);
@@ -41,6 +43,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       onOpenChange(false);
       setTitle("");
       setDescription("");
+      setOpportunity("");
     } catch (error) {
       console.error('Error adding idea:', error);
       toast.error("حدث خطأ أثناء إضافة الفكرة");
@@ -79,6 +82,19 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
               onChange={(e) => setDescription(e.target.value)}
               className="text-right min-h-[100px]"
               placeholder="اشرح فكرتك بالتفصيل"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="opportunity" className="text-right block text-sm font-medium">
+              الفرصة التي تحققها الفكرة
+            </label>
+            <Textarea
+              id="opportunity"
+              value={opportunity}
+              onChange={(e) => setOpportunity(e.target.value)}
+              className="text-right min-h-[100px]"
+              placeholder="اشرح الفرصة التي تحققها فكرتك"
               required
             />
           </div>
