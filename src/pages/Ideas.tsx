@@ -1,4 +1,3 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useNavigate } from "react-router-dom";
 
 interface Idea {
   id: string;
@@ -29,6 +29,7 @@ interface Idea {
 }
 
 const Ideas = () => {
+  const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
@@ -59,11 +60,9 @@ const Ideas = () => {
     if (!discussionPeriod) return "لم يتم تحديد مدة";
     
     try {
-      // تحويل النص إلى أيام (مثال: "14 days" إلى 14)
       const days = parseInt(discussionPeriod.split(' ')[0]);
       if (isNaN(days)) return "تنسيق غير صحيح";
 
-      // حساب تاريخ نهاية المناقشة
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + days);
       
@@ -190,10 +189,7 @@ const Ideas = () => {
                     <TableRow 
                       key={idea.id}
                       className="hover:bg-muted/50 cursor-pointer"
-                      onClick={() => {
-                        // هنا سيتم إضافة التوجيه إلى صفحة تفاصيل الفكرة
-                        console.log('Navigate to idea details:', idea.id);
-                      }}
+                      onClick={() => navigate(`/ideas/${idea.id}`)}
                     >
                       <TableCell className="text-center font-medium text-primary hover:underline">
                         {idea.title}

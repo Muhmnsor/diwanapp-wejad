@@ -23,6 +23,7 @@ import PortfolioProjectDetails from "./pages/PortfolioProjectDetails";
 import PortfolioWorkspaceDetails from "./pages/PortfolioWorkspaceDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
+import IdeaDetails from "./pages/IdeaDetails";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -62,6 +63,7 @@ const AppRoutes = () => {
         } 
       />
       <Route path="/ideas" element={<Ideas />} />
+      <Route path="/ideas/:id" element={<IdeaDetails />} />
       <Route 
         path="/finance" 
         element={
@@ -102,7 +104,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
-      {/* Catch all route - must be last */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
