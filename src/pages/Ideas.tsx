@@ -131,33 +131,45 @@ const Ideas = () => {
             </Button>
           </div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">عنوان الفكرة</TableHead>
-                  <TableHead className="text-right">المنشئ</TableHead>
-                  <TableHead className="text-right">تاريخ الإنشاء</TableHead>
-                  <TableHead className="text-right">الأيام المتبقية للمناقشة</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ideas.map((idea) => (
-                  <TableRow key={idea.id}>
-                    <TableCell className="font-medium">{idea.title}</TableCell>
-                    <TableCell>{idea.profiles?.email}</TableCell>
-                    <TableCell>{new Date(idea.created_at).toLocaleDateString('ar-SA')}</TableCell>
-                    <TableCell>{calculateRemainingDays(idea.proposed_execution_date)}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(idea.status)}`}>
-                        {getStatusDisplay(idea.status)}
-                      </span>
-                    </TableCell>
+          <div className="rounded-md border overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50 sticky top-0">
+                  <TableRow>
+                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                      عنوان الفكرة
+                    </TableHead>
+                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                      المنشئ
+                    </TableHead>
+                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                      تاريخ الإنشاء
+                    </TableHead>
+                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                      الأيام المتبقية للمناقشة
+                    </TableHead>
+                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                      الحالة
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {ideas.map((idea) => (
+                    <TableRow key={idea.id}>
+                      <TableCell className="font-medium">{idea.title}</TableCell>
+                      <TableCell>{idea.profiles?.email}</TableCell>
+                      <TableCell>{new Date(idea.created_at).toLocaleDateString('ar-SA')}</TableCell>
+                      <TableCell>{calculateRemainingDays(idea.proposed_execution_date)}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(idea.status)}`}>
+                          {getStatusDisplay(idea.status)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
       </main>
