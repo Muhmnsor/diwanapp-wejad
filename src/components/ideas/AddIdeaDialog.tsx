@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,14 +18,13 @@ interface CostItem {
 }
 
 interface Partner {
-  name: string;
-  contribution: string;
+  value: string;
 }
 
 interface SimilarIdea {
   title: string;
   link: string;
-  file?: File | null; // Changed to make File explicitly nullable
+  file?: File | null;
 }
 
 export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
@@ -40,29 +38,17 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [proposedDate, setProposedDate] = useState("");
   const [duration, setDuration] = useState("");
   const [ideaType, setIdeaType] = useState("تطويرية");
-  const [similarIdeas, setSimilarIdeas] = useState<SimilarIdea[]>([{ title: "", link: "", file: null }]); // Initialize with null file
+  const [similarIdeas, setSimilarIdeas] = useState<SimilarIdea[]>([{ title: "", link: "", file: null }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
 
-  const [partners, setPartners] = useState<Partner[]>([{ name: "", contribution: "" }]);
+  const [partners, setPartners] = useState<string>("");
   const [costs, setCosts] = useState<CostItem[]>([{ item: "", quantity: 0, total_cost: 0 }]);
-
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     const newTotal = costs.reduce((sum, cost) => sum + (cost.total_cost || 0), 0);
     setTotalCost(newTotal);
   }, [costs]);
-
-  const handlePartnerChange = (index: number, field: keyof Partner, value: string) => {
-    const newPartners = [...partners];
-    newPartners[index][field] = value;
-    setPartners(newPartners);
-  };
-
-  const addPartner = () => {
-    setPartners([...partners, { name: "", contribution: "" }]);
-  };
 
   const handleCostChange = (index: number, field: keyof CostItem, value: number | string) => {
     const newCosts = [...costs];
@@ -84,7 +70,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
 
   const addSimilarIdea = () => {
     if (similarIdeas.length < 10) {
-      setSimilarIdeas([...similarIdeas, { title: "", link: "", file: null }]); // Include null file in new items
+      setSimilarIdeas([...similarIdeas, { title: "", link: "", file: null }]);
     } else {
       toast.error("لا يمكن إضافة أكثر من 10 أفكار مشابهة");
     }
@@ -95,6 +81,11 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
     setIsSubmitting(true);
 
     try {
+      const formattedPartners = partners.split(',').map(p => {
+        const [name, contribution = ''] = p.split(':').map(s => s.trim());
+        return { name, contribution };
+      }).filter(p => p.name);
+
       const { error } = await supabase
         .from('ideas')
         .insert([
@@ -104,7 +95,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             opportunity,
             problem,
             contributing_departments: departments.split(',').map(d => d.trim()).filter(d => d),
-            expected_partners: partners.filter(p => p.name && p.contribution),
+            expected_partners: formattedPartners,
             benefits,
             expected_costs: costs.filter(c => c.item && c.quantity > 0),
             required_resources: requiredResources,
@@ -134,7 +125,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       setDuration("");
       setIdeaType("تطويرية");
       setSimilarIdeas([{ title: "", link: "", file: null }]);
-      setPartners([{ name: "", contribution: "" }]);
+      setPartners("");
       setCosts([{ item: "", quantity: 0, total_cost: 0 }]);
     } catch (error) {
       console.error('Error adding idea:', error);
@@ -270,39 +261,16 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-right block text-sm font-medium">
+          <label htmlFor="partners" className="text-right block text-sm font-medium">
             الشركاء المتوقعون ومساهماتهم
           </label>
-          <div className="bg-muted/50 p-4 rounded-lg">
-            <div className="grid grid-cols-2 gap-2 mb-2 font-medium text-right">
-              <div>اسم الشريك</div>
-              <div>المساهمة المتوقعة</div>
-            </div>
-            {partners.map((partner, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <Input
-                  value={partner.name}
-                  onChange={(e) => handlePartnerChange(index, 'name', e.target.value)}
-                  className="text-right"
-                  placeholder="اسم الشريك"
-                />
-                <Input
-                  value={partner.contribution}
-                  onChange={(e) => handlePartnerChange(index, 'contribution', e.target.value)}
-                  className="text-right"
-                  placeholder="المساهمة المتوقعة"
-                />
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addPartner}
-              className="w-full mt-2"
-            >
-              إضافة شريك
-            </Button>
-          </div>
+          <Input
+            id="partners"
+            value={partners}
+            onChange={(e) => setPartners(e.target.value)}
+            className="text-right"
+            placeholder="أدخل الشركاء ومساهماتهم مفصولة بفواصل (مثال: شريك1:مساهمة1، شريك2:مساهمة2)"
+          />
         </div>
 
         <div className="space-y-2">
