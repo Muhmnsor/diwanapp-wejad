@@ -845,6 +845,232 @@ export type Database = {
           },
         ]
       }
+      idea_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      idea_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          idea_id: string | null
+          parent_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_comments_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "idea_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idea_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      idea_to_tags: {
+        Row: {
+          idea_id: string
+          tag_id: string
+        }
+        Insert: {
+          idea_id: string
+          tag_id: string
+        }
+        Update: {
+          idea_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_to_tags_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_to_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "idea_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idea_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          idea_id: string | null
+          title: string
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          idea_id?: string | null
+          title: string
+          updated_at?: string
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          idea_id?: string | null
+          title?: string
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_versions_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idea_votes: {
+        Row: {
+          created_at: string
+          id: string
+          idea_id: string | null
+          user_id: string | null
+          vote_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          user_id?: string | null
+          vote_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idea_id?: string | null
+          user_id?: string | null
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_votes_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ideas: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           event_id: string | null
