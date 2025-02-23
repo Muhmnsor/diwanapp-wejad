@@ -19,7 +19,7 @@ interface Idea {
 
 const Ideas = () => {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(true);
 
   const { data: ideas, isLoading } = useQuery({
     queryKey: ['ideas', filterStatus],
@@ -56,6 +56,11 @@ const Ideas = () => {
             إضافة فكرة
           </Button>
         </div>
+
+        <AddIdeaDialog 
+          open={isAddDialogOpen} 
+          onOpenChange={setIsAddDialogOpen}
+        />
 
         {isLoading ? (
           <div className="text-center py-8">جاري التحميل...</div>
@@ -103,11 +108,6 @@ const Ideas = () => {
             ))}
           </div>
         )}
-
-        <AddIdeaDialog 
-          open={isAddDialogOpen} 
-          onOpenChange={setIsAddDialogOpen}
-        />
       </main>
 
       <Footer />

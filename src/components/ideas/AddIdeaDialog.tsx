@@ -120,7 +120,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   if (!open) return null;
 
   return (
-    <div className="bg-white rounded-lg border border-border p-6 mt-6">
+    <div className="bg-white rounded-lg border border-border p-6 mb-8">
       <h2 className="text-2xl font-bold mb-6 text-right">إضافة فكرة جديدة</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <BasicInfoFields
