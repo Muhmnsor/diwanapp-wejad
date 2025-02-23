@@ -1,12 +1,14 @@
-
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, MessageSquare, ThumbsUp, ThumbsDown } from "lucide-react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface Idea {
   id: string;
@@ -26,11 +28,28 @@ interface Idea {
   proposed_execution_date: string;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  idea_id: string;
+}
+
+interface Vote {
+  vote_type: 'up' | 'down';
+  user_id: string;
+  idea_id: string;
+}
+
 const IdeaDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: idea, isLoading } = useQuery({
+  const { data: idea, isLoading: isIdeaLoading } = useQuery({
     queryKey: ['idea', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -39,14 +58,100 @@ const IdeaDetails = () => {
         .eq('id', id)
         .single();
 
-      if (error) {
-        console.error('Error fetching idea:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data as Idea;
     }
   });
+
+  const { data: comments = [], isLoading: isCommentsLoading } = useQuery({
+    queryKey: ['comments', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('idea_comments')
+        .select('*')
+        .eq('idea_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Comment[];
+    }
+  });
+
+  const { data: votes = [], isLoading: isVotesLoading } = useQuery({
+    queryKey: ['votes', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('idea_votes')
+        .select('*')
+        .eq('idea_id', id);
+
+      if (error) throw error;
+      return data as Vote[];
+    }
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const { data, error } = await supabase
+        .from('idea_comments')
+        .insert([
+          {
+            idea_id: id,
+            content,
+            user_id: 'temp-user-id' // سيتم تحديثه لاحقاً عند إضافة نظام المستخدمين
+          }
+        ]);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', id] });
+      setComment("");
+      toast.success("تم إضافة التعليق بنجاح");
+    },
+    onError: () => {
+      toast.error("حدث خطأ أثناء إضافة التعليق");
+    }
+  });
+
+  const voteMutation = useMutation({
+    mutationFn: async (voteType: 'up' | 'down') => {
+      const { data, error } = await supabase
+        .from('idea_votes')
+        .insert([
+          {
+            idea_id: id,
+            vote_type: voteType,
+            user_id: 'temp-user-id' // سيتم تحديثه لاحقاً عند إضافة نظام المستخدمين
+          }
+        ]);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['votes', id] });
+      toast.success("تم تسجيل تصويتك بنجاح");
+    },
+    onError: () => {
+      toast.error("حدث خطأ أثناء التصويت");
+    }
+  });
+
+  const handleAddComment = async () => {
+    if (!comment.trim()) return;
+    setIsSubmitting(true);
+    try {
+      await addCommentMutation.mutateAsync(comment);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVote = async (type: 'up' | 'down') => {
+    await voteMutation.mutateAsync(type);
+  };
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -78,7 +183,7 @@ const IdeaDetails = () => {
     }
   };
 
-  if (isLoading) {
+  if (isIdeaLoading || isCommentsLoading || isVotesLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
@@ -101,6 +206,9 @@ const IdeaDetails = () => {
       </div>
     );
   }
+
+  const upVotes = votes.filter(v => v.vote_type === 'up').length;
+  const downVotes = votes.filter(v => v.vote_type === 'down').length;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -198,21 +306,64 @@ const IdeaDetails = () => {
             )}
 
             {/* قسم التصويت والمناقشة */}
-            <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
-              <div className="flex gap-4">
-                <Button variant="outline" size="sm">
-                  <ThumbsUp className="ml-2 h-4 w-4" />
-                  مؤيد
-                </Button>
-                <Button variant="outline" size="sm">
-                  <ThumbsDown className="ml-2 h-4 w-4" />
-                  معارض
-                </Button>
+            <div className="space-y-6">
+              <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
+                <div className="flex gap-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleVote('up')}
+                  >
+                    <ThumbsUp className="ml-2 h-4 w-4" />
+                    مؤيد ({upVotes})
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleVote('down')}
+                  >
+                    <ThumbsDown className="ml-2 h-4 w-4" />
+                    معارض ({downVotes})
+                  </Button>
+                </div>
               </div>
-              <Button>
-                <MessageSquare className="ml-2 h-4 w-4" />
-                إضافة تعليق
-              </Button>
+
+              {/* قسم التعليقات */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">التعليقات</h2>
+                
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <Textarea
+                      placeholder="أضف تعليقك هنا..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={handleAddComment}
+                      disabled={isSubmitting || !comment.trim()}
+                    >
+                      <MessageSquare className="ml-2 h-4 w-4" />
+                      إضافة تعليق
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {comments.map((comment) => (
+                      <div 
+                        key={comment.id} 
+                        className="bg-muted p-4 rounded-lg"
+                      >
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {new Date(comment.created_at).toLocaleDateString('ar-SA')}
+                        </p>
+                        <p className="text-foreground">{comment.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
