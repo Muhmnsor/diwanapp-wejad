@@ -141,21 +141,21 @@ const Ideas = () => {
         <div className="rounded-md border overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-muted/50 sticky top-0">
+              <TableHeader className="bg-primary/5">
                 <TableRow>
-                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                  <TableHead className="text-center font-bold text-lg py-4 text-primary">
                     عنوان الفكرة
                   </TableHead>
-                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                  <TableHead className="text-center font-bold text-lg py-4 text-primary">
                     المنشئ
                   </TableHead>
-                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                  <TableHead className="text-center font-bold text-lg py-4 text-primary">
                     تاريخ الإنشاء
                   </TableHead>
-                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                  <TableHead className="text-center font-bold text-lg py-4 text-primary">
                     الوقت المتبقي للمناقشة
                   </TableHead>
-                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                  <TableHead className="text-center font-bold text-lg py-4 text-primary">
                     الحالة
                   </TableHead>
                 </TableRow>
@@ -187,13 +187,26 @@ const Ideas = () => {
                   </TableRow>
                 ) : (
                   ideas.map((idea) => (
-                    <TableRow key={idea.id}>
-                      <TableCell className="font-medium">{idea.title}</TableCell>
-                      <TableCell>{idea.created_by}</TableCell>
-                      <TableCell>{new Date(idea.created_at).toLocaleDateString('ar-SA')}</TableCell>
-                      <TableCell>{calculateRemainingTime(idea.discussion_period)}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(idea.status)}`}>
+                    <TableRow 
+                      key={idea.id}
+                      className="hover:bg-muted/50 cursor-pointer"
+                      onClick={() => {
+                        // هنا سيتم إضافة التوجيه إلى صفحة تفاصيل الفكرة
+                        console.log('Navigate to idea details:', idea.id);
+                      }}
+                    >
+                      <TableCell className="text-center font-medium text-primary hover:underline">
+                        {idea.title}
+                      </TableCell>
+                      <TableCell className="text-center">{idea.created_by}</TableCell>
+                      <TableCell className="text-center">
+                        {new Date(idea.created_at).toLocaleDateString('ar-SA')}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {calculateRemainingTime(idea.discussion_period)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={`px-3 py-1 rounded-full text-sm ${getStatusClass(idea.status)}`}>
                           {getStatusDisplay(idea.status)}
                         </span>
                       </TableCell>
