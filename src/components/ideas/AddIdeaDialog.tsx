@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ interface Partner {
 interface SimilarIdea {
   title: string;
   link: string;
-  file?: File;
+  file?: File | null; // Changed to make File explicitly nullable
 }
 
 export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
@@ -39,7 +40,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [proposedDate, setProposedDate] = useState("");
   const [duration, setDuration] = useState("");
   const [ideaType, setIdeaType] = useState("تطويرية");
-  const [similarIdeas, setSimilarIdeas] = useState<SimilarIdea[]>([{ title: "", link: "" }]);
+  const [similarIdeas, setSimilarIdeas] = useState<SimilarIdea[]>([{ title: "", link: "", file: null }]); // Initialize with null file
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
 
@@ -83,7 +84,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
 
   const addSimilarIdea = () => {
     if (similarIdeas.length < 10) {
-      setSimilarIdeas([...similarIdeas, { title: "", link: "" }]);
+      setSimilarIdeas([...similarIdeas, { title: "", link: "", file: null }]); // Include null file in new items
     } else {
       toast.error("لا يمكن إضافة أكثر من 10 أفكار مشابهة");
     }
@@ -132,7 +133,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       setProposedDate("");
       setDuration("");
       setIdeaType("تطويرية");
-      setSimilarIdeas([{ title: "", link: "" }]);
+      setSimilarIdeas([{ title: "", link: "", file: null }]);
       setPartners([{ name: "", contribution: "" }]);
       setCosts([{ item: "", quantity: 0, total_cost: 0 }]);
     } catch (error) {
