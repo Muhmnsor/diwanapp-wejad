@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,6 +125,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       onOpenChange(false);
       
+      // Reset form
       setTitle("");
       setDescription("");
       setOpportunity("");
