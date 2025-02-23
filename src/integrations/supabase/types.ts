@@ -1043,6 +1043,7 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
+          opportunity: string | null
           status: string
           title: string
           updated_at: string
@@ -1054,6 +1055,7 @@ export type Database = {
           created_by?: string | null
           description: string
           id?: string
+          opportunity?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -1065,6 +1067,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
+          opportunity?: string | null
           status?: string
           title?: string
           updated_at?: string
