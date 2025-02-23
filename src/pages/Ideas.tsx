@@ -116,45 +116,55 @@ const Ideas = () => {
           onOpenChange={setIsAddDialogOpen}
         />
 
-        {isLoading ? (
-          <div className="text-center py-8">جاري التحميل...</div>
-        ) : !ideas?.length ? (
-          <div className="text-center py-8 space-y-4">
-            <p className="text-gray-500">لا توجد أفكار حالياً</p>
-            <Button 
-              variant="outline" 
-              onClick={() => setFilterStatus(null)}
-              className="mx-auto"
-            >
-              <FilterX className="ml-2 h-4 w-4" />
-              إزالة الفلتر
-            </Button>
-          </div>
-        ) : (
-          <div className="rounded-md border overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/50 sticky top-0">
+        <div className="rounded-md border overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/50 sticky top-0">
+                <TableRow>
+                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                    عنوان الفكرة
+                  </TableHead>
+                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                    المنشئ
+                  </TableHead>
+                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                    تاريخ الإنشاء
+                  </TableHead>
+                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                    الأيام المتبقية للمناقشة
+                  </TableHead>
+                  <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
+                    الحالة
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
                   <TableRow>
-                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
-                      عنوان الفكرة
-                    </TableHead>
-                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
-                      المنشئ
-                    </TableHead>
-                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
-                      تاريخ الإنشاء
-                    </TableHead>
-                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
-                      الأيام المتبقية للمناقشة
-                    </TableHead>
-                    <TableHead className="text-right font-bold py-4 text-primary whitespace-nowrap">
-                      الحالة
-                    </TableHead>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      جاري التحميل...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ideas.map((idea) => (
+                ) : !ideas?.length ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <div className="space-y-4">
+                        <p className="text-gray-500">لا توجد أفكار حالياً</p>
+                        {filterStatus && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setFilterStatus(null)}
+                            className="mx-auto"
+                          >
+                            <FilterX className="ml-2 h-4 w-4" />
+                            إزالة الفلتر
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  ideas.map((idea) => (
                     <TableRow key={idea.id}>
                       <TableCell className="font-medium">{idea.title}</TableCell>
                       <TableCell>{idea.profiles?.email}</TableCell>
@@ -166,12 +176,12 @@ const Ideas = () => {
                         </span>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        )}
+        </div>
       </main>
 
       <Footer />
