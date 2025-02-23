@@ -212,7 +212,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
 
         <div className="space-y-2">
           <label htmlFor="problem" className="text-right block text-sm font-medium">
-            المشكلة التي تعالجها الفكرة
+            الم��كلة التي تعالجها الفكرة
           </label>
           <Textarea
             id="problem"
@@ -280,16 +280,16 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             {partners.map((partner, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <Input
-                  value={partner.contribution}
-                  onChange={(e) => handlePartnerChange(index, 'contribution', e.target.value)}
-                  className="text-right"
-                  placeholder="المساهمة المتوقعة"
-                />
-                <Input
                   value={partner.name}
                   onChange={(e) => handlePartnerChange(index, 'name', e.target.value)}
                   className="text-right"
                   placeholder="اسم الشريك"
+                />
+                <Input
+                  value={partner.contribution}
+                  onChange={(e) => handlePartnerChange(index, 'contribution', e.target.value)}
+                  className="text-right"
+                  placeholder="المساهمة المتوقعة"
                 />
               </div>
             ))}
@@ -317,11 +317,10 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             {costs.map((cost, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <Input
-                  type="number"
-                  value={cost.total_cost}
-                  onChange={(e) => handleCostChange(index, 'total_cost', Number(e.target.value))}
+                  value={cost.item}
+                  onChange={(e) => handleCostChange(index, 'item', e.target.value)}
                   className="text-right"
-                  placeholder="التكلفة الإجمالية"
+                  placeholder="البند"
                 />
                 <Input
                   type="number"
@@ -331,10 +330,11 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
                   placeholder="العدد"
                 />
                 <Input
-                  value={cost.item}
-                  onChange={(e) => handleCostChange(index, 'item', e.target.value)}
+                  type="number"
+                  value={cost.total_cost}
+                  onChange={(e) => handleCostChange(index, 'total_cost', Number(e.target.value))}
                   className="text-right"
-                  placeholder="البند"
+                  placeholder="التكلفة الإجمالية"
                 />
               </div>
             ))}
@@ -364,16 +364,16 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             {similarIdeas.map((idea, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <Input
-                  value={idea.link}
-                  onChange={(e) => handleSimilarIdeaChange(index, 'link', e.target.value)}
-                  className="text-right"
-                  placeholder="رابط الفكرة"
-                />
-                <Input
                   value={idea.title}
                   onChange={(e) => handleSimilarIdeaChange(index, 'title', e.target.value)}
                   className="text-right"
                   placeholder="عنوان الفكرة"
+                />
+                <Input
+                  value={idea.link}
+                  onChange={(e) => handleSimilarIdeaChange(index, 'link', e.target.value)}
+                  className="text-right"
+                  placeholder="رابط الفكرة"
                 />
               </div>
             ))}
