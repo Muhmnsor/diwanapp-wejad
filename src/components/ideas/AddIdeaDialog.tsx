@@ -23,7 +23,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [requiredResources, setRequiredResources] = useState("");
   const [proposedDate, setProposedDate] = useState("");
   const [duration, setDuration] = useState("");
-  const [ideaType, setIdeaType] = useState("تطويرية");
+  const [ideaType, setIdeaType] = useState("برنامج");
   const [similarIdeas, setSimilarIdeas] = useState<SimilarIdea[]>([{ title: "", link: "" }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
@@ -166,6 +166,20 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <label htmlFor="benefits" className="text-right block text-sm font-medium">
+            العوائد من تنفيذ الفكرة
+          </label>
+          <Textarea
+            id="benefits"
+            value={benefits}
+            onChange={(e) => setBenefits(e.target.value)}
+            className="text-right"
+            placeholder="اذكر العوائد المتوقعة من تنفيذ الفكرة"
+            required
+          />
+        </div>
+
         <DepartmentsSection
           departments={departments}
           onDepartmentChange={handleDepartmentChange}
@@ -177,6 +191,20 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
           onPartnerChange={handlePartnerChange}
           onAddPartner={() => setPartners([...partners, { name: "", contribution: "" }])}
         />
+
+        <div className="space-y-2">
+          <label htmlFor="requiredResources" className="text-right block text-sm font-medium">
+            الموارد التنفيذية المطلوبة
+          </label>
+          <Textarea
+            id="requiredResources"
+            value={requiredResources}
+            onChange={(e) => setRequiredResources(e.target.value)}
+            className="text-right"
+            placeholder="اذكر الموارد المطلوبة لتنفيذ الفكرة"
+            required
+          />
+        </div>
 
         <CostsSection
           costs={costs}
@@ -196,34 +224,6 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             }
           }}
         />
-
-        <div className="space-y-2">
-          <label htmlFor="benefits" className="text-right block text-sm font-medium">
-            العوائد من تنفيذ الفكرة
-          </label>
-          <Textarea
-            id="benefits"
-            value={benefits}
-            onChange={(e) => setBenefits(e.target.value)}
-            className="text-right"
-            placeholder="اذكر العوائد المتوقعة من تنفيذ الفكرة"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="requiredResources" className="text-right block text-sm font-medium">
-            الموارد التنفيذية المطلوبة
-          </label>
-          <Textarea
-            id="requiredResources"
-            value={requiredResources}
-            onChange={(e) => setRequiredResources(e.target.value)}
-            className="text-right"
-            placeholder="اذكر الموارد المطلوبة لتنفيذ الفكرة"
-            required
-          />
-        </div>
 
         <div className="flex justify-end gap-3 mt-6">
           <Button
