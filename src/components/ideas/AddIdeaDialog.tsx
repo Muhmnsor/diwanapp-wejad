@@ -30,7 +30,7 @@ interface Partner {
 interface SimilarIdea {
   title: string;
   link: string;
-  file?: File;
+  file?: string | File;
 }
 
 export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
