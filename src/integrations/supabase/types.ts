@@ -1038,36 +1038,54 @@ export type Database = {
       ideas: {
         Row: {
           assigned_to: string | null
+          benefits: string | null
           category: string | null
+          contributing_departments: string[] | null
           created_at: string
           created_by: string | null
           description: string
+          expected_costs: Json | null
+          expected_partners: Json | null
           id: string
           opportunity: string | null
+          problem: string | null
+          required_resources: string | null
           status: string
           title: string
           updated_at: string
         }
         Insert: {
           assigned_to?: string | null
+          benefits?: string | null
           category?: string | null
+          contributing_departments?: string[] | null
           created_at?: string
           created_by?: string | null
           description: string
+          expected_costs?: Json | null
+          expected_partners?: Json | null
           id?: string
           opportunity?: string | null
+          problem?: string | null
+          required_resources?: string | null
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
           assigned_to?: string | null
+          benefits?: string | null
           category?: string | null
+          contributing_departments?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string
+          expected_costs?: Json | null
+          expected_partners?: Json | null
           id?: string
           opportunity?: string | null
+          problem?: string | null
+          required_resources?: string | null
           status?: string
           title?: string
           updated_at?: string
