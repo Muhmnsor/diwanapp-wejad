@@ -55,9 +55,15 @@ export const BasicInfoFields = ({
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-right"
             required
           >
-            <option value="تطويرية">تطويرية</option>
-            <option value="إبداعية">إبداعية</option>
-            <option value="ابتكارية">ابتكارية</option>
+            <option value="برنامج">برنامج</option>
+            <option value="مشروع">مشروع</option>
+            <option value="استثمار">استثمار</option>
+            <option value="شراكة">شراكة</option>
+            <option value="زيارة">زيارة</option>
+            <option value="تطوير">تطوير</option>
+            <option value="توظيف">توظيف</option>
+            <option value="شراء">شراء</option>
+            <option value="أخرى">أخرى</option>
           </select>
         </div>
       </div>
