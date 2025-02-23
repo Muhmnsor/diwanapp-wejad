@@ -19,7 +19,7 @@ interface Idea {
 
 const Ideas = () => {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const { data: ideas, isLoading } = useQuery({
     queryKey: ['ideas', filterStatus],
@@ -116,3 +116,4 @@ const Ideas = () => {
 };
 
 export default Ideas;
+
