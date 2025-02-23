@@ -17,6 +17,11 @@ interface CostItem {
   total_cost: number;
 }
 
+interface Department {
+  name: string;
+  contribution: string;
+}
+
 interface Partner {
   name: string;
   contribution: string;
@@ -33,7 +38,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [description, setDescription] = useState("");
   const [opportunity, setOpportunity] = useState("");
   const [problem, setProblem] = useState("");
-  const [departments, setDepartments] = useState("");
+  const [departments, setDepartments] = useState<Department[]>([{ name: "", contribution: "" }]);
   const [benefits, setBenefits] = useState("");
   const [requiredResources, setRequiredResources] = useState("");
   const [proposedDate, setProposedDate] = useState("");
@@ -52,6 +57,16 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
     const newTotal = costs.reduce((sum, cost) => sum + (cost.total_cost || 0), 0);
     setTotalCost(newTotal);
   }, [costs]);
+
+  const handleDepartmentChange = (index: number, field: keyof Department, value: string) => {
+    const newDepartments = [...departments];
+    newDepartments[index][field] = value;
+    setDepartments(newDepartments);
+  };
+
+  const addDepartment = () => {
+    setDepartments([...departments, { name: "", contribution: "" }]);
+  };
 
   const handlePartnerChange = (index: number, field: keyof Partner, value: string) => {
     const newPartners = [...partners];
@@ -102,7 +117,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             description,
             opportunity,
             problem,
-            contributing_departments: departments.split(',').map(d => d.trim()).filter(d => d),
+            contributing_departments: departments.filter(d => d.name && d.contribution),
             expected_partners: partners.filter(p => p.name && p.contribution),
             benefits,
             expected_costs: costs.filter(c => c.item && c.quantity > 0),
@@ -126,7 +141,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       setDescription("");
       setOpportunity("");
       setProblem("");
-      setDepartments("");
+      setDepartments([{ name: "", contribution: "" }]);
       setBenefits("");
       setRequiredResources("");
       setProposedDate("");
@@ -212,7 +227,7 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
 
         <div className="space-y-2">
           <label htmlFor="problem" className="text-right block text-sm font-medium">
-            الم��كلة التي تعالجها الفكرة
+            الظاهرة التي تعالجها الفكرة
           </label>
           <Textarea
             id="problem"
@@ -255,17 +270,39 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="departments" className="text-right block text-sm font-medium">
+          <label className="text-right block text-sm font-medium">
             الإدارات والوحدات المساهمة
           </label>
-          <Input
-            id="departments"
-            value={departments}
-            onChange={(e) => setDepartments(e.target.value)}
-            className="text-right"
-            placeholder="أدخل الإدارات مفصولة بفواصل"
-            required
-          />
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 mb-2 font-medium text-right">
+              <div>اسم الإدارة/الوحدة</div>
+              <div>المساهمة المتوقعة</div>
+            </div>
+            {departments.map((department, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <Input
+                  value={department.name}
+                  onChange={(e) => handleDepartmentChange(index, 'name', e.target.value)}
+                  className="text-right"
+                  placeholder="اسم الإدارة/الوحدة"
+                />
+                <Input
+                  value={department.contribution}
+                  onChange={(e) => handleDepartmentChange(index, 'contribution', e.target.value)}
+                  className="text-right"
+                  placeholder="المساهمة المتوقعة"
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addDepartment}
+              className="w-full mt-2"
+            >
+              إضافة إدارة/وحدة
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
