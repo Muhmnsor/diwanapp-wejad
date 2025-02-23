@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -13,14 +14,9 @@ import VerifyCertificate from "./pages/VerifyCertificate";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Documents from "./pages/Documents";
-import Tasks from "./pages/Tasks";
 import TasksDashboard from "./pages/TasksDashboard";
 import Ideas from "./pages/Ideas";
 import Finance from "./pages/Finance";
-import PortfolioDetails from "./pages/PortfolioDetails";
-import NewPortfolioProject from "./pages/NewPortfolioProject";
-import PortfolioProjectDetails from "./pages/PortfolioProjectDetails";
-import PortfolioWorkspaceDetails from "./pages/PortfolioWorkspaceDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 
@@ -46,14 +42,6 @@ const AppRoutes = () => {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/documents" element={<Documents />} />
       <Route 
-        path="/tasks" 
-        element={
-          <ProtectedRoute>
-            <Tasks />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
         path="/tasks/dashboard" 
         element={
           <ProtectedRoute>
@@ -62,47 +50,7 @@ const AppRoutes = () => {
         } 
       />
       <Route path="/ideas" element={<Ideas />} />
-      <Route 
-        path="/finance" 
-        element={
-          <ProtectedRoute>
-            <Finance />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portfolios/:id" 
-        element={
-          <ProtectedRoute>
-            <PortfolioDetails />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portfolios/:portfolioId/projects/new" 
-        element={
-          <ProtectedRoute>
-            <NewPortfolioProject />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portfolio-projects/:projectId" 
-        element={
-          <ProtectedRoute>
-            <PortfolioProjectDetails />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portfolio-workspaces/:workspaceId" 
-        element={
-          <ProtectedRoute>
-            <PortfolioWorkspaceDetails />
-          </ProtectedRoute>
-        } 
-      />
-      {/* Catch all route - must be last */}
+      <Route path="/finance" element={<Finance />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
