@@ -20,7 +20,7 @@ interface CommentListProps {
 }
 
 export const CommentList = ({ comments, onAddComment, isSubmitting }: CommentListProps) => {
-  const [comment, setComment] = useState("");
+  const [newCommentText, setNewCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
 
   const getCommentReplies = (commentId: string) => {
@@ -32,23 +32,23 @@ export const CommentList = ({ comments, onAddComment, isSubmitting }: CommentLis
   };
 
   const handleAddComment = async () => {
-    if (!comment.trim()) return;
-    await onAddComment(comment, replyTo);
-    setComment("");
+    if (!newCommentText.trim()) return;
+    await onAddComment(newCommentText, replyTo);
+    setNewCommentText("");
     setReplyTo(null);
   };
 
-  const renderComment = (comment: Comment, level: number = 0) => {
-    const replies = getCommentReplies(comment.id);
-    const isReplyBeingAdded = replyTo === comment.id;
+  const renderComment = (commentItem: Comment, level: number = 0) => {
+    const replies = getCommentReplies(commentItem.id);
+    const isReplyBeingAdded = replyTo === commentItem.id;
 
     return (
-      <div key={comment.id} className="relative">
+      <div key={commentItem.id} className="relative">
         <div className={`bg-muted p-4 rounded-lg ${level > 0 ? 'mr-8 border-r border-primary/20' : ''}`}>
           <p className="text-sm text-muted-foreground mb-2">
-            {new Date(comment.created_at).toLocaleDateString('ar-SA')}
+            {new Date(commentItem.created_at).toLocaleDateString('ar-SA')}
           </p>
-          <p className="text-foreground mb-3">{comment.content}</p>
+          <p className="text-foreground mb-3">{commentItem.content}</p>
           <Button 
             variant="ghost" 
             size="sm"
@@ -56,8 +56,8 @@ export const CommentList = ({ comments, onAddComment, isSubmitting }: CommentLis
               if (isReplyBeingAdded) {
                 setReplyTo(null);
               } else {
-                setReplyTo(comment.id);
-                setComment('');
+                setReplyTo(commentItem.id);
+                setNewCommentText('');
               }
             }}
           >
@@ -69,13 +69,13 @@ export const CommentList = ({ comments, onAddComment, isSubmitting }: CommentLis
             <div className="mt-4 flex gap-4">
               <Textarea
                 placeholder="اكتب ردك هنا..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
                 className="flex-1"
               />
               <Button 
                 onClick={handleAddComment}
-                disabled={isSubmitting || !comment.trim()}
+                disabled={isSubmitting || !newCommentText.trim()}
               >
                 <MessageSquare className="ml-2 h-4 w-4" />
                 إضافة رد
@@ -102,13 +102,13 @@ export const CommentList = ({ comments, onAddComment, isSubmitting }: CommentLis
           <div className="flex gap-4">
             <Textarea
               placeholder="أضف تعليقك هنا..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
               className="flex-1"
             />
             <Button 
               onClick={handleAddComment}
-              disabled={isSubmitting || !comment.trim()}
+              disabled={isSubmitting || !newCommentText.trim()}
             >
               <MessageSquare className="ml-2 h-4 w-4" />
               إضافة تعليق
