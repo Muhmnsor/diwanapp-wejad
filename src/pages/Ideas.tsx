@@ -24,6 +24,7 @@ interface Idea {
   category: string | null;
   created_at: string;
   created_by: string;
+  discussion_period: string | null;
   proposed_execution_date: string;
 }
 
@@ -36,12 +37,7 @@ const Ideas = () => {
     queryFn: async () => {
       let query = supabase
         .from('ideas')
-        .select(`
-          *,
-          profiles:created_by (
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filterStatus) {
@@ -55,30 +51,42 @@ const Ideas = () => {
         throw error;
       }
       
-      return data as (Idea & { profiles: { email: string } })[];
+      return data as Idea[];
     }
   });
 
-  const calculateRemainingTime = (proposedDate: string) => {
-    if (!proposedDate) return "لم يتم تحديد موعد";
+  const calculateRemainingTime = (discussionPeriod: string | null) => {
+    if (!discussionPeriod) return "لم يتم تحديد مدة";
     
-    const now = new Date();
-    const proposedDay = new Date(proposedDate);
-    const diffTime = proposedDay.getTime() - now.getTime();
-    
-    if (diffTime <= 0) {
-      return "انتهى الموعد";
-    }
+    try {
+      // تحويل النص إلى أيام (مثال: "14 days" إلى 14)
+      const days = parseInt(discussionPeriod.split(' ')[0]);
+      if (isNaN(days)) return "تنسيق غير صحيح";
 
-    const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (days > 0) {
-      return `${days} يوم و ${hours} ساعة`;
-    } else if (hours > 0) {
-      return `${hours} ساعة`;
-    } else {
-      return "أقل من ساعة";
+      // حساب تاريخ نهاية المناقشة
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + days);
+      
+      const now = new Date();
+      const diffTime = endDate.getTime() - now.getTime();
+      
+      if (diffTime <= 0) {
+        return "انتهت المناقشة";
+      }
+
+      const remainingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const remainingHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      
+      if (remainingDays > 0) {
+        return `${remainingDays} يوم و ${remainingHours} ساعة`;
+      } else if (remainingHours > 0) {
+        return `${remainingHours} ساعة`;
+      } else {
+        return "أقل من ساعة";
+      }
+    } catch (error) {
+      console.error('Error calculating remaining time:', error);
+      return "خطأ في الحساب";
     }
   };
 
@@ -181,9 +189,9 @@ const Ideas = () => {
                   ideas.map((idea) => (
                     <TableRow key={idea.id}>
                       <TableCell className="font-medium">{idea.title}</TableCell>
-                      <TableCell>{idea.profiles?.email}</TableCell>
+                      <TableCell>{idea.created_by}</TableCell>
                       <TableCell>{new Date(idea.created_at).toLocaleDateString('ar-SA')}</TableCell>
-                      <TableCell>{calculateRemainingTime(idea.proposed_execution_date)}</TableCell>
+                      <TableCell>{calculateRemainingTime(idea.discussion_period)}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(idea.status)}`}>
                           {getStatusDisplay(idea.status)}
