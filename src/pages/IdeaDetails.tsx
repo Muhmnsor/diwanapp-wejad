@@ -1,14 +1,17 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, MessageSquare, ThumbsUp, ThumbsDown, CornerDownLeft } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useState } from "react";
+import { CommentList } from "@/components/ideas/comments/CommentList";
+import { VoteSection } from "@/components/ideas/voting/VoteSection";
+import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
 
 interface Idea {
   id: string;
@@ -47,8 +50,6 @@ const IdeaDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [comment, setComment] = useState("");
-  const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: idea, isLoading: isIdeaLoading } = useQuery({
@@ -101,7 +102,7 @@ const IdeaDetails = () => {
             idea_id: id,
             content,
             parent_id: parentId,
-            user_id: 'temp-user-id' // سيتم تحديثه لاحقاً عند إضافة نظام المستخدمين
+            user_id: 'temp-user-id'
           }
         ]);
 
@@ -110,9 +111,7 @@ const IdeaDetails = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', id] });
-      setComment("");
-      setReplyTo(null);
-      toast.success(replyTo ? "تم إضافة الرد بنجاح" : "تم إضافة التعليق بنجاح");
+      toast.success("تم إضافة التعليق بنجاح");
     },
     onError: () => {
       toast.error("حدث خطأ أثناء إضافة التعليق");
@@ -127,7 +126,7 @@ const IdeaDetails = () => {
           {
             idea_id: id,
             vote_type: voteType,
-            user_id: 'temp-user-id' // سيتم تحديثه لاحقاً عند إضافة نظام المستخدمين
+            user_id: 'temp-user-id'
           }
         ]);
 
@@ -143,14 +142,10 @@ const IdeaDetails = () => {
     }
   });
 
-  const handleAddComment = async () => {
-    if (!comment.trim()) return;
+  const handleAddComment = async (content: string, parentId?: string) => {
     setIsSubmitting(true);
     try {
-      await addCommentMutation.mutateAsync({ 
-        content: comment,
-        parentId: replyTo
-      });
+      await addCommentMutation.mutateAsync({ content, parentId });
     } finally {
       setIsSubmitting(false);
     }
@@ -158,99 +153,6 @@ const IdeaDetails = () => {
 
   const handleVote = async (type: 'up' | 'down') => {
     await voteMutation.mutateAsync(type);
-  };
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'bg-gray-100 text-gray-800';
-      case 'under_review':
-        return 'bg-blue-100 text-blue-800';
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'مسودة';
-      case 'under_review':
-        return 'قيد المراجعة';
-      case 'approved':
-        return 'تمت الموافقة';
-      case 'rejected':
-        return 'مرفوضة';
-      default:
-        return 'مؤرشفة';
-    }
-  };
-
-  const getCommentReplies = (commentId: string) => {
-    return comments.filter(c => c.parent_id === commentId);
-  };
-
-  const getRootComments = () => {
-    return comments.filter(c => !c.parent_id);
-  };
-
-  const renderComment = (comment: Comment, level: number = 0) => {
-    const replies = getCommentReplies(comment.id);
-    const isReplyBeingAdded = replyTo === comment.id;
-
-    return (
-      <div key={comment.id} className="relative">
-        <div className={`bg-muted p-4 rounded-lg ${level > 0 ? 'mr-8 border-r border-primary/20' : ''}`}>
-          <p className="text-sm text-muted-foreground mb-2">
-            {new Date(comment.created_at).toLocaleDateString('ar-SA')}
-          </p>
-          <p className="text-foreground mb-3">{comment.content}</p>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => {
-              if (isReplyBeingAdded) {
-                setReplyTo(null);
-              } else {
-                setReplyTo(comment.id);
-                setComment('');
-              }
-            }}
-          >
-            <CornerDownLeft className="ml-2 h-4 w-4" />
-            {isReplyBeingAdded ? 'إلغاء الرد' : 'رد'}
-          </Button>
-
-          {isReplyBeingAdded && (
-            <div className="mt-4 flex gap-4">
-              <Textarea
-                placeholder="اكتب ردك هنا..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleAddComment}
-                disabled={isSubmitting || !comment.trim()}
-              >
-                <MessageSquare className="ml-2 h-4 w-4" />
-                إضافة رد
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {replies.length > 0 && (
-          <div className="mt-4 space-y-4">
-            {replies.map(reply => renderComment(reply, level + 1))}
-          </div>
-        )}
-      </div>
-    );
   };
 
   if (isIdeaLoading || isCommentsLoading || isVotesLoading) {
@@ -277,38 +179,21 @@ const IdeaDetails = () => {
     );
   }
 
-  const upVotes = votes.filter(v => v.vote_type === 'up').length;
-  const downVotes = votes.filter(v => v.vote_type === 'down').length;
-
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
       <main className="flex-1 container mx-auto px-4 py-8" dir="rtl">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button 
-              variant="ghost" 
-              className="mb-4"
-              onClick={() => navigate('/ideas')}
-            >
-              <ArrowRight className="ml-2 h-4 w-4" />
-              العودة إلى القائمة
-            </Button>
-            
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-primary mb-2">{idea.title}</h1>
-                <div className="flex items-center gap-4 text-muted-foreground">
-                  <span>بواسطة: {idea.created_by}</span>
-                  <span>•</span>
-                  <span>{new Date(idea.created_at).toLocaleDateString('ar-SA')}</span>
-                </div>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-sm ${getStatusClass(idea.status)}`}>
-                {getStatusDisplay(idea.status)}
-              </span>
-            </div>
-          </div>
+          <Button 
+            variant="ghost" 
+            className="mb-4"
+            onClick={() => navigate('/ideas')}
+          >
+            <ArrowRight className="ml-2 h-4 w-4" />
+            العودة إلى القائمة
+          </Button>
+
+          <IdeaMetadata {...idea} />
 
           <Separator className="my-6" />
 
@@ -374,50 +259,12 @@ const IdeaDetails = () => {
             )}
 
             <div className="space-y-6">
-              <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
-                <div className="flex gap-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleVote('up')}
-                  >
-                    <ThumbsUp className="ml-2 h-4 w-4" />
-                    مؤيد ({upVotes})
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleVote('down')}
-                  >
-                    <ThumbsDown className="ml-2 h-4 w-4" />
-                    معارض ({downVotes})
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {!replyTo && (
-                  <div className="flex gap-4">
-                    <Textarea
-                      placeholder="أضف تعليقك هنا..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={handleAddComment}
-                      disabled={isSubmitting || !comment.trim()}
-                    >
-                      <MessageSquare className="ml-2 h-4 w-4" />
-                      إضافة تعليق
-                    </Button>
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                  {getRootComments().map(comment => renderComment(comment))}
-                </div>
-              </div>
+              <VoteSection votes={votes} onVote={handleVote} />
+              <CommentList 
+                comments={comments}
+                onAddComment={handleAddComment}
+                isSubmitting={isSubmitting}
+              />
             </div>
           </div>
         </div>
