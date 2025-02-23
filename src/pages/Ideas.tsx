@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
 interface Idea {
@@ -189,10 +190,14 @@ const Ideas = () => {
                     <TableRow 
                       key={idea.id}
                       className="hover:bg-muted/50 cursor-pointer"
-                      onClick={() => navigate(`/ideas/${idea.id}`)}
                     >
-                      <TableCell className="text-center font-medium text-primary hover:underline">
-                        {idea.title}
+                      <TableCell className="text-center">
+                        <Link 
+                          to={`/ideas/${idea.id}`}
+                          className="font-medium text-primary hover:underline block w-full h-full"
+                        >
+                          {idea.title}
+                        </Link>
                       </TableCell>
                       <TableCell className="text-center">{idea.created_by}</TableCell>
                       <TableCell className="text-center">
