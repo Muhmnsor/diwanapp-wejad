@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +22,12 @@ interface Partner {
   contribution: string;
 }
 
+interface SimilarIdea {
+  title: string;
+  link: string;
+  file?: File;
+}
+
 export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -31,12 +36,22 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const [departments, setDepartments] = useState("");
   const [benefits, setBenefits] = useState("");
   const [requiredResources, setRequiredResources] = useState("");
+  const [proposedDate, setProposedDate] = useState("");
+  const [duration, setDuration] = useState("");
+  const [ideaType, setIdeaType] = useState("تطويرية");
+  const [similarIdeas, setSimilarIdeas] = useState<SimilarIdea[]>([{ title: "", link: "" }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [totalCost, setTotalCost] = useState(0);
 
   const [partners, setPartners] = useState<Partner[]>([{ name: "", contribution: "" }]);
   const [costs, setCosts] = useState<CostItem[]>([{ item: "", quantity: 0, total_cost: 0 }]);
 
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const newTotal = costs.reduce((sum, cost) => sum + (cost.total_cost || 0), 0);
+    setTotalCost(newTotal);
+  }, [costs]);
 
   const handlePartnerChange = (index: number, field: keyof Partner, value: string) => {
     const newPartners = [...partners];
@@ -60,6 +75,20 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
     setCosts([...costs, { item: "", quantity: 0, total_cost: 0 }]);
   };
 
+  const handleSimilarIdeaChange = (index: number, field: keyof SimilarIdea, value: string) => {
+    const newIdeas = [...similarIdeas];
+    newIdeas[index][field] = value;
+    setSimilarIdeas(newIdeas);
+  };
+
+  const addSimilarIdea = () => {
+    if (similarIdeas.length < 10) {
+      setSimilarIdeas([...similarIdeas, { title: "", link: "" }]);
+    } else {
+      toast.error("لا يمكن إضافة أكثر من 10 أفكار مشابهة");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -78,6 +107,10 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             benefits,
             expected_costs: costs.filter(c => c.item && c.quantity > 0),
             required_resources: requiredResources,
+            proposed_execution_date: proposedDate,
+            duration,
+            idea_type: ideaType,
+            similar_ideas: similarIdeas.filter(idea => idea.title || idea.link),
             status: 'draft'
           }
         ]);
@@ -96,6 +129,10 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
       setDepartments("");
       setBenefits("");
       setRequiredResources("");
+      setProposedDate("");
+      setDuration("");
+      setIdeaType("تطويرية");
+      setSimilarIdeas([{ title: "", link: "" }]);
       setPartners([{ name: "", contribution: "" }]);
       setCosts([{ item: "", quantity: 0, total_cost: 0 }]);
     } catch (error) {
@@ -112,18 +149,37 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
     <div className="bg-white rounded-lg border border-border p-6 mt-6">
       <h2 className="text-2xl font-bold mb-6 text-right">إضافة فكرة جديدة</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="title" className="text-right block text-sm font-medium">
-            عنوان الفكرة
-          </label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-right"
-            placeholder="أدخل عنوان الفكرة"
-            required
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="title" className="text-right block text-sm font-medium">
+              عنوان الفكرة
+            </label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-right"
+              placeholder="أدخل عنوان الفكرة"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="ideaType" className="text-right block text-sm font-medium">
+              نوع الفكرة
+            </label>
+            <select
+              id="ideaType"
+              value={ideaType}
+              onChange={(e) => setIdeaType(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-right"
+              required
+            >
+              <option value="تطويرية">تطويرية</option>
+              <option value="إبداعية">إبداعية</option>
+              <option value="ابتكارية">ابتكارية</option>
+            </select>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -168,6 +224,36 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
           />
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="proposedDate" className="text-right block text-sm font-medium">
+              تاريخ التنفيذ المقترح
+            </label>
+            <Input
+              type="date"
+              id="proposedDate"
+              value={proposedDate}
+              onChange={(e) => setProposedDate(e.target.value)}
+              className="text-right"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="duration" className="text-right block text-sm font-medium">
+              المدة المتوقعة للتنفيذ
+            </label>
+            <Input
+              id="duration"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              className="text-right"
+              placeholder="مثال: 3 أشهر"
+              required
+            />
+          </div>
+        </div>
+
         <div className="space-y-2">
           <label htmlFor="departments" className="text-right block text-sm font-medium">
             الإدارات والوحدات المساهمة
@@ -186,30 +272,122 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
           <label className="text-right block text-sm font-medium">
             الشركاء المتوقعون ومساهماتهم
           </label>
-          {partners.map((partner, index) => (
-            <div key={index} className="flex gap-2 mb-2">
-              <Input
-                value={partner.contribution}
-                onChange={(e) => handlePartnerChange(index, 'contribution', e.target.value)}
-                className="text-right"
-                placeholder="المساهمة المتوقعة"
-              />
-              <Input
-                value={partner.name}
-                onChange={(e) => handlePartnerChange(index, 'name', e.target.value)}
-                className="text-right"
-                placeholder="اسم الشريك"
-              />
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 mb-2 font-medium text-right">
+              <div>اسم الشريك</div>
+              <div>المساهمة المتوقعة</div>
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addPartner}
-            className="w-full"
-          >
-            إضافة شريك
-          </Button>
+            {partners.map((partner, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <Input
+                  value={partner.contribution}
+                  onChange={(e) => handlePartnerChange(index, 'contribution', e.target.value)}
+                  className="text-right"
+                  placeholder="المساهمة المتوقعة"
+                />
+                <Input
+                  value={partner.name}
+                  onChange={(e) => handlePartnerChange(index, 'name', e.target.value)}
+                  className="text-right"
+                  placeholder="اسم الشريك"
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addPartner}
+              className="w-full mt-2"
+            >
+              إضافة شريك
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-right block text-sm font-medium">
+            جدول تكلفة الفكرة المتوقعة
+          </label>
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <div className="grid grid-cols-3 gap-2 mb-2 font-medium text-right">
+              <div>البند</div>
+              <div>العدد</div>
+              <div>التكلفة الإجمالية</div>
+            </div>
+            {costs.map((cost, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <Input
+                  type="number"
+                  value={cost.total_cost}
+                  onChange={(e) => handleCostChange(index, 'total_cost', Number(e.target.value))}
+                  className="text-right"
+                  placeholder="التكلفة الإجمالية"
+                />
+                <Input
+                  type="number"
+                  value={cost.quantity}
+                  onChange={(e) => handleCostChange(index, 'quantity', Number(e.target.value))}
+                  className="text-right"
+                  placeholder="العدد"
+                />
+                <Input
+                  value={cost.item}
+                  onChange={(e) => handleCostChange(index, 'item', e.target.value)}
+                  className="text-right"
+                  placeholder="البند"
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addCostItem}
+              className="w-full mb-2"
+            >
+              إضافة بند تكلفة
+            </Button>
+            <div className="text-left font-medium mt-4 p-2 bg-secondary rounded">
+              إجمالي التكلفة: {totalCost.toLocaleString()} ريال
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-right block text-sm font-medium">
+            الأفكار المشابهة
+          </label>
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 mb-2 font-medium text-right">
+              <div>عنوان الفكرة</div>
+              <div>الرابط</div>
+            </div>
+            {similarIdeas.map((idea, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <Input
+                  value={idea.link}
+                  onChange={(e) => handleSimilarIdeaChange(index, 'link', e.target.value)}
+                  className="text-right"
+                  placeholder="رابط الفكرة"
+                />
+                <Input
+                  value={idea.title}
+                  onChange={(e) => handleSimilarIdeaChange(index, 'title', e.target.value)}
+                  className="text-right"
+                  placeholder="عنوان الفكرة"
+                />
+              </div>
+            ))}
+            {similarIdeas.length < 10 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addSimilarIdea}
+                className="w-full"
+              >
+                إضافة فكرة مشابهة
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -224,44 +402,6 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             placeholder="اذكر العوائد المتوقعة من تنفيذ الفكرة"
             required
           />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-right block text-sm font-medium">
-            جدول تكلفة الفكرة المتوقعة
-          </label>
-          {costs.map((cost, index) => (
-            <div key={index} className="flex gap-2 mb-2">
-              <Input
-                type="number"
-                value={cost.total_cost}
-                onChange={(e) => handleCostChange(index, 'total_cost', Number(e.target.value))}
-                className="text-right"
-                placeholder="التكلفة الإجمالية"
-              />
-              <Input
-                type="number"
-                value={cost.quantity}
-                onChange={(e) => handleCostChange(index, 'quantity', Number(e.target.value))}
-                className="text-right"
-                placeholder="العدد"
-              />
-              <Input
-                value={cost.item}
-                onChange={(e) => handleCostChange(index, 'item', e.target.value)}
-                className="text-right"
-                placeholder="البند"
-              />
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addCostItem}
-            className="w-full"
-          >
-            إضافة بند تكلفة
-          </Button>
         </div>
 
         <div className="space-y-2">

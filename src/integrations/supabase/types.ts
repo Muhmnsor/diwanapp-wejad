@@ -1044,12 +1044,16 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string
+          duration: string | null
           expected_costs: Json | null
           expected_partners: Json | null
           id: string
+          idea_type: string | null
           opportunity: string | null
           problem: string | null
+          proposed_execution_date: string | null
           required_resources: string | null
+          similar_ideas: Json | null
           status: string
           title: string
           updated_at: string
@@ -1062,12 +1066,16 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description: string
+          duration?: string | null
           expected_costs?: Json | null
           expected_partners?: Json | null
           id?: string
+          idea_type?: string | null
           opportunity?: string | null
           problem?: string | null
+          proposed_execution_date?: string | null
           required_resources?: string | null
+          similar_ideas?: Json | null
           status?: string
           title: string
           updated_at?: string
@@ -1080,12 +1088,16 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          duration?: string | null
           expected_costs?: Json | null
           expected_partners?: Json | null
           id?: string
+          idea_type?: string | null
           opportunity?: string | null
           problem?: string | null
+          proposed_execution_date?: string | null
           required_resources?: string | null
+          similar_ideas?: Json | null
           status?: string
           title?: string
           updated_at?: string
