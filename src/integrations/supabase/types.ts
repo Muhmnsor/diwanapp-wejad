@@ -1055,6 +1055,7 @@ export type Database = {
           required_resources: string | null
           similar_ideas: Json | null
           status: string
+          supporting_files: Json | null
           title: string
           updated_at: string
         }
@@ -1077,6 +1078,7 @@ export type Database = {
           required_resources?: string | null
           similar_ideas?: Json | null
           status?: string
+          supporting_files?: Json | null
           title: string
           updated_at?: string
         }
@@ -1099,6 +1101,7 @@ export type Database = {
           required_resources?: string | null
           similar_ideas?: Json | null
           status?: string
+          supporting_files?: Json | null
           title?: string
           updated_at?: string
         }

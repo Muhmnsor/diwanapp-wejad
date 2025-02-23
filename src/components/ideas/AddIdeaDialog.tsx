@@ -14,6 +14,7 @@ import { SupportingFilesSection, SupportingFile } from "./form/SupportingFilesSe
 import { AddIdeaDialogProps, Department, Partner, CostItem, SimilarIdea } from "./types";
 
 export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [opportunity, setOpportunity] = useState("");
