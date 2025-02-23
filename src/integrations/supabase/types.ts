@@ -2233,47 +2233,6 @@ export type Database = {
         }
         Relationships: []
       }
-      workspace_sync_status: {
-        Row: {
-          created_at: string
-          etag: string | null
-          id: string
-          last_sync_at: string | null
-          last_sync_status: string | null
-          sync_error: string | null
-          updated_at: string
-          workspace_id: string
-        }
-        Insert: {
-          created_at?: string
-          etag?: string | null
-          id?: string
-          last_sync_at?: string | null
-          last_sync_status?: string | null
-          sync_error?: string | null
-          updated_at?: string
-          workspace_id: string
-        }
-        Update: {
-          created_at?: string
-          etag?: string | null
-          id?: string
-          last_sync_at?: string | null
-          last_sync_status?: string | null
-          sync_error?: string | null
-          updated_at?: string
-          workspace_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workspace_sync_status_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: true
-            referencedRelation: "portfolio_workspaces"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never

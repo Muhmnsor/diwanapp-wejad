@@ -1,9 +1,8 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DeletePortfolioDialog } from "./DeletePortfolioDialog";
 import { EditPortfolioDialog } from "./EditPortfolioDialog";
 import { PortfolioCard } from "./components/PortfolioCard";
@@ -22,44 +21,45 @@ export const PortfolioList = () => {
     description: string | null;
   } | null>(null);
   
-  const { data: portfolios, isLoading, error, refetch } = useQuery({
+  const { data: portfolios, isLoading, error } = useQuery({
     queryKey: ['portfolios'],
     queryFn: async () => {
-      console.log('Fetching portfolios directly from Asana...');
+      console.log('Fetching portfolios...');
       
-      const { data: portfoliosData, error: fetchError } = await supabase
-        .functions.invoke('get-workspace');
+      const { data: portfoliosData, error: portfoliosError } = await supabase
+        .from('portfolios')
+        .select(`
+          *,
+          portfolio_projects!portfolio_projects_portfolio_id_fkey(count),
+          portfolio_only_projects!portfolio_only_projects_portfolio_id_fkey(count)
+        `);
 
-      if (fetchError) {
-        console.error('Error fetching portfolios:', fetchError);
-        throw fetchError;
+      if (portfoliosError) {
+        console.error('Error fetching portfolios:', portfoliosError);
+        throw portfoliosError;
       }
 
-      return portfoliosData?.map((portfolio: any) => ({
-        id: portfolio.gid,
-        name: portfolio.name,
-        description: portfolio.notes || null,
-        asana_gid: portfolio.gid,
-        total_projects: portfolio.items?.length || 0,
-        created_at: portfolio.created_at,
-        modified_at: portfolio.modified_at,
-        asana_sync_enabled: true
-      })) || [];
-    },
-    refetchInterval: 30000, // تحديث كل 30 ثانية
-    staleTime: 10000, // اعتبار البيانات قديمة بعد 10 ثوانٍ
+      const portfoliosWithCounts = portfoliosData?.map(portfolio => {
+        const regularProjectsCount = portfolio.portfolio_projects[0]?.count || 0;
+        const onlyProjectsCount = portfolio.portfolio_only_projects[0]?.count || 0;
+        const totalProjects = regularProjectsCount + onlyProjectsCount;
+
+        console.log(`Portfolio ${portfolio.name} counts:`, {
+          regularProjects: regularProjectsCount,
+          onlyProjects: onlyProjectsCount,
+          total: totalProjects
+        });
+
+        return {
+          ...portfolio,
+          total_projects: totalProjects
+        };
+      }) || [];
+
+      console.log('Processed portfolios with counts:', portfoliosWithCounts);
+      return portfoliosWithCounts;
+    }
   });
-
-  // إعادة تحديث البيانات عند التركيز على النافذة
-  useEffect(() => {
-    const onFocus = () => {
-      console.log('Window focused, refetching portfolios from Asana...');
-      refetch();
-    };
-
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [refetch]);
 
   const handleCardClick = (e: React.MouseEvent, portfolioId: string) => {
     if (!(e.target as HTMLElement).closest('button')) {

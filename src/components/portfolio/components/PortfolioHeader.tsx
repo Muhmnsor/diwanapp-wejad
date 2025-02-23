@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Link, Plus } from 'lucide-react';
 import { AddPortfolioDialog } from '../AddPortfolioDialog';
@@ -19,10 +18,6 @@ export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
     setIsSyncing(true);
     try {
       await onSync();
-      toast.success('تمت المزامنة بنجاح');
-    } catch (error) {
-      console.error('Error during sync:', error);
-      toast.error('فشل في المزامنة');
     } finally {
       setIsSyncing(false);
     }
@@ -70,7 +65,7 @@ export const PortfolioHeader = ({ onSync }: PortfolioHeaderProps) => {
           className="flex items-center gap-2"
         >
           <RefreshCw className={`h-4 w-4 ml-2 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isSyncing ? 'جاري المزامنة...' : 'مزامنة مع Asana'}
+          مزامنة مع Asana
         </Button>
         <Button
           onClick={() => setIsDialogOpen(true)}
