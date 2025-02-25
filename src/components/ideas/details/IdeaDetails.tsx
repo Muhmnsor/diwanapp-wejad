@@ -126,7 +126,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         )}
 
         {idea.expected_costs?.length > 0 && (
-          <section className="bg-purple-50 p-6 rounded-lg">
+          <section className="bg-white p-6 rounded-lg border border-purple-100">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">التكاليف المتوقعة</h3>
             <div className="overflow-x-auto bg-white rounded-lg">
               <table className="w-full">
