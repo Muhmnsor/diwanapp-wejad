@@ -44,7 +44,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
       onOpenChange={setIsOpen}
       className="w-full space-y-2 text-right"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-row-reverse">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm">
             {isOpen ? (
