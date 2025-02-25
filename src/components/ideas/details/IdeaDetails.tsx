@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -27,6 +27,37 @@ interface IdeaDetailsProps {
 
 export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const discussionEndDate = new Date();
+      discussionEndDate.setDate(discussionEndDate.getDate() + parseInt(idea.discussion_period) || 0);
+      
+      const now = new Date().getTime();
+      const endTime = discussionEndDate.getTime();
+      const distance = endTime - now;
+
+      if (distance > 0) {
+        setCountdown({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000)
+        });
+      }
+    };
+
+    const timer = setInterval(calculateTimeLeft, 1000);
+    calculateTimeLeft(); // Initial calculation
+
+    return () => clearInterval(timer);
+  }, [idea.discussion_period]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
@@ -62,9 +93,12 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         </CollapsibleTrigger>
         <div>
           <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            مدة المناقشة: {idea.discussion_period}
-          </p>
+          <div className="text-muted-foreground text-sm mt-1 space-y-1">
+            <p>مدة المناقشة: {idea.discussion_period} يوم</p>
+            <p className="text-primary">
+              متبقي: {countdown.days} يوم {countdown.hours} ساعة {countdown.minutes} دقيقة {countdown.seconds} ثانية
+            </p>
+          </div>
         </div>
       </div>
 
