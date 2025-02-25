@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -160,11 +161,11 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
           <section className="bg-white p-6 rounded-lg border border-purple-100">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">الشركاء المتوقعون</h3>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full bg-white rounded-lg">
                 <thead>
-                  <tr className="bg-purple-100">
-                    <th className="p-3 text-right text-purple-800 border-b">اسم الشريك</th>
-                    <th className="p-3 text-right text-purple-800 border-b">المساهمة</th>
+                  <tr className="bg-purple-100 rounded-t-lg">
+                    <th className="p-3 text-right text-purple-800 border-b first:rounded-tr-lg">اسم الشريك</th>
+                    <th className="p-3 text-right text-purple-800 border-b last:rounded-tl-lg">المساهمة</th>
                   </tr>
                 </thead>
                 <tbody>
