@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
@@ -31,6 +30,10 @@ interface Idea {
   expected_costs: { item: string; quantity: number; total_cost: number }[];
   expected_partners: { name: string; contribution: string }[];
   proposed_execution_date: string;
+  similar_ideas: { title: string; link: string }[];
+  supporting_files: { name: string; file_path: string }[];
+  duration: string;
+  idea_type: string;
 }
 
 interface Comment {
@@ -64,7 +67,14 @@ const IdeaDetails = () => {
         .single();
 
       if (error) throw error;
-      return data as Idea;
+      
+      return {
+        ...data,
+        similar_ideas: data.similar_ideas || [],
+        supporting_files: data.supporting_files || [],
+        duration: data.duration || '',
+        idea_type: data.idea_type || 'تطويرية'
+      } as Idea;
     }
   });
 
