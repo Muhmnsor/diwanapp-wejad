@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -87,6 +86,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
       onOpenChange={setIsOpen}
       className="w-full space-y-2 text-right"
     >
+      <p className="text-muted-foreground text-sm mb-2">مدة المناقشة: {idea.discussion_period} يوم</p>
       <div className="flex items-start justify-between flex-row-reverse">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm">
@@ -104,10 +104,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
           </Button>
         </CollapsibleTrigger>
         <div className="space-y-2">
-          <div className="flex justify-between items-start">
-            <p className="text-muted-foreground text-sm">مدة المناقشة: {idea.discussion_period} يوم</p>
-            <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
-          </div>
+          <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
           <div className="text-sm mt-1">
             {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
               <p className="text-destructive">انتهت فترة المناقشة</p>
