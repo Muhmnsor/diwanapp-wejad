@@ -47,80 +47,78 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="w-full space-y-2 text-right"
+      className="w-full space-y-4 text-right bg-white rounded-lg shadow-sm p-6"
     >
-      <div className="flex items-start justify-between flex-row-reverse">
+      <div className="flex items-center justify-between border-b pb-4">
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hover:bg-purple-50">
             {isOpen ? (
               <>
-                <EyeOff className="ml-2 h-4 w-4" />
-                إخفاء التفاصيل
+                <EyeOff className="ml-2 h-4 w-4 text-purple-600" />
+                <span className="text-purple-600">إخفاء التفاصيل</span>
               </>
             ) : (
               <>
-                <Eye className="ml-2 h-4 w-4" />
-                عرض التفاصيل
+                <Eye className="ml-2 h-4 w-4 text-purple-600" />
+                <span className="text-purple-600">عرض التفاصيل</span>
               </>
             )}
           </Button>
         </CollapsibleTrigger>
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
-        </div>
+        <h2 className="text-2xl font-semibold text-purple-700">تفاصيل الفكرة</h2>
       </div>
 
-      <CollapsibleContent className="space-y-6">
-        <section>
-          <h3 className="text-lg font-semibold mb-2">نوع الفكرة</h3>
-          <p className="text-muted-foreground">{idea.idea_type}</p>
+      <CollapsibleContent className="space-y-8">
+        <section className="bg-purple-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">نوع الفكرة</h3>
+          <p className="text-gray-700">{idea.idea_type}</p>
         </section>
 
-        <section>
-          <h3 className="text-lg font-semibold mb-2">وصف الفكرة</h3>
-          <p className="text-muted-foreground">{idea.description}</p>
+        <section className="bg-white p-6 rounded-lg border border-purple-100">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">وصف الفكرة</h3>
+          <p className="text-gray-700 leading-relaxed">{idea.description}</p>
         </section>
 
-        <section>
-          <h3 className="text-lg font-semibold mb-2">المشكلة</h3>
-          <p className="text-muted-foreground">{idea.problem}</p>
+        <section className="bg-purple-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">المشكلة</h3>
+          <p className="text-gray-700 leading-relaxed">{idea.problem}</p>
         </section>
 
-        <section>
-          <h3 className="text-lg font-semibold mb-2">الفرصة</h3>
-          <p className="text-muted-foreground">{idea.opportunity}</p>
+        <section className="bg-white p-6 rounded-lg border border-purple-100">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">الفرصة</h3>
+          <p className="text-gray-700 leading-relaxed">{idea.opportunity}</p>
         </section>
 
-        <section>
-          <h3 className="text-lg font-semibold mb-2">الفوائد المتوقعة</h3>
-          <p className="text-muted-foreground">{idea.benefits}</p>
+        <section className="bg-purple-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">الفوائد المتوقعة</h3>
+          <p className="text-gray-700 leading-relaxed">{idea.benefits}</p>
         </section>
 
-        <section>
-          <h3 className="text-lg font-semibold mb-2">الموارد المطلوبة</h3>
-          <p className="text-muted-foreground">{idea.required_resources}</p>
+        <section className="bg-white p-6 rounded-lg border border-purple-100">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">الموارد المطلوبة</h3>
+          <p className="text-gray-700 leading-relaxed">{idea.required_resources}</p>
         </section>
 
-        <section>
-          <h3 className="text-lg font-semibold mb-2">التنفيذ المقترح</h3>
-          <div className="space-y-2">
-            <p className="text-muted-foreground">
+        <section className="bg-purple-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold mb-3 text-purple-800">التنفيذ المقترح</h3>
+          <div className="space-y-3">
+            <p className="text-gray-700">
               تاريخ التنفيذ: {formatDate(idea.proposed_execution_date)}
             </p>
-            <p className="text-muted-foreground">
+            <p className="text-gray-700">
               المدة المتوقعة: {idea.duration}
             </p>
           </div>
         </section>
 
         {idea.contributing_departments?.length > 0 && (
-          <section>
-            <h3 className="text-lg font-semibold mb-2">الإدارات المساهمة</h3>
-            <div className="space-y-3">
+          <section className="bg-white p-6 rounded-lg border border-purple-100">
+            <h3 className="text-lg font-semibold mb-4 text-purple-800">الإدارات المساهمة</h3>
+            <div className="grid gap-4 md:grid-cols-2">
               {idea.contributing_departments.map((dept, index) => (
-                <div key={index} className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">{dept.name}</h4>
-                  <p className="text-sm text-muted-foreground">{dept.contribution}</p>
+                <div key={index} className="bg-purple-50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2 text-purple-700">{dept.name}</h4>
+                  <p className="text-sm text-gray-600">{dept.contribution}</p>
                 </div>
               ))}
             </div>
@@ -128,28 +126,28 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         )}
 
         {idea.expected_costs?.length > 0 && (
-          <section>
-            <h3 className="text-lg font-semibold mb-2">التكاليف المتوقعة</h3>
-            <div className="overflow-x-auto">
+          <section className="bg-purple-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-purple-800">التكاليف المتوقعة</h3>
+            <div className="overflow-x-auto bg-white rounded-lg">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-muted">
-                    <th className="p-2 text-right">البند</th>
-                    <th className="p-2 text-center">الكمية</th>
-                    <th className="p-2 text-center">التكلفة الإجمالية</th>
+                  <tr className="bg-purple-100">
+                    <th className="p-3 text-right text-purple-800">البند</th>
+                    <th className="p-3 text-center text-purple-800">الكمية</th>
+                    <th className="p-3 text-center text-purple-800">التكلفة الإجمالية</th>
                   </tr>
                 </thead>
                 <tbody>
                   {idea.expected_costs.map((cost, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="p-2">{cost.item}</td>
-                      <td className="p-2 text-center">{cost.quantity}</td>
-                      <td className="p-2 text-center">{cost.total_cost} ريال</td>
+                    <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
+                      <td className="p-3 text-gray-700">{cost.item}</td>
+                      <td className="p-3 text-center text-gray-700">{cost.quantity}</td>
+                      <td className="p-3 text-center text-gray-700">{cost.total_cost} ريال</td>
                     </tr>
                   ))}
-                  <tr className="bg-muted">
-                    <td colSpan={2} className="p-2 font-semibold text-left">المجموع الكلي:</td>
-                    <td className="p-2 text-center font-semibold">
+                  <tr className="bg-purple-100">
+                    <td colSpan={2} className="p-3 font-semibold text-left text-purple-800">المجموع الكلي:</td>
+                    <td className="p-3 text-center font-semibold text-purple-800">
                       {calculateTotalCost(idea.expected_costs)} ريال
                     </td>
                   </tr>
@@ -160,13 +158,13 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         )}
 
         {idea.expected_partners?.length > 0 && (
-          <section>
-            <h3 className="text-lg font-semibold mb-2">الشركاء المتوقعون</h3>
-            <div className="space-y-3">
+          <section className="bg-white p-6 rounded-lg border border-purple-100">
+            <h3 className="text-lg font-semibold mb-4 text-purple-800">الشركاء المتوقعون</h3>
+            <div className="grid gap-4 md:grid-cols-2">
               {idea.expected_partners.map((partner, index) => (
-                <div key={index} className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">{partner.name}</h4>
-                  <p className="text-sm text-muted-foreground">{partner.contribution}</p>
+                <div key={index} className="bg-purple-50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2 text-purple-700">{partner.name}</h4>
+                  <p className="text-sm text-gray-600">{partner.contribution}</p>
                 </div>
               ))}
             </div>
@@ -174,17 +172,17 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         )}
 
         {idea.similar_ideas?.length > 0 && (
-          <section>
-            <h3 className="text-lg font-semibold mb-2">الأفكار المشابهة</h3>
-            <div className="space-y-3">
+          <section className="bg-purple-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-purple-800">الأفكار المشابهة</h3>
+            <div className="grid gap-4 md:grid-cols-2">
               {idea.similar_ideas.map((similar, index) => (
-                <div key={index} className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">{similar.title}</h4>
+                <div key={index} className="bg-white p-4 rounded-lg border border-purple-100">
+                  <h4 className="font-medium mb-2 text-purple-700">{similar.title}</h4>
                   <a 
                     href={similar.link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm text-purple-600 hover:text-purple-700 hover:underline"
                   >
                     رابط الفكرة
                   </a>
@@ -195,17 +193,17 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         )}
 
         {idea.supporting_files?.length > 0 && (
-          <section>
-            <h3 className="text-lg font-semibold mb-2">الملفات الداعمة</h3>
-            <div className="space-y-2">
+          <section className="bg-white p-6 rounded-lg border border-purple-100">
+            <h3 className="text-lg font-semibold mb-4 text-purple-800">الملفات الداعمة</h3>
+            <div className="space-y-3">
               {idea.supporting_files.map((file, index) => (
-                <div key={index} className="flex items-center justify-between bg-muted p-3 rounded-lg">
-                  <span className="text-sm">{file.name}</span>
+                <div key={index} className="flex items-center justify-between bg-purple-50 p-4 rounded-lg">
+                  <span className="text-sm text-gray-700">{file.name}</span>
                   <a
                     href={file.file_path}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline text-sm"
+                    className="text-purple-600 hover:text-purple-700 hover:underline text-sm"
                   >
                     تحميل الملف
                   </a>
