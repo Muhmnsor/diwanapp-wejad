@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -182,9 +181,9 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         )}
 
         {idea.similar_ideas?.length > 0 && (
-          <section className="bg-white p-6 rounded-lg border border-purple-100">
+          <section className="bg-purple-50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">الأفكار المشابهة</h3>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto bg-white rounded-lg">
               <table className="w-full">
                 <thead>
                   <tr className="bg-purple-100">
