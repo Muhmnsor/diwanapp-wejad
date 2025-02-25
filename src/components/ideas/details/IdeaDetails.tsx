@@ -104,10 +104,10 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
             )}
           </Button>
         </CollapsibleTrigger>
-        <div>
+        <div className="space-y-2">
           <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
-          <div className="text-muted-foreground text-sm mt-1 space-y-1">
-            <p>مدة المناقشة: {idea.discussion_period} يوم</p>
+          <div className="text-sm mt-1">
+            <p className="text-muted-foreground">مدة المناقشة: {idea.discussion_period} يوم</p>
             {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
               <p className="text-destructive">انتهت فترة المناقشة</p>
             ) : (
