@@ -213,7 +213,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
           </section>
         )}
 
-        {idea.supporting_files?.length > 0 && (
+        {idea.supporting_files && idea.supporting_files.length > 0 && (
           <section className="bg-white p-6 rounded-lg border border-purple-100">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">الملفات الداعمة</h3>
             <div className="overflow-x-auto">
