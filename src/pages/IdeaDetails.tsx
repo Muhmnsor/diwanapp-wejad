@@ -12,7 +12,7 @@ import { useState } from "react";
 import { CommentList } from "@/components/ideas/comments/CommentList";
 import { VoteSection } from "@/components/ideas/voting/VoteSection";
 import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
-import { IdeaDetails } from "@/components/ideas/details/IdeaDetails";
+import { IdeaDetails as IdeaDetailsComponent } from "@/components/ideas/details/IdeaDetails";
 
 interface Idea {
   id: string;
@@ -200,7 +200,7 @@ const IdeaDetails = () => {
           <Separator className="my-6" />
 
           <div className="space-y-8">
-            <IdeaDetails idea={idea} />
+            <IdeaDetailsComponent idea={idea} />
 
             <div className="space-y-6">
               <VoteSection votes={votes} onVote={handleVote} />
