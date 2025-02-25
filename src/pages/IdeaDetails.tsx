@@ -12,6 +12,7 @@ import { useState } from "react";
 import { CommentList } from "@/components/ideas/comments/CommentList";
 import { VoteSection } from "@/components/ideas/voting/VoteSection";
 import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
+import { IdeaDetails } from "@/components/ideas/details/IdeaDetails";
 
 interface Idea {
   id: string;
@@ -28,6 +29,7 @@ interface Idea {
   required_resources: string;
   contributing_departments: { name: string; contribution: string }[];
   expected_costs: { item: string; quantity: number; total_cost: number }[];
+  expected_partners: { name: string; contribution: string }[];
   proposed_execution_date: string;
 }
 
@@ -198,65 +200,7 @@ const IdeaDetails = () => {
           <Separator className="my-6" />
 
           <div className="space-y-8">
-            <section>
-              <h2 className="text-xl font-semibold mb-3">وصف الفكرة</h2>
-              <p className="text-muted-foreground leading-relaxed">{idea.description}</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">المشكلة</h2>
-              <p className="text-muted-foreground leading-relaxed">{idea.problem}</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">الفرصة</h2>
-              <p className="text-muted-foreground leading-relaxed">{idea.opportunity}</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">الفوائد المتوقعة</h2>
-              <p className="text-muted-foreground leading-relaxed">{idea.benefits}</p>
-            </section>
-
-            {idea.contributing_departments?.length > 0 && (
-              <section>
-                <h2 className="text-xl font-semibold mb-3">الإدارات المساهمة</h2>
-                <div className="space-y-3">
-                  {idea.contributing_departments.map((dept, index) => (
-                    <div key={index} className="bg-muted p-4 rounded-lg">
-                      <h3 className="font-medium mb-2">{dept.name}</h3>
-                      <p className="text-sm text-muted-foreground">{dept.contribution}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {idea.expected_costs?.length > 0 && (
-              <section>
-                <h2 className="text-xl font-semibold mb-3">التكاليف المتوقعة</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-muted">
-                        <th className="text-right p-3">البند</th>
-                        <th className="text-center p-3">الكمية</th>
-                        <th className="text-center p-3">التكلفة الإجمالية</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {idea.expected_costs.map((cost, index) => (
-                        <tr key={index} className="border-b">
-                          <td className="p-3">{cost.item}</td>
-                          <td className="text-center p-3">{cost.quantity}</td>
-                          <td className="text-center p-3">{cost.total_cost} ريال</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
+            <IdeaDetails idea={idea} />
 
             <div className="space-y-6">
               <VoteSection votes={votes} onVote={handleVote} />
