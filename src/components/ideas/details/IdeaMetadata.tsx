@@ -89,7 +89,7 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-primary mb-2">{title}</h1>
-          <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-4 text-muted-foreground">
               <span>بواسطة: {created_by}</span>
               <span>•</span>
@@ -102,7 +102,8 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
               )}
             </div>
             {discussion_period && (
-              <div className="text-sm">
+              <div className="flex items-center gap-2 text-sm">
+                <span>•</span>
                 {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
                   <p className="text-destructive">انتهت فترة المناقشة</p>
                 ) : (
