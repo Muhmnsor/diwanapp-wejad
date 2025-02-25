@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -160,13 +159,23 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         {idea.expected_partners?.length > 0 && (
           <section className="bg-white p-6 rounded-lg border border-purple-100">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">الشركاء المتوقعون</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {idea.expected_partners.map((partner, index) => (
-                <div key={index} className="bg-purple-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2 text-purple-700">{partner.name}</h4>
-                  <p className="text-sm text-gray-600">{partner.contribution}</p>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-purple-100">
+                    <th className="p-3 text-right text-purple-800 border-b">اسم الشريك</th>
+                    <th className="p-3 text-right text-purple-800 border-b">المساهمة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {idea.expected_partners.map((partner, index) => (
+                    <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
+                      <td className="p-3 text-gray-700 font-medium">{partner.name}</td>
+                      <td className="p-3 text-gray-600">{partner.contribution}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </section>
         )}
