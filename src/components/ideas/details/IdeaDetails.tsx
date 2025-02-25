@@ -22,6 +22,7 @@ interface IdeaDetailsProps {
     proposed_execution_date: string;
     duration: string;
     idea_type: string;
+    created_at: string;
   };
 }
 
@@ -40,7 +41,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         const discussionDays = parseInt(idea.discussion_period);
         if (isNaN(discussionDays)) return;
 
-        const createdDate = new Date();
+        const createdDate = new Date(idea.created_at);
         const discussionEndDate = new Date(createdDate);
         discussionEndDate.setDate(discussionEndDate.getDate() + discussionDays);
         
@@ -56,6 +57,9 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
             minutes: duration.minutes || 0,
             seconds: duration.seconds || 0
           });
+        } else {
+          // إذا انتهت فترة المناقشة
+          setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         }
       } catch (error) {
         console.error('Error calculating time left:', error);
@@ -66,7 +70,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
     calculateTimeLeft(); // Initial calculation
 
     return () => clearInterval(timer);
-  }, [idea.discussion_period]);
+  }, [idea.discussion_period, idea.created_at]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
@@ -104,9 +108,13 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
           <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
           <div className="text-muted-foreground text-sm mt-1 space-y-1">
             <p>مدة المناقشة: {idea.discussion_period} يوم</p>
-            <p className="text-primary">
-              متبقي: {countdown.days} يوم {countdown.hours} ساعة {countdown.minutes} دقيقة {countdown.seconds} ثانية
-            </p>
+            {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
+              <p className="text-destructive">انتهت فترة المناقشة</p>
+            ) : (
+              <p className="text-primary">
+                متبقي: {countdown.days} يوم {countdown.hours} ساعة {countdown.minutes} دقيقة {countdown.seconds} ثانية
+              </p>
+            )}
           </div>
         </div>
       </div>
