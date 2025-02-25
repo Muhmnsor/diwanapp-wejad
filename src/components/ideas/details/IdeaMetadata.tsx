@@ -4,9 +4,10 @@ interface IdeaMetadataProps {
   created_at: string;
   status: string;
   title: string;
+  discussion_period?: string;
 }
 
-export const IdeaMetadata = ({ created_by, created_at, status, title }: IdeaMetadataProps) => {
+export const IdeaMetadata = ({ created_by, created_at, status, title, discussion_period }: IdeaMetadataProps) => {
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'draft':
@@ -38,18 +39,26 @@ export const IdeaMetadata = ({ created_by, created_at, status, title }: IdeaMeta
   };
 
   return (
-    <div className="flex justify-between items-start">
-      <div>
-        <h1 className="text-3xl font-bold text-primary mb-2">{title}</h1>
-        <div className="flex items-center gap-4 text-muted-foreground">
-          <span>بواسطة: {created_by}</span>
-          <span>•</span>
-          <span>{new Date(created_at).toLocaleDateString('ar-SA')}</span>
+    <div className="space-y-2">
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-primary mb-2">{title}</h1>
+          <div className="flex items-center gap-4 text-muted-foreground">
+            <span>بواسطة: {created_by}</span>
+            <span>•</span>
+            <span>{new Date(created_at).toLocaleDateString('ar-SA')}</span>
+            {discussion_period && (
+              <>
+                <span>•</span>
+                <span>مدة المناقشة: {discussion_period} يوم</span>
+              </>
+            )}
+          </div>
         </div>
+        <span className={`px-3 py-1 rounded-full text-sm ${getStatusClass(status)}`}>
+          {getStatusDisplay(status)}
+        </span>
       </div>
-      <span className={`px-3 py-1 rounded-full text-sm ${getStatusClass(status)}`}>
-        {getStatusDisplay(status)}
-      </span>
     </div>
   );
 };
