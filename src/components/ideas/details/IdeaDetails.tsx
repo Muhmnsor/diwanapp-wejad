@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { format } from "date-fns";
+import { format, formatDuration, intervalToDuration } from "date-fns";
 import { ar } from "date-fns/locale";
 
 interface IdeaDetailsProps {
@@ -36,20 +36,29 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const discussionEndDate = new Date();
-      discussionEndDate.setDate(discussionEndDate.getDate() + parseInt(idea.discussion_period) || 0);
-      
-      const now = new Date().getTime();
-      const endTime = discussionEndDate.getTime();
-      const distance = endTime - now;
+      try {
+        const discussionDays = parseInt(idea.discussion_period);
+        if (isNaN(discussionDays)) return;
 
-      if (distance > 0) {
-        setCountdown({
-          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((distance % (1000 * 60)) / 1000)
-        });
+        const createdDate = new Date();
+        const discussionEndDate = new Date(createdDate);
+        discussionEndDate.setDate(discussionEndDate.getDate() + discussionDays);
+        
+        const now = new Date().getTime();
+        const endTime = discussionEndDate.getTime();
+        const distance = endTime - now;
+
+        if (distance > 0) {
+          const duration = intervalToDuration({ start: now, end: endTime });
+          setCountdown({
+            days: duration.days || 0,
+            hours: duration.hours || 0,
+            minutes: duration.minutes || 0,
+            seconds: duration.seconds || 0
+          });
+        }
+      } catch (error) {
+        console.error('Error calculating time left:', error);
       }
     };
 
