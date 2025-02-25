@@ -58,7 +58,6 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
             seconds: duration.seconds || 0
           });
         } else {
-          // إذا انتهت فترة المناقشة
           setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         }
       } catch (error) {
@@ -67,7 +66,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
     };
 
     const timer = setInterval(calculateTimeLeft, 1000);
-    calculateTimeLeft(); // Initial calculation
+    calculateTimeLeft();
 
     return () => clearInterval(timer);
   }, [idea.discussion_period, idea.created_at]);
@@ -105,9 +104,11 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
           </Button>
         </CollapsibleTrigger>
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
+          <div className="flex justify-between items-start">
+            <p className="text-muted-foreground text-sm">مدة المناقشة: {idea.discussion_period} يوم</p>
+            <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
+          </div>
           <div className="text-sm mt-1">
-            <p className="text-muted-foreground">مدة المناقشة: {idea.discussion_period} يوم</p>
             {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
               <p className="text-destructive">انتهت فترة المناقشة</p>
             ) : (
