@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -36,6 +37,10 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
     } catch {
       return dateStr;
     }
+  };
+
+  const calculateTotalCost = (costs: { total_cost: number }[]) => {
+    return costs.reduce((sum, cost) => sum + (cost.total_cost || 0), 0);
   };
 
   return (
@@ -142,6 +147,12 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
                       <td className="p-2 text-center">{cost.total_cost} ريال</td>
                     </tr>
                   ))}
+                  <tr className="bg-muted">
+                    <td colSpan={2} className="p-2 font-semibold text-left">المجموع الكلي:</td>
+                    <td className="p-2 text-center font-semibold">
+                      {calculateTotalCost(idea.expected_costs)} ريال
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
