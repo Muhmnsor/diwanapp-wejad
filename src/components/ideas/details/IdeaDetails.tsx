@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -126,7 +125,7 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         )}
 
         {idea.expected_costs?.length > 0 && (
-          <section className="bg-white p-6 rounded-lg border border-purple-100">
+          <section className="bg-purple-50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold mb-4 text-purple-800">التكاليف المتوقعة</h3>
             <div className="overflow-x-auto bg-white rounded-lg">
               <table className="w-full">
@@ -188,15 +187,15 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-purple-100">
-                    <th className="p-3 text-right text-purple-800">البند</th>
-                    <th className="p-3 text-center text-purple-800">الرابط</th>
+                    <th className="p-3 text-right text-purple-800 border-b">عنوان الفكرة</th>
+                    <th className="p-3 text-right text-purple-800 border-b">الرابط</th>
                   </tr>
                 </thead>
                 <tbody>
                   {idea.similar_ideas.map((similar, index) => (
                     <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
                       <td className="p-3 text-gray-700">{similar.title}</td>
-                      <td className="p-3 text-center">
+                      <td className="p-3">
                         <a 
                           href={similar.link} 
                           target="_blank" 
