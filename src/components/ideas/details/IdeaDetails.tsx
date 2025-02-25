@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 interface IdeaDetailsProps {
   idea: {
@@ -14,20 +16,35 @@ interface IdeaDetailsProps {
     contributing_departments: { name: string; contribution: string }[];
     expected_costs: { item: string; quantity: number; total_cost: number }[];
     expected_partners: { name: string; contribution: string }[];
+    discussion_period: string;
+    similar_ideas: { title: string; link: string }[];
+    supporting_files: { name: string; file_path: string }[];
+    proposed_execution_date: string;
+    duration: string;
+    idea_type: string;
   };
 }
 
 export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      return format(date, "d MMMM yyyy", { locale: ar });
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="w-full space-y-2"
+      className="w-full space-y-2 text-right"
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
+      <div className="flex items-start justify-between">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm">
             {isOpen ? (
@@ -43,9 +60,20 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
             )}
           </Button>
         </CollapsibleTrigger>
+        <div>
+          <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            مدة المناقشة: {idea.discussion_period}
+          </p>
+        </div>
       </div>
 
       <CollapsibleContent className="space-y-6">
+        <section>
+          <h3 className="text-lg font-semibold mb-2">نوع الفكرة</h3>
+          <p className="text-muted-foreground">{idea.idea_type}</p>
+        </section>
+
         <section>
           <h3 className="text-lg font-semibold mb-2">وصف الفكرة</h3>
           <p className="text-muted-foreground">{idea.description}</p>
@@ -69,6 +97,18 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         <section>
           <h3 className="text-lg font-semibold mb-2">الموارد المطلوبة</h3>
           <p className="text-muted-foreground">{idea.required_resources}</p>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold mb-2">التنفيذ المقترح</h3>
+          <div className="space-y-2">
+            <p className="text-muted-foreground">
+              تاريخ التنفيذ: {formatDate(idea.proposed_execution_date)}
+            </p>
+            <p className="text-muted-foreground">
+              المدة المتوقعة: {idea.duration}
+            </p>
+          </div>
         </section>
 
         {idea.contributing_departments?.length > 0 && (
@@ -119,6 +159,48 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
                 <div key={index} className="bg-muted p-4 rounded-lg">
                   <h4 className="font-medium mb-2">{partner.name}</h4>
                   <p className="text-sm text-muted-foreground">{partner.contribution}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {idea.similar_ideas?.length > 0 && (
+          <section>
+            <h3 className="text-lg font-semibold mb-2">الأفكار المشابهة</h3>
+            <div className="space-y-3">
+              {idea.similar_ideas.map((similar, index) => (
+                <div key={index} className="bg-muted p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">{similar.title}</h4>
+                  <a 
+                    href={similar.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    رابط الفكرة
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {idea.supporting_files?.length > 0 && (
+          <section>
+            <h3 className="text-lg font-semibold mb-2">الملفات الداعمة</h3>
+            <div className="space-y-2">
+              {idea.supporting_files.map((file, index) => (
+                <div key={index} className="flex items-center justify-between bg-muted p-3 rounded-lg">
+                  <span className="text-sm">{file.name}</span>
+                  <a
+                    href={file.file_path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline text-sm"
+                  >
+                    تحميل الملف
+                  </a>
                 </div>
               ))}
             </div>
