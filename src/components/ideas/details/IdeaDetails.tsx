@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { format, formatDuration, intervalToDuration } from "date-fns";
+import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
 interface IdeaDetailsProps {
@@ -27,48 +27,6 @@ interface IdeaDetailsProps {
 
 export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      try {
-        const discussionDays = parseInt(idea.discussion_period);
-        if (isNaN(discussionDays)) return;
-
-        const createdDate = new Date(idea.created_at);
-        const discussionEndDate = new Date(createdDate);
-        discussionEndDate.setDate(discussionEndDate.getDate() + discussionDays);
-        
-        const now = new Date().getTime();
-        const endTime = discussionEndDate.getTime();
-        const distance = endTime - now;
-
-        if (distance > 0) {
-          const duration = intervalToDuration({ start: now, end: endTime });
-          setCountdown({
-            days: duration.days || 0,
-            hours: duration.hours || 0,
-            minutes: duration.minutes || 0,
-            seconds: duration.seconds || 0
-          });
-        } else {
-          setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        }
-      } catch (error) {
-        console.error('Error calculating time left:', error);
-      }
-    };
-
-    const timer = setInterval(calculateTimeLeft, 1000);
-    calculateTimeLeft();
-
-    return () => clearInterval(timer);
-  }, [idea.discussion_period, idea.created_at]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
@@ -86,7 +44,6 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
       onOpenChange={setIsOpen}
       className="w-full space-y-2 text-right"
     >
-      <p className="text-muted-foreground text-sm mb-2">مدة المناقشة: {idea.discussion_period} يوم</p>
       <div className="flex items-start justify-between flex-row-reverse">
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm">
@@ -105,15 +62,6 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
         </CollapsibleTrigger>
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
-          <div className="text-sm mt-1">
-            {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
-              <p className="text-destructive">انتهت فترة المناقشة</p>
-            ) : (
-              <p className="text-primary">
-                متبقي: {countdown.days} يوم {countdown.hours} ساعة {countdown.minutes} دقيقة {countdown.seconds} ثانية
-              </p>
-            )}
-          </div>
         </div>
       </div>
 
