@@ -21,8 +21,14 @@ const Ideas = () => {
   const { data: ideas, isLoading, refetch } = useQuery({
     queryKey: ['ideas', filterStatus],
     queryFn: async () => {
-      // تم تعديل الاستعلام ليجلب البيانات مباشرة دون العلاقات
-      let query = supabase.from('ideas').select('*');
+      let query = supabase
+        .from('ideas')
+        .select(`
+          *,
+          profiles (
+            email
+          )
+        `);
 
       if (filterStatus) {
         query = query.eq('status', filterStatus);
@@ -35,10 +41,9 @@ const Ideas = () => {
         throw error;
       }
       
-      // تعديل البيانات المسترجعة لتتوافق مع الواجهة المطلوبة
       return data.map(idea => ({
         ...idea,
-        creator_email: 'غير معروف' // قيمة افتراضية للبريد الإلكتروني
+        creator_email: idea.profiles?.email || 'غير معروف'
       }));
     }
   });
