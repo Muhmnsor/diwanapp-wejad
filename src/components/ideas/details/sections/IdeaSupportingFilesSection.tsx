@@ -1,6 +1,8 @@
 
 import { FC } from "react";
 import { Download } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface SupportingFile {
   name: string;
@@ -14,9 +16,26 @@ interface IdeaSupportingFilesSectionProps {
 export const IdeaSupportingFilesSection: FC<IdeaSupportingFilesSectionProps> = ({ files }) => {
   const handleDownload = async (filePath: string, fileName: string) => {
     try {
-      const response = await fetch(filePath);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      console.log("Attempting to download file:", filePath);
+      
+      const { data, error } = await supabase.storage
+        .from('idea-files')
+        .download(filePath);
+
+      if (error) {
+        console.error('Error downloading file:', error);
+        toast.error('حدث خطأ أثناء تحميل الملف');
+        return;
+      }
+
+      if (!data) {
+        console.error('No file data received');
+        toast.error('الملف غير موجود');
+        return;
+      }
+
+      // إنشاء رابط للتحميل
+      const url = window.URL.createObjectURL(data);
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
@@ -24,8 +43,11 @@ export const IdeaSupportingFilesSection: FC<IdeaSupportingFilesSectionProps> = (
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      
+      toast.success('تم تحميل الملف بنجاح');
     } catch (error) {
-      console.error('Error downloading file:', error);
+      console.error('Error in download process:', error);
+      toast.error('حدث خطأ أثناء تحميل الملف');
     }
   };
 
