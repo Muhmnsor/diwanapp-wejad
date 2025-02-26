@@ -19,23 +19,30 @@ export const IdeasTable = ({
   setFilterStatus,
   onDelete
 }: IdeasTableProps) => {
-  const calculateRemainingTime = (discussionPeriod: string | null) => {
+  const calculateRemainingTime = (discussionPeriod: string | null, createdAt: string) => {
     if (!discussionPeriod) return "لم يتم تحديد مدة";
     
     try {
       const parts = discussionPeriod.split(' ');
       let totalHours = 0;
       
-      for (let i = 0; i < parts.length; i++) {
-        if (parts[i] === 'days' && i > 0) {
-          totalHours += parseInt(parts[i-1]) * 24;
-        }
-        if (parts[i] === 'hours' && i > 0) {
-          totalHours += parseInt(parts[i-1]);
+      // إذا كان التنسيق HH:MM:SS
+      if (discussionPeriod.includes(':')) {
+        const [hours] = discussionPeriod.split(':');
+        totalHours = parseInt(hours);
+      } else {
+        // التنسيق القديم (days و hours)
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i] === 'days' && i > 0) {
+            totalHours += parseInt(parts[i-1]) * 24;
+          }
+          if (parts[i] === 'hours' && i > 0) {
+            totalHours += parseInt(parts[i-1]);
+          }
         }
       }
 
-      const creationDate = new Date();
+      const creationDate = new Date(createdAt);
       const endDate = new Date(creationDate.getTime() + totalHours * 60 * 60 * 1000);
       
       const now = new Date();
@@ -48,7 +55,6 @@ export const IdeasTable = ({
       const remainingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       const remainingHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       
-      // تعديل المنطق هنا لإظهار الساعات دائماً عندما تكون أقل من يوم
       if (remainingDays > 0) {
         return remainingHours > 0 
           ? `${remainingDays} يوم و ${remainingHours} ساعة`
@@ -172,7 +178,7 @@ export const IdeasTable = ({
                     })}
                   </TableCell>
                   <TableCell className="text-center">
-                    {calculateRemainingTime(idea.discussion_period)}
+                    {calculateRemainingTime(idea.discussion_period, idea.created_at)}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className={`px-3 py-1 rounded-full text-sm ${getStatusClass(idea.status)}`}>
