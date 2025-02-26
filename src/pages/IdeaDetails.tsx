@@ -63,6 +63,63 @@ const IdeaDetails = () => {
     }
   });
 
+  const voteMutation = useMutation({
+    mutationFn: async (voteType: 'up' | 'down') => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("يجب تسجيل الدخول للتصويت");
+      }
+
+      const currentVote = votes.find(v => v.user_id === user.id);
+
+      // إذا كان المستخدم قد صوت من قبل
+      if (currentVote) {
+        // إذا كان نفس التصويت السابق، نقوم بإزالته
+        if (currentVote.vote_type === voteType) {
+          const { error } = await supabase
+            .from('idea_votes')
+            .delete()
+            .eq('idea_id', id)
+            .eq('user_id', user.id);
+
+          if (error) throw error;
+        } else {
+          // إذا كان تصويت مختلف، نقوم بتحديث التصويت
+          const { error } = await supabase
+            .from('idea_votes')
+            .update({ vote_type: voteType })
+            .eq('idea_id', id)
+            .eq('user_id', user.id);
+
+          if (error) throw error;
+        }
+      } else {
+        // إذا لم يكن هناك تصويت سابق، نضيف تصويت جديد
+        const { error } = await supabase
+          .from('idea_votes')
+          .insert([
+            {
+              idea_id: id,
+              vote_type: voteType,
+              user_id: user.id
+            }
+          ]);
+
+        if (error) throw error;
+      }
+
+      return voteType;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['votes', id] });
+      toast.success("تم تسجيل تصويتك بنجاح");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء التصويت");
+    }
+  });
+
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, parentId, file }: { content: string; parentId?: string; file?: File }) => {
       console.log("Starting comment mutation with file:", file?.name);
@@ -138,36 +195,6 @@ const IdeaDetails = () => {
     onError: (error) => {
       console.error("Comment error:", error);
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إضافة التعليق");
-    }
-  });
-
-  const voteMutation = useMutation({
-    mutationFn: async (voteType: 'up' | 'down') => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("يجب تسجيل الدخول للتصويت");
-      }
-
-      const { data, error } = await supabase
-        .from('idea_votes')
-        .insert([
-          {
-            idea_id: id,
-            vote_type: voteType,
-            user_id: user.id
-          }
-        ]);
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['votes', id] });
-      toast.success("تم تسجيل تصويتك بنجاح");
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء التصويت");
     }
   });
 
