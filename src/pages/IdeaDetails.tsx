@@ -65,6 +65,7 @@ const IdeaDetails = () => {
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, parentId, file }: { content: string; parentId?: string; file?: File }) => {
+      console.log("Starting comment mutation with file:", file?.name);
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -76,10 +77,9 @@ const IdeaDetails = () => {
       let attachmentName = null;
 
       if (file) {
+        console.log("Processing file upload:", file.name, file.type);
         const fileExt = file.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-
-        console.log("Uploading file:", fileName, file.type);
 
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('attachments')
@@ -90,6 +90,8 @@ const IdeaDetails = () => {
           throw new Error("فشل في رفع الملف");
         }
 
+        console.log("File uploaded successfully:", uploadData);
+
         const { data: { publicUrl } } = supabase.storage
           .from('attachments')
           .getPublicUrl(fileName);
@@ -98,7 +100,7 @@ const IdeaDetails = () => {
         attachmentType = file.type;
         attachmentName = file.name;
 
-        console.log("File uploaded successfully:", {
+        console.log("File metadata prepared:", {
           url: attachmentUrl,
           type: attachmentType,
           name: attachmentName
@@ -117,9 +119,16 @@ const IdeaDetails = () => {
             attachment_type: attachmentType,
             attachment_name: attachmentName
           }
-        ]);
+        ])
+        .select('*')
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Comment insert error:", error);
+        throw error;
+      }
+
+      console.log("Comment added successfully:", data);
       return data;
     },
     onSuccess: () => {
@@ -219,4 +228,3 @@ const IdeaDetails = () => {
 };
 
 export default IdeaDetails;
-
