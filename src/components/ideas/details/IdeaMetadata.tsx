@@ -153,21 +153,21 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
     }
 
     // بناء نص العد التنازلي
-    const parts = [];
+    const displayParts = [];
     if (countdown.days > 0) {
-      parts.push(`${countdown.days} يوم`);
+      displayParts.push(`${countdown.days} يوم`);
     }
     if (countdown.hours > 0) {
-      parts.push(`${countdown.hours} ساعة`);
+      displayParts.push(`${countdown.hours} ساعة`);
     }
     if (countdown.minutes > 0) {
-      parts.push(`${countdown.minutes} دقيقة`);
+      displayParts.push(`${countdown.minutes} دقيقة`);
     }
     if (countdown.seconds > 0) {
-      parts.push(`${countdown.seconds} ثانية`);
+      displayParts.push(`${countdown.seconds} ثانية`);
     }
 
-    return parts.length > 0 ? parts.join(' و ') : "أقل من دقيقة";
+    return displayParts.length > 0 ? displayParts.join(' و ') : "أقل من دقيقة";
   };
 
   return (
