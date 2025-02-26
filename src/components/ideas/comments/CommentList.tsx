@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare } from "lucide-react";
@@ -5,6 +6,7 @@ import { toast } from "sonner";
 import { CommentForm } from "./components/CommentForm";
 import { CommentItem } from "./components/CommentItem";
 import type { Comment, CommentListProps } from "./types";
+
 export const CommentList = ({
   comments,
   onAddComment,
@@ -15,17 +17,21 @@ export const CommentList = ({
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (scrollViewportRef.current) {
       scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
     }
   }, [comments]);
+
   const getCommentReplies = (commentId: string) => {
     return comments.filter(c => c.parent_id === commentId).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
+
   const getRootComments = () => {
     return comments.filter(c => !c.parent_id).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -41,6 +47,7 @@ export const CommentList = ({
       setSelectedFile(file);
     }
   };
+
   const handleAddComment = async () => {
     if (!newCommentText.trim()) return;
     try {
@@ -53,11 +60,13 @@ export const CommentList = ({
       toast.error('حدث خطأ في إضافة التعليق');
     }
   };
+
   const handleCancelReply = () => {
     setReplyTo(null);
     setNewCommentText("");
     setSelectedFile(null);
   };
+
   const renderComment = (commentItem: Comment, level: number = 0) => {
     const replies = getCommentReplies(commentItem.id);
     const isReplyBeingAdded = replyTo === commentItem.id;
@@ -81,13 +90,25 @@ export const CommentList = ({
           </div>}
       </div>;
   };
+
+  const rootComments = getRootComments();
+  const hasComments = rootComments.length > 0;
+
   return <div dir="rtl">
       <h2 className="text-lg font-semibold mb-3">المناقشات</h2>
       
       <div className="space-y-1">
-        <ScrollArea dir="ltr" className="h-[400px] pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1),inset_0_-12px_8px_-10px_rgba(0,0,0,0.1)] rounded-2xl px-[15px] mx-[4px]">
+        <ScrollArea dir="ltr" className={`pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1),inset_0_-12px_8px_-10px_rgba(0,0,0,0.1)] rounded-2xl px-[15px] mx-[4px] ${hasComments ? 'h-[400px]' : 'h-[200px]'}`}>
           <div className="h-full" ref={scrollViewportRef}>
-            {getRootComments().map(comment => renderComment(comment))}
+            {hasComments ? (
+              rootComments.map(comment => renderComment(comment))
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
+                <MessageSquare className="h-12 w-12 mb-4 text-primary/20" />
+                <p className="text-lg font-medium mb-2">لا توجد مناقشات بعد</p>
+                <p className="text-sm">كن أول من يشارك برأيه وأفكاره!</p>
+              </div>
+            )}
           </div>
         </ScrollArea>
 
