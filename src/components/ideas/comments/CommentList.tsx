@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CornerDownLeft, MessageSquare, User } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Comment {
   id: string;
@@ -133,9 +134,11 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
       <h2 className="text-lg font-semibold mb-3">التعليقات</h2>
       
       <div className="space-y-1">
-        <div>
-          {getRootComments().map(comment => renderComment(comment))}
-        </div>
+        <ScrollArea className="h-[400px] pr-4 -mr-4">
+          <div>
+            {getRootComments().map(comment => renderComment(comment))}
+          </div>
+        </ScrollArea>
 
         {!replyTo && (
           <div className="flex gap-2 pt-3 mt-3 border-t">
