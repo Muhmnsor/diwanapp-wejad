@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,11 +22,20 @@ export const IdeasTable = ({
     if (!discussionPeriod) return "لم يتم تحديد مدة";
     
     try {
-      const days = parseInt(discussionPeriod.split(' ')[0]);
-      if (isNaN(days)) return "تنسيق غير صحيح";
+      const parts = discussionPeriod.split(' ');
+      let totalHours = 0;
+      
+      for (let i = 0; i < parts.length; i++) {
+        if (parts[i] === 'days' && i > 0) {
+          totalHours += parseInt(parts[i-1]) * 24;
+        }
+        if (parts[i] === 'hours' && i > 0) {
+          totalHours += parseInt(parts[i-1]);
+        }
+      }
 
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + days);
+      const creationDate = new Date();
+      const endDate = new Date(creationDate.getTime() + totalHours * 60 * 60 * 1000);
       
       const now = new Date();
       const diffTime = endDate.getTime() - now.getTime();
@@ -39,8 +47,10 @@ export const IdeasTable = ({
       const remainingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       const remainingHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       
-      if (remainingDays > 0) {
+      if (remainingDays > 0 && remainingHours > 0) {
         return `${remainingDays} يوم و ${remainingHours} ساعة`;
+      } else if (remainingDays > 0) {
+        return `${remainingDays} يوم`;
       } else if (remainingHours > 0) {
         return `${remainingHours} ساعة`;
       } else {
@@ -48,7 +58,7 @@ export const IdeasTable = ({
       }
     } catch (error) {
       console.error('Error calculating remaining time:', error);
-      return "خطأ في الحساب";
+      return "خطأ في حساب الوقت المتبقي";
     }
   };
 
