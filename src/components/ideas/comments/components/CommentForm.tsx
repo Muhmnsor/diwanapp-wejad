@@ -32,19 +32,19 @@ export const CommentForm = ({
   submitLabel = "تعليق"
 }: CommentFormProps) => {
   return (
-    <div className="flex gap-2">
-      <Avatar className="h-8 w-8">
+    <div className="flex gap-2 w-full">
+      <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarFallback>
           <User className="h-4 w-4" />
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1">
+      <div className="flex-1 w-full">
         <Textarea
           placeholder={placeholder}
           value={text}
           onChange={(e) => onTextChange(e.target.value)}
           onFocus={onFocus}
-          className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
+          className="min-h-[80px] w-full resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
         />
         <div className="flex justify-between items-center mt-2">
           <div className="flex gap-2 items-center">
