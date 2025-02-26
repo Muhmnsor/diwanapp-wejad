@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { intervalToDuration } from "date-fns";
 
@@ -85,63 +84,61 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
   };
 
   return (
-    <div className="space-y-4 bg-white rounded-lg shadow-sm p-6 border border-purple-100">
-      <div className="flex justify-between items-start">
-        <div className="space-y-4 flex-1">
-          <div>
-            <h1 className="text-3xl font-bold text-purple-800 mb-2">{title}</h1>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">بواسطة:</span>
-                <span>{created_by}</span>
-              </div>
-              <span className="text-purple-300">•</span>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">التاريخ:</span>
-                <span>{new Date(created_at).toLocaleDateString('ar-SA')}</span>
-              </div>
-              {discussion_period && (
+    <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
+      <div className="flex justify-between items-start gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-purple-800 mb-2">{title}</h1>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-2">
+            <div className="flex items-center gap-1">
+              <span className="font-medium">بواسطة:</span>
+              <span>{created_by}</span>
+            </div>
+            <span className="text-purple-300">•</span>
+            <div className="flex items-center gap-1">
+              <span className="font-medium">التاريخ:</span>
+              <span>{new Date(created_at).toLocaleDateString('ar-SA')}</span>
+            </div>
+            {discussion_period && (
+              <>
+                <span className="text-purple-300">•</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">مدة المناقشة:</span>
+                  <span>{discussion_period} يوم</span>
+                </div>
+              </>
+            )}
+          </div>
+          {discussion_period && countdown && (
+            <div className="inline-flex items-center gap-3 bg-purple-50 rounded-lg py-2 px-3 text-sm">
+              {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
+                <p className="text-red-600 font-medium">انتهت فترة المناقشة</p>
+              ) : (
                 <>
-                  <span className="text-purple-300">•</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">مدة المناقشة:</span>
-                    <span>{discussion_period} يوم</span>
+                  <span className="font-medium text-purple-800">متبقي:</span>
+                  <div className="flex gap-2">
+                    <div className="flex items-center">
+                      <span className="font-bold text-purple-700">{countdown.days}</span>
+                      <span className="text-purple-600 mr-1">ي</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-bold text-purple-700">{countdown.hours}</span>
+                      <span className="text-purple-600 mr-1">س</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-bold text-purple-700">{countdown.minutes}</span>
+                      <span className="text-purple-600 mr-1">د</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-bold text-purple-700">{countdown.seconds}</span>
+                      <span className="text-purple-600 mr-1">ث</span>
+                    </div>
                   </div>
                 </>
               )}
             </div>
-          </div>
-          {discussion_period && countdown && (
-            <div className="bg-purple-50 rounded-lg p-4 inline-block">
-              {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
-                <p className="text-red-600 font-medium">انتهت فترة المناقشة</p>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold text-purple-800">متبقي:</span>
-                  <div className="flex gap-3">
-                    <div className="text-center">
-                      <span className="text-2xl font-bold text-purple-700">{countdown.days}</span>
-                      <p className="text-sm text-purple-600">يوم</p>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-2xl font-bold text-purple-700">{countdown.hours}</span>
-                      <p className="text-sm text-purple-600">ساعة</p>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-2xl font-bold text-purple-700">{countdown.minutes}</span>
-                      <p className="text-sm text-purple-600">دقيقة</p>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-2xl font-bold text-purple-700">{countdown.seconds}</span>
-                      <p className="text-sm text-purple-600">ثانية</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           )}
         </div>
-        <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
+        <span className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${getStatusClass(status)}`}>
           {getStatusDisplay(status)}
         </span>
       </div>
