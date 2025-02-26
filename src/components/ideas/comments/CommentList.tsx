@@ -54,14 +54,14 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 text-right">
-              <div className="flex items-center gap-1 mb-0.5 justify-end">
+              <div className="flex items-center gap-1 mb-0.5 justify-start">
                 <span className="font-medium">مستخدم</span>
                 <span className="text-xs text-muted-foreground">
                   {new Date(commentItem.created_at).toLocaleDateString('ar-SA')}
                 </span>
               </div>
               <p className="text-foreground mb-1 leading-normal text-sm text-right">{commentItem.content}</p>
-              <div className="flex gap-2 justify-start">
+              <div className="flex gap-2 justify-end">
                 <Button 
                   variant="ghost" 
                   size="sm"
@@ -97,7 +97,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
                     onChange={(e) => setNewCommentText(e.target.value)}
                     className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
                   />
-                  <div className="flex justify-start mt-1">
+                  <div className="flex justify-end mt-1">
                     <Button 
                       onClick={handleAddComment}
                       disabled={isSubmitting || !newCommentText.trim()}
@@ -147,7 +147,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
                 onFocus={onCommentFocus}
                 className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
               />
-              <div className="flex justify-start mt-1">
+              <div className="flex justify-end mt-1">
                 <Button 
                   onClick={handleAddComment}
                   disabled={isSubmitting || !newCommentText.trim()}
