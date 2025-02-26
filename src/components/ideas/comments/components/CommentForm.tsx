@@ -38,20 +38,23 @@ export const CommentForm = ({
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 w-full">
-        <Textarea 
-          placeholder={placeholder} 
-          value={text} 
-          onChange={e => onTextChange(e.target.value)} 
-          onFocus={onFocus} 
-          className="min-h-[80px] w-full resize-none border rounded-2xl focus-visible:ring-0 text-right px-[23px] py-4" 
-        />
+        <div className="relative">
+          <Textarea 
+            placeholder={placeholder} 
+            value={text} 
+            onChange={e => onTextChange(e.target.value)} 
+            onFocus={onFocus} 
+            className="min-h-[80px] w-full resize-none border rounded-2xl focus-visible:ring-0 text-right px-[23px] py-4 pr-[50px]" 
+          />
+          <div className="absolute left-3 bottom-3">
+            <input type="file" id={inputId} className="hidden" onChange={onFileChange} accept="image/*,.pdf,.docx,.xlsx" />
+            <Button type="button" variant="ghost" size="sm" className="h-8 hover:bg-accent/10 rounded-full" onClick={() => document.getElementById(inputId)?.click()}>
+              <Paperclip className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
         <div className="flex justify-between items-center mt-2">
           <div className="flex gap-2 items-center">
-            <input type="file" id={inputId} className="hidden" onChange={onFileChange} accept="image/*,.pdf,.docx,.xlsx" />
-            <Button type="button" variant="ghost" size="sm" className="h-8" onClick={() => document.getElementById(inputId)?.click()}>
-              <Paperclip className="h-4 w-4 ml-1" />
-              إضافة مرفق
-            </Button>
             {selectedFile && <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <span>{selectedFile.name}</span>
                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onFileRemove}>
