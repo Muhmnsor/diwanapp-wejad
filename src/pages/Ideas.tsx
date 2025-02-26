@@ -46,6 +46,7 @@ const Ideas = () => {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [ideaToDelete, setIdeaToDelete] = useState<Idea | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: ideas, isLoading, refetch } = useQuery({
     queryKey: ['ideas', filterStatus],
@@ -75,7 +76,10 @@ const Ideas = () => {
   };
 
   const confirmDelete = async () => {
-    if (!ideaToDelete) return;
+    if (!ideaToDelete || isDeleting) return;
+
+    setIsDeleting(true);
+    console.log('Starting delete operation for idea:', ideaToDelete.id);
 
     try {
       const { error } = await supabase
@@ -83,14 +87,19 @@ const Ideas = () => {
         .delete()
         .eq('id', ideaToDelete.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
+      console.log('Delete successful');
       toast.success('تم حذف الفكرة بنجاح');
-      refetch();
+      await refetch(); // انتظار اكتمال تحديث البيانات
     } catch (error) {
       console.error('Error deleting idea:', error);
       toast.error('حدث خطأ أثناء حذف الفكرة');
     } finally {
+      setIsDeleting(false);
       setIdeaToDelete(null);
     }
   };
@@ -258,6 +267,7 @@ const Ideas = () => {
                           size="icon"
                           className="text-red-600 hover:text-red-800 hover:bg-red-100"
                           onClick={() => handleDelete(idea)}
+                          disabled={isDeleting}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -275,7 +285,9 @@ const Ideas = () => {
 
       <AlertDialog 
         open={!!ideaToDelete} 
-        onOpenChange={() => setIdeaToDelete(null)}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setIdeaToDelete(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -285,12 +297,13 @@ const Ideas = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
             >
-              حذف
+              {isDeleting ? 'جاري الحذف...' : 'حذف'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
