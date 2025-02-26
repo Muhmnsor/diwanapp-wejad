@@ -85,30 +85,10 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
-      <div className="flex items-center justify-between gap-4 flex-wrap lg:flex-nowrap">
-        <h1 className="text-xl font-bold text-purple-800 min-w-[200px] truncate">{title}</h1>
-        <div className="flex items-center gap-2 text-sm text-gray-600 flex-shrink-0">
-          <div className="flex items-center gap-1">
-            <span className="font-medium">بواسطة:</span>
-            <span>{created_by}</span>
-          </div>
-          <span className="text-purple-300">•</span>
-          <div className="flex items-center gap-1">
-            <span className="font-medium">التاريخ:</span>
-            <span>{new Date(created_at).toLocaleDateString('ar-SA')}</span>
-          </div>
-          {discussion_period && (
-            <>
-              <span className="text-purple-300">•</span>
-              <div className="flex items-center gap-1">
-                <span className="font-medium">مدة المناقشة:</span>
-                <span>{discussion_period} يوم</span>
-              </div>
-            </>
-          )}
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
         {discussion_period && countdown && (
-          <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm flex-shrink-0">
+          <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
             {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
               <p className="text-red-600 font-medium">انتهت المناقشة</p>
             ) : (
@@ -124,7 +104,7 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
             )}
           </div>
         )}
-        <span className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 ${getStatusClass(status)}`}>
+        <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
           {getStatusDisplay(status)}
         </span>
       </div>
