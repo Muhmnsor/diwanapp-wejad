@@ -26,7 +26,7 @@ export const CommentAttachment = ({ comment }: CommentAttachmentProps) => {
           <img 
             src={comment.attachment_url} 
             alt={comment.attachment_name || 'صورة مرفقة'} 
-            className="rounded-lg max-h-[200px] object-cover"
+            className="rounded-lg max-h-[150px] max-w-[250px] object-contain"
           />
         </a>
       </div>
@@ -45,3 +45,4 @@ export const CommentAttachment = ({ comment }: CommentAttachmentProps) => {
     </a>
   );
 };
+
