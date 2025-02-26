@@ -27,11 +27,15 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   const [replyTo, setReplyTo] = useState<string | null>(null);
 
   const getCommentReplies = (commentId: string) => {
-    return comments.filter(c => c.parent_id === commentId);
+    return comments
+      .filter(c => c.parent_id === commentId)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
 
   const getRootComments = () => {
-    return comments.filter(c => !c.parent_id);
+    return comments
+      .filter(c => !c.parent_id)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
 
   const handleAddComment = async () => {
@@ -165,3 +169,4 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
     </div>
   );
 };
+
