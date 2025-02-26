@@ -149,7 +149,11 @@ export const IdeasTable = ({
                   </TableCell>
                   <TableCell className="text-center">{idea.creator_email}</TableCell>
                   <TableCell className="text-center">
-                    {new Date(idea.created_at).toLocaleDateString('ar-SA')}
+                    {new Date(idea.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit'
+                    })}
                   </TableCell>
                   <TableCell className="text-center">
                     {calculateRemainingTime(idea.discussion_period)}
