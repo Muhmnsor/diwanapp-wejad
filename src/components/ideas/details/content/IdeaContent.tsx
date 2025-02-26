@@ -1,4 +1,3 @@
-
 import { Separator } from "@/components/ui/separator";
 import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
 import { IdeaDetails } from "@/components/ideas/details/IdeaDetails";
@@ -6,7 +5,6 @@ import { VoteSection } from "@/components/ideas/voting/VoteSection";
 import { CommentList } from "@/components/ideas/comments/CommentList";
 import { Vote, Idea, Comment } from "../types";
 import { useState } from "react";
-
 interface IdeaContentProps {
   idea: Idea;
   votes: Vote[];
@@ -15,7 +13,6 @@ interface IdeaContentProps {
   onAddComment: (content: string, parentId?: string) => Promise<void>;
   isSubmitting: boolean;
 }
-
 export const IdeaContent = ({
   idea,
   votes,
@@ -26,11 +23,9 @@ export const IdeaContent = ({
 }: IdeaContentProps) => {
   // تغيير القيمة الافتراضية إلى false لتكون مطوية عند البداية
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-
   const handleCommentFocus = () => {
     setIsDetailsOpen(false);
   };
-
   return <div className="max-w-4xl mx-auto">
       <IdeaMetadata {...idea} />
 
@@ -39,14 +34,9 @@ export const IdeaContent = ({
       <div className="space-y-8">
         <IdeaDetails idea={idea} isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} />
 
-        <div className="space-y-6">
+        <div className="space-y-6 my-[11px]">
           <VoteSection votes={votes} onVote={onVote} />
-          <CommentList 
-            comments={comments} 
-            onAddComment={onAddComment} 
-            isSubmitting={isSubmitting} 
-            onCommentFocus={handleCommentFocus}
-          />
+          <CommentList comments={comments} onAddComment={onAddComment} isSubmitting={isSubmitting} onCommentFocus={handleCommentFocus} />
         </div>
       </div>
     </div>;
