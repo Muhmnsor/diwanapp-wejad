@@ -6,6 +6,7 @@ import { CornerDownLeft, MessageSquare, User, Paperclip, X, FileText, Image as I
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Comment {
   id: string;
@@ -56,31 +57,43 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        alert('نوع الملف غير مدعوم. الرجاء اختيار صورة، PDF، Word أو Excel.');
+        toast.error('نوع الملف غير مدعوم. الرجاء اختيار صورة، PDF، Word أو Excel.');
         return;
       }
 
       // التحقق من حجم الملف (5MB كحد أقصى)
       if (file.size > 5 * 1024 * 1024) {
-        alert('حجم الملف يجب أن لا يتجاوز 5 ميجابايت');
+        toast.error('حجم الملف يجب أن لا يتجاوز 5 ميجابايت');
         return;
       }
 
+      console.log("Selected file:", file.name, file.type);
       setSelectedFile(file);
     }
   };
 
   const handleAddComment = async () => {
     if (!newCommentText.trim()) return;
-    await onAddComment(newCommentText, replyTo, selectedFile || undefined);
-    setNewCommentText("");
-    setSelectedFile(null);
-    setReplyTo(null);
+
+    try {
+      await onAddComment(newCommentText, replyTo, selectedFile || undefined);
+      console.log("Comment added successfully with file:", selectedFile?.name);
+      setNewCommentText("");
+      setSelectedFile(null);
+      setReplyTo(null);
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error('حدث خطأ في إضافة التعليق');
+    }
   };
 
   const renderAttachment = (comment: Comment) => {
-    if (!comment.attachment_url) return null;
+    if (!comment.attachment_url) {
+      console.log("No attachment URL for comment:", comment.id);
+      return null;
+    }
 
+    console.log("Rendering attachment:", comment.attachment_url, comment.attachment_type);
     const isImage = comment.attachment_type?.startsWith('image/');
     const icon = isImage ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />;
 
