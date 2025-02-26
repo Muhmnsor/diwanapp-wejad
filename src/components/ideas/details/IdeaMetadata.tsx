@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { intervalToDuration } from "date-fns";
 
@@ -46,14 +45,8 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
           }
         }
 
-        // تحقق إضافي للقيم
-        console.log('Discussion period:', discussion_period);
-        console.log('Total hours calculated:', totalHours);
-        console.log('Created at:', created_at);
-
         // إذا كانت الفترة صفرية أو غير صالحة
         if (totalHours <= 0) {
-          console.log('Invalid discussion period');
           setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
           return;
         }
@@ -62,17 +55,10 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
         const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
         const now = new Date();
 
-        // تحقق إضافي للتواريخ
-        console.log('Created date:', createdDate);
-        console.log('End date:', discussionEndDate);
-        console.log('Current time:', now);
-        console.log('Time difference (ms):', discussionEndDate.getTime() - now.getTime());
-
         const distance = discussionEndDate.getTime() - now.getTime();
 
         if (distance > 0) {
           const duration = intervalToDuration({ start: now, end: discussionEndDate });
-          console.log('Duration calculated:', duration);
           setCountdown({
             days: duration.days || 0,
             hours: duration.hours || 0,
@@ -80,7 +66,6 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
             seconds: duration.seconds || 0
           });
         } else {
-          console.log('Discussion period has ended');
           setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         }
       } catch (error) {
@@ -131,28 +116,34 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
       return "غير محدد";
     }
 
-    // إذا انتهت الفترة أو كانت صفرية
+    // إذا كانت كل القيم صفرية، نتحقق مما إذا كانت الفترة قد انتهت فعلاً
     if (countdown.days === 0 && countdown.hours === 0 && 
         countdown.minutes === 0 && countdown.seconds === 0) {
-
-      // تحقق إضافي للتأكد من انتهاء الفترة
+      
+      const createdDate = new Date(created_at);
       const parts = discussion_period.split(' ');
       let totalHours = 0;
       
+      // حساب إجمالي الساعات مرة أخرى للتحقق
       for (let i = 0; i < parts.length; i++) {
-        if (parts[i] === 'days' && i > 0) totalHours += parseInt(parts[i-1]) * 24;
-        if (parts[i] === 'hours' && i > 0) totalHours += parseInt(parts[i-1]);
+        if (parts[i] === 'days' && i > 0) {
+          const days = parseInt(parts[i-1]);
+          if (!isNaN(days)) totalHours += days * 24;
+        }
+        if (parts[i] === 'hours' && i > 0) {
+          const hours = parseInt(parts[i-1]);
+          if (!isNaN(hours)) totalHours += hours;
+        }
       }
 
-      const createdDate = new Date(created_at);
       const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
       const now = new Date();
-
+      
+      // إذا لم تنته الفترة بعد، نعرض الوقت المتبقي
       if (now < discussionEndDate) {
-        // إذا لم تنته الفترة فعلياً، نعرض صفر بدلاً من "انتهت المناقشة"
-        return "0 ثانية";
+        return "أقل من دقيقة";
       }
-
+      
       return "انتهت المناقشة";
     }
 
@@ -171,7 +162,7 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
       parts.push(`${countdown.seconds} ثانية`);
     }
 
-    return parts.length > 0 ? parts.join(' و ') : "0 ثانية";
+    return parts.length > 0 ? parts.join(' و ') : "أقل من دقيقة";
   };
 
   return (
