@@ -76,6 +76,12 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
     setIsSubmitting(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const uploadedFiles = await Promise.all(
         supportingFiles
           .filter(file => file.name && file.file)
@@ -119,7 +125,8 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
             similar_ideas: similarIdeas.filter(idea => idea.title || idea.link),
             supporting_files: uploadedFiles.filter(Boolean),
             discussion_period: discussionPeriod,
-            status: 'draft'
+            status: 'draft',
+            created_by: user.id // Add the user ID here
           }
         ]);
 
