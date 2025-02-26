@@ -46,26 +46,26 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
 
     return (
       <div key={commentItem.id} className="relative">
-        <div className={`p-4 hover:bg-muted/50 transition-colors ${level > 0 ? 'mr-12' : ''}`}>
-          <div className="flex gap-3">
-            <Avatar>
+        <div className={`py-2 px-3 hover:bg-muted/50 transition-colors ${level > 0 ? 'mr-8' : ''}`}>
+          <div className="flex gap-2">
+            <Avatar className="h-8 w-8">
               <AvatarFallback>
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-1 mb-0.5">
                 <span className="font-medium">مستخدم</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {new Date(commentItem.created_at).toLocaleDateString('ar-SA')}
                 </span>
               </div>
-              <p className="text-foreground mb-3 leading-relaxed">{commentItem.content}</p>
+              <p className="text-foreground mb-1 leading-normal text-sm">{commentItem.content}</p>
               <div className="flex gap-2">
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="hover:bg-primary/10 rounded-full h-8 px-3 text-muted-foreground hover:text-primary"
+                  className="hover:bg-primary/10 rounded-full h-6 px-2 text-muted-foreground hover:text-primary text-xs"
                   onClick={() => {
                     if (isReplyBeingAdded) {
                       setReplyTo(null);
@@ -75,7 +75,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
                     }
                   }}
                 >
-                  <CornerDownLeft className="ml-1 h-4 w-4" />
+                  <CornerDownLeft className="ml-1 h-3 w-3" />
                   {isReplyBeingAdded ? 'إلغاء' : 'رد'}
                 </Button>
               </div>
@@ -83,11 +83,11 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
           </div>
 
           {isReplyBeingAdded && (
-            <div className="mt-4 mr-12">
-              <div className="flex gap-3">
-                <Avatar>
+            <div className="mt-2 mr-10">
+              <div className="flex gap-2">
+                <Avatar className="h-8 w-8">
                   <AvatarFallback>
-                    <User className="h-5 w-5" />
+                    <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
@@ -95,16 +95,16 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
                     placeholder="اكتب ردك هنا..."
                     value={newCommentText}
                     onChange={(e) => setNewCommentText(e.target.value)}
-                    className="min-h-[100px] resize-none border-b focus-visible:ring-0 rounded-none px-0"
+                    className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0"
                   />
-                  <div className="flex justify-start mt-2">
+                  <div className="flex justify-start mt-1">
                     <Button 
                       onClick={handleAddComment}
                       disabled={isSubmitting || !newCommentText.trim()}
                       className="rounded-full"
                       size="sm"
                     >
-                      <MessageSquare className="ml-2 h-4 w-4" />
+                      <MessageSquare className="ml-1 h-3 w-3" />
                       رد
                     </Button>
                   </div>
@@ -115,7 +115,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
         </div>
 
         {replies.length > 0 && (
-          <div className="space-y-1 border-r border-border mr-6">
+          <div className="border-r border-border mr-4">
             {replies.map(reply => renderComment(reply, level + 1))}
           </div>
         )}
@@ -124,15 +124,15 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-6">التعليقات</h2>
+    <div>
+      <h2 className="text-lg font-semibold mb-3">التعليقات</h2>
       
-      <div className="space-y-6">
+      <div className="space-y-1">
         {!replyTo && (
-          <div className="flex gap-3">
-            <Avatar>
+          <div className="flex gap-2 pb-3">
+            <Avatar className="h-8 w-8">
               <AvatarFallback>
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
@@ -141,13 +141,14 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
                 onFocus={onCommentFocus}
-                className="min-h-[100px] resize-none border-b focus-visible:ring-0 rounded-none px-0"
+                className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0"
               />
-              <div className="flex justify-start mt-2">
+              <div className="flex justify-start mt-1">
                 <Button 
                   onClick={handleAddComment}
                   disabled={isSubmitting || !newCommentText.trim()}
                   className="rounded-full"
+                  size="sm"
                 >
                   تعليق
                 </Button>
@@ -156,7 +157,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
           </div>
         )}
 
-        <div className="space-y-1 divide-y">
+        <div>
           {getRootComments().map(comment => renderComment(comment))}
         </div>
       </div>
