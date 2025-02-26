@@ -33,36 +33,38 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
         // حساب إجمالي الساعات من الأيام والساعات
         for (let i = 0; i < parts.length; i++) {
           if (parts[i] === 'days' && i > 0) {
-            totalHours += parseInt(parts[i-1]) * 24;
+            const days = parseInt(parts[i-1]);
+            if (!isNaN(days)) {
+              totalHours += days * 24;
+            }
           }
           if (parts[i] === 'hours' && i > 0) {
-            totalHours += parseInt(parts[i-1]);
+            const hours = parseInt(parts[i-1]);
+            if (!isNaN(hours)) {
+              totalHours += hours;
+            }
           }
         }
 
-        // إذا كانت الفترة صفرية
-        if (totalHours === 0) {
+        const createdDate = new Date(created_at);
+        const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
+        const now = new Date();
+
+        // التحقق مما إذا كانت المناقشة قد انتهت بالفعل
+        if (now >= discussionEndDate) {
           setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
           return;
         }
 
-        const createdDate = new Date(created_at);
-        const discussionEndDate = new Date(createdDate.getTime() + totalHours * 60 * 60 * 1000);
-        
-        const now = new Date();
-        const distance = discussionEndDate.getTime() - now.getTime();
+        // حساب الوقت المتبقي
+        const duration = intervalToDuration({ start: now, end: discussionEndDate });
+        setCountdown({
+          days: duration.days || 0,
+          hours: duration.hours || 0,
+          minutes: duration.minutes || 0,
+          seconds: duration.seconds || 0
+        });
 
-        if (distance > 0) {
-          const duration = intervalToDuration({ start: now, end: discussionEndDate });
-          setCountdown({
-            days: duration.days || 0,
-            hours: duration.hours || 0,
-            minutes: duration.minutes || 0,
-            seconds: duration.seconds || 0
-          });
-        } else {
-          setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        }
       } catch (error) {
         console.error('Error calculating time left:', error);
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -111,9 +113,42 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
       return "غير محدد";
     }
 
-    // إذا انتهت الفترة أو كانت صفرية
+    const createdDate = new Date(created_at);
+    const parts = discussion_period.split(' ');
+    let totalHours = 0;
+
+    // حساب إجمالي الساعات
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] === 'days' && i > 0) {
+        const days = parseInt(parts[i-1]);
+        if (!isNaN(days)) totalHours += days * 24;
+      }
+      if (parts[i] === 'hours' && i > 0) {
+        const hours = parseInt(parts[i-1]);
+        if (!isNaN(hours)) totalHours += hours;
+      }
+    }
+
+    // التحقق من صلاحية الفترة
+    if (totalHours <= 0) {
+      return "فترة مناقشة غير صالحة";
+    }
+
+    const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
+    const now = new Date();
+
+    // التحقق من انتهاء المناقشة
+    if (now >= discussionEndDate) {
+      return "انتهت المناقشة";
+    }
+
+    // إذا لم يكن هناك أي وقت متبقي في العداد لكن المناقشة لم تنته بعد
     if (countdown.days === 0 && countdown.hours === 0 && 
         countdown.minutes === 0 && countdown.seconds === 0) {
+      const timeLeft = discussionEndDate.getTime() - now.getTime();
+      if (timeLeft > 0) {
+        return "أقل من دقيقة";
+      }
       return "انتهت المناقشة";
     }
 
@@ -132,7 +167,7 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
       parts.push(`${countdown.seconds} ثانية`);
     }
 
-    return parts.join(' و ');
+    return parts.length > 0 ? parts.join(' و ') : "أقل من دقيقة";
   };
 
   return (
