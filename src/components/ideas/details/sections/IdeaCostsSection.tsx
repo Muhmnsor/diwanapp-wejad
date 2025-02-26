@@ -19,8 +19,8 @@ export const IdeaCostsSection: FC<IdeaCostsSectionProps> = ({ costs }) => {
   };
 
   return (
-    <section className="bg-white p-4 rounded-lg border border-purple-100">
-      <h3 className="text-lg font-semibold mb-2 text-purple-800">التكاليف المتوقعة</h3>
+    <section className="bg-white p-4 rounded-lg border border-purple-100 mb-4">
+      <h3 className="text-lg font-semibold mb-4 text-purple-800">التكاليف المتوقعة</h3>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

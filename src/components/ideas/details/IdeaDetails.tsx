@@ -1,16 +1,15 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { IdeaTypeSection } from "./sections/IdeaTypeSection";
 import { IdeaProblemSection } from "./sections/IdeaProblemSection";
 import { IdeaBenefitsSection } from "./sections/IdeaBenefitsSection";
 import { IdeaOpportunitySection } from "./sections/IdeaOpportunitySection";
+import { IdeaDescriptionSection } from "./sections/IdeaDescriptionSection";
 import { IdeaResourcesSection } from "./sections/IdeaResourcesSection";
 import { IdeaExecutionSection } from "./sections/IdeaExecutionSection";
-import { IdeaDescriptionSection } from "./sections/IdeaDescriptionSection";
 import { IdeaDepartmentsSection } from "./sections/IdeaDepartmentsSection";
 import { IdeaPartnersSection } from "./sections/IdeaPartnersSection";
 import { IdeaCostsSection } from "./sections/IdeaCostsSection";
@@ -45,18 +44,18 @@ export const IdeaDetails = ({ idea, isOpen, onOpenChange }: IdeaDetailsProps) =>
       </Button>
 
       {isOpen && (
-        <div className="w-full text-right bg-white rounded-lg shadow-sm p-4 mt-2">
+        <div className="w-full text-right bg-white rounded-lg shadow-sm p-4 mt-2 space-y-4">
           <div className="space-y-4">
             <IdeaTypeSection ideaType={idea.idea_type} />
+            <IdeaDescriptionSection description={idea.description} />
             <IdeaProblemSection problem={idea.problem} />
-            <IdeaBenefitsSection benefits={idea.benefits} />
             <IdeaOpportunitySection opportunity={idea.opportunity} />
+            <IdeaBenefitsSection benefits={idea.benefits} />
             <IdeaResourcesSection resources={idea.resources} />
             <IdeaExecutionSection
               proposedExecutionDate={idea.proposed_execution_date}
               duration={idea.duration}
             />
-            <IdeaDescriptionSection description={idea.description} />
             <IdeaDepartmentsSection departments={idea.departments} />
             <IdeaPartnersSection partners={idea.partners} />
             <IdeaCostsSection costs={idea.costs} />
