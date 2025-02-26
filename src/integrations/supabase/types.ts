@@ -877,7 +877,9 @@ export type Database = {
           idea_id: string | null
           parent_id: string | null
           updated_at: string
+          user_email: string | null
           user_id: string | null
+          user_name: string | null
         }
         Insert: {
           content: string
@@ -886,7 +888,9 @@ export type Database = {
           idea_id?: string | null
           parent_id?: string | null
           updated_at?: string
+          user_email?: string | null
           user_id?: string | null
+          user_name?: string | null
         }
         Update: {
           content?: string
@@ -895,7 +899,9 @@ export type Database = {
           idea_id?: string | null
           parent_id?: string | null
           updated_at?: string
+          user_email?: string | null
           user_id?: string | null
+          user_name?: string | null
         }
         Relationships: [
           {
