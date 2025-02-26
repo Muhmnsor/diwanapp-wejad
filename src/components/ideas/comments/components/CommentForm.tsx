@@ -1,7 +1,9 @@
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Paperclip, X } from "lucide-react";
+
 interface CommentFormProps {
   onSubmit: () => Promise<void>;
   text: string;
@@ -15,6 +17,7 @@ interface CommentFormProps {
   inputId?: string;
   submitLabel?: string;
 }
+
 export const CommentForm = ({
   onSubmit,
   text,
@@ -35,7 +38,13 @@ export const CommentForm = ({
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 w-full">
-        <Textarea placeholder={placeholder} value={text} onChange={e => onTextChange(e.target.value)} onFocus={onFocus} className="min-h-[80px] w-full resize-none border-b focus-visible:ring-0 rounded-none text-right px-[23px]" />
+        <Textarea 
+          placeholder={placeholder} 
+          value={text} 
+          onChange={e => onTextChange(e.target.value)} 
+          onFocus={onFocus} 
+          className="min-h-[80px] w-full resize-none border-b focus-visible:ring-0 rounded-lg text-right px-[23px]" 
+        />
         <div className="flex justify-between items-center mt-2">
           <div className="flex gap-2 items-center">
             <input type="file" id={inputId} className="hidden" onChange={onFileChange} accept="image/*,.pdf,.docx,.xlsx" />
