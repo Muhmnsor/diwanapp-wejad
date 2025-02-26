@@ -225,29 +225,21 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(!idea.supporting_files || idea.supporting_files.length === 0) ? (
-                    <tr>
-                      <td colSpan={2} className="p-4 text-center text-gray-500">
-                        لا توجد ملفات داعمة
+                  {idea.supporting_files.map((file, index) => (
+                    <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
+                      <td className="p-3 text-gray-700">{file.name}</td>
+                      <td className="p-3 text-center">
+                        <a
+                          href={file.file_path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-600 hover:text-purple-700 hover:underline text-sm"
+                        >
+                          تحميل الملف
+                        </a>
                       </td>
                     </tr>
-                  ) : (
-                    idea.supporting_files.map((file, index) => (
-                      <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
-                        <td className="p-3 text-gray-700">{file.name}</td>
-                        <td className="p-3 text-center">
-                          <a
-                            href={file.file_path}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-purple-600 hover:text-purple-700 hover:underline text-sm"
-                          >
-                            تحميل الملف
-                          </a>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
