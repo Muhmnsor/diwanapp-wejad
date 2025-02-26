@@ -65,69 +65,99 @@ const IdeaDetails = () => {
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, parentId, file }: { content: string; parentId?: string; file?: File }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("يجب تسجيل الدخول لإضافة تعليق");
-      }
-
-      let attachmentUrl = null;
-      let attachmentType = null;
-      let attachmentName = null;
-
-      if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-
-        console.log("Uploading file:", fileName, file.type);
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('attachments')
-          .upload(fileName, file);
-
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-          throw new Error("فشل في رفع الملف");
+      try {
+        console.log("Starting comment submission with:", { content, hasFile: !!file });
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error("يجب تسجيل الدخول لإضافة تعليق");
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('attachments')
-          .getPublicUrl(fileName);
+        let attachmentUrl = null;
+        let attachmentType = null;
+        let attachmentName = null;
 
-        attachmentUrl = publicUrl;
-        attachmentType = file.type;
-        attachmentName = file.name;
+        if (file) {
+          try {
+            console.log("Starting file upload process");
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-        console.log("File uploaded successfully:", {
-          url: attachmentUrl,
-          type: attachmentType,
-          name: attachmentName
-        });
-      }
+            console.log("Attempting to upload file:", { fileName, type: file.type, size: file.size });
 
-      const { data, error } = await supabase
-        .from('idea_comments')
-        .insert([
-          {
-            idea_id: id,
-            content,
-            parent_id: parentId,
-            user_id: user.id,
-            attachment_url: attachmentUrl,
-            attachment_type: attachmentType,
-            attachment_name: attachmentName
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('attachments')
+              .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error("Upload error details:", uploadError);
+              throw new Error(`فشل في رفع الملف: ${uploadError.message}`);
+            }
+
+            console.log("File upload successful, getting public URL");
+            
+            const { data } = supabase.storage
+              .from('attachments')
+              .getPublicUrl(fileName);
+
+            attachmentUrl = data.publicUrl;
+            attachmentType = file.type;
+            attachmentName = file.name;
+
+            console.log("File metadata prepared:", {
+              url: attachmentUrl,
+              type: attachmentType,
+              name: attachmentName
+            });
+          } catch (uploadError) {
+            console.error("File upload process failed:", uploadError);
+            throw new Error("فشل في معالجة الملف المرفق");
           }
-        ]);
+        }
 
-      if (error) throw error;
-      return data;
+        console.log("Preparing to insert comment with attachment:", {
+          hasAttachment: !!attachmentUrl,
+          attachmentType,
+          attachmentName
+        });
+
+        const { data, error } = await supabase
+          .from('idea_comments')
+          .insert([
+            {
+              idea_id: id,
+              content,
+              parent_id: parentId,
+              user_id: user.id,
+              attachment_url: attachmentUrl,
+              attachment_type: attachmentType,
+              attachment_name: attachmentName
+            }
+          ])
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Comment insertion error:", error);
+          throw error;
+        }
+
+        console.log("Comment successfully added:", data);
+        return data;
+      } catch (error) {
+        console.error("Complete error details:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', id] });
       toast.success("تم إضافة التعليق بنجاح");
     },
     onError: (error) => {
-      console.error("Comment error:", error);
+      console.error("Comment mutation error:", error);
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إضافة التعليق");
     }
   });
@@ -165,7 +195,10 @@ const IdeaDetails = () => {
   const handleAddComment = async (content: string, parentId?: string, file?: File) => {
     setIsSubmitting(true);
     try {
+      console.log("handleAddComment called with:", { content, parentId, hasFile: !!file });
       await addCommentMutation.mutateAsync({ content, parentId, file });
+    } catch (error) {
+      console.error("Error in handleAddComment:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -219,4 +252,3 @@ const IdeaDetails = () => {
 };
 
 export default IdeaDetails;
-
