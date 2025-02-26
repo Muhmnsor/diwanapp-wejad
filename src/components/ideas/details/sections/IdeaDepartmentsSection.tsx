@@ -25,13 +25,15 @@ export const IdeaDepartmentsSection: FC<IdeaDepartmentsSectionProps> = ({ depart
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-purple-100">
-              <th className="p-2 text-right text-purple-800 rounded-lg">الإدارة</th>
+              <th className="p-2 text-right text-purple-800 rounded-tr-lg">الإدارة</th>
+              <th className="p-2 text-right text-purple-800 rounded-tl-lg">المساهمة</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-purple-50">
             {departments.map((dept, index) => (
               <tr key={index} className="hover:bg-purple-50/50 transition-colors">
                 <td className="p-2 text-gray-700">{dept.name}</td>
+                <td className="p-2 text-gray-600">{dept.contribution}</td>
               </tr>
             ))}
           </tbody>
