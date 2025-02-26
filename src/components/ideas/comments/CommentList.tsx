@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CornerDownLeft, MessageSquare, User, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
@@ -32,6 +32,14 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   const [newCommentText, setNewCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+
+  // التمرير إلى آخر التعليقات عند تحديث التعليقات
+  useEffect(() => {
+    if (scrollViewportRef.current) {
+      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
+    }
+  }, [comments]);
 
   const getCommentReplies = (commentId: string) => {
     return comments
@@ -48,7 +56,6 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // التحقق من نوع الملف
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif',
         'application/pdf',
@@ -61,7 +68,6 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
         return;
       }
 
-      // التحقق من حجم الملف (5MB كحد أقصى)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('حجم الملف يجب أن لا يتجاوز 5 ميجابايت');
         return;
@@ -251,8 +257,8 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
       <h2 className="text-lg font-semibold mb-3">التعليقات</h2>
       
       <div className="space-y-1">
-        <ScrollArea className="h-[400px] pr-4 -mr-4">
-          <div>
+        <ScrollArea className="h-[400px] pr-4 -mr-4" dir="ltr">
+          <div className="h-full" ref={scrollViewportRef}>
             {getRootComments().map(comment => renderComment(comment))}
           </div>
         </ScrollArea>
