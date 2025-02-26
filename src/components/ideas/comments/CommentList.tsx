@@ -84,6 +84,25 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
     const isImage = comment.attachment_type?.startsWith('image/');
     const icon = isImage ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />;
 
+    if (isImage) {
+      return (
+        <div className="mt-2">
+          <a
+            href={comment.attachment_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block"
+          >
+            <img 
+              src={comment.attachment_url} 
+              alt={comment.attachment_name || 'صورة مرفقة'} 
+              className="rounded-lg max-h-[200px] object-cover"
+            />
+          </a>
+        </div>
+      );
+    }
+
     return (
       <a
         href={comment.attachment_url}
