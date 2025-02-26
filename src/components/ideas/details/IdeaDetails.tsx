@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -14,6 +15,7 @@ import { IdeaCostsSection } from "./sections/IdeaCostsSection";
 import { IdeaPartnersSection } from "./sections/IdeaPartnersSection";
 import { IdeaSimilarIdeasSection } from "./sections/IdeaSimilarIdeasSection";
 import { IdeaSupportingFilesSection } from "./sections/IdeaSupportingFilesSection";
+
 interface IdeaDetailsProps {
   idea: {
     description: string;
@@ -49,12 +51,16 @@ interface IdeaDetailsProps {
     created_at: string;
   };
 }
+
 export const IdeaDetails = ({
   idea
 }: IdeaDetailsProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  return <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-4 text-right bg-white rounded-lg shadow-sm p-6 my-0 py-0">
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-4 text-right bg-white rounded-lg shadow-sm p-6 my-0 py-0">
       <div className="flex items-center justify-between border-b pb-4">
+        <h2 className="text-2xl font-semibold text-purple-700">تفاصيل الفكرة</h2>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" className="hover:bg-purple-50">
             {isOpen ? <>
@@ -66,7 +72,6 @@ export const IdeaDetails = ({
               </>}
           </Button>
         </CollapsibleTrigger>
-        <h2 className="text-2xl font-semibold text-purple-700">تفاصيل الفكرة</h2>
       </div>
 
       <CollapsibleContent className="space-y-8">
@@ -83,5 +88,6 @@ export const IdeaDetails = ({
         <IdeaSimilarIdeasSection similarIdeas={idea.similar_ideas} />
         <IdeaSupportingFilesSection files={idea.supporting_files} />
       </CollapsibleContent>
-    </Collapsible>;
+    </Collapsible>
+  );
 };
