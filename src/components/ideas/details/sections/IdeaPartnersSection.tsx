@@ -19,19 +19,19 @@ export const IdeaPartnersSection: FC<IdeaPartnersSectionProps> = ({ partners }) 
   }
 
   return (
-    <section className="bg-white p-4 rounded-lg border border-purple-100 mb-4">
-      <h3 className="text-lg font-semibold mb-4 text-purple-800">الشركاء المتوقعون</h3>
+    <section className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+      <h3 className="text-lg font-semibold mb-4 text-gray-800">الشركاء المتوقعون</h3>
       <div className="overflow-x-auto relative">
         <table className="w-full table-auto">
           <thead>
-            <tr className="bg-purple-100">
-              <th className="p-2 text-right text-purple-800 rounded-tr-lg">اسم الشريك</th>
-              <th className="p-2 text-right text-purple-800 rounded-tl-lg">المساهمة</th>
+            <tr className="bg-gray-100">
+              <th className="p-2 text-right text-gray-800 rounded-tr-lg">اسم الشريك</th>
+              <th className="p-2 text-right text-gray-800 rounded-tl-lg">المساهمة</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-purple-50">
+          <tbody className="divide-y divide-gray-50">
             {partners.map((partner, index) => (
-              <tr key={index} className="hover:bg-purple-50/50 transition-colors">
+              <tr key={index} className="hover:bg-gray-50/50 transition-colors">
                 <td className="p-2 text-gray-700">{partner.name}</td>
                 <td className="p-2 text-gray-600">{partner.contribution}</td>
               </tr>
