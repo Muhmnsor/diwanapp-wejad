@@ -24,7 +24,8 @@ export const IdeaContent = ({
   onAddComment,
   isSubmitting
 }: IdeaContentProps) => {
-  const [isDetailsOpen, setIsDetailsOpen] = useState(true);
+  // تغيير القيمة الافتراضية إلى false لتكون مطوية عند البداية
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const handleCommentFocus = () => {
     setIsDetailsOpen(false);
