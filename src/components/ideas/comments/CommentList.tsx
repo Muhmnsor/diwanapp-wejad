@@ -42,12 +42,13 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   const getRootComments = () => {
     return comments
       .filter(c => !c.parent_id)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // التحقق من نوع الملف
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif',
         'application/pdf',
@@ -60,6 +61,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
         return;
       }
 
+      // التحقق من حجم الملف (5MB كحد أقصى)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('حجم الملف يجب أن لا يتجاوز 5 ميجابايت');
         return;
