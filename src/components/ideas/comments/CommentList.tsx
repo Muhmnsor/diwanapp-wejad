@@ -45,7 +45,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
 
     return (
       <div key={commentItem.id} className="relative">
-        <div className={`bg-muted p-4 rounded-lg ${level > 0 ? 'mr-8 border-r border-primary/20' : ''}`}>
+        <div className={`bg-muted/50 p-4 rounded-xl ${level > 0 ? 'mr-8 border-r border-primary/20' : ''}`}>
           <p className="text-sm text-muted-foreground mb-2">
             {new Date(commentItem.created_at).toLocaleDateString('ar-SA')}
           </p>
@@ -53,6 +53,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
           <Button 
             variant="ghost" 
             size="sm"
+            className="hover:bg-primary/10 rounded-full text-primary"
             onClick={() => {
               if (isReplyBeingAdded) {
                 setReplyTo(null);
@@ -67,20 +68,24 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
           </Button>
 
           {isReplyBeingAdded && (
-            <div className="mt-4 flex gap-4">
+            <div className="mt-4 bg-background rounded-2xl p-4 border border-input">
               <Textarea
                 placeholder="اكتب ردك هنا..."
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
-                className="flex-1"
+                className="min-h-[100px] border-0 focus-visible:ring-0 resize-none text-lg bg-transparent p-0"
               />
-              <Button 
-                onClick={handleAddComment}
-                disabled={isSubmitting || !newCommentText.trim()}
-              >
-                <MessageSquare className="ml-2 h-4 w-4" />
-                إضافة رد
-              </Button>
+              <div className="flex justify-start mt-2">
+                <Button 
+                  onClick={handleAddComment}
+                  disabled={isSubmitting || !newCommentText.trim()}
+                  className="rounded-full"
+                  size="sm"
+                >
+                  <MessageSquare className="ml-2 h-4 w-4" />
+                  رد
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -96,29 +101,32 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">التعليقات</h2>
+      <h2 className="text-xl font-semibold mb-4">التعليقات</h2>
       
-      <div className="space-y-4">
+      <div className="space-y-6">
         {!replyTo && (
-          <div className="flex gap-4">
+          <div className="bg-background rounded-2xl p-4 border border-input">
             <Textarea
-              placeholder="أضف تعليقك هنا..."
+              placeholder="ما رأيك في هذه الفكرة؟"
               value={newCommentText}
               onChange={(e) => setNewCommentText(e.target.value)}
               onFocus={onCommentFocus}
-              className="flex-1"
+              className="min-h-[100px] border-0 focus-visible:ring-0 resize-none text-lg bg-transparent p-0"
             />
-            <Button 
-              onClick={handleAddComment}
-              disabled={isSubmitting || !newCommentText.trim()}
-            >
-              <MessageSquare className="ml-2 h-4 w-4" />
-              إضافة تعليق
-            </Button>
+            <div className="flex justify-start mt-2">
+              <Button 
+                onClick={handleAddComment}
+                disabled={isSubmitting || !newCommentText.trim()}
+                className="rounded-full"
+              >
+                <MessageSquare className="ml-2 h-4 w-4" />
+                تعليق
+              </Button>
+            </div>
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-6 mt-8">
           {getRootComments().map(comment => renderComment(comment))}
         </div>
       </div>
