@@ -45,8 +45,8 @@ export const IdeaDetails = ({ idea, isOpen, onOpenChange }: IdeaDetailsProps) =>
       </Button>
 
       {isOpen && (
-        <div className="w-full space-y-1 text-right bg-white rounded-lg shadow-sm p-3 mt-2">
-          <div className="grid gap-3">
+        <div className="w-full text-right bg-white rounded-lg shadow-sm p-4 mt-2">
+          <div className="space-y-4">
             <IdeaTypeSection ideaType={idea.idea_type} />
             <IdeaProblemSection problem={idea.problem} />
             <IdeaBenefitsSection benefits={idea.benefits} />
