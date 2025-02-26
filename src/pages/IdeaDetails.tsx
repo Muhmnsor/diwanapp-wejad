@@ -64,11 +64,45 @@ const IdeaDetails = () => {
   });
 
   const addCommentMutation = useMutation({
-    mutationFn: async ({ content, parentId }: { content: string; parentId?: string }) => {
+    mutationFn: async ({ content, parentId, file }: { content: string; parentId?: string; file?: File }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error("يجب تسجيل الدخول لإضافة تعليق");
+      }
+
+      let attachmentUrl = null;
+      let attachmentType = null;
+      let attachmentName = null;
+
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+
+        console.log("Uploading file:", fileName, file.type);
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          throw new Error("فشل في رفع الملف");
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('attachments')
+          .getPublicUrl(fileName);
+
+        attachmentUrl = publicUrl;
+        attachmentType = file.type;
+        attachmentName = file.name;
+
+        console.log("File uploaded successfully:", {
+          url: attachmentUrl,
+          type: attachmentType,
+          name: attachmentName
+        });
       }
 
       const { data, error } = await supabase
@@ -78,7 +112,10 @@ const IdeaDetails = () => {
             idea_id: id,
             content,
             parent_id: parentId,
-            user_id: user.id
+            user_id: user.id,
+            attachment_url: attachmentUrl,
+            attachment_type: attachmentType,
+            attachment_name: attachmentName
           }
         ]);
 
@@ -90,6 +127,7 @@ const IdeaDetails = () => {
       toast.success("تم إضافة التعليق بنجاح");
     },
     onError: (error) => {
+      console.error("Comment error:", error);
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إضافة التعليق");
     }
   });
@@ -124,10 +162,10 @@ const IdeaDetails = () => {
     }
   });
 
-  const handleAddComment = async (content: string, parentId?: string) => {
+  const handleAddComment = async (content: string, parentId?: string, file?: File) => {
     setIsSubmitting(true);
     try {
-      await addCommentMutation.mutateAsync({ content, parentId });
+      await addCommentMutation.mutateAsync({ content, parentId, file });
     } finally {
       setIsSubmitting(false);
     }
@@ -181,3 +219,4 @@ const IdeaDetails = () => {
 };
 
 export default IdeaDetails;
+
