@@ -1,60 +1,17 @@
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useState } from "react";
-import { CommentList } from "@/components/ideas/comments/CommentList";
-import { VoteSection } from "@/components/ideas/voting/VoteSection";
-import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
-import { IdeaDetails as IdeaDetailsComponent } from "@/components/ideas/details/IdeaDetails";
-
-interface Idea {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  category: string | null;
-  created_at: string;
-  created_by: string;
-  discussion_period: string;
-  opportunity: string;
-  problem: string;
-  benefits: string;
-  required_resources: string;
-  contributing_departments: { name: string; contribution: string }[];
-  expected_costs: { item: string; quantity: number; total_cost: number }[];
-  expected_partners: { name: string; contribution: string }[];
-  proposed_execution_date: string;
-  similar_ideas: { title: string; link: string }[];
-  supporting_files: { name: string; file_path: string }[];
-  duration: string;
-  idea_type: string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  idea_id: string;
-  parent_id: string | null;
-}
-
-interface Vote {
-  vote_type: 'up' | 'down';
-  user_id: string;
-  idea_id: string;
-}
+import { SecondaryHeader } from "@/components/ideas/details/navigation/SecondaryHeader";
+import { IdeaContent } from "@/components/ideas/details/content/IdeaContent";
+import { Idea, Comment, Vote } from "@/components/ideas/details/types";
 
 const IdeaDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -195,53 +152,16 @@ const IdeaDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      
-      {/* Secondary Header */}
-      <div className="w-full border-b bg-white">
-        <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between" dir="rtl">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost"
-                className="gap-2"
-                onClick={() => navigate('/ideas')}
-              >
-                <ArrowRight className="h-4 w-4" />
-                العودة إلى الأفكار
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="gap-2"
-                disabled
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                لوحة التحكم
-                <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">قريباً</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <SecondaryHeader />
       <main className="flex-1 container mx-auto px-4 py-8" dir="rtl">
-        <div className="max-w-4xl mx-auto">
-          <IdeaMetadata {...idea} />
-
-          <Separator className="my-6" />
-
-          <div className="space-y-8">
-            <IdeaDetailsComponent idea={idea} />
-
-            <div className="space-y-6">
-              <VoteSection votes={votes} onVote={handleVote} />
-              <CommentList 
-                comments={comments}
-                onAddComment={handleAddComment}
-                isSubmitting={isSubmitting}
-              />
-            </div>
-          </div>
-        </div>
+        <IdeaContent 
+          idea={idea}
+          votes={votes}
+          comments={comments}
+          onVote={handleVote}
+          onAddComment={handleAddComment}
+          isSubmitting={isSubmitting}
+        />
       </main>
       <Footer />
     </div>
