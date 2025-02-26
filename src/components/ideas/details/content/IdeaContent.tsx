@@ -34,7 +34,7 @@ export const IdeaContent = ({
       <div className="space-y-8">
         <IdeaDetails idea={idea} isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} />
 
-        <div className="space-y-6 my-[11px]">
+        <div className="space-y-6 my-0">
           <VoteSection votes={votes} onVote={onVote} />
           <CommentList comments={comments} onAddComment={onAddComment} isSubmitting={isSubmitting} onCommentFocus={handleCommentFocus} />
         </div>
