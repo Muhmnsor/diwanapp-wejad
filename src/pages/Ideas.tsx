@@ -37,6 +37,7 @@ interface Idea {
   category: string | null;
   created_at: string;
   created_by: string;
+  creator_email?: string;
   discussion_period: string | null;
   proposed_execution_date: string;
 }
@@ -53,7 +54,12 @@ const Ideas = () => {
     queryFn: async () => {
       let query = supabase
         .from('ideas')
-        .select('*')
+        .select(`
+          *,
+          profiles:created_by (
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (filterStatus) {
@@ -67,7 +73,11 @@ const Ideas = () => {
         throw error;
       }
       
-      return data as Idea[];
+      // Transform the data to include the creator's email
+      return data.map(idea => ({
+        ...idea,
+        creator_email: idea.profiles?.email || 'غير معروف'
+      })) as Idea[];
     }
   });
 
@@ -249,7 +259,7 @@ const Ideas = () => {
                           {idea.title}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-center">{idea.created_by}</TableCell>
+                      <TableCell className="text-center">{idea.creator_email}</TableCell>
                       <TableCell className="text-center">
                         {new Date(idea.created_at).toLocaleDateString('ar-SA')}
                       </TableCell>
