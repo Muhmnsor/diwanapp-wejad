@@ -17,7 +17,7 @@ export const SecondaryHeader = () => {
               onClick={() => navigate('/ideas')}
             >
               <ArrowRight className="h-4 w-4" />
-              العودة إلى قائمة الأفكار
+              قائمة الأفكار
             </Button>
             <Button 
               variant="ghost" 
