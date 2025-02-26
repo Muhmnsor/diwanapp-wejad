@@ -51,7 +51,7 @@ export const VoteSection = ({
       toast.error('حدث خطأ في عملية التصويت');
     }
   };
-  return <div className="bg-muted p-4 rounded-lg py-0">
+  return <div className="bg-muted p-4 rounded-lg py-[2px] mx-0 px-[14px] my-[11px]">
       <div className="flex items-center gap-8">
         <div className="flex gap-4">
           <Button variant={currentUserVote === 'up' ? 'default' : 'outline'} size="sm" onClick={() => handleVote('up')} className={currentUserVote === 'up' ? 'bg-green-600 hover:bg-green-700' : ''}>
