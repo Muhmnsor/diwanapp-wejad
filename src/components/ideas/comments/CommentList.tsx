@@ -22,13 +22,13 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   const getCommentReplies = (commentId: string) => {
     return comments
       .filter(c => c.parent_id === commentId)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
 
   const getRootComments = () => {
     return comments
       .filter(c => !c.parent_id)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
