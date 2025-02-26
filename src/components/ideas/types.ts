@@ -19,3 +19,34 @@ export interface IdeasTableProps {
   setFilterStatus: (status: string | null) => void;
   onDelete: (idea: Idea) => void;
 }
+
+export interface AddIdeaDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export interface Department {
+  name: string;
+  contribution: string;
+}
+
+export interface Partner {
+  name: string;
+  contribution: string;
+}
+
+export interface CostItem {
+  item: string;
+  quantity: number;
+  total_cost: number;
+}
+
+export interface SimilarIdea {
+  title: string;
+  link: string;
+}
+
+export interface SupportingFile {
+  name: string;
+  file: File | null;
+}
