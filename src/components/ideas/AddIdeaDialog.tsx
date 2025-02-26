@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,14 +75,25 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    console.log("Starting form submission...");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw new Error('Authentication error: ' + authError.message);
+      }
+
       if (!user) {
+        console.error("No user found");
         throw new Error('User not authenticated');
       }
 
+      console.log("Authenticated user:", user.id);
+      console.log("Preparing files for upload...");
+
+      // Upload files
       const uploadedFiles = await Promise.all(
         supportingFiles
           .filter(file => file.name && file.file)
@@ -90,13 +102,18 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
 
             const fileExt = file.file.name.split('.').pop();
             const fileName = `${crypto.randomUUID()}.${fileExt}`;
+            console.log("Uploading file:", fileName);
             
             const { error: uploadError } = await supabase.storage
               .from('idea-files')
               .upload(fileName, file.file);
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+              console.error("File upload error:", uploadError);
+              throw uploadError;
+            }
 
+            console.log("File uploaded successfully:", fileName);
             return {
               name: file.name,
               file_path: fileName
@@ -104,38 +121,49 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
           })
       );
 
+      console.log("Files uploaded:", uploadedFiles);
+
       const discussionPeriod = `${discussionPeriodDays} days ${discussionPeriodHours} hours`;
+      console.log("Discussion period:", discussionPeriod);
 
-      const { error } = await supabase
+      // Prepare idea data
+      const ideaData = {
+        title,
+        description,
+        opportunity,
+        problem,
+        contributing_departments: departments.filter(d => d.name && d.contribution),
+        expected_partners: partners.filter(p => p.name && p.contribution),
+        benefits,
+        expected_costs: costs.filter(c => c.item && c.quantity > 0),
+        required_resources: requiredResources,
+        proposed_execution_date: proposedDate,
+        duration,
+        idea_type: ideaType,
+        similar_ideas: similarIdeas.filter(idea => idea.title || idea.link),
+        supporting_files: uploadedFiles.filter(Boolean),
+        discussion_period: discussionPeriod,
+        status: 'draft',
+        created_by: user.id
+      };
+
+      console.log("Submitting idea data:", ideaData);
+
+      const { error: insertError } = await supabase
         .from('ideas')
-        .insert([
-          {
-            title,
-            description,
-            opportunity,
-            problem,
-            contributing_departments: departments.filter(d => d.name && d.contribution),
-            expected_partners: partners.filter(p => p.name && p.contribution),
-            benefits,
-            expected_costs: costs.filter(c => c.item && c.quantity > 0),
-            required_resources: requiredResources,
-            proposed_execution_date: proposedDate,
-            duration,
-            idea_type: ideaType,
-            similar_ideas: similarIdeas.filter(idea => idea.title || idea.link),
-            supporting_files: uploadedFiles.filter(Boolean),
-            discussion_period: discussionPeriod,
-            status: 'draft',
-            created_by: user.id // Add the user ID here
-          }
-        ]);
+        .insert([ideaData]);
 
-      if (error) throw error;
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        throw insertError;
+      }
 
+      console.log("Idea submitted successfully");
       toast.success("تم إضافة الفكرة بنجاح");
       queryClient.invalidateQueries({ queryKey: ['ideas'] });
       onOpenChange(false);
       
+      // Reset form
       setTitle("");
       setDescription("");
       setOpportunity("");
@@ -328,3 +356,4 @@ export const AddIdeaDialog = ({ open, onOpenChange }: AddIdeaDialogProps) => {
     </div>
   );
 };
+
