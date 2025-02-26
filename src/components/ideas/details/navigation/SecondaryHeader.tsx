@@ -9,7 +9,7 @@ export const SecondaryHeader = () => {
   return (
     <div className="w-full border-b bg-white">
       <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between" dir="rtl">
+        <div className="flex items-center justify-center" dir="rtl">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost"
@@ -17,7 +17,7 @@ export const SecondaryHeader = () => {
               onClick={() => navigate('/ideas')}
             >
               <ArrowRight className="h-4 w-4" />
-              العودة إلى الأفكار
+              العودة إلى قائمة الأفكار
             </Button>
             <Button 
               variant="ghost" 
