@@ -43,7 +43,7 @@ export const CommentForm = ({
           value={text} 
           onChange={e => onTextChange(e.target.value)} 
           onFocus={onFocus} 
-          className="min-h-[80px] w-full resize-none border-b focus-visible:ring-0 rounded-lg text-right px-[23px]" 
+          className="min-h-[80px] w-full resize-none border rounded-2xl focus-visible:ring-0 text-right px-[23px] py-4" 
         />
         <div className="flex justify-between items-center mt-2">
           <div className="flex gap-2 items-center">
