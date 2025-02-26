@@ -17,13 +17,21 @@ export const VoteSection = ({ votes, onVote }: VoteSectionProps) => {
   const upVotes = votes.filter(v => v.vote_type === 'up').length;
   const downVotes = votes.filter(v => v.vote_type === 'down').length;
 
+  const handleVote = async (type: 'up' | 'down') => {
+    try {
+      await onVote(type);
+    } catch (error) {
+      console.error('Error voting:', error);
+    }
+  };
+
   return (
     <div className="flex justify-between items-center bg-muted p-4 rounded-lg">
       <div className="flex gap-4">
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => onVote('up')}
+          onClick={() => handleVote('up')}
         >
           <ThumbsUp className="ml-2 h-4 w-4" />
           مؤيد ({upVotes})
@@ -31,7 +39,7 @@ export const VoteSection = ({ votes, onVote }: VoteSectionProps) => {
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => onVote('down')}
+          onClick={() => handleVote('down')}
         >
           <ThumbsDown className="ml-2 h-4 w-4" />
           معارض ({downVotes})
