@@ -18,6 +18,23 @@ export const IdeaDepartmentsSection: FC<IdeaDepartmentsSectionProps> = ({ depart
     return null;
   }
 
+  // معالجة البيانات المدمجة في حقل name
+  const processedDepartments = departments.map(dept => {
+    try {
+      if (typeof dept.name === 'string' && dept.name.startsWith('{')) {
+        const parsed = JSON.parse(dept.name);
+        return {
+          name: parsed.name,
+          contribution: parsed.contribution
+        };
+      }
+      return dept;
+    } catch (error) {
+      console.error("Error parsing department data:", error);
+      return dept;
+    }
+  });
+
   return (
     <section className="bg-white p-4 rounded-lg border border-purple-100 mb-4">
       <h3 className="text-lg font-semibold mb-4 text-purple-800">الإدارات المساهمة</h3>
@@ -30,8 +47,8 @@ export const IdeaDepartmentsSection: FC<IdeaDepartmentsSectionProps> = ({ depart
             </tr>
           </thead>
           <tbody>
-            {departments.map((dept, index) => {
-              console.log("Department entry:", dept); // للتأكد من شكل البيانات
+            {processedDepartments.map((dept, index) => {
+              console.log("Processed department entry:", dept);
               return (
                 <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
                   <td className="p-3 text-gray-700">{dept.name}</td>
