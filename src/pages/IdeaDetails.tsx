@@ -1,6 +1,7 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -194,17 +195,36 @@ const IdeaDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
+      
+      {/* Secondary Header */}
+      <div className="w-full border-b bg-white">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center justify-between" dir="rtl">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost"
+                className="gap-2"
+                onClick={() => navigate('/ideas')}
+              >
+                <ArrowRight className="h-4 w-4" />
+                العودة إلى الأفكار
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="gap-2"
+                disabled
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                لوحة التحكم
+                <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">قريباً</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <main className="flex-1 container mx-auto px-4 py-8" dir="rtl">
         <div className="max-w-4xl mx-auto">
-          <Button 
-            variant="ghost" 
-            className="mb-4"
-            onClick={() => navigate('/ideas')}
-          >
-            <ArrowRight className="ml-2 h-4 w-4" />
-            العودة إلى القائمة
-          </Button>
-
           <IdeaMetadata {...idea} />
 
           <Separator className="my-6" />
