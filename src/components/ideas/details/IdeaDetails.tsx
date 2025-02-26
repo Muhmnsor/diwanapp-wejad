@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -213,19 +214,25 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
           </section>
         )}
 
-        {idea.supporting_files && idea.supporting_files.length > 0 && (
-          <section className="bg-white p-6 rounded-lg border border-purple-100">
-            <h3 className="text-lg font-semibold mb-4 text-purple-800">الملفات الداعمة</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full bg-white rounded-lg">
-                <thead>
-                  <tr className="bg-purple-100 rounded-t-lg">
-                    <th className="p-3 text-right text-purple-800 border-b first:rounded-tr-lg">اسم الملف</th>
-                    <th className="p-3 text-center text-purple-800 border-b last:rounded-tl-lg">التحميل</th>
+        <section className="bg-white p-6 rounded-lg border border-purple-100">
+          <h3 className="text-lg font-semibold mb-4 text-purple-800">الملفات الداعمة</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full bg-white rounded-lg">
+              <thead>
+                <tr className="bg-purple-100 rounded-t-lg">
+                  <th className="p-3 text-right text-purple-800 border-b first:rounded-tr-lg">اسم الملف</th>
+                  <th className="p-3 text-center text-purple-800 border-b last:rounded-tl-lg">التحميل</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(!idea.supporting_files || idea.supporting_files.length === 0) ? (
+                  <tr>
+                    <td colSpan={2} className="p-4 text-center text-gray-500">
+                      لا توجد ملفات داعمة
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {idea.supporting_files.map((file, index) => (
+                ) : (
+                  idea.supporting_files.map((file, index) => (
                     <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
                       <td className="p-3 text-gray-700">{file.name}</td>
                       <td className="p-3 text-center">
@@ -239,12 +246,12 @@ export const IdeaDetails = ({ idea }: IdeaDetailsProps) => {
                         </a>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </CollapsibleContent>
     </Collapsible>
   );
