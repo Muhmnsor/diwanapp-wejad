@@ -128,8 +128,12 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
       <h2 className="text-lg font-semibold mb-3">التعليقات</h2>
       
       <div className="space-y-1">
+        <div>
+          {getRootComments().map(comment => renderComment(comment))}
+        </div>
+
         {!replyTo && (
-          <div className="flex gap-2 pb-3">
+          <div className="flex gap-2 pt-3 mt-3 border-t">
             <Avatar className="h-8 w-8">
               <AvatarFallback>
                 <User className="h-4 w-4" />
@@ -156,10 +160,6 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
             </div>
           </div>
         )}
-
-        <div>
-          {getRootComments().map(comment => renderComment(comment))}
-        </div>
       </div>
     </div>
   );
