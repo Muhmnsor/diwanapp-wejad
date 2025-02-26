@@ -1,5 +1,6 @@
 
 import { FC } from "react";
+import { Download } from "lucide-react";
 
 interface SupportingFile {
   name: string;
@@ -11,6 +12,23 @@ interface IdeaSupportingFilesSectionProps {
 }
 
 export const IdeaSupportingFilesSection: FC<IdeaSupportingFilesSectionProps> = ({ files }) => {
+  const handleDownload = async (filePath: string, fileName: string) => {
+    try {
+      const response = await fetch(filePath);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
+
   return (
     <section className="bg-white p-6 rounded-lg border border-purple-100">
       <h3 className="text-lg font-semibold mb-4 text-purple-800">الملفات الداعمة</h3>
@@ -34,14 +52,13 @@ export const IdeaSupportingFilesSection: FC<IdeaSupportingFilesSectionProps> = (
                 <tr key={index} className="border-b border-purple-50 hover:bg-purple-50/50 transition-colors">
                   <td className="p-3 text-gray-700">{file.name}</td>
                   <td className="p-3 text-center">
-                    <a
-                      href={file.file_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-purple-600 hover:text-purple-700 hover:underline text-sm"
+                    <button
+                      onClick={() => handleDownload(file.file_path, file.name)}
+                      className="text-purple-600 hover:text-purple-700 hover:underline text-sm inline-flex items-center gap-1"
                     >
+                      <Download className="h-4 w-4" />
                       تحميل الملف
-                    </a>
+                    </button>
                   </td>
                 </tr>
               ))
