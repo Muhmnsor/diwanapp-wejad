@@ -289,14 +289,14 @@ const Ideas = () => {
           if (!open && !isDeleting) setIdeaToDelete(null);
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
             <AlertDialogTitle>هل أنت متأكد من حذف هذه الفكرة؟</AlertDialogTitle>
             <AlertDialogDescription>
               سيتم حذف الفكرة نهائياً ولا يمكن التراجع عن هذا الإجراء.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="sm:justify-start">
             <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
