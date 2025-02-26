@@ -18,9 +18,13 @@ export const IdeaSupportingFilesSection: FC<IdeaSupportingFilesSectionProps> = (
     try {
       console.log("Attempting to download file:", filePath);
       
+      // نحتاج فقط اسم الملف من المسار الكامل
+      const filePathParts = filePath.split('/');
+      const actualFileName = filePathParts[filePathParts.length - 1];
+      
       const { data, error } = await supabase.storage
         .from('idea-files')
-        .download(filePath);
+        .download(actualFileName);
 
       if (error) {
         console.error('Error downloading file:', error);
