@@ -127,7 +127,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
       <h2 className="text-lg font-semibold mb-3">التعليقات</h2>
       
       <div className="space-y-1">
-        <ScrollArea className="h-[400px] pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1)] rounded-t-lg" dir="ltr">
+        <ScrollArea className="h-[400px] pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1),inset_0_-12px_8px_-10px_rgba(0,0,0,0.1)] rounded-t-lg" dir="ltr">
           <div className="h-full" ref={scrollViewportRef}>
             {getRootComments().map(comment => renderComment(comment))}
           </div>
