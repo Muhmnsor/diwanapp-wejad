@@ -69,6 +69,12 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
     }
   };
 
+  const handleCancelReply = () => {
+    setReplyTo(null);
+    setNewCommentText("");
+    setSelectedFile(null);
+  };
+
   const renderComment = (commentItem: Comment, level: number = 0) => {
     const replies = getCommentReplies(commentItem.id);
     const isReplyBeingAdded = replyTo === commentItem.id;
@@ -80,7 +86,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
           level={level}
           onReply={() => {
             if (isReplyBeingAdded) {
-              setReplyTo(null);
+              handleCancelReply();
             } else {
               setReplyTo(commentItem.id);
               setNewCommentText('');
