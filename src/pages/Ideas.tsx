@@ -1,4 +1,3 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useQuery } from "@tanstack/react-query";
@@ -54,13 +53,7 @@ const Ideas = () => {
     queryFn: async () => {
       let query = supabase
         .from('ideas')
-        .select(`
-          *,
-          profiles:created_by (
-            email
-          )
-        `)
-        .order('created_at', { ascending: false });
+        .select('*, profiles:created_by(email)')
 
       if (filterStatus) {
         query = query.eq('status', filterStatus);
@@ -73,11 +66,10 @@ const Ideas = () => {
         throw error;
       }
       
-      // Transform the data to include the creator's email
       return data.map(idea => ({
         ...idea,
         creator_email: idea.profiles?.email || 'غير معروف'
-      })) as Idea[];
+      }));
     }
   });
 
@@ -104,7 +96,7 @@ const Ideas = () => {
 
       console.log('Delete successful');
       toast.success('تم حذف الفكرة بنجاح');
-      await refetch(); // انتظار اكتمال تحديث البيانات
+      await refetch();
     } catch (error) {
       console.error('Error deleting idea:', error);
       toast.error('حدث خطأ أثناء حذف الفكرة');
@@ -231,7 +223,7 @@ const Ideas = () => {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8">
                       <div className="space-y-4">
-                        <p className="text-gray-500">لا توجد أفكار حالياً</p>
+                        <p className="text-gray-500">لا توجد أ��كار حالياً</p>
                         {filterStatus && (
                           <Button 
                             variant="outline" 
