@@ -45,7 +45,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
     const isReplyBeingAdded = replyTo === commentItem.id;
 
     return (
-      <div key={commentItem.id} className="relative">
+      <div key={commentItem.id} className="relative" dir="rtl">
         <div className={`py-2 px-3 hover:bg-muted/50 transition-colors ${level > 0 ? 'mr-8' : ''}`}>
           <div className="flex gap-2">
             <Avatar className="h-8 w-8">
@@ -95,7 +95,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
                     placeholder="اكتب ردك هنا..."
                     value={newCommentText}
                     onChange={(e) => setNewCommentText(e.target.value)}
-                    className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0"
+                    className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
                   />
                   <div className="flex justify-start mt-1">
                     <Button 
@@ -124,7 +124,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   };
 
   return (
-    <div>
+    <div dir="rtl">
       <h2 className="text-lg font-semibold mb-3">التعليقات</h2>
       
       <div className="space-y-1">
@@ -145,7 +145,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
                 value={newCommentText}
                 onChange={(e) => setNewCommentText(e.target.value)}
                 onFocus={onCommentFocus}
-                className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0"
+                className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
               />
               <div className="flex justify-start mt-1">
                 <Button 
