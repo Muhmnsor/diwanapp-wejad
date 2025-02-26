@@ -39,23 +39,24 @@ export const IdeasTable = ({
       const endDate = new Date(creationDate.getTime() + totalHours * 60 * 60 * 1000);
       
       const now = new Date();
-      const diffTime = endDate.getTime() - now.getTime();
+      const diffTime = Math.max(0, endDate.getTime() - now.getTime());
       
-      if (diffTime <= 0) {
+      if (diffTime === 0) {
         return "انتهت المناقشة";
       }
 
       const remainingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       const remainingHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       
-      if (remainingDays > 0 && remainingHours > 0) {
-        return `${remainingDays} يوم و ${remainingHours} ساعة`;
-      } else if (remainingDays > 0) {
-        return `${remainingDays} يوم`;
-      } else if (remainingHours > 0) {
-        return `${remainingHours} ساعة`;
+      // تعديل المنطق هنا لإظهار الساعات دائماً عندما تكون أقل من يوم
+      if (remainingDays > 0) {
+        return remainingHours > 0 
+          ? `${remainingDays} يوم و ${remainingHours} ساعة`
+          : `${remainingDays} يوم`;
       } else {
-        return "أقل من ساعة";
+        return remainingHours > 0 
+          ? `${remainingHours} ساعة`
+          : "أقل من ساعة";
       }
     } catch (error) {
       console.error('Error calculating remaining time:', error);
