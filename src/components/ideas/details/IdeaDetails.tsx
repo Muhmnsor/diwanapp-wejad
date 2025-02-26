@@ -27,6 +27,23 @@ export const IdeaDetails = ({ idea, isOpen, onOpenChange }: IdeaDetailsProps) =>
     onOpenChange(!isOpen);
   };
 
+  // تحويل البيانات من الشكل المخزن في قاعدة البيانات إلى الشكل المطلوب للمكونات
+  const departments = idea.contributing_departments?.map((dept: string) => ({
+    name: dept,
+    contribution: "" // يمكن إضافة المساهمة لاحقاً إذا كانت متوفرة
+  })) || [];
+
+  const partners = (idea.expected_partners || []).map((partner: any) => ({
+    name: partner.name || "",
+    contribution: partner.contribution || ""
+  }));
+
+  const costs = (idea.expected_costs || []).map((cost: any) => ({
+    item: cost.item || "",
+    quantity: cost.quantity || 0,
+    total_cost: cost.total_cost || 0
+  }));
+
   return (
     <div>
       <Button
@@ -56,9 +73,9 @@ export const IdeaDetails = ({ idea, isOpen, onOpenChange }: IdeaDetailsProps) =>
               proposedExecutionDate={idea.proposed_execution_date}
               duration={idea.duration}
             />
-            <IdeaDepartmentsSection departments={idea.departments} />
-            <IdeaPartnersSection partners={idea.partners} />
-            <IdeaCostsSection costs={idea.costs} />
+            <IdeaDepartmentsSection departments={departments} />
+            <IdeaPartnersSection partners={partners} />
+            <IdeaCostsSection costs={costs} />
             <IdeaSupportingFilesSection files={idea.supporting_files} />
             <IdeaSimilarIdeasSection similarIdeas={idea.similar_ideas} />
           </div>
