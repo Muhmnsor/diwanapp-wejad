@@ -1,32 +1,11 @@
 
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { CornerDownLeft, MessageSquare, User, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { supabase } from "@/integrations/supabase/client";
+import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  idea_id: string;
-  parent_id: string | null;
-  user_email?: string;
-  attachment_url?: string;
-  attachment_type?: string;
-  attachment_name?: string;
-}
-
-interface CommentListProps {
-  comments: Comment[];
-  onAddComment: (content: string, parentId?: string, file?: File) => Promise<void>;
-  isSubmitting: boolean;
-  onCommentFocus?: () => void;
-}
+import { CommentForm } from "./components/CommentForm";
+import { CommentItem } from "./components/CommentItem";
+import type { Comment, CommentListProps } from "./types";
 
 export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFocus }: CommentListProps) => {
   const [newCommentText, setNewCommentText] = useState("");
@@ -34,7 +13,6 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
 
-  // التمرير إلى آخر التعليقات عند تحديث التعليقات
   useEffect(() => {
     if (scrollViewportRef.current) {
       scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
@@ -59,8 +37,8 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif',
         'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       ];
 
       if (!allowedTypes.includes(file.type)) {
@@ -73,7 +51,6 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
         return;
       }
 
-      console.log("Selected file:", file.name, file.type);
       setSelectedFile(file);
     }
   };
@@ -83,7 +60,6 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
 
     try {
       await onAddComment(newCommentText, replyTo, selectedFile || undefined);
-      console.log("Comment added successfully with file:", selectedFile?.name);
       setNewCommentText("");
       setSelectedFile(null);
       setReplyTo(null);
@@ -93,155 +69,43 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
     }
   };
 
-  const renderAttachment = (comment: Comment) => {
-    if (!comment.attachment_url) {
-      console.log("No attachment URL for comment:", comment.id);
-      return null;
-    }
-
-    console.log("Rendering attachment:", comment.attachment_url, comment.attachment_type);
-    const isImage = comment.attachment_type?.startsWith('image/');
-    const icon = isImage ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />;
-
-    if (isImage) {
-      return (
-        <div className="mt-2">
-          <a
-            href={comment.attachment_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block"
-          >
-            <img 
-              src={comment.attachment_url} 
-              alt={comment.attachment_name || 'صورة مرفقة'} 
-              className="rounded-lg max-h-[200px] object-cover"
-            />
-          </a>
-        </div>
-      );
-    }
-
-    return (
-      <a
-        href={comment.attachment_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 text-sm text-primary hover:underline mt-2"
-      >
-        {icon}
-        <span>{comment.attachment_name || 'مرفق'}</span>
-      </a>
-    );
-  };
-
   const renderComment = (commentItem: Comment, level: number = 0) => {
     const replies = getCommentReplies(commentItem.id);
     const isReplyBeingAdded = replyTo === commentItem.id;
 
     return (
       <div key={commentItem.id} className="relative" dir="rtl">
-        <div className={`py-2 px-3 hover:bg-muted/50 transition-colors ${level > 0 ? 'mr-8' : ''}`}>
-          <div className="flex gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 text-right">
-              <div className="flex items-center gap-1 mb-0.5 justify-start">
-                <span className="font-medium">{commentItem.user_email || 'مستخدم'}</span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(commentItem.created_at).toLocaleDateString('ar-SA')}
-                </span>
-              </div>
-              <p className="text-foreground mb-1 leading-normal text-sm text-right">{commentItem.content}</p>
-              {renderAttachment(commentItem)}
-              <div className="flex gap-2 justify-end">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="hover:bg-primary/10 rounded-full h-6 px-2 text-muted-foreground hover:text-primary text-xs"
-                  onClick={() => {
-                    if (isReplyBeingAdded) {
-                      setReplyTo(null);
-                    } else {
-                      setReplyTo(commentItem.id);
-                      setNewCommentText('');
-                      setSelectedFile(null);
-                    }
-                  }}
-                >
-                  <CornerDownLeft className="ml-1 h-3 w-3" />
-                  {isReplyBeingAdded ? 'إلغاء' : 'رد'}
-                </Button>
-              </div>
-            </div>
-          </div>
+        <CommentItem
+          comment={commentItem}
+          level={level}
+          onReply={() => {
+            if (isReplyBeingAdded) {
+              setReplyTo(null);
+            } else {
+              setReplyTo(commentItem.id);
+              setNewCommentText('');
+              setSelectedFile(null);
+            }
+          }}
+          isReplyBeingAdded={isReplyBeingAdded}
+        />
 
-          {isReplyBeingAdded && (
-            <div className="mt-2 mr-10">
-              <div className="flex gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <Textarea
-                    placeholder="اكتب ردك هنا..."
-                    value={newCommentText}
-                    onChange={(e) => setNewCommentText(e.target.value)}
-                    className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="file"
-                        id="reply-file"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        accept="image/*,.pdf,.docx,.xlsx"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8"
-                        onClick={() => document.getElementById('reply-file')?.click()}
-                      >
-                        <Paperclip className="h-4 w-4 ml-1" />
-                        إضافة مرفق
-                      </Button>
-                      {selectedFile && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <span>{selectedFile.name}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={() => setSelectedFile(null)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    <Button 
-                      onClick={handleAddComment}
-                      disabled={isSubmitting || !newCommentText.trim()}
-                      className="rounded-full"
-                      size="sm"
-                    >
-                      <MessageSquare className="ml-1 h-3 w-3" />
-                      رد
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {isReplyBeingAdded && (
+          <div className="mt-2 mr-10">
+            <CommentForm
+              text={newCommentText}
+              onTextChange={setNewCommentText}
+              selectedFile={selectedFile}
+              onFileChange={handleFileChange}
+              onFileRemove={() => setSelectedFile(null)}
+              onSubmit={handleAddComment}
+              isSubmitting={isSubmitting}
+              placeholder="اكتب ردك هنا..."
+              inputId="reply-file"
+              submitLabel="رد"
+            />
+          </div>
+        )}
 
         {replies.length > 0 && (
           <div className="border-r border-border mr-4">
@@ -265,62 +129,16 @@ export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFoc
 
         {!replyTo && (
           <div className="flex gap-2 pt-3 mt-3 border-t">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <Textarea
-                placeholder="شارك برأيك..."
-                value={newCommentText}
-                onChange={(e) => setNewCommentText(e.target.value)}
-                onFocus={onCommentFocus}
-                className="min-h-[80px] resize-none border-b focus-visible:ring-0 rounded-none px-0 text-right"
-              />
-              <div className="flex justify-between items-center mt-2">
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="file"
-                    id="comment-file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept="image/*,.pdf,.docx,.xlsx"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8"
-                    onClick={() => document.getElementById('comment-file')?.click()}
-                  >
-                    <Paperclip className="h-4 w-4 ml-1" />
-                    إضافة مرفق
-                  </Button>
-                  {selectedFile && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <span>{selectedFile.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => setSelectedFile(null)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <Button 
-                  onClick={handleAddComment}
-                  disabled={isSubmitting || !newCommentText.trim()}
-                  className="rounded-full"
-                  size="sm"
-                >
-                  تعليق
-                </Button>
-              </div>
-            </div>
+            <CommentForm
+              text={newCommentText}
+              onTextChange={setNewCommentText}
+              selectedFile={selectedFile}
+              onFileChange={handleFileChange}
+              onFileRemove={() => setSelectedFile(null)}
+              onSubmit={handleAddComment}
+              isSubmitting={isSubmitting}
+              onFocus={onCommentFocus}
+            />
           </div>
         )}
       </div>
