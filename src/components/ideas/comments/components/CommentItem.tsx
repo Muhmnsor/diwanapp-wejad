@@ -20,7 +20,7 @@ export const CommentItem = ({
 }: CommentItemProps) => {
   return (
     <div className={`py-2 px-3 hover:bg-muted/50 transition-colors ${level > 0 ? 'mr-8' : ''}`}>
-      <div className="flex gap-2 shadow-[inset_0_8px_6px_-6px_rgba(0,0,0,0.1)]">
+      <div className="flex gap-2">
         <Avatar className="h-8 w-8">
           <AvatarFallback>
             <User className="h-4 w-4" />
