@@ -53,8 +53,8 @@ export const VoteSection = ({ votes, onVote }: VoteSectionProps) => {
   };
 
   return (
-    <div className="bg-muted p-4 rounded-lg space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="bg-muted p-4 rounded-lg">
+      <div className="flex items-center gap-8">
         <div className="flex gap-4">
           <Button 
             variant={currentUserVote === 'up' ? 'default' : 'outline'}
@@ -75,26 +75,26 @@ export const VoteSection = ({ votes, onVote }: VoteSectionProps) => {
             معارض ({downVotes})
           </Button>
         </div>
-      </div>
 
-      <div className="text-sm text-gray-600">
-        <div className="flex justify-between mb-1">
-          <span>نتيجة التصويت:</span>
-          <span>{totalVotes} مشارك</span>
-        </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden flex">
-          <div 
-            className="h-full bg-green-500 transition-all duration-300"
-            style={{ width: `${positivePercentage}%` }}
-          />
-          <div 
-            className="h-full bg-red-500 transition-all duration-300"
-            style={{ width: `${negativePercentage}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-1 text-xs">
-          <span className="text-green-600">{positivePercentage}% مؤيد</span>
-          <span className="text-red-600">{negativePercentage}% معارض</span>
+        <div className="text-sm text-gray-600 flex-1">
+          <div className="flex justify-between mb-1">
+            <span>نتيجة التصويت:</span>
+            <span>{totalVotes} مشارك</span>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden flex">
+            <div 
+              className="h-full bg-green-500 transition-all duration-300"
+              style={{ width: `${positivePercentage}%` }}
+            />
+            <div 
+              className="h-full bg-red-500 transition-all duration-300"
+              style={{ width: `${negativePercentage}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1 text-xs">
+            <span className="text-green-600">{positivePercentage}% مؤيد</span>
+            <span className="text-red-600">{negativePercentage}% معارض</span>
+          </div>
         </div>
       </div>
     </div>
