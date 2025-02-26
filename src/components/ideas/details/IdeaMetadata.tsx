@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { intervalToDuration } from "date-fns";
 
@@ -20,19 +21,39 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
   useEffect(() => {
     const calculateTimeLeft = () => {
       try {
-        const discussionDays = parseInt(discussion_period || "0");
-        if (isNaN(discussionDays)) return;
+        // إذا لم تكن هناك فترة مناقشة
+        if (!discussion_period) {
+          setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+          return;
+        }
+
+        const parts = discussion_period.split(' ');
+        let totalHours = 0;
+
+        // حساب إجمالي الساعات من الأيام والساعات
+        for (let i = 0; i < parts.length; i++) {
+          if (parts[i] === 'days' && i > 0) {
+            totalHours += parseInt(parts[i-1]) * 24;
+          }
+          if (parts[i] === 'hours' && i > 0) {
+            totalHours += parseInt(parts[i-1]);
+          }
+        }
+
+        // إذا كانت الفترة صفرية
+        if (totalHours === 0) {
+          setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+          return;
+        }
 
         const createdDate = new Date(created_at);
-        const discussionEndDate = new Date(createdDate);
-        discussionEndDate.setDate(discussionEndDate.getDate() + discussionDays);
+        const discussionEndDate = new Date(createdDate.getTime() + totalHours * 60 * 60 * 1000);
         
-        const now = new Date().getTime();
-        const endTime = discussionEndDate.getTime();
-        const distance = endTime - now;
+        const now = new Date();
+        const distance = discussionEndDate.getTime() - now.getTime();
 
         if (distance > 0) {
-          const duration = intervalToDuration({ start: now, end: endTime });
+          const duration = intervalToDuration({ start: now, end: discussionEndDate });
           setCountdown({
             days: duration.days || 0,
             hours: duration.hours || 0,
@@ -44,6 +65,7 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
         }
       } catch (error) {
         console.error('Error calculating time left:', error);
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
 
@@ -83,27 +105,46 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
     }
   };
 
+  const getCountdownDisplay = () => {
+    // إذا لم تكن هناك فترة مناقشة
+    if (!discussion_period) {
+      return "غير محدد";
+    }
+
+    // إذا انتهت الفترة أو كانت صفرية
+    if (countdown.days === 0 && countdown.hours === 0 && 
+        countdown.minutes === 0 && countdown.seconds === 0) {
+      return "انتهت المناقشة";
+    }
+
+    // بناء نص العد التنازلي
+    const parts = [];
+    if (countdown.days > 0) {
+      parts.push(`${countdown.days} يوم`);
+    }
+    if (countdown.hours > 0) {
+      parts.push(`${countdown.hours} ساعة`);
+    }
+    if (countdown.minutes > 0) {
+      parts.push(`${countdown.minutes} دقيقة`);
+    }
+    if (countdown.seconds > 0) {
+      parts.push(`${countdown.seconds} ثانية`);
+    }
+
+    return parts.join(' و ');
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
-        {discussion_period && countdown && (
-          <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
-            {countdown.days === 0 && countdown.hours === 0 && countdown.minutes === 0 && countdown.seconds === 0 ? (
-              <p className="text-red-600 font-medium">انتهت المناقشة</p>
-            ) : (
-              <>
-                <span className="font-medium text-purple-800">متبقي:</span>
-                <div className="flex gap-2">
-                  <span className="font-bold text-purple-700">{countdown.days}ي</span>
-                  <span className="font-bold text-purple-700">{countdown.hours}س</span>
-                  <span className="font-bold text-purple-700">{countdown.minutes}د</span>
-                  <span className="font-bold text-purple-700">{countdown.seconds}ث</span>
-                </div>
-              </>
-            )}
+        <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
+          <span className="font-medium text-purple-800">متبقي:</span>
+          <div className="font-bold text-purple-700">
+            {getCountdownDisplay()}
           </div>
-        )}
+        </div>
         <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
           {getStatusDisplay(status)}
         </span>
