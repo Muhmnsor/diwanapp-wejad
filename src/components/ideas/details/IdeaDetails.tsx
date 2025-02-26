@@ -1,94 +1,70 @@
 
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+
 import { IdeaTypeSection } from "./sections/IdeaTypeSection";
-import { IdeaDescriptionSection } from "./sections/IdeaDescriptionSection";
 import { IdeaProblemSection } from "./sections/IdeaProblemSection";
-import { IdeaOpportunitySection } from "./sections/IdeaOpportunitySection";
 import { IdeaBenefitsSection } from "./sections/IdeaBenefitsSection";
+import { IdeaOpportunitySection } from "./sections/IdeaOpportunitySection";
 import { IdeaResourcesSection } from "./sections/IdeaResourcesSection";
 import { IdeaExecutionSection } from "./sections/IdeaExecutionSection";
+import { IdeaDescriptionSection } from "./sections/IdeaDescriptionSection";
 import { IdeaDepartmentsSection } from "./sections/IdeaDepartmentsSection";
-import { IdeaCostsSection } from "./sections/IdeaCostsSection";
 import { IdeaPartnersSection } from "./sections/IdeaPartnersSection";
-import { IdeaSimilarIdeasSection } from "./sections/IdeaSimilarIdeasSection";
+import { IdeaCostsSection } from "./sections/IdeaCostsSection";
 import { IdeaSupportingFilesSection } from "./sections/IdeaSupportingFilesSection";
+import { IdeaSimilarIdeasSection } from "./sections/IdeaSimilarIdeasSection";
 
 interface IdeaDetailsProps {
-  idea: {
-    description: string;
-    opportunity: string;
-    problem: string;
-    benefits: string;
-    required_resources: string;
-    contributing_departments: {
-      name: string;
-      contribution: string;
-    }[];
-    expected_costs: {
-      item: string;
-      quantity: number;
-      total_cost: number;
-    }[];
-    expected_partners: {
-      name: string;
-      contribution: string;
-    }[];
-    discussion_period: string;
-    similar_ideas: {
-      title: string;
-      link: string;
-    }[];
-    supporting_files: {
-      name: string;
-      file_path: string;
-    }[];
-    proposed_execution_date: string;
-    duration: string;
-    idea_type: string;
-    created_at: string;
-  };
+  idea: any;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
 
-export const IdeaDetails = ({
-  idea,
-  isOpen,
-  onOpenChange
-}: IdeaDetailsProps) => {
-  return (
-    <Collapsible open={isOpen} onOpenChange={onOpenChange} className="w-full space-y-4 text-right bg-white rounded-lg shadow-sm p-6 my-0 py-0">
-      <div className="flex items-center justify-between border-b pb-4">
-        <h2 className="text-2xl font-semibold text-purple-700">تفاصيل الفكرة</h2>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="hover:bg-purple-50">
-            {isOpen ? <>
-                <EyeOff className="ml-2 h-4 w-4 text-purple-600" />
-                <span className="text-purple-600">إخفاء التفاصيل</span>
-              </> : <>
-                <Eye className="ml-2 h-4 w-4 text-purple-600" />
-                <span className="text-purple-600">عرض التفاصيل</span>
-              </>}
-          </Button>
-        </CollapsibleTrigger>
-      </div>
+export const IdeaDetails = ({ idea, isOpen, onOpenChange }: IdeaDetailsProps) => {
+  const handleToggle = () => {
+    onOpenChange(!isOpen);
+  };
 
-      <CollapsibleContent className="space-y-8">
-        <IdeaTypeSection ideaType={idea.idea_type} />
-        <IdeaDescriptionSection description={idea.description} />
-        <IdeaProblemSection problem={idea.problem} />
-        <IdeaOpportunitySection opportunity={idea.opportunity} />
-        <IdeaBenefitsSection benefits={idea.benefits} />
-        <IdeaResourcesSection resources={idea.required_resources} />
-        <IdeaExecutionSection proposedExecutionDate={idea.proposed_execution_date} duration={idea.duration} />
-        <IdeaDepartmentsSection departments={idea.contributing_departments} />
-        <IdeaCostsSection costs={idea.expected_costs} />
-        <IdeaPartnersSection partners={idea.expected_partners} />
-        <IdeaSimilarIdeasSection similarIdeas={idea.similar_ideas} />
-        <IdeaSupportingFilesSection files={idea.supporting_files} />
-      </CollapsibleContent>
-    </Collapsible>
+  return (
+    <div>
+      <Button
+        variant="ghost"
+        onClick={handleToggle}
+        className="flex items-center gap-2 p-0 hover:bg-transparent focus:bg-transparent"
+      >
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform",
+            isOpen ? "-rotate-180" : ""
+          )}
+        />
+        <span className="text-muted-foreground">تفاصيل الفكرة</span>
+      </Button>
+
+      {isOpen && (
+        <div className="w-full space-y-2 text-right bg-white rounded-lg shadow-sm p-4 my-0 py-0">
+          <div className="grid gap-2">
+            <IdeaTypeSection ideaType={idea.idea_type} />
+            <IdeaProblemSection problem={idea.problem} />
+            <IdeaBenefitsSection benefits={idea.benefits} />
+            <IdeaOpportunitySection opportunity={idea.opportunity} />
+            <IdeaResourcesSection resources={idea.resources} />
+            <IdeaExecutionSection
+              proposedExecutionDate={idea.proposed_execution_date}
+              duration={idea.duration}
+            />
+            <IdeaDescriptionSection description={idea.description} />
+            <IdeaDepartmentsSection departments={idea.departments} />
+            <IdeaPartnersSection partners={idea.partners} />
+            <IdeaCostsSection costs={idea.costs} />
+            <IdeaSupportingFilesSection files={idea.supporting_files} />
+            <IdeaSimilarIdeasSection similarIdeas={idea.similar_ideas} />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

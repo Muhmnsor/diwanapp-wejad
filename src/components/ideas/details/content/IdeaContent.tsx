@@ -1,3 +1,4 @@
+
 import { Separator } from "@/components/ui/separator";
 import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
 import { IdeaDetails } from "@/components/ideas/details/IdeaDetails";
@@ -5,6 +6,7 @@ import { VoteSection } from "@/components/ideas/voting/VoteSection";
 import { CommentList } from "@/components/ideas/comments/CommentList";
 import { Vote, Idea, Comment } from "../types";
 import { useState } from "react";
+
 interface IdeaContentProps {
   idea: Idea;
   votes: Vote[];
@@ -13,6 +15,7 @@ interface IdeaContentProps {
   onAddComment: (content: string, parentId?: string) => Promise<void>;
   isSubmitting: boolean;
 }
+
 export const IdeaContent = ({
   idea,
   votes,
@@ -21,23 +24,32 @@ export const IdeaContent = ({
   onAddComment,
   isSubmitting
 }: IdeaContentProps) => {
-  // تغيير القيمة الافتراضية إلى false لتكون مطوية عند البداية
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  
   const handleCommentFocus = () => {
     setIsDetailsOpen(false);
   };
-  return <div className="max-w-4xl mx-auto">
+
+  return (
+    <div className="max-w-4xl mx-auto">
       <IdeaMetadata {...idea} />
-
-      <Separator className="my-[11px]" />
-
-      <div className="space-y-8">
-        <IdeaDetails idea={idea} isOpen={isDetailsOpen} onOpenChange={setIsDetailsOpen} />
-
-        <div className="space-y-6 my-0">
+      <Separator className="my-2" />
+      <div className="space-y-4">
+        <IdeaDetails 
+          idea={idea} 
+          isOpen={isDetailsOpen} 
+          onOpenChange={setIsDetailsOpen} 
+        />
+        <div className="space-y-4 my-0">
           <VoteSection votes={votes} onVote={onVote} />
-          <CommentList comments={comments} onAddComment={onAddComment} isSubmitting={isSubmitting} onCommentFocus={handleCommentFocus} />
+          <CommentList 
+            comments={comments} 
+            onAddComment={onAddComment} 
+            isSubmitting={isSubmitting} 
+            onCommentFocus={handleCommentFocus} 
+          />
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
