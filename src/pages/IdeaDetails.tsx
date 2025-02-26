@@ -65,6 +65,12 @@ const IdeaDetails = () => {
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, parentId }: { content: string; parentId?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("يجب تسجيل الدخول لإضافة تعليق");
+      }
+
       const { data, error } = await supabase
         .from('idea_comments')
         .insert([
@@ -72,7 +78,7 @@ const IdeaDetails = () => {
             idea_id: id,
             content,
             parent_id: parentId,
-            user_id: 'temp-user-id'
+            user_id: user.id
           }
         ]);
 
@@ -83,20 +89,26 @@ const IdeaDetails = () => {
       queryClient.invalidateQueries({ queryKey: ['comments', id] });
       toast.success("تم إضافة التعليق بنجاح");
     },
-    onError: () => {
-      toast.error("حدث خطأ أثناء إضافة التعليق");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إضافة التعليق");
     }
   });
 
   const voteMutation = useMutation({
     mutationFn: async (voteType: 'up' | 'down') => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("يجب تسجيل الدخول للتصويت");
+      }
+
       const { data, error } = await supabase
         .from('idea_votes')
         .insert([
           {
             idea_id: id,
             vote_type: voteType,
-            user_id: 'temp-user-id'
+            user_id: user.id
           }
         ]);
 
@@ -107,8 +119,8 @@ const IdeaDetails = () => {
       queryClient.invalidateQueries({ queryKey: ['votes', id] });
       toast.success("تم تسجيل تصويتك بنجاح");
     },
-    onError: () => {
-      toast.error("حدث خطأ أثناء التصويت");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء التصويت");
     }
   });
 
