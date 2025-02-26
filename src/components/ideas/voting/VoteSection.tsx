@@ -82,10 +82,14 @@ export const VoteSection = ({ votes, onVote }: VoteSectionProps) => {
           <span>نتيجة التصويت:</span>
           <span>{totalVotes} مشارك</span>
         </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden flex">
           <div 
             className="h-full bg-green-500 transition-all duration-300"
             style={{ width: `${positivePercentage}%` }}
+          />
+          <div 
+            className="h-full bg-red-500 transition-all duration-300"
+            style={{ width: `${negativePercentage}%` }}
           />
         </div>
         <div className="flex justify-between mt-1 text-xs">
