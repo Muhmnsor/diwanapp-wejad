@@ -24,8 +24,8 @@ export const IdeaExecutionSection: FC<IdeaExecutionSectionProps> = ({
   };
 
   return (
-    <section className="bg-purple-50 p-6 rounded-lg">
-      <h3 className="text-lg font-semibold mb-3 text-purple-800">التنفيذ المقترح</h3>
+    <section className="bg-gray-50 p-6 rounded-lg">
+      <h3 className="text-lg font-semibold mb-3 text-gray-800">التنفيذ المقترح</h3>
       <div className="flex items-center gap-4">
         <p className="text-gray-700">
           تاريخ التنفيذ: {formatDate(proposedExecutionDate)}
