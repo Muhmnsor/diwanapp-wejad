@@ -17,9 +17,10 @@ interface CommentListProps {
   comments: Comment[];
   onAddComment: (content: string, parentId?: string) => Promise<void>;
   isSubmitting: boolean;
+  onCommentFocus?: () => void;
 }
 
-export const CommentList = ({ comments, onAddComment, isSubmitting }: CommentListProps) => {
+export const CommentList = ({ comments, onAddComment, isSubmitting, onCommentFocus }: CommentListProps) => {
   const [newCommentText, setNewCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
 
@@ -104,6 +105,7 @@ export const CommentList = ({ comments, onAddComment, isSubmitting }: CommentLis
               placeholder="أضف تعليقك هنا..."
               value={newCommentText}
               onChange={(e) => setNewCommentText(e.target.value)}
+              onFocus={onCommentFocus}
               className="flex-1"
             />
             <Button 

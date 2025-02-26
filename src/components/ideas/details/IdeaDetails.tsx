@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -50,15 +49,17 @@ interface IdeaDetailsProps {
     idea_type: string;
     created_at: string;
   };
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
 }
 
 export const IdeaDetails = ({
-  idea
+  idea,
+  isOpen,
+  onOpenChange
 }: IdeaDetailsProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-4 text-right bg-white rounded-lg shadow-sm p-6 my-0 py-0">
+    <Collapsible open={isOpen} onOpenChange={onOpenChange} className="w-full space-y-4 text-right bg-white rounded-lg shadow-sm p-6 my-0 py-0">
       <div className="flex items-center justify-between border-b pb-4">
         <h2 className="text-2xl font-semibold text-purple-700">تفاصيل الفكرة</h2>
         <CollapsibleTrigger asChild>
