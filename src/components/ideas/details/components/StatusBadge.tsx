@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { getStatusClass, getStatusDisplay } from "../utils/statusUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,17 +17,16 @@ export const StatusBadge = ({
   discussion_period,
   ideaId 
 }: StatusBadgeProps) => {
-  // استخدام فقط لاستخراج قيمة الحالة بدون هوك مخصص
-  const [status, setStatus] = React.useState(initialStatus);
+  const [status, setStatus] = useState(initialStatus);
   
   // جلب الحالة الحديثة عند التحميل والتحديث عند كل تغيير
   useEffect(() => {
     if (!ideaId) return;
     
-    // جلب الحالة الحالية من قاعدة البيانات
-    const fetchStatus = async () => {
+    // وظيفة لجلب حالة الفكرة من قاعدة البيانات
+    const fetchCurrentStatus = async () => {
       try {
-        console.log("جلب حالة الفكرة:", ideaId);
+        console.log("جلب حالة الفكرة الحالية:", ideaId);
         const { data, error } = await supabase
           .from('ideas')
           .select('status')
@@ -39,17 +38,27 @@ export const StatusBadge = ({
           return;
         }
         
-        if (data && data.status !== status) {
-          console.log(`تحديث حالة الفكرة من "${status}" إلى "${data.status}"`);
-          setStatus(data.status);
+        if (data && data.status) {
+          console.log(`حالة الفكرة المستلمة من قاعدة البيانات: "${data.status}"`);
+          
+          // تحديث الحالة فقط إذا كانت مختلفة
+          if (data.status !== status) {
+            console.log(`تحديث حالة الفكرة في واجهة المستخدم من "${status}" إلى "${data.status}"`);
+            setStatus(data.status);
+            
+            // عرض إشعار إذا كانت الحالة "بانتظار القرار"
+            if (data.status === "pending_decision") {
+              toast.info("الفكرة الآن بانتظار القرار", { duration: 3000 });
+            }
+          }
         }
       } catch (err) {
-        console.error("خطأ غير متوقع:", err);
+        console.error("خطأ غير متوقع أثناء جلب حالة الفكرة:", err);
       }
     };
 
-    // جلب الحالة فوراً
-    fetchStatus();
+    // جلب الحالة فوراً عند تحميل المكون
+    fetchCurrentStatus();
     
     // إعداد قناة الاستماع للتغييرات في الوقت الحقيقي
     const channel = supabase
@@ -63,23 +72,36 @@ export const StatusBadge = ({
           filter: `id=eq.${ideaId}`
         },
         (payload) => {
-          if (payload.new && payload.new.status !== status) {
-            console.log(`تلقي تحديث حالة جديد من قاعدة البيانات: "${payload.new.status}"`);
-            setStatus(payload.new.status);
+          if (payload.new && payload.new.status) {
+            const newStatus = payload.new.status;
+            console.log(`تم استلام تحديث حالة جديد من قاعدة البيانات: "${newStatus}"`);
+            
+            // تحديث الحالة في واجهة المستخدم
+            setStatus(newStatus);
+            
+            // عرض إشعار عند تغيير الحالة
+            if (newStatus === "pending_decision") {
+              toast.info("الفكرة الآن بانتظار القرار", { duration: 3000 });
+            } else if (newStatus === "approved") {
+              toast.success("تمت الموافقة على الفكرة", { duration: 3000 });
+            } else if (newStatus === "rejected") {
+              toast.error("تم رفض الفكرة", { duration: 3000 });
+            }
           }
         }
       )
       .subscribe((status) => {
-        console.log("حالة الاشتراك:", status);
+        console.log("حالة الاشتراك في التغييرات:", status);
       });
       
+    // تنظيف الاشتراك عند إلغاء تحميل المكون
     return () => {
       console.log("إلغاء الاشتراك في قناة التغييرات");
       supabase.removeChannel(channel);
     };
-  }, [ideaId, initialStatus]);
+  }, [ideaId, status]);
 
-  // سجل الحالة الحالية لأغراض التصحيح
+  // سجل معلومات العرض للتصحيح
   console.log(`عرض الحالة: "${status}" (${typeof status})`);
   
   return (
