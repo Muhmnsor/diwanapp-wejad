@@ -28,11 +28,12 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
       // تعيين الحالة المبدئية لتكون نفس الحالة المستلمة من الخارج
       let newStatus = status;
       
-      if (discussion_period && created_at && status === "under_review") {
+      // التحقق من انتهاء فترة المناقشة مباشرة بغض النظر عن الحالة الحالية
+      if (discussion_period && created_at) {
         const timeLeft = calculateTimeRemaining(discussion_period, created_at);
         console.log("الوقت المتبقي:", timeLeft);
         
-        // إذا كان الوقت قد انتهى والحالة لا تزال "قيد المناقشة"
+        // إذا كان الوقت قد انتهى
         if (
           timeLeft.days === 0 && 
           timeLeft.hours === 0 && 
@@ -40,6 +41,7 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
           timeLeft.seconds === 0
         ) {
           console.log("الوقت انتهى، التحقق من وجود قرار");
+          
           // التحقق من وجود قرار
           if (ideaId) {
             try {
@@ -57,16 +59,18 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
                 // لم يتخذ قرار بعد، يجب أن تكون الحالة "بانتظار القرار"
                 newStatus = "pending_decision";
                 
-                // تحديث حالة الفكرة في قاعدة البيانات
-                const { error: updateError } = await supabase
-                  .from("ideas")
-                  .update({ status: "pending_decision" })
-                  .eq("id", ideaId);
-                  
-                if (updateError) {
-                  console.error("خطأ في تحديث حالة الفكرة:", updateError);
-                } else {
-                  console.log("تم تحديث حالة الفكرة بنجاح إلى بانتظار القرار");
+                // تحديث حالة الفكرة في قاعدة البيانات إذا كانت مختلفة
+                if (status !== "pending_decision") {
+                  const { error: updateError } = await supabase
+                    .from("ideas")
+                    .update({ status: "pending_decision" })
+                    .eq("id", ideaId);
+                    
+                  if (updateError) {
+                    console.error("خطأ في تحديث حالة الفكرة:", updateError);
+                  } else {
+                    console.log("تم تحديث حالة الفكرة بنجاح إلى بانتظار القرار");
+                  }
                 }
               } else if (decisionData) {
                 console.log("يوجد قرار بالفعل");
@@ -75,36 +79,37 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
               console.error("خطأ في فحص وجود قرار:", error);
             }
           }
+        } else if (status === "under_review") {
+          console.log("الفكرة لا تزال في فترة المناقشة");
+          newStatus = "under_review";
         }
       } else {
-        // إذا كانت الحالة ليست "قيد المناقشة" أو لا توجد فترة مناقشة محددة
-        console.log("الحالة ليست قيد المناقشة أو لا توجد فترة مناقشة محددة:", status);
+        // إذا لا توجد فترة مناقشة محددة
+        console.log("لا توجد فترة مناقشة محددة:", status);
         
         // فحص إضافي لمعرفة القيمة الدقيقة للحالة
-        if (status === null) {
-          console.log("⚠️ الحالة هي null");
-          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة null
-        } else if (status === undefined) {
-          console.log("⚠️ الحالة هي undefined");
-          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة undefined
-        } else if (status === "") {
-          console.log("⚠️ الحالة هي سلسلة فارغة");
-          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة سلسلة فارغة
+        if (status === null || status === undefined || status === "") {
+          console.log("⚠️ الحالة فارغة أو غير معرفة");
+          newStatus = "under_review"; // قيمة افتراضية
         } else if (status === "draft") {
           console.log("⚠️ الحالة هي مسودة (draft)");
           newStatus = "under_review"; // تحويل مسودة إلى قيد المناقشة
         }
       }
       
-      // تحديث حالة العرض مرة واحدة فقط في نهاية الفحص
-      setDisplayStatus(newStatus);
+      // تحديث حالة العرض فقط إذا كانت مختلفة عن الحالة السابقة
+      if (newStatus !== displayStatus) {
+        setDisplayStatus(newStatus);
+        console.log("تم تحديث الحالة من", displayStatus, "إلى", newStatus);
+      }
+
       console.log("الحالة النهائية بعد المعالجة:", newStatus);
       console.log("نص العرض النهائي:", getStatusDisplay(newStatus));
       console.log("صف التنسيق النهائي:", getStatusClass(newStatus));
     };
     
     checkTimeExpired();
-  }, [status, created_at, discussion_period, ideaId]);
+  }, [status, created_at, discussion_period, ideaId, displayStatus]);
 
   return (
     <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(displayStatus)}`}>
