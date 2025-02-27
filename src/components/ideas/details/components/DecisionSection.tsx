@@ -56,8 +56,15 @@ export const DecisionSection = ({
   const [newAssigneeName, setNewAssigneeName] = useState("");
   const [newAssigneeResponsibility, setNewAssigneeResponsibility] = useState("");
   
-  // إضافة سجلات للتشخيص
-  console.log("DecisionSection props:", { ideaId, status, isAdmin, decision });
+  // إضافة سجلات تشخيص محسنة
+  console.log("DecisionSection - لقطة الحالة الكاملة:", { 
+    ideaId, 
+    status, 
+    isAdmin, 
+    hasExistingDecision: Boolean(decision?.id),  
+    decisionFullDetails: decision,
+    ideaStatus: status
+  });
   
   // تحديد إذا كان هناك قرار تم اتخاذه بالفعل
   const hasDecision = Boolean(decision?.id);
@@ -181,16 +188,33 @@ export const DecisionSection = ({
         const parsedAssignees = JSON.parse(decision.assignee);
         if (Array.isArray(parsedAssignees)) {
           setAssignees(parsedAssignees);
+          console.log("تم تحميل قائمة المكلفين بنجاح:", parsedAssignees);
         }
       } catch (e) {
         // إذا لم تكن صيغة JSON صحيحة، قد تكون بيانات قديمة
-        console.log("Cannot parse assignee data, might be old format");
+        console.log("Cannot parse assignee data, might be old format:", decision.assignee);
       }
     }
   }, [decision]);
 
+  // تحديث القيم عندما تتغير بيانات القرار
+  useEffect(() => {
+    setNewStatus(decision?.status || "pending_decision");
+    setReason(decision?.reason || "");
+    setTimeline(decision?.timeline || "");
+    setBudget(decision?.budget || "");
+  }, [decision]);
+
   // عرض نموذج القرار فقط إذا لم يكن هناك قرار أو كان المستخدم مشرفاً ويقوم بالتحرير
   const showDecisionForm = !hasDecision || (isAdmin && isEditing);
+
+  console.log("DecisionSection - قرار العرض:", {
+    hasDecision,
+    isAdmin,
+    isEditing,
+    showDecisionForm,
+    decisionStatus: decision?.status || "غير محدد"
+  });
 
   return (
     <Card className="mb-4">

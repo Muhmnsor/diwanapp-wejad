@@ -56,6 +56,7 @@ export const IdeaContent = ({
           );
           
           setIsAdmin(isUserAdmin);
+          console.log("User admin status:", isUserAdmin);
         }
       } catch (error) {
         console.error("Error checking user role:", error);
@@ -71,19 +72,17 @@ export const IdeaContent = ({
     const fetchDecision = async () => {
       setIsLoadingDecision(true);
       try {
+        // إصلاح استعلام البيانات بحذف الجزء المتعلق بصاحب القرار
         const { data, error } = await supabase
           .from('idea_decisions')
-          .select(`
-            *,
-            created_by_name:created_by(email)
-          `)
+          .select('*')
           .eq('idea_id', idea.id)
           .maybeSingle();
           
         if (error) throw error;
         
+        console.log("Decision data fetched:", data);
         setDecision(data);
-        console.log("Decision data:", data); // إضافة سجل للتحقق من بيانات القرار
       } catch (error) {
         console.error("Error fetching decision:", error);
         toast.error("حدث خطأ أثناء جلب بيانات القرار");
@@ -110,10 +109,7 @@ export const IdeaContent = ({
       // تحديث بيانات القرار
       const { data: updatedDecision, error: decisionError } = await supabase
         .from('idea_decisions')
-        .select(`
-          *,
-          created_by_name:created_by(email)
-        `)
+        .select('*')
         .eq('idea_id', idea.id)
         .maybeSingle();
         
@@ -125,6 +121,7 @@ export const IdeaContent = ({
       }
       
       setDecision(updatedDecision);
+      console.log("Decision updated successfully:", updatedDecision);
       
       toast.success("تم تحديث بيانات القرار بنجاح");
     } catch (error) {
@@ -134,9 +131,13 @@ export const IdeaContent = ({
   };
 
   // إضافة سجل للتحقق من البيانات
-  console.log("Idea status:", idea.status);
-  console.log("Is admin:", isAdmin);
-  console.log("Is loading decision:", isLoadingDecision);
+  console.log("IdeaContent - بيانات الفكرة:", { 
+    ideaId: idea.id, 
+    ideaStatus: idea.status, 
+    ideaTitle: idea.title, 
+    hasDecision: Boolean(decision?.id),
+    isAdmin
+  });
 
   return (
     <div className="max-w-4xl mx-auto">
