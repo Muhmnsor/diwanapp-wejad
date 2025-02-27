@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { calculateTimeRemaining } from "../utils/countdownUtils";
 
 interface ExtendDiscussionDialogProps {
   isOpen: boolean;
@@ -23,6 +24,59 @@ export const ExtendDiscussionDialog = ({
   const [days, setDays] = useState<number>(0);
   const [hours, setHours] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [remainingDays, setRemainingDays] = useState<number>(0);
+  const [remainingHours, setRemainingHours] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // استرجاع معلومات الفكرة والوقت المتبقي عند فتح النافذة
+  useEffect(() => {
+    if (isOpen) {
+      const fetchIdeaDetails = async () => {
+        setIsLoading(true);
+        try {
+          const { data: ideaData, error: fetchError } = await supabase
+            .from("ideas")
+            .select("discussion_period, created_at")
+            .eq("id", ideaId)
+            .single();
+
+          if (fetchError) {
+            throw fetchError;
+          }
+
+          if (ideaData) {
+            // حساب الوقت المتبقي
+            const { discussion_period, created_at } = ideaData;
+            
+            if (discussion_period && created_at) {
+              // حساب الوقت المتبقي بالساعات
+              const timeRemaining = calculateTimeRemaining(discussion_period, created_at);
+              
+              // تحويل الوقت المتبقي إلى أيام وساعات
+              const totalHoursRemaining = 
+                (timeRemaining.days * 24) + 
+                timeRemaining.hours + 
+                (timeRemaining.minutes / 60) + 
+                (timeRemaining.seconds / 3600);
+              
+              const remaining_days = Math.floor(totalHoursRemaining / 24);
+              const remaining_hours = Math.floor(totalHoursRemaining % 24);
+              
+              setRemainingDays(remaining_days);
+              setRemainingHours(remaining_hours);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching idea details:", error);
+          toast.error("حدث خطأ أثناء تحميل بيانات الفكرة");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchIdeaDetails();
+    }
+  }, [isOpen, ideaId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +92,7 @@ export const ExtendDiscussionDialog = ({
       // الحصول على فترة المناقشة الحالية
       const { data: ideaData, error: fetchError } = await supabase
         .from("ideas")
-        .select("discussion_period")
+        .select("discussion_period, created_at")
         .eq("id", ideaId)
         .single();
 
@@ -46,10 +100,10 @@ export const ExtendDiscussionDialog = ({
         throw fetchError;
       }
 
+      // تحليل فترة المناقشة الحالية
       let currentDays = 0;
       let currentHours = 0;
       
-      // تحليل فترة المناقشة الحالية
       if (ideaData.discussion_period) {
         const parts = ideaData.discussion_period.split(' ');
         for (let i = 0; i < parts.length; i++) {
@@ -62,9 +116,23 @@ export const ExtendDiscussionDialog = ({
         }
       }
 
-      // إضافة الوقت الإضافي
-      const newDays = currentDays + days;
-      const newHours = currentHours + hours;
+      // حساب المدة المتبقية الفعلية (إذا كانت هناك مدة متبقية)
+      let effectiveDays = 0;
+      let effectiveHours = 0;
+
+      if (remainingDays > 0 || remainingHours > 0) {
+        // استخدام المدة المتبقية المحسوبة
+        effectiveDays = remainingDays;
+        effectiveHours = remainingHours;
+      } else {
+        // إذا لم تكن هناك مدة متبقية، نستخدم القيم الافتراضية
+        effectiveDays = 0;
+        effectiveHours = 0;
+      }
+
+      // إضافة الوقت الإضافي إلى الوقت المتبقي
+      const newDays = effectiveDays + days;
+      const newHours = effectiveHours + hours;
       
       // تنسيق فترة المناقشة الجديدة
       const newDiscussionPeriod = `${newDays} days ${newHours} hours`;
@@ -97,51 +165,65 @@ export const ExtendDiscussionDialog = ({
           <DialogTitle className="text-right">تمديد فترة المناقشة</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="days" className="text-right col-span-1">الأيام</Label>
-              <Input
-                id="days"
-                type="number"
-                min="0"
-                value={days}
-                onChange={(e) => setDays(parseInt(e.target.value) || 0)}
-                className="col-span-3"
-              />
+        {isLoading ? (
+          <div className="py-4 text-center">جاري تحميل البيانات...</div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            {(remainingDays > 0 || remainingHours > 0) && (
+              <div className="mb-4 p-3 bg-purple-50 rounded-md">
+                <p className="text-sm text-purple-700">
+                  الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
+                  {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
+                  {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
+                </p>
+              </div>
+            )}
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="days" className="text-right col-span-1">الأيام</Label>
+                <Input
+                  id="days"
+                  type="number"
+                  min="0"
+                  value={days}
+                  onChange={(e) => setDays(parseInt(e.target.value) || 0)}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="hours" className="text-right col-span-1">الساعات</Label>
+                <Input
+                  id="hours"
+                  type="number"
+                  min="0"
+                  max="23"
+                  value={hours}
+                  onChange={(e) => setHours(parseInt(e.target.value) || 0)}
+                  className="col-span-3"
+                />
+              </div>
             </div>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="hours" className="text-right col-span-1">الساعات</Label>
-              <Input
-                id="hours"
-                type="number"
-                min="0"
-                max="23"
-                value={hours}
-                onChange={(e) => setHours(parseInt(e.target.value) || 0)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          
-          <DialogFooter className="sm:justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose} 
-              disabled={isSubmitting}
-            >
-              إلغاء
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || (days === 0 && hours === 0)}
-            >
-              {isSubmitting ? "جاري التمديد..." : "تمديد"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="sm:justify-between">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose} 
+                disabled={isSubmitting}
+              >
+                إلغاء
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || (days === 0 && hours === 0)}
+              >
+                {isSubmitting ? "جاري التمديد..." : "تمديد"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
