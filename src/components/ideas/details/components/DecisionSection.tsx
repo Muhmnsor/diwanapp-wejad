@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDate } from "@/utils/dateUtils";
-import { CheckCircle, Clock, XCircle } from "lucide-react";
+import { CheckCircle, Clock, Plus, Trash, XCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { getStatusClass, getStatusDisplay } from "../utils/statusUtils";
 
@@ -31,6 +31,12 @@ interface DecisionSectionProps {
   };
 }
 
+interface AssigneeItem {
+  id: string;
+  name: string;
+  responsibility: string;
+}
+
 export const DecisionSection = ({ 
   ideaId, 
   status, 
@@ -45,8 +51,34 @@ export const DecisionSection = ({
   const [timeline, setTimeline] = useState<string>(decision?.timeline || "");
   const [budget, setBudget] = useState<string>(decision?.budget || "");
   
+  // إضافة قائمة المكلفين
+  const [assignees, setAssignees] = useState<AssigneeItem[]>([]);
+  const [newAssigneeName, setNewAssigneeName] = useState("");
+  const [newAssigneeResponsibility, setNewAssigneeResponsibility] = useState("");
+  
   // إضافة سجلات للتشخيص
   console.log("DecisionSection props:", { ideaId, status, isAdmin, decision });
+  
+  const handleAddAssignee = () => {
+    if (!newAssigneeName || !newAssigneeResponsibility) {
+      toast.error("يرجى إدخال اسم المكلف والمهمة");
+      return;
+    }
+    
+    const newAssignee: AssigneeItem = {
+      id: crypto.randomUUID(),
+      name: newAssigneeName,
+      responsibility: newAssigneeResponsibility
+    };
+    
+    setAssignees([...assignees, newAssignee]);
+    setNewAssigneeName("");
+    setNewAssigneeResponsibility("");
+  };
+  
+  const handleRemoveAssignee = (id: string) => {
+    setAssignees(assignees.filter(item => item.id !== id));
+  };
   
   const handleSubmitDecision = async () => {
     if (!reason) {
@@ -65,12 +97,15 @@ export const DecisionSection = ({
         
       if (ideaError) throw ideaError;
       
+      // إعداد بيانات المكلفين كسلسلة نصية JSON
+      const assigneesData = assignees.length > 0 ? JSON.stringify(assignees) : null;
+      
       // إضافة قرار جديد أو تحديث القرار الحالي
       const decisionData = {
         idea_id: ideaId,
         status: newStatus,
         reason,
-        assignee: assignee || null,
+        assignee: assigneesData || assignee || null, // استخدام المكلفين الجدد إذا وجدوا، وإلا استخدام المكلف القديم
         timeline: timeline || null,
         budget: budget || null,
       };
@@ -106,6 +141,25 @@ export const DecisionSection = ({
       setIsSubmitting(false);
     }
   };
+
+  // عند تحميل البيانات، تحقق مما إذا كان هناك مكلفين في صيغة JSON
+  useEffect(() => {
+    if (decision?.assignee) {
+      try {
+        // محاولة تحليل البيانات كـ JSON
+        const parsedAssignees = JSON.parse(decision.assignee);
+        if (Array.isArray(parsedAssignees)) {
+          setAssignees(parsedAssignees);
+        } else {
+          // إذا لم تكن مصفوفة، استخدم القيمة كاسم مكلف واحد
+          setAssignee(decision.assignee);
+        }
+      } catch (e) {
+        // إذا لم تكن صيغة JSON صحيحة، استخدم القيمة كاسم مكلف واحد
+        setAssignee(decision.assignee);
+      }
+    }
+  }, [decision]);
 
   // عرض واجهة اتخاذ القرار دائماً بغض النظر عن حالة الفكرة
   // للاختبار فقط - نحذف جميع شروط التحقق من الحالة
@@ -149,34 +203,107 @@ export const DecisionSection = ({
           
           {newStatus === 'approved' && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="assignee">المكلف بالتنفيذ</Label>
-                <Input 
-                  id="assignee" 
-                  placeholder="أدخل اسم الشخص أو الإدارة المكلفة بالتنفيذ"
-                  value={assignee}
-                  onChange={(e) => setAssignee(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="timeline">الإطار الزمني المقترح</Label>
-                <Input 
-                  id="timeline" 
-                  placeholder="مثال: 3 أشهر، أسبوعين، ..."
-                  value={timeline}
-                  onChange={(e) => setTimeline(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="budget">الميزانية المقترحة</Label>
-                <Input 
-                  id="budget" 
-                  placeholder="الميزانية المقترحة للتنفيذ (إن وجدت)"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>المكلفون بالتنفيذ</Label>
+                  
+                  {/* جدول المكلفين */}
+                  {assignees.length > 0 && (
+                    <div className="border rounded-md overflow-hidden mb-2">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted">
+                          <tr>
+                            <th className="py-2 px-4 text-right">الاسم</th>
+                            <th className="py-2 px-4 text-right">المهمة</th>
+                            <th className="py-2 px-4 text-center w-16">حذف</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {assignees.map((item) => (
+                            <tr key={item.id} className="border-t">
+                              <td className="py-2 px-4">{item.name}</td>
+                              <td className="py-2 px-4">{item.responsibility}</td>
+                              <td className="py-2 px-4 text-center">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleRemoveAssignee(item.id)}
+                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                                >
+                                  <Trash size={16} />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  
+                  {/* نموذج إضافة مكلف جديد */}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+                    <div className="sm:col-span-5">
+                      <Input 
+                        placeholder="اسم المكلف"
+                        value={newAssigneeName}
+                        onChange={(e) => setNewAssigneeName(e.target.value)}
+                      />
+                    </div>
+                    <div className="sm:col-span-5">
+                      <Input 
+                        placeholder="المهمة أو المسؤولية"
+                        value={newAssigneeResponsibility}
+                        onChange={(e) => setNewAssigneeResponsibility(e.target.value)}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Button 
+                        type="button" 
+                        onClick={handleAddAssignee}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        <Plus size={16} className="ml-1" />
+                        إضافة
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* حقل المكلف القديم للتوافق */}
+                  {assignees.length === 0 && (
+                    <div className="space-y-2">
+                      <Input 
+                        id="assignee" 
+                        placeholder="أدخل اسم الشخص أو الإدارة المكلفة بالتنفيذ"
+                        value={assignee}
+                        onChange={(e) => setAssignee(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        لإضافة أكثر من مكلف، استخدم الجدول أعلاه
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="timeline">الإطار الزمني المقترح</Label>
+                  <Input 
+                    id="timeline" 
+                    placeholder="مثال: 3 أشهر، أسبوعين، ..."
+                    value={timeline}
+                    onChange={(e) => setTimeline(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="budget">الميزانية المقترحة</Label>
+                  <Input 
+                    id="budget" 
+                    placeholder="الميزانية المقترحة للتنفيذ (إن وجدت)"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                  />
+                </div>
               </div>
             </>
           )}
