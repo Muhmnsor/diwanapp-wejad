@@ -135,11 +135,11 @@ export const CommentList = ({
     return 'h-[400px]'; // الارتفاع الأقصى للتعليقات الكثيرة
   };
 
-  return <div dir="rtl">
+  return <div dir="rtl" className="bg-[#F2FCE2] p-4 rounded-lg border border-green-100 shadow-sm">
       <h2 className="text-lg font-semibold mb-3">المناقشات</h2>
       
       <div className="space-y-1">
-        <ScrollArea dir="ltr" className={`pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1),inset_0_-12px_8px_-10px_rgba(0,0,0,0.1)] rounded-2xl px-[15px] mx-[4px] ${getScrollAreaHeight()}`}>
+        <ScrollArea dir="ltr" className={`pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1),inset_0_-12px_8px_-10px_rgba(0,0,0,0.1)] rounded-2xl px-[15px] mx-[4px] bg-white ${getScrollAreaHeight()}`}>
           <div className="h-full" ref={scrollViewportRef}>
             {hasComments ? (
               rootComments.map(comment => renderComment(comment))
