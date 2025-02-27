@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { getStatusClass, getStatusDisplay } from "../utils/statusUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
