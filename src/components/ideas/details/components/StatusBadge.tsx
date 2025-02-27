@@ -17,7 +17,11 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
   useEffect(() => {
     // فحص ما إذا كان الوقت قد انتهى وكان يجب تغيير الحالة
     const checkTimeExpired = async () => {
-      console.log("الحالة الحالية:", status);
+      // سجلات تصحيح مفصلة
+      console.log("StatusBadge - معلومات الحالة:");
+      console.log("الحالة الأصلية المستلمة:", status);
+      console.log("نوع الحالة:", typeof status);
+      console.log("قيمة العرض الأولية:", getStatusDisplay(status));
       console.log("فترة المناقشة:", discussion_period);
       console.log("تاريخ الإنشاء:", created_at);
       
@@ -74,18 +78,33 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
         }
       } else {
         // إذا كانت الحالة ليست "قيد المناقشة" أو لا توجد فترة مناقشة محددة
-        console.log("الحالة ليست قيد المناقشة أو لا توجد فترة مناقشة محددة");
+        console.log("الحالة ليست قيد المناقشة أو لا توجد فترة مناقشة محددة:", status);
+        
+        // فحص إضافي لمعرفة القيمة الدقيقة للحالة
+        if (status === null) {
+          console.log("⚠️ الحالة هي null");
+          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة null
+        } else if (status === undefined) {
+          console.log("⚠️ الحالة هي undefined");
+          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة undefined
+        } else if (status === "") {
+          console.log("⚠️ الحالة هي سلسلة فارغة");
+          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة سلسلة فارغة
+        } else if (status === "draft") {
+          console.log("⚠️ الحالة هي مسودة (draft)");
+          newStatus = "under_review"; // تحويل مسودة إلى قيد المناقشة
+        }
       }
       
       // تحديث حالة العرض مرة واحدة فقط في نهاية الفحص
       setDisplayStatus(newStatus);
+      console.log("الحالة النهائية بعد المعالجة:", newStatus);
+      console.log("نص العرض النهائي:", getStatusDisplay(newStatus));
+      console.log("صف التنسيق النهائي:", getStatusClass(newStatus));
     };
     
     checkTimeExpired();
   }, [status, created_at, discussion_period, ideaId]);
-
-  // إضافة سجلات للتصحيح
-  console.log("حالة العرض النهائية:", displayStatus);
 
   return (
     <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(displayStatus)}`}>
