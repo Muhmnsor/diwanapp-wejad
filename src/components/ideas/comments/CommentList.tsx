@@ -6,17 +6,21 @@ import { toast } from "sonner";
 import { CommentForm } from "./components/CommentForm";
 import { CommentItem } from "./components/CommentItem";
 import type { Comment, CommentListProps } from "./types";
+import { isDiscussionActive } from "../details/utils/countdownUtils";
 
 export const CommentList = ({
   comments,
   onAddComment,
   isSubmitting,
-  onCommentFocus
+  onCommentFocus,
+  ideaCreatedAt,
+  ideaDiscussionPeriod
 }: CommentListProps) => {
   const [newCommentText, setNewCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const discussionActive = isDiscussionActive(ideaDiscussionPeriod, ideaCreatedAt);
 
   useEffect(() => {
     if (scrollViewportRef.current) {
@@ -50,6 +54,12 @@ export const CommentList = ({
 
   const handleAddComment = async () => {
     if (!newCommentText.trim()) return;
+    
+    if (!discussionActive) {
+      toast.error('انتهت فترة المناقشة. لا يمكن إضافة تعليقات جديدة.');
+      return;
+    }
+    
     try {
       await onAddComment(newCommentText, replyTo, selectedFile || undefined);
       setNewCommentText("");
@@ -72,17 +82,34 @@ export const CommentList = ({
     const isReplyBeingAdded = replyTo === commentItem.id;
     return <div key={commentItem.id} className="relative" dir="rtl">
         <CommentItem comment={commentItem} level={level} onReply={() => {
-        if (isReplyBeingAdded) {
-          handleCancelReply();
-        } else {
-          setReplyTo(commentItem.id);
-          setNewCommentText('');
-          setSelectedFile(null);
-        }
-      }} isReplyBeingAdded={isReplyBeingAdded} />
+          if (!discussionActive) {
+            toast.error('انتهت فترة المناقشة. لا يمكن إضافة ردود جديدة.');
+            return;
+          }
+          
+          if (isReplyBeingAdded) {
+            handleCancelReply();
+          } else {
+            setReplyTo(commentItem.id);
+            setNewCommentText('');
+            setSelectedFile(null);
+          }
+        }} isReplyBeingAdded={isReplyBeingAdded} />
 
         {isReplyBeingAdded && <div className="mt-2 mr-10">
-            <CommentForm text={newCommentText} onTextChange={setNewCommentText} selectedFile={selectedFile} onFileChange={handleFileChange} onFileRemove={() => setSelectedFile(null)} onSubmit={handleAddComment} isSubmitting={isSubmitting} placeholder="اكتب ردك هنا..." inputId="reply-file" submitLabel="رد" />
+            <CommentForm 
+              text={newCommentText} 
+              onTextChange={setNewCommentText} 
+              selectedFile={selectedFile} 
+              onFileChange={handleFileChange} 
+              onFileRemove={() => setSelectedFile(null)} 
+              onSubmit={handleAddComment} 
+              isSubmitting={isSubmitting} 
+              placeholder="اكتب ردك هنا..." 
+              inputId="reply-file" 
+              submitLabel="رد" 
+              isDiscussionActive={discussionActive}
+            />
           </div>}
 
         {replies.length > 0 && <div className="border-r border-border mr-4">
@@ -113,7 +140,17 @@ export const CommentList = ({
         </ScrollArea>
 
         {!replyTo && <div className="flex gap-2 pt-3 mt-3 border-t">
-            <CommentForm text={newCommentText} onTextChange={setNewCommentText} selectedFile={selectedFile} onFileChange={handleFileChange} onFileRemove={() => setSelectedFile(null)} onSubmit={handleAddComment} isSubmitting={isSubmitting} onFocus={onCommentFocus} />
+            <CommentForm 
+              text={newCommentText} 
+              onTextChange={setNewCommentText} 
+              selectedFile={selectedFile} 
+              onFileChange={handleFileChange} 
+              onFileRemove={() => setSelectedFile(null)} 
+              onSubmit={handleAddComment} 
+              isSubmitting={isSubmitting} 
+              onFocus={onCommentFocus}
+              isDiscussionActive={discussionActive}
+            />
           </div>}
       </div>
     </div>;

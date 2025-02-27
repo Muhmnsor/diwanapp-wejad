@@ -2,7 +2,8 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Paperclip, X } from "lucide-react";
+import { User, Paperclip, X, Clock } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface CommentFormProps {
   onSubmit: () => Promise<void>;
@@ -16,6 +17,7 @@ interface CommentFormProps {
   placeholder?: string;
   inputId?: string;
   submitLabel?: string;
+  isDiscussionActive?: boolean;
 }
 
 export const CommentForm = ({
@@ -29,9 +31,23 @@ export const CommentForm = ({
   onFocus,
   placeholder = "شارك برأيك...",
   inputId = "comment-file",
-  submitLabel = "تعليق"
+  submitLabel = "تعليق",
+  isDiscussionActive = true
 }: CommentFormProps) => {
-  return <div className="flex gap-2 w-full">
+  if (!isDiscussionActive) {
+    return (
+      <Alert variant="destructive" className="bg-amber-50 border-amber-300 text-amber-800">
+        <Clock className="h-5 w-5 text-amber-600" />
+        <AlertTitle className="text-amber-800 mr-2">انتهت فترة المناقشة</AlertTitle>
+        <AlertDescription className="text-amber-700 mr-2">
+          لقد انتهت فترة المناقشة لهذه الفكرة. يرجى التواصل مع صاحب الصلاحية لطلب تمديد فترة المناقشة إذا كنت ترغب في إضافة تعليقات جديدة.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="flex gap-2 w-full">
       <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarFallback>
           <User className="h-4 w-4" />
@@ -67,5 +83,6 @@ export const CommentForm = ({
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };

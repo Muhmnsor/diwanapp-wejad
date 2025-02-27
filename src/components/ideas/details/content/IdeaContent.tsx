@@ -53,7 +53,9 @@ export const IdeaContent = ({
             comments={comments} 
             onAddComment={onAddComment} 
             isSubmitting={isSubmitting} 
-            onCommentFocus={handleCommentFocus} 
+            onCommentFocus={handleCommentFocus}
+            ideaCreatedAt={idea.created_at}
+            ideaDiscussionPeriod={idea.discussion_period}
           />
         </div>
       </div>
