@@ -24,13 +24,13 @@ export const IdeaExecutionSection: FC<IdeaExecutionSectionProps> = ({
   };
 
   return (
-    <section className="bg-gray-50 p-6 rounded-lg">
-      <h3 className="text-lg font-semibold mb-3 text-gray-800">التنفيذ المقترح</h3>
-      <div className="flex items-center gap-4">
+    <section className="bg-white p-4 rounded-lg border border-purple-100">
+      <h3 className="text-base font-semibold mb-2 text-neutral-950">التنفيذ المقترح</h3>
+      <div className="flex items-center gap-3 text-sm">
         <p className="text-gray-700">
           تاريخ التنفيذ: {formatDate(proposedExecutionDate)}
         </p>
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-4" />
         <p className="text-gray-700">
           المدة المتوقعة: {duration}
         </p>

@@ -56,33 +56,33 @@ export const IdeaSupportingFilesSection: FC<IdeaSupportingFilesSectionProps> = (
   };
 
   return (
-    <section className="bg-white p-6 rounded-lg border border-gray-200">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">الملفات الداعمة</h3>
+    <section className="bg-white p-4 rounded-lg border border-purple-100">
+      <h3 className="text-base font-semibold mb-2 text-neutral-950">الملفات الداعمة</h3>
       <div className="overflow-x-auto">
-        <table className="w-full bg-white rounded-lg">
+        <table className="w-full bg-white rounded-lg text-sm">
           <thead>
-            <tr className="bg-gray-100 rounded-t-lg">
-              <th className="p-3 text-right text-gray-800 border-b first:rounded-tr-lg">اسم الملف</th>
-              <th className="p-3 text-center text-gray-800 border-b last:rounded-tl-lg">التحميل</th>
+            <tr className="bg-gray-50 rounded-t-lg">
+              <th className="p-2 text-right text-gray-800 border-b first:rounded-tr-lg">اسم الملف</th>
+              <th className="p-2 text-center text-gray-800 border-b last:rounded-tl-lg">التحميل</th>
             </tr>
           </thead>
           <tbody>
             {(!files || files.length === 0) ? (
               <tr>
-                <td colSpan={2} className="p-4 text-center text-gray-500">
+                <td colSpan={2} className="p-3 text-center text-gray-500">
                   لا توجد ملفات داعمة
                 </td>
               </tr>
             ) : (
               files.map((file, index) => (
                 <tr key={index} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="p-3 text-gray-700">{file.name}</td>
-                  <td className="p-3 text-center">
+                  <td className="p-2 text-gray-700">{file.name}</td>
+                  <td className="p-2 text-center">
                     <button
                       onClick={() => handleDownload(file.file_path, file.name)}
-                      className="text-gray-600 hover:text-gray-700 hover:underline text-sm inline-flex items-center gap-1"
+                      className="text-gray-600 hover:text-gray-700 hover:underline text-xs inline-flex items-center gap-1"
                     >
-                      <Download className="h-4 w-4" />
+                      <Download className="h-3 w-3" />
                       تحميل الملف
                     </button>
                   </td>

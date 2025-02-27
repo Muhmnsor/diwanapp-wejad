@@ -171,16 +171,16 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
-        <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
+    <div className="bg-white rounded-lg shadow-sm p-3 border border-purple-100">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-lg font-bold text-purple-800 truncate">{title}</h1>
+        <div className="flex items-center gap-1 bg-purple-50 rounded-lg py-1 px-2 text-xs">
           <span className="font-medium text-purple-800">متبقي:</span>
           <div className="font-bold text-purple-700">
             {getCountdownDisplay()}
           </div>
         </div>
-        <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(status)}`}>
           {getStatusDisplay(status)}
         </span>
       </div>
