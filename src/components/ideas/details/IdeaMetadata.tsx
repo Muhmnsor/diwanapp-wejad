@@ -233,17 +233,16 @@ export const IdeaMetadata = ({
             </div>
           </div>
           
-          {isDiscussionActive() && (
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="text-purple-700 border-purple-200 h-8"
-              onClick={handleExtendDialogOpen}
-            >
-              <Clock className="h-3.5 w-3.5 ml-1" />
-              تمديد
-            </Button>
-          )}
+          {/* تم إزالة الشرط isDiscussionActive() ليظهر الزر دائمًا */}
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="text-purple-700 border-purple-200 h-8"
+            onClick={handleExtendDialogOpen}
+          >
+            <Clock className="h-3.5 w-3.5 ml-1" />
+            تمديد
+          </Button>
           
           <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
             {getStatusDisplay(status)}
