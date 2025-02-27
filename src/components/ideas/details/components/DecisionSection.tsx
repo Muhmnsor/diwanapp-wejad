@@ -50,6 +50,7 @@ export const DecisionSection = ({
   const [reason, setReason] = useState<string>(decision?.reason || "");
   const [timeline, setTimeline] = useState<string>(decision?.timeline || "");
   const [budget, setBudget] = useState<string>(decision?.budget || "");
+  const [localDecision, setLocalDecision] = useState(decision);
   
   // إضافة قائمة المكلفين
   const [assignees, setAssignees] = useState<AssigneeItem[]>([]);
@@ -63,11 +64,17 @@ export const DecisionSection = ({
     isAdmin, 
     hasExistingDecision: Boolean(decision?.id),  
     decisionFullDetails: decision,
-    ideaStatus: status
+    ideaStatus: status,
+    localDecision
   });
   
   // تحديد إذا كان هناك قرار تم اتخاذه بالفعل
-  const hasDecision = Boolean(decision?.id);
+  const hasDecision = Boolean(localDecision?.id);
+  
+  // تحديث المتغير المحلي عندما تتغير البيانات الخارجية
+  useEffect(() => {
+    setLocalDecision(decision);
+  }, [decision]);
   
   // تحميل بيانات القرار مباشرة من قاعدة البيانات إذا لم تكن متوفرة
   useEffect(() => {
@@ -100,6 +107,7 @@ export const DecisionSection = ({
             setReason(data.reason);
             setTimeline(data.timeline || "");
             setBudget(data.budget || "");
+            setLocalDecision(data);
             
             // تحديث المكلفين إذا كانوا متوفرين
             if (data.assignee) {
@@ -176,30 +184,39 @@ export const DecisionSection = ({
       
       let dbOperation;
       let dbError;
+      let savedDecision;
       
-      if (decision?.id) {
+      if (localDecision?.id) {
         // تحديث القرار الحالي
-        console.log("Updating existing decision with ID:", decision.id);
-        const { error } = await supabase
+        console.log("Updating existing decision with ID:", localDecision.id);
+        const { data, error } = await supabase
           .from("idea_decisions")
           .update(decisionData)
-          .eq("id", decision.id);
+          .eq("id", localDecision.id)
+          .select()
+          .single();
           
         dbError = error;
+        savedDecision = data;
       } else {
         // إضافة قرار جديد
         console.log("Creating new decision");
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("idea_decisions")
-          .insert([decisionData]);
+          .insert([decisionData])
+          .select()
+          .single();
           
         dbError = error;
+        savedDecision = data;
       }
       
       if (dbError) {
         console.error("Database error:", dbError);
         throw dbError;
       }
+      
+      console.log("Decision saved successfully:", savedDecision);
       
       // تحديث حالة الفكرة
       console.log("Updating idea status:", newStatus);
@@ -213,7 +230,11 @@ export const DecisionSection = ({
         throw ideaError;
       }
       
-      console.log("Decision saved successfully");
+      // تحديث البيانات المحلية على الفور
+      if (savedDecision) {
+        setLocalDecision(savedDecision);
+      }
+      
       toast.success("تم حفظ القرار بنجاح");
       
       // انتهاء وضع التحرير
@@ -235,28 +256,30 @@ export const DecisionSection = ({
 
   // عند تحميل البيانات، تحقق مما إذا كان هناك مكلفين في صيغة JSON
   useEffect(() => {
-    if (decision?.assignee) {
+    if (localDecision?.assignee) {
       try {
         // محاولة تحليل البيانات كـ JSON
-        const parsedAssignees = JSON.parse(decision.assignee);
+        const parsedAssignees = JSON.parse(localDecision.assignee);
         if (Array.isArray(parsedAssignees)) {
           setAssignees(parsedAssignees);
           console.log("تم تحميل قائمة المكلفين بنجاح:", parsedAssignees);
         }
       } catch (e) {
         // إذا لم تكن صيغة JSON صحيحة، قد تكون بيانات قديمة
-        console.log("Cannot parse assignee data, might be old format:", decision.assignee);
+        console.log("Cannot parse assignee data, might be old format:", localDecision.assignee);
       }
     }
-  }, [decision]);
+  }, [localDecision]);
 
   // تحديث القيم عندما تتغير بيانات القرار
   useEffect(() => {
-    setNewStatus(decision?.status || "pending_decision");
-    setReason(decision?.reason || "");
-    setTimeline(decision?.timeline || "");
-    setBudget(decision?.budget || "");
-  }, [decision]);
+    if (localDecision) {
+      setNewStatus(localDecision.status || "pending_decision");
+      setReason(localDecision.reason || "");
+      setTimeline(localDecision.timeline || "");
+      setBudget(localDecision.budget || "");
+    }
+  }, [localDecision]);
 
   // عرض نموذج القرار فقط إذا لم يكن هناك قرار أو كان المستخدم مشرفاً ويقوم بالتحرير
   const showDecisionForm = !hasDecision || (isAdmin && isEditing);
@@ -266,7 +289,7 @@ export const DecisionSection = ({
     isAdmin,
     isEditing,
     showDecisionForm,
-    decisionStatus: decision?.status || "غير محدد"
+    decisionStatus: localDecision?.status || "غير محدد"
   });
 
   // تحديد ما إذا كان يجب عرض المحتوى بناءً على وجود بيانات
@@ -444,16 +467,16 @@ export const DecisionSection = ({
         ) : hasContent ? (
           // عرض تفاصيل القرار الحالي
           <div className="space-y-4">
-            <div className="rounded-md p-3 border">
+            <div className="rounded-md p-3 border bg-muted/10">
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-semibold">حالة القرار:</span>
-                  <span className={`px-2 py-0.5 rounded-full text-sm ${getStatusClass(decision?.status || newStatus)}`}>
-                    {getStatusDisplay(decision?.status || newStatus)}
+                  <span className={`px-2 py-0.5 rounded-full text-sm ${getStatusClass(localDecision?.status || newStatus)}`}>
+                    {getStatusDisplay(localDecision?.status || newStatus)}
                   </span>
                 </div>
                 <div className="text-gray-600 text-sm">
-                  تم اتخاذ القرار في {decision?.created_at ? formatDate(decision.created_at) : 'تاريخ غير معروف'}
+                  تم اتخاذ القرار في {localDecision?.created_at ? formatDate(localDecision.created_at) : 'تاريخ غير معروف'}
                 </div>
               </div>
               
@@ -462,10 +485,10 @@ export const DecisionSection = ({
               <div className="space-y-3">
                 <div>
                   <h4 className="font-semibold mb-1">السبب / الملاحظات:</h4>
-                  <p className="text-gray-700 whitespace-pre-line">{decision?.reason || reason}</p>
+                  <p className="text-gray-700 whitespace-pre-line">{localDecision?.reason || reason}</p>
                 </div>
                 
-                {(decision?.status === 'approved' || newStatus === 'approved') && (
+                {(localDecision?.status === 'approved' || newStatus === 'approved') && (
                   <>
                     {assignees.length > 0 && (
                       <div>
@@ -491,17 +514,17 @@ export const DecisionSection = ({
                       </div>
                     )}
                     
-                    {(timeline || decision?.timeline) && (
+                    {(timeline || localDecision?.timeline) && (
                       <div>
                         <h4 className="font-semibold mb-1">الإطار الزمني المقترح:</h4>
-                        <p className="text-gray-700">{decision?.timeline || timeline}</p>
+                        <p className="text-gray-700">{localDecision?.timeline || timeline}</p>
                       </div>
                     )}
                     
-                    {(budget || decision?.budget) && (
+                    {(budget || localDecision?.budget) && (
                       <div>
                         <h4 className="font-semibold mb-1">الميزانية المقترحة:</h4>
-                        <p className="text-gray-700">{decision?.budget || budget}</p>
+                        <p className="text-gray-700">{localDecision?.budget || budget}</p>
                       </div>
                     )}
                   </>
