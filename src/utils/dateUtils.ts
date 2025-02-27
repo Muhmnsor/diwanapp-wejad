@@ -23,7 +23,7 @@ export const getEventDateTime = (date: string, time: string = '00:00'): Date => 
   return eventDate;
 };
 
-// إضافة دالة formatDate
+// تعديل دالة formatDate لتعرض التاريخ بالميلادي
 export const formatDate = (dateString: string): string => {
   if (!dateString) return '';
   
@@ -33,13 +33,14 @@ export const formatDate = (dateString: string): string => {
       return dateString;
     }
     
-    return date.toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // عرض التاريخ بالتقويم الميلادي بتنسيق اليوم/الشهر/السنة والوقت
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   } catch (error) {
     console.error('Error formatting date:', error);
     return dateString;
