@@ -2,8 +2,6 @@
 // دالة للحصول على اسم عرض الحالة بالعربية
 export const getStatusDisplay = (status: string): string => {
   switch (status) {
-    case 'draft':
-      return 'مسودة';
     case 'under_review':
       return 'قيد المناقشة';
     case 'pending_decision':
@@ -22,8 +20,6 @@ export const getStatusDisplay = (status: string): string => {
 // دالة للحصول على اسم الصف CSS للحالة
 export const getStatusClass = (status: string): string => {
   switch (status) {
-    case 'draft':
-      return 'bg-gray-100 text-gray-800';
     case 'under_review':
       return 'bg-blue-100 text-blue-800';
     case 'pending_decision':
