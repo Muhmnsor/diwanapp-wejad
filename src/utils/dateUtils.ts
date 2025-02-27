@@ -22,3 +22,26 @@ export const getEventDateTime = (date: string, time: string = '00:00'): Date => 
   console.log('Creating event date from:', { date, time, result: eventDate });
   return eventDate;
 };
+
+// إضافة دالة formatDate
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    
+    return date.toLocaleDateString('ar-SA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+};

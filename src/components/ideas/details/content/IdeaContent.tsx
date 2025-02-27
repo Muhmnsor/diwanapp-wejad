@@ -52,7 +52,7 @@ export const IdeaContent = ({
           
           // التحقق من وجود دور المدير
           const isUserAdmin = data.some(role => 
-            role.role_id && role.role_id.name === 'admin'
+            role.role_id && typeof role.role_id === 'object' && 'name' in role.role_id && role.role_id.name === 'admin'
           );
           
           setIsAdmin(isUserAdmin);

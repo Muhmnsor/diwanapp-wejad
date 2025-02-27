@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDate } from "@/utils/dateUtils";
-import { CheckCircle, Clock, FileDown, XCircle } from "lucide-react";
+import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { getStatusClass, getStatusDisplay } from "../utils/statusUtils";
 
 interface DecisionSectionProps {
   ideaId: string;
