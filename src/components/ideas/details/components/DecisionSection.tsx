@@ -463,7 +463,7 @@ export const DecisionSection = ({
               
               <Separator className="my-3" />
               
-              <div className="space-y-3">
+              <div className="space-y-3 text-right">
                 <div>
                   <h4 className="font-semibold mb-1">السبب / الملاحظات:</h4>
                   <p className="text-gray-700 whitespace-pre-line">{localDecision?.reason || reason}</p>
@@ -473,7 +473,7 @@ export const DecisionSection = ({
                   <>
                     {assignees.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-2">المكلفون بالتنفيذ:</h4>
+                        <h4 className="font-semibold mb-2 text-right">المكلفون بالتنفيذ:</h4>
                         <div className="border rounded-md overflow-hidden">
                           <table className="w-full text-sm">
                             <thead className="bg-muted">
@@ -496,14 +496,14 @@ export const DecisionSection = ({
                     )}
                     
                     {(timeline || localDecision?.timeline) && (
-                      <div>
+                      <div className="text-right">
                         <h4 className="font-semibold mb-1">الإطار الزمني المقترح:</h4>
                         <p className="text-gray-700">{localDecision?.timeline || timeline}</p>
                       </div>
                     )}
                     
                     {(budget || localDecision?.budget) && (
-                      <div>
+                      <div className="text-right">
                         <h4 className="font-semibold mb-1">الميزانية المقترحة:</h4>
                         <p className="text-gray-700">{localDecision?.budget || budget}</p>
                       </div>
