@@ -302,13 +302,14 @@ ${decisionData.status === 'approved' ? `
     <Button
       onClick={handleDownload}
       disabled={isLoading}
-      className="flex items-center gap-2"
-      variant="outline"
+      size="sm"
+      variant="outline" 
+      className="text-xs flex items-center gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
     >
       {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 size={14} className="animate-spin" />
       ) : (
-        <FileDown className="h-4 w-4" />
+        <FileDown size={14} />
       )}
       تنزيل الفكرة والمناقشات
     </Button>
