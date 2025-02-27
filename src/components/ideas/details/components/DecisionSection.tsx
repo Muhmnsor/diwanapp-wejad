@@ -134,7 +134,7 @@ export const DecisionSection = ({
       
       let dbError;
       
-      if (decision?.id) {
+      if (hasDecision && decision?.id) {
         // تحديث القرار الحالي
         console.log("Updating existing decision with ID:", decision.id);
         const { error } = await supabase
