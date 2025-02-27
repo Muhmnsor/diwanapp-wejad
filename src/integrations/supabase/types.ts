@@ -1059,7 +1059,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string
-          discussion_period: unknown | null
+          discussion_period: string | null
           duration: string | null
           expected_costs: Json | null
           expected_partners: Json | null
@@ -1083,7 +1083,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description: string
-          discussion_period?: unknown | null
+          discussion_period?: string | null
           duration?: string | null
           expected_costs?: Json | null
           expected_partners?: Json | null
@@ -1107,7 +1107,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
-          discussion_period?: unknown | null
+          discussion_period?: string | null
           duration?: string | null
           expected_costs?: Json | null
           expected_partners?: Json | null
