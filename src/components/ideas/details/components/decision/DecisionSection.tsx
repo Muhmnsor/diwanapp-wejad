@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +100,7 @@ export const DecisionSection = ({
   
   const handleDeleteDecision = async () => {
     if (!localDecision?.id) {
+      console.error("No decision ID found for deletion");
       toast.error("لا يوجد قرار للحذف");
       return;
     }
@@ -108,22 +108,8 @@ export const DecisionSection = ({
     setIsDeleting(true);
     
     try {
-      console.log("Deleting decision with ID:", localDecision.id);
+      console.log("Starting deletion process for decision:", localDecision.id);
       
-      // تنفيذ عملية الحذف
-      const { error: deleteError } = await supabase
-        .from("idea_decisions")
-        .delete()
-        .eq("id", localDecision.id);
-        
-      if (deleteError) {
-        console.error("Error deleting decision:", deleteError);
-        throw deleteError;
-      }
-      
-      console.log("Decision successfully deleted, now updating idea status");
-      
-      // تحديث حالة الفكرة بعد حذف القرار
       const { error: ideaError } = await supabase
         .from("ideas")
         .update({ status: "under_review" })
@@ -134,9 +120,20 @@ export const DecisionSection = ({
         throw ideaError;
       }
       
-      console.log("Idea status updated successfully after deletion");
+      console.log("Successfully updated idea status to under_review");
       
-      // تحديث الحالة المحلية
+      const { error: deleteError } = await supabase
+        .from("idea_decisions")
+        .delete()
+        .eq("id", localDecision.id);
+        
+      if (deleteError) {
+        console.error("Error deleting decision:", deleteError);
+        throw deleteError;
+      }
+      
+      console.log("Successfully deleted decision");
+      
       setLocalDecision(undefined);
       setAssignees([]);
       setReason("");
@@ -151,7 +148,7 @@ export const DecisionSection = ({
       }
       
     } catch (error) {
-      console.error("Error during decision deletion:", error);
+      console.error("Error during decision deletion process:", error);
       toast.error("حدث خطأ أثناء حذف القرار");
     } finally {
       setIsDeleting(false);
@@ -160,37 +157,36 @@ export const DecisionSection = ({
   };
   
   const handleSubmitDecision = async (
-    status: string,
-    reason: string,
-    timeline: string,
-    budget: string,
+    newStatus: string,
+    newReason: string,
+    newTimeline: string,
+    newBudget: string,
     assigneesList: AssigneeItem[]
   ) => {
-    if (!reason) {
+    if (!newReason) {
       toast.error("يجب إدخال سبب القرار");
       return;
     }
     
     setIsSubmitting(true);
-    console.log("Submitting decision...");
+    console.log("Starting decision submission process");
     
     try {
       const assigneesData = assigneesList.length > 0 ? JSON.stringify(assigneesList) : null;
-      console.log("Assignees data:", assigneesData);
       
       const { data: { user } } = await supabase.auth.getUser();
       
       const newDecisionData = {
         idea_id: ideaId,
-        status,
-        reason,
+        status: newStatus,
+        reason: newReason,
         assignee: assigneesData,
-        timeline: timeline || null,
-        budget: budget || null,
+        timeline: newTimeline || null,
+        budget: newBudget || null,
         created_by: user?.id || null
       };
       
-      console.log("Decision data to save:", newDecisionData);
+      console.log("Submitting new decision data:", newDecisionData);
       
       const { data: newDecision, error: insertError } = await supabase
         .from("idea_decisions")
@@ -203,13 +199,13 @@ export const DecisionSection = ({
         throw insertError;
       }
       
-      console.log("New decision created successfully:", newDecision);
+      console.log("New decision created:", newDecision);
       
-      if (status !== newStatus) {
-        console.log("Updating idea status from", status, "to", status);  // تم تغيير this.status إلى status
+      if (newStatus !== status) {
+        console.log("Updating idea status from", status, "to", newStatus);
         const { error: ideaError } = await supabase
           .from("ideas")
-          .update({ status })
+          .update({ status: newStatus })
           .eq("id", ideaId);
           
         if (ideaError) {
@@ -217,20 +213,19 @@ export const DecisionSection = ({
           throw ideaError;
         }
         
-        console.log("Idea status updated successfully to:", status);
+        console.log("Successfully updated idea status");
       }
       
       if (newDecision) {
         setLocalDecision(newDecision);
-        setNewStatus(status);
-        setReason(reason);
-        setTimeline(timeline);
-        setBudget(budget);
+        setNewStatus(newStatus);
+        setReason(newReason);
+        setTimeline(newTimeline);
+        setBudget(newBudget);
         setAssignees(assigneesList);
       }
       
       toast.success("تم حفظ القرار بنجاح");
-      
       setIsEditing(false);
       
       if (onStatusChange) {
@@ -238,7 +233,7 @@ export const DecisionSection = ({
       }
       
     } catch (error) {
-      console.error("Error saving decision:", error);
+      console.error("Error in decision submission:", error);
       toast.error("حدث خطأ أثناء حفظ القرار");
     } finally {
       setIsSubmitting(false);
