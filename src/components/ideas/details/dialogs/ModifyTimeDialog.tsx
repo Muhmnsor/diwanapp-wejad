@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -32,7 +32,44 @@ export const ModifyTimeDialog = ({
   const [unit, setUnit] = useState<string>("hours");
   const [operation, setOperation] = useState<string>("add");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentHours, setCurrentHours] = useState<number>(0);
   const queryClient = useQueryClient();
+
+  // جلب الوقت الحالي عند فتح النافذة
+  useEffect(() => {
+    if (isOpen && currentPeriod) {
+      let hours = 0;
+      
+      // تفسير الوقت الحالي
+      if (currentPeriod.includes('hours') || currentPeriod.includes('hour')) {
+        const match = currentPeriod.match(/(\d+)\s+hour/);
+        if (match) {
+          hours = parseInt(match[1]);
+        }
+      } else if (currentPeriod.includes('days') || currentPeriod.includes('day')) {
+        const match = currentPeriod.match(/(\d+)\s+day/);
+        if (match) {
+          hours = parseInt(match[1]) * 24;
+        }
+      } else {
+        hours = parseFloat(currentPeriod);
+      }
+      
+      setCurrentHours(hours);
+      
+      // تحديد الوحدة المناسبة للعرض
+      if (hours >= 24 && hours % 24 === 0) {
+        setUnit("days");
+        setTime(hours / 24);
+      } else if (hours < 1) {
+        setUnit("minutes");
+        setTime(Math.round(hours * 60));
+      } else {
+        setUnit("hours");
+        setTime(hours);
+      }
+    }
+  }, [isOpen, currentPeriod]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,37 +90,8 @@ export const ModifyTimeDialog = ({
         hoursToModify = time / 60;
       }
       
-      // الحصول على الوقت الحالي
-      const { data: idea, error: fetchError } = await supabase
-        .from("ideas")
-        .select("discussion_period")
-        .eq("id", ideaId)
-        .single();
-      
-      if (fetchError) {
-        throw fetchError;
-      }
-      
       // حساب الوقت الجديد
       let newHours = 0;
-      let currentHours = 0;
-      
-      if (idea.discussion_period) {
-        // تفسير الوقت الحالي
-        if (idea.discussion_period.includes('hours') || idea.discussion_period.includes('hour')) {
-          const match = idea.discussion_period.match(/(\d+)\s+hour/);
-          if (match) {
-            currentHours = parseInt(match[1]);
-          }
-        } else if (idea.discussion_period.includes('days') || idea.discussion_period.includes('day')) {
-          const match = idea.discussion_period.match(/(\d+)\s+day/);
-          if (match) {
-            currentHours = parseInt(match[1]) * 24;
-          }
-        } else {
-          currentHours = parseFloat(idea.discussion_period);
-        }
-      }
       
       if (operation === "add") {
         newHours = currentHours + hoursToModify;
@@ -127,6 +135,20 @@ export const ModifyTimeDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
           <div className="space-y-4">
+            {/* عرض الوقت الحالي */}
+            <div className="space-y-2 bg-purple-50 p-3 rounded-md">
+              <Label>الوقت الحالي للمناقشة:</Label>
+              <div className="font-medium text-purple-800">
+                {currentHours >= 24 && currentHours % 24 === 0 ? (
+                  `${currentHours / 24} يوم`
+                ) : currentHours < 1 ? (
+                  `${Math.round(currentHours * 60)} دقيقة`
+                ) : (
+                  `${currentHours} ساعة`
+                )}
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="operation">نوع العملية:</Label>
               <RadioGroup
