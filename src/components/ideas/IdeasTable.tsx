@@ -11,6 +11,7 @@ import {
 import { FilterX, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { IdeasTableProps } from "./types";
+import { calculateTimeRemaining, formatCountdown } from "./details/utils/countdownUtils";
 
 export const IdeasTable = ({ 
   ideas,
@@ -19,44 +20,23 @@ export const IdeasTable = ({
   setFilterStatus,
   onDelete
 }: IdeasTableProps) => {
-  const calculateRemainingTime = (discussionPeriod: string | null) => {
+  const calculateRemainingTime = (discussionPeriod: string | null, createdAt: string) => {
     if (!discussionPeriod) return "لم يتم تحديد مدة";
     
     try {
-      const parts = discussionPeriod.split(' ');
-      let totalHours = 0;
+      // استخدم نفس وظيفة حساب الوقت المتبقي المستخدمة في تفاصيل الفكرة
+      const timeRemaining = calculateTimeRemaining(discussionPeriod, createdAt);
       
-      for (let i = 0; i < parts.length; i++) {
-        if (parts[i] === 'days' && i > 0) {
-          totalHours += parseInt(parts[i-1]) * 24;
-        }
-        if (parts[i] === 'hours' && i > 0) {
-          totalHours += parseInt(parts[i-1]);
-        }
-      }
-
-      const creationDate = new Date();
-      const endDate = new Date(creationDate.getTime() + totalHours * 60 * 60 * 1000);
-      
-      const now = new Date();
-      const diffTime = endDate.getTime() - now.getTime();
-      
-      if (diffTime <= 0) {
+      // إذا كانت كل القيم صفر، فقد انتهت المناقشة
+      if (timeRemaining.days === 0 && 
+          timeRemaining.hours === 0 && 
+          timeRemaining.minutes === 0 && 
+          timeRemaining.seconds === 0) {
         return "انتهت المناقشة";
       }
-
-      const remainingDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      const remainingHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       
-      if (remainingDays > 0 && remainingHours > 0) {
-        return `${remainingDays} يوم و ${remainingHours} ساعة`;
-      } else if (remainingDays > 0) {
-        return `${remainingDays} يوم`;
-      } else if (remainingHours > 0) {
-        return `${remainingHours} ساعة`;
-      } else {
-        return "أقل من ساعة";
-      }
+      // استخدم دالة تنسيق العرض نفسها المستخدمة في تفاصيل الفكرة
+      return formatCountdown(timeRemaining);
     } catch (error) {
       console.error('Error calculating remaining time:', error);
       return "خطأ في حساب الوقت المتبقي";
@@ -171,7 +151,7 @@ export const IdeasTable = ({
                     })}
                   </TableCell>
                   <TableCell className="text-center">
-                    {calculateRemainingTime(idea.discussion_period)}
+                    {calculateRemainingTime(idea.discussion_period, idea.created_at)}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className={`px-3 py-1 rounded-full text-sm ${getStatusClass(idea.status)}`}>
