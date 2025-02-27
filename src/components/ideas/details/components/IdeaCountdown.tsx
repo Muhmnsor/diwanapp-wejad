@@ -18,6 +18,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     seconds: 0
   });
   const [isExpired, setIsExpired] = useState(false);
+  const [alreadyUpdated, setAlreadyUpdated] = useState(false);
 
   useEffect(() => {
     const calculateTimeLeft = async () => {
@@ -32,18 +33,23 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
         timeLeft.seconds === 0;
       
       // إذا انتهى الوقت للتو، قم بتحديث حالة الفكرة
-      if (expired && !isExpired && ideaId) {
+      if (expired && !isExpired && ideaId && !alreadyUpdated) {
         setIsExpired(true);
         
         try {
-          // التحقق من الحالة الحالية للفكرة ومن عدم وجود قرار
+          // التحقق من الحالة الحالية للفكرة
           const { data: ideaData, error: ideaError } = await supabase
             .from("ideas")
             .select("status")
             .eq("id", ideaId)
             .single();
             
-          if (ideaError) throw ideaError;
+          if (ideaError) {
+            console.error("خطأ في التحقق من حالة الفكرة:", ideaError);
+            return;
+          }
+          
+          console.log("الحالة الحالية للفكرة:", ideaData?.status);
           
           // التحقق من وجود قرار للفكرة
           const { data: decisionData, error: decisionError } = await supabase
@@ -52,32 +58,50 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
             .eq("idea_id", ideaId)
             .maybeSingle();
             
-          if (decisionError && decisionError.code !== 'PGRST116') throw decisionError;
+          if (decisionError) {
+            console.error("خطأ في التحقق من وجود قرار:", decisionError);
+            return;
+          }
           
-          // تحديث الحالة فقط إذا كانت الفكرة في مرحلة المناقشة ولا يوجد قرار بعد
-          if (ideaData && ideaData.status === "under_review" && !decisionData) {
+          console.log("هل يوجد قرار؟", decisionData ? "نعم" : "لا");
+          
+          // تحديث الحالة فقط إذا كانت الفكرة في مرحلة المناقشة وانتهت المدة ولا يوجد قرار
+          if (ideaData && 
+              (ideaData.status === "under_review" || ideaData.status === "draft") && 
+              !decisionData) {
+            
+            console.log("بدء تحديث حالة الفكرة إلى 'pending_decision'");
+            
             const { error: updateError } = await supabase
               .from("ideas")
               .update({ status: "pending_decision" })
               .eq("id", ideaId);
               
-            if (updateError) throw updateError;
+            if (updateError) {
+              console.error("خطأ في تحديث حالة الفكرة:", updateError);
+              return;
+            }
             
+            setAlreadyUpdated(true);
+            console.log("تم تحديث حالة الفكرة بنجاح إلى 'pending_decision'");
             toast.info("انتهت فترة المناقشة. الفكرة الآن بانتظار القرار.", { duration: 5000 });
           }
         } catch (err) {
-          console.error("Error updating idea status:", err);
+          console.error("خطأ غير متوقع أثناء تحديث حالة الفكرة:", err);
         }
       } else {
         setIsExpired(expired);
       }
     };
 
+    // تنفيذ الحساب فوراً عند التحميل
+    calculateTimeLeft();
+    
+    // تنفيذ الحساب كل ثانية
     const timer = setInterval(calculateTimeLeft, 1000);
-    calculateTimeLeft(); // تنفيذ فوري للعملية الحسابية
-
+    
     return () => clearInterval(timer);
-  }, [discussion_period, created_at, ideaId, isExpired]);
+  }, [discussion_period, created_at, ideaId, isExpired, alreadyUpdated]);
 
   if (!discussion_period) {
     return (
