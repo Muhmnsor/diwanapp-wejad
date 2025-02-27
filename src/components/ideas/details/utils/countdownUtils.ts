@@ -95,3 +95,54 @@ export const getCountdownDisplay = (discussionPeriod: string, createdAt: string,
   
   return `${time.seconds} ثانية`;
 };
+
+// إضافة دالة formatCountdown المفقودة
+export const formatCountdown = (timeRemaining: CountdownTime): string => {
+  if (timeRemaining.days === 0 && 
+      timeRemaining.hours === 0 && 
+      timeRemaining.minutes === 0 && 
+      timeRemaining.seconds === 0) {
+    return "انتهت المناقشة";
+  }
+  
+  const parts = [];
+  
+  if (timeRemaining.days > 0) {
+    parts.push(`${timeRemaining.days} يوم`);
+  }
+  
+  if (timeRemaining.hours > 0) {
+    parts.push(`${timeRemaining.hours} ساعة`);
+  }
+  
+  if (timeRemaining.minutes > 0 && parts.length < 2) {
+    parts.push(`${timeRemaining.minutes} دقيقة`);
+  }
+  
+  if (parts.length === 0) {
+    return "أقل من دقيقة";
+  }
+  
+  return parts.join(' و ');
+};
+
+// إضافة دالة isDiscussionActive المفقودة
+export const isDiscussionActive = (discussionPeriod?: string, createdAt?: string): boolean => {
+  if (!discussionPeriod || !createdAt) {
+    // إذا لم تكن هناك فترة مناقشة أو تاريخ إنشاء، نفترض أن المناقشة غير نشطة
+    return false;
+  }
+  
+  // حساب الوقت المتبقي
+  const timeLeft = calculateTimeRemaining(discussionPeriod, createdAt);
+  
+  // التحقق ما إذا كان الوقت قد انتهى (كل القيم صفر)
+  const isExpired = 
+    timeLeft.days === 0 && 
+    timeLeft.hours === 0 && 
+    timeLeft.minutes === 0 && 
+    timeLeft.seconds === 0;
+  
+  // المناقشة نشطة إذا لم ينته الوقت
+  return !isExpired;
+};
