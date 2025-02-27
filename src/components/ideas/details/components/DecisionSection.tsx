@@ -81,7 +81,7 @@ export const DecisionSection = ({
             .eq('idea_id', ideaId)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
             
           if (error) {
             if (error.code !== 'PGRST116') { // Not found error code
@@ -154,18 +154,6 @@ export const DecisionSection = ({
     console.log("Submitting decision...");
     
     try {
-      // تحديث حالة الفكرة
-      console.log("Updating idea status:", newStatus);
-      const { error: ideaError } = await supabase
-        .from("ideas")
-        .update({ status: newStatus })
-        .eq("id", ideaId);
-        
-      if (ideaError) {
-        console.error("Error updating idea status:", ideaError);
-        throw ideaError;
-      }
-      
       // إعداد بيانات المكلفين كسلسلة نصية JSON
       const assigneesData = assignees.length > 0 ? JSON.stringify(assignees) : null;
       console.log("Assignees data:", assigneesData);
@@ -173,12 +161,12 @@ export const DecisionSection = ({
       // الحصول على معرف المستخدم الحالي
       const { data: { user } } = await supabase.auth.getUser();
       
-      // إضافة قرار جديد أو تحديث القرار الحالي
+      // إعداد بيانات القرار
       const decisionData = {
         idea_id: ideaId,
         status: newStatus,
         reason,
-        assignee: assigneesData, // استخدام المكلفين الجدد فقط
+        assignee: assigneesData,
         timeline: timeline || null,
         budget: budget || null,
         created_by: user?.id || null
@@ -186,6 +174,7 @@ export const DecisionSection = ({
       
       console.log("Decision data to save:", decisionData);
       
+      let dbOperation;
       let dbError;
       
       if (decision?.id) {
@@ -200,18 +189,28 @@ export const DecisionSection = ({
       } else {
         // إضافة قرار جديد
         console.log("Creating new decision");
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("idea_decisions")
-          .insert([decisionData])
-          .select();
+          .insert([decisionData]);
           
-        console.log("Insert result:", { data, error });
         dbError = error;
       }
       
       if (dbError) {
         console.error("Database error:", dbError);
         throw dbError;
+      }
+      
+      // تحديث حالة الفكرة
+      console.log("Updating idea status:", newStatus);
+      const { error: ideaError } = await supabase
+        .from("ideas")
+        .update({ status: newStatus })
+        .eq("id", ideaId);
+        
+      if (ideaError) {
+        console.error("Error updating idea status:", ideaError);
+        throw ideaError;
       }
       
       console.log("Decision saved successfully");
