@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateTimeRemaining } from "../utils/countdownUtils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ExtendDiscussionDialogProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const ExtendDiscussionDialog = ({
   const [isLoading, setIsLoading] = useState(true);
   const [operation, setOperation] = useState<string>("add");
   const [totalCurrentHours, setTotalCurrentHours] = useState<number>(0);
+  const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
   
   // استرجاع معلومات الفكرة والوقت المتبقي عند فتح النافذة
   useEffect(() => {
@@ -199,101 +201,162 @@ export const ExtendDiscussionDialog = ({
     }
   };
 
+  const handleEndDiscussion = async () => {
+    setIsSubmitting(true);
+    try {
+      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها
+      const { error: updateError } = await supabase
+        .from("ideas")
+        .update({ discussion_period: "0 hours" })
+        .eq("id", ideaId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      console.log("Discussion ended successfully");
+      toast.success("تم إنهاء المناقشة بنجاح");
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("Error ending discussion:", error);
+      toast.error("حدث خطأ أثناء إنهاء المناقشة");
+    } finally {
+      setIsSubmitting(false);
+      setIsEndDialogOpen(false);
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
-        <DialogHeader>
-          <DialogTitle className="text-right">تعديل فترة المناقشة</DialogTitle>
-        </DialogHeader>
-        
-        {isLoading ? (
-          <div className="py-4 text-center">جاري تحميل البيانات...</div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              {/* عرض الوقت الحالي والمتبقي */}
-              <div className="p-3 bg-purple-50 rounded-md space-y-2">
-                <p className="text-sm font-medium text-purple-800">
-                  الفترة الكلية الحالية: {Math.floor(totalCurrentHours / 24) > 0 ? `${Math.floor(totalCurrentHours / 24)} يوم` : ""} 
-                  {Math.floor(totalCurrentHours / 24) > 0 && totalCurrentHours % 24 > 0 ? " و " : ""}
-                  {totalCurrentHours % 24 > 0 ? `${Math.floor(totalCurrentHours % 24)} ساعة` : ""}
-                  {totalCurrentHours === 0 && "غير محددة"}
-                </p>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right">تعديل فترة المناقشة</DialogTitle>
+          </DialogHeader>
+          
+          {isLoading ? (
+            <div className="py-4 text-center">جاري تحميل البيانات...</div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                {/* عرض الوقت الحالي والمتبقي */}
+                <div className="p-3 bg-purple-50 rounded-md space-y-2">
+                  <p className="text-sm font-medium text-purple-800">
+                    الفترة الكلية الحالية: {Math.floor(totalCurrentHours / 24) > 0 ? `${Math.floor(totalCurrentHours / 24)} يوم` : ""} 
+                    {Math.floor(totalCurrentHours / 24) > 0 && totalCurrentHours % 24 > 0 ? " و " : ""}
+                    {totalCurrentHours % 24 > 0 ? `${Math.floor(totalCurrentHours % 24)} ساعة` : ""}
+                    {totalCurrentHours === 0 && "غير محددة"}
+                  </p>
+                  
+                  <p className="text-sm text-purple-700">
+                    الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
+                    {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
+                    {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
+                    {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+                  </p>
+                </div>
                 
-                <p className="text-sm text-purple-700">
-                  الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
-                  {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
-                  {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
-                  {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
-                </p>
+                {/* اختيار نوع العملية (تمديد/تنقيص) */}
+                <div className="space-y-2">
+                  <Label>نوع العملية:</Label>
+                  <RadioGroup
+                    value={operation}
+                    onValueChange={setOperation}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="add" id="add" />
+                      <Label htmlFor="add">تمديد</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="subtract" id="subtract" />
+                      <Label htmlFor="subtract">تنقيص</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="days" className="text-right col-span-1">الأيام</Label>
+                    <Input
+                      id="days"
+                      type="number"
+                      min="0"
+                      value={days}
+                      onChange={(e) => setDays(parseInt(e.target.value) || 0)}
+                      className="col-span-3"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="hours" className="text-right col-span-1">الساعات</Label>
+                    <Input
+                      id="hours"
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={hours}
+                      onChange={(e) => setHours(parseInt(e.target.value) || 0)}
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
               </div>
               
-              {/* اختيار نوع العملية (تمديد/تنقيص) */}
-              <div className="space-y-2">
-                <Label>نوع العملية:</Label>
-                <RadioGroup
-                  value={operation}
-                  onValueChange={setOperation}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="add" id="add" />
-                    <Label htmlFor="add">تمديد</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="subtract" id="subtract" />
-                    <Label htmlFor="subtract">تنقيص</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="days" className="text-right col-span-1">الأيام</Label>
-                  <Input
-                    id="days"
-                    type="number"
-                    min="0"
-                    value={days}
-                    onChange={(e) => setDays(parseInt(e.target.value) || 0)}
-                    className="col-span-3"
-                  />
+              <DialogFooter className="sm:justify-between mt-6 flex-wrap gap-2">
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={onClose} 
+                    disabled={isSubmitting}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="destructive" 
+                    onClick={() => setIsEndDialogOpen(true)} 
+                    disabled={isSubmitting}
+                  >
+                    إنهاء المناقشة
+                  </Button>
                 </div>
                 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="hours" className="text-right col-span-1">الساعات</Label>
-                  <Input
-                    id="hours"
-                    type="number"
-                    min="0"
-                    max="23"
-                    value={hours}
-                    onChange={(e) => setHours(parseInt(e.target.value) || 0)}
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter className="sm:justify-between mt-6">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onClose} 
-                disabled={isSubmitting}
-              >
-                إلغاء
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting || (days === 0 && hours === 0)}
-              >
-                {isSubmitting ? "جاري التعديل..." : operation === "add" ? "تمديد" : "تنقيص"}
-              </Button>
-            </DialogFooter>
-          </form>
-        )}
-      </DialogContent>
-    </Dialog>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting || (days === 0 && hours === 0)}
+                >
+                  {isSubmitting ? "جاري التعديل..." : operation === "add" ? "تمديد" : "تنقيص"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* نافذة تأكيد إنهاء المناقشة */}
+      <AlertDialog open={isEndDialogOpen} onOpenChange={setIsEndDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد إنهاء المناقشة</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من رغبتك في إنهاء المناقشة؟ هذا الإجراء لا يمكن التراجع عنه.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2 justify-between">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleEndDiscussion}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "جاري الإنهاء..." : "إنهاء المناقشة"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
