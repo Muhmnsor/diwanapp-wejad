@@ -69,6 +69,60 @@ export const DecisionSection = ({
   // تحديد إذا كان هناك قرار تم اتخاذه بالفعل
   const hasDecision = Boolean(decision?.id);
   
+  // تحميل بيانات القرار مباشرة من قاعدة البيانات إذا لم تكن متوفرة
+  useEffect(() => {
+    const fetchLatestDecision = async () => {
+      if (!hasDecision && ideaId) {
+        console.log("Fetching decision directly for idea:", ideaId);
+        try {
+          const { data, error } = await supabase
+            .from('idea_decisions')
+            .select('*')
+            .eq('idea_id', ideaId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+            
+          if (error) {
+            if (error.code !== 'PGRST116') { // Not found error code
+              console.error("Error fetching decision:", error);
+            } else {
+              console.log("No decision found for idea:", ideaId);
+            }
+            return;
+          }
+          
+          console.log("Directly fetched decision:", data);
+          
+          // تحديث القيم
+          if (data) {
+            setNewStatus(data.status);
+            setReason(data.reason);
+            setTimeline(data.timeline || "");
+            setBudget(data.budget || "");
+            
+            // تحديث المكلفين إذا كانوا متوفرين
+            if (data.assignee) {
+              try {
+                const parsedAssignees = JSON.parse(data.assignee);
+                if (Array.isArray(parsedAssignees)) {
+                  setAssignees(parsedAssignees);
+                  console.log("تم تحميل قائمة المكلفين مباشرة:", parsedAssignees);
+                }
+              } catch (e) {
+                console.log("Cannot parse assignee data:", data.assignee);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Unexpected error fetching decision:", error);
+        }
+      }
+    };
+    
+    fetchLatestDecision();
+  }, [ideaId, hasDecision]);
+  
   const handleAddAssignee = () => {
     if (!newAssigneeName || !newAssigneeResponsibility) {
       toast.error("يرجى إدخال اسم المكلف والمهمة");
@@ -215,6 +269,9 @@ export const DecisionSection = ({
     showDecisionForm,
     decisionStatus: decision?.status || "غير محدد"
   });
+
+  // تحديد ما إذا كان يجب عرض المحتوى بناءً على وجود بيانات
+  const hasContent = hasDecision || reason;
 
   return (
     <Card className="mb-4">
@@ -385,15 +442,15 @@ export const DecisionSection = ({
               </Button>
             </div>
           </div>
-        ) : (
+        ) : hasContent ? (
           // عرض تفاصيل القرار الحالي
           <div className="space-y-4">
             <div className="rounded-md p-3 border">
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-semibold">حالة القرار:</span>
-                  <span className={`px-2 py-0.5 rounded-full text-sm ${getStatusClass(decision?.status || 'pending_decision')}`}>
-                    {getStatusDisplay(decision?.status || 'pending_decision')}
+                  <span className={`px-2 py-0.5 rounded-full text-sm ${getStatusClass(decision?.status || newStatus)}`}>
+                    {getStatusDisplay(decision?.status || newStatus)}
                   </span>
                 </div>
                 <div className="text-gray-600 text-sm">
@@ -406,10 +463,10 @@ export const DecisionSection = ({
               <div className="space-y-3">
                 <div>
                   <h4 className="font-semibold mb-1">السبب / الملاحظات:</h4>
-                  <p className="text-gray-700 whitespace-pre-line">{decision?.reason}</p>
+                  <p className="text-gray-700 whitespace-pre-line">{decision?.reason || reason}</p>
                 </div>
                 
-                {decision?.status === 'approved' && (
+                {(decision?.status === 'approved' || newStatus === 'approved') && (
                   <>
                     {assignees.length > 0 && (
                       <div>
@@ -435,23 +492,34 @@ export const DecisionSection = ({
                       </div>
                     )}
                     
-                    {timeline && (
+                    {(timeline || decision?.timeline) && (
                       <div>
                         <h4 className="font-semibold mb-1">الإطار الزمني المقترح:</h4>
-                        <p className="text-gray-700">{timeline}</p>
+                        <p className="text-gray-700">{decision?.timeline || timeline}</p>
                       </div>
                     )}
                     
-                    {budget && (
+                    {(budget || decision?.budget) && (
                       <div>
                         <h4 className="font-semibold mb-1">الميزانية المقترحة:</h4>
-                        <p className="text-gray-700">{budget}</p>
+                        <p className="text-gray-700">{decision?.budget || budget}</p>
                       </div>
                     )}
                   </>
                 )}
               </div>
             </div>
+          </div>
+        ) : isAdmin ? (
+          // عرض رسالة للمشرفين إذا لم يكن هناك قرار بعد
+          <div className="text-center py-4">
+            <p className="text-muted-foreground mb-3">لم يتم اتخاذ قرار بشأن هذه الفكرة بعد.</p>
+            <Button onClick={() => setIsEditing(true)}>إضافة قرار جديد</Button>
+          </div>
+        ) : (
+          // عرض رسالة للمستخدمين العاديين
+          <div className="text-center py-4">
+            <p className="text-muted-foreground">لم يتم اتخاذ قرار بشأن هذه الفكرة بعد.</p>
           </div>
         )}
       </CardContent>

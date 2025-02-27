@@ -72,14 +72,21 @@ export const IdeaContent = ({
     const fetchDecision = async () => {
       setIsLoadingDecision(true);
       try {
-        // إصلاح استعلام البيانات بحذف الجزء المتعلق بصاحب القرار
+        console.log("Fetching decision data for idea:", idea.id);
+        
+        // استعلام مباشر لجلب أحدث قرار
         const { data, error } = await supabase
           .from('idea_decisions')
           .select('*')
           .eq('idea_id', idea.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching decision:", error);
+          throw error;
+        }
         
         console.log("Decision data fetched:", data);
         setDecision(data);
@@ -97,6 +104,10 @@ export const IdeaContent = ({
   // تحديث بيانات القرار بعد التغيير
   const handleDecisionStatusChange = async () => {
     try {
+      // إعادة تحميل بيانات القرار
+      console.log("Refreshing decision data after update");
+      setIsLoadingDecision(true);
+      
       // إعادة تحميل بيانات الفكرة
       const { data: updatedIdea, error: ideaError } = await supabase
         .from("ideas")
@@ -111,6 +122,8 @@ export const IdeaContent = ({
         .from('idea_decisions')
         .select('*')
         .eq('idea_id', idea.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
         
       if (decisionError) throw decisionError;
@@ -127,6 +140,8 @@ export const IdeaContent = ({
     } catch (error) {
       console.error("Error updating decision data:", error);
       toast.error("حدث خطأ أثناء تحديث بيانات القرار");
+    } finally {
+      setIsLoadingDecision(false);
     }
   };
 
@@ -136,6 +151,7 @@ export const IdeaContent = ({
     ideaStatus: idea.status, 
     ideaTitle: idea.title, 
     hasDecision: Boolean(decision?.id),
+    decision,
     isAdmin
   });
 
