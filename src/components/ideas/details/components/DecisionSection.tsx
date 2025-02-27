@@ -47,7 +47,6 @@ export const DecisionSection = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newStatus, setNewStatus] = useState<string>(decision?.status || "pending_decision");
   const [reason, setReason] = useState<string>(decision?.reason || "");
-  const [assignee, setAssignee] = useState<string>(decision?.assignee || "");
   const [timeline, setTimeline] = useState<string>(decision?.timeline || "");
   const [budget, setBudget] = useState<string>(decision?.budget || "");
   
@@ -114,7 +113,7 @@ export const DecisionSection = ({
         idea_id: ideaId,
         status: newStatus,
         reason,
-        assignee: assigneesData || assignee || null, // استخدام المكلفين الجدد إذا وجدوا، وإلا استخدام المكلف القديم
+        assignee: assigneesData, // استخدام المكلفين الجدد فقط
         timeline: timeline || null,
         budget: budget || null,
         created_by: user?.id || null
@@ -175,19 +174,14 @@ export const DecisionSection = ({
         const parsedAssignees = JSON.parse(decision.assignee);
         if (Array.isArray(parsedAssignees)) {
           setAssignees(parsedAssignees);
-        } else {
-          // إذا لم تكن مصفوفة، استخدم القيمة كاسم مكلف واحد
-          setAssignee(decision.assignee);
         }
       } catch (e) {
-        // إذا لم تكن صيغة JSON صحيحة، استخدم القيمة كاسم مكلف واحد
-        setAssignee(decision.assignee);
+        // إذا لم تكن صيغة JSON صحيحة، قد تكون بيانات قديمة
+        console.log("Cannot parse assignee data, might be old format");
       }
     }
   }, [decision]);
 
-  // عرض واجهة اتخاذ القرار دائماً بغض النظر عن حالة الفكرة
-  // للاختبار فقط - نحذف جميع شروط التحقق من الحالة
   return (
     <Card className="mb-4">
       <CardHeader className="pb-3">
@@ -293,21 +287,6 @@ export const DecisionSection = ({
                       </Button>
                     </div>
                   </div>
-                  
-                  {/* حقل المكلف القديم للتوافق */}
-                  {assignees.length === 0 && (
-                    <div className="space-y-2">
-                      <Input 
-                        id="assignee" 
-                        placeholder="أدخل اسم الشخص أو الإدارة المكلفة بالتنفيذ"
-                        value={assignee}
-                        onChange={(e) => setAssignee(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        لإضافة أكثر من مكلف، استخدم الجدول أعلاه
-                      </p>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="space-y-2">
