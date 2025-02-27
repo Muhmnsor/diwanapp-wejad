@@ -120,12 +120,26 @@ export const CommentList = ({
 
   const rootComments = getRootComments();
   const hasComments = rootComments.length > 0;
+  
+  // تحديد ارتفاع منطقة التعليقات بناءً على عدد التعليقات
+  const getScrollAreaHeight = () => {
+    if (!hasComments) {
+      return 'h-[150px]'; // ارتفاع مصغر عندما لا توجد تعليقات
+    }
+    
+    const commentCount = comments.length;
+    if (commentCount <= 3) {
+      return 'h-[250px]'; // ارتفاع صغير لعدد قليل من التعليقات
+    }
+    
+    return 'h-[400px]'; // الارتفاع الأقصى للتعليقات الكثيرة
+  };
 
   return <div dir="rtl">
       <h2 className="text-lg font-semibold mb-3">المناقشات</h2>
       
       <div className="space-y-1">
-        <ScrollArea dir="ltr" className={`pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1),inset_0_-12px_8px_-10px_rgba(0,0,0,0.1)] rounded-2xl px-[15px] mx-[4px] ${hasComments ? 'h-[400px]' : 'h-[200px]'}`}>
+        <ScrollArea dir="ltr" className={`pr-4 -mr-4 shadow-[inset_0_12px_8px_-10px_rgba(0,0,0,0.1),inset_0_-12px_8px_-10px_rgba(0,0,0,0.1)] rounded-2xl px-[15px] mx-[4px] ${getScrollAreaHeight()}`}>
           <div className="h-full" ref={scrollViewportRef}>
             {hasComments ? (
               rootComments.map(comment => renderComment(comment))
