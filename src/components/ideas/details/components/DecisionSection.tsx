@@ -87,18 +87,27 @@ export const DecisionSection = ({
     }
     
     setIsSubmitting(true);
+    console.log("Submitting decision...");
     
     try {
       // تحديث حالة الفكرة
+      console.log("Updating idea status:", newStatus);
       const { error: ideaError } = await supabase
         .from("ideas")
         .update({ status: newStatus })
         .eq("id", ideaId);
         
-      if (ideaError) throw ideaError;
+      if (ideaError) {
+        console.error("Error updating idea status:", ideaError);
+        throw ideaError;
+      }
       
       // إعداد بيانات المكلفين كسلسلة نصية JSON
       const assigneesData = assignees.length > 0 ? JSON.stringify(assignees) : null;
+      console.log("Assignees data:", assigneesData);
+      
+      // الحصول على معرف المستخدم الحالي
+      const { data: { user } } = await supabase.auth.getUser();
       
       // إضافة قرار جديد أو تحديث القرار الحالي
       const decisionData = {
@@ -108,12 +117,16 @@ export const DecisionSection = ({
         assignee: assigneesData || assignee || null, // استخدام المكلفين الجدد إذا وجدوا، وإلا استخدام المكلف القديم
         timeline: timeline || null,
         budget: budget || null,
+        created_by: user?.id || null
       };
+      
+      console.log("Decision data to save:", decisionData);
       
       let dbError;
       
       if (decision?.id) {
         // تحديث القرار الحالي
+        console.log("Updating existing decision with ID:", decision.id);
         const { error } = await supabase
           .from("idea_decisions")
           .update(decisionData)
@@ -122,17 +135,29 @@ export const DecisionSection = ({
         dbError = error;
       } else {
         // إضافة قرار جديد
-        const { error } = await supabase
+        console.log("Creating new decision");
+        const { data, error } = await supabase
           .from("idea_decisions")
-          .insert([decisionData]);
+          .insert([decisionData])
+          .select();
           
+        console.log("Insert result:", { data, error });
         dbError = error;
       }
       
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw dbError;
+      }
       
+      console.log("Decision saved successfully");
       toast.success("تم حفظ القرار بنجاح");
-      if (onStatusChange) onStatusChange();
+      
+      // تحديث الواجهة بعد حفظ القرار
+      if (onStatusChange) {
+        console.log("Calling onStatusChange callback");
+        onStatusChange();
+      }
       
     } catch (error) {
       console.error("Error saving decision:", error);
