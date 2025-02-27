@@ -1,7 +1,6 @@
 
 import { getStatusClass, getStatusDisplay } from "../utils/statusUtils";
 import { useEffect, useState } from "react";
-import { calculateTimeRemaining } from "../utils/countdownUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,122 +12,157 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: StatusBadgeProps) => {
-  const [displayStatus, setDisplayStatus] = useState(status);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(status);
 
-  // تحقق من انتهاء وقت المناقشة عند تحميل المكون أو تغيير الحالة
+  // جلب الحالة الحالية من قاعدة البيانات مباشرة
   useEffect(() => {
-    const checkDiscussionEnded = async () => {
+    if (!ideaId) return;
+
+    const fetchCurrentStatus = async () => {
       try {
-        // التحقق من الشروط الأساسية
-        if (!discussion_period || !created_at || !ideaId) {
+        // جلب الحالة الحالية من قاعدة البيانات
+        const { data, error } = await supabase
+          .from("ideas")
+          .select("status")
+          .eq("id", ideaId)
+          .single();
+
+        if (error) {
+          console.error("خطأ في جلب حالة الفكرة:", error);
           return;
         }
 
-        // حساب الوقت المتبقي للمناقشة
-        const timeLeft = calculateTimeRemaining(discussion_period, created_at);
-        console.log("StatusBadge - الوقت المتبقي:", timeLeft, "الحالة الحالية:", status);
+        if (data && data.status !== currentStatus) {
+          console.log(`تحديث الحالة من ${currentStatus} إلى ${data.status}`);
+          setCurrentStatus(data.status);
+        }
+      } catch (error) {
+        console.error("خطأ غير متوقع:", error);
+      }
+    };
 
-        // إذا كانت الحالة الحالية هي قيد المناقشة (under_review) وانتهى الوقت
-        if (status === "under_review" && 
-            timeLeft.days === 0 && timeLeft.hours === 0 && 
-            timeLeft.minutes === 0 && timeLeft.seconds === 0) {
+    fetchCurrentStatus();
+
+    // تحديث كل 5 ثواني للتأكد من أحدث حالة
+    const intervalId = setInterval(fetchCurrentStatus, 5000);
+    return () => clearInterval(intervalId);
+  }, [ideaId, currentStatus]);
+
+  // فحص ما إذا كان يجب تحديث الحالة بناءً على انتهاء المناقشة
+  useEffect(() => {
+    if (!ideaId || !created_at || !discussion_period) return;
+    if (currentStatus !== "under_review") return; // فقط للأفكار قيد المناقشة
+
+    const checkAndUpdateStatus = async () => {
+      try {
+        // حساب ما إذا كانت المناقشة قد انتهت
+        const discussionEndDate = calculateDiscussionEndDate(created_at, discussion_period);
+        const now = new Date();
+        
+        // إذا انتهى وقت المناقشة
+        if (discussionEndDate <= now) {
+          console.log("انتهت مدة المناقشة. الحالة الحالية:", currentStatus);
           
-          console.log("المناقشة انتهت والحالة الحالية هي قيد المناقشة، يجب تحديثها");
-          
-          // التحقق من وجود قرار للفكرة قبل تحديث الحالة
-          const { data: decisionData, error: decisionError } = await supabase
+          // التحقق من وجود قرار
+          const { data: decisionExists } = await supabase
             .from("idea_decisions")
             .select("id")
             .eq("idea_id", ideaId)
             .maybeSingle();
-          
-          if (decisionError) {
-            console.error("خطأ في التحقق من وجود قرار:", decisionError);
-            return;
-          }
-          
-          // إذا لم يوجد قرار، تحديث الحالة إلى بانتظار القرار
-          if (!decisionData) {
-            console.log("لا يوجد قرار، تحديث الحالة إلى بانتظار القرار");
-            setDisplayStatus("pending_decision");
             
-            // تحديث الحالة في قاعدة البيانات
-            if (!isUpdating) {
-              setIsUpdating(true);
-              const { error: updateError } = await supabase
-                .from("ideas")
-                .update({ status: "pending_decision" })
-                .eq("id", ideaId);
+          // إذا لم يوجد قرار، نقوم بتحديث الحالة
+          if (!decisionExists) {
+            console.log("لا يوجد قرار. تحديث الحالة إلى 'بانتظار القرار'");
+            
+            const { error: updateError } = await supabase
+              .from("ideas")
+              .update({ status: "pending_decision" })
+              .eq("id", ideaId);
               
-              setIsUpdating(false);
-              
-              if (updateError) {
-                console.error("خطأ في تحديث حالة الفكرة:", updateError);
-                return;
-              }
-              
-              console.log("✅ تم تحديث حالة الفكرة بنجاح إلى بانتظار القرار");
-              toast.info("انتهت فترة المناقشة. الفكرة الآن بانتظار القرار.", {
-                duration: 5000
-              });
-              
-              // إعادة تحميل الصفحة لتحديث جميع المكونات
-              setTimeout(() => window.location.reload(), 1500);
+            if (updateError) {
+              console.error("خطأ في تحديث حالة الفكرة:", updateError);
+              return;
             }
+            
+            setCurrentStatus("pending_decision");
+            toast.info("انتهت فترة المناقشة. الفكرة الآن بانتظار القرار.");
           }
-        } else if (timeLeft.days === 0 && timeLeft.hours === 0 && 
-                  timeLeft.minutes === 0 && timeLeft.seconds === 0) {
-          // إذا انتهى وقت المناقشة، استخدم الحالة المخزنة في قاعدة البيانات بدلاً من الحالة المرسلة كخاصية
-          const { data: ideaData, error: ideaError } = await supabase
-            .from("ideas")
-            .select("status")
-            .eq("id", ideaId)
-            .single();
-          
-          if (ideaError) {
-            console.error("خطأ في جلب حالة الفكرة من قاعدة البيانات:", ideaError);
-            return;
-          }
-          
-          if (ideaData) {
-            console.log("تم جلب حالة الفكرة من قاعدة البيانات:", ideaData.status);
-            setDisplayStatus(ideaData.status);
-          }
-        } else {
-          // في حالة لم ينتهِ وقت المناقشة، استخدم الحالة المرسلة كخاصية
-          setDisplayStatus(status);
         }
       } catch (error) {
-        console.error("خطأ غير متوقع أثناء فحص حالة المناقشة:", error);
+        console.error("خطأ في فحص وتحديث الحالة:", error);
       }
     };
-
-    checkDiscussionEnded();
-  }, [status, created_at, discussion_period, ideaId, isUpdating]);
-
-  // فحص دوري لحالة المناقشة
-  useEffect(() => {
-    // تنفيذ الفحص كل 10 ثواني
-    const timer = setInterval(() => {
-      if (!isUpdating && ideaId && created_at && discussion_period && status === "under_review") {
-        const timeLeft = calculateTimeRemaining(discussion_period, created_at);
-        console.log("فحص دوري للوقت المتبقي:", timeLeft);
-        
-        if (timeLeft.days === 0 && timeLeft.hours === 0 && 
-            timeLeft.minutes === 0 && timeLeft.seconds === 0) {
-          console.log("انتهى وقت المناقشة في الفحص الدوري، تحديث الصفحة");
-          window.location.reload();
-        }
-      }
-    }, 10000);
-
-    return () => clearInterval(timer);
-  }, [status, created_at, discussion_period, ideaId, isUpdating]);
+    
+    checkAndUpdateStatus();
+    
+    // تحقق دوري
+    const intervalId = setInterval(checkAndUpdateStatus, 10000);
+    return () => clearInterval(intervalId);
+  }, [ideaId, created_at, discussion_period, currentStatus]);
 
   return (
-    <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(displayStatus)}`}>
-      {getStatusDisplay(displayStatus)}
+    <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(currentStatus)}`}>
+      {getStatusDisplay(currentStatus)}
     </span>
   );
 };
+
+// دالة مساعدة لحساب تاريخ انتهاء المناقشة
+function calculateDiscussionEndDate(created_at: string, discussion_period: string): Date {
+  try {
+    const createdDate = new Date(created_at);
+    let hoursToAdd = 0;
+    
+    // معالجة صيغة "X days Y hours"
+    if (discussion_period.includes('days') || discussion_period.includes('day') || 
+        discussion_period.includes('hours') || discussion_period.includes('hour')) {
+      
+      const parts = discussion_period.split(' ');
+      
+      for (let i = 0; i < parts.length; i++) {
+        if ((parts[i] === 'days' || parts[i] === 'day') && i > 0) {
+          const days = parseInt(parts[i-1]);
+          if (!isNaN(days)) {
+            hoursToAdd += days * 24;
+          }
+        }
+        if ((parts[i] === 'hours' || parts[i] === 'hour') && i > 0) {
+          const hours = parseInt(parts[i-1]);
+          if (!isNaN(hours)) {
+            hoursToAdd += hours;
+          }
+        }
+      }
+    } 
+    // معالجة صيغة "HH:MM:SS"
+    else if (discussion_period.includes(':')) {
+      const timeParts = discussion_period.split(':');
+      if (timeParts.length >= 2) {
+        const hours = parseInt(timeParts[0]);
+        const minutes = parseInt(timeParts[1]);
+        
+        if (!isNaN(hours)) {
+          hoursToAdd += hours;
+        }
+        
+        if (!isNaN(minutes)) {
+          hoursToAdd += minutes / 60;
+        }
+      }
+    }
+    // محاولة تفسير القيمة كرقم (عدد الساعات)
+    else {
+      const hours = parseFloat(discussion_period);
+      if (!isNaN(hours)) {
+        hoursToAdd = hours;
+      }
+    }
+    
+    // إضافة الساعات إلى تاريخ الإنشاء
+    return new Date(createdDate.getTime() + (hoursToAdd * 60 * 60 * 1000));
+  } catch (error) {
+    console.error("خطأ في حساب تاريخ انتهاء المناقشة:", error);
+    // إرجاع تاريخ سابق في حالة الخطأ - هذا سيؤدي إلى اعتبار المناقشة منتهية
+    return new Date(0);
+  }
+}
