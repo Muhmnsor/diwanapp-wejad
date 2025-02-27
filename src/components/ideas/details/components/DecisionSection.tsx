@@ -349,8 +349,8 @@ export const DecisionSection = ({
                         <table className="w-full text-sm">
                           <thead className="bg-muted">
                             <tr>
-                              <th className="py-2 px-4 text-right">الاسم</th>
-                              <th className="py-2 px-4 text-right">المهمة</th>
+                              <th className="py-2 px-4 text-center">الاسم</th>
+                              <th className="py-2 px-4 text-center">المهمة</th>
                               <th className="py-2 px-4 text-center w-16">حذف</th>
                             </tr>
                           </thead>
@@ -480,8 +480,8 @@ export const DecisionSection = ({
                           <table className="w-full text-sm">
                             <thead className="bg-muted">
                               <tr>
-                                <th className="py-2 px-4 text-right">الاسم</th>
-                                <th className="py-2 px-4 text-right">المهمة</th>
+                                <th className="py-2 px-4 text-center">الاسم</th>
+                                <th className="py-2 px-4 text-center">المهمة</th>
                               </tr>
                             </thead>
                             <tbody>
