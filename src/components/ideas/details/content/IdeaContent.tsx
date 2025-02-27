@@ -4,7 +4,7 @@ import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
 import { IdeaDetails } from "@/components/ideas/details/IdeaDetails";
 import { VoteSection } from "@/components/ideas/voting/VoteSection";
 import { CommentList } from "@/components/ideas/comments/CommentList";
-import { DecisionSection } from "@/components/ideas/details/components/DecisionSection";
+import { DecisionSection } from "@/components/ideas/details/components/decision/DecisionSection";
 import { Vote, Idea, Comment } from "../types";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
