@@ -103,7 +103,7 @@ export const DecisionSection = ({
           console.log("Directly fetched decision:", data);
           
           if (data) {
-            setNewStatus(data.status);
+            setNewStatus(data.status || "pending_decision");
             setReason(data.reason);
             setTimeline(data.timeline || "");
             setBudget(data.budget || "");
@@ -160,18 +160,22 @@ export const DecisionSection = ({
     setIsDeleting(true);
     
     try {
-      console.log("Deleting decision:", localDecision.id);
+      console.log("Deleting decision with ID:", localDecision.id);
       
-      const { error } = await supabase
+      // تنفيذ عملية الحذف
+      const { error: deleteError } = await supabase
         .from("idea_decisions")
         .delete()
         .eq("id", localDecision.id);
         
-      if (error) {
-        console.error("Error deleting decision:", error);
-        throw error;
+      if (deleteError) {
+        console.error("Error deleting decision:", deleteError);
+        throw deleteError;
       }
       
+      console.log("Decision successfully deleted, now updating idea status");
+      
+      // تحديث حالة الفكرة بعد حذف القرار
       const { error: ideaError } = await supabase
         .from("ideas")
         .update({ status: "under_review" })
@@ -182,6 +186,9 @@ export const DecisionSection = ({
         throw ideaError;
       }
       
+      console.log("Idea status updated successfully after deletion");
+      
+      // تحديث الحالة المحلية
       setLocalDecision(undefined);
       setAssignees([]);
       setReason("");
