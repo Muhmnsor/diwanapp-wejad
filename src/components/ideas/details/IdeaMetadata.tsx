@@ -1,8 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { intervalToDuration } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Clock } from "lucide-react";
+import { ExtendDiscussionDialog } from "./dialogs/ExtendDiscussionDialog";
 
 interface IdeaMetadataProps {
+  id: string;
   created_by: string;
   created_at: string;
   status: string;
@@ -10,13 +14,21 @@ interface IdeaMetadataProps {
   discussion_period?: string;
 }
 
-export const IdeaMetadata = ({ created_by, created_at, status, title, discussion_period }: IdeaMetadataProps) => {
+export const IdeaMetadata = ({ 
+  id,
+  created_by, 
+  created_at, 
+  status, 
+  title, 
+  discussion_period 
+}: IdeaMetadataProps) => {
   const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0
   });
+  const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -76,6 +88,19 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
 
     return () => clearInterval(timer);
   }, [discussion_period, created_at]);
+
+  const handleExtendDialogOpen = () => {
+    setIsExtendDialogOpen(true);
+  };
+
+  const handleExtendDialogClose = () => {
+    setIsExtendDialogOpen(false);
+  };
+
+  const handleExtendSuccess = () => {
+    // يمكن إضافة أي منطق إضافي هنا بعد نجاح عملية التمديد
+    console.log("Discussion period extended successfully");
+  };
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -170,20 +195,68 @@ export const IdeaMetadata = ({ created_by, created_at, status, title, discussion
     return displayParts.length > 0 ? displayParts.join(' و ') : "أقل من دقيقة";
   };
 
+  const isDiscussionActive = () => {
+    if (!discussion_period) return false;
+    
+    const createdDate = new Date(created_at);
+    const parts = discussion_period.split(' ');
+    let totalHours = 0;
+
+    // حساب إجمالي الساعات
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] === 'days' && i > 0) {
+        const days = parseInt(parts[i-1]);
+        if (!isNaN(days)) totalHours += days * 24;
+      }
+      if (parts[i] === 'hours' && i > 0) {
+        const hours = parseInt(parts[i-1]);
+        if (!isNaN(hours)) totalHours += hours;
+      }
+    }
+
+    const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
+    const now = new Date();
+
+    return now < discussionEndDate;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
-        <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
-          <span className="font-medium text-purple-800">متبقي:</span>
-          <div className="font-bold text-purple-700">
-            {getCountdownDisplay()}
+        
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
+            <span className="font-medium text-purple-800">متبقي:</span>
+            <div className="font-bold text-purple-700">
+              {getCountdownDisplay()}
+            </div>
           </div>
+          
+          {isDiscussionActive() && (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-purple-700 border-purple-200 h-8"
+              onClick={handleExtendDialogOpen}
+            >
+              <Clock className="h-3.5 w-3.5 ml-1" />
+              تمديد
+            </Button>
+          )}
+          
+          <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
+            {getStatusDisplay(status)}
+          </span>
         </div>
-        <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
-          {getStatusDisplay(status)}
-        </span>
       </div>
+      
+      <ExtendDiscussionDialog
+        isOpen={isExtendDialogOpen}
+        onClose={handleExtendDialogClose}
+        ideaId={id}
+        onSuccess={handleExtendSuccess}
+      />
     </div>
   );
 };

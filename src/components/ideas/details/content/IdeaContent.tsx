@@ -12,7 +12,7 @@ interface IdeaContentProps {
   votes: Vote[];
   comments: Comment[];
   onVote: (type: 'up' | 'down') => Promise<void>;
-  onAddComment: (content: string, parentId?: string) => Promise<void>;
+  onAddComment: (content: string, parentId?: string, file?: File) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -32,7 +32,14 @@ export const IdeaContent = ({
 
   return (
     <div className="max-w-4xl mx-auto">
-      <IdeaMetadata {...idea} />
+      <IdeaMetadata 
+        id={idea.id} 
+        created_by={idea.created_by} 
+        created_at={idea.created_at} 
+        status={idea.status} 
+        title={idea.title} 
+        discussion_period={idea.discussion_period} 
+      />
       <Separator className="my-2" />
       <div className="space-y-4">
         <IdeaDetails 
