@@ -1,9 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IdeaCountdown } from "./components/IdeaCountdown";
 import { StatusBadge } from "./components/StatusBadge";
 import { ExtendButton } from "./components/ExtendButton";
 import { ExtendDiscussionDialog } from "./dialogs/ExtendDiscussionDialog";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface IdeaMetadataProps {
   id: string;
@@ -23,6 +25,14 @@ export const IdeaMetadata = ({
   discussion_period 
 }: IdeaMetadataProps) => {
   const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
+  const [updatedPeriod, setUpdatedPeriod] = useState(discussion_period);
+  const [updatedCreatedAt, setUpdatedCreatedAt] = useState(created_at);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setUpdatedPeriod(discussion_period);
+    setUpdatedCreatedAt(created_at);
+  }, [discussion_period, created_at]);
 
   const handleExtendDialogOpen = () => {
     setIsExtendDialogOpen(true);
@@ -33,8 +43,13 @@ export const IdeaMetadata = ({
   };
 
   const handleExtendSuccess = () => {
-    // يمكن إضافة أي منطق إضافي هنا بعد نجاح عملية التمديد
-    console.log("Discussion period extended successfully");
+    // إعادة تحميل الصفحة بعد نجاح التمديد
+    toast.success("تم تمديد فترة المناقشة بنجاح - جاري تحديث البيانات");
+    
+    // الانتظار قليلاً ثم إعادة تحميل الصفحة للحصول على البيانات المحدثة
+    setTimeout(() => {
+      navigate(0); // استخدام navigate(0) لإعادة تحميل الصفحة الحالية
+    }, 1000);
   };
 
   return (
@@ -43,7 +58,7 @@ export const IdeaMetadata = ({
         <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
         
         <div className="flex items-center gap-3">
-          <IdeaCountdown discussion_period={discussion_period} created_at={created_at} />
+          <IdeaCountdown discussion_period={updatedPeriod} created_at={updatedCreatedAt} />
           <ExtendButton onClick={handleExtendDialogOpen} />
           <StatusBadge status={status} />
         </div>
