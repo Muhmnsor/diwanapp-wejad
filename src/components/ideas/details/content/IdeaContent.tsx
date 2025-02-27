@@ -194,6 +194,7 @@ export const IdeaContent = ({
               isAdmin={isAdmin}
               decision={decision}
               onStatusChange={handleDecisionStatusChange}
+              ideaTitle={idea.title}
             />
           )}
         </div>

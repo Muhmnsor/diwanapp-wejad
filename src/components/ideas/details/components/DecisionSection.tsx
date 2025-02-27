@@ -19,6 +19,7 @@ interface DecisionSectionProps {
   status: string;
   isAdmin?: boolean; 
   onStatusChange?: () => void;
+  ideaTitle?: string;
   decision?: {
     id?: string;
     status: string;
@@ -43,6 +44,7 @@ export const DecisionSection = ({
   status, 
   isAdmin = false, 
   onStatusChange,
+  ideaTitle = "",
   decision 
 }: DecisionSectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -317,7 +319,7 @@ export const DecisionSection = ({
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">
-            {hasDecision ? "القرار المتخذ" : "اتخاذ القرار"}
+            {ideaTitle || (hasDecision ? "القرار المتخذ" : "اتخاذ القرار")}
           </CardTitle>
           
           {hasDecision && isAdmin && !isEditing && (
