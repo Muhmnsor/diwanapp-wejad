@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IdeaDownloadButton } from "./components/IdeaDownloadButton";
 
 import { IdeaTypeSection } from "./sections/IdeaTypeSection";
 import { IdeaProblemSection } from "./sections/IdeaProblemSection";
@@ -46,19 +47,23 @@ export const IdeaDetails = ({ idea, isOpen, onOpenChange }: IdeaDetailsProps) =>
 
   return (
     <div>
-      <Button
-        variant="ghost"
-        onClick={handleToggle}
-        className="flex items-center gap-2 p-0 hover:bg-transparent focus:bg-transparent"
-      >
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform",
-            isOpen ? "-rotate-180" : ""
-          )}
-        />
-        <span className="text-muted-foreground">تفاصيل الفكرة</span>
-      </Button>
+      <div className="flex justify-between items-center mb-3">
+        <Button
+          variant="ghost"
+          onClick={handleToggle}
+          className="flex items-center gap-2 p-0 hover:bg-transparent focus:bg-transparent"
+        >
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform",
+              isOpen ? "-rotate-180" : ""
+            )}
+          />
+          <span className="text-muted-foreground">تفاصيل الفكرة</span>
+        </Button>
+
+        <IdeaDownloadButton ideaId={idea.id} ideaTitle={idea.title} />
+      </div>
 
       {isOpen && (
         <div className="w-full text-right bg-white rounded-lg shadow-sm p-4 mt-2 space-y-4">
