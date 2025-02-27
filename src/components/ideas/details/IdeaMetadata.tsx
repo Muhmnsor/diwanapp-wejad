@@ -5,7 +5,7 @@ import { StatusBadge } from "./components/StatusBadge";
 import { ExtendButton } from "./components/ExtendButton";
 import { ExtendDiscussionDialog } from "./dialogs/ExtendDiscussionDialog";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IdeaMetadataProps {
   id: string;
@@ -27,7 +27,7 @@ export const IdeaMetadata = ({
   const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
   const [updatedPeriod, setUpdatedPeriod] = useState(discussion_period);
   const [updatedCreatedAt, setUpdatedCreatedAt] = useState(created_at);
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     setUpdatedPeriod(discussion_period);
@@ -43,13 +43,14 @@ export const IdeaMetadata = ({
   };
 
   const handleExtendSuccess = () => {
-    // إعادة تحميل الصفحة بعد نجاح التمديد
-    toast.success("تم تمديد فترة المناقشة بنجاح - جاري تحديث البيانات");
+    toast.success("تم تمديد فترة المناقشة بنجاح");
     
-    // الانتظار قليلاً ثم إعادة تحميل الصفحة للحصول على البيانات المحدثة
-    setTimeout(() => {
-      navigate(0); // استخدام navigate(0) لإعادة تحميل الصفحة الحالية
-    }, 1000);
+    // تحديث البيانات باستخدام React Query
+    // 1. تحديث قائمة الأفكار
+    queryClient.invalidateQueries({ queryKey: ['ideas'] });
+    
+    // 2. تحديث تفاصيل الفكرة الحالية
+    queryClient.invalidateQueries({ queryKey: ['idea', id] });
   };
 
   return (

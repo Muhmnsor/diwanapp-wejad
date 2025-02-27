@@ -1,222 +1,57 @@
 
-import { useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useState } from "react";
-import { SecondaryHeader } from "@/components/ideas/details/navigation/SecondaryHeader";
+import { useParams } from "react-router-dom";
+import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
 import { IdeaContent } from "@/components/ideas/details/content/IdeaContent";
-import { Idea, Comment, Vote } from "@/components/ideas/details/types";
+import { VoteSection } from "@/components/ideas/voting/VoteSection";
+import { CommentList } from "@/components/ideas/comments/CommentList";
+import { SecondaryHeader } from "@/components/ideas/details/navigation/SecondaryHeader";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const IdeaDetails = () => {
-  const { id } = useParams();
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { data: idea, isLoading: isIdeaLoading } = useQuery({
+  const { id } = useParams<{ id: string }>();
+  
+  const { data: idea, isLoading } = useQuery({
     queryKey: ['idea', id],
     queryFn: async () => {
+      if (!id) throw new Error("ID is undefined");
+      
       const { data, error } = await supabase
         .from('ideas')
-        .select('*')
+        .select(`
+          *,
+          profiles (
+            email
+          )
+        `)
         .eq('id', id)
         .single();
-
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching idea:", error);
+        throw error;
+      }
       
       return {
         ...data,
-        similar_ideas: data.similar_ideas || [],
-        supporting_files: data.supporting_files || [],
-        duration: data.duration || '',
-        idea_type: data.idea_type || 'تطويرية'
-      } as Idea;
-    }
-  });
-
-  const { data: comments = [], isLoading: isCommentsLoading } = useQuery({
-    queryKey: ['comments', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('idea_comments')
-        .select('*')
-        .eq('idea_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Comment[];
-    }
-  });
-
-  const { data: votes = [], isLoading: isVotesLoading } = useQuery({
-    queryKey: ['votes', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('idea_votes')
-        .select('*')
-        .eq('idea_id', id);
-
-      if (error) throw error;
-      return data as Vote[];
-    }
-  });
-
-  const voteMutation = useMutation({
-    mutationFn: async (voteType: 'up' | 'down') => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("يجب تسجيل الدخول للتصويت");
-      }
-
-      const currentVote = votes.find(v => v.user_id === user.id);
-
-      // إذا كان المستخدم قد صوت من قبل
-      if (currentVote) {
-        // إذا كان نفس التصويت السابق، نقوم بإزالته
-        if (currentVote.vote_type === voteType) {
-          const { error } = await supabase
-            .from('idea_votes')
-            .delete()
-            .eq('idea_id', id)
-            .eq('user_id', user.id);
-
-          if (error) throw error;
-        } else {
-          // إذا كان تصويت مختلف، نقوم بتحديث التصويت
-          const { error } = await supabase
-            .from('idea_votes')
-            .update({ vote_type: voteType })
-            .eq('idea_id', id)
-            .eq('user_id', user.id);
-
-          if (error) throw error;
-        }
-      } else {
-        // إذا لم يكن هناك تصويت سابق، نضيف تصويت جديد
-        const { error } = await supabase
-          .from('idea_votes')
-          .insert([
-            {
-              idea_id: id,
-              vote_type: voteType,
-              user_id: user.id
-            }
-          ]);
-
-        if (error) throw error;
-      }
-
-      return voteType;
+        creator_email: data.profiles?.email || 'غير معروف'
+      };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['votes', id] });
-      toast.success("تم تسجيل تصويتك بنجاح");
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء التصويت");
-    }
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const addCommentMutation = useMutation({
-    mutationFn: async ({ content, parentId, file }: { content: string; parentId?: string; file?: File }) => {
-      console.log("Starting comment mutation with file:", file?.name);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("يجب تسجيل الدخول لإضافة تعليق");
-      }
-
-      let attachmentUrl = null;
-      let attachmentType = null;
-      let attachmentName = null;
-
-      if (file) {
-        console.log("Processing file upload:", file.name, file.type);
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('attachments')
-          .upload(fileName, file);
-
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-          throw new Error("فشل في رفع الملف");
-        }
-
-        console.log("File uploaded successfully:", uploadData);
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('attachments')
-          .getPublicUrl(fileName);
-
-        attachmentUrl = publicUrl;
-        attachmentType = file.type;
-        attachmentName = file.name;
-
-        console.log("File metadata prepared:", {
-          url: attachmentUrl,
-          type: attachmentType,
-          name: attachmentName
-        });
-      }
-
-      const { data, error } = await supabase
-        .from('idea_comments')
-        .insert([
-          {
-            idea_id: id,
-            content,
-            parent_id: parentId,
-            user_id: user.id,
-            attachment_url: attachmentUrl,
-            attachment_type: attachmentType,
-            attachment_name: attachmentName
-          }
-        ])
-        .select('*')
-        .single();
-
-      if (error) {
-        console.error("Comment insert error:", error);
-        throw error;
-      }
-
-      console.log("Comment added successfully:", data);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', id] });
-      toast.success("تم إضافة التعليق بنجاح");
-    },
-    onError: (error) => {
-      console.error("Comment error:", error);
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء إضافة التعليق");
-    }
-  });
-
-  const handleAddComment = async (content: string, parentId?: string, file?: File) => {
-    setIsSubmitting(true);
-    try {
-      await addCommentMutation.mutateAsync({ content, parentId, file });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleVote = async (type: 'up' | 'down') => {
-    await voteMutation.mutateAsync(type);
-  };
-
-  if (isIdeaLoading || isCommentsLoading || isVotesLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <TopHeader />
         <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="text-center py-12">جاري التحميل...</div>
+          <div className="space-y-6">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-[400px] w-full" />
+          </div>
         </main>
         <Footer />
       </div>
@@ -228,7 +63,10 @@ const IdeaDetails = () => {
       <div className="min-h-screen flex flex-col">
         <TopHeader />
         <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="text-center py-12">لم يتم العثور على الفكرة</div>
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-800">لم يتم العثور على الفكرة</h2>
+            <p className="text-gray-600 mt-2">تأكد من الرابط واحاول مرة أخرى</p>
+          </div>
         </main>
         <Footer />
       </div>
@@ -238,17 +76,49 @@ const IdeaDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <SecondaryHeader />
+      <SecondaryHeader title="رجوع إلى قائمة الأفكار" />
+      
       <main className="flex-1 container mx-auto px-4 py-8" dir="rtl">
-        <IdeaContent 
-          idea={idea}
-          votes={votes}
-          comments={comments}
-          onVote={handleVote}
-          onAddComment={handleAddComment}
-          isSubmitting={isSubmitting}
-        />
+        <div className="space-y-8 max-w-4xl mx-auto">
+          <IdeaMetadata
+            id={idea.id}
+            created_by={idea.created_by}
+            created_at={idea.created_at}
+            status={idea.status}
+            title={idea.title}
+            discussion_period={idea.discussion_period}
+          />
+          
+          <IdeaContent 
+            problemStatement={idea.problem_statement}
+            solution={idea.solution}
+            benefits={idea.benefits}
+            costs={idea.costs}
+            requiredResources={idea.required_resources}
+            executionTime={idea.execution_time}
+            targetDepartments={idea.target_departments}
+            similarIdeas={idea.similar_ideas}
+            type={idea.type}
+            opportunity={idea.opportunity}
+            partners={idea.partners}
+            supportingFiles={idea.supporting_files}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-2">
+              <CommentList ideaId={idea.id} />
+            </div>
+            
+            <div className="md:col-span-1">
+              <VoteSection 
+                ideaId={idea.id}
+                voteCount={idea.vote_count || 0}
+              />
+            </div>
+          </div>
+        </div>
       </main>
+
       <Footer />
     </div>
   );
