@@ -93,8 +93,28 @@ export const ExtendDiscussionDialog = ({
     setIsSubmitting(true);
 
     try {
-      // تنسيق فترة المناقشة الجديدة
-      const newDiscussionPeriod = `${days} days ${hours} hours`;
+      // تنسيق فترة المناقشة الجديدة - التأكد من أن التنسيق يتطابق مع المتوقع
+      // تحقق من أن days و hours هي أرقام صحيحة وموجبة
+      const finalDays = Math.max(0, Math.floor(days));
+      const finalHours = Math.max(0, Math.floor(hours));
+      
+      // صياغة فترة المناقشة بالشكل الصحيح
+      const daysText = finalDays === 1 ? "day" : "days";
+      const hoursText = finalHours === 1 ? "hour" : "hours";
+      
+      let newDiscussionPeriod = "";
+      if (finalDays > 0) {
+        newDiscussionPeriod += `${finalDays} ${daysText}`;
+      }
+      if (finalHours > 0) {
+        if (newDiscussionPeriod) newDiscussionPeriod += " ";
+        newDiscussionPeriod += `${finalHours} ${hoursText}`;
+      }
+      
+      // إذا كانت الفترة فارغة (حالة خاصة) نضع قيمة افتراضية
+      if (!newDiscussionPeriod) {
+        newDiscussionPeriod = "0 days";
+      }
 
       // تحديث فترة المناقشة في قاعدة البيانات
       const { error: updateError } = await supabase

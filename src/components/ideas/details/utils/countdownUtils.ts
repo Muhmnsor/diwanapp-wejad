@@ -21,13 +21,13 @@ export const calculateTimeRemaining = (
 
     // حساب إجمالي الساعات من الأيام والساعات
     for (let i = 0; i < parts.length; i++) {
-      if (parts[i] === 'days' && i > 0) {
+      if ((parts[i] === 'days' || parts[i] === 'day') && i > 0) {
         const days = parseInt(parts[i-1]);
         if (!isNaN(days)) {
           totalHours += days * 24;
         }
       }
-      if (parts[i] === 'hours' && i > 0) {
+      if ((parts[i] === 'hours' || parts[i] === 'hour') && i > 0) {
         const hours = parseInt(parts[i-1]);
         if (!isNaN(hours)) {
           totalHours += hours;
@@ -93,11 +93,11 @@ export const getCountdownDisplay = (
 
   // حساب إجمالي الساعات
   for (let i = 0; i < parts.length; i++) {
-    if (parts[i] === 'days' && i > 0) {
+    if ((parts[i] === 'days' || parts[i] === 'day') && i > 0) {
       const days = parseInt(parts[i-1]);
       if (!isNaN(days)) totalHours += days * 24;
     }
-    if (parts[i] === 'hours' && i > 0) {
+    if ((parts[i] === 'hours' || parts[i] === 'hour') && i > 0) {
       const hours = parseInt(parts[i-1]);
       if (!isNaN(hours)) totalHours += hours;
     }
@@ -141,11 +141,11 @@ export const isDiscussionActive = (
 
   // حساب إجمالي الساعات
   for (let i = 0; i < parts.length; i++) {
-    if (parts[i] === 'days' && i > 0) {
+    if ((parts[i] === 'days' || parts[i] === 'day') && i > 0) {
       const days = parseInt(parts[i-1]);
       if (!isNaN(days)) totalHours += days * 24;
     }
-    if (parts[i] === 'hours' && i > 0) {
+    if ((parts[i] === 'hours' || parts[i] === 'hour') && i > 0) {
       const hours = parseInt(parts[i-1]);
       if (!isNaN(hours)) totalHours += hours;
     }
