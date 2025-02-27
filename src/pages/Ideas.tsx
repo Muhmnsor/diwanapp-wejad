@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AddIdeaDialog } from "@/components/ideas/AddIdeaDialog";
 import { toast } from "sonner";
 import { IdeasTable } from "@/components/ideas/IdeasTable";
@@ -17,31 +17,9 @@ const Ideas = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [ideaToDelete, setIdeaToDelete] = useState<Idea | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // إضافة استماع لأحداث التحديث
-  useEffect(() => {
-    // إنشاء قناة للاستماع إلى تحديثات الأفكار
-    const channel = supabase
-      .channel('ideas_updates')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'ideas'
-      }, () => {
-        console.log('Received update notification - refreshing ideas data');
-        setRefreshTrigger(prev => prev + 1);
-      })
-      .subscribe();
-
-    // تنظيف المشتركين عند إزالة المكون
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   const { data: ideas, isLoading, refetch } = useQuery({
-    queryKey: ['ideas', filterStatus, refreshTrigger],
+    queryKey: ['ideas', filterStatus],
     queryFn: async () => {
       let query = supabase
         .from('ideas')
@@ -103,13 +81,6 @@ const Ideas = () => {
     }
   };
 
-  // دالة لتحديث البيانات يدويًا
-  const refreshData = async () => {
-    console.log('Manually refreshing ideas data');
-    await refetch();
-    toast.success('تم تحديث البيانات');
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
@@ -117,15 +88,10 @@ const Ideas = () => {
       <main className="flex-1 container mx-auto px-4 py-8" dir="rtl">
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">إدارة الأفكار</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={refreshData}>
-              تحديث البيانات
-            </Button>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="ml-2 h-4 w-4" />
-              إضافة فكرة
-            </Button>
-          </div>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="ml-2 h-4 w-4" />
+            إضافة فكرة
+          </Button>
         </div>
 
         <AddIdeaDialog 
