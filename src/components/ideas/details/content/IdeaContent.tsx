@@ -150,17 +150,6 @@ export const IdeaContent = ({
       />
       <Separator className="my-2" />
       <div className="space-y-4">
-        {/* عرض قسم القرار دائماً (للاختبار) */}
-        {!isLoadingDecision && (
-          <DecisionSection 
-            ideaId={idea.id}
-            status={idea.status}
-            isAdmin={isAdmin}
-            decision={decision}
-            onStatusChange={handleDecisionStatusChange}
-          />
-        )}
-        
         <IdeaDetails 
           idea={idea} 
           isOpen={isDetailsOpen} 
@@ -176,6 +165,17 @@ export const IdeaContent = ({
             ideaCreatedAt={idea.created_at}
             ideaDiscussionPeriod={idea.discussion_period}
           />
+          
+          {/* نقل قسم القرار إلى هنا (بعد التعليقات) */}
+          {!isLoadingDecision && (
+            <DecisionSection 
+              ideaId={idea.id}
+              status={idea.status}
+              isAdmin={isAdmin}
+              decision={decision}
+              onStatusChange={handleDecisionStatusChange}
+            />
+          )}
         </div>
       </div>
     </div>
