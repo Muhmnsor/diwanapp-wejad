@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -325,7 +326,7 @@ export const DecisionSection = ({
                 variant="outline" 
                 size="sm" 
                 onClick={() => setIsEditing(true)}
-                className="text-xs flex items-center gap-1"
+                className="text-xs flex items-center gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
               >
                 <Edit size={14} />
                 تعديل القرار
