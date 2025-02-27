@@ -4,6 +4,8 @@ import { IdeaCountdown } from "./components/IdeaCountdown";
 import { StatusBadge } from "./components/StatusBadge";
 import { ExtendButton } from "./components/ExtendButton";
 import { ExtendDiscussionDialog } from "./dialogs/ExtendDiscussionDialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface IdeaMetadataProps {
   id: string;
@@ -23,6 +25,7 @@ export const IdeaMetadata = ({
   discussion_period 
 }: IdeaMetadataProps) => {
   const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleExtendDialogOpen = () => {
     setIsExtendDialogOpen(true);
@@ -34,7 +37,11 @@ export const IdeaMetadata = ({
 
   const handleExtendSuccess = () => {
     // يمكن إضافة أي منطق إضافي هنا بعد نجاح عملية التمديد
-    console.log("Discussion period extended successfully");
+    toast.success("تم تمديد فترة المناقشة بنجاح");
+    
+    // تحديث البيانات
+    queryClient.invalidateQueries({ queryKey: ["ideas"] });
+    queryClient.invalidateQueries({ queryKey: ["idea", id] });
   };
 
   return (
@@ -43,7 +50,11 @@ export const IdeaMetadata = ({
         <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
         
         <div className="flex items-center gap-3">
-          <IdeaCountdown discussion_period={discussion_period} created_at={created_at} />
+          <IdeaCountdown 
+            discussion_period={discussion_period} 
+            created_at={created_at} 
+            ideaId={id} 
+          />
           <ExtendButton onClick={handleExtendDialogOpen} />
           <StatusBadge status={status} />
         </div>
