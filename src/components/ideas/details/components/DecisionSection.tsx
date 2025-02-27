@@ -45,6 +45,9 @@ export const DecisionSection = ({
   const [timeline, setTimeline] = useState<string>(decision?.timeline || "");
   const [budget, setBudget] = useState<string>(decision?.budget || "");
   
+  // إضافة سجلات للتشخيص
+  console.log("DecisionSection props:", { ideaId, status, isAdmin, decision });
+  
   const handleSubmitDecision = async () => {
     if (!reason) {
       toast.error("يجب إدخال سبب القرار");
@@ -103,135 +106,103 @@ export const DecisionSection = ({
       setIsSubmitting(false);
     }
   };
-  
-  // إذا كانت حالة الفكرة في مراحل المناقشة أو المسودة
-  if (status === 'draft' || status === 'under_review') {
-    return (
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">القرار</CardTitle>
-          <CardDescription>
-            الفكرة قيد المناقشة. سيتم اتخاذ القرار بعد انتهاء فترة المناقشة.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-3 text-muted-foreground">
-            <Clock className="ml-2 h-5 w-5" />
-            بانتظار انتهاء المناقشة
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  // إذا كانت الفكرة بانتظار القرار ولكن لم يتم اتخاذ قرار بعد
-  if (status === 'pending_decision' && !decision && !isAdmin) {
-    return (
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">القرار</CardTitle>
-          <CardDescription>
-            انتهت فترة المناقشة. الفكرة بانتظار القرار النهائي.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-3 text-amber-600">
-            <Clock className="ml-2 h-5 w-5" />
-            بانتظار القرار النهائي
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  // إذا كان المستخدم مديرًا ويمكنه اتخاذ قرار
-  if (isAdmin && (status === 'pending_decision' || status === 'approved' || status === 'rejected' || status === 'needs_modification')) {
-    return (
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">اتخاذ القرار</CardTitle>
-          <CardDescription>
-            {decision ? "تعديل القرار الحالي" : "اتخذ قرارًا بشأن هذه الفكرة"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="decision-status">حالة القرار</Label>
-              <Select 
-                value={newStatus} 
-                onValueChange={setNewStatus}
+
+  // للمشرفين: عرض واجهة اتخاذ القرار
+  if (isAdmin) {
+    // إذا كان المستخدم مشرفًا وأي من الحالات التالية صحيحة:
+    // 1. الفكرة بانتظار القرار
+    // 2. هناك قرار موجود بالفعل (لتمكين التعديل)
+    // 3. حالة الفكرة مرفوضة أو موافق عليها أو تحتاج تعديل
+    if (status === 'pending_decision' || decision || 
+        status === 'approved' || status === 'rejected' || status === 'needs_modification') {
+      
+      return (
+        <Card className="mb-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold">اتخاذ القرار</CardTitle>
+            <CardDescription>
+              {decision ? "تعديل القرار الحالي" : "اتخذ قرارًا بشأن هذه الفكرة"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="decision-status">حالة القرار</Label>
+                <Select 
+                  value={newStatus} 
+                  onValueChange={setNewStatus}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر حالة القرار" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="approved">موافقة</SelectItem>
+                    <SelectItem value="rejected">رفض</SelectItem>
+                    <SelectItem value="needs_modification">تحتاج تعديل</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="reason">سبب القرار / ملاحظات</Label>
+                <Textarea 
+                  id="reason" 
+                  placeholder="أدخل سبب القرار أو أي ملاحظات"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              
+              {newStatus === 'approved' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="assignee">المكلف بالتنفيذ</Label>
+                    <Input 
+                      id="assignee" 
+                      placeholder="أدخل اسم الشخص أو الإدارة المكلفة بالتنفيذ"
+                      value={assignee}
+                      onChange={(e) => setAssignee(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="timeline">الإطار الزمني المقترح</Label>
+                    <Input 
+                      id="timeline" 
+                      placeholder="مثال: 3 أشهر، أسبوعين، ..."
+                      value={timeline}
+                      onChange={(e) => setTimeline(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="budget">الميزانية المقترحة</Label>
+                    <Input 
+                      id="budget" 
+                      placeholder="الميزانية المقترحة للتنفيذ (إن وجدت)"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <Button 
+                className="w-full" 
+                onClick={handleSubmitDecision} 
+                disabled={isSubmitting || !reason}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر حالة القرار" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="approved">موافقة</SelectItem>
-                  <SelectItem value="rejected">رفض</SelectItem>
-                  <SelectItem value="needs_modification">تحتاج تعديل</SelectItem>
-                </SelectContent>
-              </Select>
+                {isSubmitting ? "جاري الحفظ..." : decision ? "تحديث القرار" : "حفظ القرار"}
+              </Button>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="reason">سبب القرار / ملاحظات</Label>
-              <Textarea 
-                id="reason" 
-                placeholder="أدخل سبب القرار أو أي ملاحظات"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
-            
-            {newStatus === 'approved' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="assignee">المكلف بالتنفيذ</Label>
-                  <Input 
-                    id="assignee" 
-                    placeholder="أدخل اسم الشخص أو الإدارة المكلفة بالتنفيذ"
-                    value={assignee}
-                    onChange={(e) => setAssignee(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="timeline">الإطار الزمني المقترح</Label>
-                  <Input 
-                    id="timeline" 
-                    placeholder="مثال: 3 أشهر، أسبوعين، ..."
-                    value={timeline}
-                    onChange={(e) => setTimeline(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="budget">الميزانية المقترحة</Label>
-                  <Input 
-                    id="budget" 
-                    placeholder="الميزانية المقترحة للتنفيذ (إن وجدت)"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
-            
-            <Button 
-              className="w-full" 
-              onClick={handleSubmitDecision} 
-              disabled={isSubmitting || !reason}
-            >
-              {isSubmitting ? "جاري الحفظ..." : decision ? "تحديث القرار" : "حفظ القرار"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+          </CardContent>
+        </Card>
+      );
+    }
   }
   
-  // عرض تفاصيل القرار للمستخدمين العاديين (أو للمديرين بعد اتخاذ القرار)
+  // عرض معلومات القرار الحالي إذا كان موجوداً
   if (decision) {
     return (
       <Card className="mb-4">
@@ -304,6 +275,46 @@ export const DecisionSection = ({
     );
   }
   
-  // حالة افتراضية (لا ينبغي الوصول إليها)
+  // للفكرة التي في حالة بانتظار القرار (للعرض للمستخدمين العاديين)
+  if (status === 'pending_decision') {
+    return (
+      <Card className="mb-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold">القرار</CardTitle>
+          <CardDescription>
+            انتهت فترة المناقشة. الفكرة بانتظار القرار النهائي.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-3 text-amber-600">
+            <Clock className="ml-2 h-5 w-5" />
+            بانتظار القرار النهائي
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // للفكرة قيد المراجعة أو في حالة المسودة (للعرض)
+  if (status === 'draft' || status === 'under_review') {
+    return (
+      <Card className="mb-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold">القرار</CardTitle>
+          <CardDescription>
+            الفكرة قيد المناقشة. سيتم اتخاذ القرار بعد انتهاء فترة المناقشة.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-3 text-muted-foreground">
+            <Clock className="ml-2 h-5 w-5" />
+            بانتظار انتهاء المناقشة
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // حالة افتراضية (عندما لا تتطابق أي من الحالات السابقة)
   return null;
 };
