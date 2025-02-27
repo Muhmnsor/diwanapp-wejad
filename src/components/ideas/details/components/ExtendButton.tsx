@@ -11,11 +11,11 @@ export const ExtendButton = ({ onClick }: ExtendButtonProps) => {
     <Button 
       size="sm" 
       variant="outline" 
-      className="text-purple-700 border-purple-200 h-8"
+      className="text-xs flex items-center gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
       onClick={onClick}
     >
-      <Clock className="h-3.5 w-3.5 ml-1" />
-      تمديد
+      <Clock size={14} />
+      تمديد المناقشة
     </Button>
   );
 };
