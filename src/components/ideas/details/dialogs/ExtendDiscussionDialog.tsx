@@ -44,11 +44,16 @@ export const ExtendDiscussionDialog = ({
             throw fetchError;
           }
 
+          console.log("Idea data fetched:", ideaData);
+
           if (ideaData) {
             // حساب الوقت المتبقي
             const { discussion_period, created_at } = ideaData;
             
             if (discussion_period && created_at) {
+              console.log("Discussion period from DB:", discussion_period);
+              console.log("Created at from DB:", created_at);
+              
               // حساب الوقت المتبقي بالساعات
               const timeRemaining = calculateTimeRemaining(discussion_period, created_at);
               
@@ -61,6 +66,8 @@ export const ExtendDiscussionDialog = ({
               
               const remaining_days = Math.floor(totalHoursRemaining / 24);
               const remaining_hours = Math.floor(totalHoursRemaining % 24);
+              
+              console.log("Calculated remaining time:", { days: remaining_days, hours: remaining_hours });
               
               setRemainingDays(remaining_days);
               setRemainingHours(remaining_hours);
@@ -116,6 +123,8 @@ export const ExtendDiscussionDialog = ({
         newDiscussionPeriod = "0 days";
       }
 
+      console.log("Submitting new discussion period:", newDiscussionPeriod);
+
       // تحديث فترة المناقشة في قاعدة البيانات
       const { error: updateError } = await supabase
         .from("ideas")
@@ -126,6 +135,7 @@ export const ExtendDiscussionDialog = ({
         throw updateError;
       }
 
+      console.log("Discussion period updated successfully");
       toast.success("تم تمديد فترة المناقشة بنجاح");
       onSuccess();
       onClose();
