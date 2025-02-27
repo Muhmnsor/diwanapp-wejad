@@ -64,6 +64,10 @@ export const ExtendDiscussionDialog = ({
               
               setRemainingDays(remaining_days);
               setRemainingHours(remaining_hours);
+              
+              // ضبط القيم الافتراضية في حقول الإدخال لتكون نفس القيم المتبقية
+              setDays(remaining_days);
+              setHours(remaining_hours);
             }
           }
         } catch (error) {
@@ -89,53 +93,8 @@ export const ExtendDiscussionDialog = ({
     setIsSubmitting(true);
 
     try {
-      // الحصول على فترة المناقشة الحالية
-      const { data: ideaData, error: fetchError } = await supabase
-        .from("ideas")
-        .select("discussion_period, created_at")
-        .eq("id", ideaId)
-        .single();
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      // تحليل فترة المناقشة الحالية
-      let currentDays = 0;
-      let currentHours = 0;
-      
-      if (ideaData.discussion_period) {
-        const parts = ideaData.discussion_period.split(' ');
-        for (let i = 0; i < parts.length; i++) {
-          if (parts[i] === 'days' && i > 0) {
-            currentDays = parseInt(parts[i-1]) || 0;
-          }
-          if (parts[i] === 'hours' && i > 0) {
-            currentHours = parseInt(parts[i-1]) || 0;
-          }
-        }
-      }
-
-      // حساب المدة المتبقية الفعلية (إذا كانت هناك مدة متبقية)
-      let effectiveDays = 0;
-      let effectiveHours = 0;
-
-      if (remainingDays > 0 || remainingHours > 0) {
-        // استخدام المدة المتبقية المحسوبة
-        effectiveDays = remainingDays;
-        effectiveHours = remainingHours;
-      } else {
-        // إذا لم تكن هناك مدة متبقية، نستخدم القيم الافتراضية
-        effectiveDays = 0;
-        effectiveHours = 0;
-      }
-
-      // إضافة الوقت الإضافي إلى الوقت المتبقي
-      const newDays = effectiveDays + days;
-      const newHours = effectiveHours + hours;
-      
       // تنسيق فترة المناقشة الجديدة
-      const newDiscussionPeriod = `${newDays} days ${newHours} hours`;
+      const newDiscussionPeriod = `${days} days ${hours} hours`;
 
       // تحديث فترة المناقشة في قاعدة البيانات
       const { error: updateError } = await supabase
