@@ -20,6 +20,43 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
+    // تحديث حالة الفكرة عندما تنتهي المناقشة
+    const updateIdeaStatusIfExpired = async () => {
+      if (!ideaId || !isExpired) return;
+
+      try {
+        // أولاً، تحقق من الحالة الحالية للفكرة
+        const { data: ideaData, error: fetchError } = await supabase
+          .from('ideas')
+          .select('status')
+          .eq('id', ideaId)
+          .single();
+
+        if (fetchError) {
+          console.error("خطأ في جلب حالة الفكرة:", fetchError);
+          return;
+        }
+
+        // إذا كانت الفكرة لا تزال في حالة المناقشة وانتهى الوقت
+        if (ideaData && (ideaData.status === 'draft' || ideaData.status === 'under_review')) {
+          console.log("المناقشة انتهت، تحديث حالة الفكرة إلى بانتظار القرار");
+          
+          const { error: updateError } = await supabase
+            .from('ideas')
+            .update({ status: 'pending_decision' })
+            .eq('id', ideaId);
+
+          if (updateError) {
+            console.error("خطأ في تحديث حالة الفكرة:", updateError);
+          } else {
+            toast.info("تم تحديث حالة الفكرة إلى: بانتظار القرار", { duration: 3000 });
+          }
+        }
+      } catch (err) {
+        console.error("خطأ غير متوقع عند تحديث حالة الفكرة:", err);
+      }
+    };
+
     const calculateTimeLeft = () => {
       const timeLeft = calculateTimeRemaining(discussion_period, created_at);
       setCountdown(timeLeft);
@@ -31,7 +68,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
         timeLeft.minutes === 0 && 
         timeLeft.seconds === 0;
       
-      // تحديث حالة انتهاء المناقشة محلياً فقط
+      // تحديث حالة انتهاء المناقشة محلياً
       if (expired !== isExpired) {
         setIsExpired(expired);
         
@@ -39,6 +76,11 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
         if (expired && !isExpired) {
           console.log("⏲️ انتهت فترة المناقشة للفكرة:", ideaId);
           toast.info("انتهت فترة المناقشة", { duration: 3000 });
+          
+          // عند انتهاء المناقشة، قم بتحديث حالة الفكرة
+          if (ideaId) {
+            updateIdeaStatusIfExpired();
+          }
         }
       }
     };
@@ -49,11 +91,16 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     console.log("⏱️ فترة المناقشة:", discussion_period);
     calculateTimeLeft();
     
+    // التحقق من الحالة عند التحميل أيضًا
+    if (isExpired && ideaId) {
+      updateIdeaStatusIfExpired();
+    }
+    
     // تنفيذ الحساب كل ثانية
     const timer = setInterval(calculateTimeLeft, 1000);
     
     return () => clearInterval(timer);
-  }, [discussion_period, created_at, isExpired]);
+  }, [discussion_period, created_at, isExpired, ideaId]);
 
   if (!discussion_period) {
     return (
