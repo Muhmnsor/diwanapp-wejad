@@ -1,9 +1,8 @@
 
 import { getStatusClass, getStatusDisplay } from "../utils/statusUtils";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { calculateTimeRemaining } from "../utils/countdownUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface StatusBadgeProps {
   status: string;
@@ -14,148 +13,101 @@ interface StatusBadgeProps {
 
 export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: StatusBadgeProps) => {
   const [displayStatus, setDisplayStatus] = useState(status);
-  const [isUpdating, setIsUpdating] = useState(false);
-  
-  // تنفيذ تحديث الحالة بطريقة مباشرة وفورية
-  const updateIdeaStatus = useCallback(async (newStatus: string) => {
-    if (!ideaId || isUpdating) return;
-    
-    try {
-      setIsUpdating(true);
-      console.log("محاولة مباشرة لتحديث حالة الفكرة إلى:", newStatus);
-      
-      // تحديث قاعدة البيانات مباشرة
-      const { error } = await supabase
-        .from("ideas")
-        .update({ status: newStatus })
-        .eq("id", ideaId);
-        
-      if (error) {
-        console.error("خطأ مباشر في تحديث الفكرة:", error);
-        toast.error("فشل تحديث حالة الفكرة: " + error.message);
-      } else {
-        console.log("تم تحديث قاعدة البيانات بنجاح إلى:", newStatus);
-        toast.success("تم تحديث حالة الفكرة إلى: " + getStatusDisplay(newStatus));
-        
-        // تحديث الحالة المعروضة محلياً
-        setDisplayStatus(newStatus);
-        
-        // إعادة تحميل الصفحة بعد 2 ثانية
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("استثناء في تحديث حالة الفكرة:", err);
-      toast.error("حدث خطأ غير متوقع");
-    } finally {
-      setIsUpdating(false);
-    }
-  }, [ideaId, isUpdating]);
 
-  // التحقق من حالة الفكرة والتحديث إذا لزم الأمر
-  const checkIdeaStatus = useCallback(async () => {
-    if (!ideaId || !created_at || isUpdating) return;
-    
-    try {
-      console.log("التحقق من حالة الفكرة (معرّف الفكرة، الحالة):", ideaId, status);
-      
-      // التحقق من حالة الفكرة في قاعدة البيانات مباشرة للتأكد من الحالة الحالية
-      const { data: currentIdeaData, error: ideaError } = await supabase
-        .from("ideas")
-        .select("status")
-        .eq("id", ideaId)
-        .maybeSingle();
-        
-      if (ideaError) {
-        console.error("خطأ في جلب حالة الفكرة:", ideaError);
-        return;
-      }
-      
-      const currentDbStatus = currentIdeaData?.status || status;
-      console.log("الحالة الحالية في قاعدة البيانات:", currentDbStatus);
-      
-      // التحقق من وجود قرار للفكرة
-      const { data: decisionData, error: decisionError } = await supabase
-        .from("idea_decisions")
-        .select("status")
-        .eq("idea_id", ideaId)
-        .maybeSingle();
-      
-      if (decisionError && decisionError.code !== 'PGRST116') {
-        console.error("خطأ في جلب بيانات القرار:", decisionError);
-      }
-      
-      if (decisionData?.status) {
-        // إذا كان هناك قرار، تحديث الحالة لتتطابق مع القرار
-        console.log("وجد قرار:", decisionData.status);
-        
-        if (currentDbStatus !== decisionData.status) {
-          console.log("تحديث الحالة لتتوافق مع القرار:", decisionData.status);
-          await updateIdeaStatus(decisionData.status);
-        } else {
-          // عرض حالة القرار محلياً حتى لو كانت متطابقة
-          setDisplayStatus(decisionData.status);
-        }
-        return;
-      }
-      
-      // تحديد ما إذا كان وقت المناقشة قد انتهى
-      if (discussion_period) {
-        const timeLeft = calculateTimeRemaining(discussion_period, created_at);
-        console.log("الوقت المتبقي للمناقشة:", timeLeft);
-        
-        const isExpired = timeLeft.days === 0 && timeLeft.hours === 0 && 
-                          timeLeft.minutes === 0 && timeLeft.seconds === 0;
-                          
-        if (isExpired) {
-          console.log("وقت المناقشة منتهي، الحالة الحالية في قاعدة البيانات:", currentDbStatus);
-          
-          if (currentDbStatus !== "pending_decision") {
-            console.log("محاولة تحديث الحالة إلى 'بانتظار القرار'");
-            // تحديث الحالة في قاعدة البيانات مباشرة وفوراً
-            await updateIdeaStatus("pending_decision");
-          } else {
-            // حتى إذا كانت الحالة صحيحة في قاعدة البيانات، تأكد من عرضها محلياً
-            setDisplayStatus("pending_decision");
-          }
-        } else if (currentDbStatus === "draft") {
-          // إذا لم ينته وقت المناقشة والحالة هي "مسودة"، حدثها إلى "تحت المراجعة"
-          console.log("الحالة 'مسودة' في قاعدة البيانات، تحديثها إلى 'تحت المراجعة'");
-          await updateIdeaStatus("under_review");
-        } else {
-          // عرض الحالة الحالية من قاعدة البيانات
-          setDisplayStatus(currentDbStatus);
-        }
-      } else if (currentDbStatus === "draft") {
-        // إذا لم تكن هناك فترة مناقشة والحالة هي "مسودة"، حدثها إلى "تحت المراجعة"
-        console.log("لا توجد فترة مناقشة والحالة هي 'مسودة'، تحديثها إلى 'تحت المراجعة'");
-        await updateIdeaStatus("under_review");
-      } else {
-        // عرض الحالة الحالية من قاعدة البيانات
-        setDisplayStatus(currentDbStatus);
-      }
-    } catch (error) {
-      console.error("خطأ في التحقق من حالة الفكرة:", error);
-    }
-  }, [ideaId, status, created_at, discussion_period, updateIdeaStatus, isUpdating]);
-
-  // تنفيذ التحقق الأولي عند تحميل المكون
   useEffect(() => {
-    console.log("تنفيذ التحقق الأولي من حالة الفكرة");
-    checkIdeaStatus();
+    // فحص ما إذا كان الوقت قد انتهى وكان يجب تغيير الحالة
+    const checkTimeExpired = async () => {
+      // سجلات تصحيح مفصلة
+      console.log("StatusBadge - معلومات الحالة:");
+      console.log("الحالة الأصلية المستلمة:", status);
+      console.log("نوع الحالة:", typeof status);
+      console.log("قيمة العرض الأولية:", getStatusDisplay(status));
+      console.log("فترة المناقشة:", discussion_period);
+      console.log("تاريخ الإنشاء:", created_at);
+      
+      // تعيين الحالة المبدئية لتكون نفس الحالة المستلمة من الخارج
+      let newStatus = status;
+      
+      if (discussion_period && created_at && status === "under_review") {
+        const timeLeft = calculateTimeRemaining(discussion_period, created_at);
+        console.log("الوقت المتبقي:", timeLeft);
+        
+        // إذا كان الوقت قد انتهى والحالة لا تزال "قيد المناقشة"
+        if (
+          timeLeft.days === 0 && 
+          timeLeft.hours === 0 && 
+          timeLeft.minutes === 0 && 
+          timeLeft.seconds === 0
+        ) {
+          console.log("الوقت انتهى، التحقق من وجود قرار");
+          // التحقق من وجود قرار
+          if (ideaId) {
+            try {
+              const { data: decisionData, error } = await supabase
+                .from("idea_decisions")
+                .select("id")
+                .eq("idea_id", ideaId)
+                .maybeSingle();
+                
+              console.log("بيانات القرار:", decisionData);
+              console.log("خطأ الاستعلام:", error);
+                
+              if (!error && !decisionData) {
+                console.log("لا يوجد قرار، تغيير الحالة إلى بانتظار القرار");
+                // لم يتخذ قرار بعد، يجب أن تكون الحالة "بانتظار القرار"
+                newStatus = "pending_decision";
+                
+                // تحديث حالة الفكرة في قاعدة البيانات
+                const { error: updateError } = await supabase
+                  .from("ideas")
+                  .update({ status: "pending_decision" })
+                  .eq("id", ideaId);
+                  
+                if (updateError) {
+                  console.error("خطأ في تحديث حالة الفكرة:", updateError);
+                } else {
+                  console.log("تم تحديث حالة الفكرة بنجاح إلى بانتظار القرار");
+                }
+              } else if (decisionData) {
+                console.log("يوجد قرار بالفعل");
+              }
+            } catch (error) {
+              console.error("خطأ في فحص وجود قرار:", error);
+            }
+          }
+        }
+      } else {
+        // إذا كانت الحالة ليست "قيد المناقشة" أو لا توجد فترة مناقشة محددة
+        console.log("الحالة ليست قيد المناقشة أو لا توجد فترة مناقشة محددة:", status);
+        
+        // فحص إضافي لمعرفة القيمة الدقيقة للحالة
+        if (status === null) {
+          console.log("⚠️ الحالة هي null");
+          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة null
+        } else if (status === undefined) {
+          console.log("⚠️ الحالة هي undefined");
+          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة undefined
+        } else if (status === "") {
+          console.log("⚠️ الحالة هي سلسلة فارغة");
+          newStatus = "under_review"; // قيمة افتراضية إذا كانت الحالة سلسلة فارغة
+        } else if (status === "draft") {
+          console.log("⚠️ الحالة هي مسودة (draft)");
+          newStatus = "under_review"; // تحويل مسودة إلى قيد المناقشة
+        }
+      }
+      
+      // تحديث حالة العرض مرة واحدة فقط في نهاية الفحص
+      setDisplayStatus(newStatus);
+      console.log("الحالة النهائية بعد المعالجة:", newStatus);
+      console.log("نص العرض النهائي:", getStatusDisplay(newStatus));
+      console.log("صف التنسيق النهائي:", getStatusClass(newStatus));
+    };
     
-    // تنفيذ التحقق بشكل دوري
-    const intervalId = setInterval(() => {
-      console.log("تنفيذ التحقق الدوري من حالة الفكرة");
-      checkIdeaStatus();
-    }, 30000);
-    
-    return () => clearInterval(intervalId);
-  }, [checkIdeaStatus]);
+    checkTimeExpired();
+  }, [status, created_at, discussion_period, ideaId]);
 
   return (
-    <span data-idea-id={ideaId} data-original-status={status} data-display-status={displayStatus} className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(displayStatus)}`}>
+    <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(displayStatus)}`}>
       {getStatusDisplay(displayStatus)}
     </span>
   );

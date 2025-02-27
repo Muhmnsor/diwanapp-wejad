@@ -6,143 +6,171 @@ export interface CountdownTime {
   seconds: number;
 }
 
-export const calculateTimeRemaining = (discussionPeriod: string, createdAt: string): CountdownTime => {
-  console.log("=== معلومات الوقت المتبقي ===");
-  console.log("نوع فترة المناقشة:", typeof discussionPeriod);
-  console.log("فترة المناقشة الأصلية:", discussionPeriod);
-  
-  // تحويل فترة المناقشة إلى ساعات
-  let totalHours = 0;
-  
-  if (discussionPeriod.includes('day')) {
-    const days = parseInt(discussionPeriod);
-    totalHours = days * 24;
-    console.log("تم إضافة", days, "يوم للمجموع");
-  } else if (discussionPeriod.includes('hour')) {
-    totalHours = parseInt(discussionPeriod);
-    console.log("تم إضافة", totalHours, "ساعة للمجموع");
-  } else {
-    // تحليل الصيغة 'X days/hours'
-    console.log("تم اكتشاف صيغة days/hours");
-    const value = parseInt(discussionPeriod);
-    if (!isNaN(value)) {
-      totalHours = value;
-      console.log("تم إضافة", value, "ساعة للمجموع");
+export const calculateTimeRemaining = (
+  discussion_period: string | undefined,
+  created_at: string
+): CountdownTime => {
+  try {
+    // إذا لم تكن هناك فترة مناقشة
+    if (!discussion_period) {
+      console.log("لا توجد فترة مناقشة محددة");
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     }
+
+    console.log("=== معلومات الوقت المتبقي ===");
+    console.log("نوع فترة المناقشة:", typeof discussion_period);
+    console.log("فترة المناقشة الأصلية:", discussion_period);
+    
+    let totalHours = 0;
+    
+    // التحقق مما إذا كانت فترة المناقشة بتنسيق "X days Y hours"
+    if (discussion_period.includes('days') || discussion_period.includes('day') || 
+        discussion_period.includes('hours') || discussion_period.includes('hour')) {
+      console.log("تم اكتشاف صيغة days/hours");
+      
+      const parts = discussion_period.split(' ');
+      
+      // حساب إجمالي الساعات من الأيام والساعات
+      for (let i = 0; i < parts.length; i++) {
+        if ((parts[i] === 'days' || parts[i] === 'day') && i > 0) {
+          const days = parseInt(parts[i-1]);
+          if (!isNaN(days)) {
+            totalHours += days * 24;
+            console.log(`تم إضافة ${days} يوم (${days * 24} ساعة) للمجموع`);
+          }
+        }
+        if ((parts[i] === 'hours' || parts[i] === 'hour') && i > 0) {
+          const hours = parseInt(parts[i-1]);
+          if (!isNaN(hours)) {
+            totalHours += hours;
+            console.log(`تم إضافة ${hours} ساعة للمجموع`);
+          }
+        }
+      }
+    } 
+    // تحقق من تنسيق "HH:MM:SS"
+    else if (discussion_period.includes(':')) {
+      console.log("تم اكتشاف صيغة HH:MM:SS");
+      const timeParts = discussion_period.split(':');
+      if (timeParts.length >= 2) {
+        const hours = parseInt(timeParts[0]);
+        const minutes = parseInt(timeParts[1]);
+        
+        if (!isNaN(hours)) {
+          totalHours += hours;
+          console.log(`تم إضافة ${hours} ساعة للمجموع`);
+        }
+        
+        if (!isNaN(minutes)) {
+          totalHours += minutes / 60;
+          console.log(`تم إضافة ${minutes} دقيقة (${minutes/60} ساعة) للمجموع`);
+        }
+      }
+    }
+    // محاولة تفسير القيمة كرقم (عدد الساعات)
+    else {
+      console.log("محاولة تفسير القيمة كعدد ساعات");
+      const hours = parseFloat(discussion_period);
+      if (!isNaN(hours)) {
+        totalHours = hours;
+        console.log(`تم تفسير القيمة ${hours} كعدد ساعات`);
+      }
+    }
+
+    console.log("إجمالي الساعات المحسوبة:", totalHours);
+
+    if (totalHours <= 0) {
+      console.log("تحذير: إجمالي الساعات المحسوبة هو صفر أو أقل");
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+
+    const createdDate = new Date(created_at);
+    console.log("تاريخ الإنشاء:", createdDate.toLocaleString());
+    
+    const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
+    console.log("تاريخ انتهاء المناقشة:", discussionEndDate.toLocaleString());
+    
+    const now = new Date();
+    console.log("الوقت الحالي:", now.toLocaleString());
+    
+    const diffInMs = discussionEndDate.getTime() - now.getTime();
+    console.log("الفرق بالميلي ثانية:", diffInMs);
+    
+    // التحقق مما إذا كانت المناقشة قد انتهت بالفعل
+    if (diffInMs <= 0) {
+      console.log("حالة المناقشة: انتهت المناقشة");
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+
+    // حساب الفرق بين الوقت الحالي ووقت انتهاء المناقشة
+    const diffInSecs = Math.floor(diffInMs / 1000);
+    
+    const days = Math.floor(diffInSecs / (24 * 60 * 60));
+    const hours = Math.floor((diffInSecs % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((diffInSecs % (60 * 60)) / 60);
+    const seconds = Math.floor(diffInSecs % 60);
+
+    console.log("الوقت المتبقي:", {
+      أيام: days,
+      ساعات: hours,
+      دقائق: minutes,
+      ثواني: seconds
+    });
+
+    return { days, hours, minutes, seconds };
+  } catch (error) {
+    console.error('Error calculating time left:', error);
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
-  
-  console.log("إجمالي الساعات المحسوبة:", totalHours);
-  
-  // تحويل تاريخ الإنشاء إلى كائن Date
-  const createdDate = new Date(createdAt);
-  console.log("تاريخ الإنشاء:", createdDate.toLocaleString());
-  
-  // حساب تاريخ انتهاء المناقشة
-  const endDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
-  console.log("تاريخ انتهاء المناقشة:", endDate.toLocaleString());
-  
-  // الوقت الحالي
-  const now = new Date();
-  console.log("الوقت الحالي:", now.toLocaleString());
-  
-  // حساب الفرق بالميلي ثانية
-  const timeDiff = endDate.getTime() - now.getTime();
-  console.log("الفرق بالميلي ثانية:", timeDiff);
-  
-  // إذا انتهى الوقت، نرجع أصفار
-  if (timeDiff <= 0) {
-    console.log("حالة المناقشة: انتهت المناقشة");
-    return {
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0
-    };
-  }
-  
-  // حساب الوقت المتبقي
-  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-  
-  console.log("حالة المناقشة: المناقشة جارية");
-  console.log("الوقت المتبقي:", { days, hours, minutes, seconds });
-  
-  return { days, hours, minutes, seconds };
 };
 
-export const getCountdownDisplay = (discussionPeriod: string, createdAt: string, time: CountdownTime): string => {
-  if (!discussionPeriod || !createdAt) {
+export const formatCountdown = (countdown: CountdownTime): string => {
+  const displayParts = [];
+  if (countdown.days > 0) {
+    displayParts.push(`${countdown.days} يوم`);
+  }
+  if (countdown.hours > 0) {
+    displayParts.push(`${countdown.hours} ساعة`);
+  }
+  if (countdown.minutes > 0) {
+    displayParts.push(`${countdown.minutes} دقيقة`);
+  }
+  // تم إزالة الثواني من العرض
+
+  return displayParts.length > 0 ? displayParts.join(' و ') : "أقل من دقيقة";
+};
+
+export const getCountdownDisplay = (
+  discussion_period: string | undefined,
+  created_at: string,
+  countdown: CountdownTime
+): string => {
+  // إذا لم تكن هناك فترة مناقشة
+  if (!discussion_period) {
     return "غير محدد";
   }
-  
-  if (time.days === 0 && time.hours === 0 && time.minutes === 0 && time.seconds === 0) {
-    return "انتهت المناقشة";
+
+  // إذا كانت هناك أيام أو ساعات أو دقائق أو ثواني متبقية، نعرضها
+  if (countdown.days > 0 || countdown.hours > 0 || countdown.minutes > 0 || countdown.seconds > 0) {
+    return formatCountdown(countdown);
   }
-  
-  if (time.days > 0) {
-    return `${time.days} يوم ${time.hours} ساعة`;
-  }
-  
-  if (time.hours > 0) {
-    return `${time.hours} ساعة ${time.minutes} دقيقة`;
-  }
-  
-  if (time.minutes > 0) {
-    return `${time.minutes} دقيقة`;
-  }
-  
-  return `${time.seconds} ثانية`;
+
+  // إذا وصلنا إلى هنا، فالمناقشة انتهت
+  return "انتهت المناقشة";
 };
 
-// إضافة دالة formatCountdown المفقودة
-export const formatCountdown = (timeRemaining: CountdownTime): string => {
-  if (timeRemaining.days === 0 && 
-      timeRemaining.hours === 0 && 
-      timeRemaining.minutes === 0 && 
-      timeRemaining.seconds === 0) {
-    return "انتهت المناقشة";
-  }
+export const isDiscussionActive = (
+  discussion_period: string | undefined,
+  created_at: string
+): boolean => {
+  if (!discussion_period) return false;
   
-  const parts = [];
-  
-  if (timeRemaining.days > 0) {
-    parts.push(`${timeRemaining.days} يوم`);
-  }
-  
-  if (timeRemaining.hours > 0) {
-    parts.push(`${timeRemaining.hours} ساعة`);
-  }
-  
-  if (timeRemaining.minutes > 0 && parts.length < 2) {
-    parts.push(`${timeRemaining.minutes} دقيقة`);
-  }
-  
-  if (parts.length === 0) {
-    return "أقل من دقيقة";
-  }
-  
-  return parts.join(' و ');
-};
-
-// إضافة دالة isDiscussionActive المفقودة
-export const isDiscussionActive = (discussionPeriod?: string, createdAt?: string): boolean => {
-  if (!discussionPeriod || !createdAt) {
-    // إذا لم تكن هناك فترة مناقشة أو تاريخ إنشاء، نفترض أن المناقشة غير نشطة
+  try {
+    const timeRemaining = calculateTimeRemaining(discussion_period, created_at);
+    return timeRemaining.days > 0 || timeRemaining.hours > 0 || 
+           timeRemaining.minutes > 0 || timeRemaining.seconds > 0;
+  } catch (error) {
+    console.error('Error in isDiscussionActive:', error);
     return false;
   }
-  
-  // حساب الوقت المتبقي
-  const timeLeft = calculateTimeRemaining(discussionPeriod, createdAt);
-  
-  // التحقق ما إذا كان الوقت قد انتهى (كل القيم صفر)
-  const isExpired = 
-    timeLeft.days === 0 && 
-    timeLeft.hours === 0 && 
-    timeLeft.minutes === 0 && 
-    timeLeft.seconds === 0;
-  
-  // المناقشة نشطة إذا لم ينته الوقت
-  return !isExpired;
 };
