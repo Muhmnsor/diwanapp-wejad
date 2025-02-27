@@ -27,7 +27,7 @@ export const ExtendDiscussionDialog = ({
   const [remainingDays, setRemainingDays] = useState<number>(0);
   const [remainingHours, setRemainingHours] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-
+  
   // استرجاع معلومات الفكرة والوقت المتبقي عند فتح النافذة
   useEffect(() => {
     if (isOpen) {
@@ -72,9 +72,9 @@ export const ExtendDiscussionDialog = ({
               setRemainingDays(remaining_days);
               setRemainingHours(remaining_hours);
               
-              // ضبط القيم الافتراضية في حقول الإدخال لتكون نفس القيم المتبقية
-              setDays(remaining_days);
-              setHours(remaining_hours);
+              // ضبط القيم الافتراضية في حقول الإدخال لتكون صفر
+              setDays(0);
+              setHours(0);
             }
           }
         } catch (error) {
@@ -100,10 +100,14 @@ export const ExtendDiscussionDialog = ({
     setIsSubmitting(true);
 
     try {
-      // تنسيق فترة المناقشة الجديدة - التأكد من أن التنسيق يتطابق مع المتوقع
-      // تحقق من أن days و hours هي أرقام صحيحة وموجبة
-      const finalDays = Math.max(0, Math.floor(days));
-      const finalHours = Math.max(0, Math.floor(hours));
+      // حساب إجمالي الساعات الجديدة (الوقت المتبقي + الوقت المضاف)
+      const currentRemainingHours = (remainingDays * 24) + remainingHours;
+      const additionalHours = (days * 24) + hours;
+      const totalHours = currentRemainingHours + additionalHours;
+      
+      // تحويل إجمالي الساعات إلى أيام وساعات
+      const finalDays = Math.floor(totalHours / 24);
+      const finalHours = Math.floor(totalHours % 24);
       
       // صياغة فترة المناقشة بالشكل الصحيح
       const daysText = finalDays === 1 ? "day" : "days";
@@ -123,19 +127,28 @@ export const ExtendDiscussionDialog = ({
         newDiscussionPeriod = "0 days";
       }
 
-      console.log("Submitting new discussion period:", newDiscussionPeriod);
+      console.log("Current remaining hours:", currentRemainingHours);
+      console.log("Additional hours to add:", additionalHours);
+      console.log("Total new hours:", totalHours);
+      console.log("New discussion period:", newDiscussionPeriod);
 
-      // تحديث فترة المناقشة في قاعدة البيانات
+      // تحديث تاريخ الإنشاء ليكون الوقت الحالي
+      const now = new Date().toISOString();
+      
+      // تحديث فترة المناقشة وتاريخ الإنشاء في قاعدة البيانات
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: newDiscussionPeriod })
+        .update({ 
+          discussion_period: newDiscussionPeriod,
+          created_at: now // تحديث تاريخ الإنشاء ليكون الآن
+        })
         .eq("id", ideaId);
 
       if (updateError) {
         throw updateError;
       }
 
-      console.log("Discussion period updated successfully");
+      console.log("Discussion period extended successfully");
       toast.success("تم تمديد فترة المناقشة بنجاح");
       onSuccess();
       onClose();
@@ -164,6 +177,9 @@ export const ExtendDiscussionDialog = ({
                   الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
                   {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
                   {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
+                </p>
+                <p className="text-xs text-purple-600 mt-1">
+                  سيتم إضافة الوقت الجديد إلى الوقت المتبقي
                 </p>
               </div>
             )}
