@@ -26,7 +26,7 @@ export const StatusBadge = ({
     // وظيفة لجلب حالة الفكرة من قاعدة البيانات
     const fetchCurrentStatus = async () => {
       try {
-        console.log("جلب حالة الفكرة الحالية:", ideaId);
+        console.log("🔍 جلب حالة الفكرة الحالية:", ideaId);
         const { data, error } = await supabase
           .from('ideas')
           .select('status')
@@ -34,33 +34,37 @@ export const StatusBadge = ({
           .single();
           
         if (error) {
-          console.error("خطأ في جلب حالة الفكرة:", error);
+          console.error("⚠️ خطأ في جلب حالة الفكرة:", error);
           return;
         }
         
         if (data && data.status) {
-          console.log(`حالة الفكرة المستلمة من قاعدة البيانات: "${data.status}"`);
+          console.log(`📊 حالة الفكرة المستلمة من قاعدة البيانات: "${data.status}"`);
           
           // تحديث الحالة فقط إذا كانت مختلفة
           if (data.status !== status) {
-            console.log(`تحديث حالة الفكرة في واجهة المستخدم من "${status}" إلى "${data.status}"`);
+            console.log(`🔄 تحديث حالة الفكرة في واجهة المستخدم من "${status}" إلى "${data.status}"`);
             setStatus(data.status);
             
             // عرض إشعار إذا كانت الحالة "بانتظار القرار"
             if (data.status === "pending_decision") {
               toast.info("الفكرة الآن بانتظار القرار", { duration: 3000 });
             }
+          } else {
+            console.log(`ℹ️ الحالة الحالية مطابقة للحالة في قاعدة البيانات: "${status}"`);
           }
         }
       } catch (err) {
-        console.error("خطأ غير متوقع أثناء جلب حالة الفكرة:", err);
+        console.error("⚠️ خطأ غير متوقع أثناء جلب حالة الفكرة:", err);
       }
     };
 
     // جلب الحالة فوراً عند تحميل المكون
+    console.log("🏁 بدء تحميل مكون StatusBadge مع الحالة الأولية:", initialStatus);
     fetchCurrentStatus();
     
     // إعداد قناة الاستماع للتغييرات في الوقت الحقيقي
+    console.log("📡 إعداد قناة الاستماع للتغييرات في الوقت الحقيقي للفكرة:", ideaId);
     const channel = supabase
       .channel(`idea-status-${ideaId}`)
       .on(
@@ -74,7 +78,7 @@ export const StatusBadge = ({
         (payload) => {
           if (payload.new && payload.new.status) {
             const newStatus = payload.new.status;
-            console.log(`تم استلام تحديث حالة جديد من قاعدة البيانات: "${newStatus}"`);
+            console.log(`📢 تم استلام تحديث حالة جديد من قاعدة البيانات: "${newStatus}"`);
             
             // تحديث الحالة في واجهة المستخدم
             setStatus(newStatus);
@@ -91,18 +95,18 @@ export const StatusBadge = ({
         }
       )
       .subscribe((status) => {
-        console.log("حالة الاشتراك في التغييرات:", status);
+        console.log("📡 حالة الاشتراك في التغييرات:", status);
       });
       
     // تنظيف الاشتراك عند إلغاء تحميل المكون
     return () => {
-      console.log("إلغاء الاشتراك في قناة التغييرات");
+      console.log("🧹 إلغاء الاشتراك في قناة التغييرات");
       supabase.removeChannel(channel);
     };
   }, [ideaId, status]);
 
   // سجل معلومات العرض للتصحيح
-  console.log(`عرض الحالة: "${status}" (${typeof status})`);
+  console.log(`🏷️ عرض الحالة: "${status}" (${typeof status})`);
   
   return (
     <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(status)}`}>
