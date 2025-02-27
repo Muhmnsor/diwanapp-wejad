@@ -21,6 +21,9 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
       console.log("فترة المناقشة:", discussion_period);
       console.log("تاريخ الإنشاء:", created_at);
       
+      // تعيين الحالة المبدئية لتكون نفس الحالة المستلمة من الخارج
+      let newStatus = status;
+      
       if (discussion_period && created_at && status === "under_review") {
         const timeLeft = calculateTimeRemaining(discussion_period, created_at);
         console.log("الوقت المتبقي:", timeLeft);
@@ -48,7 +51,7 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
               if (!error && !decisionData) {
                 console.log("لا يوجد قرار، تغيير الحالة إلى بانتظار القرار");
                 // لم يتخذ قرار بعد، يجب أن تكون الحالة "بانتظار القرار"
-                setDisplayStatus("pending_decision");
+                newStatus = "pending_decision";
                 
                 // تحديث حالة الفكرة في قاعدة البيانات
                 const { error: updateError } = await supabase
@@ -70,16 +73,15 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
           }
         }
       } else {
-        // إذا كانت الحالة ليست "قيد المناقشة" نعرض الحالة الأصلية
+        // إذا كانت الحالة ليست "قيد المناقشة" أو لا توجد فترة مناقشة محددة
         console.log("الحالة ليست قيد المناقشة أو لا توجد فترة مناقشة محددة");
-        setDisplayStatus(status);
       }
+      
+      // تحديث حالة العرض مرة واحدة فقط في نهاية الفحص
+      setDisplayStatus(newStatus);
     };
     
     checkTimeExpired();
-    
-    // إضافة مستمع للتغييرات في status
-    setDisplayStatus(status);
   }, [status, created_at, discussion_period, ideaId]);
 
   // إضافة سجلات للتصحيح
