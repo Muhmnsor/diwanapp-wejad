@@ -35,8 +35,19 @@ export const IdeasTable = ({
         return "انتهت المناقشة";
       }
       
-      // استخدم دالة تنسيق العرض نفسها المستخدمة في تفاصيل الفكرة
-      return formatCountdown(timeRemaining);
+      // تنسيق الوقت المتبقي بدون عرض الثواني
+      const displayParts = [];
+      if (timeRemaining.days > 0) {
+        displayParts.push(`${timeRemaining.days} يوم`);
+      }
+      if (timeRemaining.hours > 0) {
+        displayParts.push(`${timeRemaining.hours} ساعة`);
+      }
+      if (timeRemaining.minutes > 0) {
+        displayParts.push(`${timeRemaining.minutes} دقيقة`);
+      }
+      
+      return displayParts.length > 0 ? displayParts.join(' و ') : "أقل من دقيقة";
     } catch (error) {
       console.error('Error calculating remaining time:', error);
       return "خطأ في حساب الوقت المتبقي";

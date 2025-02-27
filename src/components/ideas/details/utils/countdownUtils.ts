@@ -135,9 +135,7 @@ export const formatCountdown = (countdown: CountdownTime): string => {
   if (countdown.minutes > 0) {
     displayParts.push(`${countdown.minutes} دقيقة`);
   }
-  if (countdown.seconds > 0) {
-    displayParts.push(`${countdown.seconds} ثانية`);
-  }
+  // تم إزالة الثواني من العرض
 
   return displayParts.length > 0 ? displayParts.join(' و ') : "أقل من دقيقة";
 };
