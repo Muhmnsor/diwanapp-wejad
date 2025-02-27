@@ -12,6 +12,7 @@ import { FilterX, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { IdeasTableProps } from "./types";
 import { calculateTimeRemaining, formatCountdown } from "./details/utils/countdownUtils";
+import { getStatusClass, getStatusDisplay } from "./details/utils/statusUtils";
 
 export const IdeasTable = ({ 
   ideas,
@@ -51,36 +52,6 @@ export const IdeasTable = ({
     } catch (error) {
       console.error('Error calculating remaining time:', error);
       return "خطأ في حساب الوقت المتبقي";
-    }
-  };
-
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'مسودة';
-      case 'under_review':
-        return 'قيد المراجعة';
-      case 'approved':
-        return 'تمت الموافقة';
-      case 'rejected':
-        return 'مرفوضة';
-      default:
-        return 'مؤرشفة';
-    }
-  };
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'bg-gray-100 text-gray-800';
-      case 'under_review':
-        return 'bg-blue-100 text-blue-800';
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
     }
   };
 
