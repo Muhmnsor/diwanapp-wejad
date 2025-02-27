@@ -30,8 +30,13 @@ const formatCommentDate = (dateStr: string): string => {
     const minutes = commentDate.getMinutes().toString().padStart(2, '0');
     return formatTime12Hour(`${hours}:${minutes}`);
   } else {
-    // إذا كان التعليق من يوم آخر، نعرض التاريخ
-    return commentDate.toLocaleDateString('ar-SA');
+    // إذا كان التعليق من يوم آخر، نعرض التاريخ بالتقويم الميلادي
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit'
+    };
+    return commentDate.toLocaleDateString('ar', options);
   }
 };
 
