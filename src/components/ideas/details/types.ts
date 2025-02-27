@@ -14,6 +14,19 @@ export interface Comment {
   parent_id: string | null;
 }
 
+export interface Decision {
+  id: string;
+  idea_id: string;
+  status: string;
+  reason: string;
+  assignee?: string;
+  timeline?: string;
+  budget?: string;
+  created_at: string;
+  created_by: string;
+  created_by_name?: string;
+}
+
 export interface Idea {
   id: string;
   title: string;

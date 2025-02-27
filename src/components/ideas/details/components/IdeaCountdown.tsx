@@ -1,13 +1,16 @@
 
 import { useEffect, useState } from "react";
 import { calculateTimeRemaining, getCountdownDisplay, CountdownTime } from "../utils/countdownUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface IdeaCountdownProps {
   discussion_period?: string;
   created_at: string;
+  ideaId?: string;
 }
 
-export const IdeaCountdown = ({ discussion_period, created_at }: IdeaCountdownProps) => {
+export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCountdownProps) => {
   const [countdown, setCountdown] = useState<CountdownTime>({
     days: 0,
     hours: 0,
@@ -17,7 +20,7 @@ export const IdeaCountdown = ({ discussion_period, created_at }: IdeaCountdownPr
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
+    const calculateTimeLeft = async () => {
       const timeLeft = calculateTimeRemaining(discussion_period, created_at);
       setCountdown(timeLeft);
       
@@ -28,14 +31,44 @@ export const IdeaCountdown = ({ discussion_period, created_at }: IdeaCountdownPr
         timeLeft.minutes === 0 && 
         timeLeft.seconds === 0;
       
-      setIsExpired(expired);
+      // إذا انتهى الوقت للتو، قم بتحديث حالة الفكرة
+      if (expired && !isExpired && ideaId) {
+        setIsExpired(true);
+        
+        try {
+          // التحقق من الحالة الحالية للفكرة
+          const { data, error } = await supabase
+            .from("ideas")
+            .select("status")
+            .eq("id", ideaId)
+            .single();
+            
+          if (error) throw error;
+          
+          // تحديث الحالة فقط إذا كانت الفكرة في مرحلة المراجعة
+          if (data && data.status === "under_review") {
+            const { error: updateError } = await supabase
+              .from("ideas")
+              .update({ status: "pending_decision" })
+              .eq("id", ideaId);
+              
+            if (updateError) throw updateError;
+            
+            toast.info("انتهت فترة المناقشة. الفكرة الآن بانتظار القرار.", { duration: 5000 });
+          }
+        } catch (err) {
+          console.error("Error updating idea status:", err);
+        }
+      } else {
+        setIsExpired(expired);
+      }
     };
 
     const timer = setInterval(calculateTimeLeft, 1000);
     calculateTimeLeft(); // تنفيذ فوري للعملية الحسابية
 
     return () => clearInterval(timer);
-  }, [discussion_period, created_at]);
+  }, [discussion_period, created_at, ideaId, isExpired]);
 
   if (!discussion_period) {
     return (
