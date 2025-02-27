@@ -173,7 +173,7 @@ export const IdeaContent = ({
           onOpenChange={setIsDetailsOpen} 
         />
         <div className="space-y-4 my-0">
-          <VoteSection votes={votes} onVote={onVote} />
+          {/* قسم المناقشات */}
           <CommentList 
             comments={comments} 
             onAddComment={onAddComment} 
@@ -183,7 +183,10 @@ export const IdeaContent = ({
             ideaDiscussionPeriod={idea.discussion_period}
           />
           
-          {/* نقل قسم القرار إلى هنا (بعد التعليقات) */}
+          {/* تم نقل قسم التصويت ليكون بعد المناقشات وقبل القرار */}
+          <VoteSection votes={votes} onVote={onVote} />
+          
+          {/* قسم القرار */}
           {!isLoadingDecision && (
             <DecisionSection 
               ideaId={idea.id}
