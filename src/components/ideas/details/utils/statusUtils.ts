@@ -13,7 +13,7 @@ export const getStatusDisplay = (status: string): string => {
 
   switch (normalizedStatus) {
     case 'draft':
-      return 'مسودة';
+      return 'قيد المناقشة'; // تحويل مسودة إلى قيد المناقشة
     case 'under_review':
       return 'قيد المناقشة';
     case 'pending_decision':
@@ -43,7 +43,7 @@ export const getStatusClass = (status: string): string => {
 
   switch (normalizedStatus) {
     case 'draft':
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-blue-100 text-blue-800'; // نفس لون قيد المناقشة
     case 'under_review':
       return 'bg-blue-100 text-blue-800';
     case 'pending_decision':
