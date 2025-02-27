@@ -1,4 +1,25 @@
 
+// دالة للحصول على اسم عرض الحالة بالعربية
+export const getStatusDisplay = (status: string): string => {
+  switch (status) {
+    case 'draft':
+      return 'مسودة';
+    case 'under_review':
+      return 'قيد المراجعة';
+    case 'pending_decision':
+      return 'بانتظار القرار';
+    case 'approved':
+      return 'تمت الموافقة';
+    case 'rejected':
+      return 'مرفوض';
+    case 'needs_modification':
+      return 'يحتاج تعديل';
+    default:
+      return 'غير معروف';
+  }
+};
+
+// دالة للحصول على اسم الصف CSS للحالة
 export const getStatusClass = (status: string): string => {
   switch (status) {
     case 'draft':
@@ -15,24 +36,5 @@ export const getStatusClass = (status: string): string => {
       return 'bg-orange-100 text-orange-800';
     default:
       return 'bg-gray-100 text-gray-800';
-  }
-};
-
-export const getStatusDisplay = (status: string): string => {
-  switch (status) {
-    case 'draft':
-      return 'مسودة';
-    case 'under_review':
-      return 'قيد المراجعة';
-    case 'pending_decision':
-      return 'بانتظار القرار';
-    case 'approved':
-      return 'تمت الموافقة';
-    case 'rejected':
-      return 'مرفوضة';
-    case 'needs_modification':
-      return 'تحتاج تعديل';
-    default:
-      return 'مؤرشفة';
   }
 };

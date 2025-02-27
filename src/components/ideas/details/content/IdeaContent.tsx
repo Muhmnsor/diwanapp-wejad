@@ -83,6 +83,7 @@ export const IdeaContent = ({
         if (error) throw error;
         
         setDecision(data);
+        console.log("Decision data:", data); // إضافة سجل للتحقق من بيانات القرار
       } catch (error) {
         console.error("Error fetching decision:", error);
         toast.error("حدث خطأ أثناء جلب بيانات القرار");
@@ -132,6 +133,11 @@ export const IdeaContent = ({
     }
   };
 
+  // إضافة سجل للتحقق من البيانات
+  console.log("Idea status:", idea.status);
+  console.log("Is admin:", isAdmin);
+  console.log("Is loading decision:", isLoadingDecision);
+
   return (
     <div className="max-w-4xl mx-auto">
       <IdeaMetadata 
@@ -144,11 +150,8 @@ export const IdeaContent = ({
       />
       <Separator className="my-2" />
       <div className="space-y-4">
-        {/* عرض قسم القرار فقط إذا كانت الفكرة في مرحلة القرار أو ما بعدها */}
-        {(idea.status === 'pending_decision' || 
-         idea.status === 'approved' || 
-         idea.status === 'rejected' || 
-         idea.status === 'needs_modification') && !isLoadingDecision && (
+        {/* عرض قسم القرار دائماً (للاختبار) */}
+        {!isLoadingDecision && (
           <DecisionSection 
             ideaId={idea.id}
             status={idea.status}
