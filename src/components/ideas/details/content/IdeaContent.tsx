@@ -1,5 +1,4 @@
 
-import { Separator } from "@/components/ui/separator";
 import { IdeaMetadata } from "@/components/ideas/details/IdeaMetadata";
 import { IdeaDetails } from "@/components/ideas/details/IdeaDetails";
 import { VoteSection } from "@/components/ideas/voting/VoteSection";
@@ -165,7 +164,6 @@ export const IdeaContent = ({
         title={idea.title} 
         discussion_period={idea.discussion_period} 
       />
-      <Separator className="my-2" />
       <div className="space-y-4">
         <IdeaDetails 
           idea={idea} 
