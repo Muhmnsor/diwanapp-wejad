@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,16 +52,13 @@ export const DecisionSection = ({
   const [budget, setBudget] = useState<string>(decision?.budget || "");
   const [localDecision, setLocalDecision] = useState(decision);
   
-  // إضافة حالات لحوار تأكيد الحذف
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // إضافة قائمة المكلفين
   const [assignees, setAssignees] = useState<AssigneeItem[]>([]);
   const [newAssigneeName, setNewAssigneeName] = useState("");
   const [newAssigneeResponsibility, setNewAssigneeResponsibility] = useState("");
   
-  // إضافة سجلات تشخيص محسنة
   console.log("DecisionSection - لقطة الحالة الكاملة:", { 
     ideaId, 
     status, 
@@ -73,15 +69,12 @@ export const DecisionSection = ({
     localDecision
   });
   
-  // تحديد إذا كان هناك قرار تم اتخاذه بالفعل
   const hasDecision = Boolean(localDecision?.id);
   
-  // تحديث المتغير المحلي عندما تتغير البيانات الخارجية
   useEffect(() => {
     setLocalDecision(decision);
   }, [decision]);
   
-  // تحميل بيانات القرار مباشرة من قاعدة البيانات إذا لم تكن متوفرة
   useEffect(() => {
     const fetchLatestDecision = async () => {
       if (!hasDecision && ideaId) {
@@ -96,7 +89,7 @@ export const DecisionSection = ({
             .maybeSingle();
             
           if (error) {
-            if (error.code !== 'PGRST116') { // Not found error code
+            if (error.code !== 'PGRST116') {
               console.error("Error fetching decision:", error);
             } else {
               console.log("No decision found for idea:", ideaId);
@@ -106,7 +99,6 @@ export const DecisionSection = ({
           
           console.log("Directly fetched decision:", data);
           
-          // تحديث القيم
           if (data) {
             setNewStatus(data.status);
             setReason(data.reason);
@@ -114,7 +106,6 @@ export const DecisionSection = ({
             setBudget(data.budget || "");
             setLocalDecision(data);
             
-            // تحديث المكلفين إذا كانوا متوفرين
             if (data.assignee) {
               try {
                 const parsedAssignees = JSON.parse(data.assignee);
@@ -157,7 +148,6 @@ export const DecisionSection = ({
     setAssignees(assignees.filter(item => item.id !== id));
   };
   
-  // وظيفة حذف القرار
   const handleDeleteDecision = async () => {
     if (!localDecision?.id) {
       toast.error("لا يوجد قرار للحذف");
@@ -169,7 +159,6 @@ export const DecisionSection = ({
     try {
       console.log("Deleting decision:", localDecision.id);
       
-      // حذف القرار من قاعدة البيانات
       const { error } = await supabase
         .from("idea_decisions")
         .delete()
@@ -180,7 +169,6 @@ export const DecisionSection = ({
         throw error;
       }
       
-      // إعادة حالة الفكرة إلى قيد المراجعة
       const { error: ideaError } = await supabase
         .from("ideas")
         .update({ status: "under_review" })
@@ -191,7 +179,6 @@ export const DecisionSection = ({
         throw ideaError;
       }
       
-      // تحديث الحالة المحلية
       setLocalDecision(undefined);
       setAssignees([]);
       setReason("");
@@ -201,7 +188,6 @@ export const DecisionSection = ({
       
       toast.success("تم حذف القرار بنجاح");
       
-      // تحديث واجهة المستخدم
       if (onStatusChange) {
         onStatusChange();
       }
@@ -225,14 +211,11 @@ export const DecisionSection = ({
     console.log("Submitting decision...");
     
     try {
-      // إعداد بيانات المكلفين كسلسلة نصية JSON
       const assigneesData = assignees.length > 0 ? JSON.stringify(assignees) : null;
       console.log("Assignees data:", assigneesData);
       
-      // الحصول على معرف المستخدم الحالي
       const { data: { user } } = await supabase.auth.getUser();
       
-      // إنشاء قرار جديد دائمًا لتجنب مشاكل التحديث
       const newDecisionData = {
         idea_id: ideaId,
         status: newStatus,
@@ -245,8 +228,6 @@ export const DecisionSection = ({
       
       console.log("Decision data to save:", newDecisionData);
       
-      // إضافة قرار جديد دائماً بدلاً من تحديث القرار القديم
-      console.log("Creating new decision");
       const { data: newDecision, error: insertError } = await supabase
         .from("idea_decisions")
         .insert([newDecisionData])
@@ -260,7 +241,6 @@ export const DecisionSection = ({
       
       console.log("New decision created successfully:", newDecision);
       
-      // تحديث حالة الفكرة إذا لزم الأمر
       if (status !== newStatus) {
         console.log("Updating idea status from", status, "to", newStatus);
         const { error: ideaError } = await supabase
@@ -276,19 +256,15 @@ export const DecisionSection = ({
         console.log("Idea status updated successfully to:", newStatus);
       }
       
-      // تحديث البيانات المحلية على الفور
       if (newDecision) {
         setLocalDecision(newDecision);
       }
       
       toast.success("تم حفظ القرار بنجاح");
       
-      // انتهاء وضع التحرير
       setIsEditing(false);
       
-      // تحديث الواجهة بعد حفظ القرار
       if (onStatusChange) {
-        console.log("Calling onStatusChange callback");
         onStatusChange();
       }
       
@@ -300,24 +276,20 @@ export const DecisionSection = ({
     }
   };
 
-  // عند تحميل البيانات، تحقق مما إذا كان هناك مكلفين في صيغة JSON
   useEffect(() => {
     if (localDecision?.assignee) {
       try {
-        // محاولة تحليل البيانات كـ JSON
         const parsedAssignees = JSON.parse(localDecision.assignee);
         if (Array.isArray(parsedAssignees)) {
           setAssignees(parsedAssignees);
           console.log("تم تحميل قائمة المكلفين بنجاح:", parsedAssignees);
         }
       } catch (e) {
-        // إذا لم تكن صيغة JSON صحيحة، قد تكون بيانات قديمة
         console.log("Cannot parse assignee data, might be old format:", localDecision.assignee);
       }
     }
   }, [localDecision]);
 
-  // تحديث القيم عندما تتغير بيانات القرار
   useEffect(() => {
     if (localDecision) {
       setNewStatus(localDecision.status || "pending_decision");
@@ -327,7 +299,6 @@ export const DecisionSection = ({
     }
   }, [localDecision]);
 
-  // عرض نموذج القرار فقط إذا لم يكن هناك قرار أو كان المستخدم مشرفاً ويقوم بالتحرير
   const showDecisionForm = !hasDecision || (isAdmin && isEditing);
 
   console.log("DecisionSection - قرار العرض:", {
@@ -338,7 +309,6 @@ export const DecisionSection = ({
     decisionStatus: localDecision?.status || "غير محدد"
   });
 
-  // تحديد ما إذا كان يجب عرض المحتوى بناءً على وجود بيانات
   const hasContent = hasDecision || reason;
 
   return (
@@ -361,10 +331,10 @@ export const DecisionSection = ({
                 تعديل القرار
               </Button>
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 size="sm" 
                 onClick={() => setShowDeleteDialog(true)}
-                className="text-xs flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-xs flex items-center gap-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
               >
                 <Trash size={14} />
                 حذف القرار
@@ -381,7 +351,6 @@ export const DecisionSection = ({
       </CardHeader>
       <CardContent>
         {showDecisionForm ? (
-          // عرض نموذج اتخاذ القرار
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="decision-status">حالة القرار</Label>
@@ -417,7 +386,6 @@ export const DecisionSection = ({
                   <div className="space-y-2">
                     <Label>المكلفون بالتنفيذ</Label>
                     
-                    {/* جدول المكلفين */}
                     {assignees.length > 0 && (
                       <div className="border rounded-md overflow-hidden mb-2">
                         <table className="w-full text-sm">
@@ -450,7 +418,6 @@ export const DecisionSection = ({
                       </div>
                     )}
                     
-                    {/* نموذج إضافة مكلف جديد */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
                       <div className="sm:col-span-5">
                         <Input 
@@ -522,7 +489,6 @@ export const DecisionSection = ({
             </div>
           </div>
         ) : hasContent ? (
-          // عرض تفاصيل القرار الحالي
           <div className="space-y-4">
             <div className="rounded-md p-3 border bg-muted/10">
               <div className="flex items-center mb-3">
@@ -588,20 +554,17 @@ export const DecisionSection = ({
             </div>
           </div>
         ) : isAdmin ? (
-          // عرض رسالة للمشرفين إذا لم يكن هناك قرار بعد
           <div className="text-center py-4">
             <p className="text-muted-foreground mb-3">لم يتم اتخاذ قرار بشأن هذه الفكرة بعد.</p>
             <Button onClick={() => setIsEditing(true)}>إضافة قرار جديد</Button>
           </div>
         ) : (
-          // عرض رسالة للمستخدمين العاديين
           <div className="text-center py-4">
             <p className="text-muted-foreground">لم يتم اتخاذ قرار بشأن هذه الفكرة بعد.</p>
           </div>
         )}
       </CardContent>
 
-      {/* حوار تأكيد الحذف */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
