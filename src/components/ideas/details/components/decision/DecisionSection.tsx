@@ -206,7 +206,7 @@ export const DecisionSection = ({
       console.log("New decision created successfully:", newDecision);
       
       if (status !== newStatus) {
-        console.log("Updating idea status from", this.status, "to", status);
+        console.log("Updating idea status from", status, "to", status);  // تم تغيير this.status إلى status
         const { error: ideaError } = await supabase
           .from("ideas")
           .update({ status })
