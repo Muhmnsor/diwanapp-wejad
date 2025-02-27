@@ -103,7 +103,7 @@ export const getCountdownDisplay = (
     }
   }
 
-  // التحقق من صلاحية الفترة
+  // التحقق من صلاحية الفترة - مهم: فترة صفر ساعات تعتبر غير صالحة
   if (totalHours <= 0) {
     return "فترة مناقشة غير صالحة";
   }
@@ -117,17 +117,13 @@ export const getCountdownDisplay = (
     return "انتهت المناقشة";
   }
 
-  // إذا لم يكن هناك أي وقت متبقي في العداد لكن المناقشة لم تنته بعد
-  if (countdown.days === 0 && countdown.hours === 0 && 
-      countdown.minutes === 0 && countdown.seconds === 0) {
-    const timeLeft = discussionEndDate.getTime() - now.getTime();
-    if (timeLeft > 0) {
-      return "أقل من دقيقة";
-    }
-    return "انتهت المناقشة";
+  // إذا كان هناك وقت متبقي حتى لو كان أقل من يوم، نعرضه
+  if (countdown.hours > 0 || countdown.minutes > 0 || countdown.seconds > 0 || countdown.days > 0) {
+    return formatCountdown(countdown);
   }
 
-  return formatCountdown(countdown);
+  // إذا وصلنا إلى هنا، فهناك وقت متبقي أقل من دقيقة
+  return "أقل من دقيقة";
 };
 
 export const isDiscussionActive = (
