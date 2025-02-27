@@ -451,16 +451,14 @@ export const DecisionSection = ({
           // عرض تفاصيل القرار الحالي
           <div className="space-y-4">
             <div className="rounded-md p-3 border bg-muted/10">
-              <div className="mb-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold">حالة القرار:</span>
-                  <span className={`px-2 py-0.5 rounded-full text-sm ${getStatusClass(localDecision?.status || newStatus)}`}>
-                    {getStatusDisplay(localDecision?.status || newStatus)}
-                  </span>
-                </div>
-                <div className="text-gray-600 text-sm">
+              <div className="flex items-center mb-3">
+                <span className="font-semibold ml-2">حالة القرار:</span>
+                <span className={`px-2 py-0.5 rounded-full text-sm ${getStatusClass(localDecision?.status || newStatus)}`}>
+                  {getStatusDisplay(localDecision?.status || newStatus)}
+                </span>
+                <span className="mr-3 text-gray-600 text-sm">
                   تم اتخاذ القرار في {localDecision?.created_at ? formatDate(localDecision.created_at) : 'تاريخ غير معروف'}
-                </div>
+                </span>
               </div>
               
               <Separator className="my-3" />
