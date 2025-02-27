@@ -124,7 +124,7 @@ export const DecisionSection = ({
         idea_id: ideaId,
         status: newStatus,
         reason,
-        assignee: assigneesData, // استخدام المكلفين الجدد فقط
+        assignee: assigneesData,
         timeline: timeline || null,
         budget: budget || null,
         created_by: user?.id || null
@@ -132,17 +132,33 @@ export const DecisionSection = ({
       
       console.log("Decision data to save:", decisionData);
       
-      let dbError;
-      
       if (hasDecision && decision?.id) {
-        // تحديث القرار الحالي
-        console.log("Updating existing decision with ID:", decision.id);
-        const { error } = await supabase
+        // استراتيجية بديلة: حذف القرار القديم وإنشاء قرار جديد
+        console.log("Using alternative strategy: Deleting old decision and creating new one");
+        
+        // حذف القرار القديم
+        const { error: deleteError } = await supabase
           .from("idea_decisions")
-          .update(decisionData)
+          .delete()
           .eq("id", decision.id);
           
-        dbError = error;
+        if (deleteError) {
+          console.error("Error deleting old decision:", deleteError);
+          throw deleteError;
+        }
+        
+        // إنشاء قرار جديد
+        const { data, error: insertError } = await supabase
+          .from("idea_decisions")
+          .insert([decisionData])
+          .select();
+          
+        if (insertError) {
+          console.error("Error creating new decision:", insertError);
+          throw insertError;
+        }
+        
+        console.log("New decision created successfully:", data);
       } else {
         // إضافة قرار جديد
         console.log("Creating new decision");
@@ -152,12 +168,11 @@ export const DecisionSection = ({
           .select();
           
         console.log("Insert result:", { data, error });
-        dbError = error;
-      }
-      
-      if (dbError) {
-        console.error("Database error:", dbError);
-        throw dbError;
+        
+        if (error) {
+          console.error("Error creating decision:", error);
+          throw error;
+        }
       }
       
       console.log("Decision saved successfully");
