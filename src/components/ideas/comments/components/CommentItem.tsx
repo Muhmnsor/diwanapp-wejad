@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User, CornerDownLeft } from "lucide-react";
 import { CommentAttachment } from "./CommentAttachment";
+import { formatTime12Hour } from "@/utils/dateTimeUtils";
+import { parseDate } from "@/utils/dateUtils";
 
 interface CommentItemProps {
   comment: Comment;
@@ -11,6 +13,27 @@ interface CommentItemProps {
   onReply: () => void;
   isReplyBeingAdded: boolean;
 }
+
+const formatCommentDate = (dateStr: string): string => {
+  const commentDate = parseDate(dateStr);
+  if (!commentDate) return '';
+  
+  const now = new Date();
+  const isToday = 
+    commentDate.getDate() === now.getDate() &&
+    commentDate.getMonth() === now.getMonth() &&
+    commentDate.getFullYear() === now.getFullYear();
+  
+  if (isToday) {
+    // إذا كان التعليق من اليوم نفسه، نعرض الوقت فقط
+    const hours = commentDate.getHours().toString().padStart(2, '0');
+    const minutes = commentDate.getMinutes().toString().padStart(2, '0');
+    return formatTime12Hour(`${hours}:${minutes}`);
+  } else {
+    // إذا كان التعليق من يوم آخر، نعرض التاريخ
+    return commentDate.toLocaleDateString('ar-SA');
+  }
+};
 
 export const CommentItem = ({
   comment,
@@ -30,7 +53,7 @@ export const CommentItem = ({
           <div className="flex items-center gap-1 mb-0.5 justify-start">
             <span className="font-medium">{comment.user_email || 'مستخدم'}</span>
             <span className="text-xs text-muted-foreground">
-              {new Date(comment.created_at).toLocaleDateString('ar-SA')}
+              {formatCommentDate(comment.created_at)}
             </span>
           </div>
           <p className="text-foreground mb-1 leading-normal text-sm text-right">{comment.content}</p>
