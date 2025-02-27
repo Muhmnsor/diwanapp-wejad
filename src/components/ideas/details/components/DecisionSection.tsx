@@ -169,69 +169,33 @@ export const DecisionSection = ({
       // الحصول على معرف المستخدم الحالي
       const { data: { user } } = await supabase.auth.getUser();
       
-      // إعداد بيانات القرار
-      let decisionData: any;
+      // إنشاء قرار جديد دائمًا لتجنب مشاكل التحديث
+      const newDecisionData = {
+        idea_id: ideaId,
+        status: newStatus,
+        reason,
+        assignee: assigneesData,
+        timeline: timeline || null,
+        budget: budget || null,
+        created_by: user?.id || null
+      };
       
-      if (localDecision?.id) {
-        // IMPORTANT: لا نقوم بإرسال updated_at مع التحديث للتوافق مع الـ trigger في قاعدة البيانات
-        decisionData = {
-          idea_id: ideaId,
-          status: newStatus,
-          reason,
-          assignee: assigneesData,
-          timeline: timeline || null,
-          budget: budget || null
-        };
-      } else {
-        decisionData = {
-          idea_id: ideaId,
-          status: newStatus,
-          reason,
-          assignee: assigneesData,
-          timeline: timeline || null,
-          budget: budget || null,
-          created_by: user?.id || null
-        };
+      console.log("Decision data to save:", newDecisionData);
+      
+      // إضافة قرار جديد دائماً بدلاً من تحديث القرار القديم
+      console.log("Creating new decision");
+      const { data: newDecision, error: insertError } = await supabase
+        .from("idea_decisions")
+        .insert([newDecisionData])
+        .select("*")
+        .single();
+        
+      if (insertError) {
+        console.error("Error creating decision:", insertError);
+        throw insertError;
       }
       
-      console.log("Decision data to save:", decisionData);
-      
-      let savedDecision;
-      
-      if (localDecision?.id) {
-        // تحديث القرار الحالي
-        console.log("Updating existing decision with ID:", localDecision.id);
-        const { data, error } = await supabase
-          .from("idea_decisions")
-          .update(decisionData)
-          .eq("id", localDecision.id)
-          .select("*")
-          .single();
-          
-        if (error) {
-          console.error("Error updating decision:", error);
-          throw error;
-        }
-        
-        savedDecision = data;
-        console.log("Decision updated successfully:", savedDecision);
-      } else {
-        // إضافة قرار جديد
-        console.log("Creating new decision");
-        const { data, error } = await supabase
-          .from("idea_decisions")
-          .insert([decisionData])
-          .select("*")
-          .single();
-          
-        if (error) {
-          console.error("Error creating decision:", error);
-          throw error;
-        }
-        
-        savedDecision = data;
-        console.log("Decision created successfully:", savedDecision);
-      }
+      console.log("New decision created successfully:", newDecision);
       
       // تحديث حالة الفكرة إذا لزم الأمر
       if (status !== newStatus) {
@@ -245,11 +209,13 @@ export const DecisionSection = ({
           console.error("Error updating idea status:", ideaError);
           throw ideaError;
         }
+        
+        console.log("Idea status updated successfully to:", newStatus);
       }
       
       // تحديث البيانات المحلية على الفور
-      if (savedDecision) {
-        setLocalDecision(savedDecision);
+      if (newDecision) {
+        setLocalDecision(newDecision);
       }
       
       toast.success("تم حفظ القرار بنجاح");
