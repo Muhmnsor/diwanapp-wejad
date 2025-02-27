@@ -6,15 +6,11 @@ import { toast } from "sonner";
 
 interface StatusBadgeProps {
   status: string;
-  created_at?: string;
-  discussion_period?: string;
   ideaId?: string;
 }
 
 export const StatusBadge = ({ 
   status: initialStatus,
-  created_at,
-  discussion_period,
   ideaId 
 }: StatusBadgeProps) => {
   const [status, setStatus] = useState(initialStatus);
@@ -46,9 +42,13 @@ export const StatusBadge = ({
             console.log(`🔄 تحديث حالة الفكرة في واجهة المستخدم من "${status}" إلى "${data.status}"`);
             setStatus(data.status);
             
-            // عرض إشعار إذا كانت الحالة "بانتظار القرار"
+            // عرض إشعار عند تغيير الحالة
             if (data.status === "pending_decision") {
               toast.info("الفكرة الآن بانتظار القرار", { duration: 3000 });
+            } else if (data.status === "approved") {
+              toast.success("تمت الموافقة على الفكرة", { duration: 3000 });
+            } else if (data.status === "rejected") {
+              toast.error("تم رفض الفكرة", { duration: 3000 });
             }
           } else {
             console.log(`ℹ️ الحالة الحالية مطابقة للحالة في قاعدة البيانات: "${status}"`);
