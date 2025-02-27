@@ -39,19 +39,36 @@ export const calculateTimeRemaining = (
     const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));
     const now = new Date();
 
+    // تسجيل معلومات مفصلة عن الوقت المتبقي للتحقق
+    console.log("=== معلومات الوقت المتبقي ===");
+    console.log("فترة المناقشة:", discussion_period);
+    console.log("تاريخ الإنشاء:", created_at);
+    console.log("تاريخ انتهاء المناقشة:", discussionEndDate.toLocaleString());
+    console.log("الوقت الحالي:", now.toLocaleString());
+    
+    const diffInMs = discussionEndDate.getTime() - now.getTime();
+    console.log("الفرق بالميلي ثانية:", diffInMs);
+    
     // التحقق مما إذا كانت المناقشة قد انتهت بالفعل
     if (now >= discussionEndDate) {
+      console.log("حالة المناقشة: انتهت المناقشة");
       return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     }
 
     // حساب الفرق بين الوقت الحالي ووقت انتهاء المناقشة
-    const diffInMs = discussionEndDate.getTime() - now.getTime();
     const diffInSecs = Math.floor(diffInMs / 1000);
     
     const days = Math.floor(diffInSecs / (24 * 60 * 60));
     const hours = Math.floor((diffInSecs % (24 * 60 * 60)) / (60 * 60));
     const minutes = Math.floor((diffInSecs % (60 * 60)) / 60);
     const seconds = Math.floor(diffInSecs % 60);
+
+    console.log("الوقت المتبقي:", {
+      أيام: days,
+      ساعات: hours,
+      دقائق: minutes,
+      ثواني: seconds
+    });
 
     return { days, hours, minutes, seconds };
   } catch (error) {
