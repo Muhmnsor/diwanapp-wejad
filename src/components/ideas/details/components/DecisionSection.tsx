@@ -12,7 +12,6 @@ import { formatDate } from "@/utils/dateUtils";
 import { CheckCircle, Clock, Plus, Trash, XCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { getStatusClass, getStatusDisplay } from "../utils/statusUtils";
-import { IdeaDownloadButton } from "./IdeaDownloadButton";
 
 interface DecisionSectionProps {
   ideaId: string;
@@ -30,7 +29,6 @@ interface DecisionSectionProps {
     created_by?: string;
     created_by_name?: string;
   };
-  ideaTitle?: string;
 }
 
 interface AssigneeItem {
@@ -44,8 +42,7 @@ export const DecisionSection = ({
   status, 
   isAdmin = false, 
   onStatusChange,
-  decision,
-  ideaTitle = ""
+  decision 
 }: DecisionSectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newStatus, setNewStatus] = useState<string>(decision?.status || "pending_decision");
@@ -189,13 +186,12 @@ export const DecisionSection = ({
     }
   }, [decision]);
 
+  // عرض واجهة اتخاذ القرار دائماً بغض النظر عن حالة الفكرة
+  // للاختبار فقط - نحذف جميع شروط التحقق من الحالة
   return (
     <Card className="mb-4">
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold">اتخاذ القرار</CardTitle>
-          <IdeaDownloadButton ideaId={ideaId} ideaTitle={ideaTitle} />
-        </div>
+        <CardTitle className="text-lg font-semibold">اتخاذ القرار</CardTitle>
         <CardDescription>
           {decision ? "تعديل القرار الحالي" : "اتخذ قرارًا بشأن هذه الفكرة"}
         </CardDescription>
