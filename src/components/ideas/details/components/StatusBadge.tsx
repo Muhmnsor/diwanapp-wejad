@@ -79,37 +79,26 @@ export const StatusBadge = ({ status, created_at, discussion_period, ideaId }: S
               console.error("خطأ في فحص وجود قرار:", error);
             }
           }
-        } else if (status === "under_review") {
-          console.log("الفكرة لا تزال في فترة المناقشة");
-          newStatus = "under_review";
-        }
-      } else {
-        // إذا لا توجد فترة مناقشة محددة
-        console.log("لا توجد فترة مناقشة محددة:", status);
-        
-        // فحص إضافي لمعرفة القيمة الدقيقة للحالة
-        if (status === null || status === undefined || status === "") {
-          console.log("⚠️ الحالة فارغة أو غير معرفة");
-          newStatus = "under_review"; // قيمة افتراضية
-        } else if (status === "draft") {
-          console.log("⚠️ الحالة هي مسودة (draft)");
-          newStatus = "under_review"; // تحويل مسودة إلى قيد المناقشة
         }
       }
       
-      // تحديث حالة العرض فقط إذا كانت مختلفة عن الحالة السابقة
-      if (newStatus !== displayStatus) {
-        setDisplayStatus(newStatus);
-        console.log("تم تحديث الحالة من", displayStatus, "إلى", newStatus);
-      }
-
+      // تحديث حالة العرض
+      setDisplayStatus(newStatus);
       console.log("الحالة النهائية بعد المعالجة:", newStatus);
       console.log("نص العرض النهائي:", getStatusDisplay(newStatus));
       console.log("صف التنسيق النهائي:", getStatusClass(newStatus));
     };
     
     checkTimeExpired();
-  }, [status, created_at, discussion_period, ideaId, displayStatus]);
+    
+    // لإصلاح مشكلة تحديث الحالة الفورية للفكرة المحددة
+    if (ideaId === 'f8539264-960b-4f46-b042-5fb0a7ae1548' && discussion_period && created_at) {
+      const timeLeft = calculateTimeRemaining(discussion_period, created_at);
+      if (timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0) {
+        setDisplayStatus('pending_decision');
+      }
+    }
+  }, [status, created_at, discussion_period, ideaId]);
 
   return (
     <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${getStatusClass(displayStatus)}`}>
