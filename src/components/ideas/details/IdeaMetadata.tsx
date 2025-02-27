@@ -4,7 +4,6 @@ import { IdeaCountdown } from "./components/IdeaCountdown";
 import { StatusBadge } from "./components/StatusBadge";
 import { ExtendButton } from "./components/ExtendButton";
 import { ExtendDiscussionDialog } from "./dialogs/ExtendDiscussionDialog";
-import { IdeaDownloadButton } from "./components/IdeaDownloadButton";
 
 interface IdeaMetadataProps {
   id: string;
@@ -38,19 +37,12 @@ export const IdeaMetadata = ({
     console.log("Discussion period extended successfully");
   };
 
-  // تحديد ما إذا كان ينبغي عرض زر التنزيل
-  // نعرضه فقط للأفكار التي تم اتخاذ قرار بشأنها (approved, rejected, needs_modification)
-  const showDownloadButton = ['approved', 'rejected', 'needs_modification'].includes(status);
-
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
         
         <div className="flex items-center gap-3 flex-wrap">
-          {showDownloadButton && (
-            <IdeaDownloadButton ideaId={id} ideaTitle={title} />
-          )}
           <IdeaCountdown discussion_period={discussion_period} created_at={created_at} />
           <ExtendButton onClick={handleExtendDialogOpen} />
           <StatusBadge status={status} />
