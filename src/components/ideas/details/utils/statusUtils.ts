@@ -5,7 +5,7 @@ export const getStatusDisplay = (status: string): string => {
     case 'draft':
       return 'مسودة';
     case 'under_review':
-      return 'قيد المراجعة';
+      return 'قيد المناقشة';
     case 'pending_decision':
       return 'بانتظار القرار';
     case 'approved':

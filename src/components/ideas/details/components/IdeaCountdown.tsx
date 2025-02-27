@@ -36,17 +36,26 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
         setIsExpired(true);
         
         try {
-          // التحقق من الحالة الحالية للفكرة
-          const { data, error } = await supabase
+          // التحقق من الحالة الحالية للفكرة ومن عدم وجود قرار
+          const { data: ideaData, error: ideaError } = await supabase
             .from("ideas")
             .select("status")
             .eq("id", ideaId)
             .single();
             
-          if (error) throw error;
+          if (ideaError) throw ideaError;
           
-          // تحديث الحالة فقط إذا كانت الفكرة في مرحلة المراجعة
-          if (data && data.status === "under_review") {
+          // التحقق من وجود قرار للفكرة
+          const { data: decisionData, error: decisionError } = await supabase
+            .from("idea_decisions")
+            .select("id")
+            .eq("idea_id", ideaId)
+            .maybeSingle();
+            
+          if (decisionError && decisionError.code !== 'PGRST116') throw decisionError;
+          
+          // تحديث الحالة فقط إذا كانت الفكرة في مرحلة المناقشة ولا يوجد قرار بعد
+          if (ideaData && ideaData.status === "under_review" && !decisionData) {
             const { error: updateError } = await supabase
               .from("ideas")
               .update({ status: "pending_decision" })
@@ -81,17 +90,17 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
 
   if (isExpired) {
     return (
-      <div className="flex items-center gap-2 bg-red-50 rounded-lg py-1.5 px-2 text-sm">
-        <span className="font-medium text-red-800">حالة المناقشة:</span>
-        <div className="font-bold text-red-700">انتهت المناقشة</div>
+      <div className="flex items-center gap-2 bg-amber-50 rounded-lg py-1.5 px-2 text-sm">
+        <span className="font-medium text-amber-800">حالة المناقشة:</span>
+        <div className="font-bold text-amber-700">انتهت المناقشة</div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
-      <span className="font-medium text-purple-800">متبقي:</span>
-      <div className="font-bold text-purple-700">
+    <div className="flex items-center gap-2 bg-blue-50 rounded-lg py-1.5 px-2 text-sm">
+      <span className="font-medium text-blue-800">متبقي للمناقشة:</span>
+      <div className="font-bold text-blue-700">
         {getCountdownDisplay(discussion_period, created_at, countdown)}
       </div>
     </div>
