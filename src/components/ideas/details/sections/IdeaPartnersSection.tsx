@@ -19,12 +19,12 @@ export const IdeaPartnersSection: FC<IdeaPartnersSectionProps> = ({ partners }) 
   }
 
   return (
-    <section className="bg-white p-4 rounded-lg border border-purple-100 mb-3">
-      <h3 className="text-base font-semibold mb-2 text-neutral-950">الشركاء المتوقعون</h3>
+    <section className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
+      <h3 className="text-lg font-semibold mb-4 text-gray-800">الشركاء المتوقعون</h3>
       <div className="overflow-x-auto relative">
-        <table className="w-full table-auto text-sm">
+        <table className="w-full table-auto">
           <thead>
-            <tr className="bg-gray-50">
+            <tr className="bg-gray-100">
               <th className="p-2 text-right text-gray-800 rounded-tr-lg">اسم الشريك</th>
               <th className="p-2 text-right text-gray-800 rounded-tl-lg">المساهمة</th>
             </tr>
