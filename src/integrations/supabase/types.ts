@@ -929,6 +929,50 @@ export type Database = {
           },
         ]
       }
+      idea_decisions: {
+        Row: {
+          assignee: string | null
+          budget: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          idea_id: string | null
+          reason: string
+          status: string
+          timeline: string | null
+        }
+        Insert: {
+          assignee?: string | null
+          budget?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          idea_id?: string | null
+          reason: string
+          status: string
+          timeline?: string | null
+        }
+        Update: {
+          assignee?: string | null
+          budget?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          idea_id?: string | null
+          reason?: string
+          status?: string
+          timeline?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_decisions_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_tags: {
         Row: {
           created_at: string
