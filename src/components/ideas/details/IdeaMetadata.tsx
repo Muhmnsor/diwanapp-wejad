@@ -45,7 +45,12 @@ export const IdeaMetadata = ({
         <div className="flex items-center gap-3 flex-wrap">
           <IdeaCountdown discussion_period={discussion_period} created_at={created_at} />
           <ExtendButton onClick={handleExtendDialogOpen} />
-          <StatusBadge status={status} created_at={created_at} discussion_period={discussion_period} ideaId={id} />
+          <StatusBadge 
+            status={status} 
+            created_at={created_at} 
+            discussion_period={discussion_period} 
+            ideaId={id}
+          />
         </div>
       </div>
       
