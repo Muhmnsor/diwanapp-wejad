@@ -29,11 +29,11 @@ export const exportIdea = async ({
     
     // تصدير البيانات حسب التنسيق المحدد
     if (exportFormat === "pdf") {
-      await exportToPdf(data, ideaTitle);
+      await exportToPdf(data, ideaTitle, exportOptions);
     } else if (exportFormat === "text") {
       exportToText(data, ideaTitle);
     } else if (exportFormat === "zip") {
-      await exportToZip(data, ideaTitle);
+      await exportToZip(data, ideaTitle, exportOptions);
     } else {
       throw new Error("تنسيق التصدير غير مدعوم");
     }
@@ -139,14 +139,14 @@ const exportToText = (data: any, ideaTitle: string) => {
 };
 
 // تصدير البيانات كملف PDF
-const exportToPdf = async (data: any, ideaTitle: string) => {
+const exportToPdf = async (data: any, ideaTitle: string, exportOptions: string[]) => {
   // هذه وظيفة مستقبلية - حالياً نستخدم التصدير النصي
   toast.error("عذراً، التصدير بصيغة PDF غير متاح حالياً. جاري استخدام التصدير النصي بدلاً من ذلك.");
   exportToText(data, ideaTitle);
 };
 
 // تصدير البيانات كملف مضغوط
-const exportToZip = async (data: any, ideaTitle: string) => {
+const exportToZip = async (data: any, ideaTitle: string, exportOptions: string[]) => {
   const zip = new JSZip();
   
   // إضافة ملف للفكرة
@@ -178,6 +178,14 @@ const exportToZip = async (data: any, ideaTitle: string) => {
       ).join("\n");
     
     attachmentsFolder.file("supporting_files_info.txt", supportingFilesInfoText);
+    
+    // إذا تم اختيار تنزيل الملفات
+    if (exportOptions.includes("download_files")) {
+      const filesFolder = zip.folder("files");
+      
+      // تنزيل الملفات الداعمة
+      await downloadSupportingFiles(data.idea.supporting_files, filesFolder);
+    }
   }
   
   // إضافة معلومات مرفقات التعليقات
@@ -190,6 +198,14 @@ const exportToZip = async (data: any, ideaTitle: string) => {
         ).join("\n");
       
       attachmentsFolder.file("comment_attachments_info.txt", commentAttachmentsInfoText);
+      
+      // إذا تم اختيار تنزيل الملفات
+      if (exportOptions.includes("download_files")) {
+        const commentsFolder = zip.folder("comment_attachments");
+        
+        // تنزيل مرفقات التعليقات
+        await downloadCommentAttachments(commentsWithAttachments, commentsFolder);
+      }
     }
   }
   
@@ -209,6 +225,124 @@ const exportToZip = async (data: any, ideaTitle: string) => {
     console.error("خطأ في إنشاء الملف المضغوط:", error);
     throw new Error(`فشل في إنشاء الملف المضغوط: ${error.message}`);
   }
+};
+
+// تنزيل الملفات الداعمة وإضافتها إلى المجلد
+const downloadSupportingFiles = async (supportingFiles: any[], folder: JSZip) => {
+  if (!supportingFiles || supportingFiles.length === 0) return;
+  
+  const filesToDownload = supportingFiles.map(async (file) => {
+    try {
+      // استخراج اسم الملف الحقيقي من المسار
+      const filePathParts = file.file_path.split('/');
+      const actualFileName = filePathParts[filePathParts.length - 1];
+      
+      // تنزيل الملف من Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('idea-files')
+        .download(actualFileName);
+        
+      if (error) {
+        console.error(`خطأ في تنزيل الملف ${file.name}:`, error);
+        return null;
+      }
+      
+      if (!data) {
+        console.error(`لم يتم العثور على بيانات للملف ${file.name}`);
+        return null;
+      }
+      
+      // إضافة الملف إلى المجلد
+      const safeFileName = sanitizeFileName(file.name);
+      folder.file(safeFileName, data);
+      
+      return {
+        name: safeFileName,
+        success: true
+      };
+    } catch (error) {
+      console.error(`خطأ في تنزيل الملف ${file.name}:`, error);
+      return {
+        name: file.name,
+        success: false,
+        error: error.message
+      };
+    }
+  });
+  
+  // انتظار انتهاء تنزيل جميع الملفات
+  const results = await Promise.all(filesToDownload);
+  
+  // إضافة تقرير بالملفات التي تم تنزيلها والتي فشل تنزيلها
+  const successfulFiles = results.filter(r => r && r.success).map(r => r.name);
+  const failedFiles = results.filter(r => r && !r.success).map(r => `${r.name} (${r.error})`);
+  
+  const reportContent = `
+تقرير تنزيل الملفات الداعمة:
+===========================
+عدد الملفات التي تم تنزيلها بنجاح: ${successfulFiles.length}
+عدد الملفات التي فشل تنزيلها: ${failedFiles.length}
+
+${failedFiles.length > 0 ? `الملفات التي فشل تنزيلها:\n${failedFiles.join('\n')}` : ''}
+`;
+  
+  folder.file("_download_report.txt", reportContent);
+};
+
+// تنزيل مرفقات التعليقات وإضافتها إلى المجلد
+const downloadCommentAttachments = async (comments: any[], folder: JSZip) => {
+  if (!comments || comments.length === 0) return;
+  
+  const attachmentsToDownload = comments.map(async (comment) => {
+    if (!comment.attachment_url) return null;
+    
+    try {
+      // تحديد اسم الملف
+      const fileName = comment.attachment_name || `attachment_${comment.id}`;
+      const safeFileName = sanitizeFileName(fileName);
+      
+      // تنزيل الملف من URL
+      const response = await fetch(comment.attachment_url);
+      if (!response.ok) {
+        throw new Error(`فشل في تنزيل الملف: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      
+      // إضافة الملف إلى المجلد
+      folder.file(safeFileName, blob);
+      
+      return {
+        name: safeFileName,
+        success: true
+      };
+    } catch (error) {
+      console.error(`خطأ في تنزيل مرفق التعليق:`, error);
+      return {
+        name: comment.attachment_name || `attachment_${comment.id}`,
+        success: false,
+        error: error.message
+      };
+    }
+  });
+  
+  // انتظار انتهاء تنزيل جميع المرفقات
+  const results = await Promise.all(attachmentsToDownload);
+  
+  // إضافة تقرير بالمرفقات التي تم تنزيلها والتي فشل تنزيلها
+  const successfulFiles = results.filter(r => r && r.success).map(r => r.name);
+  const failedFiles = results.filter(r => r && !r.success).map(r => `${r.name} (${r.error})`);
+  
+  const reportContent = `
+تقرير تنزيل مرفقات التعليقات:
+===========================
+عدد المرفقات التي تم تنزيلها بنجاح: ${successfulFiles.length}
+عدد المرفقات التي فشل تنزيلها: ${failedFiles.length}
+
+${failedFiles.length > 0 ? `المرفقات التي فشل تنزيلها:\n${failedFiles.join('\n')}` : ''}
+`;
+  
+  folder.file("_download_report.txt", reportContent);
 };
 
 // وظائف إنشاء المحتوى النصي

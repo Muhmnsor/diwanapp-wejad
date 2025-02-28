@@ -74,6 +74,12 @@ export const IdeaExportDialog = ({
       description: "روابط الملفات المرفقة بالتعليقات (بدون تنزيل الملفات)",
       default: true,
     },
+    {
+      id: "download_files",
+      label: "تنزيل الملفات المرفقة",
+      description: "تنزيل الملفات الداعمة ومرفقات التعليقات كجزء من التصدير",
+      default: false,
+    },
   ];
 
   const exportFormats = [
