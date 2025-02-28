@@ -17,8 +17,13 @@ export const IdeaDownloadButton = ({ ideaId, ideaTitle }: IdeaDownloadButtonProp
 
   const handleDownload = async () => {
     setIsLoading(true);
+    console.log("=== بدء عملية التنزيل ===");
+    console.log("معرف الفكرة:", ideaId);
+    console.log("عنوان الفكرة:", ideaTitle);
+
     try {
       // 1. جلب بيانات الفكرة
+      console.log("1. جاري جلب بيانات الفكرة...");
       const { data: ideaData, error: ideaError } = await supabase
         .from("ideas")
         .select(`
@@ -26,20 +31,37 @@ export const IdeaDownloadButton = ({ ideaId, ideaTitle }: IdeaDownloadButtonProp
           created_by_user:created_by(email)
         `)
         .eq("id", ideaId)
-        .single();
+        .maybeSingle();
         
-      if (ideaError) throw ideaError;
+      if (ideaError) {
+        console.error("خطأ في جلب بيانات الفكرة:", ideaError);
+        throw new Error(`فشل في جلب بيانات الفكرة: ${ideaError.message}`);
+      }
+      
+      if (!ideaData) {
+        console.error("لم يتم العثور على بيانات للفكرة");
+        throw new Error("لم يتم العثور على بيانات للفكرة");
+      }
+      
+      console.log("تم جلب بيانات الفكرة بنجاح:", ideaData);
       
       // 2. جلب التعليقات
+      console.log("2. جاري جلب التعليقات...");
       const { data: commentsData, error: commentsError } = await supabase
         .from("idea_comments")
         .select("*")
         .eq("idea_id", ideaId)
         .order("created_at", { ascending: true });
         
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        console.error("خطأ في جلب التعليقات:", commentsError);
+        throw new Error(`فشل في جلب التعليقات: ${commentsError.message}`);
+      }
+      
+      console.log(`تم جلب ${commentsData?.length || 0} تعليق`);
       
       // 3. جلب القرار (إن وجد)
+      console.log("3. جاري جلب بيانات القرار...");
       const { data: decisionData, error: decisionError } = await supabase
         .from("idea_decisions")
         .select(`
@@ -49,20 +71,33 @@ export const IdeaDownloadButton = ({ ideaId, ideaTitle }: IdeaDownloadButtonProp
         .eq("idea_id", ideaId)
         .maybeSingle();
         
-      if (decisionError) throw decisionError;
+      if (decisionError) {
+        console.error("خطأ في جلب القرار:", decisionError);
+        throw new Error(`فشل في جلب بيانات القرار: ${decisionError.message}`);
+      }
+      
+      console.log("تم جلب بيانات القرار:", decisionData ? "موجود" : "غير موجود");
       
       // 4. جلب التصويتات
+      console.log("4. جاري جلب التصويتات...");
       const { data: votesData, error: votesError } = await supabase
         .from("idea_votes")
         .select("*")
         .eq("idea_id", ideaId);
         
-      if (votesError) throw votesError;
+      if (votesError) {
+        console.error("خطأ في جلب التصويتات:", votesError);
+        throw new Error(`فشل في جلب التصويتات: ${votesError.message}`);
+      }
       
-      // إعداد ملف مضغوط
+      console.log(`تم جلب ${votesData?.length || 0} تصويت`);
+      
+      // 5. إنشاء ملف زيب بدون محاولة تضمين الملفات المرفقة
+      console.log("5. جاري إنشاء الملف المضغوط - بدون مرفقات...");
       const zip = new JSZip();
       
-      // 5. إنشاء ملف نصي للفكرة
+      // 6. إنشاء ملف نصي للفكرة
+      console.log("6. جاري إنشاء ملف نصي للفكرة...");
       const ideaCreatedAt = new Date(ideaData.created_at).toLocaleString('ar');
       const ideaTextContent = `عنوان الفكرة: ${ideaData.title}
 تاريخ الإنشاء: ${ideaCreatedAt}
@@ -99,8 +134,10 @@ ${formatCosts(ideaData.expected_costs)}
 `;
 
       zip.file("idea.txt", ideaTextContent);
+      console.log("تمت إضافة idea.txt إلى الملف المضغوط");
       
-      // 6. إنشاء ملف نصي للمناقشات
+      // 7. إنشاء ملف نصي للمناقشات
+      console.log("7. جاري إنشاء ملف نصي للمناقشات...");
       let commentsTextContent = "المناقشات:\n\n";
       
       if (commentsData && commentsData.length > 0) {
@@ -117,8 +154,10 @@ ${formatCosts(ideaData.expected_costs)}
       }
       
       zip.file("comments.txt", commentsTextContent);
+      console.log("تمت إضافة comments.txt إلى الملف المضغوط");
       
-      // 7. إنشاء ملف للتصويتات
+      // 8. إنشاء ملف للتصويتات
+      console.log("8. جاري إنشاء ملف للتصويتات...");
       let votesTextContent = "التصويتات:\n\n";
       const upVotes = votesData.filter(v => v.vote_type === 'up').length;
       const downVotes = votesData.filter(v => v.vote_type === 'down').length;
@@ -128,9 +167,11 @@ ${formatCosts(ideaData.expected_costs)}
       votesTextContent += `الأصوات المعارضة: ${downVotes}\n`;
       
       zip.file("votes.txt", votesTextContent);
+      console.log("تمت إضافة votes.txt إلى الملف المضغوط");
       
-      // 8. إضافة القرار إذا كان موجودًا
+      // 9. إضافة القرار إذا كان موجودًا
       if (decisionData) {
+        console.log("9. جاري إضافة ملف القرار...");
         const decisionDate = new Date(decisionData.created_at).toLocaleString('ar');
         const decisionTextContent = `القرار:
 تاريخ القرار: ${decisionDate}
@@ -147,86 +188,94 @@ ${decisionData.status === 'approved' ? `
 ` : ''}
 `;
         zip.file("decision.txt", decisionTextContent);
+        console.log("تمت إضافة decision.txt إلى الملف المضغوط");
       }
       
-      // 9. إنشاء مجلد للملفات المرفقة
-      const attachmentsFolder = zip.folder("attachments");
+      // 10. إنشاء مجلد للملفات المرفقة (ملحوظة المعلومات فقط دون محاولة تنزيل الملفات الفعلية)
+      const attachmentsFolder = zip.folder("attachments_info");
       
-      // 10. الملفات الداعمة للفكرة
-      if (ideaData.supporting_files && ideaData.supporting_files.length > 0) {
-        const supportingFilesInfoText = "الملفات الداعمة للفكرة:\n\n" + 
+      // 11. إضافة معلومات الملفات الداعمة (إذا كانت موجودة)
+      if (ideaData.supporting_files && Array.isArray(ideaData.supporting_files) && ideaData.supporting_files.length > 0) {
+        console.log("11. جاري إضافة معلومات الملفات الداعمة...");
+        const supportingFilesInfoText = "الملفات الداعمة للفكرة (ملاحظة: الملفات الفعلية غير مضمنة في هذا التنزيل):\n\n" + 
           ideaData.supporting_files.map((file, index) => 
             `${index + 1}. ${file.name}: ${file.file_path}`
           ).join("\n");
         
-        attachmentsFolder.file("_supporting_files_info.txt", supportingFilesInfoText);
-        
-        for (const file of ideaData.supporting_files) {
-          try {
-            // تنزيل الملف من التخزين
-            const { data: fileData, error: fileError } = await supabase.storage
-              .from('idea-files')
-              .download(getFileNameFromPath(file.file_path));
-              
-            if (fileError) {
-              console.error("Error downloading file:", fileError);
-              continue;
-            }
-            
-            if (fileData) {
-              attachmentsFolder.file(`supporting/${file.name}`, fileData);
-            }
-          } catch (fileErr) {
-            console.error("Error processing file:", fileErr);
-          }
-        }
+        attachmentsFolder.file("supporting_files_info.txt", supportingFilesInfoText);
+        console.log("تمت إضافة معلومات الملفات الداعمة");
       }
       
-      // 11. مرفقات التعليقات
+      // 12. إضافة معلومات مرفقات التعليقات (إذا كانت موجودة)
       const commentsWithAttachments = commentsData.filter(comment => comment.attachment_url);
-      
       if (commentsWithAttachments.length > 0) {
-        const commentAttachmentsInfoText = "مرفقات التعليقات:\n\n" + 
+        console.log("12. جاري إضافة معلومات مرفقات التعليقات...");
+        const commentAttachmentsInfoText = "مرفقات التعليقات (ملاحظة: الملفات الفعلية غير مضمنة في هذا التنزيل):\n\n" + 
           commentsWithAttachments.map((comment, index) => 
             `${index + 1}. ${comment.attachment_name || 'ملف مرفق'}: ${comment.attachment_url}`
           ).join("\n");
         
-        attachmentsFolder.file("_comment_attachments_info.txt", commentAttachmentsInfoText);
-        
-        for (const comment of commentsWithAttachments) {
-          try {
-            if (!comment.attachment_url) continue;
-            
-            // تنزيل الملف من التخزين
-            const fileName = getFileNameFromPath(comment.attachment_url);
-            const { data: fileData, error: fileError } = await supabase.storage
-              .from('attachments')
-              .download(fileName);
-              
-            if (fileError) {
-              console.error("Error downloading comment attachment:", fileError);
-              continue;
-            }
-            
-            if (fileData) {
-              attachmentsFolder.file(`comments/${comment.attachment_name || fileName}`, fileData);
-            }
-          } catch (fileErr) {
-            console.error("Error processing comment attachment:", fileErr);
-          }
-        }
+        attachmentsFolder.file("comment_attachments_info.txt", commentAttachmentsInfoText);
+        console.log("تمت إضافة معلومات مرفقات التعليقات");
       }
       
-      // 12. إنشاء الملف المضغوط وتنزيله
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      saveAs(zipBlob, `فكرة-${sanitizeFileName(ideaTitle)}.zip`);
-      
-      toast.success("تم تحضير الملف المضغوط بنجاح");
+      // 13. إنشاء الملف المضغوط وتنزيله
+      console.log("13. جاري توليد الملف المضغوط النهائي...");
+      try {
+        const zipBlob = await zip.generateAsync({
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: {
+            level: 5
+          }
+        });
+        
+        console.log("تم توليد الملف المضغوط، الحجم:", zipBlob.size, "بايت");
+        
+        if (zipBlob.size === 0) {
+          console.error("الملف المضغوط فارغ (حجمه صفر بايت)");
+          throw new Error("الملف المضغوط فارغ");
+        }
+        
+        const sanitizedTitle = sanitizeFileName(ideaTitle || 'فكرة');
+        const zipFileName = `فكرة-${sanitizedTitle}.zip`;
+        console.log("جاري حفظ الملف المضغوط باسم:", zipFileName);
+        
+        // استخدام بديل لـ saveAs في حالة وجود مشكلة
+        try {
+          // الطريقة 1: استخدام saveAs من file-saver
+          saveAs(zipBlob, zipFileName);
+          console.log("تم استدعاء وظيفة saveAs بنجاح");
+        } catch (saveError) {
+          console.error("خطأ في استخدام saveAs:", saveError);
+          
+          // الطريقة 2: استخدام طريقة بديلة للتنزيل
+          console.log("محاولة استخدام طريقة بديلة للتنزيل...");
+          const downloadUrl = URL.createObjectURL(zipBlob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = zipFileName;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(downloadUrl);
+          }, 100);
+          console.log("تم استخدام الطريقة البديلة للتنزيل");
+        }
+        
+        toast.success("تم تحضير الملف المضغوط بنجاح");
+        console.log("اكتملت عملية التنزيل بنجاح");
+      } catch (zipError) {
+        console.error("خطأ في إنشاء أو حفظ الملف المضغوط:", zipError);
+        throw new Error(`فشل في إنشاء أو حفظ الملف المضغوط: ${zipError.message}`);
+      }
     } catch (error) {
-      console.error("Error preparing zip file:", error);
-      toast.error("حدث خطأ أثناء تحضير الملف المضغوط");
+      console.error("=== حدث خطأ أثناء عملية التنزيل ===", error);
+      toast.error(`حدث خطأ أثناء تحضير الملف المضغوط: ${error.message || "خطأ غير معروف"}`);
     } finally {
       setIsLoading(false);
+      console.log("=== انتهت عملية التنزيل ===");
     }
   };
   
@@ -280,22 +329,18 @@ ${decisionData.status === 'approved' ? `
     let totalCost = 0;
     const costsText = costs.map((cost: any, index: number) => {
       const itemCost = cost.total_cost || 0;
-      totalCost += itemCost;
+      totalCost += Number(itemCost);
       return `${index + 1}. ${cost.item} - الكمية: ${cost.quantity} - التكلفة: ${itemCost} ريال`;
     }).join('\n');
     
     return `${costsText}\n\nالتكلفة الإجمالية: ${totalCost} ريال`;
   };
   
-  const getFileNameFromPath = (path: string): string => {
-    // استخراج اسم الملف من المسار الكامل
-    if (!path) return '';
-    const parts = path.split('/');
-    return parts[parts.length - 1];
-  };
-  
   const sanitizeFileName = (fileName: string): string => {
-    return fileName.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
+    const sanitized = fileName.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
+    console.log("اسم الملف قبل التنقية:", fileName);
+    console.log("اسم الملف بعد التنقية:", sanitized);
+    return sanitized;
   };
   
   return (
