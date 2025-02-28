@@ -17,10 +17,13 @@ export const IdeaDownloadButton = ({ ideaId, ideaTitle }: IdeaDownloadButtonProp
 
   const handleDownload = async () => {
     setIsLoading(true);
+    console.log("=== بدء عملية التنزيل ===");
+    console.log("معرف الفكرة:", ideaId);
+    console.log("عنوان الفكرة:", ideaTitle);
+
     try {
-      console.log("Starting download process for idea:", ideaId);
-      
       // 1. جلب بيانات الفكرة
+      console.log("1. جاري جلب بيانات الفكرة...");
       const { data: ideaData, error: ideaError } = await supabase
         .from("ideas")
         .select(`
@@ -31,13 +34,16 @@ export const IdeaDownloadButton = ({ ideaId, ideaTitle }: IdeaDownloadButtonProp
         .single();
         
       if (ideaError) {
-        console.error("Error fetching idea data:", ideaError);
-        throw ideaError;
+        console.error("خطأ في جلب بيانات الفكرة:", ideaError);
+        throw new Error(`فشل في جلب بيانات الفكرة: ${ideaError.message}`);
       }
       
-      console.log("Idea data fetched successfully:", ideaData);
+      console.log("تم جلب بيانات الفكرة بنجاح:", ideaData);
+      console.log("نوع المتغير supporting_files:", typeof ideaData.supporting_files);
+      console.log("قيمة المتغير supporting_files:", JSON.stringify(ideaData.supporting_files));
       
       // 2. جلب التعليقات
+      console.log("2. جاري جلب التعليقات...");
       const { data: commentsData, error: commentsError } = await supabase
         .from("idea_comments")
         .select("*")
@@ -45,13 +51,14 @@ export const IdeaDownloadButton = ({ ideaId, ideaTitle }: IdeaDownloadButtonProp
         .order("created_at", { ascending: true });
         
       if (commentsError) {
-        console.error("Error fetching comments:", commentsError);
-        throw commentsError;
+        console.error("خطأ في جلب التعليقات:", commentsError);
+        throw new Error(`فشل في جلب التعليقات: ${commentsError.message}`);
       }
       
-      console.log(`Fetched ${commentsData?.length || 0} comments`);
+      console.log(`تم جلب ${commentsData?.length || 0} تعليق`);
       
       // 3. جلب القرار (إن وجد)
+      console.log("3. جاري جلب بيانات القرار...");
       const { data: decisionData, error: decisionError } = await supabase
         .from("idea_decisions")
         .select(`
@@ -62,32 +69,42 @@ export const IdeaDownloadButton = ({ ideaId, ideaTitle }: IdeaDownloadButtonProp
         .maybeSingle();
         
       if (decisionError) {
-        console.error("Error fetching decision:", decisionError);
-        throw decisionError;
+        console.error("خطأ في جلب القرار:", decisionError);
+        throw new Error(`فشل في جلب بيانات القرار: ${decisionError.message}`);
       }
       
-      console.log("Decision data:", decisionData);
+      console.log("تم جلب بيانات القرار:", decisionData ? "موجود" : "غير موجود");
       
       // 4. جلب التصويتات
+      console.log("4. جاري جلب التصويتات...");
       const { data: votesData, error: votesError } = await supabase
         .from("idea_votes")
         .select("*")
         .eq("idea_id", ideaId);
         
       if (votesError) {
-        console.error("Error fetching votes:", votesError);
-        throw votesError;
+        console.error("خطأ في جلب التصويتات:", votesError);
+        throw new Error(`فشل في جلب التصويتات: ${votesError.message}`);
       }
       
-      console.log(`Fetched ${votesData?.length || 0} votes`);
+      console.log(`تم جلب ${votesData?.length || 0} تصويت`);
       
       // إعداد ملف مضغوط
-      const zip = new JSZip();
-      console.log("Creating zip file...");
+      console.log("5. جاري إنشاء ملف مضغوط...");
+      let zip;
+      try {
+        zip = new JSZip();
+        console.log("تم إنشاء كائن JSZip بنجاح");
+      } catch (zipError) {
+        console.error("خطأ في إنشاء كائن JSZip:", zipError);
+        throw new Error(`فشل في تهيئة مكتبة الضغط: ${zipError.message}`);
+      }
       
-      // 5. إنشاء ملف نصي للفكرة
-      const ideaCreatedAt = new Date(ideaData.created_at).toLocaleString('ar');
-      const ideaTextContent = `عنوان الفكرة: ${ideaData.title}
+      // 6. إنشاء ملف نصي للفكرة
+      console.log("6. جاري إنشاء ملف نصي للفكرة...");
+      try {
+        const ideaCreatedAt = new Date(ideaData.created_at).toLocaleString('ar');
+        const ideaTextContent = `عنوان الفكرة: ${ideaData.title}
 تاريخ الإنشاء: ${ideaCreatedAt}
 مقدم الفكرة: ${ideaData.created_by_user?.email || 'غير معروف'}
 الحالة: ${getStatusText(ideaData.status)}
@@ -120,45 +137,63 @@ ${formatPartners(ideaData.expected_partners)}
 التكاليف المتوقعة:
 ${formatCosts(ideaData.expected_costs)}
 `;
-
-      zip.file("idea.txt", ideaTextContent);
-      console.log("Added idea.txt to zip");
-      
-      // 6. إنشاء ملف نصي للمناقشات
-      let commentsTextContent = "المناقشات:\n\n";
-      
-      if (commentsData && commentsData.length > 0) {
-        commentsData.forEach((comment, index) => {
-          const commentDate = new Date(comment.created_at).toLocaleString('ar');
-          commentsTextContent += `[${commentDate}] ${comment.user_email || 'مستخدم'}: ${comment.content}\n`;
-          if (comment.attachment_url) {
-            commentsTextContent += `مرفق: ${comment.attachment_name || 'ملف مرفق'}\n`;
-          }
-          commentsTextContent += "------------------------------\n";
-        });
-      } else {
-        commentsTextContent += "لا توجد مناقشات.";
+        console.log("تم إنشاء محتوى ملف الفكرة النصي");
+        zip.file("idea.txt", ideaTextContent);
+        console.log("تمت إضافة idea.txt إلى الملف المضغوط");
+      } catch (ideaFileError) {
+        console.error("خطأ في إنشاء ملف الفكرة النصي:", ideaFileError);
+        throw new Error(`فشل في إنشاء ملف الفكرة النصي: ${ideaFileError.message}`);
       }
       
-      zip.file("comments.txt", commentsTextContent);
-      console.log("Added comments.txt to zip");
+      // 7. إنشاء ملف نصي للمناقشات
+      console.log("7. جاري إنشاء ملف نصي للمناقشات...");
+      try {
+        let commentsTextContent = "المناقشات:\n\n";
+        
+        if (commentsData && commentsData.length > 0) {
+          commentsData.forEach((comment, index) => {
+            const commentDate = new Date(comment.created_at).toLocaleString('ar');
+            commentsTextContent += `[${commentDate}] ${comment.user_email || 'مستخدم'}: ${comment.content}\n`;
+            if (comment.attachment_url) {
+              commentsTextContent += `مرفق: ${comment.attachment_name || 'ملف مرفق'}\n`;
+            }
+            commentsTextContent += "------------------------------\n";
+          });
+        } else {
+          commentsTextContent += "لا توجد مناقشات.";
+        }
+        
+        zip.file("comments.txt", commentsTextContent);
+        console.log("تمت إضافة comments.txt إلى الملف المضغوط");
+      } catch (commentsFileError) {
+        console.error("خطأ في إنشاء ملف المناقشات النصي:", commentsFileError);
+        throw new Error(`فشل في إنشاء ملف المناقشات النصي: ${commentsFileError.message}`);
+      }
       
-      // 7. إنشاء ملف للتصويتات
-      let votesTextContent = "التصويتات:\n\n";
-      const upVotes = votesData.filter(v => v.vote_type === 'up').length;
-      const downVotes = votesData.filter(v => v.vote_type === 'down').length;
+      // 8. إنشاء ملف للتصويتات
+      console.log("8. جاري إنشاء ملف للتصويتات...");
+      try {
+        let votesTextContent = "التصويتات:\n\n";
+        const upVotes = votesData.filter(v => v.vote_type === 'up').length;
+        const downVotes = votesData.filter(v => v.vote_type === 'down').length;
+        
+        votesTextContent += `إجمالي الأصوات: ${votesData.length}\n`;
+        votesTextContent += `الأصوات المؤيدة: ${upVotes}\n`;
+        votesTextContent += `الأصوات المعارضة: ${downVotes}\n`;
+        
+        zip.file("votes.txt", votesTextContent);
+        console.log("تمت إضافة votes.txt إلى الملف المضغوط");
+      } catch (votesFileError) {
+        console.error("خطأ في إنشاء ملف التصويتات النصي:", votesFileError);
+        throw new Error(`فشل في إنشاء ملف التصويتات النصي: ${votesFileError.message}`);
+      }
       
-      votesTextContent += `إجمالي الأصوات: ${votesData.length}\n`;
-      votesTextContent += `الأصوات المؤيدة: ${upVotes}\n`;
-      votesTextContent += `الأصوات المعارضة: ${downVotes}\n`;
-      
-      zip.file("votes.txt", votesTextContent);
-      console.log("Added votes.txt to zip");
-      
-      // 8. إضافة القرار إذا كان موجودًا
+      // 9. إضافة القرار إذا كان موجودًا
       if (decisionData) {
-        const decisionDate = new Date(decisionData.created_at).toLocaleString('ar');
-        const decisionTextContent = `القرار:
+        console.log("9. جاري إضافة ملف القرار...");
+        try {
+          const decisionDate = new Date(decisionData.created_at).toLocaleString('ar');
+          const decisionTextContent = `القرار:
 تاريخ القرار: ${decisionDate}
 متخذ القرار: ${decisionData.decision_maker?.email || 'غير معروف'}
 الحالة: ${getStatusText(decisionData.status)}
@@ -172,126 +207,236 @@ ${decisionData.status === 'approved' ? `
 الميزانية المقترحة: ${decisionData.budget || 'غير محددة'}
 ` : ''}
 `;
-        zip.file("decision.txt", decisionTextContent);
-        console.log("Added decision.txt to zip");
+          zip.file("decision.txt", decisionTextContent);
+          console.log("تمت إضافة decision.txt إلى الملف المضغوط");
+        } catch (decisionFileError) {
+          console.error("خطأ في إنشاء ملف القرار النصي:", decisionFileError);
+          throw new Error(`فشل في إنشاء ملف القرار النصي: ${decisionFileError.message}`);
+        }
       }
       
-      // 9. إنشاء مجلد للملفات المرفقة إذا كانت موجودة
+      // 10. إنشاء مجلد للملفات المرفقة إذا كانت موجودة
+      console.log("10. جاري إنشاء مجلد للملفات المرفقة...");
       const attachmentsFolder = zip.folder("attachments");
       if (!attachmentsFolder) {
-        console.error("Failed to create attachments folder in zip");
+        console.error("فشل في إنشاء مجلد المرفقات في الملف المضغوط");
         throw new Error("فشل في إنشاء مجلد المرفقات");
       }
       
-      // 10. الملفات الداعمة للفكرة (إذا كانت موجودة)
-      let supportingFilesProcessed = 0;
-      if (ideaData.supporting_files && ideaData.supporting_files.length > 0) {
-        console.log("Processing supporting files:", ideaData.supporting_files.length);
-        const supportingFilesInfoText = "الملفات الداعمة للفكرة:\n\n" + 
-          ideaData.supporting_files.map((file, index) => 
-            `${index + 1}. ${file.name}: ${file.file_path}`
-          ).join("\n");
-        
-        attachmentsFolder.file("_supporting_files_info.txt", supportingFilesInfoText);
-        
-        // استخدام async/await في قائمة الوعود
-        for (const file of ideaData.supporting_files) {
-          try {
-            console.log("Downloading supporting file:", file.name, file.file_path);
-            const fileName = getFileNameFromPath(file.file_path);
-            console.log("Extracted filename:", fileName);
-            
-            // تنزيل الملف من التخزين
-            const { data: fileData, error: fileError } = await supabase.storage
-              .from('idea-files')
-              .download(fileName);
-              
-            if (fileError) {
-              console.error("Error downloading file:", fileError);
-              continue;
-            }
-            
-            if (fileData) {
-              attachmentsFolder.file(`supporting/${file.name}`, fileData);
-              supportingFilesProcessed++;
-              console.log("Added supporting file to zip:", file.name);
-            }
-          } catch (fileErr) {
-            console.error("Error processing file:", fileErr);
-          }
-        }
+      console.log("تم إنشاء مجلد المرفقات بنجاح");
+      
+      // 11. التحقق من وجود دلو التخزين (bucket) في Supabase للملفات الداعمة
+      console.log("11. التحقق من دلو التخزين 'idea-files'...");
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      if (bucketsError) {
+        console.error("خطأ في جلب قائمة دلاء التخزين:", bucketsError);
       } else {
-        console.log("No supporting files to process");
+        console.log("دلاء التخزين المتوفرة:", buckets.map(b => b.name).join(", "));
+        const ideaFilesBucketExists = buckets.some(b => b.name === 'idea-files');
+        const attachmentsBucketExists = buckets.some(b => b.name === 'attachments');
+        console.log("هل يوجد دلو idea-files؟", ideaFilesBucketExists ? "نعم" : "لا");
+        console.log("هل يوجد دلو attachments؟", attachmentsBucketExists ? "نعم" : "لا");
       }
       
-      // 11. مرفقات التعليقات (إذا كانت موجودة)
+      // 12. الملفات الداعمة للفكرة (إذا كانت موجودة)
+      console.log("12. معالجة الملفات الداعمة للفكرة...");
+      let supportingFilesProcessed = 0;
+      
+      if (ideaData.supporting_files && Array.isArray(ideaData.supporting_files) && ideaData.supporting_files.length > 0) {
+        console.log(`عدد الملفات الداعمة: ${ideaData.supporting_files.length}`);
+        
+        try {
+          const supportingFilesInfoText = "الملفات الداعمة للفكرة:\n\n" + 
+            ideaData.supporting_files.map((file, index) => 
+              `${index + 1}. ${file.name}: ${file.file_path}`
+            ).join("\n");
+          
+          attachmentsFolder.file("_supporting_files_info.txt", supportingFilesInfoText);
+          console.log("تم إنشاء ملف معلومات الملفات الداعمة بنجاح");
+          
+          // إنشاء مجلد للملفات الداعمة
+          const supportingFolder = attachmentsFolder.folder("supporting");
+          if (!supportingFolder) {
+            console.error("فشل في إنشاء مجلد الملفات الداعمة");
+            throw new Error("فشل في إنشاء مجلد الملفات الداعمة");
+          }
+          
+          console.log("تم إنشاء مجلد الملفات الداعمة بنجاح");
+          
+          // التحقق من محتويات دلو التخزين idea-files
+          console.log("جاري التحقق من محتويات دلو idea-files...");
+          const { data: bucketFiles, error: bucketFilesError } = await supabase.storage
+            .from('idea-files')
+            .list();
+          
+          if (bucketFilesError) {
+            console.error("خطأ في جلب قائمة الملفات من دلو idea-files:", bucketFilesError);
+          } else {
+            console.log("الملفات الموجودة في دلو idea-files:", bucketFiles.map(f => f.name).join(", "));
+          }
+          
+          // استخدام async/await في قائمة الوعود
+          for (const file of ideaData.supporting_files) {
+            try {
+              console.log("معالجة الملف الداعم:", file.name, file.file_path);
+              
+              const fileName = getFileNameFromPath(file.file_path);
+              console.log("اسم الملف المستخرج:", fileName);
+              
+              // تنزيل الملف من التخزين
+              console.log(`محاولة تنزيل الملف ${fileName} من دلو idea-files...`);
+              const { data: fileData, error: fileError } = await supabase.storage
+                .from('idea-files')
+                .download(fileName);
+                
+              if (fileError) {
+                console.error(`خطأ في تنزيل الملف ${fileName}:`, fileError);
+                continue;
+              }
+              
+              if (!fileData) {
+                console.error(`الملف ${fileName} غير موجود أو فارغ`);
+                continue;
+              }
+              
+              console.log(`تم تنزيل الملف ${fileName} بنجاح، حجم الملف: ${fileData.size} بايت`);
+              
+              // إضافة الملف إلى الملف المضغوط
+              supportingFolder.file(file.name, fileData);
+              supportingFilesProcessed++;
+              console.log(`تمت إضافة الملف الداعم ${file.name} إلى الملف المضغوط`);
+            } catch (fileErr) {
+              console.error(`خطأ في معالجة الملف الداعم ${file.name}:`, fileErr);
+            }
+          }
+        } catch (supportingFilesError) {
+          console.error("خطأ في معالجة الملفات الداعمة:", supportingFilesError);
+        }
+      } else {
+        console.log("لا توجد ملفات داعمة للمعالجة");
+      }
+      
+      // 13. مرفقات التعليقات (إذا كانت موجودة)
+      console.log("13. معالجة مرفقات التعليقات...");
       let attachmentsProcessed = 0;
       const commentsWithAttachments = commentsData.filter(comment => comment.attachment_url);
       
       if (commentsWithAttachments.length > 0) {
-        console.log("Processing comment attachments:", commentsWithAttachments.length);
-        const commentAttachmentsInfoText = "مرفقات التعليقات:\n\n" + 
-          commentsWithAttachments.map((comment, index) => 
-            `${index + 1}. ${comment.attachment_name || 'ملف مرفق'}: ${comment.attachment_url}`
-          ).join("\n");
+        console.log(`عدد التعليقات مع مرفقات: ${commentsWithAttachments.length}`);
         
-        attachmentsFolder.file("_comment_attachments_info.txt", commentAttachmentsInfoText);
-        
-        // استخدام async/await في قائمة الوعود
-        for (const comment of commentsWithAttachments) {
-          try {
-            if (!comment.attachment_url) {
-              console.log("Skipping comment with no attachment URL");
-              continue;
-            }
-            
-            console.log("Downloading comment attachment:", comment.attachment_url);
-            const fileName = getFileNameFromPath(comment.attachment_url);
-            console.log("Extracted filename:", fileName);
-            
-            // تنزيل الملف من التخزين
-            const { data: fileData, error: fileError } = await supabase.storage
-              .from('attachments')
-              .download(fileName);
-              
-            if (fileError) {
-              console.error("Error downloading comment attachment:", fileError);
-              continue;
-            }
-            
-            if (fileData) {
-              attachmentsFolder.file(`comments/${comment.attachment_name || fileName}`, fileData);
-              attachmentsProcessed++;
-              console.log("Added comment attachment to zip:", comment.attachment_name || fileName);
-            }
-          } catch (fileErr) {
-            console.error("Error processing comment attachment:", fileErr);
+        try {
+          const commentAttachmentsInfoText = "مرفقات التعليقات:\n\n" + 
+            commentsWithAttachments.map((comment, index) => 
+              `${index + 1}. ${comment.attachment_name || 'ملف مرفق'}: ${comment.attachment_url}`
+            ).join("\n");
+          
+          attachmentsFolder.file("_comment_attachments_info.txt", commentAttachmentsInfoText);
+          console.log("تم إنشاء ملف معلومات مرفقات التعليقات بنجاح");
+          
+          // إنشاء مجلد لمرفقات التعليقات
+          const commentsFolder = attachmentsFolder.folder("comments");
+          if (!commentsFolder) {
+            console.error("فشل في إنشاء مجلد مرفقات التعليقات");
+            throw new Error("فشل في إنشاء مجلد مرفقات التعليقات");
           }
+          
+          console.log("تم إنشاء مجلد مرفقات التعليقات بنجاح");
+          
+          // التحقق من محتويات دلو التخزين attachments
+          console.log("جاري التحقق من محتويات دلو attachments...");
+          const { data: bucketFiles, error: bucketFilesError } = await supabase.storage
+            .from('attachments')
+            .list();
+          
+          if (bucketFilesError) {
+            console.error("خطأ في جلب قائمة الملفات من دلو attachments:", bucketFilesError);
+          } else {
+            console.log("الملفات الموجودة في دلو attachments:", bucketFiles.map(f => f.name).join(", "));
+          }
+          
+          // استخدام async/await في قائمة الوعود
+          for (const comment of commentsWithAttachments) {
+            try {
+              if (!comment.attachment_url) {
+                console.log("تخطي تعليق بدون رابط مرفق");
+                continue;
+              }
+              
+              console.log("معالجة مرفق التعليق:", comment.attachment_url);
+              
+              const fileName = getFileNameFromPath(comment.attachment_url);
+              console.log("اسم الملف المستخرج:", fileName);
+              
+              // تنزيل الملف من التخزين
+              console.log(`محاولة تنزيل الملف ${fileName} من دلو attachments...`);
+              const { data: fileData, error: fileError } = await supabase.storage
+                .from('attachments')
+                .download(fileName);
+                
+              if (fileError) {
+                console.error(`خطأ في تنزيل مرفق التعليق ${fileName}:`, fileError);
+                continue;
+              }
+              
+              if (!fileData) {
+                console.error(`مرفق التعليق ${fileName} غير موجود أو فارغ`);
+                continue;
+              }
+              
+              console.log(`تم تنزيل مرفق التعليق ${fileName} بنجاح، حجم الملف: ${fileData.size} بايت`);
+              
+              // إضافة الملف إلى الملف المضغوط
+              commentsFolder.file(comment.attachment_name || fileName, fileData);
+              attachmentsProcessed++;
+              console.log(`تمت إضافة مرفق التعليق ${comment.attachment_name || fileName} إلى الملف المضغوط`);
+            } catch (fileErr) {
+              console.error(`خطأ في معالجة مرفق التعليق:`, fileErr);
+            }
+          }
+        } catch (attachmentsError) {
+          console.error("خطأ في معالجة مرفقات التعليقات:", attachmentsError);
         }
       } else {
-        console.log("No comment attachments to process");
+        console.log("لا توجد مرفقات تعليقات للمعالجة");
       }
       
-      console.log(`Processed ${supportingFilesProcessed} supporting files and ${attachmentsProcessed} comment attachments`);
+      console.log(`تمت معالجة ${supportingFilesProcessed} ملف داعم و ${attachmentsProcessed} مرفق تعليق`);
       
-      // 12. إنشاء الملف المضغوط وتنزيله
-      console.log("Generating final zip file...");
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      console.log("Zip file generated, size:", zipBlob.size);
-      
-      const sanitizedTitle = sanitizeFileName(ideaTitle || 'فكرة');
-      const zipFileName = `فكرة-${sanitizedTitle}.zip`;
-      console.log("Saving zip file as:", zipFileName);
-      
-      saveAs(zipBlob, zipFileName);
-      
-      toast.success("تم تحضير الملف المضغوط بنجاح");
-      console.log("Download process completed successfully");
+      // 14. إنشاء الملف المضغوط وتنزيله
+      console.log("14. جاري توليد الملف المضغوط النهائي...");
+      try {
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        console.log("تم توليد الملف المضغوط، الحجم:", zipBlob.size, "بايت");
+        
+        if (zipBlob.size === 0) {
+          console.error("الملف المضغوط فارغ (حجمه صفر بايت)");
+          throw new Error("الملف المضغوط فارغ");
+        }
+        
+        const sanitizedTitle = sanitizeFileName(ideaTitle || 'فكرة');
+        const zipFileName = `فكرة-${sanitizedTitle}.zip`;
+        console.log("جاري حفظ الملف المضغوط باسم:", zipFileName);
+        
+        try {
+          saveAs(zipBlob, zipFileName);
+          console.log("تم استدعاء وظيفة saveAs بنجاح");
+        } catch (saveError) {
+          console.error("خطأ في حفظ الملف:", saveError);
+          throw new Error(`فشل في حفظ الملف المضغوط: ${saveError.message}`);
+        }
+        
+        toast.success("تم تحضير الملف المضغوط بنجاح");
+        console.log("اكتملت عملية التنزيل بنجاح");
+      } catch (zipError) {
+        console.error("خطأ في إنشاء أو حفظ الملف المضغوط:", zipError);
+        throw new Error(`فشل في إنشاء أو حفظ الملف المضغوط: ${zipError.message}`);
+      }
     } catch (error) {
-      console.error("Error preparing zip file:", error);
-      toast.error("حدث خطأ أثناء تحضير الملف المضغوط");
+      console.error("=== حدث خطأ أثناء عملية التنزيل ===", error);
+      toast.error(`حدث خطأ أثناء تحضير الملف المضغوط: ${error.message || "خطأ غير معروف"}`);
     } finally {
       setIsLoading(false);
+      console.log("=== انتهت عملية التنزيل ===");
     }
   };
   
@@ -355,12 +500,34 @@ ${decisionData.status === 'approved' ? `
   const getFileNameFromPath = (path: string): string => {
     // استخراج اسم الملف من المسار الكامل
     if (!path) return '';
+    
+    console.log("استخراج اسم الملف من المسار:", path);
+    
+    // تجربة استخراج اسم الملف من URL كامل
+    if (path.includes('https://')) {
+      try {
+        const url = new URL(path);
+        const pathParts = url.pathname.split('/');
+        const extractedName = pathParts[pathParts.length - 1];
+        console.log("اسم الملف المستخرج من URL:", extractedName);
+        return extractedName;
+      } catch (e) {
+        console.error("فشل في استخراج اسم الملف من URL:", e);
+      }
+    }
+    
+    // الطريقة البديلة: تقسيم المسار بناءً على '/'
     const parts = path.split('/');
-    return parts[parts.length - 1];
+    const extractedName = parts[parts.length - 1];
+    console.log("اسم الملف المستخرج بالطريقة البديلة:", extractedName);
+    return extractedName;
   };
   
   const sanitizeFileName = (fileName: string): string => {
-    return fileName.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
+    const sanitized = fileName.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
+    console.log("اسم الملف قبل التنقية:", fileName);
+    console.log("اسم الملف بعد التنقية:", sanitized);
+    return sanitized;
   };
   
   return (
