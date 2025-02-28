@@ -142,7 +142,7 @@ export const IdeaExportDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="w-full max-w-3xl mx-auto p-6 h-auto overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-xl">تصدير الفكرة</DialogTitle>
           <DialogDescription>
