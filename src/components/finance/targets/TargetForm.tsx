@@ -6,22 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Save } from "lucide-react";
-
-type BudgetItem = {
-  id: string;
-  name: string;
-};
-
-type FinancialTarget = {
-  id: string;
-  year: number;
-  quarter: number;
-  type: string;
-  target_amount: number;
-  actual_amount: number;
-  budget_item_id?: string;
-  resource_source?: string;
-};
+import { FinancialTarget, BudgetItem } from "./TargetsDataService";
+import { TargetFormData } from "./hooks/useTargetFormState";
 
 type TargetFormProps = {
   budgetItems: BudgetItem[];
@@ -29,15 +15,7 @@ type TargetFormProps = {
   onSubmit: (e: React.FormEvent) => void;
   onUpdate: () => void;
   onCancel: () => void;
-  formData: {
-    year: number;
-    quarter: number;
-    type: string;
-    target_amount: number;
-    actual_amount: number;
-    budget_item_id?: string;
-    resource_source?: string;
-  };
+  formData: TargetFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
 };
