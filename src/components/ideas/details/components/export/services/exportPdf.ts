@@ -16,7 +16,8 @@ export const exportToPdf = async (data: any, ideaTitle: string, exportOptions: s
   try {
     console.log("Exporting idea to PDF format...");
     
-    // إنشاء مستند PDF جديد (باتجاه RTL)
+    // تحميل خط دعم اللغة العربية
+    // نحتاج إلى تضمين خط عربي
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -26,9 +27,8 @@ export const exportToPdf = async (data: any, ideaTitle: string, exportOptions: s
     // إضافة دعم اللغة العربية
     doc.setR2L(true);
     
-    // تعيين خط أفضل للعربية إن أمكن
-    // تتوقع مكتبة jsPDF أن تكون الخطوط متاحة
-    // تعيين حجم الخط وتنسيقه
+    // استخدام خط افتراضي
+    doc.setFont("helvetica");
     doc.setFontSize(14);
     
     // إعداد المتغيرات
@@ -48,7 +48,7 @@ export const exportToPdf = async (data: any, ideaTitle: string, exportOptions: s
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     
-    // إضافة تفاصيل الفكرة
+    // إضافة المحتوى مع معالجة النص العربي
     const addMultiLineText = (text: string) => {
       // تقسيم النص إلى أسطر مناسبة لعرض الصفحة
       const textLines = doc.splitTextToSize(text, pageWidth - (margin * 2));
