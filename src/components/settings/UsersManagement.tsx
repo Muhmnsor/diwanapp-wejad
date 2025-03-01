@@ -1,3 +1,4 @@
+
 import { UsersTable } from "@/components/users/UsersTable";
 import { UsersHeader } from "@/components/users/UsersHeader";
 import { useUsersData } from "@/components/users/hooks/useUsersData";
@@ -13,8 +14,15 @@ export const UsersManagement = () => {
   return (
     <Card>
       <CardContent className="pt-6" dir="rtl">
-        <UsersHeader roles={roles} onUserCreated={refetchUsers} />
-        <UsersTable users={users} onUserDeleted={refetchUsers} />
+        <UsersHeader 
+          roles={roles} 
+          users={users} 
+          onUserCreated={refetchUsers} 
+        />
+        <UsersTable 
+          users={users} 
+          onUserDeleted={refetchUsers} 
+        />
       </CardContent>
     </Card>
   );
