@@ -8,9 +8,12 @@ interface FormHeaderProps {
 }
 
 export const FormHeader: React.FC<FormHeaderProps> = ({ editingTarget }) => {
+  // تحديد العنوان بناءً على ما إذا كنا نعدل مستهدفًا موجودًا أم نضيف مستهدفًا جديدًا
+  const title = editingTarget ? "تعديل المستهدف" : "إضافة مستهدف جديد";
+  
   return (
     <CardHeader>
-      <CardTitle>{editingTarget ? "تعديل المستهدف" : "إضافة مستهدف جديد"}</CardTitle>
+      <CardTitle>{title}</CardTitle>
     </CardHeader>
   );
 };

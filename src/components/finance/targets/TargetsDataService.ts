@@ -5,6 +5,7 @@ export type FinancialTarget = {
   id: string;
   year: number;
   quarter: number;
+  period_type: string;
   type: string;
   target_amount: number;
   actual_amount: number;
@@ -22,6 +23,7 @@ export async function fetchTargets(): Promise<FinancialTarget[]> {
     .from("financial_targets")
     .select("*")
     .order("year", { ascending: false })
+    .order("period_type", { ascending: true })
     .order("quarter", { ascending: true })
     .order("type", { ascending: true });
 
@@ -44,6 +46,7 @@ export async function addTarget(target: Omit<FinancialTarget, "id">) {
     .insert([{
       year: target.year,
       quarter: target.quarter,
+      period_type: target.period_type,
       type: target.type,
       target_amount: target.target_amount,
       actual_amount: target.actual_amount || 0,
@@ -62,6 +65,7 @@ export async function updateTarget(id: string, target: Omit<FinancialTarget, "id
     .update({
       year: target.year,
       quarter: target.quarter,
+      period_type: target.period_type,
       type: target.type,
       target_amount: target.target_amount,
       actual_amount: target.actual_amount || 0,
@@ -115,7 +119,7 @@ export async function updateActualAmounts(targetsData: FinancialTarget[]): Promi
       
       // تحديد الشهور بناءً على الربع أو إذا كان سنويًا
       let months: number[] = [];
-      if (target.quarter === 0) {
+      if (target.period_type === "yearly") {
         // مستهدف سنوي: جميع الشهور
         months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
       } else {

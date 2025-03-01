@@ -5,6 +5,7 @@ import { FinancialTarget } from "../TargetsDataService";
 export type TargetFormData = {
   year: number;
   quarter: number;
+  period_type: string;
   type: string;
   target_amount: number;
   actual_amount: number;
@@ -20,6 +21,7 @@ export function useTargetFormState() {
   const [formData, setFormData] = useState<TargetFormData>({
     year: new Date().getFullYear(),
     quarter: 1,
+    period_type: "quarterly",
     type: "موارد",
     target_amount: 0,
     actual_amount: 0,
@@ -38,16 +40,49 @@ export function useTargetFormState() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData({
-      ...formData,
-      [name]: value === "none" ? undefined : value,
-    });
+    if (name === "period_type") {
+      // إذا تم تغيير نوع الفترة، نحدث قيمة الربع تلقائيًا
+      if (value === "yearly") {
+        setFormData({
+          ...formData,
+          period_type: value,
+          quarter: 0
+        });
+      } else {
+        // إذا كان التغيير من سنوي إلى ربعي، نضبط الربع إلى 1
+        if (formData.period_type === "yearly") {
+          setFormData({
+            ...formData,
+            period_type: value,
+            quarter: 1
+          });
+        } else {
+          // في حالة التغيير بين الأرباع
+          setFormData({
+            ...formData,
+            period_type: value
+          });
+        }
+      }
+    } else if (name === "quarter") {
+      // تحديث قيمة الربع
+      setFormData({
+        ...formData,
+        [name]: parseInt(value)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value === "none" ? undefined : value,
+      });
+    }
   };
 
   const resetForm = () => {
     setFormData({
       year: new Date().getFullYear(),
       quarter: 1,
+      period_type: "quarterly",
       type: "موارد",
       target_amount: 0,
       actual_amount: 0,
@@ -68,6 +103,7 @@ export function useTargetFormState() {
     setFormData({
       year: target.year,
       quarter: target.quarter,
+      period_type: target.period_type,
       type: target.type,
       target_amount: target.target_amount,
       actual_amount: target.actual_amount,

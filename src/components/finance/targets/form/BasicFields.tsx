@@ -30,23 +30,39 @@ export const BasicFields: React.FC<BasicFieldsProps> = ({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="quarter">الفترة</Label>
+        <Label htmlFor="period_type">نوع الفترة</Label>
         <Select
-          value={formData.quarter.toString()}
-          onValueChange={(value) => handleSelectChange("quarter", value)}
+          value={formData.period_type}
+          onValueChange={(value) => handleSelectChange("period_type", value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="اختر الفترة" />
+            <SelectValue placeholder="اختر نوع الفترة" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="0">سنوي</SelectItem>
-            <SelectItem value="1">الربع الأول</SelectItem>
-            <SelectItem value="2">الربع الثاني</SelectItem>
-            <SelectItem value="3">الربع الثالث</SelectItem>
-            <SelectItem value="4">الربع الرابع</SelectItem>
+            <SelectItem value="yearly">سنوي</SelectItem>
+            <SelectItem value="quarterly">ربع سنوي</SelectItem>
           </SelectContent>
         </Select>
       </div>
+      {formData.period_type === "quarterly" && (
+        <div className="space-y-2">
+          <Label htmlFor="quarter">الربع</Label>
+          <Select
+            value={formData.quarter.toString()}
+            onValueChange={(value) => handleSelectChange("quarter", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختر الربع" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">الربع الأول</SelectItem>
+              <SelectItem value="2">الربع الثاني</SelectItem>
+              <SelectItem value="3">الربع الثالث</SelectItem>
+              <SelectItem value="4">الربع الرابع</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="type">النوع</Label>
         <Select

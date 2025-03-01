@@ -946,6 +946,7 @@ export type Database = {
           budget_item_id: string | null
           created_at: string
           id: string
+          period_type: string
           quarter: number
           resource_source: string | null
           target_amount: number
@@ -958,6 +959,7 @@ export type Database = {
           budget_item_id?: string | null
           created_at?: string
           id?: string
+          period_type?: string
           quarter: number
           resource_source?: string | null
           target_amount?: number
@@ -970,6 +972,7 @@ export type Database = {
           budget_item_id?: string | null
           created_at?: string
           id?: string
+          period_type?: string
           quarter?: number
           resource_source?: string | null
           target_amount?: number
