@@ -175,7 +175,7 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
         
         <div className="space-y-2">
           <Label htmlFor="type">نوع المورد</Label>
-          <Select defaultValue="unbound" id="type">
+          <Select defaultValue="unbound">
             <SelectTrigger>
               <SelectValue placeholder="اختر نوع المورد" />
             </SelectTrigger>
