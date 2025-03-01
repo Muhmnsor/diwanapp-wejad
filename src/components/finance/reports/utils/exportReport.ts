@@ -1,5 +1,7 @@
+
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
+import { formatDate } from '@/utils/dateUtils';
 
 interface FinancialData {
   totalResources: number;
@@ -32,10 +34,10 @@ export const exportFinancialReport = async (
   } else if (financialData.timePeriod === 'current-quarter') {
     periodTitle = "الربع الحالي";
   } else if (financialData.timePeriod === 'custom' && financialData.startDate && financialData.endDate) {
-    const formatDate = (date: Date) => {
-      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-    };
-    periodTitle = `الفترة من ${formatDate(financialData.startDate)} إلى ${formatDate(financialData.endDate)}`;
+    // استخدام دالة formatDate لعرض التاريخ بالميلادي
+    const startDateFormatted = formatDate(financialData.startDate.toISOString());
+    const endDateFormatted = formatDate(financialData.endDate.toISOString());
+    periodTitle = `الفترة من ${startDateFormatted} إلى ${endDateFormatted}`;
   }
 
   try {
@@ -77,7 +79,7 @@ export const exportFinancialReport = async (
       const resourcesRows = financialData.resourcesData.map(resource => [
         resource.source,
         formatCurrency(resource.amount),
-        new Date(resource.date).toLocaleDateString('ar-SA'),
+        formatDate(resource.date), // استخدام دالة formatDate لتنسيق التاريخ بالميلادي
         resource.description || ''
       ]);
       
@@ -91,7 +93,7 @@ export const exportFinancialReport = async (
       const expensesRows = financialData.expensesData.map(expense => [
         expense.budget_item_name || 'غير محدد',
         formatCurrency(expense.amount),
-        new Date(expense.date).toLocaleDateString('ar-SA'),
+        formatDate(expense.date), // استخدام دالة formatDate لتنسيق التاريخ بالميلادي
         expense.beneficiary || '',
         expense.description || ''
       ]);
@@ -149,7 +151,7 @@ export const exportFinancialReport = async (
     };
     
     // تحويل المصنف إلى ملف بصيغة xlsx
-    const currentDate = new Date().toLocaleDateString('ar-SA').replace(/\//g, '-');
+    const currentDate = formatDate(new Date().toISOString()).replace(/\//g, '-'); // استخدام الصيغة الميلادية
     let fileName;
     
     switch (reportType) {
