@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Role } from "../types";
 import { Button } from "@/components/ui/button";
@@ -29,22 +30,26 @@ export const RoleList = ({
   const { data: roleUserCounts = {} } = useQuery({
     queryKey: ['role-user-counts'],
     queryFn: async () => {
+      // تصحيح استعلام Supabase للحصول على عدد المستخدمين لكل دور
       const { data, error } = await supabase
         .from('user_roles')
         .select('role_id, count')
-        .select('role_id, count(*)')
-        .groupBy('role_id');
-      
+
       if (error) {
         console.error('Error fetching role user counts:', error);
         return {};
       }
 
-      // تحويل البيانات إلى كائن مع معرف الدور كمفتاح وعدد المستخدمين كقيمة
-      return data.reduce((acc, item) => {
-        acc[item.role_id] = item.count;
-        return acc;
-      }, {});
+      // تجميع البيانات يدويًا لحساب عدد المستخدمين لكل دور
+      const countMap = {};
+      data.forEach(item => {
+        if (!countMap[item.role_id]) {
+          countMap[item.role_id] = 0;
+        }
+        countMap[item.role_id]++;
+      });
+
+      return countMap;
     }
   });
 
