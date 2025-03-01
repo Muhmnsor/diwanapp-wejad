@@ -11,10 +11,12 @@ const WebsiteManagement = () => {
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-3xl font-bold mb-8 text-center">إدارة الموقع الإلكتروني</h1>
         <Card className="w-full max-w-3xl mx-auto">
-          <CardContent className="p-8 flex flex-col items-center justify-center">
-            <Loader className="h-16 w-16 text-primary animate-spin mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">قيد التطوير</h2>
-            <p className="text-muted-foreground text-center">
+          <CardContent className="p-8 flex flex-col items-start justify-center text-right">
+            <div className="w-full flex justify-center mb-4">
+              <Loader className="h-16 w-16 text-primary animate-spin" />
+            </div>
+            <h2 className="text-2xl font-semibold mb-2 w-full text-center">قيد التطوير</h2>
+            <p className="text-muted-foreground w-full text-center">
               هذه الصفحة قيد التطوير حالياً. سيتم إطلاقها قريباً مع مجموعة كاملة من الميزات.
             </p>
           </CardContent>

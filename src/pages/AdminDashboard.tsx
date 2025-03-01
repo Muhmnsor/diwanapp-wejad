@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Database, ListChecks, Lightbulb, DollarSign, Globe, ShoppingCart, Users, Bell } from "lucide-react";
@@ -94,8 +95,10 @@ const AdminDashboard = () => {
                     className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() => navigate(app.path)}
                   >
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      <Icon className="w-12 h-12 text-primary" />
+                    <div className="flex flex-col items-start text-right space-y-4">
+                      <div className="w-full flex justify-end">
+                        <Icon className="w-12 h-12 text-primary" />
+                      </div>
                       <h2 className="text-xl font-semibold">{app.title}</h2>
                       <p className="text-gray-600">{app.description}</p>
                     </div>
@@ -116,10 +119,10 @@ const AdminDashboard = () => {
                   {userTasks.map(task => (
                     <div key={task.id} className="border-b pb-3 last:border-b-0">
                       <div className="flex justify-between items-start mb-1">
-                        <div className="font-medium">{task.title}</div>
                         <span className="text-sm text-muted-foreground">{task.dueDate}</span>
+                        <div className="font-medium text-right">{task.title}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground">{task.app}</div>
+                      <div className="text-sm text-muted-foreground text-right">{task.app}</div>
                     </div>
                   ))}
                 </div>
@@ -134,10 +137,10 @@ const AdminDashboard = () => {
                   {notifications.map(notification => (
                     <div key={notification.id} className="border-b pb-3 last:border-b-0">
                       <div className="flex justify-between items-start mb-1">
-                        <div className="font-medium">{notification.message}</div>
                         <span className="text-sm text-muted-foreground">{notification.time}</span>
+                        <div className="font-medium text-right">{notification.message}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground">{notification.app}</div>
+                      <div className="text-sm text-muted-foreground text-right">{notification.app}</div>
                     </div>
                   ))}
                 </div>
