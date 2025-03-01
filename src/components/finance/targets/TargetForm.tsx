@@ -70,15 +70,16 @@ export const TargetForm = ({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="quarter">الربع</Label>
+              <Label htmlFor="quarter">الفترة</Label>
               <Select 
                 value={formData.quarter.toString()} 
                 onValueChange={(value) => handleSelectChange("quarter", value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="اختر الربع" />
+                  <SelectValue placeholder="اختر الفترة" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="0">سنوي</SelectItem>
                   <SelectItem value="1">الربع الأول</SelectItem>
                   <SelectItem value="2">الربع الثاني</SelectItem>
                   <SelectItem value="3">الربع الثالث</SelectItem>
@@ -108,17 +109,6 @@ export const TargetForm = ({
                 name="target_amount"
                 type="number"
                 value={formData.target_amount}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="actual_amount">المبلغ المتحقق</Label>
-              <Input
-                id="actual_amount"
-                name="actual_amount"
-                type="number"
-                value={formData.actual_amount}
                 onChange={handleInputChange}
                 required
               />

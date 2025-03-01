@@ -32,6 +32,17 @@ export const TargetsTable = ({ targets, loading, onEdit, onDelete }: TargetsTabl
     return "text-red-600";
   };
 
+  const formatQuarter = (quarter: number) => {
+    switch (quarter) {
+      case 0: return "سنوي";
+      case 1: return "الربع الأول";
+      case 2: return "الربع الثاني";
+      case 3: return "الربع الثالث";
+      case 4: return "الربع الرابع";
+      default: return quarter.toString();
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-4">جاري تحميل البيانات...</div>;
   }
@@ -45,7 +56,7 @@ export const TargetsTable = ({ targets, loading, onEdit, onDelete }: TargetsTabl
       <TableHeader>
         <TableRow>
           <TableHead className="text-right">السنة</TableHead>
-          <TableHead className="text-right">الربع</TableHead>
+          <TableHead className="text-right">الفترة</TableHead>
           <TableHead className="text-right">النوع</TableHead>
           <TableHead className="text-right">المستهدف</TableHead>
           <TableHead className="text-right">المتحقق</TableHead>
@@ -57,7 +68,7 @@ export const TargetsTable = ({ targets, loading, onEdit, onDelete }: TargetsTabl
         {targets.map((target) => (
           <TableRow key={target.id}>
             <TableCell>{target.year}</TableCell>
-            <TableCell>{target.quarter}</TableCell>
+            <TableCell>{formatQuarter(target.quarter)}</TableCell>
             <TableCell>{target.type}</TableCell>
             <TableCell>{target.target_amount.toLocaleString()} ريال</TableCell>
             <TableCell>{target.actual_amount.toLocaleString()} ريال</TableCell>

@@ -45,7 +45,7 @@ export async function addTarget(target: Omit<FinancialTarget, "id">) {
       quarter: target.quarter,
       type: target.type,
       target_amount: target.target_amount,
-      actual_amount: target.actual_amount,
+      actual_amount: target.actual_amount || 0,
       budget_item_id: target.budget_item_id || null,
     }])
     .select();
@@ -62,7 +62,7 @@ export async function updateTarget(id: string, target: Omit<FinancialTarget, "id
       quarter: target.quarter,
       type: target.type,
       target_amount: target.target_amount,
-      actual_amount: target.actual_amount,
+      actual_amount: target.actual_amount || 0,
       budget_item_id: target.budget_item_id || null,
     })
     .eq("id", id);
@@ -108,19 +108,26 @@ export async function updateActualAmounts(targetsData: FinancialTarget[]): Promi
     // تحديث البيانات المتحققة لكل مستهدف
     const updatedTargets = targetsData.map(target => {
       const targetYear = target.year;
-      // تحويل الربع إلى شهور
-      const quarterMonths = {
-        1: [1, 2, 3],
-        2: [4, 5, 6],
-        3: [7, 8, 9],
-        4: [10, 11, 12]
-      };
-      const months = quarterMonths[target.quarter as 1 | 2 | 3 | 4];
-      
       let actualAmount = 0;
-
+      
+      // تحديد الشهور بناءً على الربع أو إذا كان سنويًا
+      let months: number[] = [];
+      if (target.quarter === 0) {
+        // مستهدف سنوي: جميع الشهور
+        months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+      } else {
+        // مستهدف ربعي
+        const quarterMonths = {
+          1: [1, 2, 3],
+          2: [4, 5, 6],
+          3: [7, 8, 9],
+          4: [10, 11, 12]
+        };
+        months = quarterMonths[target.quarter as 1 | 2 | 3 | 4];
+      }
+      
       if (target.type === "موارد" && resourcesData) {
-        // حساب مجموع الموارد في هذا الربع من السنة
+        // حساب مجموع الموارد في هذه الفترة
         resourcesData.forEach(resource => {
           const resourceDate = new Date(resource.date);
           const resourceYear = resourceDate.getFullYear();
@@ -131,8 +138,7 @@ export async function updateActualAmounts(targetsData: FinancialTarget[]): Promi
           }
         });
       } else if (target.type === "مصروفات" && expensesData) {
-        // حساب مجموع المصروفات في هذا الربع من السنة
-        // إذا كان هناك بند ميزانية مرتبط، نحسب فقط المصروفات المرتبطة بهذا البند
+        // حساب مجموع المصروفات في هذه الفترة
         expensesData.forEach(expense => {
           const expenseDate = new Date(expense.date);
           const expenseYear = expenseDate.getFullYear();
