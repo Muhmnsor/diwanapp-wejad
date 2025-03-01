@@ -103,44 +103,41 @@ export const ResourcesTable = () => {
           لا توجد موارد مالية مضافة حتى الآن
         </div>
       ) : (
-        <Table>
+        <Table dir="rtl">
           <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">التاريخ</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">المصدر</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">النوع</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">الجهة</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">المبلغ الإجمالي</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">الالتزامات</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">المبلغ الصافي</TableHead>
-              <TableHead className="text-center py-4 text-gray-700 font-semibold">الإجراءات</TableHead>
+            <TableRow>
+              <TableHead>التاريخ</TableHead>
+              <TableHead>المصدر</TableHead>
+              <TableHead>النوع</TableHead>
+              <TableHead>الجهة</TableHead>
+              <TableHead>المبلغ الإجمالي</TableHead>
+              <TableHead>الالتزامات</TableHead>
+              <TableHead>المبلغ الصافي</TableHead>
+              <TableHead>الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {resources.map((resource) => (
-              <TableRow 
-                key={resource.id}
-                className="hover:bg-gray-50 transition-colors"
-              >
-                <TableCell className="text-center py-4 text-gray-700">
+              <TableRow key={resource.id}>
+                <TableCell>
                   {formatDate(resource.date)}
                 </TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{resource.source}</TableCell>
-                <TableCell className="text-center py-4">
+                <TableCell>{resource.source}</TableCell>
+                <TableCell>
                   <Badge variant={resource.type === "bound" ? "outline" : "default"}>
                     {resource.type === "bound" ? "مقيد" : "غير مقيد"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{resource.entity}</TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{resource.total_amount.toLocaleString()} ريال</TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{resource.obligations_amount.toLocaleString()} ريال</TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{resource.net_amount.toLocaleString()} ريال</TableCell>
-                <TableCell className="text-center py-4">
-                  <div className="flex gap-2 justify-center">
-                    <Button variant="outline" size="icon" onClick={() => handleEdit(resource)}>
+                <TableCell>{resource.entity}</TableCell>
+                <TableCell>{resource.total_amount.toLocaleString()} ريال</TableCell>
+                <TableCell>{resource.obligations_amount.toLocaleString()} ريال</TableCell>
+                <TableCell>{resource.net_amount.toLocaleString()} ريال</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(resource)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleDelete(resource.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(resource.id)}>
                       <Trash className="h-4 w-4" />
                     </Button>
                   </div>

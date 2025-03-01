@@ -1,4 +1,3 @@
-
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { UserCog, Trash2 } from "lucide-react";
@@ -24,8 +23,8 @@ export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
   };
 
   return (
-    <TableRow className="hover:bg-gray-50 transition-colors">
-      <TableCell className="text-right py-4 text-gray-700">
+    <TableRow>
+      <TableCell className="text-right">
         <div className="space-y-1">
           <div className="font-medium">{user.username}</div>
           <div className="text-sm text-muted-foreground">
@@ -33,8 +32,8 @@ export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
           </div>
         </div>
       </TableCell>
-      <TableCell className="text-right py-4 text-gray-700">{user.lastLogin}</TableCell>
-      <TableCell className="text-center py-4">
+      <TableCell className="text-right">{user.lastLogin}</TableCell>
+      <TableCell className="text-center">
         <div className="flex gap-2 justify-center">
           <Button 
             variant="outline" 
@@ -44,7 +43,7 @@ export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
             <UserCog className="h-4 w-4" />
           </Button>
           <Button 
-            variant="outline" 
+            variant="destructive" 
             size="icon"
             onClick={onDelete}
           >

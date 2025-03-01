@@ -95,18 +95,18 @@ export const BudgetItemsTable = () => {
     <div className="border rounded-md">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50">
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">البند</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">النسبة المئوية</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">المبلغ المخصص</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">المصروفات</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">الرصيد</TableHead>
+          <TableRow>
+            <TableHead className="text-right">البند</TableHead>
+            <TableHead className="text-right">النسبة المئوية</TableHead>
+            <TableHead className="text-right">المبلغ المخصص</TableHead>
+            <TableHead className="text-right">المصروفات</TableHead>
+            <TableHead className="text-right">الرصيد</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {budgetItems.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+              <TableCell colSpan={5} className="text-center">
                 لا توجد بنود مسجلة بعد
               </TableCell>
             </TableRow>
@@ -119,19 +119,14 @@ export const BudgetItemsTable = () => {
                 item.default_percentage
               );
               return (
-                <TableRow 
-                  key={item.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <TableCell className="text-center py-4 text-gray-700">{item.name}</TableCell>
-                  <TableCell className="text-center py-4 text-gray-700">{item.default_percentage}%</TableCell>
-                  <TableCell className="text-center py-4 text-gray-700">{formatAmount(allocatedAmount)} ريال</TableCell>
-                  <TableCell className="text-center py-4 text-gray-700">{formatAmount(expensesAmount)} ريال</TableCell>
+                <TableRow key={item.id}>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.default_percentage}%</TableCell>
+                  <TableCell>{formatAmount(allocatedAmount)} ريال</TableCell>
+                  <TableCell>{formatAmount(expensesAmount)} ريال</TableCell>
                   <TableCell
                     className={
-                      balance < 0 
-                        ? "text-center py-4 text-red-500" 
-                        : "text-center py-4 text-green-500"
+                      balance < 0 ? "text-red-500" : "text-green-500"
                     }
                   >
                     {formatAmount(balance)} ريال

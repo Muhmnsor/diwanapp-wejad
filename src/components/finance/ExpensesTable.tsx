@@ -59,39 +59,36 @@ export const ExpensesTable = () => {
     <div className="border rounded-md">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50">
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">التاريخ</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">الوصف</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">البند</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">المستفيد</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">المبلغ</TableHead>
-            <TableHead className="text-center py-4 text-gray-700 font-semibold">الإجراءات</TableHead>
+          <TableRow>
+            <TableHead className="text-right">التاريخ</TableHead>
+            <TableHead className="text-right">الوصف</TableHead>
+            <TableHead className="text-right">البند</TableHead>
+            <TableHead className="text-right">المستفيد</TableHead>
+            <TableHead className="text-right">المبلغ</TableHead>
+            <TableHead className="text-right">الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {expenses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-4 text-gray-500">
+              <TableCell colSpan={6} className="text-center">
                 لا توجد مصروفات مسجلة بعد
               </TableCell>
             </TableRow>
           ) : (
             expenses.map((expense) => (
-              <TableRow 
-                key={expense.id}
-                className="hover:bg-gray-50 transition-colors"
-              >
-                <TableCell className="text-center py-4 text-gray-700">{formatDate(expense.date)}</TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{expense.description}</TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{getBudgetItemName(expense.budget_item_id)}</TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{expense.beneficiary || "غير محدد"}</TableCell>
-                <TableCell className="text-center py-4 text-gray-700">{expense.amount.toLocaleString()} ريال</TableCell>
-                <TableCell className="text-center py-4">
-                  <div className="flex gap-2 justify-center">
-                    <Button variant="outline" size="icon">
+              <TableRow key={expense.id}>
+                <TableCell>{formatDate(expense.date)}</TableCell>
+                <TableCell>{expense.description}</TableCell>
+                <TableCell>{getBudgetItemName(expense.budget_item_id)}</TableCell>
+                <TableCell>{expense.beneficiary || "غير محدد"}</TableCell>
+                <TableCell>{expense.amount.toLocaleString()} ريال</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" className="text-destructive">
+                    <Button variant="ghost" size="icon" className="text-destructive">
                       <Trash className="h-4 w-4" />
                     </Button>
                   </div>
