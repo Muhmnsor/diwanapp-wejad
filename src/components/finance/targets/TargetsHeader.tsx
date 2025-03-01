@@ -1,21 +1,22 @@
 
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 
-type TargetsHeaderProps = {
-  onAddNew: () => void;
-};
+export interface TargetsHeaderProps {
+  onOpenAddForm: () => void;
+}
 
-export const TargetsHeader = ({ onAddNew }: TargetsHeaderProps) => {
+export const TargetsHeader: React.FC<TargetsHeaderProps> = ({ onOpenAddForm }) => {
   return (
-    <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-bold">المستهدفات المالية</h2>
-      <Button 
-        onClick={onAddNew} 
-        className="flex items-center gap-2"
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-2xl font-bold text-primary">المستهدفات المالية</h2>
+      <Button
+        onClick={onOpenAddForm}
+        className="gap-2"
       >
-        <PlusCircle className="h-4 w-4" />
-        <span>إضافة مستهدف جديد</span>
+        <Plus className="h-4 w-4" />
+        <span>إضافة مستهدف</span>
       </Button>
     </div>
   );

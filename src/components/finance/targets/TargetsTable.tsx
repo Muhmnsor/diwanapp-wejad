@@ -25,7 +25,8 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
   budgetItems = [],
 }) => {
   const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(num);
+    // Using English locale to ensure English numbers
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(num);
   };
 
   const calculatePercentage = (actual: number, target: number) => {
@@ -51,35 +52,35 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>السنة</TableHead>
-          <TableHead>الفترة</TableHead>
-          {showResourceSource && <TableHead>نوع المورد</TableHead>}
-          {showBudgetItem && <TableHead>بند المصروفات</TableHead>}
-          <TableHead>المستهدف</TableHead>
-          <TableHead>المتحقق</TableHead>
-          <TableHead>نسبة التحقق</TableHead>
-          <TableHead>إجراءات</TableHead>
+          <TableHead className="text-center">السنة</TableHead>
+          <TableHead className="text-center">الفترة</TableHead>
+          {showResourceSource && <TableHead className="text-center">نوع المورد</TableHead>}
+          {showBudgetItem && <TableHead className="text-center">بند المصروفات</TableHead>}
+          <TableHead className="text-center">المستهدف</TableHead>
+          <TableHead className="text-center">المتحقق</TableHead>
+          <TableHead className="text-center">نسبة التحقق</TableHead>
+          <TableHead className="text-center">إجراءات</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {targets.map((target) => (
           <TableRow key={target.id}>
-            <TableCell>{target.year}</TableCell>
-            <TableCell>
+            <TableCell className="text-center">{target.year}</TableCell>
+            <TableCell className="text-center">
               {target.period_type === "yearly" 
                 ? "سنوي" 
                 : `الربع ${target.quarter}`}
             </TableCell>
             {showResourceSource && (
-              <TableCell>{target.resource_source || "غير محدد"}</TableCell>
+              <TableCell className="text-center">{target.resource_source || "غير محدد"}</TableCell>
             )}
             {showBudgetItem && (
-              <TableCell>{getBudgetItemName(target.budget_item_id)}</TableCell>
+              <TableCell className="text-center">{getBudgetItemName(target.budget_item_id)}</TableCell>
             )}
-            <TableCell>{formatNumber(target.target_amount)}</TableCell>
-            <TableCell>{formatNumber(target.actual_amount)}</TableCell>
+            <TableCell className="text-center">{formatNumber(target.target_amount)}</TableCell>
+            <TableCell className="text-center">{formatNumber(target.actual_amount)}</TableCell>
             <TableCell>
-              <div className="flex items-center">
+              <div className="flex items-center justify-center">
                 <div className="w-24 h-2 bg-gray-200 rounded mr-2">
                   <div
                     className={`h-full rounded ${
@@ -97,11 +98,11 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
                     }}
                   ></div>
                 </div>
-                <span>{calculatePercentage(target.actual_amount, target.target_amount)}%</span>
+                <span dir="ltr">{calculatePercentage(target.actual_amount, target.target_amount)}%</span>
               </div>
             </TableCell>
-            <TableCell>
-              <div className="flex space-x-2 space-x-reverse">
+            <TableCell className="text-center">
+              <div className="flex space-x-2 space-x-reverse justify-center">
                 <Button
                   variant="outline"
                   size="icon"

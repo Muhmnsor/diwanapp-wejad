@@ -26,11 +26,11 @@ export const TargetsContainer: React.FC<TargetsContainerProps> = ({
   return (
     <div className="space-y-6">
       {/* جدول مستهدفات الموارد */}
-      <Card>
-        <CardHeader>
-          <CardTitle>مستهدفات الموارد</CardTitle>
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="bg-muted/50">
+          <CardTitle className="text-center text-primary">مستهدفات الموارد</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <TargetsTable
             targets={resourceTargets}
             loading={loading}
@@ -42,11 +42,11 @@ export const TargetsContainer: React.FC<TargetsContainerProps> = ({
       </Card>
 
       {/* جدول مستهدفات المصروفات */}
-      <Card>
-        <CardHeader>
-          <CardTitle>مستهدفات المصروفات</CardTitle>
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="bg-muted/50">
+          <CardTitle className="text-center text-primary">مستهدفات المصروفات</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <TargetsTable
             targets={expenseTargets}
             loading={loading}
