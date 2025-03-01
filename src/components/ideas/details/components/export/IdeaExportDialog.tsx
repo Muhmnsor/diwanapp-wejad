@@ -8,9 +8,6 @@ import { ExportDialogFooter } from "./ExportDialogFooter";
 import { toast } from "sonner";
 import { IdeaExportDialogProps } from "./types";
 import { exportOptions, exportFormats } from "./constants";
-import * as JSZip from "jszip";
-import { saveAs } from "file-saver";
-import { supabase } from "@/integrations/supabase/client";
 
 export const IdeaExportDialog = ({
   open,
@@ -45,53 +42,26 @@ export const IdeaExportDialog = ({
   };
 
   const handleExport = async () => {
-    console.log("=== بدء عملية التصدير ===");
-    console.log("معرف الفكرة:", ideaId);
-    console.log("عنوان الفكرة:", ideaTitle);
-    console.log("الخيارات المحددة:", selectedOptions);
-    console.log("التنسيق المحدد:", selectedFormat);
+    console.log("Starting export process...");
+    console.log("Selected options:", selectedOptions);
+    console.log("Selected format:", selectedFormat);
     
     setIsExporting(true);
     
     try {
-      console.log("بدء التصدير...");
-      
-      if (!ideaId) {
-        throw new Error("معرف الفكرة غير محدد");
-      }
-      
-      if (!ideaTitle) {
-        console.warn("عنوان الفكرة غير محدد، سيتم استخدام عنوان افتراضي");
-      }
-      
       await exportIdea({
         ideaId,
-        ideaTitle: ideaTitle || "فكرة",
+        ideaTitle,
         exportOptions: selectedOptions,
         exportFormat: selectedFormat,
       });
       
       toast.success("تم تصدير الفكرة بنجاح");
-      console.log("=== اكتملت عملية التصدير بنجاح ===");
-      
-      // إغلاق النافذة بعد 1 ثانية للسماح للمستخدم برؤية رسالة النجاح
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 1000);
+      console.log("Export completed successfully");
+      onOpenChange(false);
     } catch (error) {
-      console.error("خطأ أثناء تصدير الفكرة:", error);
-      
-      let errorMessage = "حدث خطأ أثناء تصدير الفكرة";
-      
-      if (error instanceof Error) {
-        errorMessage += `: ${error.message}`;
-        console.error("تفاصيل الخطأ:", error.stack);
-      } else {
-        errorMessage += ": خطأ غير معروف";
-        console.error("خطأ غير معروف:", error);
-      }
-      
-      toast.error(errorMessage);
+      console.error("Error exporting idea:", error);
+      toast.error(`حدث خطأ أثناء تصدير الفكرة: ${error.message || "خطأ غير معروف"}`);
     } finally {
       setIsExporting(false);
     }
