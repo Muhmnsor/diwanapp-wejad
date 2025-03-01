@@ -42,7 +42,12 @@ export const IdeaExportDialog = ({
   };
 
   const handleExport = async () => {
+    console.log("Starting export process...");
+    console.log("Selected options:", selectedOptions);
+    console.log("Selected format:", selectedFormat);
+    
     setIsExporting(true);
+    
     try {
       await exportIdea({
         ideaId,
@@ -52,10 +57,11 @@ export const IdeaExportDialog = ({
       });
       
       toast.success("تم تصدير الفكرة بنجاح");
+      console.log("Export completed successfully");
       onOpenChange(false);
     } catch (error) {
       console.error("Error exporting idea:", error);
-      toast.error("حدث خطأ أثناء تصدير الفكرة");
+      toast.error(`حدث خطأ أثناء تصدير الفكرة: ${error.message || "خطأ غير معروف"}`);
     } finally {
       setIsExporting(false);
     }

@@ -66,11 +66,11 @@ export const fetchIdeaData = async (ideaId: string, options: string[]) => {
   // Fetch decision if requested
   if (options.includes("decision")) {
     console.log("Fetching decision data...");
+    // تعديل الاستعلام ليتناسب مع بنية قاعدة البيانات الفعلية
     const { data: decisionData, error: decisionError } = await supabase
       .from("idea_decisions")
       .select(`
-        *,
-        decision_maker:created_by(email)
+        *
       `)
       .eq("idea_id", ideaId)
       .maybeSingle();
@@ -78,6 +78,19 @@ export const fetchIdeaData = async (ideaId: string, options: string[]) => {
     if (decisionError) {
       console.error("Error fetching decision:", decisionError);
       throw new Error(`Failed to fetch decision data: ${decisionError.message}`);
+    }
+    
+    // إذا وجدنا بيانات القرار، سنحاول الحصول على معلومات المستخدم الذي اتخذ القرار
+    if (decisionData && decisionData.created_by) {
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("email")
+        .eq("id", decisionData.created_by)
+        .maybeSingle();
+        
+      if (!userError && userData) {
+        decisionData.decision_maker = { email: userData.email };
+      }
     }
     
     data.decision = decisionData;
