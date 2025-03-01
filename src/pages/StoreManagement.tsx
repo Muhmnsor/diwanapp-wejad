@@ -11,7 +11,7 @@ const StoreManagement = () => {
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-3xl font-bold mb-8 text-center">إدارة المتجر الإلكتروني</h1>
         <Card className="w-full max-w-3xl mx-auto">
-          <CardContent className="p-8 flex flex-col items-start justify-center text-right">
+          <CardContent className="p-8 flex flex-col items-center justify-center text-center">
             <div className="w-full flex justify-center mb-4">
               <Loader className="h-16 w-16 text-primary animate-spin" />
             </div>

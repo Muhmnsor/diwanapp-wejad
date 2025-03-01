@@ -95,8 +95,8 @@ const AdminDashboard = () => {
                     className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() => navigate(app.path)}
                   >
-                    <div className="flex flex-col items-start text-right space-y-4">
-                      <div className="w-full flex justify-end">
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      <div className="w-full flex justify-center">
                         <Icon className="w-12 h-12 text-primary" />
                       </div>
                       <h2 className="text-xl font-semibold">{app.title}</h2>
@@ -111,36 +111,36 @@ const AdminDashboard = () => {
           <TabsContent value="personal" className="mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Card className="p-6">
-                <div className="flex items-center mb-4">
+                <div className="flex items-center mb-4 justify-center">
                   <ListChecks className="w-6 h-6 text-primary ml-2" />
                   <h2 className="text-xl font-semibold">المهام المطلوبة</h2>
                 </div>
                 <div className="space-y-4">
                   {userTasks.map(task => (
                     <div key={task.id} className="border-b pb-3 last:border-b-0">
-                      <div className="flex justify-between items-start mb-1">
+                      <div className="flex justify-between items-center mb-1">
                         <span className="text-sm text-muted-foreground">{task.dueDate}</span>
-                        <div className="font-medium text-right">{task.title}</div>
+                        <div className="font-medium text-center">{task.title}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground text-right">{task.app}</div>
+                      <div className="text-sm text-muted-foreground text-center">{task.app}</div>
                     </div>
                   ))}
                 </div>
               </Card>
               
               <Card className="p-6">
-                <div className="flex items-center mb-4">
+                <div className="flex items-center mb-4 justify-center">
                   <Bell className="w-6 h-6 text-primary ml-2" />
                   <h2 className="text-xl font-semibold">آخر الإشعارات</h2>
                 </div>
                 <div className="space-y-4">
                   {notifications.map(notification => (
                     <div key={notification.id} className="border-b pb-3 last:border-b-0">
-                      <div className="flex justify-between items-start mb-1">
+                      <div className="flex justify-between items-center mb-1">
                         <span className="text-sm text-muted-foreground">{notification.time}</span>
-                        <div className="font-medium text-right">{notification.message}</div>
+                        <div className="font-medium text-center">{notification.message}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground text-right">{notification.app}</div>
+                      <div className="text-sm text-muted-foreground text-center">{notification.app}</div>
                     </div>
                   ))}
                 </div>
