@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { IdeaCountdown } from "./components/IdeaCountdown";
 import { StatusBadge } from "./components/StatusBadge";
@@ -31,11 +30,11 @@ export const IdeaMetadata = ({
     // يمكن إضافة أي منطق إضافي هنا بعد نجاح عملية التمديد
     console.log("Discussion period extended successfully");
   };
-  return <div className="bg-white rounded-lg shadow-sm p-2 sm:p-4 border border-purple-100 my-[7px]">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-4">
-        <h1 className="text-lg sm:text-xl font-bold text-purple-800 truncate">{title}</h1>
+  return <div className="bg-white rounded-lg shadow-sm p-4 border border-purple-100 my-[7px]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="text-xl font-bold text-purple-800 truncate">{title}</h1>
         
-        <div className="flex items-center gap-1 sm:gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <IdeaCountdown discussion_period={discussion_period} created_at={created_at} ideaId={id} />
           <ExtendButton onClick={handleExtendDialogOpen} />
           <StatusBadge status={status} ideaId={id} />
