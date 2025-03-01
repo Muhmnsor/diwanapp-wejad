@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Database, ListChecks, Lightbulb, DollarSign, Globe, ShoppingCart, Users, Bell } from "lucide-react";
@@ -60,7 +59,6 @@ const AdminDashboard = () => {
     }
   ];
 
-  // Sample user tasks and notifications - in real implementation these would come from an API
   const userTasks = [
     { id: 1, title: "مراجعة تقرير الفعالية", dueDate: "اليوم", app: "إدارة الفعاليات" },
     { id: 2, title: "تحديث محتوى الموقع", dueDate: "غداً", app: "الموقع الإلكتروني" },
@@ -109,7 +107,6 @@ const AdminDashboard = () => {
           
           <TabsContent value="personal" className="mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* المهام الشخصية */}
               <Card className="p-6">
                 <div className="flex items-center mb-4">
                   <ListChecks className="w-6 h-6 text-primary ml-2" />
@@ -128,7 +125,6 @@ const AdminDashboard = () => {
                 </div>
               </Card>
               
-              {/* الإشعارات */}
               <Card className="p-6">
                 <div className="flex items-center mb-4">
                   <Bell className="w-6 h-6 text-primary ml-2" />
