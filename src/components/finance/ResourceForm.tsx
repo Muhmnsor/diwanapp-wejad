@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,31 +14,56 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-
-// البنود الافتراضية ونسبها المئوية
-const defaultBudgetItems = [
-  { id: 1, name: "الرواتب", percentage: 15.5 },
-  { id: 2, name: "التشغيل", percentage: 11.3 },
-  { id: 3, name: "العقود", percentage: 25.9 },
-  { id: 4, name: "التسويق", percentage: 8.4 },
-  { id: 5, name: "تنفيذ البرامج", percentage: 39 },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResourceFormProps {
   onCancel: () => void;
   onSubmit: () => void;
 }
 
+interface BudgetItem {
+  id: string;
+  name: string;
+  percentage: number;
+  value: number;
+}
+
 export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [useDefaultPercentages, setUseDefaultPercentages] = useState(true);
   const [totalAmount, setTotalAmount] = useState<number | "">("");
   const [obligationsAmount, setObligationsAmount] = useState<number | "">(0);
-  const [budgetItems, setBudgetItems] = useState(
-    defaultBudgetItems.map((item) => ({
-      ...item,
-      value: 0, // القيمة المحسوبة بالريال
-    }))
-  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  // جلب بنود الميزانية من قاعدة البيانات
+  useEffect(() => {
+    const fetchBudgetItems = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('budget_items')
+          .select('id, name, default_percentage');
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          const items = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            percentage: item.default_percentage,
+            value: 0
+          }));
+          setBudgetItems(items);
+        }
+      } catch (error) {
+        console.error('Error fetching budget items:', error);
+        toast.error('حدث خطأ أثناء جلب بنود الميزانية');
+      }
+    };
+
+    fetchBudgetItems();
+  }, []);
 
   // حساب القيم بناءً على النسب والمبلغ الإجمالي
   const calculateValues = (
@@ -49,9 +74,9 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
     const netAmount = total - obligations;
     
     // حساب قيمة كل بند بناءً على النسبة
-    return defaultBudgetItems.map((item) => ({
+    return budgetItems.map((item) => ({
       ...item,
-      percentage: useDefaults ? item.percentage : 0,
+      percentage: useDefaults ? item.percentage : item.percentage,
       value: useDefaults
         ? parseFloat(((netAmount * item.percentage) / 100).toFixed(2))
         : 0,
@@ -92,7 +117,7 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
 
   // تغيير نسبة بند معين (في حالة الإدخال اليدوي)
   const handleItemPercentageChange = (
-    id: number,
+    id: string,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const newPercentage = parseFloat(e.target.value);
@@ -128,7 +153,7 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
   const isValidPercentages = Math.round(totalPercentage) === 100;
 
   // عند تقديم النموذج
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // التحقق من إدخال البيانات الأساسية
@@ -142,27 +167,59 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
       toast.error("مجموع النسب المئوية يجب أن يكون 100%");
       return;
     }
+
+    setIsLoading(true);
     
-    // بناء كائن البيانات للإرسال
-    const resourceData = {
-      date: new Date().toISOString().split("T")[0],
-      source: (document.getElementById("source") as HTMLInputElement).value,
-      type: (document.getElementById("type") as HTMLSelectElement).value,
-      entity: (document.getElementById("entity") as HTMLInputElement).value,
-      totalAmount,
-      obligationsAmount: typeof obligationsAmount === "number" ? obligationsAmount : 0,
-      netAmount: totalAmount - (typeof obligationsAmount === "number" ? obligationsAmount : 0),
-      budgetItems: budgetItems.map(({ id, name, percentage, value }) => ({
-        id,
-        name,
-        percentage,
-        value,
-      })),
-    };
-    
-    console.log("بيانات المورد المضاف:", resourceData);
-    toast.success("تم إضافة المورد بنجاح");
-    onSubmit();
+    try {
+      const source = (document.getElementById("source") as HTMLInputElement).value;
+      const type = (document.getElementById("type") as HTMLSelectElement)?.value;
+      const entity = (document.getElementById("entity") as HTMLInputElement).value;
+      const netAmount = totalAmount - (typeof obligationsAmount === "number" ? obligationsAmount : 0);
+      
+      // 1. إضافة المورد المالي
+      const { data: resourceData, error: resourceError } = await supabase
+        .from('financial_resources')
+        .insert({
+          date: new Date().toISOString().split("T")[0],
+          source,
+          type,
+          entity,
+          total_amount: totalAmount,
+          obligations_amount: typeof obligationsAmount === "number" ? obligationsAmount : 0,
+          net_amount: netAmount
+        })
+        .select();
+
+      if (resourceError) throw resourceError;
+      
+      if (!resourceData || resourceData.length === 0) {
+        throw new Error('لم يتم إنشاء المورد بنجاح');
+      }
+      
+      const resourceId = resourceData[0].id;
+      
+      // 2. إضافة توزيعات البنود
+      const distributions = budgetItems.map(item => ({
+        resource_id: resourceId,
+        budget_item_id: item.id,
+        percentage: item.percentage,
+        amount: item.value
+      }));
+      
+      const { error: distributionError } = await supabase
+        .from('resource_distributions')
+        .insert(distributions);
+      
+      if (distributionError) throw distributionError;
+      
+      toast.success("تم إضافة المورد بنجاح");
+      onSubmit();
+    } catch (error: any) {
+      console.error("خطأ في حفظ المورد:", error);
+      toast.error(error.message || "حدث خطأ أثناء حفظ المورد");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -175,7 +232,7 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
         
         <div className="space-y-2">
           <Label htmlFor="type">نوع المورد</Label>
-          <Select defaultValue="unbound">
+          <Select defaultValue="unbound" id="type">
             <SelectTrigger>
               <SelectValue placeholder="اختر نوع المورد" />
             </SelectTrigger>
@@ -306,10 +363,12 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
       </div>
 
       <div className="flex gap-2 justify-end">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           إلغاء
         </Button>
-        <Button type="submit">إضافة المورد</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "جاري الحفظ..." : "إضافة المورد"}
+        </Button>
       </div>
     </form>
   );

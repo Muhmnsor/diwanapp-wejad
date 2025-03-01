@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,52 +9,89 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// بيانات تجريبية للبنود وأرصدتها
-const budgetItems = [
-  {
-    id: 1,
-    name: "الرواتب",
-    percentage: 15.5,
-    allocated: 350000,
-    spent: 240000,
-    remaining: 110000,
-  },
-  {
-    id: 2,
-    name: "التشغيل",
-    percentage: 11.3,
-    allocated: 260000,
-    spent: 180000,
-    remaining: 80000,
-  },
-  {
-    id: 3,
-    name: "العقود",
-    percentage: 25.9,
-    allocated: 610000,
-    spent: 420000,
-    remaining: 190000,
-  },
-  {
-    id: 4,
-    name: "التسويق",
-    percentage: 8.4,
-    allocated: 200000,
-    spent: 150000,
-    remaining: 50000,
-  },
-  {
-    id: 5,
-    name: "تنفيذ البرامج",
-    percentage: 39,
-    allocated: 930000,
-    spent: 490000,
-    remaining: 440000,
-  },
-];
+interface BudgetItem {
+  id: string;
+  name: string;
+  percentage: number;
+  allocated: number;
+  spent: number;
+  remaining: number;
+}
 
 export const BudgetItemsTable = () => {
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBudgetItemsData();
+  }, []);
+
+  const fetchBudgetItemsData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // 1. جلب بنود الميزانية
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('budget_items')
+        .select('id, name, default_percentage');
+      
+      if (itemsError) throw itemsError;
+      
+      // 2. جلب المصروفات لكل بند
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('budget_item_id, amount');
+      
+      if (expensesError) throw expensesError;
+      
+      // 3. جلب الموارد الموزعة على البنود
+      const { data: distributionsData, error: distributionsError } = await supabase
+        .from('resource_distributions')
+        .select('budget_item_id, amount');
+      
+      if (distributionsError) throw distributionsError;
+      
+      // حساب المبالغ المخصصة والمصروفة لكل بند
+      const budgetItemsWithAmounts = itemsData.map(item => {
+        // حساب إجمالي المخصص للبند من الموارد الموزعة
+        const allocated = distributionsData
+          .filter(dist => dist.budget_item_id === item.id)
+          .reduce((sum, dist) => sum + dist.amount, 0);
+        
+        // حساب إجمالي المصروفات من هذا البند
+        const spent = expensesData
+          .filter(exp => exp.budget_item_id === item.id)
+          .reduce((sum, exp) => sum + exp.amount, 0);
+        
+        // حساب المتبقي
+        const remaining = allocated - spent;
+        
+        return {
+          id: item.id,
+          name: item.name,
+          percentage: item.default_percentage,
+          allocated,
+          spent,
+          remaining
+        };
+      });
+      
+      setBudgetItems(budgetItemsWithAmounts);
+    } catch (error) {
+      console.error("Error fetching budget items data:", error);
+      toast.error("حدث خطأ أثناء جلب بيانات البنود");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center p-4">جاري تحميل البيانات...</div>;
+  }
+
   return (
     <div className="relative w-full overflow-auto">
       <Table dir="rtl">
@@ -70,7 +108,9 @@ export const BudgetItemsTable = () => {
         <TableBody>
           {budgetItems.map((item) => {
             // حساب نسبة الاستهلاك
-            const spentPercentage = Math.round((item.spent / item.allocated) * 100);
+            const spentPercentage = item.allocated > 0 
+              ? Math.round((item.spent / item.allocated) * 100)
+              : 0;
             
             // تحديد لون نسبة الاستهلاك بناءً على قيمتها
             let progressColor = "bg-green-500";

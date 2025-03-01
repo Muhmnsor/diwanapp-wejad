@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,102 +12,120 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-
-// بيانات البنود المتاحة للصرف منها
-const budgetItems = [
-  { id: 1, name: "الرواتب", balance: 110000 },
-  { id: 2, name: "التشغيل", balance: 80000 },
-  { id: 3, name: "العقود", balance: 190000 },
-  { id: 4, name: "التسويق", balance: 50000 },
-  { id: 5, name: "تنفيذ البرامج", balance: 440000 },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 interface ExpenseFormProps {
   onCancel: () => void;
   onSubmit: () => void;
 }
 
+interface BudgetItem {
+  id: string;
+  name: string;
+}
+
 export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
-  const [selectedItemId, setSelectedItemId] = useState<string>("");
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [amount, setAmount] = useState<number | "">("");
-  const [currentBalance, setCurrentBalance] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [beneficiary, setBeneficiary] = useState("");
-  
-  // التعامل مع تغيير البند المختار
-  const handleItemChange = (value: string) => {
-    setSelectedItemId(value);
-    const selectedItem = budgetItems.find((item) => item.id.toString() === value);
-    setCurrentBalance(selectedItem ? selectedItem.balance : null);
-  };
-  
-  // التعامل مع تغيير المبلغ
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === "" ? "" : parseFloat(e.target.value);
-    setAmount(value);
-  };
-  
-  // عند تقديم النموذج
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // التحقق من اختيار بند
-    if (!selectedItemId) {
-      toast.error("الرجاء اختيار البند المصروف منه");
-      return;
-    }
-    
-    // التحقق من إدخال مبلغ صحيح
-    if (typeof amount !== "number" || amount <= 0) {
-      toast.error("الرجاء إدخال مبلغ صحيح");
-      return;
-    }
-    
-    // التحقق من توفر الرصيد الكافي
-    if (currentBalance !== null && amount > currentBalance) {
-      toast.error("المبلغ المطلوب أكبر من الرصيد المتاح في هذا البند");
-      return;
-    }
-    
-    // بناء كائن البيانات للإرسال
-    const expenseData = {
-      date: new Date().toISOString().split("T")[0],
-      budgetItemId: selectedItemId,
-      budgetItemName: budgetItems.find((item) => item.id.toString() === selectedItemId)?.name,
-      amount,
-      description,
-      beneficiary,
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // جلب بنود الميزانية من قاعدة البيانات
+  useEffect(() => {
+    const fetchBudgetItems = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('budget_items')
+          .select('id, name');
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setBudgetItems(data);
+          // تحديد البند الأول كاختيار افتراضي إذا كان متوفراً
+          if (data.length > 0) {
+            setSelectedItemId(data[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching budget items:', error);
+        toast.error('حدث خطأ أثناء جلب بنود الميزانية');
+      }
     };
-    
-    console.log("بيانات المصروف المضاف:", expenseData);
-    toast.success("تم إضافة المصروف بنجاح");
-    onSubmit();
+
+    fetchBudgetItems();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // التحقق من إدخال المعلومات الضرورية
+    if (!selectedItemId || typeof amount !== "number" || amount <= 0 || !description) {
+      toast.error("الرجاء ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // إضافة المصروف إلى قاعدة البيانات
+      const { error } = await supabase
+        .from('expenses')
+        .insert({
+          date,
+          budget_item_id: selectedItemId,
+          amount,
+          description,
+          beneficiary: beneficiary || null
+        });
+
+      if (error) throw error;
+
+      toast.success("تم إضافة المصروف بنجاح");
+      onSubmit();
+    } catch (error: any) {
+      console.error("خطأ في حفظ المصروف:", error);
+      toast.error(error.message || "حدث خطأ أثناء حفظ المصروف");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="budgetItem">البند المصروف منه</Label>
-          <Select value={selectedItemId} onValueChange={handleItemChange}>
-            <SelectTrigger id="budgetItem">
+          <Label htmlFor="date">التاريخ</Label>
+          <Input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="budgetItem">البند</Label>
+          <Select value={selectedItemId || ""} onValueChange={setSelectedItemId}>
+            <SelectTrigger>
               <SelectValue placeholder="اختر البند" />
             </SelectTrigger>
             <SelectContent>
               {budgetItems.map((item) => (
-                <SelectItem key={item.id} value={item.id.toString()}>
-                  {item.name} - متاح: {item.balance.toLocaleString()} ريال
+                <SelectItem key={item.id} value={item.id}>
+                  {item.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {currentBalance !== null && (
-            <p className="text-sm text-muted-foreground mt-1">
-              الرصيد المتاح: {currentBalance.toLocaleString()} ريال
-            </p>
-          )}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="amount">المبلغ (ريال)</Label>
           <Input
@@ -116,43 +134,40 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
             min="0"
             step="0.01"
             value={amount}
-            onChange={handleAmountChange}
-            required
-          />
-          {typeof amount === "number" && currentBalance !== null && amount > currentBalance && (
-            <p className="text-sm text-red-500 mt-1">
-              المبلغ أكبر من الرصيد المتاح!
-            </p>
-          )}
-        </div>
-        
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="description">وصف المصروف</Label>
-          <Textarea
-            id="description"
-            placeholder="أدخل تفاصيل المصروف والغرض منه"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => setAmount(e.target.value === "" ? "" : parseFloat(e.target.value))}
             required
           />
         </div>
-        
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="beneficiary">المستفيد (اختياري)</Label>
+
+        <div className="space-y-2">
+          <Label htmlFor="beneficiary">المستفيد</Label>
           <Input
             id="beneficiary"
-            placeholder="الجهة أو الشخص المستفيد من المصروف"
+            placeholder="اسم الجهة أو الشخص المستفيد"
             value={beneficiary}
             onChange={(e) => setBeneficiary(e.target.value)}
           />
         </div>
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="description">وصف المصروف</Label>
+        <Textarea
+          id="description"
+          placeholder="وصف تفصيلي للمصروف"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required
+        />
+      </div>
+
       <div className="flex gap-2 justify-end">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           إلغاء
         </Button>
-        <Button type="submit">إضافة المصروف</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "جاري الحفظ..." : "إضافة المصروف"}
+        </Button>
       </div>
     </form>
   );

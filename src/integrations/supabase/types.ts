@@ -187,6 +187,27 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_items: {
+        Row: {
+          created_at: string
+          default_percentage: number
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          default_percentage: number
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          default_percentage?: number
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       certificate_signatures: {
         Row: {
           created_at: string
@@ -844,6 +865,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          beneficiary: string | null
+          budget_item_id: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+        }
+        Insert: {
+          amount: number
+          beneficiary?: string | null
+          budget_item_id: string
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          beneficiary?: string | null
+          budget_item_id?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_budget_item_id_fkey"
+            columns: ["budget_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_resources: {
+        Row: {
+          created_at: string
+          date: string
+          entity: string
+          id: string
+          net_amount: number
+          obligations_amount: number | null
+          source: string
+          total_amount: number
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          entity: string
+          id?: string
+          net_amount: number
+          obligations_amount?: number | null
+          source: string
+          total_amount: number
+          type: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          entity?: string
+          id?: string
+          net_amount?: number
+          obligations_amount?: number | null
+          source?: string
+          total_amount?: number
+          type?: string
+        }
+        Relationships: []
       }
       idea_categories: {
         Row: {
@@ -2173,6 +2268,48 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_distributions: {
+        Row: {
+          amount: number
+          budget_item_id: string
+          created_at: string
+          id: string
+          percentage: number
+          resource_id: string
+        }
+        Insert: {
+          amount: number
+          budget_item_id: string
+          created_at?: string
+          id?: string
+          percentage: number
+          resource_id: string
+        }
+        Update: {
+          amount?: number
+          budget_item_id?: string
+          created_at?: string
+          id?: string
+          percentage?: number
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_distributions_budget_item_id_fkey"
+            columns: ["budget_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_distributions_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "financial_resources"
             referencedColumns: ["id"]
           },
         ]

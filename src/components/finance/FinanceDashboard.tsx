@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -21,31 +22,118 @@ import {
 } from "recharts";
 import { Wallet, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { BudgetItemsTable } from "./BudgetItemsTable";
-
-// بيانات تجريبية للرسوم البيانية - سيتم استبدالها بالبيانات الفعلية لاحقًا
-const pieData = [
-  { name: "الرواتب", value: 15.5, color: "#8884d8" },
-  { name: "التشغيل", value: 11.3, color: "#82ca9d" },
-  { name: "العقود", value: 25.9, color: "#ffc658" },
-  { name: "التسويق", value: 8.4, color: "#ff8042" },
-  { name: "تنفيذ البرامج", value: 39, color: "#0088fe" },
-];
-
-const monthlyData = [
-  { name: "يناير", الموارد: 400000, المصروفات: 240000 },
-  { name: "فبراير", الموارد: 300000, المصروفات: 200000 },
-  { name: "مارس", الموارد: 500000, المصروفات: 300000 },
-  { name: "أبريل", الموارد: 280000, المصروفات: 220000 },
-  { name: "مايو", الموارد: 390000, المصروفات: 250000 },
-  { name: "يونيو", الموارد: 490000, المصروفات: 270000 },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const FinanceDashboard = () => {
-  // بيانات اجمالية تجريبية - ستكون مرتبطة بقاعدة البيانات لاحقًا
-  const totalResources = 2360000;
-  const totalExpenses = 1480000;
-  const remainingBalance = totalResources - totalExpenses;
-  const expensePercentage = Math.round((totalExpenses / totalResources) * 100);
+  const [dashboardData, setDashboardData] = useState({
+    totalResources: 0,
+    totalExpenses: 0,
+    remainingBalance: 0,
+    expensePercentage: 0,
+    transactionsCount: { resources: 0, expenses: 0 }
+  });
+  const [pieData, setPieData] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [monthlyData, setMonthlyData] = useState<{ name: string; الموارد: number; المصروفات: number }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ألوان ثابتة للرسم البياني الدائري
+  const pieColors = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088fe"];
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // 1. جلب إجمالي الموارد
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from('financial_resources')
+        .select('net_amount');
+      
+      if (resourcesError) throw resourcesError;
+      
+      // 2. جلب إجمالي المصروفات
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('amount');
+      
+      if (expensesError) throw expensesError;
+      
+      // 3. جلب بيانات البنود
+      const { data: budgetItemsData, error: budgetItemsError } = await supabase
+        .from('budget_items')
+        .select('id, name, default_percentage');
+      
+      if (budgetItemsError) throw budgetItemsError;
+      
+      // 4. جلب المصروفات حسب البند
+      const { data: expensesByItemData, error: expensesByItemError } = await supabase
+        .from('expenses')
+        .select('budget_item_id, amount');
+      
+      if (expensesByItemError) throw expensesByItemError;
+      
+      // حساب المجاميع
+      const totalResources = resourcesData.reduce((sum, resource) => sum + resource.net_amount, 0);
+      const totalExpenses = expensesData.reduce((sum, expense) => sum + expense.amount, 0);
+      const remainingBalance = totalResources - totalExpenses;
+      const expensePercentage = totalResources > 0 ? Math.round((totalExpenses / totalResources) * 100) : 0;
+      
+      // إعداد بيانات الرسم البياني الدائري
+      const pieChartData = budgetItemsData.map((item, index) => {
+        // حساب إجمالي المصروفات لهذا البند
+        const itemExpenses = expensesByItemData
+          .filter(exp => exp.budget_item_id === item.id)
+          .reduce((sum, exp) => sum + exp.amount, 0);
+        
+        // النسبة المئوية من إجمالي المصروفات
+        const percentage = totalExpenses > 0 
+          ? (itemExpenses / totalExpenses) * 100 
+          : item.default_percentage;
+        
+        return {
+          name: item.name,
+          value: parseFloat(percentage.toFixed(1)),
+          color: pieColors[index % pieColors.length]
+        };
+      });
+      
+      // إعداد بيانات الرسم البياني الشهري (نموذجية لأغراض العرض)
+      // في التطبيق الحقيقي، ستحتاج إلى استرجاع البيانات الفعلية حسب الأشهر
+      const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
+      const monthlyChartData = months.map((month) => ({
+        name: month,
+        الموارد: Math.floor(Math.random() * 100000) + 200000, // قيم عشوائية لأغراض العرض
+        المصروفات: Math.floor(Math.random() * 50000) + 150000
+      }));
+      
+      setDashboardData({
+        totalResources,
+        totalExpenses,
+        remainingBalance,
+        expensePercentage,
+        transactionsCount: {
+          resources: resourcesData.length,
+          expenses: expensesData.length
+        }
+      });
+      
+      setPieData(pieChartData);
+      setMonthlyData(monthlyChartData);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.error("حدث خطأ أثناء جلب بيانات لوحة المعلومات");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center p-8">جاري تحميل البيانات...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -57,10 +145,10 @@ export const FinanceDashboard = () => {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalResources.toLocaleString()} ريال</div>
+            <div className="text-2xl font-bold">{dashboardData.totalResources.toLocaleString()} ريال</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-4 w-4 ml-1 text-green-500" />
-              زيادة 10% من الشهر الماضي
+              عدد الموارد: {dashboardData.transactionsCount.resources}
             </p>
           </CardContent>
         </Card>
@@ -72,10 +160,10 @@ export const FinanceDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalExpenses.toLocaleString()} ريال</div>
+            <div className="text-2xl font-bold">{dashboardData.totalExpenses.toLocaleString()} ريال</div>
             <p className="text-xs text-muted-foreground">
               <TrendingDown className="inline h-4 w-4 ml-1 text-red-500" />
-              {expensePercentage}% من إجمالي الموارد
+              {dashboardData.expensePercentage}% من إجمالي الموارد
             </p>
           </CardContent>
         </Card>
@@ -87,9 +175,9 @@ export const FinanceDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{remainingBalance.toLocaleString()} ريال</div>
+            <div className="text-2xl font-bold">{dashboardData.remainingBalance.toLocaleString()} ريال</div>
             <p className="text-xs text-muted-foreground">
-              {100 - expensePercentage}% من إجمالي الموارد
+              {100 - dashboardData.expensePercentage}% من إجمالي الموارد
             </p>
           </CardContent>
         </Card>
@@ -101,9 +189,11 @@ export const FinanceDashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">32</div>
+            <div className="text-2xl font-bold">
+              {dashboardData.transactionsCount.resources + dashboardData.transactionsCount.expenses}
+            </div>
             <p className="text-xs text-muted-foreground">
-              12 موارد و 20 مصروفات
+              {dashboardData.transactionsCount.resources} موارد و {dashboardData.transactionsCount.expenses} مصروفات
             </p>
           </CardContent>
         </Card>
