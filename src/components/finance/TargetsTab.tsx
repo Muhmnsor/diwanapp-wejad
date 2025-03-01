@@ -58,10 +58,86 @@ export const TargetsTab = () => {
         .order("type", { ascending: true });
 
       if (error) throw error;
-      setTargets(data || []);
+      
+      // بعد جلب المستهدفات، نحدّث القيم المتحققة من قاعدة البيانات
+      if (data) {
+        await updateActualAmounts(data);
+      } else {
+        setTargets([]);
+      }
     } catch (error) {
       console.error("Error fetching targets:", error);
       toast.error("حدث خطأ أثناء جلب المستهدفات المالية");
+      setLoading(false);
+    }
+  };
+
+  // تحديث القيم المتحققة بناءً على الموارد والمصروفات
+  const updateActualAmounts = async (targetsData: FinancialTarget[]) => {
+    try {
+      // جلب الموارد
+      const { data: resourcesData } = await supabase
+        .from("financial_resources")
+        .select("net_amount, date");
+      
+      // جلب المصروفات
+      const { data: expensesData } = await supabase
+        .from("expenses")
+        .select("budget_item_id, amount, date");
+      
+      // تحديث البيانات المتحققة لكل مستهدف
+      const updatedTargets = targetsData.map(target => {
+        const targetYear = target.year;
+        // تحويل الربع إلى شهور
+        const quarterMonths = {
+          1: [1, 2, 3],
+          2: [4, 5, 6],
+          3: [7, 8, 9],
+          4: [10, 11, 12]
+        };
+        const months = quarterMonths[target.quarter as 1 | 2 | 3 | 4];
+        
+        let actualAmount = 0;
+
+        if (target.type === "موارد" && resourcesData) {
+          // حساب مجموع الموارد في هذا الربع من السنة
+          resourcesData.forEach(resource => {
+            const resourceDate = new Date(resource.date);
+            const resourceYear = resourceDate.getFullYear();
+            const resourceMonth = resourceDate.getMonth() + 1;
+            
+            if (resourceYear === targetYear && months.includes(resourceMonth)) {
+              actualAmount += Number(resource.net_amount);
+            }
+          });
+        } else if (target.type === "مصروفات" && expensesData) {
+          // حساب مجموع المصروفات في هذا الربع من السنة
+          // إذا كان هناك بند ميزانية مرتبط، نحسب فقط المصروفات المرتبطة بهذا البند
+          expensesData.forEach(expense => {
+            const expenseDate = new Date(expense.date);
+            const expenseYear = expenseDate.getFullYear();
+            const expenseMonth = expenseDate.getMonth() + 1;
+            
+            if (expenseYear === targetYear && months.includes(expenseMonth)) {
+              if (target.budget_item_id) {
+                // إذا كان المستهدف مرتبط ببند ميزانية، نجمع فقط المصروفات المرتبطة بنفس البند
+                if (expense.budget_item_id === target.budget_item_id) {
+                  actualAmount += Number(expense.amount);
+                }
+              } else {
+                // إذا كان المستهدف عام (بدون بند ميزانية)، نجمع كل المصروفات
+                actualAmount += Number(expense.amount);
+              }
+            }
+          });
+        }
+        
+        return { ...target, actual_amount: actualAmount };
+      });
+      
+      setTargets(updatedTargets);
+    } catch (error) {
+      console.error("Error updating actual amounts:", error);
     } finally {
       setLoading(false);
     }
@@ -93,7 +169,7 @@ export const TargetsTab = () => {
   const handleSelectChange = (name: string, value: string) => {
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: value === "none" ? undefined : value,
     });
   };
 
@@ -309,7 +385,7 @@ export const TargetsTab = () => {
                 <div className="space-y-2">
                   <Label htmlFor="budget_item_id">بند الميزانية (اختياري)</Label>
                   <Select 
-                    value={formData.budget_item_id || ""} 
+                    value={formData.budget_item_id || "none"} 
                     onValueChange={(value) => handleSelectChange("budget_item_id", value)}
                   >
                     <SelectTrigger>
