@@ -30,23 +30,21 @@ export const RoleList = ({
   const { data: roleUserCounts = {} } = useQuery({
     queryKey: ['role-user-counts'],
     queryFn: async () => {
-      // تصحيح استعلام Supabase للحصول على عدد المستخدمين لكل دور
+      // استخدام count() مع group by في استعلام واحد
       const { data, error } = await supabase
         .from('user_roles')
-        .select('role_id, count')
+        .select('role_id, count', { count: 'exact' })
+        .group('role_id');
 
       if (error) {
         console.error('Error fetching role user counts:', error);
         return {};
       }
 
-      // تجميع البيانات يدويًا لحساب عدد المستخدمين لكل دور
+      // تحويل البيانات إلى كائن مع معرف الدور كمفتاح وعدد المستخدمين كقيمة
       const countMap = {};
       data.forEach(item => {
-        if (!countMap[item.role_id]) {
-          countMap[item.role_id] = 0;
-        }
-        countMap[item.role_id]++;
+        countMap[item.role_id] = parseInt(item.count);
       });
 
       return countMap;
