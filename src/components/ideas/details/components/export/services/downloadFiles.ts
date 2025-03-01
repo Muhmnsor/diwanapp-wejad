@@ -22,7 +22,9 @@ const logFileDetails = (file: any, index: number) => {
     path: file.file_path,
     pathExists: Boolean(file.file_path),
     pathType: typeof file.file_path,
-    pathStructure: file.file_path ? file.file_path.split('/') : []
+    pathStructure: file.file_path ? file.file_path.split('/') : [],
+    // Check if file appears to be a PDF based on name
+    isPDFBasedOnName: file.name.toLowerCase().endsWith('.pdf')
   });
   
   // Log the contents of the supabase object
@@ -83,6 +85,12 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
         
         console.log(`(${index + 1}/${supportingFiles.length}) محاولة تنزيل الملف: ${file.name}`);
         
+        // Check if file appears to be PDF based on name
+        const isPDFBasedOnName = file.name.toLowerCase().endsWith('.pdf');
+        if (isPDFBasedOnName) {
+          console.log(`تم اكتشاف ملف PDF (بناءً على الاسم): ${file.name}`);
+        }
+        
         // طريقة 1: استخدام getPublicUrl
         try {
           console.log(`محاولة تنزيل الملف باستخدام URL عام...`);
@@ -98,12 +106,20 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
             
             if (fetchResponse.ok) {
               console.log(`تم جلب البيانات بنجاح، حالة الاستجابة: ${fetchResponse.status}`);
-              console.log(`نوع المحتوى: ${fetchResponse.headers.get('content-type')}`);
+              
+              const contentType = fetchResponse.headers.get('content-type');
+              console.log(`نوع المحتوى: ${contentType}`);
+              
+              // Better PDF detection
+              const isPDFBasedOnContentType = contentType?.includes('pdf');
+              if (isPDFBasedOnContentType) {
+                console.log(`تم اكتشاف ملف PDF (بناءً على نوع المحتوى)`);
+              }
               
               const fetchedData = await fetchResponse.blob();
               
-              const isPDF = fetchResponse.headers.get('content-type')?.includes('pdf') || 
-                          file.name.toLowerCase().endsWith('.pdf');
+              const isPDF = isPDFBasedOnContentType || 
+                          isPDFBasedOnName;
               
               if (fetchedData && fetchedData.size > 0) {
                 const safeFileName = sanitizeFileName(file.name);
@@ -115,7 +131,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
                   method: "publicUrl",
                   size: fetchedData.size,
                   isPDF: isPDF,
-                  contentType: fetchResponse.headers.get('content-type') || undefined
+                  contentType: contentType || undefined
                 });
                 
                 console.log(`تم تنزيل الملف ${file.name} بنجاح عبر URL عام، الحجم: ${fetchedData.size} بايت`);
@@ -154,12 +170,20 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
             
             if (fetchResponse.ok) {
               console.log(`تم جلب البيانات بنجاح، حالة الاستجابة: ${fetchResponse.status}`);
-              console.log(`نوع المحتوى: ${fetchResponse.headers.get('content-type')}`);
+              
+              const contentType = fetchResponse.headers.get('content-type');
+              console.log(`نوع المحتوى: ${contentType}`);
+              
+              // Better PDF detection
+              const isPDFBasedOnContentType = contentType?.includes('pdf');
+              if (isPDFBasedOnContentType) {
+                console.log(`تم اكتشاف ملف PDF (بناءً على نوع المحتوى)`);
+              }
               
               const fetchedData = await fetchResponse.blob();
               
-              const isPDF = fetchResponse.headers.get('content-type')?.includes('pdf') || 
-                          file.name.toLowerCase().endsWith('.pdf');
+              const isPDF = isPDFBasedOnContentType || 
+                          isPDFBasedOnName;
               
               if (fetchedData && fetchedData.size > 0) {
                 const safeFileName = sanitizeFileName(file.name);
@@ -171,7 +195,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
                   method: "signedUrl",
                   size: fetchedData.size,
                   isPDF: isPDF,
-                  contentType: fetchResponse.headers.get('content-type') || undefined
+                  contentType: contentType || undefined
                 });
                 
                 console.log(`تم تنزيل الملف ${file.name} بنجاح عبر URL مُوقّع، الحجم: ${fetchedData.size} بايت`);
@@ -198,6 +222,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
         // طريقة 3: استخدام طريقة التنزيل المباشر
         try {
           console.log(`محاولة تنزيل الملف عبر التنزيل المباشر...`);
+          console.log(`مسار الملف للتنزيل المباشر: ${file.file_path}`);
           
           // تجربة بالاسم الكامل أولاً
           const { data: downloadData, error: downloadError } = await supabase.storage
@@ -208,8 +233,14 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
             console.log(`تم تنزيل الملف بنجاح، الحجم: ${downloadData.size}`);
             console.log(`نوع المحتوى: ${downloadData.type}`);
             
-            const isPDF = downloadData.type.includes('pdf') || 
-                        file.name.toLowerCase().endsWith('.pdf');
+            // Better PDF detection
+            const isPDFBasedOnType = downloadData.type.includes('pdf');
+            if (isPDFBasedOnType) {
+              console.log(`تم اكتشاف ملف PDF (بناءً على نوع المحتوى)`);
+            }
+            
+            const isPDF = isPDFBasedOnType || 
+                        isPDFBasedOnName;
             
             const safeFileName = sanitizeFileName(file.name);
             folder.file(safeFileName, downloadData);
@@ -241,9 +272,11 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
             if (file.file_path.includes('/')) {
               const parts = file.file_path.split('/');
               fileName = parts[parts.length - 1];
+              console.log(`تم استخراج اسم الملف من المسار (/)): ${fileName}`);
             } else if (file.file_path.includes('\\')) {
               const parts = file.file_path.split('\\');
               fileName = parts[parts.length - 1];
+              console.log(`تم استخراج اسم الملف من المسار (\\): ${fileName}`);
             }
             
             console.log(`اسم الملف المستخرج: ${fileName}`);
@@ -254,9 +287,16 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
               
             if (!filenameError && filenameData) {
               console.log(`تم تنزيل الملف بنجاح بالاسم المستخرج، الحجم: ${filenameData.size}`);
+              console.log(`نوع المحتوى: ${filenameData.type}`);
               
-              const isPDF = filenameData.type.includes('pdf') || 
-                          file.name.toLowerCase().endsWith('.pdf');
+              // Better PDF detection
+              const isPDFBasedOnType = filenameData.type.includes('pdf');
+              if (isPDFBasedOnType) {
+                console.log(`تم اكتشاف ملف PDF (بناءً على نوع المحتوى)`);
+              }
+              
+              const isPDF = isPDFBasedOnType || 
+                          isPDFBasedOnName;
               
               const safeFileName = sanitizeFileName(file.name);
               folder.file(safeFileName, filenameData);
@@ -378,15 +418,27 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
       
       try {
         console.log(`=== معلومات مرفق التعليق #${index + 1} ===`);
+        
+        // Check if attachment appears to be PDF based on URL or name
+        const isPDFBasedOnUrl = comment.attachment_url?.toLowerCase().includes('.pdf');
+        const isPDFBasedOnName = comment.attachment_name?.toLowerCase().endsWith('.pdf');
+        const isPDFBasedOnType = comment.attachment_type?.includes('pdf');
+        
         console.log({
           commentId: comment.id,
           attachmentName: comment.attachment_name || 'بدون اسم',
           attachmentUrl: comment.attachment_url,
+          urlType: typeof comment.attachment_url,
+          hasValidUrl: !!comment.attachment_url,
           attachmentType: comment.attachment_type || 'غير معروف',
-          isPdf: comment.attachment_type?.includes('pdf') || 
-                 comment.attachment_url?.toLowerCase().includes('.pdf') || 
-                 (comment.attachment_name && comment.attachment_name.toLowerCase().endsWith('.pdf'))
+          isPdfBasedOnUrl: isPDFBasedOnUrl,
+          isPdfBasedOnName: isPDFBasedOnName,
+          isPdfBasedOnType: isPDFBasedOnType
         });
+        
+        if (isPDFBasedOnUrl || isPDFBasedOnName || isPDFBasedOnType) {
+          console.log(`تم اكتشاف ملف PDF في مرفق التعليق: ${comment.attachment_name || 'بدون اسم'}`);
+        }
         
         console.log(`(${index + 1}/${comments.length}) محاولة تنزيل مرفق التعليق: ${comment.attachment_name || 'بدون اسم'}`);
         
@@ -402,12 +454,22 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
           
           if (response.ok) {
             console.log(`تم جلب البيانات بنجاح، حالة الاستجابة: ${response.status}`);
-            console.log(`نوع المحتوى: ${response.headers.get('content-type')}`);
+            
+            const contentType = response.headers.get('content-type');
+            console.log(`نوع المحتوى: ${contentType}`);
+            
+            // Better PDF detection with content type
+            const isPDFBasedOnContentType = contentType?.includes('pdf');
+            if (isPDFBasedOnContentType) {
+              console.log(`تم اكتشاف ملف PDF (بناءً على نوع المحتوى)`);
+            }
             
             const blob = await response.blob();
             
-            const isPDF = response.headers.get('content-type')?.includes('pdf') || 
-                        fileName.toLowerCase().endsWith('.pdf');
+            const isPDF = isPDFBasedOnContentType || 
+                        isPDFBasedOnUrl || 
+                        isPDFBasedOnName || 
+                        isPDFBasedOnType;
             
             if (blob && blob.size > 0) {
               folder.file(safeFileName, blob);
@@ -418,7 +480,7 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
                 method: "direct-url",
                 size: blob.size,
                 isPDF: isPDF,
-                contentType: response.headers.get('content-type') || undefined
+                contentType: contentType || undefined
               });
               
               console.log(`تم تنزيل مرفق التعليق بنجاح: ${safeFileName}، الحجم: ${blob.size} بايت`);
@@ -451,12 +513,22 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
             xhr.onload = function() {
               if (this.status === 200) {
                 console.log(`تم جلب البيانات بنجاح باستخدام XHR، حالة الاستجابة: ${this.status}`);
-                console.log(`نوع المحتوى: ${this.response.type}`);
                 
-                const blob = new Blob([this.response], { type: this.response.type || 'application/octet-stream' });
+                const blobType = this.response.type;
+                console.log(`نوع المحتوى: ${blobType}`);
                 
-                const isPDF = this.response.type?.includes('pdf') || 
-                            fileName.toLowerCase().endsWith('.pdf');
+                // Better PDF detection with response type
+                const isPDFBasedOnResponseType = blobType?.includes('pdf');
+                if (isPDFBasedOnResponseType) {
+                  console.log(`تم اكتشاف ملف PDF (بناءً على نوع XHR response)`);
+                }
+                
+                const blob = new Blob([this.response], { type: blobType || 'application/octet-stream' });
+                
+                const isPDF = isPDFBasedOnResponseType || 
+                            isPDFBasedOnUrl || 
+                            isPDFBasedOnName || 
+                            isPDFBasedOnType;
                 
                 folder.file(safeFileName, blob);
                 
@@ -466,7 +538,7 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
                   method: "xhr",
                   size: blob.size,
                   isPDF: isPDF,
-                  contentType: this.response.type
+                  contentType: blobType
                 });
                 
                 // اختبار إذا كان PDF
