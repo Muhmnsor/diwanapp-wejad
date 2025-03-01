@@ -76,6 +76,22 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         });
 
         if (roleError) throw roleError;
+        
+        // Log user activity for role change
+        await supabase.rpc('log_user_activity', {
+          user_id: selectedUser.id,
+          activity_type: 'role_change',
+          details: `تم تغيير الدور من ${selectedUser.role} إلى ${selectedRole}`
+        });
+      }
+
+      if (newPassword) {
+        // Log password change activity
+        await supabase.rpc('log_user_activity', {
+          user_id: selectedUser.id,
+          activity_type: 'password_change',
+          details: 'تم تغيير كلمة المرور'
+        });
       }
 
       toast.success("تم تحديث بيانات المستخدم بنجاح");
@@ -95,6 +111,13 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
     if (!userToDelete) return;
 
     try {
+      // Log user deletion activity before deleting the user
+      await supabase.rpc('log_user_activity', {
+        user_id: userToDelete.id,
+        activity_type: 'user_deleted',
+        details: `تم حذف المستخدم ${userToDelete.username}`
+      });
+
       const { error } = await supabase.functions.invoke('manage-users', {
         body: {
           operation: 'delete_user',

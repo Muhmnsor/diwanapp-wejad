@@ -2,22 +2,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Card, 
-  CardContent, 
+  Card,
+  CardContent,
   CardDescription, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { Loader2, AlertCircle, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Clock, AlertCircle } from "lucide-react";
-
-interface UserActivity {
-  id: string;
-  user_id: string;
-  activity_type: string;
-  details: string;
-  created_at: string;
-}
+import { UserActivity } from "./types";
 
 interface UserActivityListProps {
   userId: string;
@@ -28,33 +22,16 @@ export const UserActivityList = ({ userId }: UserActivityListProps) => {
     queryKey: ['user-activities', userId],
     queryFn: async () => {
       try {
-        // Will be implemented via the user_activities table
-        // Currently mocking the data for UI development
-        const mockActivities: UserActivity[] = [
-          {
-            id: '1',
-            user_id: userId,
-            activity_type: 'login',
-            details: 'تسجيل دخول للنظام',
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-          },
-          {
-            id: '2',
-            user_id: userId,
-            activity_type: 'view_event',
-            details: 'الاطلاع على فعالية "ورشة عمل التطوير المهني"',
-            created_at: new Date(Date.now() - 7200000).toISOString(),
-          },
-          {
-            id: '3',
-            user_id: userId,
-            activity_type: 'update_profile',
-            details: 'تحديث بيانات الملف الشخصي',
-            created_at: new Date(Date.now() - 86400000).toISOString(),
-          }
-        ];
+        const { data, error } = await supabase
+          .from('user_activities')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20);
         
-        return mockActivities;
+        if (error) throw error;
+        
+        return data as UserActivity[];
       } catch (error) {
         console.error('Error fetching user activities:', error);
         throw error;
@@ -62,17 +39,6 @@ export const UserActivityList = ({ userId }: UserActivityListProps) => {
     },
     enabled: !!userId,
   });
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ar-SA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
 
   if (isLoading) {
     return (
@@ -104,30 +70,78 @@ export const UserActivityList = ({ userId }: UserActivityListProps) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>سجل النشاط</CardTitle>
-          <CardDescription>لم يتم تسجيل أي نشاط للمستخدم بعد</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-muted-foreground" />
+            سجل النشاط
+          </CardTitle>
+          <CardDescription>
+            لا يوجد نشاط مسجل لهذا المستخدم
+          </CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
+  // Format activity type for display
+  const getActivityTypeDisplay = (type: string) => {
+    switch (type) {
+      case 'login': return 'تسجيل دخول';
+      case 'logout': return 'تسجيل خروج';
+      case 'password_change': return 'تغيير كلمة المرور';
+      case 'role_change': return 'تغيير الدور';
+      case 'create_event': return 'إنشاء فعالية';
+      case 'edit_event': return 'تعديل فعالية';
+      case 'delete_event': return 'حذف فعالية';
+      default: return type;
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleString('ar-SA', options);
+  };
+
+  // Get badge variant based on activity type
+  const getBadgeVariant = (type: string) => {
+    if (type.includes('login') || type.includes('logout')) return 'secondary';
+    if (type.includes('delete')) return 'destructive';
+    if (type.includes('create')) return 'default';
+    if (type.includes('edit') || type.includes('change')) return 'outline';
+    return 'outline';
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>سجل النشاط</CardTitle>
-        <CardDescription>آخر الأنشطة التي قام بها المستخدم</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          سجل النشاط
+        </CardTitle>
+        <CardDescription>
+          آخر {activities.length} نشاط للمستخدم
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[300px] w-full pr-4">
+        <ScrollArea className="h-[300px] pr-4 -mr-4">
           <div className="space-y-4">
             {activities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-4 border-b pb-4">
-                <div className="rounded-full bg-primary/10 p-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium">{activity.details}</p>
-                  <p className="text-xs text-muted-foreground">
+              <div 
+                key={activity.id} 
+                className="flex items-start gap-3 border-b pb-3"
+              >
+                <Badge variant={getBadgeVariant(activity.activity_type)}>
+                  {getActivityTypeDisplay(activity.activity_type)}
+                </Badge>
+                <div className="flex-1">
+                  <p className="text-sm">{activity.details}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {formatDate(activity.created_at)}
                   </p>
                 </div>

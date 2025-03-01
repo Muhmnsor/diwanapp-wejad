@@ -1,36 +1,22 @@
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Clock, User, Shield, Activity } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { User as UserType } from "./types";
-import { UserActivityList } from "./UserActivityList";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { User } from "./types";
 import { UserPermissionsList } from "./UserPermissionsList";
+import { UserActivityList } from "./UserActivityList";
+import { Separator } from "@/components/ui/separator";
+import { Shield, Activity } from "lucide-react";
 
 interface UserDetailsDialogProps {
-  user: UserType | null;
+  user: User | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const UserDetailsDialog = ({
-  user,
-  isOpen,
-  onClose
-}: UserDetailsDialogProps) => {
-  const getRoleDisplayName = (roleName: string | undefined) => {
+export const UserDetailsDialog = ({ user, isOpen, onClose }: UserDetailsDialogProps) => {
+  if (!user) return null;
+
+  const getRoleDisplayName = (roleName: string) => {
     if (!roleName || roleName === 'لم يتم تعيين دور') return 'لم يتم تعيين دور';
     
     switch (roleName) {
@@ -44,74 +30,50 @@ export const UserDetailsDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]" dir="rtl">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-right text-xl">
+          <DialogTitle className="text-xl flex items-center gap-2">
             تفاصيل المستخدم
           </DialogTitle>
+          <DialogDescription>
+            معلومات تفصيلية عن المستخدم وصلاحياته وسجل نشاطه
+          </DialogDescription>
         </DialogHeader>
         
-        {user && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  معلومات المستخدم
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">البريد الإلكتروني</div>
-                    <div className="font-medium">{user.username}</div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">الدور</div>
-                    <div className="font-medium">
-                      <Badge variant="outline">{getRoleDisplayName(user.role)}</Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">آخر تسجيل دخول</div>
-                    <div className="font-medium flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      {user.lastLogin || 'لم يسجل دخول بعد'}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">معرف المستخدم</div>
-                    <div className="font-medium text-xs opacity-75">{user.id}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Tabs defaultValue="permissions">
-              <TabsList className="w-full">
-                <TabsTrigger value="permissions" className="flex-1">
-                  <Shield className="h-4 w-4 me-2" />
-                  الصلاحيات
-                </TabsTrigger>
-                <TabsTrigger value="activity" className="flex-1">
-                  <Activity className="h-4 w-4 me-2" />
-                  سجل النشاط
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="permissions" className="mt-4">
-                <UserPermissionsList userId={user.id} role={user.role} />
-              </TabsContent>
-              
-              <TabsContent value="activity" className="mt-4">
-                <UserActivityList userId={user.id} />
-              </TabsContent>
-            </Tabs>
+        <div className="py-2">
+          <div className="space-y-2 mb-4">
+            <h3 className="text-lg font-semibold">{user.username}</h3>
+            <p className="text-muted-foreground">
+              الدور: {getRoleDisplayName(user.role)}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              آخر تسجيل دخول: {user.lastLogin}
+            </p>
           </div>
-        )}
+          
+          <Separator className="my-4" />
+          
+          <Tabs defaultValue="permissions" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="permissions" className="flex-1">
+                <Shield className="h-4 w-4 mr-2" />
+                الصلاحيات
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="flex-1">
+                <Activity className="h-4 w-4 mr-2" />
+                سجل النشاط
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="permissions" className="pt-4">
+              <UserPermissionsList userId={user.id} role={user.role} />
+            </TabsContent>
+            
+            <TabsContent value="activity" className="pt-4">
+              <UserActivityList userId={user.id} />
+            </TabsContent>
+          </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );

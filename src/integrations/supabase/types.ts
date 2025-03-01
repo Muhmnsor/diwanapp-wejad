@@ -2654,6 +2654,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          details: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           role_id: string
@@ -2819,6 +2843,14 @@ export type Database = {
           new_password?: string
         }
         Returns: Json
+      }
+      log_user_activity: {
+        Args: {
+          user_id: string
+          activity_type: string
+          details: string
+        }
+        Returns: string
       }
     }
     Enums: {
