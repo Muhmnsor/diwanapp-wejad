@@ -316,7 +316,7 @@ export const TargetsTab = () => {
                       <SelectValue placeholder="اختر بند الميزانية" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">بدون تحديد</SelectItem>
+                      <SelectItem value="none">بدون تحديد</SelectItem>
                       {budgetItems.map((item) => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.name}
