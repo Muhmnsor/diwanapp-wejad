@@ -1,19 +1,13 @@
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { exportIdea } from "./ideaExporter";
 import { ExportOptions } from "./ExportOptions";
 import { ExportFormats } from "./ExportFormats";
 import { ExportDialogFooter } from "./ExportDialogFooter";
+import { toast } from "sonner";
 import { IdeaExportDialogProps } from "./types";
-import { getExportFormats, getExportOptions } from "./constants";
+import { exportOptions, exportFormats } from "./constants";
 
 export const IdeaExportDialog = ({
   open,
@@ -21,26 +15,23 @@ export const IdeaExportDialog = ({
   ideaId,
   ideaTitle,
 }: IdeaExportDialogProps) => {
-  const exportOptions = getExportOptions();
-  const exportFormats = getExportFormats();
-
   const [selectedOptions, setSelectedOptions] = useState<string[]>(
-    exportOptions.filter((option) => option.default).map((option) => option.id)
+    exportOptions
+      .filter((option) => option.default || option.required)
+      .map((option) => option.id)
   );
-
+  
   const [selectedFormat, setSelectedFormat] = useState<string>(
-    exportFormats.find((format) => format.default)?.id || "text"
+    exportFormats.find((format) => format.default)?.id || exportFormats[0].id
   );
-
+  
   const [isExporting, setIsExporting] = useState(false);
 
   const handleOptionChange = (optionId: string, checked: boolean) => {
     if (checked) {
       setSelectedOptions([...selectedOptions, optionId]);
     } else {
-      if (!exportOptions.find((o) => o.id === optionId)?.required) {
-        setSelectedOptions(selectedOptions.filter((id) => id !== optionId));
-      }
+      setSelectedOptions(selectedOptions.filter((id) => id !== optionId));
     }
   };
 
@@ -59,11 +50,12 @@ export const IdeaExportDialog = ({
         exportOptions: selectedOptions,
         exportFormat: selectedFormat,
       });
+      
       toast.success("تم تصدير الفكرة بنجاح");
       onOpenChange(false);
     } catch (error) {
       console.error("Error exporting idea:", error);
-      toast.error(`حدث خطأ أثناء تصدير الفكرة: ${error.message || "خطأ غير معروف"}`);
+      toast.error("حدث خطأ أثناء تصدير الفكرة");
     } finally {
       setIsExporting(false);
     }
@@ -71,28 +63,25 @@ export const IdeaExportDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl mx-auto p-6 h-auto overflow-y-auto max-h-[90vh]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">تصدير الفكرة</DialogTitle>
-          <DialogDescription>
-            حدد العناصر التي ترغب بتضمينها في ملف التصدير
-          </DialogDescription>
+          <DialogTitle>تصدير الفكرة</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-6 py-4">
+        
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto p-1">
           <ExportOptions
             selectedOptions={selectedOptions}
             handleOptionChange={handleOptionChange}
             exportOptions={exportOptions}
           />
-
+          
           <ExportFormats
             selectedFormat={selectedFormat}
             handleFormatChange={handleFormatChange}
             exportFormats={exportFormats}
           />
         </div>
-
+        
         <ExportDialogFooter
           isExporting={isExporting}
           onCancel={() => onOpenChange(false)}
