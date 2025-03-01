@@ -11,6 +11,7 @@ type FinancialTarget = {
   target_amount: number;
   actual_amount: number;
   budget_item_id?: string;
+  resource_source?: string;
 };
 
 type TargetsTableProps = {

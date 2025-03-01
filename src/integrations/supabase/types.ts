@@ -947,6 +947,7 @@ export type Database = {
           created_at: string
           id: string
           quarter: number
+          resource_source: string | null
           target_amount: number
           type: string
           updated_at: string
@@ -958,6 +959,7 @@ export type Database = {
           created_at?: string
           id?: string
           quarter: number
+          resource_source?: string | null
           target_amount?: number
           type: string
           updated_at?: string
@@ -969,6 +971,7 @@ export type Database = {
           created_at?: string
           id?: string
           quarter?: number
+          resource_source?: string | null
           target_amount?: number
           type?: string
           updated_at?: string

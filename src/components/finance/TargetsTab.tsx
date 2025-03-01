@@ -30,6 +30,7 @@ export const TargetsTab = () => {
     target_amount: 0,
     actual_amount: 0,
     budget_item_id: undefined as string | undefined,
+    resource_source: undefined as string | undefined,
   });
 
   useEffect(() => {
@@ -103,6 +104,7 @@ export const TargetsTab = () => {
         target_amount: formData.target_amount,
         actual_amount: formData.actual_amount,
         budget_item_id: formData.budget_item_id,
+        resource_source: formData.resource_source,
       });
       
       toast.success("تم إضافة المستهدف بنجاح");
@@ -128,6 +130,7 @@ export const TargetsTab = () => {
       target_amount: target.target_amount,
       actual_amount: target.actual_amount,
       budget_item_id: target.budget_item_id,
+      resource_source: target.resource_source,
     });
   };
 
@@ -142,6 +145,7 @@ export const TargetsTab = () => {
         target_amount: formData.target_amount,
         actual_amount: formData.actual_amount,
         budget_item_id: formData.budget_item_id,
+        resource_source: formData.resource_source,
       });
       
       toast.success("تم تحديث المستهدف بنجاح");
@@ -176,6 +180,7 @@ export const TargetsTab = () => {
       target_amount: 0,
       actual_amount: 0,
       budget_item_id: undefined,
+      resource_source: undefined,
     });
   };
 
