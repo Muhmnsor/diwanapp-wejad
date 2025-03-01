@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Database, ListChecks, Lightbulb, DollarSign, Globe, ShoppingCart } from "lucide-react";
+import { Database, ListChecks, Lightbulb, DollarSign, Globe, ShoppingCart, Users } from "lucide-react";
 import { AdminHeader } from "@/components/layout/AdminHeader";
 import { Footer } from "@/components/layout/Footer";
 
@@ -38,6 +38,12 @@ const AdminDashboard = () => {
       icon: DollarSign,
       path: "/finance",
       description: "إدارة الميزانية والمصروفات"
+    },
+    {
+      title: "إدارة المستخدمين",
+      icon: Users,
+      path: "/users",
+      description: "إدارة حسابات المستخدمين والصلاحيات"
     },
     {
       title: "الموقع الإلكتروني",
