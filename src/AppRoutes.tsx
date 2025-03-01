@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -24,6 +25,9 @@ import PortfolioWorkspaceDetails from "./pages/PortfolioWorkspaceDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "@/store/authStore";
 import IdeaDetails from "./pages/IdeaDetails";
+import UsersManagement from "./pages/UsersManagement";
+import WebsiteManagement from "./pages/WebsiteManagement";
+import StoreManagement from "./pages/StoreManagement";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -104,6 +108,9 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
+      <Route path="/website" element={<WebsiteManagement />} />
+      <Route path="/store" element={<StoreManagement />} />
+      <Route path="/users-management" element={<UsersManagement />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -42,7 +42,7 @@ const AdminDashboard = () => {
     {
       title: "إدارة المستخدمين",
       icon: Users,
-      path: "/users",
+      path: "/users-management",
       description: "إدارة حسابات المستخدمين والصلاحيات"
     },
     {
