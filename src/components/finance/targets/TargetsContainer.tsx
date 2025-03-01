@@ -34,6 +34,7 @@ export const TargetsContainer: React.FC<TargetsContainerProps> = ({
             loading={loading}
             onEdit={onEdit}
             onDelete={onDelete}
+            showResourceSource={true}
           />
         </CardContent>
       </Card>
@@ -49,6 +50,7 @@ export const TargetsContainer: React.FC<TargetsContainerProps> = ({
             loading={loading}
             onEdit={onEdit}
             onDelete={onDelete}
+            showResourceSource={false}
           />
         </CardContent>
       </Card>

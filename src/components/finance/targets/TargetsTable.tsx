@@ -10,6 +10,7 @@ interface TargetsTableProps {
   loading: boolean;
   onEdit: (target: FinancialTarget) => void;
   onDelete: (id: string) => void;
+  showResourceSource?: boolean;
 }
 
 export const TargetsTable: React.FC<TargetsTableProps> = ({
@@ -17,6 +18,7 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
   loading,
   onEdit,
   onDelete,
+  showResourceSource = false,
 }) => {
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(num);
@@ -41,6 +43,7 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
         <TableRow>
           <TableHead>السنة</TableHead>
           <TableHead>الفترة</TableHead>
+          {showResourceSource && <TableHead>نوع المورد</TableHead>}
           <TableHead>المستهدف</TableHead>
           <TableHead>المتحقق</TableHead>
           <TableHead>نسبة التحقق</TableHead>
@@ -56,6 +59,9 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
                 ? "سنوي" 
                 : `الربع ${target.quarter}`}
             </TableCell>
+            {showResourceSource && (
+              <TableCell>{target.resource_source || "غير محدد"}</TableCell>
+            )}
             <TableCell>{formatNumber(target.target_amount)}</TableCell>
             <TableCell>{formatNumber(target.actual_amount)}</TableCell>
             <TableCell>
