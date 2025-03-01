@@ -33,9 +33,9 @@ export const TopHeader = () => {
       <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
         <div className="flex flex-col" dir="rtl">
           {/* Logo and Main Navigation */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center py-2 md:py-4">
+          <div className="flex flex-col xs:flex-row md:flex-row md:justify-between md:items-center py-2 md:py-4 gap-2 xs:gap-4">
             <Logo />
-            <div className="flex items-center justify-center gap-2 mt-2 md:mt-0">
+            <div className="flex items-center justify-center gap-2 mt-1 xs:mt-0 md:mt-0 flex-wrap xs:flex-nowrap">
               <HomeButton 
                 isEventOrProjectDetails={isEventOrProjectDetails}
                 isAuthenticated={isAuthenticated}
