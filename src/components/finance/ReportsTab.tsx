@@ -1,12 +1,77 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileText, BarChart, PieChart } from "lucide-react";
+import { fetchTargets, updateActualAmounts } from "./targets/TargetsDataService";
 
 export const ReportsTab = () => {
   const [activeReportTab, setActiveReportTab] = useState("summary");
+  const [financialData, setFinancialData] = useState({
+    totalResources: 0,
+    totalExpenses: 0,
+    resourcesTarget: 0,
+    resourcesPercentage: 0,
+    resourcesRemaining: 0,
+    currentYear: new Date().getFullYear()
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadFinancialData();
+  }, []);
+
+  const loadFinancialData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch targets data
+      const targetsData = await fetchTargets();
+      const updatedTargets = await updateActualAmounts(targetsData);
+      
+      // Filter for current year
+      const currentYear = new Date().getFullYear();
+      const currentYearTargets = updatedTargets.filter(target => target.year === currentYear);
+      
+      // Split by type
+      const resourceTargets = currentYearTargets.filter(target => target.type === "موارد");
+      const expenseTargets = currentYearTargets.filter(target => target.type === "مصروفات");
+      
+      // Calculate totals
+      const totalResources = resourceTargets.reduce((sum, target) => sum + target.actual_amount, 0);
+      const totalExpenses = expenseTargets.reduce((sum, target) => sum + target.actual_amount, 0);
+      const resourcesTarget = resourceTargets.reduce((sum, target) => sum + target.target_amount, 0);
+      const resourcesPercentage = resourcesTarget > 0 ? Math.round((totalResources / resourcesTarget) * 100) : 0;
+      const resourcesRemaining = resourcesTarget - totalResources > 0 ? resourcesTarget - totalResources : 0;
+      
+      setFinancialData({
+        totalResources,
+        totalExpenses,
+        resourcesTarget,
+        resourcesPercentage,
+        resourcesRemaining,
+        currentYear
+      });
+    } catch (error) {
+      console.error("Error loading financial data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format number with currency
+  const formatCurrency = (num: number) => {
+    const formatted = new Intl.NumberFormat('en-US', { 
+      style: 'currency', 
+      currency: 'SAR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(num);
+    
+    // Remove trailing zeros
+    return formatted.replace(/\.00$/, '');
+  };
 
   return (
     <div className="space-y-6">
@@ -54,50 +119,60 @@ export const ReportsTab = () => {
         <TabsContent value="summary" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>الملخص المالي - 2023</CardTitle>
+              <CardTitle>الملخص المالي - {financialData.currentYear}</CardTitle>
               <CardDescription>نظرة عامة على الوضع المالي للسنة الحالية</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">ملخص الموارد والمصروفات</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">إجمالي الموارد:</span>
-                      <span className="font-medium">1,250,000 ريال</span>
+              {loading ? (
+                <div className="text-center py-4">جاري تحميل البيانات...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">ملخص الموارد والمصروفات</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">إجمالي الموارد:</span>
+                        <span className="font-medium">{formatCurrency(financialData.totalResources)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">إجمالي المصروفات:</span>
+                        <span className="font-medium">{formatCurrency(financialData.totalExpenses)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">الرصيد الحالي:</span>
+                        <span className={`font-medium ${financialData.totalResources - financialData.totalExpenses >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(financialData.totalResources - financialData.totalExpenses)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">إجمالي المصروفات:</span>
-                      <span className="font-medium">850,000 ريال</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">الرصيد الحالي:</span>
-                      <span className="font-medium text-green-600">400,000 ريال</span>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">تحقيق المستهدفات</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">مستهدف الموارد:</span>
+                        <span className="font-medium">{formatCurrency(financialData.resourcesTarget)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">نسبة التحقق:</span>
+                        <span className={`font-medium ${
+                          financialData.resourcesPercentage >= 90 ? 'text-green-600' : 
+                          financialData.resourcesPercentage >= 70 ? 'text-yellow-600' : 
+                          'text-red-600'
+                        }`}>{financialData.resourcesPercentage}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">المتبقي للتحقيق:</span>
+                        <span className="font-medium">{formatCurrency(financialData.resourcesRemaining)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">تحقيق المستهدفات</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">مستهدف الموارد:</span>
-                      <span className="font-medium">1,500,000 ريال</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">نسبة التحقق:</span>
-                      <span className="font-medium text-yellow-600">83%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">المتبقي للتحقيق:</span>
-                      <span className="font-medium">250,000 ريال</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
 
               <div className="mt-8 text-center">
-                <p className="text-muted-foreground">يمكن هنا إضافة رسومات بيانية تفصيلية لتوضيح البيانات المالية</p>
+                <p className="text-muted-foreground">يمكن إضافة رسومات بيانية تفصيلية لتوضيح البيانات المالية</p>
               </div>
             </CardContent>
           </Card>
