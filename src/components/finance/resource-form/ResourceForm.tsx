@@ -11,11 +11,13 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
     useDefaultPercentages,
     totalAmount,
     obligationsAmount,
+    source,
     isLoading,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
     handleObligationsChange,
+    handleSourceChange,
     handleUseDefaultsChange,
     handleItemPercentageChange,
     handleSubmit,
@@ -28,6 +30,8 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
         obligationsAmount={obligationsAmount}
         handleTotalAmountChange={handleTotalAmountChange}
         handleObligationsChange={handleObligationsChange}
+        source={source}
+        handleSourceChange={handleSourceChange}
       />
 
       <BudgetDistribution

@@ -9,6 +9,7 @@ export const useResourceForm = (onSubmit: () => void) => {
   const [useDefaultPercentages, setUseDefaultPercentages] = useState(true);
   const [totalAmount, setTotalAmount] = useState<number | "">("");
   const [obligationsAmount, setObligationsAmount] = useState<number | "">(0);
+  const [source, setSource] = useState("منصات التمويل الجماعي");
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch budget items from the database
@@ -79,6 +80,11 @@ export const useResourceForm = (onSubmit: () => void) => {
     }
   };
 
+  // Handle source change
+  const handleSourceChange = (value: string) => {
+    setSource(value);
+  };
+
   // Handle percentage type change (default or manual)
   const handleUseDefaultsChange = (value: string) => {
     const useDefaults = value === "default";
@@ -146,7 +152,6 @@ export const useResourceForm = (onSubmit: () => void) => {
     setIsLoading(true);
     
     try {
-      const source = (document.getElementById("source") as HTMLInputElement).value;
       const type = (document.getElementById("type") as HTMLSelectElement)?.value;
       const entity = (document.getElementById("entity") as HTMLInputElement).value;
       const netAmount = totalAmount - (typeof obligationsAmount === "number" ? obligationsAmount : 0);
@@ -202,11 +207,13 @@ export const useResourceForm = (onSubmit: () => void) => {
     useDefaultPercentages,
     totalAmount,
     obligationsAmount,
+    source,
     isLoading,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
     handleObligationsChange,
+    handleSourceChange,
     handleUseDefaultsChange,
     handleItemPercentageChange,
     handleSubmit,

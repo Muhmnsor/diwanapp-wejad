@@ -14,6 +14,8 @@ interface BasicInfoFieldsProps {
   obligationsAmount: number | "";
   handleTotalAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleObligationsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  source: string;
+  handleSourceChange: (value: string) => void;
 }
 
 export const BasicInfoFields = ({
@@ -21,18 +23,36 @@ export const BasicInfoFields = ({
   obligationsAmount,
   handleTotalAmountChange,
   handleObligationsChange,
+  source,
+  handleSourceChange,
 }: BasicInfoFieldsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
         <Label htmlFor="source">مصدر المورد</Label>
-        <Input id="source" placeholder="مثال: منحة، تبرع، إيرادات" required />
+        <Select value={source} onValueChange={handleSourceChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="اختر مصدر المورد" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="منصات التمويل الجماعي">منصات التمويل الجماعي</SelectItem>
+            <SelectItem value="الدعم الحكومي">الدعم الحكومي</SelectItem>
+            <SelectItem value="اشتراكات البرامج والفعاليات">اشتراكات البرامج والفعاليات</SelectItem>
+            <SelectItem value="المؤسسات المانحة">المؤسسات المانحة</SelectItem>
+            <SelectItem value="المسئولية الاجتماعية | الرعايات">المسئولية الاجتماعية | الرعايات</SelectItem>
+            <SelectItem value="متجر الجمعية الكتروني">متجر الجمعية الكتروني</SelectItem>
+            <SelectItem value="التبرع عبر الرسائل">التبرع عبر الرسائل</SelectItem>
+            <SelectItem value="الصدقة الالكترونية">الصدقة الالكترونية</SelectItem>
+            <SelectItem value="تبرعات عينية">تبرعات عينية</SelectItem>
+            <SelectItem value="أخرى">أخرى</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <div className="space-y-2">
         <Label htmlFor="type">نوع المورد</Label>
         <Select defaultValue="unbound">
-          <SelectTrigger id="type">
+          <SelectTrigger>
             <SelectValue placeholder="اختر نوع المورد" />
           </SelectTrigger>
           <SelectContent>
