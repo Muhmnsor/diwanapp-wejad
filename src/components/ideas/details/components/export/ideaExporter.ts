@@ -45,7 +45,24 @@ export const exportIdea = async ({
       exportToText(data, ideaTitle);
     } else if (exportFormat === "zip") {
       console.log("بدء تصدير الملف المضغوط...");
-      await exportToZip(data, ideaTitle, exportOptions);
+      
+      // طباعة المزيد من التفاصيل للتنقيح
+      console.log("بيانات للتضمين في ZIP:", {
+        hasIdea: !!data.idea,
+        hasComments: !!(data.comments && data.comments.length > 0),
+        hasVotes: !!(data.votes && data.votes.length > 0),
+        hasDecision: !!data.decision,
+        hasSupportingFiles: !!(data.idea?.supporting_files && data.idea.supporting_files.length > 0),
+        downloadFiles: exportOptions.includes("download_files")
+      });
+      
+      try {
+        await exportToZip(data, ideaTitle, exportOptions);
+        console.log("تم تصدير الملف المضغوط بنجاح");
+      } catch (zipError) {
+        console.error("خطأ خلال عملية تصدير ZIP:", zipError);
+        throw new Error(`فشل إنشاء ملف ZIP: ${zipError instanceof Error ? zipError.message : String(zipError)}`);
+      }
     } else {
       throw new Error("تنسيق تصدير غير مدعوم");
     }

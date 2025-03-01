@@ -51,19 +51,44 @@ export const IdeaExportDialog = ({
     setIsExporting(true);
     
     try {
+      console.log("بدء التصدير...");
+      
+      if (!ideaId) {
+        throw new Error("معرف الفكرة غير محدد");
+      }
+      
+      if (!ideaTitle) {
+        console.warn("عنوان الفكرة غير محدد، سيتم استخدام عنوان افتراضي");
+      }
+      
       await exportIdea({
         ideaId,
-        ideaTitle,
+        ideaTitle: ideaTitle || "فكرة",
         exportOptions: selectedOptions,
         exportFormat: selectedFormat,
       });
       
       toast.success("تم تصدير الفكرة بنجاح");
       console.log("=== اكتملت عملية التصدير بنجاح ===");
-      onOpenChange(false);
+      
+      // إغلاق النافذة بعد 1 ثانية للسماح للمستخدم برؤية رسالة النجاح
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1000);
     } catch (error) {
       console.error("خطأ أثناء تصدير الفكرة:", error);
-      toast.error(`حدث خطأ أثناء تصدير الفكرة: ${error instanceof Error ? error.message : "خطأ غير معروف"}`);
+      
+      let errorMessage = "حدث خطأ أثناء تصدير الفكرة";
+      
+      if (error instanceof Error) {
+        errorMessage += `: ${error.message}`;
+        console.error("تفاصيل الخطأ:", error.stack);
+      } else {
+        errorMessage += ": خطأ غير معروف";
+        console.error("خطأ غير معروف:", error);
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsExporting(false);
     }

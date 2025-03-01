@@ -17,11 +17,19 @@ import {
  * Export idea data as a ZIP file
  */
 export const exportToZip = async (data: any, ideaTitle: string, exportOptions: string[]) => {
-  console.log("Starting ZIP export process with data:", data);
+  console.log("Starting ZIP export process with data:", Object.keys(data));
+  
+  // التحقق من البيانات قبل البدء
+  if (!data || !data.idea) {
+    console.error("بيانات الفكرة غير كاملة أو غير صالحة:", data);
+    throw new Error("بيانات الفكرة غير كاملة أو غير صالحة");
+  }
+  
   const zip = new JSZip();
   
   try {
     // Add a file for the idea
+    console.log("إضافة محتوى الفكرة الأساسي للملف المضغوط");
     zip.file("idea.txt", generateIdeaTextContent(data.idea));
     
     // Add a file for comments if available
@@ -44,12 +52,18 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
     
     // Add a folder for attachment information
     const attachmentsFolder = zip.folder("attachments_info");
+    if (!attachmentsFolder) {
+      console.warn("فشل إنشاء مجلد المرفقات في الملف المضغوط");
+    } else {
+      console.log("تم إنشاء مجلد معلومات المرفقات");
+    }
     
     // Add supporting files information
-    if (data.idea.supporting_files && Array.isArray(data.idea.supporting_files) && data.idea.supporting_files.length > 0) {
-      console.log(`Processing ${data.idea.supporting_files.length} supporting files`);
+    const supportingFiles = data.idea.supporting_files;
+    if (supportingFiles && Array.isArray(supportingFiles) && supportingFiles.length > 0) {
+      console.log(`Processing ${supportingFiles.length} supporting files`);
       const supportingFilesInfoText = "الملفات الداعمة للفكرة (روابط فقط):\n\n" + 
-        data.idea.supporting_files.map((file: any, index: number) => 
+        supportingFiles.map((file: any, index: number) => 
           `${index + 1}. ${file.name}: ${file.file_path}`
         ).join("\n");
       
@@ -57,17 +71,30 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
       
       // If download_files option is selected
       if (exportOptions.includes("download_files")) {
+        console.log("بدء تنزيل الملفات المرفقة (تم اختيار خيار تنزيل الملفات)");
         const filesFolder = zip.folder("files");
         
-        // Download supporting files
-        if (filesFolder) {
-          await downloadSupportingFiles(data.idea.supporting_files, filesFolder);
+        if (!filesFolder) {
+          console.warn("فشل إنشاء مجلد الملفات في الملف المضغوط");
+        } else {
+          // Download supporting files
+          try {
+            await downloadSupportingFiles(supportingFiles, filesFolder);
+            console.log("تم تنزيل الملفات المرفقة بنجاح");
+          } catch (filesError) {
+            console.error("حدث خطأ أثناء تنزيل الملفات المرفقة:", filesError);
+            // نستمر في العملية حتى لو فشل تنزيل الملفات المرفقة
+          }
         }
+      } else {
+        console.log("تم تخطي تنزيل الملفات (لم يتم اختيار الخيار)");
       }
+    } else {
+      console.log("لا توجد ملفات مرفقة للفكرة");
     }
     
     // Add comment attachments information
-    if (data.comments) {
+    if (data.comments && Array.isArray(data.comments)) {
       const commentsWithAttachments = data.comments.filter((comment: any) => comment.attachment_url);
       if (commentsWithAttachments.length > 0) {
         console.log(`Processing ${commentsWithAttachments.length} comment attachments`);
@@ -82,30 +109,60 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
         if (exportOptions.includes("download_files")) {
           const commentsFolder = zip.folder("comment_attachments");
           
-          // Download comment attachments
-          if (commentsFolder) {
-            await downloadCommentAttachments(commentsWithAttachments, commentsFolder);
+          if (!commentsFolder) {
+            console.warn("فشل إنشاء مجلد مرفقات التعليقات في الملف المضغوط");
+          } else {
+            // Download comment attachments
+            try {
+              await downloadCommentAttachments(commentsWithAttachments, commentsFolder);
+              console.log("تم تنزيل مرفقات التعليقات بنجاح");
+            } catch (commentsError) {
+              console.error("حدث خطأ أثناء تنزيل مرفقات التعليقات:", commentsError);
+              // نستمر في العملية حتى لو فشل تنزيل مرفقات التعليقات
+            }
           }
         }
+      } else {
+        console.log("لا توجد مرفقات للتعليقات");
       }
     }
     
     // Create and download the ZIP file
-    console.log("Generating ZIP file...");
-    const zipBlob = await zip.generateAsync({
-      type: "blob",
-      compression: "DEFLATE",
-      compressionOptions: {
-        level: 5
-      }
-    });
+    console.log("توليد ملف ZIP...");
     
-    const fileName = sanitizeFileName(`فكرة-${ideaTitle}.zip`);
-    console.log(`Saving ZIP file as: ${fileName}`);
-    saveAs(zipBlob, fileName);
-    console.log("ZIP file saved successfully");
+    try {
+      const zipBlob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: {
+          level: 5
+        }
+      });
+      
+      if (!zipBlob || zipBlob.size === 0) {
+        throw new Error("فشل إنشاء ملف ZIP (حجم الملف 0)");
+      }
+      
+      console.log(`تم إنشاء ملف ZIP بنجاح. حجم الملف: ${zipBlob.size} بايت`);
+      
+      const fileName = sanitizeFileName(`فكرة-${ideaTitle}.zip`);
+      console.log(`Saving ZIP file as: ${fileName}`);
+      
+      // التحقق من أن ملف zip تم إنشاؤه بشكل صحيح
+      if (zipBlob.size > 0) {
+        saveAs(zipBlob, fileName);
+        console.log("تم حفظ ملف ZIP بنجاح");
+      } else {
+        throw new Error("فشل إنشاء ملف ZIP (حجم الملف 0 بايت)");
+      }
+      
+    } catch (zipGenError) {
+      console.error("خطأ أثناء إنشاء أو حفظ ملف ZIP:", zipGenError);
+      throw new Error(`فشل توليد ملف ZIP: ${zipGenError instanceof Error ? zipGenError.message : String(zipGenError)}`);
+    }
+    
   } catch (error) {
-    console.error("Error creating ZIP file:", error);
-    throw new Error(`Failed to create ZIP file: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("خطأ في إنشاء ملف ZIP:", error);
+    throw new Error(`فشل إنشاء ملف ZIP: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
