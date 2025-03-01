@@ -1,3 +1,4 @@
+
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { UsersTable } from "@/components/users/UsersTable";
@@ -22,7 +23,7 @@ const Users = () => {
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <UsersHeader roles={roles} onUserCreated={refetchUsers} />
+        <UsersHeader roles={roles} users={users} onUserCreated={refetchUsers} />
         <UsersTable users={users} onUserDeleted={refetchUsers} />
       </div>
       <Footer />
