@@ -61,8 +61,9 @@ export const ExpensesTable = () => {
         <TableHeader>
           <TableRow>
             <TableHead className="text-right">التاريخ</TableHead>
-            <TableHead className="text-right">العنوان</TableHead>
+            <TableHead className="text-right">الوصف</TableHead>
             <TableHead className="text-right">البند</TableHead>
+            <TableHead className="text-right">المستفيد</TableHead>
             <TableHead className="text-right">المبلغ</TableHead>
             <TableHead className="text-right">الإجراءات</TableHead>
           </TableRow>
@@ -70,7 +71,7 @@ export const ExpensesTable = () => {
         <TableBody>
           {expenses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">
+              <TableCell colSpan={6} className="text-center">
                 لا توجد مصروفات مسجلة بعد
               </TableCell>
             </TableRow>
@@ -78,8 +79,9 @@ export const ExpensesTable = () => {
             expenses.map((expense) => (
               <TableRow key={expense.id}>
                 <TableCell>{formatDate(expense.date)}</TableCell>
-                <TableCell>{expense.title}</TableCell>
+                <TableCell>{expense.description}</TableCell>
                 <TableCell>{getBudgetItemName(expense.budget_item_id)}</TableCell>
+                <TableCell>{expense.beneficiary || "غير محدد"}</TableCell>
                 <TableCell>{expense.amount.toLocaleString()} ريال</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
