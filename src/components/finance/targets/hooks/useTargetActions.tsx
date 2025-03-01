@@ -23,6 +23,7 @@ export function useTargetActions(
       await addTarget({
         year: formData.year,
         quarter: formData.quarter,
+        period_type: formData.period_type,
         type: formData.type,
         target_amount: formData.target_amount,
         actual_amount: formData.actual_amount,
@@ -49,6 +50,7 @@ export function useTargetActions(
       await updateTarget(editingTarget.id, {
         year: formData.year,
         quarter: formData.quarter,
+        period_type: formData.period_type,
         type: formData.type,
         target_amount: formData.target_amount,
         actual_amount: formData.actual_amount,
