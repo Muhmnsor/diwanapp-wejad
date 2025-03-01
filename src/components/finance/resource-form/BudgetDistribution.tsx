@@ -49,8 +49,8 @@ export const BudgetDistribution = ({
         </div>
       </div>
 
-      <div className="border rounded-lg p-4 text-right">
-        <div className="grid grid-cols-3 gap-4 mb-4 font-bold">
+      <div className="border rounded-lg p-4 text-right overflow-x-auto">
+        <div className="grid grid-cols-3 gap-4 mb-4 font-bold min-w-[500px]">
           <div>البند</div>
           <div>النسبة المئوية</div>
           <div>القيمة (ريال)</div>
@@ -67,7 +67,7 @@ export const BudgetDistribution = ({
           />
         ))}
 
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t font-bold">
+        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t font-bold min-w-[500px]">
           <div>الإجمالي</div>
           <div
             className={

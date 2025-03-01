@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -149,7 +148,7 @@ export const ResourcesTable = () => {
       )}
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[900px]">
+        <DialogContent className="max-w-[95%] w-full md:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-right">تعديل مورد مالي</DialogTitle>
           </DialogHeader>
