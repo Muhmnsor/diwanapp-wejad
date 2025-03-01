@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Edit, Trash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDate } from "@/utils/dateUtils";
 
 export const ExpensesTable = () => {
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -76,7 +77,7 @@ export const ExpensesTable = () => {
           ) : (
             expenses.map((expense) => (
               <TableRow key={expense.id}>
-                <TableCell>{new Date(expense.date).toLocaleDateString("ar-SA")}</TableCell>
+                <TableCell>{formatDate(expense.date)}</TableCell>
                 <TableCell>{expense.title}</TableCell>
                 <TableCell>{getBudgetItemName(expense.budget_item_id)}</TableCell>
                 <TableCell>{expense.amount.toLocaleString()} ريال</TableCell>

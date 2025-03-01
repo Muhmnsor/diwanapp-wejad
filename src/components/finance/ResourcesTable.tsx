@@ -13,6 +13,7 @@ import { Edit, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDate } from "@/utils/dateUtils";
 
 interface Resource {
   id: string;
@@ -99,7 +100,7 @@ export const ResourcesTable = () => {
             {resources.map((resource) => (
               <TableRow key={resource.id}>
                 <TableCell>
-                  {new Date(resource.date).toLocaleDateString("ar-SA")}
+                  {formatDate(resource.date)}
                 </TableCell>
                 <TableCell>{resource.source}</TableCell>
                 <TableCell>

@@ -38,15 +38,7 @@ export const formatDate = (dateString: string): string => {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     
-    // تحويل الوقت لنظام 12 ساعة مع إضافة ص/م
-    let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'م' : 'ص';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // الساعة 0 تصبح 12
-    const hoursStr = hours.toString().padStart(2, '0');
-    
-    return `${day}/${month}/${year} ${hoursStr}:${minutes} ${ampm}`;
+    return `${day}/${month}/${year}`;
   } catch (error) {
     console.error('Error formatting date:', error);
     return dateString;
