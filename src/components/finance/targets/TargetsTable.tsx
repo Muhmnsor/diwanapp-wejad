@@ -40,6 +40,22 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
     return item ? item.name : "غير محدد";
   };
 
+  // Calculate totals
+  const calculateTotals = () => {
+    return targets.reduce(
+      (totals, target) => {
+        return {
+          targetAmount: totals.targetAmount + target.target_amount,
+          actualAmount: totals.actualAmount + target.actual_amount,
+        };
+      },
+      { targetAmount: 0, actualAmount: 0 }
+    );
+  };
+
+  const totals = calculateTotals();
+  const overallPercentage = calculatePercentage(totals.actualAmount, totals.targetAmount);
+
   if (loading) {
     return <div className="text-center py-4">جاري تحميل البيانات...</div>;
   }
@@ -121,6 +137,37 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
             </TableCell>
           </TableRow>
         ))}
+        
+        {/* Totals Row */}
+        <TableRow className="font-bold bg-muted/50">
+          <TableCell colSpan={showResourceSource || showBudgetItem ? 3 : 2} className="text-center">
+            الإجمالي
+          </TableCell>
+          {showResourceSource && !showBudgetItem && <TableCell />}
+          {!showResourceSource && showBudgetItem && <TableCell />}
+          <TableCell className="text-center">{formatNumber(totals.targetAmount)}</TableCell>
+          <TableCell className="text-center">{formatNumber(totals.actualAmount)}</TableCell>
+          <TableCell>
+            <div className="flex items-center justify-center">
+              <div className="w-24 h-2 bg-gray-200 rounded mr-2">
+                <div
+                  className={`h-full rounded ${
+                    overallPercentage >= 100
+                      ? "bg-green-500"
+                      : overallPercentage >= 75
+                      ? "bg-yellow-400"
+                      : "bg-red-500"
+                  }`}
+                  style={{
+                    width: `${Math.min(overallPercentage, 100)}%`,
+                  }}
+                ></div>
+              </div>
+              <span dir="ltr">{overallPercentage}%</span>
+            </div>
+          </TableCell>
+          <TableCell />
+        </TableRow>
       </TableBody>
     </Table>
   );
