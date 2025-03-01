@@ -10,7 +10,35 @@ export interface FileDownloadResult {
   error?: string;
   method?: string;
   size?: number;
+  isPDF?: boolean;
+  contentType?: string;
 }
+
+// Function to log file details for debugging
+const logFileDetails = (file: any, index: number) => {
+  console.log(`=== تفاصيل الملف #${index + 1} ===`);
+  console.log({
+    name: file.name,
+    path: file.file_path,
+    pathExists: Boolean(file.file_path),
+    pathType: typeof file.file_path,
+    pathStructure: file.file_path ? file.file_path.split('/') : []
+  });
+  
+  // Log the contents of the supabase object
+  try {
+    console.log('supabase object structure:', {
+      storageExists: Boolean(supabase.storage),
+      bucketsExist: Boolean(supabase.storage?.from),
+      ideaFilesExist: Boolean(supabase.storage?.from('idea-files')),
+      publicUrlFnExists: Boolean(supabase.storage?.from('idea-files').getPublicUrl),
+      downloadFnExists: Boolean(supabase.storage?.from('idea-files').download),
+      createSignedUrlFnExists: Boolean(supabase.storage?.from('idea-files').createSignedUrl)
+    });
+  } catch (error) {
+    console.error('Error inspecting supabase object:', error);
+  }
+};
 
 /**
  * Download supporting files and add them to a specified folder
@@ -21,7 +49,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
     return;
   }
   
-  console.log(`محاولة تنزيل ${supportingFiles.length} ملف داعم`);
+  console.log(`=== محاولة تنزيل ${supportingFiles.length} ملف داعم ===`);
   
   try {
     // تحقق من صلاحية كائن JSZip
@@ -50,19 +78,32 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
           continue;
         }
         
+        // Log detailed file information
+        logFileDetails(file, index);
+        
         console.log(`(${index + 1}/${supportingFiles.length}) محاولة تنزيل الملف: ${file.name}`);
         
         // طريقة 1: استخدام getPublicUrl
         try {
+          console.log(`محاولة تنزيل الملف باستخدام URL عام...`);
+          
           const { data: urlData } = supabase.storage
             .from('idea-files')
             .getPublicUrl(file.file_path);
             
           if (urlData?.publicUrl) {
+            console.log(`تم الحصول على URL عام: ${urlData.publicUrl}`);
+            
             const fetchResponse = await fetch(urlData.publicUrl);
             
             if (fetchResponse.ok) {
+              console.log(`تم جلب البيانات بنجاح، حالة الاستجابة: ${fetchResponse.status}`);
+              console.log(`نوع المحتوى: ${fetchResponse.headers.get('content-type')}`);
+              
               const fetchedData = await fetchResponse.blob();
+              
+              const isPDF = fetchResponse.headers.get('content-type')?.includes('pdf') || 
+                          file.name.toLowerCase().endsWith('.pdf');
               
               if (fetchedData && fetchedData.size > 0) {
                 const safeFileName = sanitizeFileName(file.name);
@@ -72,13 +113,27 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
                   name: safeFileName,
                   success: true,
                   method: "publicUrl",
-                  size: fetchedData.size
+                  size: fetchedData.size,
+                  isPDF: isPDF,
+                  contentType: fetchResponse.headers.get('content-type') || undefined
                 });
                 
                 console.log(`تم تنزيل الملف ${file.name} بنجاح عبر URL عام، الحجم: ${fetchedData.size} بايت`);
+                
+                // اختبار إذا كان PDF
+                if (isPDF) {
+                  console.log(`الملف ${file.name} هو ملف PDF`);
+                }
+                
                 continue;
+              } else {
+                console.warn(`البيانات المستلمة فارغة أو حجمها 0 بايت`);
               }
+            } else {
+              console.warn(`فشل جلب البيانات. حالة الاستجابة: ${fetchResponse.status}`);
             }
+          } else {
+            console.warn(`لم نستطع الحصول على URL عام للملف`);
           }
         } catch (publicUrlError) {
           console.warn(`فشل تنزيل الملف باستخدام URL عام:`, publicUrlError);
@@ -86,15 +141,25 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
         
         // طريقة 2: استخدام createSignedUrl
         try {
+          console.log(`محاولة تنزيل الملف باستخدام URL مُوقّع...`);
+          
           const { data: signedUrlData, error: signedUrlError } = await supabase.storage
             .from('idea-files')
             .createSignedUrl(file.file_path, 60);
           
           if (!signedUrlError && signedUrlData?.signedUrl) {
+            console.log(`تم الحصول على URL مُوقّع: ${signedUrlData.signedUrl}`);
+            
             const fetchResponse = await fetch(signedUrlData.signedUrl);
             
             if (fetchResponse.ok) {
+              console.log(`تم جلب البيانات بنجاح، حالة الاستجابة: ${fetchResponse.status}`);
+              console.log(`نوع المحتوى: ${fetchResponse.headers.get('content-type')}`);
+              
               const fetchedData = await fetchResponse.blob();
+              
+              const isPDF = fetchResponse.headers.get('content-type')?.includes('pdf') || 
+                          file.name.toLowerCase().endsWith('.pdf');
               
               if (fetchedData && fetchedData.size > 0) {
                 const safeFileName = sanitizeFileName(file.name);
@@ -104,13 +169,27 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
                   name: safeFileName,
                   success: true,
                   method: "signedUrl",
-                  size: fetchedData.size
+                  size: fetchedData.size,
+                  isPDF: isPDF,
+                  contentType: fetchResponse.headers.get('content-type') || undefined
                 });
                 
                 console.log(`تم تنزيل الملف ${file.name} بنجاح عبر URL مُوقّع، الحجم: ${fetchedData.size} بايت`);
+                
+                // اختبار إذا كان PDF
+                if (isPDF) {
+                  console.log(`الملف ${file.name} هو ملف PDF`);
+                }
+                
                 continue;
+              } else {
+                console.warn(`البيانات المستلمة فارغة أو حجمها 0 بايت`);
               }
+            } else {
+              console.warn(`فشل جلب البيانات. حالة الاستجابة: ${fetchResponse.status}`);
             }
+          } else {
+            console.warn(`لم نستطع الحصول على URL مُوقّع للملف. الخطأ:`, signedUrlError);
           }
         } catch (signedUrlError) {
           console.warn(`فشل تنزيل الملف باستخدام URL مُوقّع:`, signedUrlError);
@@ -118,21 +197,20 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
         
         // طريقة 3: استخدام طريقة التنزيل المباشر
         try {
-          // استخراج اسم الملف من المسار
-          let fileName = file.file_path;
-          if (file.file_path.includes('/')) {
-            const parts = file.file_path.split('/');
-            fileName = parts[parts.length - 1];
-          } else if (file.file_path.includes('\\')) {
-            const parts = file.file_path.split('\\');
-            fileName = parts[parts.length - 1];
-          }
+          console.log(`محاولة تنزيل الملف عبر التنزيل المباشر...`);
           
+          // تجربة بالاسم الكامل أولاً
           const { data: downloadData, error: downloadError } = await supabase.storage
             .from('idea-files')
-            .download(fileName);
-            
+            .download(file.file_path);
+          
           if (!downloadError && downloadData) {
+            console.log(`تم تنزيل الملف بنجاح، الحجم: ${downloadData.size}`);
+            console.log(`نوع المحتوى: ${downloadData.type}`);
+            
+            const isPDF = downloadData.type.includes('pdf') || 
+                        file.name.toLowerCase().endsWith('.pdf');
+            
             const safeFileName = sanitizeFileName(file.name);
             folder.file(safeFileName, downloadData);
             
@@ -140,51 +218,82 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
               name: safeFileName,
               success: true,
               method: "direct-download",
-              size: downloadData.size
+              size: downloadData.size,
+              isPDF: isPDF,
+              contentType: downloadData.type
             });
             
             console.log(`تم تنزيل الملف ${file.name} بنجاح عبر التنزيل المباشر، الحجم: ${downloadData.size} بايت`);
+            
+            // اختبار إذا كان PDF
+            if (isPDF) {
+              console.log(`الملف ${file.name} هو ملف PDF`);
+            }
+            
             continue;
+          } else {
+            console.warn(`فشل تنزيل الملف مباشرة. الخطأ:`, downloadError);
+            
+            // محاولة استخراج الاسم من المسار
+            console.log(`محاولة استخراج اسم الملف من المسار: ${file.file_path}`);
+            
+            let fileName = file.file_path;
+            if (file.file_path.includes('/')) {
+              const parts = file.file_path.split('/');
+              fileName = parts[parts.length - 1];
+            } else if (file.file_path.includes('\\')) {
+              const parts = file.file_path.split('\\');
+              fileName = parts[parts.length - 1];
+            }
+            
+            console.log(`اسم الملف المستخرج: ${fileName}`);
+            
+            const { data: filenameData, error: filenameError } = await supabase.storage
+              .from('idea-files')
+              .download(fileName);
+              
+            if (!filenameError && filenameData) {
+              console.log(`تم تنزيل الملف بنجاح بالاسم المستخرج، الحجم: ${filenameData.size}`);
+              
+              const isPDF = filenameData.type.includes('pdf') || 
+                          file.name.toLowerCase().endsWith('.pdf');
+              
+              const safeFileName = sanitizeFileName(file.name);
+              folder.file(safeFileName, filenameData);
+              
+              results.push({
+                name: safeFileName,
+                success: true,
+                method: "filename-download",
+                size: filenameData.size,
+                isPDF: isPDF,
+                contentType: filenameData.type
+              });
+              
+              console.log(`تم تنزيل الملف ${file.name} بنجاح باسم الملف المستخرج، الحجم: ${filenameData.size} بايت`);
+              
+              // اختبار إذا كان PDF
+              if (isPDF) {
+                console.log(`الملف ${file.name} هو ملف PDF`);
+              }
+              
+              continue;
+            } else {
+              console.warn(`فشل تنزيل الملف باسم الملف المستخرج. الخطأ:`, filenameError);
+            }
           }
-          
-          // محاولة أخيرة باستخدام المسار الكامل
-          const { data: fullPathData, error: fullPathError } = await supabase.storage
-            .from('idea-files')
-            .download(file.file_path);
-            
-          if (!fullPathError && fullPathData) {
-            const safeFileName = sanitizeFileName(file.name);
-            folder.file(safeFileName, fullPathData);
-            
-            results.push({
-              name: safeFileName,
-              success: true,
-              method: "full-path-download",
-              size: fullPathData.size
-            });
-            
-            console.log(`تم تنزيل الملف ${file.name} بنجاح عبر التنزيل بالمسار الكامل، الحجم: ${fullPathData.size} بايت`);
-            continue;
-          }
-          
-          // فشلت جميع المحاولات
-          results.push({
-            name: file.name,
-            success: false,
-            error: "فشلت جميع طرق التنزيل المتاحة"
-          });
-          
-          console.error(`فشلت جميع محاولات تنزيل الملف ${file.name}`);
-          
         } catch (directDownloadError) {
           console.error(`خطأ في التنزيل المباشر للملف ${file.name}:`, directDownloadError);
-          
-          results.push({
-            name: file.name,
-            success: false,
-            error: directDownloadError instanceof Error ? directDownloadError.message : String(directDownloadError)
-          });
         }
+        
+        // فشلت جميع المحاولات
+        results.push({
+          name: file.name,
+          success: false,
+          error: "فشلت جميع طرق التنزيل المتاحة"
+        });
+        
+        console.error(`فشلت جميع محاولات تنزيل الملف ${file.name}`);
         
       } catch (fileError) {
         console.error(`خطأ في تنزيل الملف ${file?.name || 'unknown'}:`, fileError);
@@ -200,14 +309,23 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
     // إنشاء تقرير بالنتائج
     const successfulFiles = results.filter(r => r.success).map(r => r.name);
     const failedFiles = results.filter(r => !r.success).map(r => `${r.name} (${r.error})`);
+    const pdfFiles = results.filter(r => r.isPDF && r.success).map(r => r.name);
     
     console.log(`اكتمل تنزيل الملفات: ${successfulFiles.length} ملف ناجح، ${failedFiles.length} ملف فاشل`);
+    console.log(`عدد ملفات PDF التي تم تنزيلها: ${pdfFiles.length}`);
+    
+    // Log detailed results
+    console.log("نتائج التنزيل المفصلة:", results);
     
     const reportContent = `
 تقرير تنزيل الملفات الداعمة:
 ===========================
 عدد الملفات التي تم تنزيلها بنجاح: ${successfulFiles.length}
 عدد الملفات التي فشل تنزيلها: ${failedFiles.length}
+عدد ملفات PDF التي تم تنزيلها: ${pdfFiles.length}
+
+تفاصيل الملفات الناجحة:
+${results.filter(r => r.success).map(r => `- ${r.name} (${r.method}, ${r.size} بايت, نوع المحتوى: ${r.contentType || 'غير معروف'}, PDF: ${r.isPDF ? 'نعم' : 'لا'})`).join('\n')}
 
 ${failedFiles.length > 0 ? `الملفات التي فشل تنزيلها:\n${failedFiles.join('\n')}` : ''}
 `;
@@ -223,6 +341,7 @@ ${failedFiles.length > 0 ? `الملفات التي فشل تنزيلها:\n${fa
 خطأ أثناء تنزيل الملفات الداعمة:
 ==============================
 ${error instanceof Error ? error.message : String(error)}
+${error instanceof Error && error.stack ? '\nStack Trace:\n' + error.stack : ''}
 `);
     }
     
@@ -239,7 +358,7 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
     return;
   }
   
-  console.log(`محاولة تنزيل مرفقات لـ ${comments.length} تعليق`);
+  console.log(`=== محاولة تنزيل مرفقات لـ ${comments.length} تعليق ===`);
   
   try {
     // تحقق من صلاحية كائن JSZip
@@ -258,6 +377,17 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
       }
       
       try {
+        console.log(`=== معلومات مرفق التعليق #${index + 1} ===`);
+        console.log({
+          commentId: comment.id,
+          attachmentName: comment.attachment_name || 'بدون اسم',
+          attachmentUrl: comment.attachment_url,
+          attachmentType: comment.attachment_type || 'غير معروف',
+          isPdf: comment.attachment_type?.includes('pdf') || 
+                 comment.attachment_url?.toLowerCase().includes('.pdf') || 
+                 (comment.attachment_name && comment.attachment_name.toLowerCase().endsWith('.pdf'))
+        });
+        
         console.log(`(${index + 1}/${comments.length}) محاولة تنزيل مرفق التعليق: ${comment.attachment_name || 'بدون اسم'}`);
         
         // تحديد اسم الملف
@@ -266,10 +396,18 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
         
         // محاولة تنزيل الملف مباشرة من URL
         try {
+          console.log(`محاولة تنزيل المرفق مباشرة من URL العام: ${comment.attachment_url}`);
+          
           const response = await fetch(comment.attachment_url);
           
           if (response.ok) {
+            console.log(`تم جلب البيانات بنجاح، حالة الاستجابة: ${response.status}`);
+            console.log(`نوع المحتوى: ${response.headers.get('content-type')}`);
+            
             const blob = await response.blob();
+            
+            const isPDF = response.headers.get('content-type')?.includes('pdf') || 
+                        fileName.toLowerCase().endsWith('.pdf');
             
             if (blob && blob.size > 0) {
               folder.file(safeFileName, blob);
@@ -277,12 +415,25 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
               results.push({
                 name: safeFileName,
                 success: true,
-                size: blob.size
+                method: "direct-url",
+                size: blob.size,
+                isPDF: isPDF,
+                contentType: response.headers.get('content-type') || undefined
               });
               
               console.log(`تم تنزيل مرفق التعليق بنجاح: ${safeFileName}، الحجم: ${blob.size} بايت`);
+              
+              // اختبار إذا كان PDF
+              if (isPDF) {
+                console.log(`الملف ${safeFileName} هو ملف PDF`);
+              }
+              
               continue;
+            } else {
+              console.warn(`البيانات المستلمة فارغة أو حجمها 0 بايت`);
             }
+          } else {
+            console.warn(`فشل جلب البيانات. حالة الاستجابة: ${response.status}`);
           }
         } catch (fetchError) {
           console.warn(`فشل تنزيل المرفق من URL:`, fetchError);
@@ -290,6 +441,8 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
         
         // محاولة أخرى باستخدام XMLHttpRequest
         try {
+          console.log(`محاولة تنزيل المرفق باستخدام XMLHttpRequest...`);
+          
           const result = await new Promise<FileDownloadResult>((resolve) => {
             const xhr = new XMLHttpRequest();
             xhr.open('GET', comment.attachment_url, true);
@@ -297,17 +450,33 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
             
             xhr.onload = function() {
               if (this.status === 200) {
-                const blob = new Blob([this.response], { type: 'application/octet-stream' });
+                console.log(`تم جلب البيانات بنجاح باستخدام XHR، حالة الاستجابة: ${this.status}`);
+                console.log(`نوع المحتوى: ${this.response.type}`);
+                
+                const blob = new Blob([this.response], { type: this.response.type || 'application/octet-stream' });
+                
+                const isPDF = this.response.type?.includes('pdf') || 
+                            fileName.toLowerCase().endsWith('.pdf');
+                
                 folder.file(safeFileName, blob);
                 
                 resolve({
                   name: safeFileName,
                   success: true,
                   method: "xhr",
-                  size: blob.size
+                  size: blob.size,
+                  isPDF: isPDF,
+                  contentType: this.response.type
                 });
                 
+                // اختبار إذا كان PDF
+                if (isPDF) {
+                  console.log(`الملف ${safeFileName} هو ملف PDF`);
+                }
+                
               } else {
+                console.warn(`فشل جلب البيانات باستخدام XHR. حالة الاستجابة: ${this.status}`);
+                
                 resolve({
                   name: safeFileName,
                   success: false,
@@ -317,6 +486,8 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
             };
             
             xhr.onerror = function() {
+              console.error(`خطأ شبكة أثناء استخدام XHR`);
+              
               resolve({
                 name: safeFileName,
                 success: false,
@@ -360,14 +531,23 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
     // إنشاء تقرير بالنتائج
     const successfulFiles = results.filter(r => r.success).map(r => r.name);
     const failedFiles = results.filter(r => !r.success).map(r => `${r.name} (${r.error})`);
+    const pdfFiles = results.filter(r => r.isPDF && r.success).map(r => r.name);
     
     console.log(`اكتمل تنزيل مرفقات التعليقات: ${successfulFiles.length} مرفق ناجح، ${failedFiles.length} مرفق فاشل`);
+    console.log(`عدد ملفات PDF التي تم تنزيلها: ${pdfFiles.length}`);
+    
+    // Log detailed results
+    console.log("نتائج تنزيل المرفقات المفصلة:", results);
     
     const reportContent = `
 تقرير تنزيل مرفقات التعليقات:
 ===========================
 عدد المرفقات التي تم تنزيلها بنجاح: ${successfulFiles.length}
 عدد المرفقات التي فشل تنزيلها: ${failedFiles.length}
+عدد ملفات PDF التي تم تنزيلها: ${pdfFiles.length}
+
+تفاصيل الملفات الناجحة:
+${results.filter(r => r.success).map(r => `- ${r.name} (${r.method}, ${r.size} بايت, نوع المحتوى: ${r.contentType || 'غير معروف'}, PDF: ${r.isPDF ? 'نعم' : 'لا'})`).join('\n')}
 
 ${failedFiles.length > 0 ? `المرفقات التي فشل تنزيلها:\n${failedFiles.join('\n')}` : ''}
 `;
@@ -383,6 +563,7 @@ ${failedFiles.length > 0 ? `المرفقات التي فشل تنزيلها:\n${
 خطأ أثناء تنزيل مرفقات التعليقات:
 ================================
 ${error instanceof Error ? error.message : String(error)}
+${error instanceof Error && error.stack ? '\nStack Trace:\n' + error.stack : ''}
 `);
     }
     

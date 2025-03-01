@@ -1,203 +1,224 @@
 
 /**
- * Formats departments into human-readable text
+ * Generate text content for idea
  */
-export const formatDepartments = (departments: any[]): string => {
-  if (!departments || !departments.length) return 'لا توجد إدارات مساهمة';
-  
-  return departments.map((dept: any, index: number) => {
-    let name, contribution;
-    if (typeof dept === 'string') {
-      try {
-        const parsed = JSON.parse(dept);
-        name = parsed.name;
-        contribution = parsed.contribution;
-      } catch (e) {
-        name = dept;
-        contribution = '';
-      }
-    } else {
-      name = dept.name;
-      contribution = dept.contribution;
-    }
-    
-    return `${index + 1}. ${name}${contribution ? ` - المساهمة: ${contribution}` : ''}`;
-  }).join('\n');
-};
-
-/**
- * Formats partners into human-readable text
- */
-export const formatPartners = (partners: any[]): string => {
-  if (!partners || !partners.length) return 'لا يوجد شركاء متوقعون';
-  
-  return partners.map((partner: any, index: number) => {
-    return `${index + 1}. ${partner.name}${partner.contribution ? ` - المساهمة: ${partner.contribution}` : ''}`;
-  }).join('\n');
-};
-
-/**
- * Formats costs into human-readable text
- */
-export const formatCosts = (costs: any[]): string => {
-  if (!costs || !costs.length) return 'لا توجد تكاليف متوقعة';
-  
-  let totalCost = 0;
-  const costsText = costs.map((cost: any, index: number) => {
-    const itemCost = cost.total_cost || 0;
-    totalCost += Number(itemCost);
-    return `${index + 1}. ${cost.item} - الكمية: ${cost.quantity} - التكلفة: ${itemCost} ريال`;
-  }).join('\n');
-  
-  return `${costsText}\n\nالتكلفة الإجمالية: ${totalCost} ريال`;
-};
-
-/**
- * Gets the text representation of a status
- */
-export const getStatusText = (status: string): string => {
-  switch (status) {
-    case 'draft': return 'مسودة';
-    case 'under_review': return 'قيد المراجعة';
-    case 'pending_decision': return 'بانتظار القرار';
-    case 'approved': return 'تمت الموافقة';
-    case 'rejected': return 'مرفوضة';
-    case 'needs_modification': return 'تحتاج تعديل';
-    default: return status || 'غير معروف';
+export const generateIdeaTextContent = (idea: any): string => {
+  // Determine the idea status in a more readable format
+  let ideaStatus = '';
+  if (idea.status === 'pending') {
+    ideaStatus = 'قيد المراجعة';
+  } else if (idea.status === 'discussing') {
+    ideaStatus = 'قيد المناقشة';
+  } else if (idea.status === 'approved') {
+    ideaStatus = 'تمت الموافقة';
+  } else if (idea.status === 'rejected') {
+    ideaStatus = 'مرفوضة';
+  } else if (idea.status === 'archived') {
+    ideaStatus = 'مؤرشفة';
+  } else {
+    ideaStatus = idea.status || 'غير معروف';
   }
-};
 
-/**
- * Sanitizes a filename to remove invalid characters
- */
-export const sanitizeFileName = (fileName: string): string => {
-  return fileName.replace(/[\\/:*?"<>|]/g, '_').substring(0, 50);
-};
+  // Format date
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'غير محدد';
+    try {
+      return new Date(dateString).toLocaleString('ar-SA');
+    } catch (e) {
+      return dateString;
+    }
+  };
 
-/**
- * Generates text content for an idea
- */
-export const generateIdeaTextContent = (ideaData: any): string => {
-  const ideaCreatedAt = new Date(ideaData.created_at).toLocaleString('ar');
-  return `عنوان الفكرة: ${ideaData.title}
-تاريخ الإنشاء: ${ideaCreatedAt}
-مقدم الفكرة: ${ideaData.created_by_user?.email || 'غير معروف'}
-الحالة: ${getStatusText(ideaData.status)}
-نوع الفكرة: ${ideaData.idea_type || 'غير محدد'}
+  // Generate the text content
+  return `
+عنوان الفكرة: ${idea.title || 'بدون عنوان'}
+===================================
+
+معلومات عامة:
+-----------
+الحالة: ${ideaStatus}
+نوع الفكرة: ${idea.idea_type || 'غير محدد'}
+تاريخ الإنشاء: ${formatDate(idea.created_at)}
+مدة المناقشة: ${idea.duration || 'غير محدد'}
 
 الوصف:
-${ideaData.description || 'لا يوجد وصف'}
+-----
+${idea.description || 'لا يوجد وصف'}
 
 المشكلة:
-${ideaData.problem || 'غير محددة'}
+-------
+${idea.problem || 'لم يتم تحديد مشكلة'}
 
 الفرصة:
-${ideaData.opportunity || 'غير محددة'}
+------
+${idea.opportunity || 'لم يتم تحديد فرصة'}
 
-الفوائد المتوقعة:
-${ideaData.benefits || 'غير محددة'}
+الفوائد:
+-------
+${idea.benefits || 'لم يتم تحديد فوائد'}
+
+آلية التنفيذ:
+----------
+${idea.execution || 'لم يتم تحديد آلية التنفيذ'}
 
 الموارد المطلوبة:
-${ideaData.required_resources || 'غير محددة'}
-
-فترة التنفيذ المقترحة: ${ideaData.duration || 'غير محددة'}
-تاريخ التنفيذ المقترح: ${ideaData.proposed_execution_date ? new Date(ideaData.proposed_execution_date).toLocaleDateString('ar') : 'غير محدد'}
-
-الإدارات المساهمة:
-${formatDepartments(ideaData.contributing_departments)}
-
-الشركاء المتوقعون:
-${formatPartners(ideaData.expected_partners)}
+--------------
+${idea.resources || 'لم يتم تحديد موارد مطلوبة'}
 
 التكاليف المتوقعة:
-${formatCosts(ideaData.expected_costs)}`;
+---------------
+${idea.cost || 'لم يتم تحديد تكاليف متوقعة'}
+
+الإدارات المعنية:
+--------------
+${Array.isArray(idea.departments) ? idea.departments.join('، ') : (idea.departments || 'لم يتم تحديد إدارات معنية')}
+
+الشركاء:
+------
+${Array.isArray(idea.partners) ? idea.partners.join('، ') : (idea.partners || 'لم يتم تحديد شركاء')}
+
+الأفكار المشابهة:
+--------------
+${Array.isArray(idea.similar_ideas) ? idea.similar_ideas.map((similarIdea: any) => 
+  `- ${similarIdea.title || 'بدون عنوان'}: ${similarIdea.link || 'بدون رابط'}`
+).join('\n') : 'لم يتم تحديد أفكار مشابهة'}
+
+الملفات الداعمة:
+-------------
+${Array.isArray(idea.supporting_files) && idea.supporting_files.length > 0 ? 
+  idea.supporting_files.map((file: any, index: number) => 
+    `${index + 1}. ${file.name || 'ملف بدون اسم'}`
+  ).join('\n') : 
+  'لا توجد ملفات داعمة'}
+`;
 };
 
 /**
- * Generates text content for comments
+ * Generate text content for comments
  */
 export const generateCommentsTextContent = (comments: any[]): string => {
-  let commentsText = "المناقشات:\n\n";
-  
-  if (comments && comments.length > 0) {
-    comments.forEach((comment, index) => {
-      const commentDate = new Date(comment.created_at).toLocaleString('ar');
-      commentsText += `[${commentDate}] ${comment.user_email || 'مستخدم'}: ${comment.content}\n`;
-      if (comment.attachment_url) {
-        commentsText += `مرفق: ${comment.attachment_name || 'ملف مرفق'}\n`;
-      }
-      commentsText += "------------------------------\n";
-    });
-  } else {
-    commentsText += "لا توجد مناقشات.";
+  if (!comments || comments.length === 0) {
+    return "لا توجد تعليقات";
   }
-  
-  return commentsText;
+
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'غير محدد';
+    try {
+      return new Date(dateString).toLocaleString('ar-SA');
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const formattedComments = comments.map((comment, index) => {
+    let commentText = `${index + 1}. تعليق بواسطة: ${comment.user_email || 'مستخدم غير معروف'}\n`;
+    commentText += `   التاريخ: ${formatDate(comment.created_at)}\n`;
+    commentText += `   المحتوى: ${comment.content || 'بدون محتوى'}\n`;
+    
+    if (comment.attachment_url) {
+      commentText += `   المرفق: ${comment.attachment_name || 'ملف مرفق'}\n`;
+    }
+    
+    return commentText;
+  }).join('\n');
+
+  return `
+التعليقات:
+========
+${formattedComments}
+`;
 };
 
 /**
- * Generates text content for votes
+ * Generate text content for votes
  */
 export const generateVotesTextContent = (votes: any[]): string => {
-  let votesText = "التصويتات:\n\n";
-  const upVotes = votes.filter(v => v.vote_type === 'up').length;
-  const downVotes = votes.filter(v => v.vote_type === 'down').length;
-  
-  votesText += `إجمالي الأصوات: ${votes.length}\n`;
-  votesText += `الأصوات المؤيدة: ${upVotes}\n`;
-  votesText += `الأصوات المعارضة: ${downVotes}\n`;
-  
-  return votesText;
+  if (!votes || votes.length === 0) {
+    return "لا توجد أصوات";
+  }
+
+  // Count upvotes and downvotes
+  const upvotes = votes.filter(vote => vote.vote_type === 'up').length;
+  const downvotes = votes.filter(vote => vote.vote_type === 'down').length;
+
+  return `
+التصويت:
+=======
+إجمالي الأصوات: ${votes.length}
+الأصوات المؤيدة: ${upvotes}
+الأصوات المعارضة: ${downvotes}
+`;
 };
 
 /**
- * Generates text content for a decision
+ * Generate text content for decision
  */
 export const generateDecisionTextContent = (decision: any): string => {
-  if (!decision) return "القرار: لا يوجد قرار بعد.";
-  
-  const decisionDate = new Date(decision.created_at).toLocaleString('ar');
-  return `القرار:
-تاريخ القرار: ${decisionDate}
-متخذ القرار: ${decision.decision_maker?.email || 'غير معروف'}
-الحالة: ${getStatusText(decision.status)}
+  if (!decision) {
+    return "لم يتم اتخاذ قرار بعد";
+  }
 
-سبب القرار / ملاحظات:
-${decision.reason || 'لا توجد ملاحظات'}
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'غير محدد';
+    try {
+      return new Date(dateString).toLocaleString('ar-SA');
+    } catch (e) {
+      return dateString;
+    }
+  };
 
-${decision.status === 'approved' ? `
-المكلف بالتنفيذ: ${decision.assignee || 'غير محدد'}
-الإطار الزمني: ${decision.timeline || 'غير محدد'}
-الميزانية المقترحة: ${decision.budget || 'غير محددة'}
-` : ''}`;
+  return `
+القرار:
+=====
+تاريخ القرار: ${formatDate(decision.created_at)}
+نتيجة القرار: ${decision.outcome || 'غير محدد'}
+التعليق: ${decision.comments || 'بدون تعليق'}
+النقاط البارزة: ${decision.highlights || 'لا توجد نقاط بارزة'}
+المعينون: ${Array.isArray(decision.assignees) && decision.assignees.length > 0 ? 
+  decision.assignees.map((assignee: any) => assignee.name || 'بدون اسم').join('، ') : 
+  'لم يتم تعيين أحد'}
+`;
 };
 
 /**
- * Generates the complete text content for an idea export
+ * Sanitize file name to be safe for file systems
  */
-export const generateTextContent = (data: any): string => {
-  let content = "";
+export const sanitizeFileName = (fileName: string): string => {
+  if (!fileName) return 'file';
   
-  // Add idea information
-  content += generateIdeaTextContent(data.idea);
-  
-  // Add comments
-  if (data.comments) {
-    content += "\n\n" + "=" .repeat(50) + "\n";
-    content += generateCommentsTextContent(data.comments);
+  try {
+    // Replace invalid characters with underscores
+    let safeFileName = fileName
+      .replace(/[\/\\:*?"<>|]/g, '_')  // Replace invalid characters
+      .replace(/\s+/g, '_')            // Replace spaces with underscores
+      .replace(/__+/g, '_')            // Replace multiple underscores with single
+      .trim();                          // Trim any whitespace
+    
+    // If filename is too long, truncate it
+    if (safeFileName.length > 100) {
+      const extension = safeFileName.includes('.') ? 
+        safeFileName.substring(safeFileName.lastIndexOf('.')) : '';
+      const nameWithoutExt = safeFileName.includes('.') ? 
+        safeFileName.substring(0, safeFileName.lastIndexOf('.')) : safeFileName;
+      
+      safeFileName = nameWithoutExt.substring(0, 90) + extension;
+    }
+    
+    // If filename starts with a dot, add a prefix
+    if (safeFileName.startsWith('.')) {
+      safeFileName = 'file' + safeFileName;
+    }
+    
+    // If filename is empty after sanitization, use a default name
+    if (!safeFileName) {
+      safeFileName = 'file';
+    }
+    
+    console.log(`اسم الملف الأصلي: ${fileName} | اسم الملف المعدل: ${safeFileName}`);
+    
+    return safeFileName;
+  } catch (error) {
+    console.error(`خطأ أثناء تنظيف اسم الملف "${fileName}":`, error);
+    return 'file';  // Return a default name in case of error
   }
-  
-  // Add votes
-  if (data.votes) {
-    content += "\n\n" + "=" .repeat(50) + "\n";
-    content += generateVotesTextContent(data.votes);
-  }
-  
-  // Add decision
-  if (data.decision) {
-    content += "\n\n" + "=" .repeat(50) + "\n";
-    content += generateDecisionTextContent(data.decision);
-  }
-  
-  return content;
 };

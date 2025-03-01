@@ -17,7 +17,15 @@ import {
  * Export idea data as a ZIP file
  */
 export const exportToZip = async (data: any, ideaTitle: string, exportOptions: string[]) => {
-  console.log("Starting ZIP export process with data:", Object.keys(data));
+  console.log("=== بدء عملية تصدير ZIP ===");
+  console.log("البيانات المستلمة:", {
+    hasIdea: !!data?.idea,
+    commentsCount: data?.comments?.length || 0,
+    votesCount: data?.votes?.length || 0,
+    hasDecision: !!data?.decision,
+    supportingFilesCount: data?.idea?.supporting_files?.length || 0,
+    exportOptions
+  });
   
   // التحقق من البيانات قبل البدء
   if (!data || !data.idea) {
@@ -36,6 +44,31 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
     const ideaContent = generateIdeaTextContent(data.idea);
     zip.file("idea.txt", ideaContent);
     console.log("تم إضافة محتوى الفكرة بنجاح، حجم المحتوى:", ideaContent.length);
+    
+    // Add debug information file
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      browser: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      exportOptions,
+      ideaId: data.idea.id,
+      dataStructure: {
+        hasIdea: true,
+        commentsCount: data.comments?.length || 0,
+        votesCount: data.votes?.length || 0,
+        hasDecision: !!data.decision,
+        supportingFilesInfo: data.idea.supporting_files?.map((file: any) => ({
+          name: file.name,
+          path: file.file_path,
+          pathExists: !!file.file_path,
+          pathType: typeof file.file_path
+        })) || []
+      }
+    };
+    
+    zip.file("_debug_info.json", JSON.stringify(debugInfo, null, 2));
+    console.log("تم إضافة معلومات التتبع للملف المضغوط");
     
     // Add a file for comments if available
     if (data.comments && data.comments.length > 0) {
@@ -76,7 +109,18 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
     const supportingFiles = data.idea.supporting_files;
     
     if (supportingFiles && Array.isArray(supportingFiles) && supportingFiles.length > 0) {
-      console.log(`Processing ${supportingFiles.length} supporting files`);
+      console.log(`معالجة ${supportingFiles.length} ملف داعم`);
+      
+      // سجل تفاصيل الملفات الداعمة
+      supportingFiles.forEach((file: any, index: number) => {
+        console.log(`ملف داعم #${index + 1}:`, {
+          name: file.name,
+          path: file.file_path,
+          pathType: typeof file.file_path,
+          hasValidPath: !!file.file_path,
+          pathStructure: file.file_path ? file.file_path.split('/') : []
+        });
+      });
       
       // Create text file with file information
       const supportingFilesInfoText = "الملفات الداعمة للفكرة (روابط فقط):\n\n" + 
@@ -126,7 +170,20 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
     if (data.comments && Array.isArray(data.comments)) {
       const commentsWithAttachments = data.comments.filter((comment: any) => comment.attachment_url);
       if (commentsWithAttachments.length > 0) {
-        console.log(`Processing ${commentsWithAttachments.length} comment attachments`);
+        console.log(`معالجة ${commentsWithAttachments.length} مرفق تعليق`);
+        
+        // سجل تفاصيل مرفقات التعليقات
+        commentsWithAttachments.forEach((comment: any, index: number) => {
+          console.log(`مرفق تعليق #${index + 1}:`, {
+            commentId: comment.id,
+            attachmentName: comment.attachment_name || 'بدون اسم',
+            attachmentUrl: comment.attachment_url,
+            urlType: typeof comment.attachment_url,
+            hasValidUrl: !!comment.attachment_url,
+            attachmentType: comment.attachment_type || 'غير معروف',
+            isPdf: comment.attachment_type?.includes('pdf') || comment.attachment_url?.includes('.pdf')
+          });
+        });
         
         const commentAttachmentsInfoText = "مرفقات التعليقات (روابط فقط):\n\n" + 
           commentsWithAttachments.map((comment: any, index: number) => 
@@ -204,11 +261,21 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
       
     } catch (zipGenError) {
       console.error("خطأ أثناء إنشاء أو حفظ ملف ZIP:", zipGenError);
+      console.error("تفاصيل الخطأ:", {
+        message: zipGenError instanceof Error ? zipGenError.message : String(zipGenError),
+        stack: zipGenError instanceof Error ? zipGenError.stack : "No stack trace available"
+      });
       throw new Error(`فشل توليد ملف ZIP: ${zipGenError instanceof Error ? zipGenError.message : String(zipGenError)}`);
     }
     
+    console.log("=== انتهت عملية التصدير بنجاح ===");
+    
   } catch (error) {
     console.error("خطأ في إنشاء ملف ZIP:", error);
-    throw new Error(`فشل إنشاء ملف ZIP: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("تفاصيل الخطأ:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : "No stack trace available"
+    });
+    throw error;
   }
 };
