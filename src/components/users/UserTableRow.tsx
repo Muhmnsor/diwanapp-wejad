@@ -1,15 +1,17 @@
+
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { UserCog, Trash2 } from "lucide-react";
+import { UserCog, Trash2, Info } from "lucide-react";
 import { User } from "./types";
 
 interface UserTableRowProps {
   user: User;
   onEdit: () => void;
   onDelete: () => void;
+  onViewDetails: () => void;
 }
 
-export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
+export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTableRowProps) => {
   const getRoleDisplayName = (roleName: string | undefined) => {
     if (!roleName || roleName === 'لم يتم تعيين دور') return 'لم يتم تعيين دور';
     
@@ -38,7 +40,16 @@ export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
           <Button 
             variant="outline" 
             size="icon"
+            onClick={onViewDetails}
+            title="عرض التفاصيل"
+          >
+            <Info className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="icon"
             onClick={onEdit}
+            title="تعديل المستخدم"
           >
             <UserCog className="h-4 w-4" />
           </Button>
@@ -46,6 +57,7 @@ export const UserTableRow = ({ user, onEdit, onDelete }: UserTableRowProps) => {
             variant="destructive" 
             size="icon"
             onClick={onDelete}
+            title="حذف المستخدم"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

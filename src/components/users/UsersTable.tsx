@@ -14,6 +14,7 @@ import { UserTableHeader } from "./UserTableHeader";
 import { UserTableRow } from "./UserTableRow";
 import { UserEditDialog } from "./UserEditDialog";
 import { UserDeleteDialog } from "./UserDeleteDialog";
+import { UserDetailsDialog } from "./UserDetailsDialog";
 
 interface UsersTableProps {
   users: User[];
@@ -23,6 +24,7 @@ interface UsersTableProps {
 export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToView, setUserToView] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,6 +150,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
                     setSelectedRole(user.role || '');
                   }}
                   onDelete={() => setUserToDelete(user)}
+                  onViewDetails={() => setUserToView(user)}
                 />
               ))
             ) : (
@@ -178,6 +181,12 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         isOpen={!!userToDelete}
         onClose={() => setUserToDelete(null)}
         onConfirm={handleDeleteUser}
+      />
+
+      <UserDetailsDialog
+        user={userToView}
+        isOpen={!!userToView}
+        onClose={() => setUserToView(null)}
       />
     </>
   );
