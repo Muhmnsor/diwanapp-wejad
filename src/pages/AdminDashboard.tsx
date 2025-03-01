@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Database, ListChecks, Lightbulb, DollarSign, Globe, ShoppingCart, Users, Bell } from "lucide-react";
@@ -78,7 +79,7 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-3xl font-bold mb-8 text-center">لوحة التحكم المركزية</h1>
         
-        <Tabs defaultValue="apps" className="w-full">
+        <Tabs defaultValue="personal" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="apps">التطبيقات</TabsTrigger>
             <TabsTrigger value="personal">لوحة المستخدم الشخصية</TabsTrigger>
