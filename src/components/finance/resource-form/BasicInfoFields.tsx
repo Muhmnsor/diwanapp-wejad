@@ -16,6 +16,8 @@ interface BasicInfoFieldsProps {
   handleObligationsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   source: string;
   handleSourceChange: (value: string) => void;
+  defaultType?: string;
+  defaultEntity?: string;
 }
 
 export const BasicInfoFields = ({
@@ -25,6 +27,8 @@ export const BasicInfoFields = ({
   handleObligationsChange,
   source,
   handleSourceChange,
+  defaultType = "unbound",
+  defaultEntity = "",
 }: BasicInfoFieldsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
@@ -51,7 +55,7 @@ export const BasicInfoFields = ({
       
       <div className="space-y-2">
         <Label htmlFor="type">نوع المورد</Label>
-        <Select defaultValue="unbound" dir="rtl">
+        <Select defaultValue={defaultType} dir="rtl">
           <SelectTrigger id="type">
             <SelectValue placeholder="اختر نوع المورد" />
           </SelectTrigger>
@@ -64,7 +68,13 @@ export const BasicInfoFields = ({
       
       <div className="space-y-2">
         <Label htmlFor="entity">الجهة</Label>
-        <Input id="entity" placeholder="الجهة التي جاء منها المورد" required className="text-right" />
+        <Input 
+          id="entity" 
+          placeholder="الجهة التي جاء منها المورد" 
+          required 
+          className="text-right" 
+          defaultValue={defaultEntity}
+        />
       </div>
       
       <div className="space-y-2">

@@ -14,6 +14,13 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDate } from "@/utils/dateUtils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { EditResourceForm } from "./resource-form/EditResourceForm";
 
 interface Resource {
   id: string;
@@ -29,6 +36,8 @@ interface Resource {
 export const ResourcesTable = () => {
   const [resources, setResources] = useState<Resource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchResources();
@@ -51,6 +60,17 @@ export const ResourcesTable = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEdit = (resource: Resource) => {
+    setEditingResource(resource);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditComplete = () => {
+    setEditDialogOpen(false);
+    setEditingResource(null);
+    fetchResources(); // إعادة تحميل البيانات
   };
 
   const handleDelete = async (id: string) => {
@@ -114,9 +134,9 @@ export const ResourcesTable = () => {
                 <TableCell>{resource.net_amount.toLocaleString()} ريال</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    {/* <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(resource)}>
                       <Edit className="h-4 w-4" />
-                    </Button> */}
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(resource.id)}>
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -127,6 +147,21 @@ export const ResourcesTable = () => {
           </TableBody>
         </Table>
       )}
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[900px]">
+          <DialogHeader>
+            <DialogTitle className="text-right">تعديل مورد مالي</DialogTitle>
+          </DialogHeader>
+          {editingResource && (
+            <EditResourceForm 
+              resource={editingResource} 
+              onCancel={() => setEditDialogOpen(false)}
+              onSubmit={handleEditComplete} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
