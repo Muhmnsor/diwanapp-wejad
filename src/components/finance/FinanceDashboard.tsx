@@ -51,14 +51,14 @@ export const FinanceDashboard = () => {
       // 1. جلب إجمالي الموارد
       const { data: resourcesData, error: resourcesError } = await supabase
         .from('financial_resources')
-        .select('net_amount');
+        .select('net_amount, date');
       
       if (resourcesError) throw resourcesError;
       
       // 2. جلب إجمالي المصروفات
       const { data: expensesData, error: expensesError } = await supabase
         .from('expenses')
-        .select('amount');
+        .select('amount, date');
       
       if (expensesError) throw expensesError;
       
@@ -101,14 +101,8 @@ export const FinanceDashboard = () => {
         };
       });
       
-      // إعداد بيانات الرسم البياني الشهري (نموذجية لأغراض العرض)
-      // في التطبيق الحقيقي، ستحتاج إلى استرجاع البيانات الفعلية حسب الأشهر
-      const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'];
-      const monthlyChartData = months.map((month) => ({
-        name: month,
-        الموارد: Math.floor(Math.random() * 100000) + 200000, // قيم عشوائية لأغراض العرض
-        المصروفات: Math.floor(Math.random() * 50000) + 150000
-      }));
+      // إعداد بيانات الرسم البياني الشهري من البيانات الفعلية
+      const monthlyChartData = generateMonthlyData(resourcesData, expensesData);
       
       setDashboardData({
         totalResources,
@@ -129,6 +123,43 @@ export const FinanceDashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // دالة لإنشاء بيانات الشهور من البيانات الفعلية
+  const generateMonthlyData = (resources: any[], expenses: any[]) => {
+    // تحديد الأشهر العربية
+    const months = ['يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    
+    // إنشاء قاموس للبيانات الشهرية
+    const monthlyData = months.map(month => ({
+      name: month,
+      الموارد: 0,
+      المصروفات: 0
+    }));
+
+    // إضافة الموارد حسب الشهر
+    resources.forEach(resource => {
+      const date = new Date(resource.date);
+      const monthIndex = date.getMonth();
+      if (monthIndex >= 0 && monthIndex < 12) {
+        monthlyData[monthIndex].الموارد += resource.net_amount;
+      }
+    });
+
+    // إضافة المصروفات حسب الشهر
+    expenses.forEach(expense => {
+      const date = new Date(expense.date);
+      const monthIndex = date.getMonth();
+      if (monthIndex >= 0 && monthIndex < 12) {
+        monthlyData[monthIndex].المصروفات += expense.amount;
+      }
+    });
+
+    // تصفية الأشهر التي لها موارد أو مصروفات فقط للتركيز على البيانات المهمة
+    const filteredData = monthlyData.filter(item => item.الموارد > 0 || item.المصروفات > 0);
+    
+    // إذا لم تكن هناك بيانات، نعرض الأشهر الستة الأولى بقيم صفرية
+    return filteredData.length > 0 ? filteredData : monthlyData.slice(0, 6);
   };
 
   if (isLoading) {
@@ -231,7 +262,7 @@ export const FinanceDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* تدفق الأموال عبر الوقت (رسم بياني خطي/شريطي) */}
+        {/* تدفق الأموال عبر الوقت (رسم بياني شريطي) */}
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>تدفق الأموال الشهري</CardTitle>
