@@ -174,6 +174,7 @@ ${decision.status === 'approved' ? `
 
 /**
  * Generates the complete text content for an idea export
+ * @deprecated Use individual content generators instead
  */
 export const generateTextContent = (data: any): string => {
   let content = "";
