@@ -1,47 +1,30 @@
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit, Trash } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FinancialTarget } from "./TargetsDataService";
+import { Pencil, Trash2 } from "lucide-react";
 
-type FinancialTarget = {
-  id: string;
-  year: number;
-  quarter: number;
-  type: string;
-  target_amount: number;
-  actual_amount: number;
-  budget_item_id?: string;
-  resource_source?: string;
-};
-
-type TargetsTableProps = {
+interface TargetsTableProps {
   targets: FinancialTarget[];
   loading: boolean;
   onEdit: (target: FinancialTarget) => void;
   onDelete: (id: string) => void;
-};
+}
 
-export const TargetsTable = ({ targets, loading, onEdit, onDelete }: TargetsTableProps) => {
-  const getAchievementPercentage = (target: number, actual: number) => {
+export const TargetsTable: React.FC<TargetsTableProps> = ({
+  targets,
+  loading,
+  onEdit,
+  onDelete,
+}) => {
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(num);
+  };
+
+  const calculatePercentage = (actual: number, target: number) => {
     if (target === 0) return 0;
     return Math.round((actual / target) * 100);
-  };
-
-  const getAchievementColor = (percentage: number) => {
-    if (percentage >= 100) return "text-green-600";
-    if (percentage >= 80) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const formatQuarter = (quarter: number) => {
-    switch (quarter) {
-      case 0: return "سنوي";
-      case 1: return "الربع الأول";
-      case 2: return "الربع الثاني";
-      case 3: return "الربع الثالث";
-      case 4: return "الربع الرابع";
-      default: return quarter.toString();
-    }
   };
 
   if (loading) {
@@ -49,45 +32,69 @@ export const TargetsTable = ({ targets, loading, onEdit, onDelete }: TargetsTabl
   }
 
   if (targets.length === 0) {
-    return <div className="text-center py-4 text-muted-foreground">لا توجد مستهدفات مالية مسجلة</div>;
+    return <div className="text-center py-4">لا توجد مستهدفات مالية</div>;
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="text-right">السنة</TableHead>
-          <TableHead className="text-right">الفترة</TableHead>
-          <TableHead className="text-right">النوع</TableHead>
-          <TableHead className="text-right">المستهدف</TableHead>
-          <TableHead className="text-right">المتحقق</TableHead>
-          <TableHead className="text-right">نسبة التحقيق</TableHead>
-          <TableHead className="text-right">الإجراءات</TableHead>
+          <TableHead>السنة</TableHead>
+          <TableHead>الفترة</TableHead>
+          <TableHead>المستهدف</TableHead>
+          <TableHead>المتحقق</TableHead>
+          <TableHead>نسبة التحقق</TableHead>
+          <TableHead>إجراءات</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {targets.map((target) => (
           <TableRow key={target.id}>
             <TableCell>{target.year}</TableCell>
-            <TableCell>{formatQuarter(target.quarter)}</TableCell>
-            <TableCell>{target.type}</TableCell>
-            <TableCell>{target.target_amount.toLocaleString()} ريال</TableCell>
-            <TableCell>{target.actual_amount.toLocaleString()} ريال</TableCell>
-            <TableCell className={getAchievementColor(getAchievementPercentage(target.target_amount, target.actual_amount))}>
-              {getAchievementPercentage(target.target_amount, target.actual_amount)}%
+            <TableCell>
+              {target.period_type === "yearly" 
+                ? "سنوي" 
+                : `الربع ${target.quarter}`}
+            </TableCell>
+            <TableCell>{formatNumber(target.target_amount)}</TableCell>
+            <TableCell>{formatNumber(target.actual_amount)}</TableCell>
+            <TableCell>
+              <div className="flex items-center">
+                <div className="w-24 h-2 bg-gray-200 rounded mr-2">
+                  <div
+                    className={`h-full rounded ${
+                      calculatePercentage(target.actual_amount, target.target_amount) >= 100
+                        ? "bg-green-500"
+                        : calculatePercentage(target.actual_amount, target.target_amount) >= 75
+                        ? "bg-yellow-400"
+                        : "bg-red-500"
+                    }`}
+                    style={{
+                      width: `${Math.min(
+                        calculatePercentage(target.actual_amount, target.target_amount),
+                        100
+                      )}%`,
+                    }}
+                  ></div>
+                </div>
+                <span>{calculatePercentage(target.actual_amount, target.target_amount)}%</span>
+              </div>
             </TableCell>
             <TableCell>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="icon" onClick={() => onEdit(target)}>
-                  <Edit className="h-4 w-4" />
+              <div className="flex space-x-2 space-x-reverse">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onEdit(target)}
+                >
+                  <Pencil className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="text-destructive"
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => onDelete(target.id)}
                 >
-                  <Trash className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </TableCell>
