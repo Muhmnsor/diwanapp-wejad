@@ -111,7 +111,7 @@ const AdminDashboard = () => {
           <TabsContent value="personal" className="mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Card className="p-6">
-                <div className="flex items-center mb-4 justify-center">
+                <div className="flex items-center mb-4 justify-end">
                   <ListChecks className="w-6 h-6 text-primary ml-2" />
                   <h2 className="text-xl font-semibold">المهام المطلوبة</h2>
                 </div>
