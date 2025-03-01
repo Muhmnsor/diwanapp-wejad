@@ -1,5 +1,5 @@
 
-import * as JSZip from "jszip";
+import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { 
   generateIdeaTextContent, 

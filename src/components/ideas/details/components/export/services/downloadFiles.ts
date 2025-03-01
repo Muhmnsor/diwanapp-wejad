@@ -1,5 +1,5 @@
 
-import * as JSZip from "jszip";
+import JSZip from "jszip";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeFileName } from "../utils/textUtils";
 
