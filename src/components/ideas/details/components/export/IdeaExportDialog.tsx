@@ -4,31 +4,16 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@radix-ui/react-label";
-import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { exportIdea } from "./ideaExporter";
-
-interface IdeaExportOption {
-  id: string;
-  label: string;
-  description: string;
-  required?: boolean;
-  default?: boolean;
-}
-
-interface IdeaExportDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  ideaId: string;
-  ideaTitle: string;
-}
+import { ExportOptions } from "./ExportOptions";
+import { ExportFormats } from "./ExportFormats";
+import { ExportDialogFooter } from "./ExportDialogFooter";
+import { IdeaExportDialogProps } from "./types";
+import { getExportFormats, getExportOptions } from "./constants";
 
 export const IdeaExportDialog = ({
   open,
@@ -36,70 +21,8 @@ export const IdeaExportDialog = ({
   ideaId,
   ideaTitle,
 }: IdeaExportDialogProps) => {
-  const exportOptions: IdeaExportOption[] = [
-    {
-      id: "basic",
-      label: "معلومات الفكرة الأساسية",
-      description: "عنوان الفكرة، الوصف، المشكلة، الفرصة، الفوائد المتوقعة، إلخ",
-      required: true,
-      default: true,
-    },
-    {
-      id: "comments",
-      label: "التعليقات والمناقشات",
-      description: "جميع التعليقات والمناقشات المتعلقة بالفكرة",
-      default: true,
-    },
-    {
-      id: "votes",
-      label: "التصويتات والإحصاءات",
-      description: "إحصاءات التصويت على الفكرة",
-      default: true,
-    },
-    {
-      id: "decision",
-      label: "القرار المتخذ",
-      description: "القرار النهائي وتفاصيله إذا كان متوفراً",
-      default: true,
-    },
-    {
-      id: "files_links",
-      label: "روابط الملفات الداعمة",
-      description: "روابط الملفات الداعمة للفكرة (بدون تنزيل الملفات)",
-      default: true,
-    },
-    {
-      id: "attachment_links",
-      label: "روابط مرفقات التعليقات",
-      description: "روابط الملفات المرفقة بالتعليقات (بدون تنزيل الملفات)",
-      default: true,
-    },
-    {
-      id: "download_files",
-      label: "تنزيل الملفات المرفقة",
-      description: "تنزيل الملفات الداعمة ومرفقات التعليقات كجزء من التصدير",
-      default: false,
-    },
-  ];
-
-  const exportFormats = [
-    {
-      id: "pdf",
-      label: "PDF",
-      description: "تصدير بصيغة PDF (مستند للقراءة)",
-    },
-    {
-      id: "text",
-      label: "نص عادي",
-      description: "تصدير بصيغة نص عادي",
-      default: true,
-    },
-    {
-      id: "zip",
-      label: "ملف مضغوط",
-      description: "تصدير جميع المعلومات كملفات نصية في ملف مضغوط ZIP",
-    },
-  ];
+  const exportOptions = getExportOptions();
+  const exportFormats = getExportFormats();
 
   const [selectedOptions, setSelectedOptions] = useState<string[]>(
     exportOptions.filter((option) => option.default).map((option) => option.id)
@@ -157,78 +80,24 @@ export const IdeaExportDialog = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          <div className="space-y-4">
-            <h3 className="font-medium text-lg">محتويات التصدير</h3>
-            <div className="grid gap-4">
-              {exportOptions.map((option) => (
-                <div key={option.id} className="flex items-start space-x-2 space-x-reverse">
-                  <Checkbox
-                    id={`option-${option.id}`}
-                    checked={selectedOptions.includes(option.id)}
-                    onCheckedChange={(checked) => handleOptionChange(option.id, !!checked)}
-                    disabled={option.required}
-                    className="mt-1"
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor={`option-${option.id}`}
-                      className={`font-medium ${option.required ? "text-muted-foreground" : ""}`}
-                    >
-                      {option.label}
-                      {option.required && <span className="text-sm text-red-500"> (إلزامي)</span>}
-                    </label>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ExportOptions
+            selectedOptions={selectedOptions}
+            handleOptionChange={handleOptionChange}
+            exportOptions={exportOptions}
+          />
 
-          <div className="space-y-4">
-            <h3 className="font-medium text-lg">تنسيق التصدير</h3>
-            <div className="grid gap-4">
-              {exportFormats.map((format) => (
-                <div key={format.id} className="flex items-start space-x-2 space-x-reverse">
-                  <Checkbox
-                    id={`format-${format.id}`}
-                    checked={selectedFormat === format.id}
-                    onCheckedChange={(checked) => handleFormatChange(format.id, !!checked)}
-                    className="mt-1"
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <label htmlFor={`format-${format.id}`} className="font-medium">
-                      {format.label}
-                    </label>
-                    <p className="text-sm text-muted-foreground">{format.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ExportFormats
+            selectedFormat={selectedFormat}
+            handleFormatChange={handleFormatChange}
+            exportFormats={exportFormats}
+          />
         </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isExporting}
-          >
-            إلغاء
-          </Button>
-          <Button onClick={handleExport} disabled={isExporting}>
-            {isExporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                جاري التصدير...
-              </>
-            ) : (
-              <>
-                <FileDown className="mr-2 h-4 w-4" />
-                تصدير
-              </>
-            )}
-          </Button>
-        </DialogFooter>
+        <ExportDialogFooter
+          isExporting={isExporting}
+          onCancel={() => onOpenChange(false)}
+          onExport={handleExport}
+        />
       </DialogContent>
     </Dialog>
   );
