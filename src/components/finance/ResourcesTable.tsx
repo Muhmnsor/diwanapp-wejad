@@ -77,7 +77,7 @@ export const ResourcesTable = () => {
   }
 
   return (
-    <div className="relative w-full overflow-auto">
+    <div className="border rounded-md">
       {resources.length === 0 ? (
         <div className="text-center p-8 text-muted-foreground">
           لا توجد موارد مالية مضافة حتى الآن
