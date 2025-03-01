@@ -60,144 +60,139 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
         console.log(`(${index + 1}/${supportingFiles.length}) محاولة تنزيل الملف: ${file.name}, المسار: ${file.file_path}`);
         
         // استخراج اسم الملف الفعلي من المسار الكامل
-        let actualFileName = file.file_path;
         let filePathForDownload = file.file_path;
         
-        // تجريب استخراج اسم الملف من المسار بطرق مختلفة
-        if (file.file_path.includes('/')) {
-          // إذا كان المسار يحتوي على '/'
-          const filePathParts = file.file_path.split('/');
-          actualFileName = filePathParts[filePathParts.length - 1];
-        } else if (file.file_path.includes('\\')) {
-          // إذا كان المسار يحتوي على '\'
-          const filePathParts = file.file_path.split('\\');
-          actualFileName = filePathParts[filePathParts.length - 1];
-        }
-        
-        console.log(`استخلاص اسم الملف: "${actualFileName}" من المسار: "${file.file_path}"`);
-        
-        // محاولة تنزيل الملف من Supabase Storage بالمسار المستخلص
-        console.log(`محاولة تنزيل الملف من Supabase مع المسار: ${actualFileName}`);
-        console.time(`download-file-${index}`);
-        
-        const { data, error } = await supabase.storage
-          .from('idea-files')
-          .download(actualFileName);
+        // تجريب تنزيل الملف باستخدام URL مباشر كطريقة أولى
+        try {
+          console.log(`محاولة تنزيل الملف عبر URL: ${filePathForDownload}`);
           
-        console.timeEnd(`download-file-${index}`);
-        
-        if (error) {
-          console.error(`خطأ في تنزيل الملف ${file.name} بالمسار ${actualFileName}:`, error);
-          
-          // محاولة ثانية باستخدام المسار الأصلي الكامل
-          console.log(`محاولة ثانية باستخدام المسار الكامل: ${file.file_path}`);
-          console.time(`second-attempt-${index}`);
-          
-          const secondAttempt = await supabase.storage
+          // الحصول على URL التنزيل المؤقت
+          const { data: urlData, error: urlError } = await supabase.storage
             .from('idea-files')
-            .download(file.file_path);
-            
-          console.timeEnd(`second-attempt-${index}`);
+            .createSignedUrl(filePathForDownload, 60);
           
-          if (secondAttempt.error) {
-            console.error(`فشل المحاولة الثانية لتنزيل الملف ${file.name}:`, secondAttempt.error);
-            
-            // محاولة ثالثة: طلب طريقة URL بدلاً من تنزيل مباشر
-            console.log(`محاولة ثالثة: الحصول على URL للملف ${file.name}`);
-            
-            const { data: urlData, error: urlError } = await supabase.storage
-              .from('idea-files')
-              .createSignedUrl(file.file_path, 60);
-              
-            if (urlError || !urlData || !urlData.signedUrl) {
-              console.error(`فشل الحصول على URL للملف ${file.name}:`, urlError || "لا يوجد URL");
-              return {
-                name: file.name,
-                success: false,
-                error: `محاولات متعددة فشلت: ${secondAttempt.error.message}`
-              } as FileDownloadResult;
-            }
-            
-            console.log(`تم الحصول على URL للملف: ${urlData.signedUrl.substring(0, 50)}...`);
-            
-            // تنزيل الملف باستخدام fetch من URL المُوقّع
-            try {
-              const fetchResponse = await fetch(urlData.signedUrl);
-              
-              if (!fetchResponse.ok) {
-                throw new Error(`HTTP error! status: ${fetchResponse.status}`);
-              }
-              
-              const fetchedData = await fetchResponse.blob();
-              
-              if (!fetchedData || fetchedData.size === 0) {
-                throw new Error("تم تنزيل ملف فارغ");
-              }
-              
-              console.log(`تم تنزيل الملف ${file.name} بنجاح عبر fetch من URL، الحجم: ${fetchedData.size} بايت`);
-              
-              // إضافة الملف إلى المجلد
-              const safeFileName = sanitizeFileName(file.name);
-              folder.file(safeFileName, fetchedData);
-              
-              return {
-                name: safeFileName,
-                success: true,
-                method: "fetch-url"
-              } as FileDownloadResult;
-            } catch (fetchError) {
-              console.error(`خطأ في تنزيل الملف ${file.name} عبر fetch:`, fetchError);
-              return {
-                name: file.name,
-                success: false,
-                error: `فشل تنزيل الملف عبر fetch: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
-              } as FileDownloadResult;
-            }
+          if (urlError || !urlData || !urlData.signedUrl) {
+            console.error(`فشل الحصول على URL للملف ${file.name}:`, urlError || "لا يوجد URL");
+            throw new Error(`فشل الحصول على URL: ${urlError?.message || "URL غير متاح"}`);
           }
           
-          if (!secondAttempt.data) {
-            console.error(`لا توجد بيانات في المحاولة الثانية للملف ${file.name}`);
-            return {
-              name: file.name,
-              success: false,
-              error: "لم يتم إرجاع بيانات في المحاولة الثانية"
-            } as FileDownloadResult;
+          console.log(`تم الحصول على URL للملف: ${urlData.signedUrl.substring(0, 50)}...`);
+          
+          // تنزيل الملف باستخدام fetch من URL المُوقّع
+          const fetchResponse = await fetch(urlData.signedUrl);
+          
+          if (!fetchResponse.ok) {
+            console.error(`استجابة HTTP غير ناجحة: ${fetchResponse.status} - ${fetchResponse.statusText}`);
+            throw new Error(`HTTP error! status: ${fetchResponse.status}`);
           }
           
-          console.log(`تم تنزيل الملف بنجاح في المحاولة الثانية: ${file.name}، الحجم: ${secondAttempt.data.size} بايت`);
+          const fetchedData = await fetchResponse.blob();
+          
+          if (!fetchedData || fetchedData.size === 0) {
+            console.error("تم تنزيل ملف فارغ");
+            throw new Error("تم تنزيل ملف فارغ");
+          }
+          
+          console.log(`تم تنزيل الملف ${file.name} بنجاح عبر fetch من URL، الحجم: ${fetchedData.size} بايت`);
           
           // إضافة الملف إلى المجلد
           const safeFileName = sanitizeFileName(file.name);
-          folder.file(safeFileName, secondAttempt.data);
+          folder.file(safeFileName, fetchedData);
           
           return {
             name: safeFileName,
             success: true,
-            method: "second-attempt"
+            method: "fetch-url",
+            size: fetchedData.size
           } as FileDownloadResult;
-        }
-        
-        if (!data) {
-          console.error(`لا توجد بيانات للملف ${file.name}`);
+        } catch (fetchUrlError) {
+          console.error(`خطأ في تنزيل الملف ${file.name} عبر URL:`, fetchUrlError);
+          console.log("المحاولة الثانية: تنزيل مباشر من التخزين");
+          
+          // اذا فشل التنزيل عبر URL، محاولة التنزيل المباشر
+          // استخراج اسم الملف الفعلي من المسار الكامل للمحاولة الثانية
+          let actualFileName = file.file_path;
+          
+          if (file.file_path.includes('/')) {
+            // إذا كان المسار يحتوي على '/'
+            const filePathParts = file.file_path.split('/');
+            actualFileName = filePathParts[filePathParts.length - 1];
+          } else if (file.file_path.includes('\\')) {
+            // إذا كان المسار يحتوي على '\'
+            const filePathParts = file.file_path.split('\\');
+            actualFileName = filePathParts[filePathParts.length - 1];
+          }
+          
+          console.log(`استخلاص اسم الملف: "${actualFileName}" من المسار: "${file.file_path}"`);
+          
+          const { data, error } = await supabase.storage
+            .from('idea-files')
+            .download(actualFileName);
+            
+          if (error) {
+            console.error(`خطأ في تنزيل الملف ${file.name} بالمسار ${actualFileName}:`, error);
+            
+            // محاولة ثالثة باستخدام المسار الأصلي الكامل
+            console.log(`محاولة ثالثة باستخدام المسار الكامل: ${file.file_path}`);
+            
+            const thirdAttempt = await supabase.storage
+              .from('idea-files')
+              .download(file.file_path);
+              
+            if (thirdAttempt.error) {
+              console.error(`فشل المحاولة الثالثة لتنزيل الملف ${file.name}:`, thirdAttempt.error);
+              return {
+                name: file.name,
+                success: false,
+                error: `فشلت جميع المحاولات: ${thirdAttempt.error.message}`
+              } as FileDownloadResult;
+            }
+            
+            if (!thirdAttempt.data) {
+              console.error(`لا توجد بيانات في المحاولة الثالثة للملف ${file.name}`);
+              return {
+                name: file.name,
+                success: false,
+                error: "لم يتم إرجاع بيانات في المحاولة الثالثة"
+              } as FileDownloadResult;
+            }
+            
+            console.log(`تم تنزيل الملف بنجاح في المحاولة الثالثة: ${file.name}، الحجم: ${thirdAttempt.data.size} بايت`);
+            
+            // إضافة الملف إلى المجلد
+            const safeFileName = sanitizeFileName(file.name);
+            folder.file(safeFileName, thirdAttempt.data);
+            
+            return {
+              name: safeFileName,
+              success: true,
+              method: "direct-download-full-path",
+              size: thirdAttempt.data.size
+            } as FileDownloadResult;
+          }
+          
+          if (!data) {
+            console.error(`لا توجد بيانات للملف ${file.name}`);
+            return {
+              name: file.name,
+              success: false,
+              error: "لم يتم إرجاع بيانات من التخزين"
+            } as FileDownloadResult;
+          }
+          
+          console.log(`تم تنزيل الملف بنجاح: ${file.name}، الحجم: ${data.size} بايت، النوع: ${data.type}`);
+          
+          // إضافة الملف إلى المجلد
+          const safeFileName = sanitizeFileName(file.name);
+          folder.file(safeFileName, data);
+          
           return {
-            name: file.name,
-            success: false,
-            error: "لم يتم إرجاع بيانات من التخزين"
+            name: safeFileName,
+            success: true,
+            method: "direct-download-filename",
+            size: data.size
           } as FileDownloadResult;
         }
-        
-        console.log(`تم تنزيل الملف بنجاح: ${file.name}، الحجم: ${data.size} بايت، النوع: ${data.type}`);
-        
-        // إضافة الملف إلى المجلد
-        const safeFileName = sanitizeFileName(file.name);
-        folder.file(safeFileName, data);
-        
-        return {
-          name: safeFileName,
-          success: true,
-          method: "first-attempt",
-          size: data.size
-        } as FileDownloadResult;
       } catch (error) {
         console.error(`خطأ في تنزيل الملف ${file?.name || 'unknown'}:`, error);
         console.error("تفاصيل الخطأ:", {
@@ -219,8 +214,8 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
     const results = await Promise.all(filesToDownload);
     
     // إضافة تقرير عن الملفات التي تم تنزيلها بنجاح وتلك التي فشل تنزيلها
-    const successfulFiles = results.filter(r => r && r.success).map(r => r.name);
-    const failedFiles = results.filter(r => r && !r.success).map(r => `${r.name} (${r.error})`);
+    const successfulFiles = results.filter((r): r is FileDownloadResult => r && r.success).map(r => r.name);
+    const failedFiles = results.filter((r): r is FileDownloadResult => r && !r.success).map(r => `${r.name} (${r.error})`);
     
     console.log(`اكتمل تنزيل الملفات: ${successfulFiles.length} ملف ناجح، ${failedFiles.length} ملف فاشل`);
     

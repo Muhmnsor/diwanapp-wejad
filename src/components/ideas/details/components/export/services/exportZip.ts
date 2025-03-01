@@ -35,40 +35,66 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
   try {
     // إنشاء كائن JSZip جديد
     console.log("محاولة إنشاء كائن JSZip جديد");
-    const zip = new JSZip();
-    console.log("تم إنشاء كائن JSZip بنجاح", {
-      zipType: typeof zip,
-      zipMethods: Object.keys(zip),
-    });
+    let zip: JSZip;
+    try {
+      zip = new JSZip();
+      console.log("تم إنشاء كائن JSZip بنجاح", {
+        zipType: typeof zip,
+        zipMethods: Object.keys(zip),
+      });
+    } catch (zipError) {
+      console.error("خطأ في إنشاء كائن JSZip:", zipError);
+      throw new Error(`فشل إنشاء كائن JSZip: ${zipError instanceof Error ? zipError.message : String(zipError)}`);
+    }
     
     // Add a file for the idea
     console.log("إضافة محتوى الفكرة الأساسي للملف المضغوط");
     const ideaContent = generateIdeaTextContent(data.idea);
-    zip.file("idea.txt", ideaContent);
-    console.log("تم إضافة محتوى الفكرة بنجاح، حجم المحتوى:", ideaContent.length);
+    try {
+      zip.file("idea.txt", ideaContent);
+      console.log("تم إضافة محتوى الفكرة بنجاح، حجم المحتوى:", ideaContent.length);
+    } catch (fileError) {
+      console.error("خطأ في إضافة ملف الفكرة:", fileError);
+      throw new Error(`فشل إضافة ملف الفكرة: ${fileError instanceof Error ? fileError.message : String(fileError)}`);
+    }
     
     // Add a file for comments if available
     if (data.comments && data.comments.length > 0) {
       console.log(`Adding ${data.comments.length} comments to ZIP`);
-      const commentsContent = generateCommentsTextContent(data.comments);
-      zip.file("comments.txt", commentsContent);
-      console.log("تم إضافة التعليقات بنجاح، حجم المحتوى:", commentsContent.length);
+      try {
+        const commentsContent = generateCommentsTextContent(data.comments);
+        zip.file("comments.txt", commentsContent);
+        console.log("تم إضافة التعليقات بنجاح، حجم المحتوى:", commentsContent.length);
+      } catch (commentsError) {
+        console.error("خطأ في إضافة ملف التعليقات:", commentsError);
+        // نستمر رغم الخطأ
+      }
     }
     
     // Add a file for votes if available
     if (data.votes && data.votes.length > 0) {
       console.log(`Adding ${data.votes.length} votes to ZIP`);
-      const votesContent = generateVotesTextContent(data.votes);
-      zip.file("votes.txt", votesContent);
-      console.log("تم إضافة الأصوات بنجاح، حجم المحتوى:", votesContent.length);
+      try {
+        const votesContent = generateVotesTextContent(data.votes);
+        zip.file("votes.txt", votesContent);
+        console.log("تم إضافة الأصوات بنجاح، حجم المحتوى:", votesContent.length);
+      } catch (votesError) {
+        console.error("خطأ في إضافة ملف الأصوات:", votesError);
+        // نستمر رغم الخطأ
+      }
     }
     
     // Add a file for the decision if available
     if (data.decision) {
       console.log("Adding decision data to ZIP");
-      const decisionContent = generateDecisionTextContent(data.decision);
-      zip.file("decision.txt", decisionContent);
-      console.log("تم إضافة القرار بنجاح، حجم المحتوى:", decisionContent.length);
+      try {
+        const decisionContent = generateDecisionTextContent(data.decision);
+        zip.file("decision.txt", decisionContent);
+        console.log("تم إضافة القرار بنجاح، حجم المحتوى:", decisionContent.length);
+      } catch (decisionError) {
+        console.error("خطأ في إضافة ملف القرار:", decisionError);
+        // نستمر رغم الخطأ
+      }
     }
     
     // Add a folder for attachment information
@@ -93,14 +119,19 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
       });
       
       // Create text file with file information
-      const supportingFilesInfoText = "الملفات الداعمة للفكرة (روابط فقط):\n\n" + 
-        supportingFiles.map((file: any, index: number) => 
-          `${index + 1}. ${file.name}: ${file.file_path}`
-        ).join("\n");
-      
-      if (attachmentsFolder) {
-        attachmentsFolder.file("supporting_files_info.txt", supportingFilesInfoText);
-        console.log("تم إضافة معلومات الملفات الداعمة، حجم المحتوى:", supportingFilesInfoText.length);
+      try {
+        const supportingFilesInfoText = "الملفات الداعمة للفكرة (روابط فقط):\n\n" + 
+          supportingFiles.map((file: any, index: number) => 
+            `${index + 1}. ${file.name}: ${file.file_path}`
+          ).join("\n");
+        
+        if (attachmentsFolder) {
+          attachmentsFolder.file("supporting_files_info.txt", supportingFilesInfoText);
+          console.log("تم إضافة معلومات الملفات الداعمة، حجم المحتوى:", supportingFilesInfoText.length);
+        }
+      } catch (infoError) {
+        console.error("خطأ في إضافة معلومات الملفات الداعمة:", infoError);
+        // نستمر رغم الخطأ
       }
       
       // If download_files option is selected
@@ -145,14 +176,20 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
       const commentsWithAttachments = data.comments.filter((comment: any) => comment.attachment_url);
       if (commentsWithAttachments.length > 0) {
         console.log(`Processing ${commentsWithAttachments.length} comment attachments`);
-        const commentAttachmentsInfoText = "مرفقات التعليقات (روابط فقط):\n\n" + 
-          commentsWithAttachments.map((comment: any, index: number) => 
-            `${index + 1}. ${comment.attachment_name || 'ملف مرفق'}: ${comment.attachment_url}`
-          ).join("\n");
         
-        if (attachmentsFolder) {
-          attachmentsFolder.file("comment_attachments_info.txt", commentAttachmentsInfoText);
-          console.log("تم إضافة معلومات مرفقات التعليقات، حجم المحتوى:", commentAttachmentsInfoText.length);
+        try {
+          const commentAttachmentsInfoText = "مرفقات التعليقات (روابط فقط):\n\n" + 
+            commentsWithAttachments.map((comment: any, index: number) => 
+              `${index + 1}. ${comment.attachment_name || 'ملف مرفق'}: ${comment.attachment_url}`
+            ).join("\n");
+          
+          if (attachmentsFolder) {
+            attachmentsFolder.file("comment_attachments_info.txt", commentAttachmentsInfoText);
+            console.log("تم إضافة معلومات مرفقات التعليقات، حجم المحتوى:", commentAttachmentsInfoText.length);
+          }
+        } catch (infoError) {
+          console.error("خطأ في إضافة معلومات مرفقات التعليقات:", infoError);
+          // نستمر رغم الخطأ
         }
         
         // If download_files option is selected
@@ -201,11 +238,13 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
       console.log(`إجمالي حجم البيانات قبل الضغط: ${totalSize} بايت`);
       
       console.log("جاري توليد ملف ZIP...");
+      
+      // استخدام حجم أقل للضغط لتجنب المشاكل
       const zipBlob = await zip.generateAsync({
         type: "blob",
         compression: "DEFLATE",
         compressionOptions: {
-          level: 5
+          level: 3  // استخدام مستوى ضغط متوسط لتجنب المشاكل
         }
       });
       
@@ -224,23 +263,12 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
       const fileName = sanitizeFileName(`فكرة-${ideaTitle}.zip`);
       console.log(`Saving ZIP file as: ${fileName}`);
       
-      // حفظ الملف باستخدام saveAs من FileSaver.js
-      console.time("save-as-file");
+      // حفظ الملف باستخدام طريقة بديلة أولاً
+      console.time("download-zip-file");
       console.log("بدء عملية حفظ الملف...");
       
       try {
-        saveAs(zipBlob, fileName);
-        console.timeEnd("save-as-file");
-        console.log("تم استدعاء دالة saveAs بنجاح");
-      } catch (saveError) {
-        console.error("خطأ أثناء حفظ الملف:", saveError);
-        console.error("تفاصيل الخطأ:", {
-          message: saveError instanceof Error ? saveError.message : String(saveError),
-          stack: saveError instanceof Error ? saveError.stack : "No stack trace available"
-        });
-        
-        // خطة بديلة: محاولة استخدام URL.createObjectURL مباشرة
-        console.log("محاولة استخدام طريقة بديلة للتنزيل...");
+        console.log("استخدام طريقة التنزيل المباشر");
         const url = URL.createObjectURL(zipBlob);
         const link = document.createElement("a");
         link.href = url;
@@ -252,9 +280,23 @@ export const exportToZip = async (data: any, ideaTitle: string, exportOptions: s
         setTimeout(() => {
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
-          console.log("تم تنظيف الموارد بعد استخدام الطريقة البديلة");
-        }, 100);
+          console.log("تم تنظيف الموارد بعد الاستخدام المباشر");
+        }, 500);
+      } catch (directError) {
+        console.error("خطأ في طريقة التنزيل المباشر:", directError);
+        
+        // محاولة استخدام saveAs كخطة بديلة
+        console.log("محاولة استخدام FileSaver.saveAs كخطة بديلة");
+        try {
+          saveAs(zipBlob, fileName);
+          console.log("تم استخدام FileSaver.saveAs بنجاح");
+        } catch (saveError) {
+          console.error("فشل أيضًا استخدام FileSaver.saveAs:", saveError);
+          throw new Error(`فشل تنزيل الملف: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+        }
       }
+      
+      console.timeEnd("download-zip-file");
       
     } catch (zipGenError) {
       console.error("خطأ أثناء إنشاء أو حفظ ملف ZIP:", zipGenError);
