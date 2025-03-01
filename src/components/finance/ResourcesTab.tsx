@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Card,
@@ -10,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ResourcesTable } from "./ResourcesTable";
-import { ResourceForm } from "./ResourceForm";
+import { ResourceForm } from "./resource-form";
 
 export const ResourcesTab = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);

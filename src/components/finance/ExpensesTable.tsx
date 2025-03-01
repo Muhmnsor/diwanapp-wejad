@@ -50,7 +50,20 @@ export const ExpensesTable = () => {
 
       if (error) throw error;
       
-      setExpenses(data || []);
+      // Ensure data is in the correct format
+      const formattedData = data?.map(item => ({
+        id: item.id,
+        date: item.date,
+        amount: item.amount,
+        description: item.description,
+        beneficiary: item.beneficiary,
+        budget_item: {
+          id: item.budget_item?.id || "",
+          name: item.budget_item?.name || ""
+        }
+      })) || [];
+      
+      setExpenses(formattedData);
     } catch (error: any) {
       console.error("Error fetching expenses:", error);
       toast.error("حدث خطأ أثناء جلب بيانات المصروفات");
