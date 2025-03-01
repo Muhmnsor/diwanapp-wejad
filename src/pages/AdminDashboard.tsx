@@ -112,7 +112,7 @@ const AdminDashboard = () => {
               {/* المهام الشخصية */}
               <Card className="p-6">
                 <div className="flex items-center mb-4">
-                  <ListChecks className="w-6 h-6 text-primary mr-2" />
+                  <ListChecks className="w-6 h-6 text-primary ml-2" />
                   <h2 className="text-xl font-semibold">المهام المطلوبة</h2>
                 </div>
                 <div className="space-y-4">
@@ -131,7 +131,7 @@ const AdminDashboard = () => {
               {/* الإشعارات */}
               <Card className="p-6">
                 <div className="flex items-center mb-4">
-                  <Bell className="w-6 h-6 text-primary mr-2" />
+                  <Bell className="w-6 h-6 text-primary ml-2" />
                   <h2 className="text-xl font-semibold">آخر الإشعارات</h2>
                 </div>
                 <div className="space-y-4">
