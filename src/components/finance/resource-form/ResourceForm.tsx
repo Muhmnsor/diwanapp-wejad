@@ -49,3 +49,4 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
     </form>
   );
 };
+
