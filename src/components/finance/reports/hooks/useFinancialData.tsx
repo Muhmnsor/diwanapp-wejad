@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { fetchTargets, updateActualAmounts } from "../../targets/TargetsDataService";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useFinancialData = () => {
   const [financialData, setFinancialData] = useState({
@@ -9,7 +10,9 @@ export const useFinancialData = () => {
     resourcesTarget: 0,
     resourcesPercentage: 0,
     resourcesRemaining: 0,
-    currentYear: new Date().getFullYear()
+    currentYear: new Date().getFullYear(),
+    resourcesData: [],
+    expensesData: []
   });
   const [loading, setLoading] = useState(true);
   const [comparisonData, setComparisonData] = useState<any[]>([]);
@@ -41,13 +44,37 @@ export const useFinancialData = () => {
       const resourcesPercentage = resourcesTarget > 0 ? Math.round((totalResources / resourcesTarget) * 100) : 0;
       const resourcesRemaining = resourcesTarget - totalResources > 0 ? resourcesTarget - totalResources : 0;
       
+      // Fetch resources data
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from('financial_resources')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (resourcesError) throw resourcesError;
+      
+      // Fetch expenses data
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*, budget_items(name)')
+        .order('date', { ascending: false });
+      
+      if (expensesError) throw expensesError;
+      
+      // Process expenses data to include budget_item_name
+      const processedExpensesData = expensesData.map(expense => ({
+        ...expense,
+        budget_item_name: expense.budget_items?.name || 'غير محدد'
+      }));
+      
       setFinancialData({
         totalResources,
         totalExpenses,
         resourcesTarget,
         resourcesPercentage,
         resourcesRemaining,
-        currentYear
+        currentYear,
+        resourcesData: resourcesData || [],
+        expensesData: processedExpensesData || []
       });
 
       // Prepare data for comparison chart

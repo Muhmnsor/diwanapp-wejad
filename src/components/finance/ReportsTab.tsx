@@ -23,8 +23,8 @@ export const ReportsTab = () => {
         totalResources: financialData.totalResources,
         totalExpenses: financialData.totalExpenses,
         netBalance: financialData.totalResources - financialData.totalExpenses,
-        resourcesData: options.includeResourceDetails ? financialData.resourcesData : undefined,
-        expensesData: options.includeExpenseDetails ? financialData.expensesData : undefined,
+        resourcesData: options.includeResourceDetails ? (financialData.resourcesData || []) : undefined,
+        expensesData: options.includeExpenseDetails ? (financialData.expensesData || []) : undefined,
       };
       
       await exportFinancialReport(exportData, comparisonData, formatCurrency, reportType);
