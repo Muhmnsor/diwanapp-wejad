@@ -22,6 +22,7 @@ interface ExpenseFormProps {
 interface BudgetItem {
   id: string;
   name: string;
+  default_percentage: number;
 }
 
 export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
@@ -32,6 +33,10 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
   const [beneficiary, setBeneficiary] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null);
+  const [totalResources, setTotalResources] = useState<number>(0);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [isInsufficientBalance, setIsInsufficientBalance] = useState(false);
 
   // جلب بنود الميزانية من قاعدة البيانات
   useEffect(() => {
@@ -39,7 +44,7 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
       try {
         const { data, error } = await supabase
           .from('budget_items')
-          .select('id, name');
+          .select('id, name, default_percentage');
 
         if (error) {
           throw error;
@@ -61,12 +66,94 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
     fetchBudgetItems();
   }, []);
 
+  // حساب رصيد البند عند اختيار بند جديد
+  useEffect(() => {
+    if (selectedItemId) {
+      calculateBudgetItemBalance(selectedItemId);
+    }
+  }, [selectedItemId]);
+
+  // التحقق من كفاية الرصيد عند تغير مبلغ المصروف
+  useEffect(() => {
+    if (availableBalance !== null && typeof amount === 'number') {
+      setIsInsufficientBalance(amount > availableBalance);
+    } else {
+      setIsInsufficientBalance(false);
+    }
+  }, [amount, availableBalance]);
+
+  // حساب رصيد البند المتاح
+  const calculateBudgetItemBalance = async (budgetItemId: string) => {
+    setIsLoadingBalance(true);
+    setAvailableBalance(null);
+    
+    try {
+      // جلب إجمالي الموارد
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from("financial_resources")
+        .select("net_amount");
+
+      if (resourcesError) throw resourcesError;
+
+      // حساب إجمالي الموارد
+      const totalResourcesAmount = resourcesData.reduce(
+        (sum, resource) => sum + resource.net_amount,
+        0
+      );
+      
+      setTotalResources(totalResourcesAmount);
+      
+      // جلب النسبة المئوية للبند
+      const selectedItem = budgetItems.find(item => item.id === budgetItemId);
+      
+      if (!selectedItem) {
+        setAvailableBalance(0);
+        setIsLoadingBalance(false);
+        return;
+      }
+      
+      // المبلغ المخصص للبند بناءً على نسبته المئوية من إجمالي الموارد
+      const allocatedAmount = (totalResourcesAmount * selectedItem.default_percentage) / 100;
+      
+      // جلب المصروفات على هذا البند
+      const { data: expensesData, error: expensesError } = await supabase
+        .from("expenses")
+        .select("amount")
+        .eq("budget_item_id", budgetItemId);
+
+      if (expensesError) throw expensesError;
+      
+      // إجمالي المصروفات على البند
+      const totalExpenses = expensesData.reduce(
+        (sum, expense) => sum + expense.amount,
+        0
+      );
+      
+      // الرصيد المتبقي
+      const balance = allocatedAmount - totalExpenses;
+      setAvailableBalance(balance);
+      
+    } catch (error) {
+      console.error("Error calculating budget item balance:", error);
+      toast.error("حدث خطأ أثناء حساب رصيد البند");
+      setAvailableBalance(0);
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // التحقق من إدخال المعلومات الضرورية
     if (!selectedItemId || typeof amount !== "number" || amount <= 0 || !description) {
       toast.error("الرجاء ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    // التحقق من كفاية الرصيد
+    if (isInsufficientBalance) {
+      toast.error("رصيد البند غير كافٍ لإتمام هذا المصروف");
       return;
     }
 
@@ -94,6 +181,19 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // تحديد حالة العرض للرصيد
+  const renderBalance = () => {
+    if (!selectedItemId) return null;
+    if (isLoadingBalance) return <span className="text-gray-500">جاري حساب الرصيد...</span>;
+    if (availableBalance === null) return null;
+    
+    return (
+      <div className={`text-sm font-semibold ${availableBalance < 0 ? 'text-red-500' : 'text-green-500'}`}>
+        الرصيد المتاح: {availableBalance.toLocaleString()} ريال
+      </div>
+    );
   };
 
   return (
@@ -124,6 +224,7 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
               ))}
             </SelectContent>
           </Select>
+          {renderBalance()}
         </div>
 
         <div className="space-y-2">
@@ -136,7 +237,11 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
             value={amount}
             onChange={(e) => setAmount(e.target.value === "" ? "" : parseFloat(e.target.value))}
             required
+            className={isInsufficientBalance ? "border-red-500" : ""}
           />
+          {isInsufficientBalance && (
+            <p className="text-red-500 text-sm">المبلغ أكبر من الرصيد المتاح</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -165,7 +270,10 @@ export const ExpenseForm = ({ onCancel, onSubmit }: ExpenseFormProps) => {
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           إلغاء
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          disabled={isLoading || isInsufficientBalance}
+        >
           {isLoading ? "جاري الحفظ..." : "إضافة المصروف"}
         </Button>
       </div>
