@@ -1,3 +1,4 @@
+
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
@@ -8,6 +9,8 @@ interface FinancialData {
   resourcesData?: any[];
   expensesData?: any[];
   timePeriod?: string;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 interface ComparisonData {
