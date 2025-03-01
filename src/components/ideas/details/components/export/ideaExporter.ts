@@ -33,8 +33,22 @@ export const exportIdea = async ({
       ideaData: !!data.idea, 
       commentsCount: data.comments?.length || 0,
       votesCount: data.votes?.length || 0,
-      hasDecision: !!data.decision
+      hasDecision: !!data.decision,
+      ideaStatus: data.idea?.status,
+      ideaCreatedAt: data.idea?.created_at,
     });
+    
+    // تحقق من بنية البيانات للملفات المرفقة
+    if (data.idea && data.idea.supporting_files) {
+      console.log("معلومات الملفات المرفقة:", {
+        supportingFilesCount: data.idea.supporting_files.length,
+        fileDetails: data.idea.supporting_files.map(file => ({
+          name: file.name,
+          filePath: file.file_path,
+          hasValidPath: !!file.file_path,
+        }))
+      });
+    }
     
     // Export data in the selected format
     if (exportFormat === "pdf") {
@@ -49,18 +63,27 @@ export const exportIdea = async ({
       // طباعة المزيد من التفاصيل للتنقيح
       console.log("بيانات للتضمين في ZIP:", {
         hasIdea: !!data.idea,
+        ideaId: data.idea?.id,
         hasComments: !!(data.comments && data.comments.length > 0),
         hasVotes: !!(data.votes && data.votes.length > 0),
         hasDecision: !!data.decision,
         hasSupportingFiles: !!(data.idea?.supporting_files && data.idea.supporting_files.length > 0),
-        downloadFiles: exportOptions.includes("download_files")
+        downloadFiles: exportOptions.includes("download_files"),
+        supportingFilesCount: data.idea?.supporting_files?.length || 0,
+        browser: window.navigator.userAgent,
       });
       
       try {
+        console.time("zip-export-time");
         await exportToZip(data, ideaTitle, exportOptions);
+        console.timeEnd("zip-export-time");
         console.log("تم تصدير الملف المضغوط بنجاح");
       } catch (zipError) {
         console.error("خطأ خلال عملية تصدير ZIP:", zipError);
+        console.error("تفاصيل الخطأ:", {
+          message: zipError instanceof Error ? zipError.message : String(zipError),
+          stack: zipError instanceof Error ? zipError.stack : "No stack trace available"
+        });
         throw new Error(`فشل إنشاء ملف ZIP: ${zipError instanceof Error ? zipError.message : String(zipError)}`);
       }
     } else {
@@ -70,6 +93,10 @@ export const exportIdea = async ({
     console.log("=== انتهت عملية التصدير بنجاح ===");
   } catch (error) {
     console.error("خطأ في عملية التصدير:", error);
+    console.error("تفاصيل الخطأ:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : "No stack trace available"
+    });
     throw error;
   }
 };

@@ -8,6 +8,9 @@ import { ExportDialogFooter } from "./ExportDialogFooter";
 import { toast } from "sonner";
 import { IdeaExportDialogProps } from "./types";
 import { exportOptions, exportFormats } from "./constants";
+import * as JSZip from "jszip";
+import { saveAs } from "file-saver";
+import { supabase } from "@/integrations/supabase/client";
 
 export const IdeaExportDialog = ({
   open,

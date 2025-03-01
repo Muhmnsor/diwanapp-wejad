@@ -12,118 +12,210 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
     return;
   }
   
-  console.log(`محاولة تنزيل ${supportingFiles.length} ملف داعم`);
+  console.log(`محاولة تنزيل ${supportingFiles.length} ملف داعم`, {
+    folderType: typeof folder,
+    folderIsValid: !!folder,
+    supabaseAvailable: !!supabase
+  });
   
-  const filesToDownload = supportingFiles.map(async (file) => {
-    try {
-      if (!file || !file.file_path) {
-        console.error("معلومات الملف غير كاملة:", file);
-        return {
-          name: file?.name || "ملف غير معروف",
-          success: false,
-          error: "معلومات الملف غير كاملة"
-        };
-      }
-      
-      console.log(`Attempting to download file: ${file.name}, path: ${file.file_path}`);
-      
-      // استخراج اسم الملف الفعلي من المسار الكامل
-      let actualFileName = file.file_path;
-      
-      // تجريب استخراج اسم الملف من المسار بطرق مختلفة
-      if (file.file_path.includes('/')) {
-        // إذا كان المسار يحتوي على '/'
-        const filePathParts = file.file_path.split('/');
-        actualFileName = filePathParts[filePathParts.length - 1];
-      } else if (file.file_path.includes('\\')) {
-        // إذا كان المسار يحتوي على '\'
-        const filePathParts = file.file_path.split('\\');
-        actualFileName = filePathParts[filePathParts.length - 1];
-      }
-      
-      console.log(`استخلاص اسم الملف: ${actualFileName} من المسار: ${file.file_path}`);
-      
-      // التأكد من استخدام المسار الصحيح للملف في Supabase
-      // محاولة تنزيل الملف من Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('idea-files')
-        .download(actualFileName);
+  console.log("تفاصيل المكتبة JSZip:", {
+    version: JSZip.version || "غير معروف",
+    methods: Object.keys(JSZip.prototype || {}),
+    folderMethods: typeof folder.file === "function" ? "folder.file() متاح" : "folder.file() غير متاح"
+  });
+  
+  try {
+    // تحقق من صلاحية كائن JSZip
+    if (!folder || typeof folder.file !== "function") {
+      console.error("كائن JSZip غير صالح:", folder);
+      throw new Error("كائن JSZip غير صالح أو تم تعريفه بشكل غير صحيح");
+    }
+    
+    // تحقق من اتصال Supabase
+    if (!supabase || !supabase.storage) {
+      console.error("كائن Supabase غير متاح أو لا يحتوي على خاصية storage");
+      throw new Error("API Supabase غير متاح");
+    }
+    
+    const filesToDownload = supportingFiles.map(async (file, index) => {
+      try {
+        if (!file || !file.file_path) {
+          console.error(`معلومات الملف #${index + 1} غير كاملة:`, file);
+          return {
+            name: file?.name || "ملف غير معروف",
+            success: false,
+            error: "معلومات الملف غير كاملة"
+          };
+        }
         
-      if (error) {
-        console.error(`Error downloading file ${file.name}:`, error);
+        console.log(`(${index + 1}/${supportingFiles.length}) محاولة تنزيل الملف: ${file.name}, المسار: ${file.file_path}`);
         
-        // محاولة ثانية باستخدام المسار الكامل
-        const secondAttempt = await supabase.storage
+        // استخراج اسم الملف الفعلي من المسار الكامل
+        let actualFileName = file.file_path;
+        let filePathForDownload = file.file_path;
+        
+        // تجريب استخراج اسم الملف من المسار بطرق مختلفة
+        if (file.file_path.includes('/')) {
+          // إذا كان المسار يحتوي على '/'
+          const filePathParts = file.file_path.split('/');
+          actualFileName = filePathParts[filePathParts.length - 1];
+        } else if (file.file_path.includes('\\')) {
+          // إذا كان المسار يحتوي على '\'
+          const filePathParts = file.file_path.split('\\');
+          actualFileName = filePathParts[filePathParts.length - 1];
+        }
+        
+        console.log(`استخلاص اسم الملف: "${actualFileName}" من المسار: "${file.file_path}"`);
+        
+        // محاولة تنزيل الملف من Supabase Storage بالمسار المستخلص
+        console.log(`محاولة تنزيل الملف من Supabase مع المسار: ${actualFileName}`);
+        console.time(`download-file-${index}`);
+        
+        const { data, error } = await supabase.storage
           .from('idea-files')
-          .download(file.file_path);
+          .download(actualFileName);
           
-        if (secondAttempt.error) {
-          console.error(`Second attempt failed for file ${file.name}:`, secondAttempt.error);
+        console.timeEnd(`download-file-${index}`);
+        
+        if (error) {
+          console.error(`خطأ في تنزيل الملف ${file.name} بالمسار ${actualFileName}:`, error);
+          
+          // محاولة ثانية باستخدام المسار الأصلي الكامل
+          console.log(`محاولة ثانية باستخدام المسار الكامل: ${file.file_path}`);
+          console.time(`second-attempt-${index}`);
+          
+          const secondAttempt = await supabase.storage
+            .from('idea-files')
+            .download(file.file_path);
+            
+          console.timeEnd(`second-attempt-${index}`);
+          
+          if (secondAttempt.error) {
+            console.error(`فشل المحاولة الثانية لتنزيل الملف ${file.name}:`, secondAttempt.error);
+            
+            // محاولة ثالثة: طلب طريقة URL بدلاً من تنزيل مباشر
+            console.log(`محاولة ثالثة: الحصول على URL للملف ${file.name}`);
+            
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from('idea-files')
+              .createSignedUrl(file.file_path, 60);
+              
+            if (urlError || !urlData || !urlData.signedUrl) {
+              console.error(`فشل الحصول على URL للملف ${file.name}:`, urlError || "لا يوجد URL");
+              return {
+                name: file.name,
+                success: false,
+                error: `محاولات متعددة فشلت: ${secondAttempt.error.message}`
+              };
+            }
+            
+            console.log(`تم الحصول على URL للملف: ${urlData.signedUrl.substring(0, 50)}...`);
+            
+            // تنزيل الملف باستخدام fetch من URL المُوقّع
+            try {
+              const fetchResponse = await fetch(urlData.signedUrl);
+              
+              if (!fetchResponse.ok) {
+                throw new Error(`HTTP error! status: ${fetchResponse.status}`);
+              }
+              
+              const fetchedData = await fetchResponse.blob();
+              
+              if (!fetchedData || fetchedData.size === 0) {
+                throw new Error("تم تنزيل ملف فارغ");
+              }
+              
+              console.log(`تم تنزيل الملف ${file.name} بنجاح عبر fetch من URL، الحجم: ${fetchedData.size} بايت`);
+              
+              // إضافة الملف إلى المجلد
+              const safeFileName = sanitizeFileName(file.name);
+              folder.file(safeFileName, fetchedData);
+              
+              return {
+                name: safeFileName,
+                success: true,
+                method: "fetch-url"
+              };
+            } catch (fetchError) {
+              console.error(`خطأ في تنزيل الملف ${file.name} عبر fetch:`, fetchError);
+              return {
+                name: file.name,
+                success: false,
+                error: `فشل تنزيل الملف عبر fetch: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
+              };
+            }
+          }
+          
+          if (!secondAttempt.data) {
+            console.error(`لا توجد بيانات في المحاولة الثانية للملف ${file.name}`);
+            return {
+              name: file.name,
+              success: false,
+              error: "لم يتم إرجاع بيانات في المحاولة الثانية"
+            };
+          }
+          
+          console.log(`تم تنزيل الملف بنجاح في المحاولة الثانية: ${file.name}، الحجم: ${secondAttempt.data.size} بايت`);
+          
+          // إضافة الملف إلى المجلد
+          const safeFileName = sanitizeFileName(file.name);
+          folder.file(safeFileName, secondAttempt.data);
+          
           return {
-            name: file.name,
-            success: false,
-            error: `Second attempt: ${secondAttempt.error.message}`
+            name: safeFileName,
+            success: true,
+            method: "second-attempt"
           };
         }
         
-        if (!secondAttempt.data) {
-          console.error(`No data returned on second attempt for file ${file.name}`);
+        if (!data) {
+          console.error(`لا توجد بيانات للملف ${file.name}`);
           return {
             name: file.name,
             success: false,
-            error: "No data returned on second attempt"
+            error: "لم يتم إرجاع بيانات من التخزين"
           };
         }
         
-        console.log(`Successfully downloaded file on second attempt: ${file.name}`);
+        console.log(`تم تنزيل الملف بنجاح: ${file.name}، الحجم: ${data.size} بايت، النوع: ${data.type}`);
         
-        // Add the file to the folder
+        // إضافة الملف إلى المجلد
         const safeFileName = sanitizeFileName(file.name);
-        folder.file(safeFileName, secondAttempt.data);
+        folder.file(safeFileName, data);
         
         return {
           name: safeFileName,
-          success: true
+          success: true,
+          method: "first-attempt",
+          size: data.size
         };
-      }
-      
-      if (!data) {
-        console.error(`No data found for file ${file.name}`);
+      } catch (error) {
+        console.error(`خطأ في تنزيل الملف ${file?.name || 'unknown'}:`, error);
+        console.error("تفاصيل الخطأ:", {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : "No stack trace available"
+        });
+        
         return {
-          name: file.name,
+          name: file?.name || 'unknown',
           success: false,
-          error: "No data returned from storage"
+          error: error instanceof Error ? error.message : String(error)
         };
       }
-      
-      console.log(`Successfully downloaded file: ${file.name}, size: ${data.size} bytes`);
-      
-      // Add the file to the folder
-      const safeFileName = sanitizeFileName(file.name);
-      folder.file(safeFileName, data);
-      
-      return {
-        name: safeFileName,
-        success: true
-      };
-    } catch (error) {
-      console.error(`Error downloading file ${file?.name || 'unknown'}:`, error);
-      return {
-        name: file?.name || 'unknown',
-        success: false,
-        error: error instanceof Error ? error.message : String(error)
-      };
-    }
-  });
-  
-  // Wait for all file downloads to complete
-  const results = await Promise.all(filesToDownload);
-  
-  // Add a report of files that were downloaded successfully and those that failed
-  const successfulFiles = results.filter(r => r && r.success).map(r => r?.name);
-  const failedFiles = results.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
-  
-  const reportContent = `
+    });
+    
+    console.log(`جاري تنزيل ${filesToDownload.length} ملف...`);
+    
+    // انتظار جميع عمليات التنزيل
+    const results = await Promise.all(filesToDownload);
+    
+    // إضافة تقرير عن الملفات التي تم تنزيلها بنجاح وتلك التي فشل تنزيلها
+    const successfulFiles = results.filter(r => r && r.success).map(r => r?.name);
+    const failedFiles = results.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
+    
+    console.log(`اكتمل تنزيل الملفات: ${successfulFiles.length} ملف ناجح، ${failedFiles.length} ملف فاشل`);
+    
+    const reportContent = `
 تقرير تنزيل الملفات الداعمة:
 ===========================
 عدد الملفات التي تم تنزيلها بنجاح: ${successfulFiles.length}
@@ -131,9 +223,29 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
 
 ${failedFiles.length > 0 ? `الملفات التي فشل تنزيلها:\n${failedFiles.join('\n')}` : ''}
 `;
-  
-  folder.file("_download_report.txt", reportContent);
-  console.log(`تم إنشاء تقرير التنزيل. ${successfulFiles.length} ملفات ناجحة، ${failedFiles.length} ملفات فاشلة`);
+    
+    folder.file("_download_report.txt", reportContent);
+    console.log(`تم إنشاء تقرير التنزيل. ${successfulFiles.length} ملفات ناجحة، ${failedFiles.length} ملفات فاشلة`);
+    
+  } catch (error) {
+    console.error("خطأ أثناء تنزيل الملفات الداعمة:", error);
+    console.error("تفاصيل الخطأ:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : "No stack trace available"
+    });
+    
+    // إنشاء تقرير خطأ في حالة فشل عملية التنزيل
+    if (folder && typeof folder.file === "function") {
+      folder.file("_error_report.txt", `
+خطأ أثناء تنزيل الملفات الداعمة:
+==============================
+${error instanceof Error ? error.message : String(error)}
+${error instanceof Error && error.stack ? error.stack : ""}
+`);
+    }
+    
+    throw error;
+  }
 };
 
 /**
@@ -145,61 +257,134 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
     return;
   }
   
-  console.log(`محاولة تنزيل مرفقات لـ ${comments.length} تعليق`);
-  
-  const attachmentsToDownload = comments.map(async (comment) => {
-    if (!comment || !comment.attachment_url) {
-      console.log("تعليق بدون مرفق", comment?.id);
-      return null;
-    }
-    
-    try {
-      console.log(`Attempting to download comment attachment: ${comment.attachment_name || 'unnamed'}, URL: ${comment.attachment_url}`);
-      
-      // Determine the filename
-      const fileName = comment.attachment_name || `attachment_${comment.id}`;
-      const safeFileName = sanitizeFileName(fileName);
-      
-      // محاولة تنزيل الملف من URL
-      const response = await fetch(comment.attachment_url);
-      if (!response.ok) {
-        console.error(`فشل تنزيل الملف: ${response.status} - ${response.statusText}`);
-        throw new Error(`Failed to download file: ${response.statusText}`);
-      }
-      
-      const blob = await response.blob();
-      console.log(`Successfully downloaded comment attachment: ${safeFileName}, size: ${blob.size} bytes`);
-      
-      if (blob.size === 0) {
-        console.warn(`تم تنزيل مرفق التعليق ولكن حجمه 0 بايت: ${safeFileName}`);
-      }
-      
-      // Add the file to the folder
-      folder.file(safeFileName, blob);
-      
-      return {
-        name: safeFileName,
-        success: true
-      };
-    } catch (error) {
-      console.error(`Error downloading comment attachment for comment ${comment?.id}:`, error);
-      return {
-        name: comment?.attachment_name || `attachment_${comment?.id || 'unknown'}`,
-        success: false,
-        error: error instanceof Error ? error.message : String(error)
-      };
-    }
+  console.log(`محاولة تنزيل مرفقات لـ ${comments.length} تعليق`, {
+    folderType: typeof folder,
+    folderIsValid: !!folder,
+    folderMethods: typeof folder.file === "function" ? "folder.file() متاح" : "folder.file() غير متاح"
   });
   
-  // Wait for all attachment downloads to complete
-  const results = await Promise.all(attachmentsToDownload);
-  
-  // Add a report of attachments that were downloaded successfully and those that failed
-  const validResults = results.filter(r => r !== null);
-  const successfulFiles = validResults.filter(r => r && r.success).map(r => r?.name);
-  const failedFiles = validResults.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
-  
-  const reportContent = `
+  try {
+    // تحقق من صلاحية كائن JSZip
+    if (!folder || typeof folder.file !== "function") {
+      console.error("كائن JSZip غير صالح:", folder);
+      throw new Error("كائن JSZip غير صالح أو تم تعريفه بشكل غير صحيح");
+    }
+    
+    const attachmentsToDownload = comments.map(async (comment, index) => {
+      if (!comment || !comment.attachment_url) {
+        console.log(`التعليق #${index + 1} بدون مرفق`, comment?.id);
+        return null;
+      }
+      
+      try {
+        console.log(`(${index + 1}/${comments.length}) محاولة تنزيل مرفق التعليق: ${comment.attachment_name || 'بدون اسم'}، URL: ${comment.attachment_url}`);
+        
+        // تحديد اسم الملف
+        const fileName = comment.attachment_name || `attachment_${comment.id}`;
+        const safeFileName = sanitizeFileName(fileName);
+        
+        console.time(`download-comment-attachment-${index}`);
+        
+        try {
+          // محاولة تنزيل الملف من URL
+          const response = await fetch(comment.attachment_url);
+          
+          if (!response.ok) {
+            throw new Error(`فشل تنزيل الملف: ${response.status} - ${response.statusText}`);
+          }
+          
+          const blob = await response.blob();
+          console.timeEnd(`download-comment-attachment-${index}`);
+          
+          console.log(`تم تنزيل مرفق التعليق بنجاح: ${safeFileName}، الحجم: ${blob.size} بايت، النوع: ${blob.type}`);
+          
+          if (blob.size === 0) {
+            console.warn(`تم تنزيل مرفق التعليق ولكن حجمه 0 بايت: ${safeFileName}`);
+          }
+          
+          // إضافة الملف إلى المجلد
+          folder.file(safeFileName, blob);
+          
+          return {
+            name: safeFileName,
+            success: true,
+            size: blob.size
+          };
+        } catch (fetchError) {
+          console.error(`خطأ أثناء تنزيل مرفق التعليق من URL:`, fetchError);
+          
+          // محاولة ثانية باستخدام حزمة أخرى أو طريقة بديلة
+          console.log(`محاولة بديلة لتنزيل المرفق باستخدام XMLHttpRequest`);
+          
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', comment.attachment_url, true);
+            xhr.responseType = 'blob';
+            
+            xhr.onload = function() {
+              if (this.status === 200) {
+                const blob = new Blob([this.response], { type: 'application/octet-stream' });
+                console.log(`تم تنزيل المرفق بنجاح باستخدام XHR: ${safeFileName}، الحجم: ${blob.size} بايت`);
+                
+                folder.file(safeFileName, blob);
+                
+                resolve({
+                  name: safeFileName,
+                  success: true,
+                  method: "xhr",
+                  size: blob.size
+                });
+              } else {
+                console.error(`XHR فشل مع الحالة: ${this.status}`);
+                resolve({
+                  name: safeFileName,
+                  success: false,
+                  error: `XHR فشل: ${this.status}`
+                });
+              }
+            };
+            
+            xhr.onerror = function(e) {
+              console.error(`خطأ XHR:`, e);
+              resolve({
+                name: safeFileName,
+                success: false,
+                error: `خطأ شبكة XHR`
+              });
+            };
+            
+            xhr.send();
+          });
+        }
+        
+      } catch (error) {
+        console.error(`خطأ في تنزيل مرفق التعليق للتعليق ${comment?.id}:`, error);
+        console.error("تفاصيل الخطأ:", {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : "No stack trace available"
+        });
+        
+        return {
+          name: comment?.attachment_name || `attachment_${comment?.id || 'unknown'}`,
+          success: false,
+          error: error instanceof Error ? error.message : String(error)
+        };
+      }
+    });
+    
+    console.log(`جاري تنزيل ${attachmentsToDownload.length} مرفق تعليق...`);
+    
+    // انتظار جميع عمليات التنزيل
+    const results = await Promise.all(attachmentsToDownload);
+    
+    // إضافة تقرير عن المرفقات التي تم تنزيلها بنجاح وتلك التي فشل تنزيلها
+    const validResults = results.filter(r => r !== null);
+    const successfulFiles = validResults.filter(r => r && r.success).map(r => r?.name);
+    const failedFiles = validResults.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
+    
+    console.log(`اكتمل تنزيل مرفقات التعليقات: ${successfulFiles.length} مرفق ناجح، ${failedFiles.length} مرفق فاشل`);
+    
+    const reportContent = `
 تقرير تنزيل مرفقات التعليقات:
 ===========================
 عدد المرفقات التي تم تنزيلها بنجاح: ${successfulFiles.length}
@@ -207,7 +392,27 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
 
 ${failedFiles.length > 0 ? `المرفقات التي فشل تنزيلها:\n${failedFiles.join('\n')}` : ''}
 `;
-  
-  folder.file("_download_report.txt", reportContent);
-  console.log(`تم إنشاء تقرير التنزيل. ${successfulFiles.length} مرفقات ناجحة، ${failedFiles.length} مرفقات فاشلة`);
+    
+    folder.file("_download_report.txt", reportContent);
+    console.log(`تم إنشاء تقرير التنزيل. ${successfulFiles.length} مرفقات ناجحة، ${failedFiles.length} مرفقات فاشلة`);
+    
+  } catch (error) {
+    console.error("خطأ أثناء تنزيل مرفقات التعليقات:", error);
+    console.error("تفاصيل الخطأ:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : "No stack trace available"
+    });
+    
+    // إنشاء تقرير خطأ في حالة فشل عملية التنزيل
+    if (folder && typeof folder.file === "function") {
+      folder.file("_error_report.txt", `
+خطأ أثناء تنزيل مرفقات التعليقات:
+================================
+${error instanceof Error ? error.message : String(error)}
+${error instanceof Error && error.stack ? error.stack : ""}
+`);
+    }
+    
+    throw error;
+  }
 };
