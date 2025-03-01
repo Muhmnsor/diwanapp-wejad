@@ -11,6 +11,8 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
   
   const filesToDownload = supportingFiles.map(async (file) => {
     try {
+      console.log(`Attempting to download file: ${file.name}, path: ${file.file_path}`);
+      
       // Extract the actual filename from the path
       const filePathParts = file.file_path.split('/');
       const actualFileName = filePathParts[filePathParts.length - 1];
@@ -22,13 +24,23 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
         
       if (error) {
         console.error(`Error downloading file ${file.name}:`, error);
-        return null;
+        return {
+          name: file.name,
+          success: false,
+          error: error.message
+        };
       }
       
       if (!data) {
         console.error(`No data found for file ${file.name}`);
-        return null;
+        return {
+          name: file.name,
+          success: false,
+          error: "No data returned from storage"
+        };
       }
+      
+      console.log(`Successfully downloaded file: ${file.name}`);
       
       // Add the file to the folder
       const safeFileName = sanitizeFileName(file.name);
@@ -43,7 +55,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
       return {
         name: file.name,
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   });
@@ -52,8 +64,8 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
   const results = await Promise.all(filesToDownload);
   
   // Add a report of files that were downloaded successfully and those that failed
-  const successfulFiles = results.filter(r => r && r.success).map(r => r.name);
-  const failedFiles = results.filter(r => r && !r.success).map(r => `${r.name} (${r.error})`);
+  const successfulFiles = results.filter(r => r && r.success).map(r => r?.name);
+  const failedFiles = results.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
   
   const reportContent = `
 تقرير تنزيل الملفات الداعمة:
@@ -77,6 +89,8 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
     if (!comment.attachment_url) return null;
     
     try {
+      console.log(`Attempting to download comment attachment: ${comment.attachment_name || 'unnamed'}`);
+      
       // Determine the filename
       const fileName = comment.attachment_name || `attachment_${comment.id}`;
       const safeFileName = sanitizeFileName(fileName);
@@ -88,6 +102,7 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
       }
       
       const blob = await response.blob();
+      console.log(`Successfully downloaded comment attachment: ${safeFileName}`);
       
       // Add the file to the folder
       folder.file(safeFileName, blob);
@@ -101,7 +116,7 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
       return {
         name: comment.attachment_name || `attachment_${comment.id}`,
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   });
@@ -110,8 +125,8 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
   const results = await Promise.all(attachmentsToDownload);
   
   // Add a report of attachments that were downloaded successfully and those that failed
-  const successfulFiles = results.filter(r => r && r.success).map(r => r.name);
-  const failedFiles = results.filter(r => r && !r.success).map(r => `${r.name} (${r.error})`);
+  const successfulFiles = results.filter(r => r && r.success).map(r => r?.name);
+  const failedFiles = results.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
   
   const reportContent = `
 تقرير تنزيل مرفقات التعليقات:
