@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileText, BarChart, PieChart } from "lucide-react";
 import { fetchTargets, updateActualAmounts } from "./targets/TargetsDataService";
+import { TargetsComparisonChart } from "./reports/TargetsComparisonChart";
 
 export const ReportsTab = () => {
   const [activeReportTab, setActiveReportTab] = useState("summary");
@@ -17,6 +18,7 @@ export const ReportsTab = () => {
     currentYear: new Date().getFullYear()
   });
   const [loading, setLoading] = useState(true);
+  const [comparisonData, setComparisonData] = useState<any[]>([]);
 
   useEffect(() => {
     loadFinancialData();
@@ -53,6 +55,40 @@ export const ReportsTab = () => {
         resourcesRemaining,
         currentYear
       });
+
+      // Prepare data for comparison chart
+      // Group expenses by quarter
+      const expensesByQuarter = {};
+      const targetsByQuarter = {};
+      
+      for (const target of currentYearTargets) {
+        const quarter = target.period_type === 'yearly' ? 'السنوي' : `الربع ${target.quarter}`;
+        
+        if (!expensesByQuarter[quarter]) {
+          expensesByQuarter[quarter] = 0;
+          targetsByQuarter[quarter] = 0;
+        }
+        
+        if (target.type === 'مصروفات') {
+          expensesByQuarter[quarter] += target.actual_amount;
+          targetsByQuarter[quarter] += target.target_amount;
+        }
+      }
+      
+      const chartData = Object.keys(expensesByQuarter).map(quarter => {
+        const targetAmount = targetsByQuarter[quarter] || 0;
+        const actualAmount = expensesByQuarter[quarter] || 0;
+        const varianceAmount = targetAmount - actualAmount;
+        
+        return {
+          name: quarter,
+          target: targetAmount,
+          actual: actualAmount,
+          variance: varianceAmount
+        };
+      });
+      
+      setComparisonData(chartData);
     } catch (error) {
       console.error("Error loading financial data:", error);
     } finally {
@@ -171,8 +207,8 @@ export const ReportsTab = () => {
                 </div>
               )}
 
-              <div className="mt-8 text-center">
-                <p className="text-muted-foreground">يمكن إضافة رسومات بيانية تفصيلية لتوضيح البيانات المالية</p>
+              <div className="mt-8">
+                <TargetsComparisonChart data={comparisonData} loading={loading} />
               </div>
             </CardContent>
           </Card>
@@ -213,9 +249,7 @@ export const ReportsTab = () => {
               <CardDescription>مقارنة بين السنوات المالية المختلفة</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-center py-10 text-muted-foreground">
-                هنا يمكن عرض تقرير مقارنة بين السنوات المالية المختلفة من حيث الموارد والمصروفات
-              </p>
+              <TargetsComparisonChart data={comparisonData} loading={loading} />
             </CardContent>
           </Card>
         </TabsContent>
