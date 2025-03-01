@@ -9,6 +9,7 @@ export type FinancialTarget = {
   target_amount: number;
   actual_amount: number;
   budget_item_id?: string;
+  resource_source?: string;
 };
 
 export type BudgetItem = {
@@ -47,6 +48,7 @@ export async function addTarget(target: Omit<FinancialTarget, "id">) {
       target_amount: target.target_amount,
       actual_amount: target.actual_amount || 0,
       budget_item_id: target.budget_item_id || null,
+      resource_source: target.resource_source || null,
     }])
     .select();
 
@@ -64,6 +66,7 @@ export async function updateTarget(id: string, target: Omit<FinancialTarget, "id
       target_amount: target.target_amount,
       actual_amount: target.actual_amount || 0,
       budget_item_id: target.budget_item_id || null,
+      resource_source: target.resource_source || null,
     })
     .eq("id", id);
 
@@ -82,7 +85,7 @@ export async function deleteTarget(id: string) {
 export async function fetchResourcesData() {
   const { data, error } = await supabase
     .from("financial_resources")
-    .select("net_amount, date");
+    .select("net_amount, date, source");
   
   if (error) throw error;
   return data || [];
@@ -134,7 +137,15 @@ export async function updateActualAmounts(targetsData: FinancialTarget[]): Promi
           const resourceMonth = resourceDate.getMonth() + 1;
           
           if (resourceYear === targetYear && months.includes(resourceMonth)) {
-            actualAmount += Number(resource.net_amount);
+            // إذا كان هناك تحديد لمصدر محدد للمورد، نأخذ فقط الموارد من نفس المصدر
+            if (target.resource_source) {
+              if (resource.source === target.resource_source) {
+                actualAmount += Number(resource.net_amount);
+              }
+            } else {
+              // إذا لم يكن هناك تحديد لمصدر، نجمع كل الموارد
+              actualAmount += Number(resource.net_amount);
+            }
           }
         });
       } else if (target.type === "مصروفات" && expensesData) {

@@ -20,6 +20,7 @@ type FinancialTarget = {
   target_amount: number;
   actual_amount: number;
   budget_item_id?: string;
+  resource_source?: string;
 };
 
 type TargetFormProps = {
@@ -35,6 +36,7 @@ type TargetFormProps = {
     target_amount: number;
     actual_amount: number;
     budget_item_id?: string;
+    resource_source?: string;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
@@ -50,6 +52,28 @@ export const TargetForm = ({
   handleInputChange,
   handleSelectChange,
 }: TargetFormProps) => {
+  // State to control the visibility of resource source field
+  const [showResourceSource, setShowResourceSource] = useState(formData.type === "موارد");
+
+  // Update showResourceSource when formData.type changes
+  useEffect(() => {
+    setShowResourceSource(formData.type === "موارد");
+  }, [formData.type]);
+
+  // Available resource sources matching those in the resource form
+  const resourceSources = [
+    "منصات التمويل الجماعي",
+    "الدعم الحكومي",
+    "اشتراكات البرامج والفعاليات",
+    "المؤسسات المانحة",
+    "المسئولية الاجتماعية | الرعايات",
+    "متجر الجمعية الكتروني",
+    "التبرع عبر الرسائل",
+    "الصدقة الالكترونية",
+    "تبرعات عينية",
+    "أخرى"
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -102,6 +126,28 @@ export const TargetForm = ({
                 </SelectContent>
               </Select>
             </div>
+            
+            {showResourceSource && (
+              <div className="space-y-2">
+                <Label htmlFor="resource_source">مصدر المورد</Label>
+                <Select 
+                  value={formData.resource_source || ""} 
+                  onValueChange={(value) => handleSelectChange("resource_source", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر مصدر المورد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resourceSources.map((source) => (
+                      <SelectItem key={source} value={source}>
+                        {source}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="target_amount">المبلغ المستهدف</Label>
               <Input
