@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Role } from "../types";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,7 @@ export const RoleList = ({
       const { data, error } = await supabase
         .from('user_roles')
         .select('role_id, count')
-        .select('role_id, count(*)', { count: 'exact' })
+        .select('role_id, count(*)')
         .groupBy('role_id');
       
       if (error) {
