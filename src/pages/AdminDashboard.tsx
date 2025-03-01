@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Database, ListChecks, Lightbulb, DollarSign, Globe, ShoppingCart, Users, Bell } from "lucide-react";
@@ -129,7 +128,7 @@ const AdminDashboard = () => {
               </Card>
               
               <Card className="p-6">
-                <div className="flex items-center mb-4 justify-center">
+                <div className="flex items-center mb-4 justify-end">
                   <Bell className="w-6 h-6 text-primary ml-2" />
                   <h2 className="text-xl font-semibold">آخر الإشعارات</h2>
                 </div>
