@@ -1,17 +1,61 @@
+
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { DollarSign } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart, BarChart, Wallet, ArrowDownCircle, ArrowUpCircle, DollarSign } from "lucide-react";
+import { useState } from "react";
+import { FinanceDashboard } from "@/components/finance/FinanceDashboard";
+import { ResourcesTab } from "@/components/finance/ResourcesTab";
+import { ExpensesTab } from "@/components/finance/ExpensesTab";
 
 const Finance = () => {
+  const [activeTab, setActiveTab] = useState("dashboard");
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center h-full space-y-4">
-          <DollarSign className="w-16 h-16 text-primary" />
-          <h1 className="text-2xl font-bold text-primary text-center">قيد التطوير</h1>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-primary text-right">نظام إدارة الأموال</h1>
+          <p className="text-muted-foreground text-right">تحكم في إدارة الموارد والمصروفات بكفاءة</p>
         </div>
+
+        <Tabs
+          defaultValue="dashboard"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+          dir="rtl"
+        >
+          <TabsList className="grid grid-cols-3 w-full mb-8">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <PieChart className="h-4 w-4" />
+              <span>نظرة عامة</span>
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="flex items-center gap-2">
+              <ArrowUpCircle className="h-4 w-4" />
+              <span>الموارد</span>
+            </TabsTrigger>
+            <TabsTrigger value="expenses" className="flex items-center gap-2">
+              <ArrowDownCircle className="h-4 w-4" />
+              <span>المصروفات</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <FinanceDashboard />
+          </TabsContent>
+
+          <TabsContent value="resources" className="space-y-4">
+            <ResourcesTab />
+          </TabsContent>
+
+          <TabsContent value="expenses" className="space-y-4">
+            <ExpensesTab />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <Footer />
