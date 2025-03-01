@@ -15,7 +15,15 @@ export const ReportsTab = () => {
   const handleExportReport = async () => {
     setIsExporting(true);
     try {
-      await exportFinancialReport(financialData, comparisonData, formatCurrency);
+      // Create a FinancialData object that matches the expected interface
+      const exportData = {
+        totalResources: financialData.totalResources,
+        totalExpenses: financialData.totalExpenses,
+        netBalance: financialData.totalResources - financialData.totalExpenses,
+        // Include any other properties required by the FinancialData interface
+      };
+      
+      await exportFinancialReport(exportData, comparisonData, formatCurrency);
     } catch (error) {
       console.error("Error exporting report:", error);
       toast.error("حدث خطأ أثناء تصدير التقرير");
