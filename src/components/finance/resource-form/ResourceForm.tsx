@@ -24,7 +24,7 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
   } = useResourceForm(onSubmit);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" dir="rtl">
+    <form onSubmit={handleSubmit} className="space-y-6 text-right" dir="rtl">
       <BasicInfoFields
         totalAmount={totalAmount}
         obligationsAmount={obligationsAmount}

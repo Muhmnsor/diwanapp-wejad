@@ -27,10 +27,10 @@ export const BasicInfoFields = ({
   handleSourceChange,
 }: BasicInfoFieldsProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
       <div className="space-y-2">
         <Label htmlFor="source">مصدر المورد</Label>
-        <Select value={source} onValueChange={handleSourceChange}>
+        <Select value={source} onValueChange={handleSourceChange} dir="rtl">
           <SelectTrigger>
             <SelectValue placeholder="اختر مصدر المورد" />
           </SelectTrigger>
@@ -51,8 +51,8 @@ export const BasicInfoFields = ({
       
       <div className="space-y-2">
         <Label htmlFor="type">نوع المورد</Label>
-        <Select defaultValue="unbound">
-          <SelectTrigger>
+        <Select defaultValue="unbound" dir="rtl">
+          <SelectTrigger id="type">
             <SelectValue placeholder="اختر نوع المورد" />
           </SelectTrigger>
           <SelectContent>
@@ -64,7 +64,7 @@ export const BasicInfoFields = ({
       
       <div className="space-y-2">
         <Label htmlFor="entity">الجهة</Label>
-        <Input id="entity" placeholder="الجهة التي جاء منها المورد" required />
+        <Input id="entity" placeholder="الجهة التي جاء منها المورد" required className="text-right" />
       </div>
       
       <div className="space-y-2">
@@ -77,6 +77,7 @@ export const BasicInfoFields = ({
           value={totalAmount}
           onChange={handleTotalAmountChange}
           required
+          className="text-right"
         />
       </div>
       
@@ -89,6 +90,7 @@ export const BasicInfoFields = ({
           step="0.01"
           value={obligationsAmount}
           onChange={handleObligationsChange}
+          className="text-right"
         />
       </div>
       
@@ -102,6 +104,7 @@ export const BasicInfoFields = ({
           }
           readOnly
           disabled
+          className="text-right"
         />
       </div>
     </div>

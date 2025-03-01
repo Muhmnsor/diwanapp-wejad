@@ -8,12 +8,12 @@ interface FormActionsProps {
 
 export const FormActions = ({ onCancel, isLoading }: FormActionsProps) => {
   return (
-    <div className="flex gap-2 justify-end">
-      <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-        إلغاء
-      </Button>
+    <div className="flex gap-2 justify-start">
       <Button type="submit" disabled={isLoading}>
         {isLoading ? "جاري الحفظ..." : "إضافة المورد"}
+      </Button>
+      <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+        إلغاء
       </Button>
     </div>
   );

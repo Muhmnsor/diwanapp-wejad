@@ -33,10 +33,10 @@ export const BudgetDistribution = ({
     <>
       <Separator />
 
-      <div>
+      <div className="text-right">
         <Label>توزيع المبلغ على البنود</Label>
         <div className="mt-2">
-          <RadioGroup defaultValue="default" onValueChange={handleUseDefaultsChange}>
+          <RadioGroup defaultValue="default" onValueChange={handleUseDefaultsChange} dir="rtl">
             <div className="flex items-center space-x-2 space-x-reverse">
               <RadioGroupItem value="default" id="default" />
               <Label htmlFor="default">استخدام النسب الافتراضية</Label>
@@ -49,7 +49,7 @@ export const BudgetDistribution = ({
         </div>
       </div>
 
-      <div className="border rounded-lg p-4">
+      <div className="border rounded-lg p-4 text-right">
         <div className="grid grid-cols-3 gap-4 mb-4 font-bold">
           <div>البند</div>
           <div>النسبة المئوية</div>

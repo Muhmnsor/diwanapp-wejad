@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Card,
@@ -30,8 +31,8 @@ export const ResourcesTab = () => {
       {isFormOpen && (
         <Card className="mb-4">
           <CardHeader>
-            <CardTitle>إضافة مورد جديد</CardTitle>
-            <CardDescription>أدخل تفاصيل المورد المالي والتوزيع على البنود</CardDescription>
+            <CardTitle className="text-right">إضافة مورد جديد</CardTitle>
+            <CardDescription className="text-right">أدخل تفاصيل المورد المالي والتوزيع على البنود</CardDescription>
           </CardHeader>
           <CardContent>
             <ResourceForm onCancel={handleCloseForm} onSubmit={handleCloseForm} />
@@ -41,8 +42,8 @@ export const ResourcesTab = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>قائمة الموارد</CardTitle>
-          <CardDescription>جميع الموارد المالية التي تمت إضافتها</CardDescription>
+          <CardTitle className="text-right">قائمة الموارد</CardTitle>
+          <CardDescription className="text-right">جميع الموارد المالية التي تمت إضافتها</CardDescription>
         </CardHeader>
         <CardContent>
           <ResourcesTable />

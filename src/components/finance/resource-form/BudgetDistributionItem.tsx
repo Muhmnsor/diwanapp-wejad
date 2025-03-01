@@ -28,10 +28,16 @@ export const BudgetDistributionItem = ({
           value={percentage}
           onChange={onPercentageChange}
           disabled={disabled}
+          className="text-right"
         />
       </div>
       <div>
-        <Input value={value.toLocaleString()} readOnly disabled />
+        <Input 
+          value={value.toLocaleString()} 
+          readOnly 
+          disabled 
+          className="text-right"
+        />
       </div>
     </div>
   );
