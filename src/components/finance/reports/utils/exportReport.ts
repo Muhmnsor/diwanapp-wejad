@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
@@ -8,6 +7,7 @@ interface FinancialData {
   netBalance: number;
   resourcesData?: any[];
   expensesData?: any[];
+  timePeriod?: string;
 }
 
 interface ComparisonData {
@@ -20,9 +20,22 @@ interface ComparisonData {
 export const exportFinancialReport = async (
   financialData: FinancialData,
   comparisonData: ComparisonData[],
-  formatCurrency: (value: number) => string,
-  reportType: string = 'summary'
-): Promise<void> => {
+  formatCurrency: (amount: number) => string,
+  reportType: string
+) => {
+  // تحديد الفترة الزمنية
+  let periodTitle = "السنة الحالية";
+  if (financialData.timePeriod === 'last-year') {
+    periodTitle = "السنة الماضية";
+  } else if (financialData.timePeriod === 'current-quarter') {
+    periodTitle = "الربع الحالي";
+  } else if (financialData.timePeriod === 'custom' && financialData.startDate && financialData.endDate) {
+    const formatDate = (date: Date) => {
+      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    };
+    periodTitle = `الفترة من ${formatDate(financialData.startDate)} إلى ${formatDate(financialData.endDate)}`;
+  }
+
   try {
     // إنشاء مصنف Excel جديد
     const workbook = XLSX.utils.book_new();

@@ -25,6 +25,9 @@ export const ReportsTab = () => {
         netBalance: financialData.totalResources - financialData.totalExpenses,
         resourcesData: options.includeResourceDetails ? (financialData.resourcesData || []) : undefined,
         expensesData: options.includeExpenseDetails ? (financialData.expensesData || []) : undefined,
+        timePeriod: options.timePeriod,
+        startDate: options.timePeriod === 'custom' ? options.startDate : undefined,
+        endDate: options.timePeriod === 'custom' ? options.endDate : undefined
       };
       
       await exportFinancialReport(exportData, comparisonData, formatCurrency, reportType);
