@@ -33,9 +33,9 @@ export const TopHeader = () => {
       <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
         <div className="flex flex-col" dir="rtl">
           {/* Logo and Main Navigation */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center py-2 md:py-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 sm:py-3 md:py-4">
             <Logo />
-            <div className="flex items-center justify-center gap-2 mt-2 md:mt-0">
+            <div className="flex items-center justify-center flex-wrap gap-1 sm:gap-2 mt-1 sm:mt-0">
               <HomeButton 
                 isEventOrProjectDetails={isEventOrProjectDetails}
                 isAuthenticated={isAuthenticated}
@@ -57,15 +57,15 @@ export const TopHeader = () => {
 
           {/* Tasks Secondary Header - Only show on tasks pages */}
           {isTasksPage && (
-            <div className="flex items-center justify-center py-2 md:py-3 border-t w-full">
-              <div className="flex items-center gap-2 md:gap-4 w-full justify-center">
+            <div className="flex items-center justify-center py-1 sm:py-2 md:py-3 border-t w-full">
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-4 w-full justify-center">
                 <Link to="/tasks" className="flex-1 md:flex-none">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full md:w-auto flex items-center justify-center gap-2"
+                    className="w-full md:w-auto flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                   >
-                    <FolderKanban className="h-4 w-4" />
+                    <FolderKanban className="h-3 w-3 sm:h-4 sm:w-4" />
                     المحافظ
                   </Button>
                 </Link>
@@ -73,9 +73,9 @@ export const TopHeader = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full md:w-auto flex items-center justify-center gap-2"
+                    className="w-full md:w-auto flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                   >
-                    <LayoutDashboard className="h-4 w-4" />
+                    <LayoutDashboard className="h-3 w-3 sm:h-4 sm:w-4" />
                     لوحة المعلومات
                   </Button>
                 </Link>
