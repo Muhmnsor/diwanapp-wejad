@@ -1,5 +1,6 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -8,136 +9,92 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-
-interface Expense {
-  id: string;
-  date: string;
-  budget_item: {
-    id: string;
-    name: string;
-  };
-  amount: number;
-  description: string;
-  beneficiary: string | null;
-}
 
 export const ExpensesTable = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [budgetItems, setBudgetItems] = useState<{id: string; name: string}[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchExpenses = async () => {
+      setLoading(true);
+      try {
+        const { data: expensesData, error: expensesError } = await supabase
+          .from("expenses")
+          .select("*, budget_item_id");
+
+        if (expensesError) throw expensesError;
+
+        const { data: budgetItemsData, error: budgetItemsError } = await supabase
+          .from("budget_items")
+          .select("id, name");
+
+        if (budgetItemsError) throw budgetItemsError;
+
+        setExpenses(expensesData || []);
+        setBudgetItems(budgetItemsData || []);
+      } catch (error) {
+        console.error("Error fetching expenses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchExpenses();
   }, []);
 
-  const fetchExpenses = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('expenses')
-        .select(`
-          id,
-          date,
-          amount,
-          description,
-          beneficiary,
-          budget_item:budget_item_id (id, name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Ensure data is in the correct format
-      const formattedData = data?.map(item => ({
-        id: item.id,
-        date: item.date,
-        amount: item.amount,
-        description: item.description,
-        beneficiary: item.beneficiary,
-        budget_item: {
-          id: item.budget_item?.id || "",
-          name: item.budget_item?.name || ""
-        }
-      })) || [];
-      
-      setExpenses(formattedData);
-    } catch (error: any) {
-      console.error("Error fetching expenses:", error);
-      toast.error("حدث خطأ أثناء جلب بيانات المصروفات");
-    } finally {
-      setIsLoading(false);
-    }
+  const getBudgetItemName = (budgetItemId: string) => {
+    const item = budgetItems.find((item) => item.id === budgetItemId);
+    return item ? item.name : "غير محدد";
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المصروف؟")) return;
-    
-    try {
-      const { error } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', id);
-        
-      if (error) throw error;
-      
-      toast.success("تم حذف المصروف بنجاح");
-      fetchExpenses(); // إعادة تحميل البيانات
-    } catch (error: any) {
-      console.error("Error deleting expense:", error);
-      toast.error("حدث خطأ أثناء حذف المصروف");
-    }
-  };
-
-  if (isLoading) {
-    return <div className="text-center p-4">جاري تحميل البيانات...</div>;
+  if (loading) {
+    return <div className="text-center py-4">جاري التحميل...</div>;
   }
 
   return (
-    <div className="relative w-full overflow-auto">
-      {expenses.length === 0 ? (
-        <div className="text-center p-8 text-muted-foreground">
-          لا توجد مصروفات مضافة حتى الآن
-        </div>
-      ) : (
-        <Table dir="rtl">
-          <TableHeader>
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-right">التاريخ</TableHead>
+            <TableHead className="text-right">العنوان</TableHead>
+            <TableHead className="text-right">البند</TableHead>
+            <TableHead className="text-right">المبلغ</TableHead>
+            <TableHead className="text-right">الإجراءات</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {expenses.length === 0 ? (
             <TableRow>
-              <TableHead>التاريخ</TableHead>
-              <TableHead>البند</TableHead>
-              <TableHead>المبلغ</TableHead>
-              <TableHead>الوصف</TableHead>
-              <TableHead>المستفيد</TableHead>
-              <TableHead>الإجراءات</TableHead>
+              <TableCell colSpan={5} className="text-center">
+                لا توجد مصروفات مسجلة بعد
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {expenses.map((expense) => (
+          ) : (
+            expenses.map((expense) => (
               <TableRow key={expense.id}>
-                <TableCell>
-                  {new Date(expense.date).toLocaleDateString("ar-SA")}
-                </TableCell>
-                <TableCell>{expense.budget_item.name}</TableCell>
+                <TableCell>{new Date(expense.date).toLocaleDateString("ar-SA")}</TableCell>
+                <TableCell>{expense.title}</TableCell>
+                <TableCell>{getBudgetItemName(expense.budget_item_id)}</TableCell>
                 <TableCell>{expense.amount.toLocaleString()} ريال</TableCell>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>{expense.beneficiary || "-"}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    {/* <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon">
                       <Edit className="h-4 w-4" />
-                    </Button> */}
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(expense.id)}>
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-destructive">
                       <Trash className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
