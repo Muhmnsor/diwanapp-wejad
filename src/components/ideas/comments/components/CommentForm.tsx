@@ -40,7 +40,7 @@ export const CommentForm = ({
         <Clock className="h-5 w-5 text-amber-600" />
         <AlertTitle className="text-amber-800 mr-2">انتهت فترة المناقشة</AlertTitle>
         <AlertDescription className="text-amber-700 mr-2">
-          لقد انتهت فترة المناقشة لهذه الفكرة. يرجى التواصل مع صاحب الصلاحية لطلب تمديد فترة المناقشة إذا كنت ترغب في إضافة تعليقات جديدة.
+          اطلب تمديد فترة المناقشة من صاحب الصلاحية
         </AlertDescription>
       </Alert>
     );
