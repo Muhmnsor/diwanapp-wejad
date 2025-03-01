@@ -3,6 +3,15 @@ import * as JSZip from "jszip";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeFileName } from "../utils/textUtils";
 
+// Define types for the file download result
+interface FileDownloadResult {
+  name: string;
+  success: boolean;
+  error?: string;
+  method?: string;
+  size?: number;
+}
+
 /**
  * Download supporting files and add them to a specified folder
  */
@@ -45,7 +54,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
             name: file?.name || "ملف غير معروف",
             success: false,
             error: "معلومات الملف غير كاملة"
-          };
+          } as FileDownloadResult;
         }
         
         console.log(`(${index + 1}/${supportingFiles.length}) محاولة تنزيل الملف: ${file.name}, المسار: ${file.file_path}`);
@@ -106,7 +115,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
                 name: file.name,
                 success: false,
                 error: `محاولات متعددة فشلت: ${secondAttempt.error.message}`
-              };
+              } as FileDownloadResult;
             }
             
             console.log(`تم الحصول على URL للملف: ${urlData.signedUrl.substring(0, 50)}...`);
@@ -135,14 +144,14 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
                 name: safeFileName,
                 success: true,
                 method: "fetch-url"
-              };
+              } as FileDownloadResult;
             } catch (fetchError) {
               console.error(`خطأ في تنزيل الملف ${file.name} عبر fetch:`, fetchError);
               return {
                 name: file.name,
                 success: false,
                 error: `فشل تنزيل الملف عبر fetch: ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
-              };
+              } as FileDownloadResult;
             }
           }
           
@@ -152,7 +161,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
               name: file.name,
               success: false,
               error: "لم يتم إرجاع بيانات في المحاولة الثانية"
-            };
+            } as FileDownloadResult;
           }
           
           console.log(`تم تنزيل الملف بنجاح في المحاولة الثانية: ${file.name}، الحجم: ${secondAttempt.data.size} بايت`);
@@ -165,7 +174,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
             name: safeFileName,
             success: true,
             method: "second-attempt"
-          };
+          } as FileDownloadResult;
         }
         
         if (!data) {
@@ -174,7 +183,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
             name: file.name,
             success: false,
             error: "لم يتم إرجاع بيانات من التخزين"
-          };
+          } as FileDownloadResult;
         }
         
         console.log(`تم تنزيل الملف بنجاح: ${file.name}، الحجم: ${data.size} بايت، النوع: ${data.type}`);
@@ -188,7 +197,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
           success: true,
           method: "first-attempt",
           size: data.size
-        };
+        } as FileDownloadResult;
       } catch (error) {
         console.error(`خطأ في تنزيل الملف ${file?.name || 'unknown'}:`, error);
         console.error("تفاصيل الخطأ:", {
@@ -200,7 +209,7 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
           name: file?.name || 'unknown',
           success: false,
           error: error instanceof Error ? error.message : String(error)
-        };
+        } as FileDownloadResult;
       }
     });
     
@@ -210,8 +219,8 @@ export const downloadSupportingFiles = async (supportingFiles: any[], folder: JS
     const results = await Promise.all(filesToDownload);
     
     // إضافة تقرير عن الملفات التي تم تنزيلها بنجاح وتلك التي فشل تنزيلها
-    const successfulFiles = results.filter(r => r && r.success).map(r => r?.name);
-    const failedFiles = results.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
+    const successfulFiles = results.filter(r => r && r.success).map(r => r.name);
+    const failedFiles = results.filter(r => r && !r.success).map(r => `${r.name} (${r.error})`);
     
     console.log(`اكتمل تنزيل الملفات: ${successfulFiles.length} ملف ناجح، ${failedFiles.length} ملف فاشل`);
     
@@ -309,14 +318,14 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
             name: safeFileName,
             success: true,
             size: blob.size
-          };
+          } as FileDownloadResult;
         } catch (fetchError) {
           console.error(`خطأ أثناء تنزيل مرفق التعليق من URL:`, fetchError);
           
           // محاولة ثانية باستخدام حزمة أخرى أو طريقة بديلة
           console.log(`محاولة بديلة لتنزيل المرفق باستخدام XMLHttpRequest`);
           
-          return new Promise((resolve, reject) => {
+          return new Promise<FileDownloadResult>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open('GET', comment.attachment_url, true);
             xhr.responseType = 'blob';
@@ -368,7 +377,7 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
           name: comment?.attachment_name || `attachment_${comment?.id || 'unknown'}`,
           success: false,
           error: error instanceof Error ? error.message : String(error)
-        };
+        } as FileDownloadResult;
       }
     });
     
@@ -378,9 +387,10 @@ export const downloadCommentAttachments = async (comments: any[], folder: JSZip)
     const results = await Promise.all(attachmentsToDownload);
     
     // إضافة تقرير عن المرفقات التي تم تنزيلها بنجاح وتلك التي فشل تنزيلها
-    const validResults = results.filter(r => r !== null);
-    const successfulFiles = validResults.filter(r => r && r.success).map(r => r?.name);
-    const failedFiles = validResults.filter(r => r && !r.success).map(r => `${r?.name} (${r?.error})`);
+    // فلتر للحصول على النتائج غير الفارغة (نتائج null تأتي من التعليقات بدون مرفق)
+    const validResults = results.filter((r): r is FileDownloadResult => r !== null);
+    const successfulFiles = validResults.filter(r => r.success).map(r => r.name);
+    const failedFiles = validResults.filter(r => !r.success).map(r => `${r.name} (${r.error})`);
     
     console.log(`اكتمل تنزيل مرفقات التعليقات: ${successfulFiles.length} مرفق ناجح، ${failedFiles.length} مرفق فاشل`);
     
