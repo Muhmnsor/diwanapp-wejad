@@ -1,7 +1,7 @@
 
 import { saveAs } from "file-saver";
 import { 
-  generateTextContent,
+  generateIdeaTextContent,
   sanitizeFileName 
 } from "../utils/textUtils";
 
@@ -9,7 +9,7 @@ import {
  * Export idea data as a text file
  */
 export const exportToText = (data: any, ideaTitle: string) => {
-  let content = generateTextContent(data);
+  let content = generateIdeaTextContent(data.idea);
   
   // Create and download the text file
   const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
