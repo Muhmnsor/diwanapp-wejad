@@ -25,8 +25,16 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
   budgetItems = [],
 }) => {
   const formatNumber = (num: number) => {
-    // Using English locale to ensure English numbers
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'SAR' }).format(num);
+    // Using English locale to ensure English numbers and remove trailing zeros
+    const formatted = new Intl.NumberFormat('en-US', { 
+      style: 'currency', 
+      currency: 'SAR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(num);
+    
+    // Replace .00 with empty string to remove zeros
+    return formatted.replace(/\.00$/, '');
   };
 
   const calculatePercentage = (actual: number, target: number) => {
