@@ -940,6 +940,50 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_targets: {
+        Row: {
+          actual_amount: number
+          budget_item_id: string | null
+          created_at: string
+          id: string
+          quarter: number
+          target_amount: number
+          type: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          actual_amount?: number
+          budget_item_id?: string | null
+          created_at?: string
+          id?: string
+          quarter: number
+          target_amount?: number
+          type: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          actual_amount?: number
+          budget_item_id?: string | null
+          created_at?: string
+          id?: string
+          quarter?: number
+          target_amount?: number
+          type?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_targets_budget_item_id_fkey"
+            columns: ["budget_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_categories: {
         Row: {
           created_at: string
