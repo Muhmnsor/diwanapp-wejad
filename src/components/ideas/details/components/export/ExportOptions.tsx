@@ -12,7 +12,7 @@ export const ExportOptions = ({
       <h3 className="font-medium text-lg">محتويات التصدير</h3>
       <div className="grid gap-4">
         {exportOptions.map((option) => (
-          <div key={option.id} className="flex items-start space-x-2 space-x-reverse">
+          <div key={option.id} className="flex items-start space-x-reverse space-x-2">
             <Checkbox
               id={`option-${option.id}`}
               checked={selectedOptions.includes(option.id)}

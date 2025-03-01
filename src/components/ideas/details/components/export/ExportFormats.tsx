@@ -12,7 +12,7 @@ export const ExportFormats = ({
       <h3 className="font-medium text-lg">تنسيق التصدير</h3>
       <div className="grid gap-4">
         {exportFormats.map((format) => (
-          <div key={format.id} className="flex items-start space-x-2 space-x-reverse">
+          <div key={format.id} className="flex items-start space-x-reverse space-x-2">
             <Checkbox
               id={`format-${format.id}`}
               checked={selectedFormat === format.id}
