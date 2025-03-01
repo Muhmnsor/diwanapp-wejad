@@ -1,8 +1,10 @@
 
+import { useState } from "react";
 import { Role } from "../types";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { RoleList } from "./RoleList";
+import { Input } from "@/components/ui/input";
 
 interface RolesTabContentProps {
   roles: Role[];
@@ -23,18 +25,36 @@ export const RolesTabContent = ({
   onEditRole,
   onDeleteRole
 }: RolesTabContentProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // تصفية الأدوار بناءً على استعلام البحث
+  const filteredRoles = roles.filter(role => 
+    role.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (role.description && role.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Button onClick={onAddRole} className="gap-1">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="بحث عن دور..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10"
+          />
+        </div>
+        <Button onClick={onAddRole} className="gap-1 whitespace-nowrap">
           <Plus className="h-4 w-4" />
           إضافة دور جديد
         </Button>
       </div>
       
       <RoleList 
-        roles={roles}
+        roles={filteredRoles}
         isLoading={isLoading}
+        searchQuery={searchQuery}
         selectedRoleId={selectedRoleId}
         onSelectRole={onSelectRole}
         onEditRole={onEditRole}

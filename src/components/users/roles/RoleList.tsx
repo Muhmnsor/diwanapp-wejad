@@ -1,12 +1,16 @@
 
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Role } from "../types";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ShieldCheck } from "lucide-react";
+import { Pencil, Trash2, ShieldCheck, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RoleListProps {
   roles: Role[];
   isLoading: boolean;
+  searchQuery: string;
   selectedRoleId: string | null;
   onSelectRole: (roleId: string) => void;
   onEditRole: (role: Role) => void;
@@ -16,17 +20,61 @@ interface RoleListProps {
 export const RoleList = ({
   roles,
   isLoading,
+  searchQuery,
   selectedRoleId,
   onSelectRole,
   onEditRole,
   onDeleteRole
 }: RoleListProps) => {
+  // استعلام للحصول على عدد المستخدمين لكل دور
+  const { data: roleUserCounts = {} } = useQuery({
+    queryKey: ['role-user-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role_id, count')
+        .select('role_id, count(*)', { count: 'exact' })
+        .groupBy('role_id');
+      
+      if (error) {
+        console.error('Error fetching role user counts:', error);
+        return {};
+      }
+
+      // تحويل البيانات إلى كائن مع معرف الدور كمفتاح وعدد المستخدمين كقيمة
+      return data.reduce((acc, item) => {
+        acc[item.role_id] = item.count;
+        return acc;
+      }, {});
+    }
+  });
+
   if (isLoading) {
-    return <div className="py-6 text-center text-muted-foreground">جاري تحميل الأدوار...</div>;
+    return (
+      <div className="space-y-4 mt-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="border-b border-border pb-3">
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (roles.length === 0) {
-    return <div className="py-6 text-center text-muted-foreground">لا توجد أدوار محددة</div>;
+    if (searchQuery) {
+      return (
+        <div className="py-6 text-center text-muted-foreground bg-muted/20 rounded-md">
+          لا توجد نتائج مطابقة للبحث: "{searchQuery}"
+        </div>
+      );
+    }
+    return (
+      <div className="py-6 text-center text-muted-foreground bg-muted/20 rounded-md">
+        لا توجد أدوار محددة. قم بإضافة دور جديد للبدء.
+      </div>
+    );
   }
 
   return (
@@ -34,12 +82,22 @@ export const RoleList = ({
       {roles.map((role) => (
         <div 
           key={role.id} 
-          className={`flex items-center justify-between border-b border-border pb-3 ${
-            selectedRoleId === role.id ? "bg-accent/30 p-2 rounded-md" : ""
-          }`}
+          className={`flex items-center justify-between border rounded-md p-3 transition-colors 
+            ${selectedRoleId === role.id 
+              ? "bg-accent/30 border-accent" 
+              : "border-border hover:bg-muted/20"
+            }`}
         >
           <div className="flex-1">
-            <h3 className="font-medium">{role.name}</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-medium">{role.name}</h3>
+              {roleUserCounts[role.id] && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {roleUserCounts[role.id]}
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">{role.description || "لا يوجد وصف"}</p>
           </div>
           <div className="flex gap-2">
