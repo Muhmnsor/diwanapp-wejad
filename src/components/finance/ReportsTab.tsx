@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileText, BarChart, PieChart } from "lucide-react";
 import { fetchTargets, updateActualAmounts } from "./targets/TargetsDataService";
 import { TargetsComparisonChart } from "./reports/TargetsComparisonChart";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ReportsTab = () => {
   const [activeReportTab, setActiveReportTab] = useState("summary");
