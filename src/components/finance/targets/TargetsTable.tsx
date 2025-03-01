@@ -11,6 +11,8 @@ interface TargetsTableProps {
   onEdit: (target: FinancialTarget) => void;
   onDelete: (id: string) => void;
   showResourceSource?: boolean;
+  showBudgetItem?: boolean;
+  budgetItems?: {id: string, name: string}[];
 }
 
 export const TargetsTable: React.FC<TargetsTableProps> = ({
@@ -19,6 +21,8 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
   onEdit,
   onDelete,
   showResourceSource = false,
+  showBudgetItem = false,
+  budgetItems = [],
 }) => {
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(num);
@@ -27,6 +31,12 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
   const calculatePercentage = (actual: number, target: number) => {
     if (target === 0) return 0;
     return Math.round((actual / target) * 100);
+  };
+
+  const getBudgetItemName = (itemId: string | undefined) => {
+    if (!itemId) return "غير محدد";
+    const item = budgetItems.find(item => item.id === itemId);
+    return item ? item.name : "غير محدد";
   };
 
   if (loading) {
@@ -44,6 +54,7 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
           <TableHead>السنة</TableHead>
           <TableHead>الفترة</TableHead>
           {showResourceSource && <TableHead>نوع المورد</TableHead>}
+          {showBudgetItem && <TableHead>بند المصروفات</TableHead>}
           <TableHead>المستهدف</TableHead>
           <TableHead>المتحقق</TableHead>
           <TableHead>نسبة التحقق</TableHead>
@@ -61,6 +72,9 @@ export const TargetsTable: React.FC<TargetsTableProps> = ({
             </TableCell>
             {showResourceSource && (
               <TableCell>{target.resource_source || "غير محدد"}</TableCell>
+            )}
+            {showBudgetItem && (
+              <TableCell>{getBudgetItemName(target.budget_item_id)}</TableCell>
             )}
             <TableCell>{formatNumber(target.target_amount)}</TableCell>
             <TableCell>{formatNumber(target.actual_amount)}</TableCell>
