@@ -55,7 +55,7 @@ export const useUsersRolesData = () => {
         const user = {
           id: profile.id,
           username: profile.email || 'لم يتم تعيين بريد إلكتروني',
-          displayName: profile.display_name || undefined,
+          displayName: profile.display_name || '',
           role: userRole?.name || 'لم يتم تعيين دور',
           lastLogin: 'غير متوفر' // نظرًا لأننا لا نستطيع الوصول إلى auth.users مباشرة
         };

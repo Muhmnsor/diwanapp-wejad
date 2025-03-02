@@ -51,12 +51,21 @@ export const UserEditDialog = ({
   const [displayName, setDisplayName] = useState<string>("");
 
   useEffect(() => {
-    if (user && user.displayName) {
-      setDisplayName(user.displayName);
+    if (user) {
+      // Set displayName from user object when user changes
+      setDisplayName(user.displayName || "");
+      
+      // Find the role ID for the current user's role name
+      if (roles && roles.length > 0) {
+        const userRole = roles.find(r => r.name === user.role);
+        if (userRole) {
+          setSelectedRole(userRole.id);
+        }
+      }
     } else {
       setDisplayName("");
     }
-  }, [user]);
+  }, [user, roles, setSelectedRole]);
 
   const handleSubmit = async () => {
     // Update the displayName in the user object
