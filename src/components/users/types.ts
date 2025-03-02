@@ -3,7 +3,6 @@ export interface User {
   id: string;
   username: string;
   role: string;
-  roleId?: string; // إضافة معرف الدور
   lastLogin: string;
 }
 

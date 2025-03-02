@@ -30,9 +30,7 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
         <div className="space-y-1">
           <div className="font-medium">{user.username}</div>
           <div className="text-sm text-muted-foreground">
-            {user.roleId ? getRoleDisplayName(user.role) : (
-              <span className="text-amber-500">لم يتم تعيين دور - يرجى تعيين دور</span>
-            )}
+            {getRoleDisplayName(user.role)}
           </div>
         </div>
       </TableCell>

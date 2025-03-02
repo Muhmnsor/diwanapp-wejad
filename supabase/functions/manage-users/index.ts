@@ -1,209 +1,145 @@
-
-import { serve } from "https://deno.land/std@0.198.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
-serve(async (req) => {
-  // Handle CORS preflight request
+Deno.serve(async (req) => {
+  // تسجيل الطلب الوارد
+  console.log('Received request:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  })
+
+  // التعامل مع طلبات CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders, status: 204 });
-  }
-
-  // Ensure request method is POST
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 405,
-    });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Initialize Supabase client with service role key
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Parse request body
-    const requestData = await req.json();
-    const { operation, email, password, userId, roleId, newPassword } = requestData;
-
-    console.log(`Received operation: ${operation}`);
-    
-    // Operations to require admin role
-    const adminRequiredOperations = ['create_user_with_role', 'update_role', 'delete_user'];
-    
-    // Verify admin permissions if required
-    if (adminRequiredOperations.includes(operation)) {
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401,
-        });
-      }
-      
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      
-      if (authError || !user) {
-        console.error('Auth error:', authError);
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401,
-        });
-      }
-      
-      // Check if user is admin
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('roles:role_id(name)')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (roleError || !roleData || roleData.roles?.name !== 'admin') {
-        console.error('Role verification error:', roleError);
-        return new Response(JSON.stringify({ error: 'Admin role required for this operation' }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 403,
-        });
-      }
+    // التحقق من طريقة الطلب
+    if (req.method !== 'POST') {
+      throw new Error(`Method ${req.method} not allowed`)
     }
 
-    // Handle different operations
-    let result;
-    
-    if (operation === 'create_user_with_role') {
-      console.log(`Creating new user with email: ${email} and roleId: ${roleId}`);
-      
-      // Create user
-      const { data: userData, error: userError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
-
-      if (userError) {
-        console.error('User creation error:', userError);
-        return new Response(JSON.stringify({ error: userError.message }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        });
+    // إنشاء عميل Supabase
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
       }
+    )
 
-      const user = userData.user;
-      console.log('User created successfully:', user.id);
-
-      // Wait for profile to be created by the trigger
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Assign role to user using SQL directly to bypass RLS
-      if (roleId) {
-        console.log(`Assigning role ${roleId} to user ${user.id}`);
-        const { data: roleData, error: roleError } = await supabase.rpc('assign_user_role', { 
-          p_user_id: user.id, 
-          p_role_id: roleId 
-        });
-
-        if (roleError) {
-          console.error('Error assigning role:', roleError);
-          // Don't fail if role assignment fails, just log it
-        } else {
-          console.log('Role assigned successfully:', roleData);
-        }
-      }
-
-      result = { success: true, user };
-    } 
-    else if (operation === 'update_role') {
-      console.log(`Updating role for user ${userId} to ${roleId}`);
-      
-      // First remove existing roles
-      const { error: deleteError } = await supabase.rpc('delete_user_roles', { 
-        p_user_id: userId 
-      });
-      
-      if (deleteError) {
-        console.error('Error removing existing roles:', deleteError);
-        return new Response(JSON.stringify({ error: deleteError.message }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        });
-      }
-      
-      // Then assign the new role
-      if (roleId) {
-        const { data: roleData, error: roleError } = await supabase.rpc('assign_user_role', { 
-          p_user_id: userId, 
-          p_role_id: roleId 
-        });
-        
-        if (roleError) {
-          console.error('Error assigning new role:', roleError);
-          return new Response(JSON.stringify({ error: roleError.message }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          });
-        }
-        console.log('Role updated successfully:', roleData);
-      }
-      
-      result = { success: true, message: 'Role updated successfully' };
+    // تحليل بيانات الطلب
+    let requestData;
+    try {
+      requestData = await req.json()
+      console.log('Request data:', requestData)
+    } catch (error) {
+      console.error('Error parsing request body:', error)
+      throw new Error('Invalid request body')
     }
-    else if (operation === 'update_password') {
-      console.log(`Updating password for user ${userId}`);
+
+    const { operation, userId, newPassword, newRole } = requestData
+    console.log('Managing user:', { operation, userId })
+
+    if (operation === 'get_users') {
+      const { data: { users }, error: usersError } = await supabaseClient.auth.admin.listUsers()
       
-      const { data, error } = await supabase.auth.admin.updateUserById(
+      if (usersError) {
+        console.error('Error fetching users:', usersError)
+        throw usersError
+      }
+
+      return new Response(
+        JSON.stringify({ users }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (operation === 'update_password' && userId && newPassword) {
+      const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
         userId,
         { password: newPassword }
-      );
-      
-      if (error) {
-        console.error('Password update error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        });
+      )
+
+      if (updateError) {
+        console.error('Error updating password:', updateError)
+        throw updateError
       }
-      
-      result = { success: true, message: 'Password updated successfully' };
-    }
-    else if (operation === 'delete_user') {
-      console.log(`Deleting user ${userId}`);
-      
-      // Delete user
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (error) {
-        console.error('User deletion error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        });
-      }
-      
-      result = { success: true, message: 'User deleted successfully' };
-    }
-    else {
-      return new Response(JSON.stringify({ error: 'Invalid operation' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Return successful response
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    if (operation === 'update_role' && userId && newRole) {
+      // الحصول على معرف الدور الجديد
+      const { data: roles, error: rolesError } = await supabaseClient
+        .from('roles')
+        .select('id')
+        .eq('name', newRole)
+        .single()
+
+      if (rolesError) {
+        console.error('Error fetching role:', rolesError)
+        throw rolesError
+      }
+
+      // تحديث دور المستخدم
+      const { error: updateError } = await supabaseClient
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role_id: roles.id
+        })
+
+      if (updateError) {
+        console.error('Error updating role:', updateError)
+        throw updateError
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (operation === 'delete_user' && userId) {
+      const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId)
+
+      if (deleteError) {
+        console.error('Error deleting user:', deleteError)
+        throw deleteError
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    throw new Error('Invalid operation')
+
   } catch (error) {
-    console.error('Unexpected error:', error);
-    return new Response(JSON.stringify({ error: `Unexpected error: ${error.message}` }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    console.error('Error in manage-users function:', error)
+    
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+        details: error.details || error.toString()
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
-});
+})
