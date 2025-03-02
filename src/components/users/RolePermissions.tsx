@@ -71,7 +71,7 @@ export const RolePermissions = ({ role }: RolePermissionsProps) => {
 
   // تحديث حالة الصلاحيات المحددة عند تغير بيانات صلاحيات الدور
   useEffect(() => {
-    if (rolePermissions) {
+    if (rolePermissions.length > 0) {
       setSelectedPermissions(rolePermissions);
     }
   }, [rolePermissions]);
@@ -190,6 +190,15 @@ export const RolePermissions = ({ role }: RolePermissionsProps) => {
     return (
       <div className="text-center p-8">
         <p className="text-muted-foreground">جاري تحميل الصلاحيات...</p>
+      </div>
+    );
+  }
+
+  // إذا لم تكن هناك صلاحيات، أظهر رسالة
+  if (permissions.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">لم يتم العثور على صلاحيات معرفة في النظام.</p>
       </div>
     );
   }
