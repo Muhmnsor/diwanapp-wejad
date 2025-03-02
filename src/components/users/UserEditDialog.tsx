@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -59,6 +60,8 @@ export const UserEditDialog = ({
       const roleObj = roles.find(r => r.name === user.role);
       if (roleObj) {
         setSelectedRole(roleObj.id);
+      } else {
+        setSelectedRole("");
       }
     }
   }, [user, roles, setSelectedRole]);
@@ -72,6 +75,9 @@ export const UserEditDialog = ({
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-right">تعديل بيانات المستخدم</DialogTitle>
+          <DialogDescription className="text-right">
+            قم بتعديل البيانات المطلوبة ثم اضغط على زر التحديث
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2 text-right">
@@ -90,7 +96,7 @@ export const UserEditDialog = ({
               <SelectContent>
                 {roles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
-                    {getRoleDisplayName(role.name)}
+                    {role.name}
                   </SelectItem>
                 ))}
               </SelectContent>

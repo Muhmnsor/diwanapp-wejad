@@ -38,57 +38,20 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('Updating user role:', { userId: selectedUser.id, newRole: selectedRole });
         
         try {
-          // First, try a more direct approach with upsert - this will insert if not exists or update if exists
-          const { error: upsertError } = await supabase
+          // First, delete any existing roles for this user to avoid conflicts
+          const { error: deleteError } = await supabase
             .from('user_roles')
-            .upsert(
-              {
-                user_id: selectedUser.id,
-                role_id: selectedRole
-              },
-              {
-                onConflict: 'user_id',
-                ignoreDuplicates: false
-              }
-            );
-            
-          if (upsertError) {
-            console.error('Upsert approach failed:', upsertError);
-            throw upsertError;
-          }
-          
-          console.log('Role update/insert successful using upsert');
-        } catch (upsertError) {
-          console.error('Error with upsert approach, falling back to manual check:', upsertError);
-          
-          // Fallback to the manual check and update/insert approach
-          // Check if the user already has a role assigned
-          const { data: existingRoles, error: checkError } = await supabase
-            .from('user_roles')
-            .select('*')
+            .delete()
             .eq('user_id', selectedUser.id);
             
-          if (checkError) {
-            console.error('Error checking existing roles:', checkError);
-            throw checkError;
+          if (deleteError) {
+            console.error('Error deleting existing roles:', deleteError);
+            // Continue anyway as the role might not exist
           }
           
-          if (existingRoles && existingRoles.length > 0) {
-            // If roles exist, delete them first
-            console.log('Existing roles found, deleting first:', existingRoles);
-            const { error: deleteError } = await supabase
-              .from('user_roles')
-              .delete()
-              .eq('user_id', selectedUser.id);
-              
-            if (deleteError) {
-              console.error('Error deleting existing roles:', deleteError);
-              throw deleteError;
-            }
-          }
+          // Now insert the new role with a small delay to ensure the delete completed
+          await new Promise(resolve => setTimeout(resolve, 100));
           
-          // Now insert the new role
-          console.log('Inserting new role');
           const { error: insertError } = await supabase
             .from('user_roles')
             .insert({
@@ -100,6 +63,12 @@ export const useUserOperations = (onUserDeleted: () => void) => {
             console.error('Error inserting new role:', insertError);
             throw insertError;
           }
+          
+          console.log('Role update successful');
+        } catch (error) {
+          console.error('Error updating role:', error);
+          toast.error("حدث خطأ أثناء تحديث الدور");
+          throw error;
         }
         
         // Log user activity for role change
