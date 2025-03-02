@@ -33,7 +33,10 @@ export const UsersHeader = ({ roles, users, onUserCreated }: UsersHeaderProps) =
           <Users className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-semibold">إدارة المستخدمين</h2>
         </div>
-        <CreateUserDialog roles={roles} onUserCreated={onUserCreated} />
+        <CreateUserDialog 
+          roles={roles} 
+          onSuccess={onUserCreated} 
+        />
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 mb-8" style={{ direction: 'rtl' }}>

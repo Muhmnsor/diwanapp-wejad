@@ -16,23 +16,30 @@ import { UserFormFields } from "./UserFormFields";
 import { Role } from "./types";
 
 interface CreateUserDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   onSuccess: () => void;
   roles: Role[];
+  onUserCreated?: () => void; // Add this prop to maintain compatibility
 }
 
 export const CreateUserDialog = ({
-  isOpen,
-  onClose,
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
   onSuccess,
+  onUserCreated, // Accept the alternative prop name
   roles,
 }: CreateUserDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle both controlled and uncontrolled modes
+  const dialogOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen;
+  const handleClose = externalOnClose || (() => setIsOpen(false));
 
   const resetForm = () => {
     setNewUsername("");
@@ -41,9 +48,9 @@ export const CreateUserDialog = ({
     setSelectedRole("");
   };
 
-  const handleClose = () => {
+  const onDialogClose = () => {
     resetForm();
-    onClose();
+    handleClose();
   };
 
   const handleCreateUser = async () => {
@@ -113,8 +120,10 @@ export const CreateUserDialog = ({
       });
       
       toast.success("تم إنشاء المستخدم بنجاح");
-      handleClose();
+      onDialogClose();
+      // Call both success callbacks for compatibility
       onSuccess();
+      if (onUserCreated) onUserCreated();
       console.log("=== تمت عملية إنشاء المستخدم بنجاح ===");
     } catch (error) {
       console.error("خطأ عام في إنشاء المستخدم:", error);
@@ -124,8 +133,57 @@ export const CreateUserDialog = ({
     }
   };
 
+  // Support for uncontrolled usage with a button
+  if (externalIsOpen === undefined) {
+    return (
+      <>
+        <Button onClick={() => setIsOpen(true)}>إضافة مستخدم جديد</Button>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-right">إضافة مستخدم جديد</DialogTitle>
+              <DialogDescription className="text-right">
+                أدخل معلومات المستخدم الجديد. سيتمكن المستخدم من تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <UserFormFields
+              newUsername={newUsername}
+              setNewUsername={setNewUsername}
+              newPassword={newPassword}
+              setNewPassword={setNewPassword}
+              selectedRole={selectedRole}
+              setSelectedRole={setSelectedRole}
+              roles={roles}
+              newDisplayName={newDisplayName}
+              setNewDisplayName={setNewDisplayName}
+            />
+            
+            <DialogFooter className="flex flex-row-reverse sm:justify-start gap-2">
+              <Button 
+                onClick={handleCreateUser}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "جارِ الإنشاء..." : "إنشاء المستخدم"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onDialogClose}
+                disabled={isSubmitting}
+              >
+                إلغاء
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // For controlled usage (with isOpen and onClose provided)
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={dialogOpen} onOpenChange={onDialogClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-right">إضافة مستخدم جديد</DialogTitle>
@@ -156,7 +214,7 @@ export const CreateUserDialog = ({
           <Button
             type="button"
             variant="outline"
-            onClick={handleClose}
+            onClick={onDialogClose}
             disabled={isSubmitting}
           >
             إلغاء
