@@ -43,16 +43,16 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('تم تحديث كلمة المرور بنجاح');
       }
 
-      // تحديث الدور إذا كان مختلفًا عن الدور الحالي
-      if (selectedRole && selectedRole !== selectedUser.role) {
+      // تحديث الدور إذا تم تحديده
+      if (selectedRole) {
         console.log('=== تحديث دور المستخدم ===');
         console.log('معرف المستخدم:', selectedUser.id);
-        console.log('الدور القديم:', selectedUser.role);
-        console.log('الدور الجديد المحدد:', selectedRole);
+        console.log('الدور الحالي:', selectedUser.role);
+        console.log('معرف الدور الجديد المحدد:', selectedRole);
         
         try {
-          // استخدام وظيفة Edge Function لتحديث الدور
-          const { error: roleError } = await supabase.functions.invoke('manage-users', {
+          // استدعاء دالة Edge Function لتحديث الدور
+          const { data, error: roleError } = await supabase.functions.invoke('manage-users', {
             body: {
               operation: 'update_role',
               userId: selectedUser.id,
@@ -65,9 +65,10 @@ export const useUserOperations = (onUserDeleted: () => void) => {
             throw roleError;
           }
           
+          console.log('استجابة تحديث الدور:', data);
           console.log('تم تحديث الدور بنجاح');
           
-          // Log user activity for role change
+          // تسجيل نشاط تغيير الدور
           await supabase.rpc('log_user_activity', {
             user_id: selectedUser.id,
             activity_type: 'role_change',
@@ -83,7 +84,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       }
 
       if (newPassword) {
-        // Log password change activity
+        // تسجيل نشاط تغيير كلمة المرور
         await supabase.rpc('log_user_activity', {
           user_id: selectedUser.id,
           activity_type: 'password_change',

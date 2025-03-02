@@ -44,12 +44,13 @@ export const UserEditDialog = ({
 }: UserEditDialogProps) => {
   // تعيين الدور المحدد عند تغيير المستخدم
   useEffect(() => {
-    if (user && user.role) {
+    if (user && isOpen) {
       console.log("UserEditDialog - تحميل بيانات المستخدم:", user);
       console.log("UserEditDialog - الدور الحالي للمستخدم:", user.role);
+      console.log("UserEditDialog - معرف الدور الحالي:", user.roleId);
       
       if (user.roleId) {
-        // إذا كان لدينا معرّف الدور مباشرة (من التحديثات الجديدة)
+        // إذا كان لدينا معرّف الدور مباشرة
         console.log("UserEditDialog - استخدام معرّف الدور المباشر:", user.roleId);
         setSelectedRole(user.roleId);
       } else {
@@ -64,14 +65,14 @@ export const UserEditDialog = ({
         }
       }
     } else {
-      // إذا لم يكن هناك مستخدم أو لم يكن له دور، تعيين القيمة الافتراضية
-      console.log("UserEditDialog - لا يوجد مستخدم أو دور، تعيين القيمة الافتراضية");
+      // إذا لم يكن هناك مستخدم أو تم إغلاق الحوار، تعيين القيمة الافتراضية
+      console.log("UserEditDialog - لا يوجد مستخدم أو الحوار مغلق، تعيين القيمة الافتراضية");
       setSelectedRole("");
     }
-  }, [user, roles, setSelectedRole]);
+  }, [user, roles, setSelectedRole, isOpen]);
 
   console.log('UserEditDialog - الأدوار المتاحة:', roles);
-  console.log('UserEditDialog - الدور المحدد:', selectedRole);
+  console.log('UserEditDialog - الدور المحدد حاليًا:', selectedRole);
   console.log('UserEditDialog - المستخدم الحالي:', user);
 
   // وظيفة للحصول على اسم الدور المعروض بناءً على معرفه

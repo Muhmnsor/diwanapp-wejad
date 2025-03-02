@@ -37,7 +37,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
     try {
       console.log('=== بدء عملية إنشاء مستخدم جديد ===');
       console.log('البريد الإلكتروني:', newUsername);
-      console.log('الدور المحدد:', selectedRole);
+      console.log('معرف الدور المحدد:', selectedRole);
       console.log('تم إدخال كلمة مرور:', newPassword ? 'نعم' : 'لا');
       
       // استخدام وظيفة Edge Function لإنشاء مستخدم مع دور
@@ -55,6 +55,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
         throw error;
       }
 
+      console.log('استجابة إنشاء المستخدم:', data);
       console.log('تم إنشاء المستخدم بنجاح:', data);
 
       // تسجيل النشاط
