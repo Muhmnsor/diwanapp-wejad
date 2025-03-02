@@ -37,35 +37,52 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       if (selectedRole && selectedRole !== selectedUser.role) {
         console.log('Updating user role:', { userId: selectedUser.id, newRole: selectedRole });
         
-        // First, remove any existing roles for this user
-        const { error: deleteRoleError } = await supabase
+        // Check if the user already has a role assigned
+        const { data: existingRole, error: checkError } = await supabase
           .from('user_roles')
-          .delete()
-          .eq('user_id', selectedUser.id);
+          .select('*')
+          .eq('user_id', selectedUser.id)
+          .single();
           
-        if (deleteRoleError) {
-          console.error('Error removing existing roles:', deleteRoleError);
-          throw deleteRoleError;
+        if (checkError && checkError.code !== 'PGRST116') {
+          // PGRST116 means no rows returned, which is fine
+          console.error('Error checking existing role:', checkError);
+          throw checkError;
         }
         
-        // Then assign the new role
-        const { error: insertRoleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: selectedUser.id,
-            role_id: selectedRole
-          });
-          
-        if (insertRoleError) {
-          console.error('Error assigning new role:', insertRoleError);
-          throw insertRoleError;
+        // If user already has a role, update it instead of inserting a new one
+        if (existingRole) {
+          console.log('User has existing role, updating it:', existingRole);
+          const { error: updateRoleError } = await supabase
+            .from('user_roles')
+            .update({ role_id: selectedRole })
+            .eq('user_id', selectedUser.id);
+            
+          if (updateRoleError) {
+            console.error('Error updating role:', updateRoleError);
+            throw updateRoleError;
+          }
+        } else {
+          // If no existing role, insert a new one
+          console.log('No existing role, inserting new one');
+          const { error: insertRoleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: selectedUser.id,
+              role_id: selectedRole
+            });
+            
+          if (insertRoleError) {
+            console.error('Error assigning new role:', insertRoleError);
+            throw insertRoleError;
+          }
         }
         
         // Log user activity for role change
         await supabase.rpc('log_user_activity', {
           user_id: selectedUser.id,
           activity_type: 'role_change',
-          details: `تم تغيير الدور من ${selectedUser.role} إلى ${selectedRole}`
+          details: `تم تغيير الدور إلى ${selectedRole}`
         });
       }
 
