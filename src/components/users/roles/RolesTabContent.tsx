@@ -37,12 +37,12 @@ export const RolesTabContent = ({
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
         <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="بحث عن دور..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10"
+            className="w-full pr-10"
           />
         </div>
         <Button onClick={onAddRole} className="gap-1 whitespace-nowrap">
