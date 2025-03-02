@@ -34,15 +34,7 @@ export const RoleSelector = ({
   // معالجة تغيير الدور مع تسجيل إضافي للتصحيح
   const handleRoleChange = (value: string) => {
     console.log('تم اختيار الدور الجديد:', value);
-    
-    if (value === 'remove_role') {
-      console.log('تم اختيار "إزالة الدور"');
-      onRoleChange('remove_role');
-    } else {
-      const role = roles.find(r => r.id === value);
-      console.log('معلومات الدور المختار:', role);
-      onRoleChange(value);
-    }
+    onRoleChange(value);
   };
 
   return (

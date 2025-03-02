@@ -42,14 +42,11 @@ export const useUserRoleUpdate = () => {
           return false;
         }
         
-        // التحقق من تحديث الدور للتصحيح
-        await verifyUserRoles(selectedUser.id);
-        
         // تسجيل نشاط تغيير الدور
         await logUserActivity(
           selectedUser.id, 
           'role_change', 
-          `تم تغيير الدور`
+          `تم تغيير الدور إلى: ${selectedRole}`
         );
         
         toast.success("تم تحديث دور المستخدم بنجاح");

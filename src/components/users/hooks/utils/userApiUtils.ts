@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "../../types";
@@ -37,34 +38,59 @@ export const assignUserRole = async (userId: string, roleId: string): Promise<bo
   });
   
   try {
-    // تسجيل حالة اتصال Supabase قبل الاستدعاء
-    console.log('فحص حالة اتصال Supabase...');
-    const { data: healthCheck, error: healthError } = await supabase.rpc('version');
-    console.log('نتيجة فحص الاتصال:', healthCheck, healthError);
-    
-    // استدعاء وظيفة RPC مع توضيح المزيد من المعلومات للتصحيح
-    console.log('استدعاء وظيفة assign_user_role...');
-    const { data: roleData, error: roleError } = await supabase.rpc('assign_user_role', {
-      p_user_id: userId,
-      p_role_id: roleId
-    });
-    
-    if (roleError) {
-      console.error('خطأ في تعيين الدور الجديد:', roleError);
-      console.error('تفاصيل الخطأ:', JSON.stringify(roleError));
-      console.error('رمز الخطأ:', roleError.code);
-      console.error('رسالة الخطأ:', roleError.message);
-      console.error('تفاصيل إضافية:', roleError.details);
+    // تحقق مباشر من قاعدة البيانات قبل التغيير
+    console.log('التحقق من أدوار المستخدم الحالية قبل التغيير...');
+    const { data: currentRoles, error: checkError } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId);
       
-      // محاولة تعيين الدور يدويًا إذا فشلت وظيفة RPC
-      console.log('محاولة تعيين الدور يدويًا بعد فشل RPC...');
-      const manualResult = await assignUserRoleManually(userId, roleId);
-      return manualResult;
+    if (checkError) {
+      console.error('خطأ في التحقق من الأدوار الحالية:', checkError);
     } else {
-      console.log('نتيجة استدعاء وظيفة assign_user_role:', roleData);
-      console.log('تم تعيين الدور الجديد بنجاح');
-      return true;
+      console.log('أدوار المستخدم الحالية:', currentRoles);
     }
+    
+    // حذف جميع الأدوار الحالية للمستخدم أولاً قبل إضافة دور جديد
+    console.log('حذف الأدوار الحالية للمستخدم...');
+    const { error: deleteError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId);
+      
+    if (deleteError) {
+      console.error('خطأ في حذف الأدوار الحالية:', deleteError);
+      throw deleteError;
+    }
+    
+    console.log('تم حذف الأدوار الحالية بنجاح، إضافة الدور الجديد...');
+    
+    // إضافة الدور الجديد مباشرة إلى الجدول بدلاً من استخدام وظيفة RPC
+    const { data: insertData, error: insertError } = await supabase
+      .from('user_roles')
+      .insert({ user_id: userId, role_id: roleId })
+      .select();
+      
+    if (insertError) {
+      console.error('خطأ في إضافة الدور الجديد:', insertError);
+      throw insertError;
+    }
+    
+    console.log('تم تعيين الدور الجديد بنجاح:', insertData);
+    
+    // التحقق من تحديث الدور
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('user_roles')
+      .select('*, roles:role_id(id, name)')
+      .eq('user_id', userId);
+      
+    if (verifyError) {
+      console.error('خطأ في التحقق من تحديث الدور:', verifyError);
+    } else {
+      console.log('تحقق من أدوار المستخدم بعد التحديث:', verifyData);
+    }
+    
+    return true;
   } catch (error) {
     console.error('خطأ عام في تعيين الدور:', error);
     return false;
@@ -131,32 +157,19 @@ export const deleteUserRoles = async (userId: string): Promise<boolean> => {
   console.log('حذف جميع أدوار المستخدم...', userId);
   
   try {
-    const { data: deleteRoleData, error: deleteRoleError } = await supabase.rpc('delete_user_roles', {
-      p_user_id: userId
-    });
-    
-    if (deleteRoleError) {
-      console.error('خطأ في حذف أدوار المستخدم باستخدام RPC:', deleteRoleError);
-      console.error('تفاصيل الخطأ:', JSON.stringify(deleteRoleError));
+    // حذف الأدوار مباشرة من جدول user_roles بدلاً من استخدام RPC
+    const { error: deleteError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId);
       
-      // استخدام الطريقة اليدوية كبديل
-      const { error: manualDeleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-        
-      if (manualDeleteError) {
-        console.error('خطأ في حذف الأدوار يدويًا:', manualDeleteError);
-        return false;
-      }
-      
-      console.log('تم حذف أدوار المستخدم يدويًا بنجاح');
-      return true;
-    } else {
-      console.log('نتيجة استدعاء وظيفة delete_user_roles:', deleteRoleData);
-      console.log('تم حذف أدوار المستخدم بنجاح');
-      return true;
+    if (deleteError) {
+      console.error('خطأ في حذف أدوار المستخدم:', deleteError);
+      return false;
     }
+    
+    console.log('تم حذف أدوار المستخدم بنجاح');
+    return true;
   } catch (error) {
     console.error('خطأ عام في حذف أدوار المستخدم:', error);
     return false;
