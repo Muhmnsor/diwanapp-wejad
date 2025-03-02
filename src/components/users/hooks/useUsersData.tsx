@@ -25,7 +25,17 @@ export const useUsersData = () => {
     queryFn: async () => {
       console.log('Fetching users with roles...');
       
-      // First get user roles with their role information
+      // Get all users from profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email');
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      // Then get user roles with their role information
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -42,30 +52,24 @@ export const useUsersData = () => {
         throw userRolesError;
       }
 
-      // Then get user information from profiles table
-      const userIds = userRolesData.map(ur => ur.user_id);
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .in('id', userIds);
+      // Map user roles to user IDs
+      const userRolesMap = userRolesData.reduce((map, ur) => {
+        map[ur.user_id] = ur.roles;
+        return map;
+      }, {});
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
-      }
-
-      // Combine the data
-      const transformedUsers = userRolesData.map((roleData: any) => {
-        const userProfile = profilesData.find(p => p.id === roleData.user_id);
+      // Combine the data - include all users, even those without roles
+      const transformedUsers = profilesData.map((profile) => {
+        const userRole = userRolesMap[profile.id];
         return {
-          id: roleData.user_id,
-          username: userProfile?.email || 'لم يتم تعيين بريد إلكتروني',
-          role: roleData.roles?.name || 'لم يتم تعيين دور',
+          id: profile.id,
+          username: profile.email || 'لم يتم تعيين بريد إلكتروني',
+          role: userRole?.name || 'لم يتم تعيين دور',
           lastLogin: 'غير متوفر' // Since we can't access auth.users directly
         };
       });
 
-      console.log('Transformed users with roles:', transformedUsers);
+      console.log('All users (including those without roles):', transformedUsers);
       return transformedUsers as User[];
     },
     staleTime: 1000 * 30, // Cache for 30 seconds
