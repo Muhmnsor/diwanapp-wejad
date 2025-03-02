@@ -4,119 +4,85 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "../types";
 
-export const useUserOperations = (onUserDeleted: () => void) => {
+export const useUserOperations = (onUserUpdated: () => void) => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToView, setUserToView] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handlePasswordChange = async () => {
-    if (!selectedUser) {
-      toast.error("الرجاء تحديد المستخدم");
-      return;
-    }
 
+  const handlePasswordChange = async () => {
+    if (!selectedUser) return;
+    
     setIsSubmitting(true);
     try {
-      console.log('=== بدء عملية تحديث المستخدم ===');
-      console.log('معرف المستخدم:', selectedUser.id);
-      console.log('الدور المحدد:', selectedRole);
-      console.log('تم تقديم كلمة مرور جديدة:', newPassword ? 'نعم' : 'لا');
-
-      // Handle password change if provided
-      if (newPassword) {
-        console.log('محاولة تحديث كلمة المرور...');
-        const { error: passwordError } = await supabase.functions.invoke('manage-users', {
-          body: {
-            operation: 'update_password',
-            userId: selectedUser.id,
-            newPassword
-          }
+      console.log("=== بدء عملية تحديث المستخدم ===");
+      console.log("معرف المستخدم:", selectedUser.id);
+      console.log("الدور المحدد:", selectedRole);
+      console.log("المسمى الوظيفي:", selectedUser.displayName);
+      console.log("تم إدخال كلمة مرور جديدة:", newPassword ? "نعم" : "لا");
+      
+      // تحديث الدور والمسمى الوظيفي
+      if (selectedRole) {
+        console.log("تحديث دور المستخدم...");
+        const { error: roleError } = await supabase.rpc('assign_user_role', {
+          p_user_id: selectedUser.id,
+          p_role_id: selectedRole,
         });
-
+        
+        if (roleError) {
+          console.error("خطأ في تعيين الدور:", roleError);
+          throw roleError;
+        }
+        console.log("تم تحديث دور المستخدم بنجاح");
+      }
+      
+      // تحديث المسمى الوظيفي إذا كان موجودًا
+      if (selectedUser.displayName !== undefined) {
+        console.log("تحديث المسمى الوظيفي...");
+        const { error: displayNameError } = await supabase
+          .from('profiles')
+          .update({ display_name: selectedUser.displayName })
+          .eq('id', selectedUser.id);
+        
+        if (displayNameError) {
+          console.error("خطأ في تحديث المسمى الوظيفي:", displayNameError);
+          throw displayNameError;
+        }
+        console.log("تم تحديث المسمى الوظيفي بنجاح");
+      }
+      
+      // تحديث كلمة المرور إذا تم إدخالها
+      if (newPassword) {
+        console.log("تحديث كلمة المرور...");
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(
+          selectedUser.id,
+          { password: newPassword }
+        );
+        
         if (passwordError) {
-          console.error('خطأ في تحديث كلمة المرور:', passwordError);
+          console.error("خطأ في تحديث كلمة المرور:", passwordError);
           throw passwordError;
         }
-        console.log('تم تحديث كلمة المرور بنجاح');
+        console.log("تم تحديث كلمة المرور بنجاح");
       }
-
-      // Handle role change if selected role is different from current role
-      if (selectedRole && selectedRole !== selectedUser.role) {
-        console.log('=== تحديث دور المستخدم ===');
-        console.log('معرف المستخدم:', selectedUser.id);
-        console.log('الدور القديم:', selectedUser.role);
-        console.log('الدور الجديد المحدد:', selectedRole);
-        
-        try {
-          // أولاً، نحذف أي أدوار سابقة
-          console.log('حذف الأدوار السابقة...');
-          const { error: deleteError } = await supabase
-            .from('user_roles')
-            .delete()
-            .eq('user_id', selectedUser.id);
-            
-          if (deleteError) {
-            console.error('خطأ في حذف الأدوار السابقة:', deleteError);
-            throw deleteError;
-          }
-          
-          console.log('تم حذف الأدوار السابقة بنجاح، انتظار قبل إضافة الدور الجديد...');
-          
-          // انتظار 500 مللي ثانية للتأكد من إتمام عملية الحذف
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          console.log('إضافة الدور الجديد:', selectedRole);
-          const { error: insertError, data: insertData } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: selectedUser.id,
-              role_id: selectedRole
-            })
-            .select();
-              
-          if (insertError) {
-            console.error('خطأ في إضافة الدور الجديد:', insertError);
-            throw insertError;
-          }
-          
-          console.log('تم إضافة الدور الجديد بنجاح:', insertData);
-          
-          // Log user activity for role change
-          await supabase.rpc('log_user_activity', {
-            user_id: selectedUser.id,
-            activity_type: 'role_change',
-            details: `تم تغيير الدور إلى ${selectedRole}`
-          });
-          
-          console.log('تم تسجيل نشاط تغيير الدور');
-        } catch (error) {
-          console.error('خطأ أثناء تحديث الدور:', error);
-          toast.error("حدث خطأ أثناء تحديث الدور");
-          throw error;
-        }
-      }
-
-      if (newPassword) {
-        // Log password change activity
-        await supabase.rpc('log_user_activity', {
-          user_id: selectedUser.id,
-          activity_type: 'password_change',
-          details: 'تم تغيير كلمة المرور'
-        });
-        console.log('تم تسجيل نشاط تغيير كلمة المرور');
-      }
-
+      
+      // تسجيل النشاط
+      await supabase.rpc('log_user_activity', {
+        user_id: selectedUser.id,
+        activity_type: 'user_updated',
+        details: `تم تحديث معلومات المستخدم (الدور: ${selectedRole || 'لم يتغير'}, كلمة المرور: ${newPassword ? 'تم التغيير' : 'لم تتغير'}, المسمى الوظيفي: ${selectedUser.displayName || 'لم يتغير'})`
+      });
+      
       toast.success("تم تحديث بيانات المستخدم بنجاح");
       setSelectedUser(null);
       setNewPassword("");
       setSelectedRole("");
-      onUserDeleted(); // Refresh the users list
-      console.log('=== انتهت عملية تحديث المستخدم بنجاح ===');
+      onUserUpdated();
+      console.log("=== تمت عملية تحديث المستخدم بنجاح ===");
     } catch (error) {
-      console.error('خطأ عام في تحديث المستخدم:', error);
+      console.error("خطأ عام في تحديث المستخدم:", error);
       toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
     } finally {
       setIsSubmitting(false);
@@ -125,40 +91,38 @@ export const useUserOperations = (onUserDeleted: () => void) => {
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
-
+    
     try {
-      console.log('=== بدء عملية حذف المستخدم ===');
-      console.log('معرف المستخدم للحذف:', userToDelete.id);
+      console.log("=== بدء عملية حذف المستخدم ===");
+      console.log("معرف المستخدم:", userToDelete.id);
       
-      // Log user deletion activity before deleting the user
-      await supabase.rpc('log_user_activity', {
-        user_id: userToDelete.id,
-        activity_type: 'user_deleted',
-        details: `تم حذف المستخدم ${userToDelete.username}`
+      // حذف الأدوار أولاً
+      const { error: roleError } = await supabase.rpc('delete_user_roles', {
+        p_user_id: userToDelete.id
       });
-      console.log('تم تسجيل نشاط حذف المستخدم');
-
-      const { error } = await supabase.functions.invoke('manage-users', {
-        body: {
-          operation: 'delete_user',
-          userId: userToDelete.id
-        }
-      });
-
-      if (error) {
-        console.error('خطأ في حذف المستخدم:', error);
-        throw error;
+      
+      if (roleError) {
+        console.error("خطأ في حذف أدوار المستخدم:", roleError);
+        throw roleError;
       }
-
-      console.log('تم حذف المستخدم بنجاح');
+      
+      // ثم حذف المستخدم
+      const { error: userError } = await supabase.auth.admin.deleteUser(
+        userToDelete.id
+      );
+      
+      if (userError) {
+        console.error("خطأ في حذف المستخدم:", userError);
+        throw userError;
+      }
+      
       toast.success("تم حذف المستخدم بنجاح");
-      onUserDeleted();
-      console.log('=== انتهت عملية حذف المستخدم بنجاح ===');
-    } catch (error) {
-      console.error('خطأ عام في حذف المستخدم:', error);
-      toast.error("حدث خطأ أثناء حذف المستخدم");
-    } finally {
       setUserToDelete(null);
+      onUserUpdated();
+      console.log("=== تمت عملية حذف المستخدم بنجاح ===");
+    } catch (error) {
+      console.error("خطأ عام في حذف المستخدم:", error);
+      toast.error("حدث خطأ أثناء حذف المستخدم");
     }
   };
 

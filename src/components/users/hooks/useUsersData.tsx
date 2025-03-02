@@ -30,7 +30,7 @@ export const useUsersData = () => {
       // جلب جميع المستخدمين من profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email');
+        .select('id, email, display_name');
 
       if (profilesError) {
         console.error('خطأ في جلب بيانات المستخدمين:', profilesError);
@@ -73,6 +73,7 @@ export const useUsersData = () => {
         const user = {
           id: profile.id,
           username: profile.email || 'لم يتم تعيين بريد إلكتروني',
+          displayName: profile.display_name || undefined,
           role: userRole?.name || 'لم يتم تعيين دور',
           lastLogin: 'غير متوفر' // نظرًا لأننا لا نستطيع الوصول إلى auth.users مباشرة
         };

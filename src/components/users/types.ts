@@ -4,6 +4,7 @@ export interface User {
   username: string;
   role: string;
   lastLogin: string;
+  displayName?: string;  // إضافة حقل المسمى الوظيفي
 }
 
 export interface Role {

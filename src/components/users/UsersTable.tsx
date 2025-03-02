@@ -51,7 +51,8 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
     } else {
       const filtered = users.filter(user => 
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.role.toLowerCase().includes(searchTerm.toLowerCase())
+        user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.displayName && user.displayName.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredUsers(filtered);
     }

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { User, Role } from "./types";
 
 interface UserEditDialogProps {
@@ -42,36 +43,65 @@ export const UserEditDialog = ({
   isSubmitting,
   roles = []
 }: UserEditDialogProps) => {
-  // تعيين الدور المحدد عند تغيير المستخدم
+  const [displayName, setDisplayName] = useState("");
+  
+  // تعيين الدور المحدد والمسمى الوظيفي عند تغيير المستخدم
   useEffect(() => {
-    if (user && user.role) {
+    if (user) {
       console.log("UserEditDialog - تحميل بيانات المستخدم:", user);
-      console.log("UserEditDialog - الدور الحالي للمستخدم:", user.role);
       
-      // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
-      const roleObj = roles.find(r => r.name === user.role);
-      if (roleObj) {
-        console.log("UserEditDialog - تعيين الدور المحدد من بيانات المستخدم:", roleObj.id, roleObj.name);
-        setSelectedRole(roleObj.id);
+      // تعيين المسمى الوظيفي إذا كان موجودًا
+      setDisplayName(user.displayName || "");
+      
+      if (user.role) {
+        console.log("UserEditDialog - الدور الحالي للمستخدم:", user.role);
+        
+        // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
+        const roleObj = roles.find(r => r.name === user.role);
+        if (roleObj) {
+          console.log("UserEditDialog - تعيين الدور المحدد من بيانات المستخدم:", roleObj.id, roleObj.name);
+          setSelectedRole(roleObj.id);
+        } else {
+          console.log("UserEditDialog - لم يتم العثور على الدور للمستخدم، تم مسح التحديد");
+          setSelectedRole("");
+        }
       } else {
-        console.log("UserEditDialog - لم يتم العثور على الدور للمستخدم، تم مسح التحديد");
+        // إذا لم يكن هناك مستخدم أو لم يكن له دور، تعيين القيمة الافتراضية
+        console.log("UserEditDialog - لا يوجد دور للمستخدم، تعيين القيمة الافتراضية");
         setSelectedRole("");
       }
     } else {
-      // إذا لم يكن هناك مستخدم أو لم يكن له دور، تعيين القيمة الافتراضية
-      console.log("UserEditDialog - لا يوجد مستخدم أو دور، تعيين القيمة الافتراضية");
+      // إذا لم يكن هناك مستخدم، إعادة تعيين القيم الافتراضية
+      console.log("UserEditDialog - لا يوجد مستخدم، تعيين القيم الافتراضية");
       setSelectedRole("");
+      setDisplayName("");
     }
   }, [user, roles, setSelectedRole]);
 
   console.log('UserEditDialog - الأدوار المتاحة:', roles);
   console.log('UserEditDialog - الدور المحدد:', selectedRole);
   console.log('UserEditDialog - المستخدم الحالي:', user);
+  console.log('UserEditDialog - المسمى الوظيفي:', displayName);
 
   // وظيفة للحصول على اسم الدور المعروض بناءً على معرفه
   const getRoleDisplayName = (roleId: string) => {
     const role = roles.find(r => r.id === roleId);
     return role ? role.name : 'غير معروف';
+  };
+
+  // تعديل وظيفة التقديم لتشمل المسمى الوظيفي
+  const handleSubmit = () => {
+    console.log("UserEditDialog - تم النقر على زر التحديث");
+    console.log("UserEditDialog - الدور المحدد عند التقديم:", selectedRole);
+    console.log("UserEditDialog - المسمى الوظيفي عند التقديم:", displayName);
+    
+    // نمرر المسمى الوظيفي إلى العنصر الأب من خلال الاستفادة من التعديل في useUserOperations
+    // (سيتم تعديل الوظيفة onSubmit في المكون الأب للتعامل مع المسمى الوظيفي)
+    if (user) {
+      user.displayName = displayName;
+    }
+    
+    onSubmit();
   };
 
   return (
@@ -87,6 +117,15 @@ export const UserEditDialog = ({
           <div className="space-y-2 text-right">
             <div className="font-medium">البريد الإلكتروني</div>
             <div>{user?.username}</div>
+          </div>
+          <div className="space-y-2 text-right">
+            <div className="font-medium">المسمى الوظيفي</div>
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="أدخل المسمى الوظيفي"
+              className="w-full text-right"
+            />
           </div>
           <div className="space-y-2 text-right">
             <div className="font-medium">الدور الحالي</div>
@@ -126,11 +165,7 @@ export const UserEditDialog = ({
           </div>
         </div>
         <Button 
-          onClick={() => {
-            console.log("UserEditDialog - تم النقر على زر التحديث");
-            console.log("UserEditDialog - الدور المحدد عند التقديم:", selectedRole);
-            onSubmit();
-          }}
+          onClick={handleSubmit}
           className="w-full"
           disabled={isSubmitting}
         >

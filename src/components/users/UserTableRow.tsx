@@ -28,7 +28,14 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
     <TableRow dir="rtl">
       <TableCell className="text-right">
         <div className="space-y-1">
-          <div className="font-medium">{user.username}</div>
+          <div className="font-medium">
+            {user.displayName || user.username}
+            {user.displayName && (
+              <span className="text-sm text-muted-foreground mr-2 font-normal">
+                ({user.username})
+              </span>
+            )}
+          </div>
           <div className="text-sm text-muted-foreground">
             {getRoleDisplayName(user.role)}
           </div>
