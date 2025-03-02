@@ -64,10 +64,21 @@ export const useDiscussionSubmit = (
       
       console.log("New discussion period:", newDiscussionPeriod);
 
+      // تحديد ما إذا كان يجب تحديث حالة الفكرة
+      let updateData: { discussion_period: string; status?: string } = {
+        discussion_period: newDiscussionPeriod
+      };
+      
+      // إذا كانت المناقشة كانت منتهية وتم إضافة وقت جديد، يتم تحديث حالة الفكرة إلى "قيد المراجعة"
+      if (discussionData.discussionEnded && operation === "add" && newTotalHours > 0) {
+        console.log("Updating idea status to under_review because discussion was resumed");
+        updateData.status = "under_review";
+      }
+
       // تحديث قاعدة البيانات
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: newDiscussionPeriod })
+        .update(updateData)
         .eq("id", ideaId);
 
       if (updateError) {
@@ -75,7 +86,13 @@ export const useDiscussionSubmit = (
       }
 
       console.log("Discussion period updated successfully");
-      toast.success(operation === "add" ? "تم تمديد فترة المناقشة بنجاح" : "تم تنقيص فترة المناقشة بنجاح");
+      const successMessage = operation === "add" 
+        ? (discussionData.discussionEnded 
+            ? "تم تمديد فترة المناقشة وإعادة تنشيط الفكرة بنجاح" 
+            : "تم تمديد فترة المناقشة بنجاح") 
+        : "تم تنقيص فترة المناقشة بنجاح";
+      
+      toast.success(successMessage);
       onSuccess();
       onClose();
     } catch (error) {
@@ -92,7 +109,10 @@ export const useDiscussionSubmit = (
       // تحديث فترة المناقشة إلى صفر ساعات لإنهائها
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: "0 hours" })
+        .update({ 
+          discussion_period: "0 hours",
+          status: "pending_decision" 
+        })
         .eq("id", ideaId);
 
       if (updateError) {
