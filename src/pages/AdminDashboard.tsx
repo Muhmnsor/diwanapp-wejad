@@ -73,11 +73,11 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" dir="rtl">
+    <div className="min-h-screen flex flex-col">
       <AdminHeader />
       
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        <h1 className="text-3xl font-bold mb-8 text-center">لوحة التحكم المركزية</h1>
+      <div className="container mx-auto px-4 py-8 flex-grow" dir="rtl">
+        <h1 className="text-3xl font-bold mb-8 text-right">لوحة التحكم المركزية</h1>
         
         <Tabs defaultValue="personal" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
@@ -111,36 +111,36 @@ const AdminDashboard = () => {
           <TabsContent value="personal" className="mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Card className="p-6">
-                <div className="flex items-center mb-4 justify-end">
-                  <ListChecks className="w-6 h-6 text-primary ml-2" />
+                <div className="flex items-center mb-4">
                   <h2 className="text-xl font-semibold">المهام المطلوبة</h2>
+                  <ListChecks className="w-6 h-6 text-primary mr-2" />
                 </div>
                 <div className="space-y-4">
                   {userTasks.map(task => (
                     <div key={task.id} className="border-b pb-3 last:border-b-0">
                       <div className="flex justify-between items-center mb-1">
+                        <div className="font-medium text-right">{task.title}</div>
                         <span className="text-sm text-muted-foreground">{task.dueDate}</span>
-                        <div className="font-medium text-center">{task.title}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground text-center">{task.app}</div>
+                      <div className="text-sm text-muted-foreground text-right">{task.app}</div>
                     </div>
                   ))}
                 </div>
               </Card>
               
               <Card className="p-6">
-                <div className="flex items-center mb-4 justify-end">
-                  <Bell className="w-6 h-6 text-primary ml-2" />
+                <div className="flex items-center mb-4">
                   <h2 className="text-xl font-semibold">آخر الإشعارات</h2>
+                  <Bell className="w-6 h-6 text-primary mr-2" />
                 </div>
                 <div className="space-y-4">
                   {notifications.map(notification => (
                     <div key={notification.id} className="border-b pb-3 last:border-b-0">
                       <div className="flex justify-between items-center mb-1">
+                        <div className="font-medium text-right">{notification.message}</div>
                         <span className="text-sm text-muted-foreground">{notification.time}</span>
-                        <div className="font-medium text-center">{notification.message}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground text-center">{notification.app}</div>
+                      <div className="text-sm text-muted-foreground text-right">{notification.app}</div>
                     </div>
                   ))}
                 </div>
