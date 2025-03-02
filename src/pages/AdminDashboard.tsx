@@ -87,15 +87,16 @@ const AdminDashboard = () => {
           
           <TabsContent value="apps" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {apps.map((app) => {
+              {apps.map((app, index) => {
                 const Icon = app.icon;
                 return (
                   <Card
                     key={app.path}
-                    className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                    className="p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center text-center"
                     onClick={() => navigate(app.path)}
+                    style={{ direction: 'rtl' }}
                   >
-                    <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="flex flex-col items-center text-center space-y-4 w-full">
                       <div className="w-full flex justify-center">
                         <Icon className="w-12 h-12 text-primary" />
                       </div>
