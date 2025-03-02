@@ -166,7 +166,6 @@ export const useExtendDiscussion = (
       
       console.log("New discussion period:", newDiscussionPeriod);
 
-      // تحديث قاعدة البيانات - تحديث الحالة إلى draft عند التمديد والتأكد من أن الفترة أكبر من صفر
       // تعريف نوع كائن التحديثات لتجنب خطأ TypeScript
       const updates: {
         discussion_period: string;
@@ -203,10 +202,14 @@ export const useExtendDiscussion = (
       
       // استدعاء دالة النجاح لتحديث الواجهة
       onSuccess();
+      
+      // إغلاق نافذة الحوار
       onClose();
       
-      // إعادة تحميل الصفحة لتحديث العد التنازلي
-      window.location.reload();
+      // تأخير قصير قبل إعادة تحميل الصفحة للتأكد من إغلاق نافذة الحوار وتطبيق التغييرات
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
     } catch (error) {
       console.error("Error modifying discussion period:", error);
       toast.error("حدث خطأ أثناء تعديل فترة المناقشة");
@@ -233,11 +236,17 @@ export const useExtendDiscussion = (
 
       console.log("Discussion ended successfully");
       toast.success("تم إنهاء المناقشة بنجاح");
+      
+      // استدعاء دالة النجاح لتحديث الواجهة
       onSuccess();
+      
+      // إغلاق نافذة الحوار
       onClose();
       
-      // إعادة تحميل الصفحة لتحديث العد التنازلي
-      window.location.reload();
+      // تأخير قصير قبل إعادة تحميل الصفحة
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
     } catch (error) {
       console.error("Error ending discussion:", error);
       toast.error("حدث خطأ أثناء إنهاء المناقشة");
