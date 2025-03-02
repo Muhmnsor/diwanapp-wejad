@@ -78,6 +78,19 @@ export const UserEditDialog = ({
     }
   };
 
+  // إضافة سجل للتحقق من الدور المحدد قبل الإرسال
+  const handleSubmit = () => {
+    console.log('التحقق من الدور المحدد قبل الإرسال:', selectedRole);
+    console.log('هل الدور فارغ؟', !selectedRole);
+    console.log('قيمة الدور المحدد عند الإرسال:', selectedRole || 'لا يوجد دور محدد');
+    
+    // تسجيل معلومات المستخدم والأدوار المتاحة للتحقق
+    console.log('معلومات المستخدم عند الإرسال:', user);
+    console.log('الأدوار المتاحة عند الإرسال:', roles);
+    
+    onSubmit();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
@@ -134,15 +147,7 @@ export const UserEditDialog = ({
           </div>
         </div>
         <Button 
-          onClick={() => {
-            console.log('تم النقر على زر التحديث');
-            console.log('معلومات المستخدم عند التقديم:', {
-              userId: user?.id,
-              selectedRole,
-              newPassword: newPassword ? '(غير فارغ)' : '(فارغ)'
-            });
-            onSubmit();
-          }}
+          onClick={handleSubmit}
           className="w-full"
           disabled={isSubmitting}
         >
