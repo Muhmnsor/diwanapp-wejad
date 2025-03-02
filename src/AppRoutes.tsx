@@ -23,7 +23,7 @@ import NewPortfolioProject from "./pages/NewPortfolioProject";
 import PortfolioProjectDetails from "./pages/PortfolioProjectDetails";
 import PortfolioWorkspaceDetails from "./pages/PortfolioWorkspaceDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuthStore } from "@/store/auth/authStore";
+import { useAuthStore } from "@/store/authStore";
 import IdeaDetails from "./pages/IdeaDetails";
 import UsersManagement from "./pages/UsersManagement";
 import WebsiteManagement from "./pages/WebsiteManagement";
