@@ -2,364 +2,277 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { Role } from "./types";
-import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface RolePermissionsProps {
   role: Role;
 }
 
-interface AppModule {
+// تعريف نوع البيانات للتطبيقات والصلاحيات
+interface Permission {
   id: string;
   name: string;
   description: string;
-  subPermissions?: SubPermission[];
+  module: string;
 }
 
-interface SubPermission {
-  id: string;
+interface Module {
   name: string;
-  description: string;
+  permissions: Permission[];
+  isOpen: boolean;
 }
 
 export const RolePermissions = ({ role }: RolePermissionsProps) => {
-  const [selectedModules, setSelectedModules] = useState<string[]>([]);
-  const [openModules, setOpenModules] = useState<string[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // قائمة الوحدات والتطبيقات المتاحة في النظام مع الصلاحيات التفصيلية
-  const modules: AppModule[] = [
-    { 
-      id: "dashboard", 
-      name: "لوحة المعلومات", 
-      description: "عرض إحصائيات ومؤشرات النظام",
-      subPermissions: [
-        { id: "dashboard.view", name: "عرض الإحصائيات", description: "عرض إحصائيات النظام" },
-        { id: "dashboard.export", name: "تصدير البيانات", description: "تصدير إحصائيات النظام" }
-      ]
-    },
-    { 
-      id: "users", 
-      name: "إدارة المستخدمين", 
-      description: "إضافة وتعديل وحذف المستخدمين",
-      subPermissions: [
-        { id: "users.view", name: "عرض المستخدمين", description: "عرض قائمة المستخدمين" },
-        { id: "users.create", name: "إضافة مستخدمين", description: "إضافة مستخدمين جدد" },
-        { id: "users.edit", name: "تعديل المستخدمين", description: "تعديل بيانات المستخدمين" },
-        { id: "users.delete", name: "حذف المستخدمين", description: "حذف المستخدمين من النظام" },
-        { id: "users.roles", name: "إدارة الأدوار", description: "إضافة وتعديل وحذف الأدوار والصلاحيات" }
-      ]
-    },
-    { 
-      id: "events", 
-      name: "إدارة الفعاليات", 
-      description: "إنشاء وتعديل الفعاليات",
-      subPermissions: [
-        { id: "events.view", name: "عرض الفعاليات", description: "عرض قائمة الفعاليات" },
-        { id: "events.create", name: "إضافة فعاليات", description: "إنشاء فعاليات جديدة" },
-        { id: "events.edit", name: "تعديل الفعاليات", description: "تعديل بيانات الفعاليات" },
-        { id: "events.delete", name: "حذف الفعاليات", description: "حذف الفعاليات من النظام" },
-        { id: "events.attendance", name: "إدارة الحضور", description: "تسجيل حضور المشاركين في الفعاليات" }
-      ]
-    },
-    { 
-      id: "projects", 
-      name: "إدارة المشاريع", 
-      description: "إنشاء وتعديل المشاريع",
-      subPermissions: [
-        { id: "projects.view", name: "عرض المشاريع", description: "عرض قائمة المشاريع" },
-        { id: "projects.create", name: "إضافة مشاريع", description: "إنشاء مشاريع جديدة" },
-        { id: "projects.edit", name: "تعديل المشاريع", description: "تعديل بيانات المشاريع" },
-        { id: "projects.delete", name: "حذف المشاريع", description: "حذف المشاريع من النظام" },
-        { id: "projects.activities", name: "إدارة الأنشطة", description: "إدارة أنشطة المشاريع" }
-      ]
-    },
-    { 
-      id: "reports", 
-      name: "التقارير", 
-      description: "إنشاء وعرض التقارير",
-      subPermissions: [
-        { id: "reports.view", name: "عرض التقارير", description: "عرض التقارير المتاحة" },
-        { id: "reports.create", name: "إنشاء تقارير", description: "إنشاء تقارير جديدة" },
-        { id: "reports.export", name: "تصدير التقارير", description: "تصدير التقارير بتنسيقات مختلفة" }
-      ]
-    },
-    { 
-      id: "finance", 
-      name: "الإدارة المالية", 
-      description: "إدارة الموارد المالية والمصروفات",
-      subPermissions: [
-        { id: "finance.view", name: "عرض البيانات المالية", description: "عرض البيانات المالية" },
-        { id: "finance.resources", name: "إدارة الموارد", description: "إدارة الموارد المالية" },
-        { id: "finance.expenses", name: "إدارة المصروفات", description: "إدارة المصروفات والنفقات" },
-        { id: "finance.targets", name: "إدارة المستهدفات", description: "إدارة المستهدفات المالية" },
-        { id: "finance.reports", name: "تقارير مالية", description: "عرض وتصدير التقارير المالية" }
-      ]
-    },
-    { 
-      id: "certificates", 
-      name: "الشهادات", 
-      description: "إصدار وإدارة الشهادات",
-      subPermissions: [
-        { id: "certificates.view", name: "عرض الشهادات", description: "عرض الشهادات المصدرة" },
-        { id: "certificates.issue", name: "إصدار الشهادات", description: "إصدار شهادات جديدة" },
-        { id: "certificates.templates", name: "إدارة القوالب", description: "إدارة قوالب الشهادات" },
-        { id: "certificates.verify", name: "التحقق من الشهادات", description: "التحقق من صحة الشهادات" }
-      ]
-    },
-    { 
-      id: "settings", 
-      name: "الإعدادات", 
-      description: "تعديل إعدادات النظام",
-      subPermissions: [
-        { id: "settings.view", name: "عرض الإعدادات", description: "عرض إعدادات النظام" },
-        { id: "settings.edit", name: "تعديل الإعدادات", description: "تعديل إعدادات النظام" },
-        { id: "settings.notifications", name: "إعدادات الإشعارات", description: "إدارة إعدادات الإشعارات" },
-        { id: "settings.whatsapp", name: "إعدادات واتساب", description: "إدارة إعدادات واتساب" },
-        { id: "settings.backup", name: "النسخ الاحتياطي", description: "إدارة النسخ الاحتياطي للبيانات" }
-      ]
-    }
-  ];
-
-  // جلب الصلاحيات الحالية للدور المحدد
-  const { data: permissions, isLoading, refetch } = useQuery({
-    queryKey: ['role-permissions', role.id],
+  // استعلام للحصول على جميع الصلاحيات
+  const { data: permissions = [], isLoading } = useQuery({
+    queryKey: ['permissions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('app_permissions')
-        .select('app_name')
-        .eq('role_id', role.id);
-      
-      if (error) throw error;
-      return data.map(p => p.app_name);
+        .from('permissions')
+        .select('*')
+        .order('module', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching permissions:', error);
+        throw error;
+      }
+
+      return data as Permission[];
     }
   });
 
-  // تحديث قائمة التطبيقات المحددة عند تغيير بيانات الصلاحيات
+  // استعلام للحصول على صلاحيات الدور
+  const { data: rolePermissions = [], refetch: refetchRolePermissions } = useQuery({
+    queryKey: ['role-permissions', role.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('role_permissions')
+        .select('permission_id')
+        .eq('role_id', role.id);
+
+      if (error) {
+        console.error('Error fetching role permissions:', error);
+        throw error;
+      }
+
+      return data.map(rp => rp.permission_id);
+    },
+    enabled: !!role.id
+  });
+
+  // تحديث حالة الصلاحيات المحددة عند تغير بيانات صلاحيات الدور
   useEffect(() => {
-    if (permissions) {
-      setSelectedModules(permissions);
+    if (rolePermissions) {
+      setSelectedPermissions(rolePermissions);
+    }
+  }, [rolePermissions]);
+
+  // تنظيم الصلاحيات حسب الوحدات
+  useEffect(() => {
+    if (permissions.length > 0) {
+      const moduleMap: { [key: string]: Permission[] } = {};
+      
+      // تجميع الصلاحيات حسب الوحدة
+      permissions.forEach(permission => {
+        if (!moduleMap[permission.module]) {
+          moduleMap[permission.module] = [];
+        }
+        moduleMap[permission.module].push(permission);
+      });
+      
+      // تحويل الخريطة إلى مصفوفة من الوحدات
+      const moduleArray: Module[] = Object.keys(moduleMap).map(moduleName => ({
+        name: moduleName,
+        permissions: moduleMap[moduleName],
+        isOpen: true // مفتوح افتراضيًا
+      }));
+      
+      setModules(moduleArray);
     }
   }, [permissions]);
 
-  // التحكم في توسيع/طي التفاصيل
-  const toggleModule = (moduleId: string) => {
-    if (openModules.includes(moduleId)) {
-      setOpenModules(openModules.filter(id => id !== moduleId));
-    } else {
-      setOpenModules([...openModules, moduleId]);
-    }
+  // التحقق مما إذا كانت الصلاحية محددة
+  const isPermissionSelected = (permissionId: string) => {
+    return selectedPermissions.includes(permissionId);
   };
 
-  const handleToggleModule = (moduleId: string) => {
-    const module = modules.find(m => m.id === moduleId);
-    
-    if (module?.subPermissions) {
-      if (selectedModules.includes(moduleId)) {
-        // إزالة الوحدة وجميع الصلاحيات الفرعية الخاصة بها
-        const subPermissionIds = module.subPermissions.map(sp => sp.id);
-        setSelectedModules(prev => 
-          prev.filter(id => id !== moduleId && !subPermissionIds.includes(id))
-        );
+  // التحقق مما إذا كانت جميع صلاحيات الوحدة محددة
+  const areAllModulePermissionsSelected = (module: Module) => {
+    return module.permissions.every(permission => isPermissionSelected(permission.id));
+  };
+
+  // تبديل حالة صلاحية واحدة
+  const handlePermissionToggle = (permissionId: string) => {
+    setSelectedPermissions(prev => {
+      if (prev.includes(permissionId)) {
+        return prev.filter(id => id !== permissionId);
       } else {
-        // إضافة الوحدة وجميع الصلاحيات الفرعية الخاصة بها
-        const subPermissionIds = module.subPermissions.map(sp => sp.id);
-        setSelectedModules(prev => 
-          [...prev.filter(id => !id.startsWith(`${moduleId}.`)), moduleId, ...subPermissionIds]
-        );
+        return [...prev, permissionId];
       }
-    } else {
-      // للمكونات التي ليس لها صلاحيات فرعية
-      setSelectedModules(prev => 
-        prev.includes(moduleId)
-          ? prev.filter(id => id !== moduleId)
-          : [...prev, moduleId]
-      );
-    }
-  };
-
-  const handleToggleSubPermission = (permissionId: string, moduleId: string) => {
-    setSelectedModules(prev => {
-      const newSelected = prev.includes(permissionId)
-        ? prev.filter(id => id !== permissionId)
-        : [...prev, permissionId];
-      
-      // تحقق مما إذا كانت جميع الصلاحيات الفرعية محددة
-      const module = modules.find(m => m.id === moduleId);
-      if (module?.subPermissions) {
-        const allSubPermissionIds = module.subPermissions.map(sp => sp.id);
-        const selectedSubPermissions = newSelected.filter(id => allSubPermissionIds.includes(id));
-        
-        // إذا كانت جميع الصلاحيات الفرعية محددة، قم بإضافة الوحدة الرئيسية
-        if (selectedSubPermissions.length === allSubPermissionIds.length && !newSelected.includes(moduleId)) {
-          return [...newSelected, moduleId];
-        }
-        
-        // إذا لم تكن جميع الصلاحيات الفرعية محددة، قم بإزالة الوحدة الرئيسية
-        if (selectedSubPermissions.length < allSubPermissionIds.length && newSelected.includes(moduleId)) {
-          return newSelected.filter(id => id !== moduleId);
-        }
-      }
-      
-      return newSelected;
     });
   };
 
-  const areAllSubPermissionsSelected = (moduleId: string) => {
-    const module = modules.find(m => m.id === moduleId);
-    if (!module?.subPermissions) return false;
+  // تبديل حالة جميع صلاحيات الوحدة
+  const handleModuleToggle = (module: Module) => {
+    const modulePermissionIds = module.permissions.map(p => p.id);
     
-    const subPermissionIds = module.subPermissions.map(sp => sp.id);
-    return subPermissionIds.every(id => selectedModules.includes(id));
+    if (areAllModulePermissionsSelected(module)) {
+      // إلغاء تحديد جميع صلاحيات الوحدة
+      setSelectedPermissions(prev => prev.filter(id => !modulePermissionIds.includes(id)));
+    } else {
+      // تحديد جميع صلاحيات الوحدة
+      setSelectedPermissions(prev => {
+        const newSelected = [...prev];
+        modulePermissionIds.forEach(id => {
+          if (!newSelected.includes(id)) {
+            newSelected.push(id);
+          }
+        });
+        return newSelected;
+      });
+    }
   };
 
-  const areSomeSubPermissionsSelected = (moduleId: string) => {
-    const module = modules.find(m => m.id === moduleId);
-    if (!module?.subPermissions) return false;
-    
-    const subPermissionIds = module.subPermissions.map(sp => sp.id);
-    return subPermissionIds.some(id => selectedModules.includes(id)) && !areAllSubPermissionsSelected(moduleId);
+  // تبديل حالة فتح/إغلاق الوحدة
+  const toggleModuleOpen = (moduleName: string) => {
+    setModules(prev => prev.map(m => 
+      m.name === moduleName ? { ...m, isOpen: !m.isOpen } : m
+    ));
   };
 
-  const handleSavePermissions = async () => {
+  // حفظ التغييرات
+  const handleSave = async () => {
     setIsSubmitting(true);
+    
     try {
-      // حذف جميع الصلاحيات الحالية للدور
-      await supabase
-        .from('app_permissions')
+      // حذف الصلاحيات الحالية للدور
+      const { error: deleteError } = await supabase
+        .from('role_permissions')
         .delete()
         .eq('role_id', role.id);
       
-      // إضافة الصلاحيات الجديدة
-      if (selectedModules.length > 0) {
-        const permissionsToInsert = selectedModules.map(appName => ({
+      if (deleteError) throw deleteError;
+      
+      // إذا كانت هناك صلاحيات محددة، أضفها
+      if (selectedPermissions.length > 0) {
+        const rolePemissions = selectedPermissions.map(permissionId => ({
           role_id: role.id,
-          app_name: appName
+          permission_id: permissionId
         }));
         
-        const { error } = await supabase
-          .from('app_permissions')
-          .insert(permissionsToInsert);
+        const { error: insertError } = await supabase
+          .from('role_permissions')
+          .insert(rolePemissions);
         
-        if (error) throw error;
+        if (insertError) throw insertError;
       }
-
-      // تسجيل نشاط المستخدم
-      await supabase.rpc('log_user_activity', {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        activity_type: 'permissions_update',
-        details: `تم تحديث صلاحيات الدور: ${role.name}`
-      });
-
-      toast.success("تم حفظ الصلاحيات بنجاح");
-      refetch();
+      
+      toast.success("تم حفظ صلاحيات الدور بنجاح");
+      refetchRolePermissions();
     } catch (error) {
-      console.error("Error saving permissions:", error);
+      console.error('Error saving role permissions:', error);
       toast.error("حدث خطأ أثناء حفظ الصلاحيات");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">جاري تحميل الصلاحيات...</p>
+      </div>
+    );
+  }
+
   return (
-    <Card dir="rtl">
-      <CardHeader>
-        <CardTitle className="text-lg">صلاحيات الدور: {role.name}</CardTitle>
-        <CardDescription>
-          حدد الوحدات والتطبيقات التي يمكن لهذا الدور الوصول إليها
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center items-center py-4">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4">
-              {modules.map((module) => (
-                <div key={module.id} className="space-y-1 border rounded-md p-3">
-                  <div className="flex items-start space-x-2 rtl:space-x-reverse">
+    <div className="space-y-6" dir="rtl">
+      <div className="bg-muted/20 p-4 rounded-md">
+        <h3 className="text-lg font-medium mb-2">صلاحيات دور: {role.name}</h3>
+        <p className="text-muted-foreground text-sm">{role.description || "لا يوجد وصف"}</p>
+      </div>
+
+      <div className="space-y-4">
+        {modules.map((module) => (
+          <Collapsible 
+            key={module.name}
+            open={module.isOpen}
+            onOpenChange={() => toggleModuleOpen(module.name)}
+            className="border rounded-md overflow-hidden"
+          >
+            <div className="flex items-center justify-between p-4 bg-muted/30">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={areAllModulePermissionsSelected(module)}
+                  onCheckedChange={() => handleModuleToggle(module)}
+                  id={`module-${module.name}`}
+                />
+                <label 
+                  htmlFor={`module-${module.name}`}
+                  className="text-base font-medium cursor-pointer"
+                >
+                  {module.name}
+                </label>
+              </div>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  {module.isOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            
+            <CollapsibleContent>
+              <div className="p-4 bg-background space-y-2 border-t">
+                {module.permissions.map((permission) => (
+                  <div key={permission.id} className="flex items-start gap-3 mr-6">
                     <Checkbox
-                      id={`module-${module.id}`}
-                      checked={selectedModules.includes(module.id)}
-                      onCheckedChange={() => handleToggleModule(module.id)}
-                      className="mt-1"
+                      id={permission.id}
+                      checked={isPermissionSelected(permission.id)}
+                      onCheckedChange={() => handlePermissionToggle(permission.id)}
                     />
-                    <div className="grid gap-1.5 leading-none w-full">
-                      <div className="flex justify-between items-center w-full">
-                        <label
-                          htmlFor={`module-${module.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {module.name}
-                        </label>
-                        
-                        {module.subPermissions && module.subPermissions.length > 0 && (
-                          <CollapsibleTrigger asChild onClick={() => toggleModule(module.id)}>
-                            <Button variant="ghost" size="sm" className="p-0 h-7 w-7">
-                              {openModules.includes(module.id) ? 
-                                <ChevronUp className="h-4 w-4" /> : 
-                                <ChevronDown className="h-4 w-4" />
-                              }
-                            </Button>
-                          </CollapsibleTrigger>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {module.description}
-                      </p>
+                    <div>
+                      <label 
+                        htmlFor={permission.id}
+                        className="text-sm font-medium cursor-pointer block"
+                      >
+                        {permission.name}
+                      </label>
+                      {permission.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {permission.description}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  
-                  {module.subPermissions && module.subPermissions.length > 0 && (
-                    <Collapsible open={openModules.includes(module.id)}>
-                      <CollapsibleContent>
-                        <div className="space-y-2 mr-8 mt-3 border-r pr-2 border-gray-200">
-                          {module.subPermissions.map((subPermission) => (
-                            <div key={subPermission.id} className="flex items-start space-x-2 rtl:space-x-reverse">
-                              <Checkbox
-                                id={`permission-${subPermission.id}`}
-                                checked={selectedModules.includes(subPermission.id)}
-                                onCheckedChange={() => handleToggleSubPermission(subPermission.id, module.id)}
-                              />
-                              <div className="grid gap-1 leading-none">
-                                <label
-                                  htmlFor={`permission-${subPermission.id}`}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                  {subPermission.name}
-                                </label>
-                                <p className="text-xs text-muted-foreground">
-                                  {subPermission.description}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        ))}
+      </div>
 
-            <div className="mt-6 flex justify-end">
-              <Button 
-                onClick={handleSavePermissions} 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "جار الحفظ..." : "حفظ الصلاحيات"}
-              </Button>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+      <div className="flex justify-start pt-4">
+        <Button 
+          onClick={handleSave} 
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
+          {isSubmitting ? "جاري الحفظ..." : "حفظ الصلاحيات"}
+        </Button>
+      </div>
+    </div>
   );
 };
