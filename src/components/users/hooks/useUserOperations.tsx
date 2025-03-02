@@ -137,11 +137,12 @@ export const useUserOperations = (onUserDeleted: () => void) => {
 
     try {
       setIsSubmitting(true);
+      console.log("محاولة حذف المستخدم:", userToDelete.id);
 
-      // حذف المستخدم
-      const { error } = await supabase.auth.admin.deleteUser(
-        userToDelete.id
-      );
+      // استدعاء وظيفة حذف المستخدم من خلال Edge Function
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: userToDelete.id }
+      });
 
       if (error) {
         console.error("خطأ في حذف المستخدم:", error);
@@ -149,9 +150,15 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         return;
       }
 
-      toast.success("تم حذف المستخدم بنجاح");
-      onUserDeleted();
-      setUserToDelete(null);
+      console.log("استجابة حذف المستخدم:", data);
+      
+      if (data.success) {
+        toast.success("تم حذف المستخدم بنجاح");
+        onUserDeleted();
+        setUserToDelete(null);
+      } else {
+        toast.error(data.error || "حدث خطأ أثناء حذف المستخدم");
+      }
     } catch (error) {
       console.error("خطأ غير متوقع:", error);
       toast.error("حدث خطأ أثناء حذف المستخدم");
