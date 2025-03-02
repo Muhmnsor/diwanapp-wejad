@@ -42,7 +42,7 @@ export const UserEditDialog = ({
   isSubmitting,
   roles = []
 }: UserEditDialogProps) => {
-  // تعيين الدور المحدد عند فتح نافذة التعديل
+  // تهيئة الدور المحدد عند فتح نافذة التعديل
   useEffect(() => {
     if (user && roles.length > 0) {
       console.log('تهيئة مربع الحوار لتعديل المستخدم:', user.username);
@@ -81,12 +81,14 @@ export const UserEditDialog = ({
   // إضافة سجل للتحقق من الدور المحدد قبل الإرسال
   const handleSubmit = () => {
     console.log('التحقق من الدور المحدد قبل الإرسال:', selectedRole);
-    console.log('هل الدور فارغ؟', !selectedRole);
-    console.log('قيمة الدور المحدد عند الإرسال:', selectedRole || 'لا يوجد دور محدد');
     
     // تسجيل معلومات المستخدم والأدوار المتاحة للتحقق
     console.log('معلومات المستخدم عند الإرسال:', user);
     console.log('الأدوار المتاحة عند الإرسال:', roles);
+    
+    // البحث عن الدور المحدد وعرض معلوماته قبل الإرسال
+    const selectedRoleObj = roles.find(r => r.id === selectedRole);
+    console.log('الدور المحدد قبل الإرسال:', selectedRoleObj);
     
     onSubmit();
   };
@@ -116,6 +118,8 @@ export const UserEditDialog = ({
                 value={selectedRole || ''}
                 onValueChange={(value) => {
                   console.log('تم اختيار الدور الجديد:', value);
+                  const role = roles.find(r => r.id === value);
+                  console.log('معلومات الدور المختار:', role);
                   setSelectedRole(value);
                 }}
               >

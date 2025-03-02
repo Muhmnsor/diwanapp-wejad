@@ -79,7 +79,9 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
                   user={user}
                   onEdit={() => {
                     setSelectedUser(user);
-                    setSelectedRole(user.role || '');
+                    // عند تحرير المستخدم، نترك selectedRole يتم تعيينه في أثر الاستخدام داخل مربع الحوار
+                    // لمطابقة اسم الدور بمعرفه في قائمة الأدوار
+                    setSelectedRole(""); // تفريغ الدور المحدد وتركه للأثر في مربع الحوار
                   }}
                   onDelete={() => setUserToDelete(user)}
                   onViewDetails={() => setUserToView(user)}
