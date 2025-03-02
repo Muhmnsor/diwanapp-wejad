@@ -1,3 +1,4 @@
+
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/auth/authStore";
 import { useEffect } from "react";
@@ -75,10 +76,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   // Check for admin-only routes
-  const adminOnlyRoutes = ['/settings'];
+  const adminOnlyRoutes = ['/settings', '/users-management']; // تم إضافة مسار إدارة المستخدمين
   if (adminOnlyRoutes.includes(location.pathname) && !user?.isAdmin) {
     console.log('User is not admin, redirecting from:', location.pathname);
-    return <Navigate to="/" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <>{children}</>;

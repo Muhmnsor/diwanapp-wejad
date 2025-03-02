@@ -23,7 +23,7 @@ import NewPortfolioProject from "./pages/NewPortfolioProject";
 import PortfolioProjectDetails from "./pages/PortfolioProjectDetails";
 import PortfolioWorkspaceDetails from "./pages/PortfolioWorkspaceDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/store/auth/authStore";
 import IdeaDetails from "./pages/IdeaDetails";
 import UsersManagement from "./pages/UsersManagement";
 import WebsiteManagement from "./pages/WebsiteManagement";
@@ -42,13 +42,27 @@ const AppRoutes = () => {
       <Route path="/events/:id" element={<EventDetails />} />
       <Route path="/create-project" element={<CreateProject />} />
       <Route path="/projects/:id" element={<ProjectDetails />} />
-      <Route path="/settings" element={<Settings />} />
+      <Route 
+        path="/settings" 
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        } 
+      />
       <Route path="/users" element={<Users />} />
       <Route path="/events/:id/feedback" element={<EventFeedback />} />
       <Route path="/activities/:id/feedback" element={<ActivityFeedback />} />
       <Route path="/verify-certificate" element={<VerifyCertificate />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route 
+        path="/admin/dashboard" 
+        element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
       <Route path="/documents" element={<Documents />} />
       <Route 
         path="/tasks" 
@@ -108,9 +122,31 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
-      <Route path="/website" element={<WebsiteManagement />} />
-      <Route path="/store" element={<StoreManagement />} />
-      <Route path="/users-management" element={<UsersManagement />} />
+      <Route 
+        path="/website" 
+        element={
+          <ProtectedRoute>
+            <WebsiteManagement />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/store" 
+        element={
+          <ProtectedRoute>
+            <StoreManagement />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/users-management" 
+        element={
+          <ProtectedRoute>
+            <UsersManagement />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

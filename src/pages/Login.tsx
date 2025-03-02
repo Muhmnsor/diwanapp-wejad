@@ -1,3 +1,4 @@
+
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,8 @@ const Login = () => {
       
       toast.success("تم تسجيل الدخول بنجاح");
       
-      // Get the redirect path from location state, or default to "/admin" instead of "/"
-      const from = (location.state as any)?.from?.pathname || "/admin";
+      // تعديل المسار الافتراضي إلى لوحة التطبيقات المركزية بدلاً من /admin
+      const from = (location.state as any)?.from?.pathname || "/admin/dashboard";
       console.log("Login: Redirecting to:", from);
       navigate(from, { replace: true });
     } catch (error: any) {
