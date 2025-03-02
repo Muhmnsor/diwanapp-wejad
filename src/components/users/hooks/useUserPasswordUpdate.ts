@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { User } from "../types";
-import { updateUserPassword, logUserActivity } from "./utils/userApiUtils";
+import { updateUserPassword, logUserActivity } from "./utils";
 
 export const useUserPasswordUpdate = () => {
   const [newPassword, setNewPassword] = useState<string>("");
