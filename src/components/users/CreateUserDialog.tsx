@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Role } from "./types";
 import { UserFormFields } from "./UserFormFields";
+import { assignUserRole } from "./hooks/utils";
 
 interface CreateUserDialogProps {
   roles: Role[];
@@ -76,52 +77,19 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       // انتظار لضمان إنشاء السجل في جدول profiles
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // تعيين الدور للمستخدم باستخدام RPC
-      console.log('تعيين الدور للمستخدم باستخدام assign_user_role...');
+      // استخدام الوظيفة المحسنة assignUserRole من الملف المعاد هيكلته
+      console.log('تعيين الدور للمستخدم باستخدام assignUserRole...');
       console.log('معرّف المستخدم:', authUser.user.id);
       console.log('معرّف الدور المراد تعيينه:', selectedRole);
       
-      // أولاً، تأكد من حذف أي أدوار سابقة
-      const { error: deleteRoleError } = await supabase.rpc('delete_user_roles', {
-        p_user_id: authUser.user.id
-      });
+      const roleAssigned = await assignUserRole(authUser.user.id, selectedRole);
       
-      if (deleteRoleError) {
-        console.error('خطأ في حذف الأدوار السابقة:', deleteRoleError);
-        throw deleteRoleError;
-      }
-      
-      console.log('تم حذف الأدوار السابقة (إن وجدت) بنجاح');
-      
-      // ثم قم بتعيين الدور الجديد
-      const { error: roleError } = await supabase.rpc('assign_user_role', {
-        p_user_id: authUser.user.id,
-        p_role_id: selectedRole
-      });
-
-      if (roleError) {
-        console.error('خطأ في تعيين الدور:', roleError);
-        throw roleError;
+      if (!roleAssigned) {
+        console.error('فشل في تعيين الدور للمستخدم');
+        throw new Error('فشل في تعيين الدور للمستخدم');
       }
       
       console.log('تم تعيين الدور بنجاح للمستخدم:', authUser.user.id, 'الدور:', selectedRole);
-
-      // التحقق من إضافة الدور
-      const { data: userRoles, error: checkRoleError } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', authUser.user.id)
-        .eq('role_id', selectedRole);
-        
-      console.log('التحقق من إضافة الدور:', userRoles);
-      if (checkRoleError) {
-        console.error('خطأ في التحقق من إضافة الدور:', checkRoleError);
-      }
-      
-      if (!userRoles || userRoles.length === 0) {
-        console.error('لم يتم تعيين الدور بشكل صحيح رغم عدم وجود خطأ معروف');
-        throw new Error('Role assignment verification failed');
-      }
 
       // تسجيل النشاط
       await supabase.rpc('log_user_activity', {
