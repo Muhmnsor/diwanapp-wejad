@@ -16,8 +16,8 @@ export const Navigation = () => {
     return location.pathname === path;
   };
 
-  // تحقق مما إذا كان المستخدم مديرًا ماليًا (بالإضافة إلى المسؤول)
-  const shouldShowAdminLinks = user?.isAdmin || user?.role === 'financial_manager';
+  // Show admin links for all authenticated users
+  const shouldShowAdminLinks = isAuthenticated;
 
   return (
     <nav className="flex gap-2 md:gap-4 items-center flex-wrap" dir="rtl">

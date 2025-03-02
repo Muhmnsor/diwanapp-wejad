@@ -50,6 +50,7 @@ export const getUserRole = async (userId: string): Promise<string | null> => {
       return null;
     }
     
+    // Access the name property correctly through the roles object
     return userRole?.roles?.name || null;
   } catch (error) {
     console.error("SessionManager: Error in getUserRole:", error);
