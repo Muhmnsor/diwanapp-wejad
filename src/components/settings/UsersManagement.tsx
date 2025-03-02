@@ -13,14 +13,14 @@ export const UsersManagement = () => {
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6 w-full" dir="rtl">
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="users">المستخدمين</TabsTrigger>
           <TabsTrigger value="roles">الأدوار والصلاحيات</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="users" className="space-y-4">
+        <TabsContent value="users" className="space-y-4 w-full">
           <UsersHeader roles={roles} users={users} onUserCreated={refetchUsers} />
           <UsersTable users={users} onUserDeleted={refetchUsers} />
         </TabsContent>

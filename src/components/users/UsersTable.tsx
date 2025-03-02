@@ -58,7 +58,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   }, [searchTerm, users]);
 
   return (
-    <div>
+    <div className="w-full" dir="rtl">
       <SearchFilter 
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -66,7 +66,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         filteredCount={filteredUsers.length}
       />
 
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full">
         <Table>
           <TableHeader>
             <UserTableHeader />
