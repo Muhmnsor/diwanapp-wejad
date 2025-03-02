@@ -20,12 +20,6 @@ export const useUsersRolesData = () => {
       }
       
       console.log('تم جلب بيانات المستخدمين:', profilesData);
-      
-      // فحص المسميات الشخصية المخزنة
-      console.log('فحص المسميات الشخصية:');
-      profilesData.forEach(profile => {
-        console.log(`المستخدم ${profile.email}: المسمى الشخصي = ${profile.display_name || 'لا يوجد'}`);
-      });
 
       // ثم جلب أدوار المستخدمين مع معلومات الدور
       console.log('جلب أدوار المستخدمين...');
