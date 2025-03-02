@@ -43,42 +43,49 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('تم تحديث كلمة المرور بنجاح');
       }
 
-      // تحديث الدور
-      console.log('=== تحديث دور المستخدم ===');
-      console.log('معرف المستخدم:', selectedUser.id);
-      console.log('الدور الحالي:', selectedUser.role);
-      console.log('معرف الدور الجديد المحدد:', selectedRole);
-      
-      try {
-        // استدعاء دالة Edge Function لتحديث الدور
-        const { data, error: roleError } = await supabase.functions.invoke('manage-users', {
-          body: {
-            operation: 'update_role',
-            userId: selectedUser.id,
-            roleId: selectedRole
+      // تحديث الدور - تحقق أولاً مما إذا كان الدور قد تغير
+      if (selectedRole !== selectedUser.roleId) {
+        console.log('=== تحديث دور المستخدم ===');
+        console.log('معرف المستخدم:', selectedUser.id);
+        console.log('الدور الحالي:', selectedUser.roleId);
+        console.log('معرف الدور الجديد المحدد:', selectedRole);
+        
+        try {
+          // حذف الأدوار الحالية أولاً
+          await supabase.rpc('delete_user_roles', {
+            p_user_id: selectedUser.id
+          });
+          
+          console.log('تم حذف الأدوار الحالية');
+          
+          // إذا تم تحديد دور جديد، قم بتعيينه
+          if (selectedRole) {
+            const { data: roleData, error: roleAssignError } = await supabase.rpc('assign_user_role', {
+              p_user_id: selectedUser.id,
+              p_role_id: selectedRole
+            });
+            
+            if (roleAssignError) {
+              console.error('خطأ في تعيين الدور الجديد:', roleAssignError);
+              throw roleAssignError;
+            }
+            
+            console.log('تم تعيين الدور الجديد:', selectedRole);
           }
-        });
-        
-        if (roleError) {
-          console.error('خطأ في تحديث الدور:', roleError);
-          throw roleError;
+          
+          // تسجيل نشاط تغيير الدور
+          await supabase.rpc('log_user_activity', {
+            user_id: selectedUser.id,
+            activity_type: 'role_change',
+            details: `تم تغيير الدور إلى ${selectedRole}`
+          });
+          
+          console.log('تم تسجيل نشاط تغيير الدور');
+        } catch (error) {
+          console.error('خطأ أثناء تحديث الدور:', error);
+          toast.error("حدث خطأ أثناء تحديث الدور");
+          throw error;
         }
-        
-        console.log('استجابة تحديث الدور:', data);
-        console.log('تم تحديث الدور بنجاح');
-        
-        // تسجيل نشاط تغيير الدور
-        await supabase.rpc('log_user_activity', {
-          user_id: selectedUser.id,
-          activity_type: 'role_change',
-          details: `تم تغيير الدور إلى ${selectedRole}`
-        });
-        
-        console.log('تم تسجيل نشاط تغيير الدور');
-      } catch (error) {
-        console.error('خطأ أثناء تحديث الدور:', error);
-        toast.error("حدث خطأ أثناء تحديث الدور");
-        throw error;
       }
 
       if (newPassword) {
