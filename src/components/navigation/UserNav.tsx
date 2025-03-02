@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/auth/authStore";
+import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 
 export const UserNav = () => {
