@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,7 @@ export const UserEditDialog = ({
   };
 
   // Set the selected role when user changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (user && user.role) {
       // Find role ID that matches user's role name
       const roleObj = roles.find(r => r.name === user.role);
