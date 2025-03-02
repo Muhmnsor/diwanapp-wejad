@@ -14,6 +14,7 @@ import { UserDetailsDialog } from "./UserDetailsDialog";
 import { SearchFilter } from "./table/SearchFilter";
 import { EmptyState } from "./table/TableStates";
 import { useUserOperations } from "./hooks/useUserOperations";
+import { useUsersData } from "./hooks/useUsersData";
 
 interface UsersTableProps {
   users: User[];
@@ -23,6 +24,9 @@ interface UsersTableProps {
 export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
+  
+  // Get roles data for UserEditDialog
+  const { roles } = useUsersData();
   
   const {
     selectedUser,
@@ -98,6 +102,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         setNewPassword={setNewPassword}
         onSubmit={handlePasswordChange}
         isSubmitting={isSubmitting}
+        roles={roles}
       />
 
       <UserDeleteDialog
