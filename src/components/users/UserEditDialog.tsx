@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { User, Role } from "./types";
-import { UserFormFields } from "./UserFormFields";
 
 interface UserEditDialogProps {
   user: User | null;
@@ -43,24 +42,16 @@ export const UserEditDialog = ({
   isSubmitting,
   roles = []
 }: UserEditDialogProps) => {
-  const getRoleDisplayName = (roleName: string) => {
-    switch (roleName) {
-      case 'admin': return 'مشرف';
-      case 'event_creator': return 'منشئ فعاليات';
-      case 'event_executor': return 'منفذ فعاليات';
-      case 'event_media': return 'إعلامي';
-      default: return roleName;
-    }
-  };
-
   // Set the selected role when user changes
   useEffect(() => {
     if (user && user.role) {
       // Find role ID that matches user's role name
       const roleObj = roles.find(r => r.name === user.role);
       if (roleObj) {
+        console.log("Setting selected role from user data:", roleObj.id, roleObj.name);
         setSelectedRole(roleObj.id);
       } else {
+        console.log("Role not found for user, clearing selection");
         setSelectedRole("");
       }
     }
@@ -88,7 +79,10 @@ export const UserEditDialog = ({
             <div className="font-medium">الدور</div>
             <Select
               value={selectedRole}
-              onValueChange={setSelectedRole}
+              onValueChange={(value) => {
+                console.log("Role selected:", value);
+                setSelectedRole(value);
+              }}
             >
               <SelectTrigger className="w-full text-right">
                 <SelectValue placeholder="اختر الدور" />

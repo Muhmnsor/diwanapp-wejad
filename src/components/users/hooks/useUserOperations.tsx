@@ -38,45 +38,61 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('Updating user role:', { userId: selectedUser.id, newRole: selectedRole });
         
         try {
-          // First, delete any existing roles for this user to avoid conflicts
-          const { error: deleteError } = await supabase
+          // Try using upsert which is safer for concurrent operations
+          const { error: upsertError } = await supabase
             .from('user_roles')
-            .delete()
-            .eq('user_id', selectedUser.id);
+            .upsert(
+              {
+                user_id: selectedUser.id,
+                role_id: selectedRole
+              },
+              {
+                onConflict: 'user_id',
+                ignoreDuplicates: false
+              }
+            );
             
-          if (deleteError) {
-            console.error('Error deleting existing roles:', deleteError);
-            // Continue anyway as the role might not exist
-          }
-          
-          // Now insert the new role with a small delay to ensure the delete completed
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          const { error: insertError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: selectedUser.id,
-              role_id: selectedRole
-            });
+          if (upsertError) {
+            console.error('Error with upsert, falling back to delete-then-insert:', upsertError);
             
-          if (insertError) {
-            console.error('Error inserting new role:', insertError);
-            throw insertError;
+            // Fallback to delete-then-insert approach
+            const { error: deleteError } = await supabase
+              .from('user_roles')
+              .delete()
+              .eq('user_id', selectedUser.id);
+              
+            if (deleteError) {
+              console.error('Error deleting existing roles:', deleteError);
+            }
+            
+            // Short delay to ensure deletion is processed
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            const { error: insertError } = await supabase
+              .from('user_roles')
+              .insert({
+                user_id: selectedUser.id,
+                role_id: selectedRole
+              });
+              
+            if (insertError) {
+              console.error('Error inserting new role:', insertError);
+              throw insertError;
+            }
           }
           
           console.log('Role update successful');
+          
+          // Log user activity for role change
+          await supabase.rpc('log_user_activity', {
+            user_id: selectedUser.id,
+            activity_type: 'role_change',
+            details: `تم تغيير الدور إلى ${selectedRole}`
+          });
         } catch (error) {
           console.error('Error updating role:', error);
           toast.error("حدث خطأ أثناء تحديث الدور");
-          throw error;
         }
-        
-        // Log user activity for role change
-        await supabase.rpc('log_user_activity', {
-          user_id: selectedUser.id,
-          activity_type: 'role_change',
-          details: `تم تغيير الدور إلى ${selectedRole}`
-        });
       }
 
       if (newPassword) {

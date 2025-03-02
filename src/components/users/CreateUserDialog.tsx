@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -52,19 +53,52 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
 
       console.log('User created successfully:', authUser.user.id);
 
+      // Asegurarse de que no haya roles previos (por si acaso)
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', authUser.user.id);
+        
+      // Breve retraso para asegurar que la eliminación se procese
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Intentar con upsert primero
       const { error: roleError } = await supabase
         .from('user_roles')
-        .insert([
+        .upsert(
           {
             user_id: authUser.user.id,
             role_id: selectedRole
+          },
+          {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
           }
-        ]);
+        );
 
       if (roleError) {
-        console.error('Error assigning role:', roleError);
-        throw roleError;
+        console.error('Error assigning role with upsert, trying with insert:', roleError);
+        
+        // Si falla upsert, intentar con insert simple
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authUser.user.id,
+            role_id: selectedRole
+          });
+        
+        if (insertError) {
+          console.error('Error assigning role with insert:', insertError);
+          throw insertError;
+        }
       }
+
+      // Registrar la actividad
+      await supabase.rpc('log_user_activity', {
+        user_id: authUser.user.id,
+        activity_type: 'user_created',
+        details: `تم إنشاء المستخدم مع دور: ${selectedRole}`
+      });
 
       console.log('Role assigned successfully');
       toast.success("تم إضافة المستخدم بنجاح");
