@@ -28,8 +28,13 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddUser = async () => {
-    if (!newUsername || !newPassword || !selectedRole) {
-      toast.error("الرجاء إدخال جميع البيانات المطلوبة");
+    if (!newUsername || !newPassword) {
+      toast.error("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
+      return;
+    }
+
+    if (!selectedRole) {
+      toast.error("الرجاء اختيار دور للمستخدم");
       return;
     }
 
@@ -62,6 +67,9 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       
       // تعيين الدور للمستخدم باستخدام RPC
       console.log('تعيين الدور للمستخدم باستخدام assign_user_role...');
+      console.log('معرّف المستخدم:', authUser.user.id);
+      console.log('معرّف الدور المراد تعيينه:', selectedRole);
+      
       const { error: roleError } = await supabase.rpc('assign_user_role', {
         p_user_id: authUser.user.id,
         p_role_id: selectedRole
@@ -73,6 +81,18 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       }
       
       console.log('تم تعيين الدور بنجاح للمستخدم:', authUser.user.id, 'الدور:', selectedRole);
+
+      // التحقق من إضافة الدور
+      const { data: userRoles, error: checkRoleError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', authUser.user.id)
+        .eq('role_id', selectedRole);
+        
+      console.log('التحقق من إضافة الدور:', userRoles);
+      if (checkRoleError) {
+        console.error('خطأ في التحقق من إضافة الدور:', checkRoleError);
+      }
 
       // تسجيل النشاط
       await supabase.rpc('log_user_activity', {

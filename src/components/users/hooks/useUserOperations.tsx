@@ -43,66 +43,71 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('تم تحديث كلمة المرور بنجاح');
       }
 
-      // التحقق من تغيير الدور - سنقوم بمعالجة تغيير الدور حتى لو كان selectedRole فارغًا
-      // لأننا نريد حذف أي أدوار حالية في حالة عدم تحديد دور جديد
+      // التحقق من تغيير الدور
       console.log('=== تحديث دور المستخدم ===');
       console.log('معرف المستخدم:', selectedUser.id);
       console.log('الدور الحالي:', selectedUser.role || 'لا يوجد');
       console.log('الدور الجديد المحدد:', selectedRole || 'لم يتم تحديد دور');
       
-      try {
-        // أولاً، نحذف أي أدوار سابقة
-        console.log('حذف الأدوار السابقة...');
-        const { error: deleteError } = await supabase.rpc('delete_user_roles', {
-          p_user_id: selectedUser.id
+      // حذف جميع الأدوار الحالية قبل تعيين دور جديد
+      console.log('حذف الأدوار السابقة...');
+      const { error: deleteError } = await supabase.rpc('delete_user_roles', {
+        p_user_id: selectedUser.id
+      });
+        
+      if (deleteError) {
+        console.error('خطأ في حذف الأدوار السابقة:', deleteError);
+        throw deleteError;
+      }
+      
+      console.log('تم حذف الأدوار السابقة بنجاح');
+      
+      // إضافة الدور الجديد إذا تم تحديده
+      if (selectedRole) {
+        console.log('إضافة الدور الجديد:', selectedRole);
+        
+        const { error: assignError } = await supabase.rpc('assign_user_role', {
+          p_user_id: selectedUser.id,
+          p_role_id: selectedRole
         });
-          
-        if (deleteError) {
-          console.error('خطأ في حذف الأدوار السابقة:', deleteError);
-          throw deleteError;
+            
+        if (assignError) {
+          console.error('خطأ في إضافة الدور الجديد:', assignError);
+          throw assignError;
         }
         
-        console.log('تم حذف الأدوار السابقة بنجاح');
+        // التحقق من إضافة الدور
+        const { data: userRoles, error: checkRoleError } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', selectedUser.id)
+          .eq('role_id', selectedRole);
+          
+        console.log('التحقق من إضافة الدور:', userRoles);
+        if (checkRoleError) {
+          console.error('خطأ في التحقق من إضافة الدور:', checkRoleError);
+        }
         
-        // إضافة الدور الجديد إذا تم تحديده
-        if (selectedRole) {
-          console.log('إضافة الدور الجديد:', selectedRole);
-          
-          const { error: assignError } = await supabase.rpc('assign_user_role', {
-            p_user_id: selectedUser.id,
-            p_role_id: selectedRole
-          });
-              
-          if (assignError) {
-            console.error('خطأ في إضافة الدور الجديد:', assignError);
-            throw assignError;
-          }
-          
-          console.log('تم إضافة الدور الجديد بنجاح');
-          
-          // Log user activity for role change
+        console.log('تم إضافة الدور الجديد بنجاح');
+        
+        // Log user activity for role change
+        await supabase.rpc('log_user_activity', {
+          user_id: selectedUser.id,
+          activity_type: 'role_change',
+          details: `تم تغيير الدور إلى ${selectedRole}`
+        });
+        
+        console.log('تم تسجيل نشاط تغيير الدور');
+      } else {
+        // إذا لم يتم تحديد دور جديد، نسجل أنه تم إزالة الدور الحالي
+        console.log('تم إزالة الدور من المستخدم (لم يتم تحديد دور جديد)');
+        if (selectedUser.role) {
           await supabase.rpc('log_user_activity', {
             user_id: selectedUser.id,
             activity_type: 'role_change',
-            details: `تم تغيير الدور إلى ${selectedRole}`
+            details: 'تم إزالة الدور من المستخدم'
           });
-          
-          console.log('تم تسجيل نشاط تغيير الدور');
-        } else {
-          // إذا لم يتم تحديد دور جديد، نسجل أنه تم إزالة الدور الحالي
-          console.log('تم إزالة الدور من المستخدم (لم يتم تحديد دور جديد)');
-          if (selectedUser.role) {
-            await supabase.rpc('log_user_activity', {
-              user_id: selectedUser.id,
-              activity_type: 'role_change',
-              details: 'تم إزالة الدور من المستخدم'
-            });
-          }
         }
-      } catch (error) {
-        console.error('خطأ أثناء تحديث الدور:', error);
-        toast.error("حدث خطأ أثناء تحديث الدور");
-        throw error;
       }
 
       if (newPassword) {
