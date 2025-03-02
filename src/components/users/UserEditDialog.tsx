@@ -1,10 +1,10 @@
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { User } from "./types";
+import { User, Role } from "./types";
+import { UserFormFields } from "./UserFormFields";
 
 interface UserEditDialogProps {
   user: User | null;
@@ -25,6 +26,7 @@ interface UserEditDialogProps {
   setNewPassword: (password: string) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
+  roles: Role[];
 }
 
 export const UserEditDialog = ({
@@ -36,8 +38,19 @@ export const UserEditDialog = ({
   newPassword,
   setNewPassword,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  roles = []
 }: UserEditDialogProps) => {
+  const getRoleDisplayName = (roleName: string) => {
+    switch (roleName) {
+      case 'admin': return 'مشرف';
+      case 'event_creator': return 'منشئ فعاليات';
+      case 'event_executor': return 'منفذ فعاليات';
+      case 'event_media': return 'إعلامي';
+      default: return roleName;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
@@ -59,22 +72,23 @@ export const UserEditDialog = ({
                 <SelectValue placeholder="اختر الدور" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">مشرف</SelectItem>
-                <SelectItem value="event_creator">منشئ فعاليات</SelectItem>
-                <SelectItem value="event_executor">منفذ فعاليات</SelectItem>
-                <SelectItem value="event_media">إعلامي</SelectItem>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {getRoleDisplayName(role.name)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2 text-right">
             <div className="font-medium">كلمة المرور الجديدة</div>
-            <Input
+            <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="اترك فارغاً إذا لم ترد التغيير"
               dir="ltr"
-              className="text-right"
+              className="w-full px-3 py-2 border rounded-md text-right"
             />
           </div>
         </div>
