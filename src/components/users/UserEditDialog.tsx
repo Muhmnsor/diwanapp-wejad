@@ -45,21 +45,30 @@ export const UserEditDialog = ({
       console.log('أدوار المستخدم المتاحة:', roles);
       console.log('دور المستخدم الحالي:', user.role);
 
-      // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
-      const roleObj = roles.find(r => r.name === user.role);
-      if (roleObj) {
-        console.log('تم العثور على الدور المطابق:', roleObj);
-        setSelectedRole(roleObj.id);
-        console.log('تم تعيين الدور المحدد إلى:', roleObj.id);
-      } else if (roles.length > 0) {
-        // إذا لم يتم العثور على الدور، استخدم أول دور متاح كافتراضي
-        console.log('لم يتم العثور على الدور المطابق، استخدام الدور الافتراضي الأول:', roles[0].id);
-        setSelectedRole(roles[0].id);
+      if (user.role === 'لم يتم تعيين دور') {
+        // إذا لم يكن للمستخدم دور محدد، نضبط القيمة إلى فارغة (لم يتم اختيار أي دور)
+        console.log('المستخدم ليس له دور محدد، تعيين selectedRole إلى null');
+        setSelectedRole('');
+      } else {
+        // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
+        const roleObj = roles.find(r => r.name === user.role);
+        if (roleObj) {
+          console.log('تم العثور على الدور المطابق:', roleObj);
+          setSelectedRole(roleObj.id);
+          console.log('تم تعيين الدور المحدد إلى:', roleObj.id);
+        } else if (roles.length > 0) {
+          // إذا لم يتم العثور على الدور، استخدم أول دور متاح كافتراضي
+          console.log('لم يتم العثور على الدور المطابق، استخدام الدور الافتراضي الأول:', roles[0].id);
+          setSelectedRole(roles[0].id);
+        }
       }
     } else if (roles.length > 0) {
       // إذا لم يكن هناك مستخدم ولكن توجد أدوار، حدد الدور الأول كافتراضي
       console.log('لا يوجد مستخدم، تعيين الدور الافتراضي الأول:', roles[0].id);
       setSelectedRole(roles[0].id);
+    } else {
+      // إذا لم يكن هناك أدوار متاحة، اضبط القيمة إلى فارغة
+      setSelectedRole('');
     }
   }, [user, roles, setSelectedRole]);
 
@@ -72,8 +81,12 @@ export const UserEditDialog = ({
     console.log('الأدوار المتاحة عند الإرسال:', roles);
     
     // البحث عن الدور المحدد وعرض معلوماته قبل الإرسال
-    const selectedRoleObj = roles.find(r => r.id === selectedRole);
-    console.log('الدور المحدد قبل الإرسال:', selectedRoleObj);
+    if (selectedRole) {
+      const selectedRoleObj = roles.find(r => r.id === selectedRole);
+      console.log('الدور المحدد قبل الإرسال:', selectedRoleObj);
+    } else {
+      console.log('لم يتم تحديد دور قبل الإرسال');
+    }
     
     onSubmit();
   };

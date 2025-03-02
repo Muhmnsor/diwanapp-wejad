@@ -5,24 +5,25 @@ import { User } from "../types";
 import { updateUserPassword, logUserActivity } from "./utils/userApiUtils";
 
 export const useUserPasswordUpdate = () => {
-  const [newPassword, setNewPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const updatePassword = async (selectedUser: User | null) => {
     if (!selectedUser) {
       return false;
     }
 
+    // إذا لم يتم إدخال كلمة مرور جديدة، نتخطى عملية تحديث كلمة المرور
     if (!newPassword) {
-      console.log('لم يتم تقديم كلمة مرور جديدة، تخطي تحديث كلمة المرور');
+      console.log('لم يتم تقديم كلمة مرور جديدة، تخطي عملية تحديث كلمة المرور');
       return true;
     }
 
     try {
-      setIsSubmitting(true);
+      console.log('تحديث كلمة المرور للمستخدم:', selectedUser.id);
       await updateUserPassword(selectedUser.id, newPassword);
       
-      // Log password change activity
+      // تسجيل نشاط تغيير كلمة المرور
       await logUserActivity(
         selectedUser.id, 
         'password_change', 
@@ -32,9 +33,8 @@ export const useUserPasswordUpdate = () => {
       return true;
     } catch (error) {
       console.error('خطأ في تحديث كلمة المرور:', error);
+      toast.error("فشل في تحديث كلمة المرور");
       return false;
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -42,6 +42,7 @@ export const useUserPasswordUpdate = () => {
     newPassword,
     setNewPassword,
     isSubmitting,
+    setIsSubmitting,
     updatePassword
   };
 };

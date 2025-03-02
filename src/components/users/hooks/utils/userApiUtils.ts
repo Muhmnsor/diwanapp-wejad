@@ -26,87 +26,118 @@ export const updateUserPassword = async (userId: string, newPassword: string) =>
 /**
  * Assigns a role to a user using the RPC function
  */
-export const assignUserRole = async (userId: string, roleId: string) => {
+export const assignUserRole = async (userId: string, roleId: string): Promise<boolean> => {
+  if (!userId || !roleId) {
+    console.error('خطأ: معرف المستخدم أو معرف الدور غير موجود', { userId, roleId });
+    return false;
+  }
+  
   console.log('استدعاء وظيفة assign_user_role مع المعلمات:', {
     p_user_id: userId,
     p_role_id: roleId
   });
   
-  const { data: roleData, error: roleError } = await supabase.rpc('assign_user_role', {
-    p_user_id: userId,
-    p_role_id: roleId
-  });
-      
-  if (roleError) {
-    console.error('خطأ في تعيين الدور الجديد:', roleError);
-    console.error('تفاصيل الخطأ:', JSON.stringify(roleError));
+  try {
+    const { data: roleData, error: roleError } = await supabase.rpc('assign_user_role', {
+      p_user_id: userId,
+      p_role_id: roleId
+    });
     
-    // Fallback manual role assignment if RPC fails
-    await assignUserRoleManually(userId, roleId);
-  } else {
-    console.log('نتيجة استدعاء وظيفة assign_user_role:', roleData);
-    console.log('تم تعيين الدور الجديد بنجاح');
+    if (roleError) {
+      console.error('خطأ في تعيين الدور الجديد:', roleError);
+      console.error('تفاصيل الخطأ:', JSON.stringify(roleError));
+      
+      // محاولة تعيين الدور يدويًا إذا فشلت وظيفة RPC
+      const manualResult = await assignUserRoleManually(userId, roleId);
+      return manualResult;
+    } else {
+      console.log('نتيجة استدعاء وظيفة assign_user_role:', roleData);
+      console.log('تم تعيين الدور الجديد بنجاح');
+      return true;
+    }
+  } catch (error) {
+    console.error('خطأ عام في تعيين الدور:', error);
+    return false;
   }
 };
 
 /**
  * Fallback manual role assignment method
  */
-export const assignUserRoleManually = async (userId: string, roleId: string) => {
+export const assignUserRoleManually = async (userId: string, roleId: string): Promise<boolean> => {
   console.log('محاولة تعيين الدور يدويًا...');
   
-  // Delete existing roles first
-  const { error: deleteError } = await supabase
-    .from('user_roles')
-    .delete()
-    .eq('user_id', userId);
+  try {
+    // Delete existing roles first
+    const { error: deleteError } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId);
+      
+    if (deleteError) {
+      console.error('خطأ في حذف الأدوار الحالية:', deleteError);
+      return false;
+    }
     
-  if (deleteError) {
-    console.error('خطأ في حذف الأدوار الحالية:', deleteError);
-    throw deleteError;
-  }
-  
-  // Add the new role
-  const { error: insertError } = await supabase
-    .from('user_roles')
-    .insert({ user_id: userId, role_id: roleId });
+    // Add the new role
+    const { error: insertError } = await supabase
+      .from('user_roles')
+      .insert({ user_id: userId, role_id: roleId });
+      
+    if (insertError) {
+      console.error('خطأ في إضافة الدور الجديد:', insertError);
+      return false;
+    }
     
-  if (insertError) {
-    console.error('خطأ في إضافة الدور الجديد:', insertError);
-    throw insertError;
+    console.log('تم تعيين الدور يدويًا بنجاح');
+    return true;
+  } catch (error) {
+    console.error('خطأ عام في تعيين الدور يدويًا:', error);
+    return false;
   }
-  
-  console.log('تم تعيين الدور يدويًا بنجاح');
 };
 
 /**
  * Deletes all roles for a user
  */
-export const deleteUserRoles = async (userId: string) => {
-  console.log('لم يتم تحديد دور، إزالة جميع الأدوار...');
-  const { data: deleteRoleData, error: deleteRoleError } = await supabase.rpc('delete_user_roles', {
-    p_user_id: userId
-  });
+export const deleteUserRoles = async (userId: string): Promise<boolean> => {
+  if (!userId) {
+    console.error('خطأ: معرف المستخدم غير موجود');
+    return false;
+  }
   
-  if (deleteRoleError) {
-    console.error('خطأ في حذف أدوار المستخدم:', deleteRoleError);
-    console.error('تفاصيل الخطأ:', JSON.stringify(deleteRoleError));
+  console.log('حذف جميع أدوار المستخدم...', userId);
+  
+  try {
+    const { data: deleteRoleData, error: deleteRoleError } = await supabase.rpc('delete_user_roles', {
+      p_user_id: userId
+    });
     
-    // Manual fallback
-    const { error: manualDeleteError } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId);
+    if (deleteRoleError) {
+      console.error('خطأ في حذف أدوار المستخدم باستخدام RPC:', deleteRoleError);
+      console.error('تفاصيل الخطأ:', JSON.stringify(deleteRoleError));
       
-    if (manualDeleteError) {
-      console.error('خطأ في حذف الأدوار يدويًا:', manualDeleteError);
-      throw manualDeleteError;
+      // استخدام الطريقة اليدوية كبديل
+      const { error: manualDeleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+        
+      if (manualDeleteError) {
+        console.error('خطأ في حذف الأدوار يدويًا:', manualDeleteError);
+        return false;
+      }
+      
+      console.log('تم حذف أدوار المستخدم يدويًا بنجاح');
+      return true;
+    } else {
+      console.log('نتيجة استدعاء وظيفة delete_user_roles:', deleteRoleData);
+      console.log('تم حذف أدوار المستخدم بنجاح');
+      return true;
     }
-    
-    console.log('تم حذف أدوار المستخدم يدويًا بنجاح');
-  } else {
-    console.log('نتيجة استدعاء وظيفة delete_user_roles:', deleteRoleData);
-    console.log('تم حذف أدوار المستخدم بنجاح');
+  } catch (error) {
+    console.error('خطأ عام في حذف أدوار المستخدم:', error);
+    return false;
   }
 };
 
@@ -114,11 +145,15 @@ export const deleteUserRoles = async (userId: string) => {
  * Logs a user activity
  */
 export const logUserActivity = async (userId: string, activityType: string, details: string) => {
-  await supabase.rpc('log_user_activity', {
-    user_id: userId,
-    activity_type: activityType,
-    details
-  });
+  try {
+    await supabase.rpc('log_user_activity', {
+      user_id: userId,
+      activity_type: activityType,
+      details
+    });
+  } catch (error) {
+    console.error('خطأ في تسجيل نشاط المستخدم:', error);
+  }
 };
 
 /**

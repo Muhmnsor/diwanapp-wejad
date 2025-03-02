@@ -17,25 +17,36 @@ export const useUserRoleUpdate = () => {
     }
 
     try {
-      // Handle role change if provided
+      // إذا تم اختيار دور معين
       if (selectedRole) {
         console.log('تعيين الدور الجديد:', selectedRole);
-        await assignUserRole(selectedUser.id, selectedRole);
+        const result = await assignUserRole(selectedUser.id, selectedRole);
         
-        // Verify the role update for debugging
+        if (!result) {
+          console.error('فشل في تعيين الدور، عائد من الوظيفة هو false');
+          return false;
+        }
+        
+        // التحقق من تحديث الدور للتصحيح
         await verifyUserRoles(selectedUser.id);
         
-        // Log role change activity
+        // تسجيل نشاط تغيير الدور
         await logUserActivity(
           selectedUser.id, 
           'role_change', 
           `تم تغيير الدور`
         );
       } else {
-        // Remove all roles if none is selected
-        await deleteUserRoles(selectedUser.id);
+        // إذا لم يتم اختيار دور، إزالة جميع الأدوار
+        console.log('لم يتم تحديد دور، إزالة جميع الأدوار...');
+        const result = await deleteUserRoles(selectedUser.id);
         
-        // Log role removal activity
+        if (!result) {
+          console.error('فشل في حذف الأدوار، عائد من الوظيفة هو false');
+          return false;
+        }
+        
+        // تسجيل نشاط إزالة الدور
         await logUserActivity(
           selectedUser.id, 
           'role_change', 

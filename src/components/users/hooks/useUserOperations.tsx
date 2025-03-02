@@ -15,6 +15,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
     newPassword, 
     setNewPassword, 
     isSubmitting, 
+    setIsSubmitting,
     updatePassword 
   } = useUserPasswordUpdate();
   
@@ -37,6 +38,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       console.log('=== بدء عملية تحديث المستخدم ===');
       console.log('معرف المستخدم:', selectedUser.id);
@@ -46,20 +48,35 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       // Update password if provided
       const passwordSuccess = await updatePassword(selectedUser);
       
+      if (!passwordSuccess) {
+        console.error('فشل في تحديث كلمة المرور');
+        toast.error("فشل في تحديث كلمة المرور");
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Update role if needed
       const roleSuccess = await updateRole(selectedUser);
       
-      // If both operations were successful or not needed
-      if (passwordSuccess && roleSuccess) {
-        toast.success("تم تحديث بيانات المستخدم بنجاح");
-        setSelectedUser(null);
-        setNewPassword("");
-        setSelectedRole(null);
-        onUserDeleted(); // تحديث قائمة المستخدمين
+      if (!roleSuccess) {
+        console.error('فشل في تحديث دور المستخدم');
+        toast.error("فشل في تحديث دور المستخدم");
+        setIsSubmitting(false);
+        return;
       }
+      
+      // If both operations were successful or not needed
+      toast.success("تم تحديث بيانات المستخدم بنجاح");
+      setSelectedUser(null);
+      setNewPassword("");
+      setSelectedRole(null);
+      onUserDeleted(); // تحديث قائمة المستخدمين
+      
     } catch (error) {
       console.error('خطأ عام في تحديث المستخدم:', error);
       toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

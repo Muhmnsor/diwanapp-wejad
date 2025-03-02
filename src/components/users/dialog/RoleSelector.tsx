@@ -31,23 +31,32 @@ export const RoleSelector = ({
     }
   };
 
+  // معالجة تغيير الدور مع تسجيل إضافي للتصحيح
+  const handleRoleChange = (value: string) => {
+    console.log('تم اختيار الدور الجديد:', value);
+    if (value === '') {
+      console.log('تم اختيار "إزالة الدور"، تعيين القيمة إلى فارغة');
+      onRoleChange('');
+    } else {
+      const role = roles.find(r => r.id === value);
+      console.log('معلومات الدور المختار:', role);
+      onRoleChange(value);
+    }
+  };
+
   return (
     <div className="space-y-2 text-right">
       <div className="font-medium">الدور الجديد</div>
       {roles.length > 0 ? (
         <Select
           value={selectedRole || ''}
-          onValueChange={(value) => {
-            console.log('تم اختيار الدور الجديد:', value);
-            const role = roles.find(r => r.id === value);
-            console.log('معلومات الدور المختار:', role);
-            onRoleChange(value);
-          }}
+          onValueChange={handleRoleChange}
         >
           <SelectTrigger className="w-full text-right">
             <SelectValue placeholder="اختر الدور" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">إزالة الدور</SelectItem>
             {roles.map((role) => (
               <SelectItem key={role.id} value={role.id}>
                 {getRoleDisplayName(role.name)}
