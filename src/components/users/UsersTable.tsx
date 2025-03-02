@@ -58,7 +58,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   }, [searchTerm, users]);
 
   return (
-    <div dir="rtl">
+    <div>
       <SearchFilter 
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}

@@ -13,7 +13,7 @@ export const UsersManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="users">المستخدمين</TabsTrigger>
