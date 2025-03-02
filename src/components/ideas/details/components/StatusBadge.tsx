@@ -45,8 +45,6 @@ export const StatusBadge = ({
             // عرض إشعار عند تغيير الحالة
             if (data.status === "pending_decision") {
               toast.info("الفكرة الآن بانتظار القرار", { duration: 3000 });
-            } else if (data.status === "under_review") {
-              toast.info("تم تمديد مناقشة الفكرة", { duration: 3000 });
             } else if (data.status === "approved") {
               toast.success("تمت الموافقة على الفكرة", { duration: 3000 });
             } else if (data.status === "rejected") {
@@ -78,8 +76,6 @@ export const StatusBadge = ({
           filter: `id=eq.${ideaId}`
         },
         (payload) => {
-          console.log("📦 تم استلام تغيير في بيانات الفكرة:", payload);
-          
           if (payload.new && payload.new.status) {
             const newStatus = payload.new.status;
             console.log(`📢 تم استلام تحديث حالة جديد من قاعدة البيانات: "${newStatus}"`);
@@ -90,8 +86,6 @@ export const StatusBadge = ({
             // عرض إشعار عند تغيير الحالة
             if (newStatus === "pending_decision") {
               toast.info("الفكرة الآن بانتظار القرار", { duration: 3000 });
-            } else if (newStatus === "under_review") {
-              toast.info("تم تمديد مناقشة الفكرة", { duration: 3000 });
             } else if (newStatus === "approved") {
               toast.success("تمت الموافقة على الفكرة", { duration: 3000 });
             } else if (newStatus === "rejected") {
@@ -109,7 +103,7 @@ export const StatusBadge = ({
       console.log("🧹 إلغاء الاشتراك في قناة التغييرات");
       supabase.removeChannel(channel);
     };
-  }, [ideaId]);
+  }, [ideaId, status]);
 
   // سجل معلومات العرض للتصحيح
   console.log(`🏷️ عرض الحالة: "${status}" (${typeof status})`);

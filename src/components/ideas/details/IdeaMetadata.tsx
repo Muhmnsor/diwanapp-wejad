@@ -1,9 +1,9 @@
+
 import { useState } from "react";
 import { IdeaCountdown } from "./components/IdeaCountdown";
 import { StatusBadge } from "./components/StatusBadge";
 import { ExtendButton } from "./components/ExtendButton";
-import { ExtendDiscussionDialog } from "./dialogs/extend-discussion/ExtendDiscussionDialog";
-
+import { ExtendDiscussionDialog } from "./dialogs/ExtendDiscussionDialog";
 interface IdeaMetadataProps {
   id: string;
   created_by: string;
@@ -12,7 +12,6 @@ interface IdeaMetadataProps {
   title: string;
   discussion_period?: string;
 }
-
 export const IdeaMetadata = ({
   id,
   created_by,
@@ -22,19 +21,16 @@ export const IdeaMetadata = ({
   discussion_period
 }: IdeaMetadataProps) => {
   const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
-
   const handleExtendDialogOpen = () => {
     setIsExtendDialogOpen(true);
   };
-
   const handleExtendDialogClose = () => {
     setIsExtendDialogOpen(false);
   };
-
   const handleExtendSuccess = () => {
+    // يمكن إضافة أي منطق إضافي هنا بعد نجاح عملية التمديد
     console.log("Discussion period extended successfully");
   };
-
   return <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border border-purple-100 my-[7px]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
         <h1 className="text-lg sm:text-xl font-bold text-purple-800 truncate">{title}</h1>
