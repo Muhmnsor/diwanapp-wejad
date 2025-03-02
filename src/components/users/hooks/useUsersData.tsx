@@ -90,7 +90,7 @@ export const useUsersData = () => {
       console.log('جميع المستخدمين (بما في ذلك الذين ليس لديهم أدوار):', transformedUsers);
       return transformedUsers as User[];
     },
-    staleTime: 1000 * 30, // تخزين مؤقت لمدة 30 ثانية
+    staleTime: 1000 * 15, // تخزين مؤقت لمدة 15 ثانية
   });
 
   return {

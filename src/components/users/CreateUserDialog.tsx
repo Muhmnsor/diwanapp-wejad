@@ -56,16 +56,19 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       }
 
       console.log('استجابة إنشاء المستخدم:', data);
-      console.log('تم إنشاء المستخدم بنجاح:', data);
-
-      // تسجيل النشاط
+      
       if (data && data.user && data.user.id) {
+        console.log('تم إنشاء المستخدم بنجاح:', data.user.id);
+        
+        // تسجيل النشاط
         await supabase.rpc('log_user_activity', {
           user_id: data.user.id,
           activity_type: 'user_created',
           details: `تم إنشاء المستخدم مع دور: ${selectedRole}`
         });
         console.log('تم تسجيل نشاط إنشاء المستخدم');
+      } else {
+        console.error('تم إرجاع بيانات غير متوقعة:', data);
       }
 
       toast.success("تم إضافة المستخدم بنجاح");
