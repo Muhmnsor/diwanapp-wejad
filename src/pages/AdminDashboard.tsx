@@ -86,8 +86,8 @@ const AdminDashboard = () => {
           </TabsList>
           
           <TabsContent value="apps" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {apps.map((app, index) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ direction: 'rtl' }}>
+              {[...apps].reverse().map((app, index) => {
                 const Icon = app.icon;
                 return (
                   <Card
