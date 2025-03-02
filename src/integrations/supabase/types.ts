@@ -2912,6 +2912,12 @@ export type Database = {
             }
             Returns: string
           }
+      get_user_role: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: string
+      }
       handle_user_management: {
         Args: {
           operation: string
