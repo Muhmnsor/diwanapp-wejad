@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateTimeRemaining } from "../utils/countdownUtils";
+import { calculateTimeRemaining, extractTotalHours, formatTotalPeriod } from "../utils/countdownUtils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -59,23 +59,8 @@ export const ExtendDiscussionDialog = ({
               console.log("Discussion period from DB:", discussion_period);
               console.log("Created at from DB:", created_at);
               
-              // حساب إجمالي الساعات الحالية
-              let totalHours = 0;
-              
-              if (discussion_period.includes('hours') || discussion_period.includes('hour')) {
-                const match = discussion_period.match(/(\d+)\s+hour/);
-                if (match) {
-                  totalHours = parseInt(match[1]);
-                }
-              } else if (discussion_period.includes('days') || discussion_period.includes('day')) {
-                const match = discussion_period.match(/(\d+)\s+day/);
-                if (match) {
-                  totalHours = parseInt(match[1]) * 24;
-                }
-              } else {
-                totalHours = parseFloat(discussion_period);
-              }
-              
+              // استخدام الدالة الجديدة لاستخراج إجمالي الساعات
+              const totalHours = extractTotalHours(discussion_period);
               setTotalCurrentHours(totalHours);
               
               // حساب الوقت المتبقي بالساعات
@@ -100,12 +85,12 @@ export const ExtendDiscussionDialog = ({
               // إعداد القيم الأولية في حقول الإدخال بناءً على الوقت الحالي
               if (totalHours >= 24) {
                 const currentDays = Math.floor(totalHours / 24);
-                const currentHoursRemainder = totalHours % 24;
+                const currentHoursRemainder = Math.floor(totalHours % 24);
                 setDays(currentDays);
                 setHours(currentHoursRemainder);
               } else {
                 setDays(0);
-                setHours(totalHours);
+                setHours(Math.floor(totalHours));
               }
             }
           }
@@ -243,10 +228,7 @@ export const ExtendDiscussionDialog = ({
                 {/* عرض الوقت الحالي والمتبقي */}
                 <div className="p-3 bg-purple-50 rounded-md space-y-2">
                   <p className="text-sm font-medium text-purple-800">
-                    الفترة الكلية الحالية: {Math.floor(totalCurrentHours / 24) > 0 ? `${Math.floor(totalCurrentHours / 24)} يوم` : ""} 
-                    {Math.floor(totalCurrentHours / 24) > 0 && totalCurrentHours % 24 > 0 ? " و " : ""}
-                    {totalCurrentHours % 24 > 0 ? `${Math.floor(totalCurrentHours % 24)} ساعة` : ""}
-                    {totalCurrentHours === 0 && "غير محددة"}
+                    الفترة الكلية الحالية: {formatTotalPeriod(totalCurrentHours)}
                   </p>
                   
                   <p className="text-sm text-purple-700">
