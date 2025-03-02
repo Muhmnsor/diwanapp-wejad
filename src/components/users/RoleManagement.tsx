@@ -16,6 +16,7 @@ export const RoleManagement = () => {
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("roles");
 
   const { data: roles = [], refetch: refetchRoles, isLoading } = useQuery({
     queryKey: ['roles'],
@@ -47,6 +48,15 @@ export const RoleManagement = () => {
     setRoleToDelete(null);
     if (selectedRoleId === roleToDelete?.id) {
       setSelectedRoleId(null);
+      setActiveTab("roles");
+    }
+  };
+
+  // التبديل إلى تبويب الصلاحيات عند اختيار دور
+  const handleSelectRole = (roleId: string) => {
+    setSelectedRoleId(roleId);
+    if (roleId) {
+      setActiveTab("permissions");
     }
   };
 
@@ -62,7 +72,7 @@ export const RoleManagement = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="roles" dir="rtl">
+        <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
           <TabsList>
             <TabsTrigger value="roles">قائمة الأدوار</TabsTrigger>
             <TabsTrigger value="permissions" disabled={!selectedRoleId}>
@@ -76,7 +86,7 @@ export const RoleManagement = () => {
               isLoading={isLoading}
               selectedRoleId={selectedRoleId}
               onAddRole={() => setIsAddDialogOpen(true)}
-              onSelectRole={setSelectedRoleId}
+              onSelectRole={handleSelectRole}
               onEditRole={setRoleToEdit}
               onDeleteRole={setRoleToDelete}
             />
