@@ -39,12 +39,13 @@ export const useUsersData = () => {
       
       console.log('تم جلب بيانات المستخدمين:', profilesData);
 
-      // ثم جلب أدوار المستخدمين مع معلومات الدور
+      // ثم جلب أدوار المستخدمين بالطريقة المحسنة
       console.log('جلب أدوار المستخدمين...');
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
           user_id,
+          role_id,
           roles (
             id,
             name,
@@ -62,7 +63,9 @@ export const useUsersData = () => {
       // تخطيط أدوار المستخدمين إلى معرفات المستخدمين
       const userRolesMap: Record<string, any> = {};
       userRolesData.forEach(ur => {
-        userRolesMap[ur.user_id] = ur.roles;
+        if (ur.roles) {
+          userRolesMap[ur.user_id] = ur.roles;
+        }
       });
       
       console.log('خريطة أدوار المستخدمين:', userRolesMap);
@@ -74,6 +77,7 @@ export const useUsersData = () => {
           id: profile.id,
           username: profile.email || 'لم يتم تعيين بريد إلكتروني',
           role: userRole?.name || 'لم يتم تعيين دور',
+          roleId: userRole?.id || '',
           lastLogin: 'غير متوفر' // نظرًا لأننا لا نستطيع الوصول إلى auth.users مباشرة
         };
         console.log('تم إنشاء كائن المستخدم:', user);

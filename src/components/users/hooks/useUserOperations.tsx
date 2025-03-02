@@ -25,7 +25,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       console.log('الدور المحدد:', selectedRole);
       console.log('تم تقديم كلمة مرور جديدة:', newPassword ? 'نعم' : 'لا');
 
-      // Handle password change if provided
+      // تحديث كلمة المرور إذا تم تقديمها
       if (newPassword) {
         console.log('محاولة تحديث كلمة المرور...');
         const { error: passwordError } = await supabase.functions.invoke('manage-users', {
@@ -43,7 +43,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('تم تحديث كلمة المرور بنجاح');
       }
 
-      // Handle role change if selected role is different from current role
+      // تحديث الدور إذا كان مختلفًا عن الدور الحالي
       if (selectedRole && selectedRole !== selectedUser.role) {
         console.log('=== تحديث دور المستخدم ===');
         console.log('معرف المستخدم:', selectedUser.id);
@@ -51,38 +51,21 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('الدور الجديد المحدد:', selectedRole);
         
         try {
-          // أولاً، نحذف أي أدوار سابقة
-          console.log('حذف الأدوار السابقة...');
-          const { error: deleteError } = await supabase
-            .from('user_roles')
-            .delete()
-            .eq('user_id', selectedUser.id);
-            
-          if (deleteError) {
-            console.error('خطأ في حذف الأدوار السابقة:', deleteError);
-            throw deleteError;
+          // استخدام وظيفة Edge Function لتحديث الدور
+          const { error: roleError } = await supabase.functions.invoke('manage-users', {
+            body: {
+              operation: 'update_role',
+              userId: selectedUser.id,
+              roleId: selectedRole
+            }
+          });
+          
+          if (roleError) {
+            console.error('خطأ في تحديث الدور:', roleError);
+            throw roleError;
           }
           
-          console.log('تم حذف الأدوار السابقة بنجاح، انتظار قبل إضافة الدور الجديد...');
-          
-          // انتظار 500 مللي ثانية للتأكد من إتمام عملية الحذف
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          console.log('إضافة الدور الجديد:', selectedRole);
-          const { error: insertError, data: insertData } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: selectedUser.id,
-              role_id: selectedRole
-            })
-            .select();
-              
-          if (insertError) {
-            console.error('خطأ في إضافة الدور الجديد:', insertError);
-            throw insertError;
-          }
-          
-          console.log('تم إضافة الدور الجديد بنجاح:', insertData);
+          console.log('تم تحديث الدور بنجاح');
           
           // Log user activity for role change
           await supabase.rpc('log_user_activity', {
@@ -113,7 +96,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       setSelectedUser(null);
       setNewPassword("");
       setSelectedRole("");
-      onUserDeleted(); // Refresh the users list
+      onUserDeleted(); // تحديث قائمة المستخدمين
       console.log('=== انتهت عملية تحديث المستخدم بنجاح ===');
     } catch (error) {
       console.error('خطأ عام في تحديث المستخدم:', error);
@@ -130,7 +113,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       console.log('=== بدء عملية حذف المستخدم ===');
       console.log('معرف المستخدم للحذف:', userToDelete.id);
       
-      // Log user deletion activity before deleting the user
+      // تسجيل نشاط حذف المستخدم
       await supabase.rpc('log_user_activity', {
         user_id: userToDelete.id,
         activity_type: 'user_deleted',
@@ -138,6 +121,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       });
       console.log('تم تسجيل نشاط حذف المستخدم');
 
+      // استخدام وظيفة Edge Function لحذف المستخدم
       const { error } = await supabase.functions.invoke('manage-users', {
         body: {
           operation: 'delete_user',

@@ -48,14 +48,20 @@ export const UserEditDialog = ({
       console.log("UserEditDialog - تحميل بيانات المستخدم:", user);
       console.log("UserEditDialog - الدور الحالي للمستخدم:", user.role);
       
-      // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
-      const roleObj = roles.find(r => r.name === user.role);
-      if (roleObj) {
-        console.log("UserEditDialog - تعيين الدور المحدد من بيانات المستخدم:", roleObj.id, roleObj.name);
-        setSelectedRole(roleObj.id);
+      if (user.roleId) {
+        // إذا كان لدينا معرّف الدور مباشرة (من التحديثات الجديدة)
+        console.log("UserEditDialog - استخدام معرّف الدور المباشر:", user.roleId);
+        setSelectedRole(user.roleId);
       } else {
-        console.log("UserEditDialog - لم يتم العثور على الدور للمستخدم، تم مسح التحديد");
-        setSelectedRole("");
+        // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
+        const roleObj = roles.find(r => r.name === user.role);
+        if (roleObj) {
+          console.log("UserEditDialog - تعيين الدور المحدد من بيانات المستخدم:", roleObj.id, roleObj.name);
+          setSelectedRole(roleObj.id);
+        } else {
+          console.log("UserEditDialog - لم يتم العثور على الدور للمستخدم، تم مسح التحديد");
+          setSelectedRole("");
+        }
       }
     } else {
       // إذا لم يكن هناك مستخدم أو لم يكن له دور، تعيين القيمة الافتراضية

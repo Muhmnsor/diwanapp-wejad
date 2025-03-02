@@ -40,56 +40,32 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       console.log('الدور المحدد:', selectedRole);
       console.log('تم إدخال كلمة مرور:', newPassword ? 'نعم' : 'لا');
       
-      const { data: authUser, error: signUpError } = await supabase.auth.signUp({
-        email: newUsername,
-        password: newPassword,
+      // استخدام وظيفة Edge Function لإنشاء مستخدم مع دور
+      const { data, error } = await supabase.functions.invoke('manage-users', {
+        body: {
+          operation: 'create_user_with_role',
+          email: newUsername,
+          password: newPassword,
+          roleId: selectedRole
+        }
       });
 
-      if (signUpError) {
-        console.error('خطأ في إنشاء المستخدم:', signUpError);
-        throw signUpError;
+      if (error) {
+        console.error('خطأ في إنشاء المستخدم:', error);
+        throw error;
       }
 
-      if (!authUser.user) {
-        console.error('لم يتم إرجاع بيانات المستخدم');
-        throw new Error('No user data returned');
-      }
-
-      console.log('تم إنشاء المستخدم بنجاح:', authUser.user.id);
-
-      // حذف أي أدوار سابقة (للتأكد)
-      console.log('حذف أي أدوار سابقة للمستخدم...');
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', authUser.user.id);
-        
-      // انتظار لضمان معالجة عملية الحذف
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('محاولة إضافة الدور للمستخدم الجديد...');
-      const { error: roleError, data: roleData } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authUser.user.id,
-          role_id: selectedRole
-        })
-        .select();
-      
-      if (roleError) {
-        console.error('خطأ في تعيين الدور:', roleError);
-        throw roleError;
-      }
-      
-      console.log('تم تعيين الدور بنجاح:', roleData);
+      console.log('تم إنشاء المستخدم بنجاح:', data);
 
       // تسجيل النشاط
-      await supabase.rpc('log_user_activity', {
-        user_id: authUser.user.id,
-        activity_type: 'user_created',
-        details: `تم إنشاء المستخدم مع دور: ${selectedRole}`
-      });
-      console.log('تم تسجيل نشاط إنشاء المستخدم');
+      if (data && data.user && data.user.id) {
+        await supabase.rpc('log_user_activity', {
+          user_id: data.user.id,
+          activity_type: 'user_created',
+          details: `تم إنشاء المستخدم مع دور: ${selectedRole}`
+        });
+        console.log('تم تسجيل نشاط إنشاء المستخدم');
+      }
 
       toast.success("تم إضافة المستخدم بنجاح");
       setIsOpen(false);
