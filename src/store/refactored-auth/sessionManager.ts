@@ -50,8 +50,16 @@ export const getUserRole = async (userId: string): Promise<string | null> => {
       return null;
     }
     
-    // Access the name property correctly through the roles object
-    return userRole?.roles?.name || null;
+    // Access the name property correctly from the array of roles
+    if (userRole?.roles && Array.isArray(userRole.roles)) {
+      // If roles is an array, get the first role's name
+      return userRole.roles[0]?.name || null;
+    } else if (userRole?.roles) {
+      // If roles is a single object
+      return userRole.roles.name || null;
+    }
+    
+    return null;
   } catch (error) {
     console.error("SessionManager: Error in getUserRole:", error);
     return null;
