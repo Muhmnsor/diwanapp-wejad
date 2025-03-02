@@ -1,6 +1,13 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { Role } from "./types";
 
 interface UserFormFieldsProps {
@@ -62,20 +69,22 @@ export const UserFormFields = ({
       <div className="space-y-2">
         <Label>الدور</Label>
         {roles && roles.length > 0 ? (
-          <RadioGroup
-            value={selectedRole}
+          <Select 
+            value={selectedRole} 
             onValueChange={setSelectedRole}
-            className="flex flex-col space-y-2"
+            dir="rtl"
           >
-            {roles.map((role) => (
-              <div key={role.id} className="flex items-center justify-end space-x-2 space-x-reverse">
-                <Label htmlFor={role.id} className="mr-2">
+            <SelectTrigger className="w-full text-right">
+              <SelectValue placeholder="اختر الدور" />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map((role) => (
+                <SelectItem key={role.id} value={role.id}>
                   {getRoleDisplayName(role.name)}
-                </Label>
-                <RadioGroupItem value={role.id} id={role.id} />
-              </div>
-            ))}
-          </RadioGroup>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         ) : (
           <div className="text-sm text-muted-foreground">لا توجد أدوار متاحة</div>
         )}
