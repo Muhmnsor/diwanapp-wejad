@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,19 +38,17 @@ export const useUserOperations = (onUserUpdated: () => void) => {
       }
       
       // تحديث الاسم الشخصي إذا كان موجودًا
-      if (selectedUser.displayName !== undefined) {
-        console.log("تحديث الاسم الشخصي...");
-        const { error: displayNameError } = await supabase
-          .from('profiles')
-          .update({ display_name: selectedUser.displayName })
-          .eq('id', selectedUser.id);
-        
-        if (displayNameError) {
-          console.error("خطأ في تحديث الاسم الشخصي:", displayNameError);
-          throw displayNameError;
-        }
-        console.log("تم تحديث الاسم الشخصي بنجاح");
+      console.log("تحديث الاسم الشخصي...");
+      const { error: displayNameError } = await supabase
+        .from('profiles')
+        .update({ display_name: selectedUser.displayName })
+        .eq('id', selectedUser.id);
+      
+      if (displayNameError) {
+        console.error("خطأ في تحديث الاسم الشخصي:", displayNameError);
+        throw displayNameError;
       }
+      console.log("تم تحديث الاسم الشخصي بنجاح");
       
       // تحديث كلمة المرور إذا تم إدخالها
       if (newPassword) {

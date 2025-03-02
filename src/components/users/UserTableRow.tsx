@@ -42,7 +42,7 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
         </div>
       </TableCell>
       <TableCell className="text-right">
-        {user.displayName || 'غير محدد'}
+        {user.displayName ? user.displayName : 'لم يتم تعيين'}
       </TableCell>
       <TableCell className="text-right">{user.lastLogin}</TableCell>
       <TableCell className="text-center">
