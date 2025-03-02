@@ -14,8 +14,15 @@ export const EndDiscussionConfirmation = ({
   onConfirm,
   isSubmitting
 }: EndDiscussionConfirmationProps) => {
+  // منع إغلاق الحوار أثناء المعالجة
+  const handleOpenChange = (open: boolean) => {
+    if (!isSubmitting && !open) {
+      onClose();
+    }
+  };
+
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
       <AlertDialogContent dir="rtl">
         <AlertDialogHeader>
           <AlertDialogTitle>تأكيد إنهاء المناقشة</AlertDialogTitle>

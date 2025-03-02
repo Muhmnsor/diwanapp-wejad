@@ -101,12 +101,15 @@ export const useDiscussionSubmit = () => {
 
       console.log("Discussion period updated successfully");
       toast.success(operation === "add" ? "تم تمديد فترة المناقشة بنجاح" : "تم تنقيص فترة المناقشة بنجاح");
-      onSuccess();
-      onClose();
+      
+      // تأخير استدعاء دوال الإغلاق للسماح للنظام بمعالجة التحديثات
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 500);
     } catch (error) {
       console.error("Error modifying discussion period:", error);
       toast.error("حدث خطأ أثناء تعديل فترة المناقشة");
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -114,10 +117,12 @@ export const useDiscussionSubmit = () => {
   const handleEndDiscussion = async (ideaId: string, onSuccess: () => void, onClose: () => void) => {
     setIsSubmitting(true);
     try {
+      console.log("Starting end discussion process for idea:", ideaId);
+      
       // التحقق من وجود الفكرة قبل تحديثها
       const { data: ideaExists, error: checkError } = await supabase
         .from("ideas")
-        .select("id")
+        .select("id, status")
         .eq("id", ideaId)
         .single();
       
@@ -129,38 +134,44 @@ export const useDiscussionSubmit = () => {
         return;
       }
       
+      console.log("Idea found, current status:", ideaExists.status);
+      
       // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة إلى "pending_decision"
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from("ideas")
         .update({ 
           discussion_period: "0 hours",
           status: "pending_decision" 
         })
-        .eq("id", ideaId);
+        .eq("id", ideaId)
+        .select();
 
       if (updateError) {
+        console.error("Error updating idea status:", updateError);
         throw updateError;
       }
 
-      console.log("Discussion ended successfully");
+      console.log("Discussion ended successfully, updated data:", data);
       toast.success("تم إنهاء المناقشة بنجاح");
       
-      // إغلاق نافذة التأكيد أولاً
-      setIsEndDialogOpen(false);
-      
-      // استدعاء الدوال بعد إتمام العملية بنجاح
-      onSuccess();
-      
-      // إغلاق النافذة الرئيسية بعد فترة قصيرة
+      // تأخير إغلاق نافذة التأكيد والنوافذ الأخرى للتأكد من اكتمال التحديثات أولاً
       setTimeout(() => {
-        onClose();
-      }, 300);
+        // إغلاق نافذة التأكيد أولاً
+        setIsEndDialogOpen(false);
+        
+        // ثم استدعاء دالة النجاح
+        onSuccess();
+        
+        // ثم إغلاق النافذة الرئيسية بعد فترة إضافية
+        setTimeout(() => {
+          onClose();
+        }, 200);
+      }, 500);
     } catch (error) {
       console.error("Error ending discussion:", error);
       toast.error("حدث خطأ أثناء إنهاء المناقشة");
-      setIsEndDialogOpen(false);
-    } finally {
       setIsSubmitting(false);
+      setIsEndDialogOpen(false);
     }
   };
 
