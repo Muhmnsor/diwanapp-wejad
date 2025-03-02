@@ -60,9 +60,9 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       // انتظار لضمان إنشاء السجل في جدول profiles
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // تعيين الدور للمستخدم باستخدام RPC بدلاً من الإدخال المباشر
+      // تعيين الدور للمستخدم باستخدام RPC
       console.log('تعيين الدور للمستخدم باستخدام assign_user_role...');
-      const { error: roleError, data: roleData } = await supabase.rpc('assign_user_role', {
+      const { error: roleError } = await supabase.rpc('assign_user_role', {
         p_user_id: authUser.user.id,
         p_role_id: selectedRole
       });
@@ -72,7 +72,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
         throw roleError;
       }
       
-      console.log('تم تعيين الدور بنجاح:', roleData);
+      console.log('تم تعيين الدور بنجاح للمستخدم:', authUser.user.id, 'الدور:', selectedRole);
 
       // تسجيل النشاط
       await supabase.rpc('log_user_activity', {
@@ -87,7 +87,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       setNewUsername("");
       setNewPassword("");
       setSelectedRole("");
-      onUserCreated();
+      onUserCreated(); // إعادة تحميل قائمة المستخدمين
       console.log('=== انتهت عملية إنشاء المستخدم بنجاح ===');
     } catch (error) {
       console.error('خطأ عام في إضافة المستخدم:', error);

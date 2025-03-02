@@ -22,7 +22,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
     try {
       console.log('=== بدء عملية تحديث المستخدم ===');
       console.log('معرف المستخدم:', selectedUser.id);
-      console.log('الدور المحدد:', selectedRole);
+      console.log('الدور المحدد:', selectedRole || 'لم يتم تحديد دور جديد');
       console.log('تم تقديم كلمة مرور جديدة:', newPassword ? 'نعم' : 'لا');
 
       // Handle password change if provided
@@ -43,31 +43,31 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('تم تحديث كلمة المرور بنجاح');
       }
 
-      // Handle role change if selected role is different from current role
-      const currentRoleObj = selectedUser.role ? { name: selectedUser.role } : null;
-      console.log('الدور الحالي:', currentRoleObj);
+      // التحقق من تغيير الدور - سنقوم بمعالجة تغيير الدور حتى لو كان selectedRole فارغًا
+      // لأننا نريد حذف أي أدوار حالية في حالة عدم تحديد دور جديد
+      console.log('=== تحديث دور المستخدم ===');
+      console.log('معرف المستخدم:', selectedUser.id);
+      console.log('الدور الحالي:', selectedUser.role || 'لا يوجد');
+      console.log('الدور الجديد المحدد:', selectedRole || 'لم يتم تحديد دور');
       
-      if (selectedRole) {
-        console.log('=== تحديث دور المستخدم ===');
-        console.log('معرف المستخدم:', selectedUser.id);
-        console.log('الدور الحالي:', selectedUser.role);
-        console.log('الدور الجديد المحدد:', selectedRole);
+      try {
+        // أولاً، نحذف أي أدوار سابقة
+        console.log('حذف الأدوار السابقة...');
+        const { error: deleteError } = await supabase.rpc('delete_user_roles', {
+          p_user_id: selectedUser.id
+        });
+          
+        if (deleteError) {
+          console.error('خطأ في حذف الأدوار السابقة:', deleteError);
+          throw deleteError;
+        }
         
-        try {
-          // أولاً، نحذف أي أدوار سابقة
-          console.log('حذف الأدوار السابقة...');
-          const { error: deleteError } = await supabase.rpc('delete_user_roles', {
-            p_user_id: selectedUser.id
-          });
-            
-          if (deleteError) {
-            console.error('خطأ في حذف الأدوار السابقة:', deleteError);
-            throw deleteError;
-          }
+        console.log('تم حذف الأدوار السابقة بنجاح');
+        
+        // إضافة الدور الجديد إذا تم تحديده
+        if (selectedRole) {
+          console.log('إضافة الدور الجديد:', selectedRole);
           
-          console.log('تم حذف الأدوار السابقة بنجاح، إضافة الدور الجديد...');
-          
-          // إضافة الدور الجديد
           const { error: assignError } = await supabase.rpc('assign_user_role', {
             p_user_id: selectedUser.id,
             p_role_id: selectedRole
@@ -88,11 +88,21 @@ export const useUserOperations = (onUserDeleted: () => void) => {
           });
           
           console.log('تم تسجيل نشاط تغيير الدور');
-        } catch (error) {
-          console.error('خطأ أثناء تحديث الدور:', error);
-          toast.error("حدث خطأ أثناء تحديث الدور");
-          throw error;
+        } else {
+          // إذا لم يتم تحديد دور جديد، نسجل أنه تم إزالة الدور الحالي
+          console.log('تم إزالة الدور من المستخدم (لم يتم تحديد دور جديد)');
+          if (selectedUser.role) {
+            await supabase.rpc('log_user_activity', {
+              user_id: selectedUser.id,
+              activity_type: 'role_change',
+              details: 'تم إزالة الدور من المستخدم'
+            });
+          }
         }
+      } catch (error) {
+        console.error('خطأ أثناء تحديث الدور:', error);
+        toast.error("حدث خطأ أثناء تحديث الدور");
+        throw error;
       }
 
       if (newPassword) {
