@@ -1,8 +1,10 @@
 
+import { ModuleCollapsible } from "./ModuleCollapsible";
 import { Button } from "@/components/ui/button";
 import { Role } from "../types";
-import { ModuleCollapsible } from "./ModuleCollapsible";
 import { usePermissions } from "./usePermissions";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -13,7 +15,6 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
     modules,
     selectedPermissions,
     isLoading,
-    permissions,
     isSubmitting,
     handlePermissionToggle,
     handleModuleToggle,
@@ -23,50 +24,67 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
 
   if (isLoading) {
     return (
-      <div className="text-center p-8">
-        <p className="text-muted-foreground">جاري تحميل الصلاحيات...</p>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // إذا لم تكن هناك صلاحيات، أظهر رسالة
-  if (permissions.length === 0) {
+  if (!role) {
     return (
-      <div className="text-center p-8">
-        <p className="text-muted-foreground">لم يتم العثور على صلاحيات معرفة في النظام.</p>
-      </div>
+      <Alert className="mb-4">
+        <AlertCircle className="h-4 w-4 mr-2" />
+        <AlertDescription>
+          يرجى اختيار دور أولاً لعرض وتعديل الصلاحيات
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="bg-muted/20 p-4 rounded-md">
-        <h3 className="text-lg font-medium mb-2">صلاحيات دور: {role.name}</h3>
-        <p className="text-muted-foreground text-sm">{role.description || "لا يوجد وصف"}</p>
-      </div>
-
-      <div className="space-y-4">
-        {modules.map((module) => (
-          <ModuleCollapsible
-            key={module.name}
-            module={module}
-            selectedPermissions={selectedPermissions}
-            onPermissionToggle={handlePermissionToggle}
-            onModuleToggle={handleModuleToggle}
-            toggleModuleOpen={toggleModuleOpen}
-          />
-        ))}
-      </div>
-
-      <div className="flex justify-start pt-4">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">صلاحيات الدور: {role.name}</h3>
         <Button 
           onClick={handleSave} 
           disabled={isSubmitting}
-          className="w-full sm:w-auto"
+          className="gap-2"
         >
-          {isSubmitting ? "جاري الحفظ..." : "حفظ الصلاحيات"}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              جاري الحفظ...
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4" />
+              حفظ الصلاحيات
+            </>
+          )}
         </Button>
       </div>
+
+      {modules.length === 0 ? (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            لا توجد صلاحيات متاحة حالياً
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <div className="space-y-4">
+          {modules.map((module) => (
+            <ModuleCollapsible
+              key={module.name}
+              module={module}
+              selectedPermissions={selectedPermissions}
+              onPermissionToggle={handlePermissionToggle}
+              onModuleToggle={handleModuleToggle}
+              onToggleOpen={toggleModuleOpen}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

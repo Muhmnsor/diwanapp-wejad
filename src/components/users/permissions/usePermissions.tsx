@@ -15,43 +15,57 @@ export const usePermissions = (role: Role) => {
   const { data: permissions = [], isLoading } = useQuery({
     queryKey: ['permissions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permissions')
-        .select('*')
-        .order('module', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('permissions')
+          .select('*')
+          .order('module', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching permissions:', error);
+        if (error) {
+          console.error('Error fetching permissions:', error);
+          throw error;
+        }
+
+        return data as Permission[];
+      } catch (error) {
+        console.error('Error in permissions query:', error);
         throw error;
       }
-
-      return data as Permission[];
     }
   });
 
   // استعلام للحصول على صلاحيات الدور
   const { data: rolePermissions = [], refetch: refetchRolePermissions } = useQuery({
-    queryKey: ['role-permissions', role.id],
+    queryKey: ['role-permissions', role?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('role_permissions')
-        .select('permission_id')
-        .eq('role_id', role.id);
+      try {
+        if (!role?.id) return [];
+        
+        const { data, error } = await supabase
+          .from('role_permissions')
+          .select('permission_id')
+          .eq('role_id', role.id);
 
-      if (error) {
-        console.error('Error fetching role permissions:', error);
-        throw error;
+        if (error) {
+          console.error('Error fetching role permissions:', error);
+          throw error;
+        }
+
+        return data.map(rp => rp.permission_id);
+      } catch (error) {
+        console.error('Error in role permissions query:', error);
+        return [];
       }
-
-      return data.map(rp => rp.permission_id);
     },
-    enabled: !!role.id
+    enabled: !!role?.id
   });
 
   // تحديث حالة الصلاحيات المحددة عند تغير بيانات صلاحيات الدور
   useEffect(() => {
     if (rolePermissions.length > 0) {
       setSelectedPermissions(rolePermissions);
+    } else {
+      setSelectedPermissions([]);
     }
   }, [rolePermissions]);
 
@@ -123,33 +137,51 @@ export const usePermissions = (role: Role) => {
 
   // حفظ التغييرات
   const handleSave = async () => {
+    if (!role?.id) {
+      toast.error("لم يتم تحديد دور");
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      console.log("Saving permissions for role:", role.id);
+      console.log("Selected permissions:", selectedPermissions);
+      
       // حذف الصلاحيات الحالية للدور
       const { error: deleteError } = await supabase
         .from('role_permissions')
         .delete()
         .eq('role_id', role.id);
       
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting existing permissions:", deleteError);
+        throw deleteError;
+      }
       
       // إذا كانت هناك صلاحيات محددة، أضفها
       if (selectedPermissions.length > 0) {
-        const rolePemissions = selectedPermissions.map(permissionId => ({
+        const rolePermissions = selectedPermissions.map(permissionId => ({
           role_id: role.id,
           permission_id: permissionId
         }));
         
-        const { error: insertError } = await supabase
-          .from('role_permissions')
-          .insert(rolePemissions);
+        console.log("Inserting role permissions:", rolePermissions);
         
-        if (insertError) throw insertError;
+        const { error: insertError, data: insertResult } = await supabase
+          .from('role_permissions')
+          .insert(rolePermissions);
+        
+        console.log("Insert result:", insertResult);
+        
+        if (insertError) {
+          console.error("Error inserting permissions:", insertError);
+          throw insertError;
+        }
       }
       
       toast.success("تم حفظ صلاحيات الدور بنجاح");
-      refetchRolePermissions();
+      await refetchRolePermissions();
     } catch (error) {
       console.error('Error saving role permissions:', error);
       toast.error("حدث خطأ أثناء حفظ الصلاحيات");

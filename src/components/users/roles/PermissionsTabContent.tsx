@@ -1,28 +1,24 @@
 
 import { Role } from "../types";
-import { RolePermissions } from "../RolePermissions";
-import { ShieldAlert } from "lucide-react";
+import { RolePermissionsView } from "../permissions/RolePermissionsView";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface PermissionsTabContentProps {
-  selectedRole: Role | undefined;
+  selectedRole: Role | null;
 }
 
 export const PermissionsTabContent = ({ selectedRole }: PermissionsTabContentProps) => {
   if (!selectedRole) {
     return (
-      <div className="py-12 text-center bg-muted/20 rounded-md flex flex-col items-center gap-3 mt-4" dir="rtl">
-        <ShieldAlert className="h-12 w-12 text-muted-foreground/70" />
-        <div className="text-muted-foreground max-w-md">
-          <p className="font-medium mb-1">الرجاء اختيار دور من القائمة</p>
-          <p className="text-sm">قم باختيار دور من قائمة الأدوار لعرض وتعديل الصلاحيات المرتبطة به</p>
-        </div>
-      </div>
+      <Alert className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          الرجاء اختيار دور أولاً لعرض وتعديل الصلاحيات
+        </AlertDescription>
+      </Alert>
     );
   }
 
-  return (
-    <div className="mt-4">
-      <RolePermissions role={selectedRole} />
-    </div>
-  );
+  return <RolePermissionsView role={selectedRole} />;
 };
