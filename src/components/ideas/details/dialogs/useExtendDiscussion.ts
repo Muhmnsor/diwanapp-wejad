@@ -200,8 +200,13 @@ export const useExtendDiscussion = (
 
       console.log("Discussion period updated successfully");
       toast.success(operation === "add" ? "تم تمديد فترة المناقشة بنجاح" : "تم تنقيص فترة المناقشة بنجاح");
+      
+      // استدعاء دالة النجاح لتحديث الواجهة
       onSuccess();
       onClose();
+      
+      // إعادة تحميل الصفحة لتحديث العد التنازلي
+      window.location.reload();
     } catch (error) {
       console.error("Error modifying discussion period:", error);
       toast.error("حدث خطأ أثناء تعديل فترة المناقشة");
@@ -230,6 +235,9 @@ export const useExtendDiscussion = (
       toast.success("تم إنهاء المناقشة بنجاح");
       onSuccess();
       onClose();
+      
+      // إعادة تحميل الصفحة لتحديث العد التنازلي
+      window.location.reload();
     } catch (error) {
       console.error("Error ending discussion:", error);
       toast.error("حدث خطأ أثناء إنهاء المناقشة");
