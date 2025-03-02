@@ -5,6 +5,7 @@ import { useDiscussionData } from "./useDiscussionData";
 import { useDiscussionSubmit } from "./useDiscussionSubmit";
 import { DiscussionForm } from "./DiscussionForm";
 import { EndDiscussionConfirmation } from "./EndDiscussionConfirmation";
+import { useEffect } from "react";
 
 export const ExtendDiscussionDialog = ({
   isOpen,
@@ -32,6 +33,13 @@ export const ExtendDiscussionDialog = ({
     handleSubmit,
     handleEndDiscussion
   } = useDiscussionSubmit(ideaId, onSuccess, onClose);
+  
+  // إغلاق حوار إنهاء المناقشة عند إغلاق الحوار الرئيسي
+  useEffect(() => {
+    if (!isOpen) {
+      setIsEndDialogOpen(false);
+    }
+  }, [isOpen, setIsEndDialogOpen]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     return handleSubmit(
@@ -44,10 +52,16 @@ export const ExtendDiscussionDialog = ({
       remainingHours
     );
   };
+  
+  const handleEndDialogClose = (open: boolean) => {
+    if (!isSubmitting) {
+      setIsEndDialogOpen(open);
+    }
+  };
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <Dialog open={isOpen} onOpenChange={(open) => !isSubmitting && !open && onClose()}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right">تعديل فترة المناقشة</DialogTitle>
@@ -79,7 +93,7 @@ export const ExtendDiscussionDialog = ({
 
       <EndDiscussionConfirmation
         isOpen={isEndDialogOpen}
-        onOpenChange={setIsEndDialogOpen}
+        onOpenChange={handleEndDialogClose}
         onConfirm={handleEndDiscussion}
         isSubmitting={isSubmitting}
       />

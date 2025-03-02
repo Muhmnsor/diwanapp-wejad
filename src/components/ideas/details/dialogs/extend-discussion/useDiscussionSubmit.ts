@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,11 +92,25 @@ export const useDiscussionSubmit = (
     if (isSubmitting) return;
     
     setIsSubmitting(true);
+    
     try {
-      console.log("إنهاء المناقشة وتغيير الحالة إلى pending_decision للفكرة:", ideaId);
+      console.log("بدء عملية إنهاء المناقشة للفكرة:", ideaId);
       
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // التحقق من حالة وجود الفكرة قبل التحديث
+      const { data: ideaCheck, error: checkError } = await supabase
+        .from("ideas")
+        .select("id, status")
+        .eq("id", ideaId)
+        .single();
+        
+      if (checkError) {
+        console.error("خطأ في التحقق من وجود الفكرة:", checkError);
+        throw new Error("لم يتم العثور على الفكرة");
+      }
       
+      console.log("تم التحقق من وجود الفكرة:", ideaCheck);
+      
+      // تحديث فترة المناقشة وحالة الفكرة
       const { data, error: updateError } = await supabase
         .from("ideas")
         .update({ 
@@ -113,8 +128,11 @@ export const useDiscussionSubmit = (
       console.log("تم إنهاء المناقشة بنجاح:", data);
       toast.success("تم إنهاء المناقشة بنجاح");
       
-      onSuccess();
-      onClose();
+      // استخدام setTimeout لإعطاء فرصة لتوست النجاح أن يظهر قبل الإغلاق
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 500);
     } catch (error) {
       console.error("Error ending discussion:", error);
       toast.error("حدث خطأ أثناء إنهاء المناقشة");

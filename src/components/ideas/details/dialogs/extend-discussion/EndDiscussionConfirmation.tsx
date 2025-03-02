@@ -36,7 +36,6 @@ export const EndDiscussionConfirmation = ({
     } catch (error) {
       console.error("Error in handleConfirm:", error);
       // في حالة الخطأ، قد نرغب في السماح للمستخدم بالمحاولة مرة أخرى
-      // لذلك لا نغلق النافذة تلقائيًا
     }
   };
 
@@ -50,7 +49,7 @@ export const EndDiscussionConfirmation = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex gap-2 justify-between">
-          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <AlertDialogCancel disabled={isSubmitting}>إلغاء</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
