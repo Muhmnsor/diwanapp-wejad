@@ -36,7 +36,7 @@ export const UsersHeader = ({ roles, users, onUserCreated }: UsersHeaderProps) =
         <CreateUserDialog roles={roles} onUserCreated={onUserCreated} />
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 mb-8" style={{ direction: 'rtl' }}>
         <div className="bg-primary/10 rounded-lg p-4 flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <UserIcon className="h-4 w-4 text-primary" />
