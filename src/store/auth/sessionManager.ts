@@ -1,4 +1,5 @@
 
+
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 
@@ -117,3 +118,4 @@ export const clearSession = async () => {
     throw error;
   }
 };
+
