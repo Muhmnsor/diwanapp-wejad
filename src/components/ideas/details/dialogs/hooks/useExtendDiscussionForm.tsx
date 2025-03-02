@@ -47,7 +47,7 @@ export const useExtendDiscussionForm = ({
         try {
           const { data: ideaData, error: fetchError } = await supabase
             .from("ideas")
-            .select("discussion_period, created_at")
+            .select("discussion_period, created_at, status")
             .eq("id", ideaId)
             .single();
 
@@ -59,11 +59,12 @@ export const useExtendDiscussionForm = ({
 
           if (ideaData) {
             // حساب الوقت المتبقي
-            const { discussion_period, created_at } = ideaData;
+            const { discussion_period, created_at, status } = ideaData;
             
             if (discussion_period && created_at) {
               console.log("Discussion period from DB:", discussion_period);
               console.log("Created at from DB:", created_at);
+              console.log("Current status from DB:", status);
               
               // استخدام الدالة الجديدة لاستخراج إجمالي الساعات
               const totalHours = extractTotalHours(discussion_period);
@@ -189,10 +190,25 @@ export const useExtendDiscussionForm = ({
       
       console.log("New discussion period:", newDiscussionPeriod);
 
+      // تحديث حالة الفكرة إلى "قيد المناقشة" إذا كان الوقت المضاف أكبر من صفر
+      let newStatus = null;
+      if (newTotalHours > 0) {
+        newStatus = "under_review"; // قيد المناقشة
+      }
+
       // تحديث قاعدة البيانات
+      const updateData: { discussion_period: string; status?: string } = { 
+        discussion_period: newDiscussionPeriod 
+      };
+      
+      // إضافة حالة الفكرة إلى التحديث إذا كانت متاحة
+      if (newStatus) {
+        updateData.status = newStatus;
+      }
+      
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: newDiscussionPeriod })
+        .update(updateData)
         .eq("id", ideaId);
 
       if (updateError) {
@@ -200,7 +216,17 @@ export const useExtendDiscussionForm = ({
       }
 
       console.log("Discussion period updated successfully");
-      toast.success(formState.operation === "add" ? "تم تمديد فترة المناقشة بنجاح" : "تم تنقيص فترة المناقشة بنجاح");
+      
+      if (formState.operation === "add") {
+        if (newStatus) {
+          toast.success("تم تمديد فترة المناقشة وتحديث حالة الفكرة إلى قيد المناقشة", { duration: 3000 });
+        } else {
+          toast.success("تم تمديد فترة المناقشة بنجاح", { duration: 3000 });
+        }
+      } else {
+        toast.success("تم تنقيص فترة المناقشة بنجاح", { duration: 3000 });
+      }
+      
       onSuccess();
       onClose();
     } catch (error) {
@@ -214,10 +240,13 @@ export const useExtendDiscussionForm = ({
   const handleEndDiscussion = async () => {
     setFormState(prev => ({ ...prev, isSubmitting: true }));
     try {
-      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها
+      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة إلى بانتظار القرار
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: "0 hours" })
+        .update({ 
+          discussion_period: "0 hours",
+          status: "pending_decision" 
+        })
         .eq("id", ideaId);
 
       if (updateError) {
@@ -225,7 +254,7 @@ export const useExtendDiscussionForm = ({
       }
 
       console.log("Discussion ended successfully");
-      toast.success("تم إنهاء المناقشة بنجاح");
+      toast.success("تم إنهاء المناقشة بنجاح وتحديث حالة الفكرة إلى بانتظار القرار", { duration: 3000 });
       onSuccess();
       onClose();
     } catch (error) {

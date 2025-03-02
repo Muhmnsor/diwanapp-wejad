@@ -15,7 +15,7 @@ const IdeaDetails = () => {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: idea, isLoading: isIdeaLoading } = useQuery({
+  const { data: idea, isLoading: isIdeaLoading, refetch: refetchIdea } = useQuery({
     queryKey: ['idea', id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -211,6 +211,13 @@ const IdeaDetails = () => {
     await voteMutation.mutateAsync(type);
   };
 
+  // إضافة دالة لتحديث بيانات الفكرة عند تغيير فترة المناقشة
+  const handleIdeaUpdate = async () => {
+    console.log("🔄 تحديث بيانات الفكرة بعد تعديل فترة المناقشة");
+    await refetchIdea();
+    toast.success("تم تحديث بيانات الفكرة بنجاح");
+  };
+
   if (isIdeaLoading || isCommentsLoading || isVotesLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -238,7 +245,7 @@ const IdeaDetails = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
-      <SecondaryHeader />
+      <SecondaryHeader onIdeaUpdate={handleIdeaUpdate} />
       <main className="flex-1 container mx-auto px-4 py-8" dir="rtl">
         <IdeaContent 
           idea={idea}

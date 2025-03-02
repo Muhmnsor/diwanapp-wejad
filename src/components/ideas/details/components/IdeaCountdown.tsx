@@ -18,6 +18,24 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     seconds: 0
   });
   const [isExpired, setIsExpired] = useState(false);
+  // Add a key to force re-rendering when discussion period changes
+  const [updateKey, setUpdateKey] = useState(Date.now());
+
+  useEffect(() => {
+    // Reset countdown and force recalculation when discussion_period changes
+    setUpdateKey(Date.now());
+    console.log("🔄 Discussion period changed, resetting countdown:", discussion_period);
+    
+    // Immediately check if discussion is expired
+    const timeLeft = calculateTimeRemaining(discussion_period, created_at);
+    const nowExpired = 
+      timeLeft.days === 0 && 
+      timeLeft.hours === 0 && 
+      timeLeft.minutes === 0 && 
+      timeLeft.seconds === 0;
+    
+    setIsExpired(nowExpired);
+  }, [discussion_period, created_at]);
 
   useEffect(() => {
     // تحديث حالة الفكرة عندما تنتهي المناقشة
@@ -86,7 +104,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     };
 
     // تنفيذ الحساب فوراً عند التحميل
-    console.log("🔄 بدء حساب الوقت المتبقي للمناقشة");
+    console.log("🔄 بدء حساب الوقت المتبقي للمناقشة", updateKey);
     console.log("📅 تاريخ الإنشاء:", created_at);
     console.log("⏱️ فترة المناقشة:", discussion_period);
     calculateTimeLeft();
@@ -100,7 +118,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     const timer = setInterval(calculateTimeLeft, 1000);
     
     return () => clearInterval(timer);
-  }, [discussion_period, created_at, isExpired, ideaId]);
+  }, [discussion_period, created_at, isExpired, ideaId, updateKey]);
 
   if (!discussion_period) {
     return (
