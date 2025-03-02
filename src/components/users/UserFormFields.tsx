@@ -9,7 +9,6 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Role } from "./types";
-import { useEffect } from "react";
 
 interface UserFormFieldsProps {
   newUsername: string;
@@ -30,14 +29,9 @@ export const UserFormFields = ({
   setSelectedRole,
   roles,
 }: UserFormFieldsProps) => {
-  // تعيين دور افتراضي إذا كانت هناك أدوار متاحة ولم يتم تحديد أي دور
-  useEffect(() => {
-    if (roles.length > 0 && !selectedRole) {
-      setSelectedRole(roles[0].id);
-    }
-  }, [roles, selectedRole, setSelectedRole]);
+  console.log('Available roles:', roles);
+  console.log('Selected role:', selectedRole);
 
-  // ترجمة اسم الدور إلى العربية
   const getRoleDisplayName = (roleName: string) => {
     switch (roleName) {
       case 'admin': return 'مشرف';
@@ -76,7 +70,7 @@ export const UserFormFields = ({
         <Label>الدور</Label>
         {roles && roles.length > 0 ? (
           <Select 
-            value={selectedRole || ''}
+            value={selectedRole} 
             onValueChange={setSelectedRole}
             dir="rtl"
           >

@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Role } from "./types";
 import { UserFormFields } from "./UserFormFields";
-import { assignUserRole } from "./hooks/utils";
 
 interface CreateUserDialogProps {
   roles: Role[];
@@ -28,25 +27,9 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
   const [selectedRole, setSelectedRole] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
-  const validateRoleExists = (roleId: string) => {
-    return roles.some(role => role.id === roleId);
-  };
-
   const handleAddUser = async () => {
-    if (!newUsername || !newPassword) {
-      toast.error("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
-      return;
-    }
-
-    if (!selectedRole) {
-      toast.error("الرجاء اختيار دور للمستخدم");
-      return;
-    }
-
-    if (!validateRoleExists(selectedRole)) {
-      console.error("CreateUserDialog - محاولة إضافة دور غير صالح:", selectedRole);
-      toast.error("الدور المختار غير صالح، يرجى المحاولة مرة أخرى");
+    if (!newUsername || !newPassword || !selectedRole) {
+      toast.error("الرجاء إدخال جميع البيانات المطلوبة");
       return;
     }
 
@@ -74,22 +57,31 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
 
       console.log('تم إنشاء المستخدم بنجاح:', authUser.user.id);
 
-      // انتظار لضمان إنشاء السجل في جدول profiles
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // حذف أي أدوار سابقة (للتأكد)
+      console.log('حذف أي أدوار سابقة للمستخدم...');
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', authUser.user.id);
+        
+      // انتظار لضمان معالجة عملية الحذف
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // استخدام الوظيفة المحسنة assignUserRole من الملف المعاد هيكلته
-      console.log('تعيين الدور للمستخدم باستخدام assignUserRole...');
-      console.log('معرّف المستخدم:', authUser.user.id);
-      console.log('معرّف الدور المراد تعيينه:', selectedRole);
+      console.log('محاولة إضافة الدور للمستخدم الجديد...');
+      const { error: roleError, data: roleData } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authUser.user.id,
+          role_id: selectedRole
+        })
+        .select();
       
-      const roleAssigned = await assignUserRole(authUser.user.id, selectedRole);
-      
-      if (!roleAssigned) {
-        console.error('فشل في تعيين الدور للمستخدم');
-        throw new Error('فشل في تعيين الدور للمستخدم');
+      if (roleError) {
+        console.error('خطأ في تعيين الدور:', roleError);
+        throw roleError;
       }
       
-      console.log('تم تعيين الدور بنجاح للمستخدم:', authUser.user.id, 'الدور:', selectedRole);
+      console.log('تم تعيين الدور بنجاح:', roleData);
 
       // تسجيل النشاط
       await supabase.rpc('log_user_activity', {
@@ -104,7 +96,7 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       setNewUsername("");
       setNewPassword("");
       setSelectedRole("");
-      onUserCreated(); // إعادة تحميل قائمة المستخدمين
+      onUserCreated();
       console.log('=== انتهت عملية إنشاء المستخدم بنجاح ===');
     } catch (error) {
       console.error('خطأ عام في إضافة المستخدم:', error);

@@ -79,8 +79,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
                   user={user}
                   onEdit={() => {
                     setSelectedUser(user);
-                    // استخدام null بدلاً من قيمة فارغة، سيتم تعيين القيمة الصحيحة في UserEditDialog
-                    setSelectedRole(null);
+                    setSelectedRole(user.role || '');
                   }}
                   onDelete={() => setUserToDelete(user)}
                   onViewDetails={() => setUserToView(user)}
@@ -93,20 +92,18 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         </Table>
       </div>
 
-      {selectedUser && (
-        <UserEditDialog
-          user={selectedUser}
-          isOpen={!!selectedUser}
-          onClose={() => setSelectedUser(null)}
-          selectedRole={selectedRole}
-          setSelectedRole={setSelectedRole}
-          newPassword={newPassword}
-          setNewPassword={setNewPassword}
-          onSubmit={handlePasswordChange}
-          isSubmitting={isSubmitting}
-          roles={roles}
-        />
-      )}
+      <UserEditDialog
+        user={selectedUser}
+        isOpen={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        selectedRole={selectedRole}
+        setSelectedRole={setSelectedRole}
+        newPassword={newPassword}
+        setNewPassword={setNewPassword}
+        onSubmit={handlePasswordChange}
+        isSubmitting={isSubmitting}
+        roles={roles}
+      />
 
       <UserDeleteDialog
         user={userToDelete}

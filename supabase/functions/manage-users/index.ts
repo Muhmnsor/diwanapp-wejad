@@ -1,136 +1,145 @@
-
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.1.1";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+Deno.serve(async (req) => {
+  // تسجيل الطلب الوارد
+  console.log('Received request:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  })
+
+  // التعامل مع طلبات CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // التحقق من طريقة الطلب
+    if (req.method !== 'POST') {
+      throw new Error(`Method ${req.method} not allowed`)
+    }
+
+    // إنشاء عميل Supabase
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
         },
       }
-    );
+    )
 
-    // Verify the request is from an admin user
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
-
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Authorization header is required" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+    // تحليل بيانات الطلب
+    let requestData;
+    try {
+      requestData = await req.json()
+      console.log('Request data:', requestData)
+    } catch (error) {
+      console.error('Error parsing request body:', error)
+      throw new Error('Invalid request body')
     }
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    const { operation, userId, newPassword, newRole } = requestData
+    console.log('Managing user:', { operation, userId })
 
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+    if (operation === 'get_users') {
+      const { data: { users }, error: usersError } = await supabaseClient.auth.admin.listUsers()
+      
+      if (usersError) {
+        console.error('Error fetching users:', usersError)
+        throw usersError
+      }
+
+      return new Response(
+        JSON.stringify({ users }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Check if user is admin
-    const { data: roles, error: rolesError } = await supabaseClient
-      .from("user_roles")
-      .select(`
-        role_id,
-        roles (
-          name
-        )
-      `)
-      .eq("user_id", user.id);
+    if (operation === 'update_password' && userId && newPassword) {
+      const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
+        userId,
+        { password: newPassword }
+      )
 
-    if (rolesError) {
-      return new Response(JSON.stringify({ error: "Error fetching user roles" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      if (updateError) {
+        console.error('Error updating password:', updateError)
+        throw updateError
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    const isAdmin = roles?.some(r => r.roles?.name === "admin");
+    if (operation === 'update_role' && userId && newRole) {
+      // الحصول على معرف الدور الجديد
+      const { data: roles, error: rolesError } = await supabaseClient
+        .from('roles')
+        .select('id')
+        .eq('name', newRole)
+        .single()
 
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "Unauthorized - Admin role required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      if (rolesError) {
+        console.error('Error fetching role:', rolesError)
+        throw rolesError
+      }
+
+      // تحديث دور المستخدم
+      const { error: updateError } = await supabaseClient
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role_id: roles.id
+        })
+
+      if (updateError) {
+        console.error('Error updating role:', updateError)
+        throw updateError
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Parse request body
-    const { operation, userId, newPassword, roleId } = await req.json();
+    if (operation === 'delete_user' && userId) {
+      const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId)
 
-    // Perform the requested operation
-    switch (operation) {
-      case "update_password":
-        if (!userId || !newPassword) {
-          return new Response(JSON.stringify({ error: "User ID and new password are required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
+      if (deleteError) {
+        console.error('Error deleting user:', deleteError)
+        throw deleteError
+      }
 
-        const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
-          userId,
-          { password: newPassword }
-        );
-
-        if (updateError) {
-          return new Response(JSON.stringify({ error: updateError.message }), {
-            status: 500, 
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-
-      case "delete_user":
-        if (!userId) {
-          return new Response(JSON.stringify({ error: "User ID is required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId);
-
-        if (deleteError) {
-          return new Response(JSON.stringify({ error: deleteError.message }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
-        }
-
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-
-      default:
-        return new Response(JSON.stringify({ error: "Invalid operation" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+
+    throw new Error('Invalid operation')
+
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    });
+    console.error('Error in manage-users function:', error)
+    
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+        details: error.details || error.toString()
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
-});
+})
