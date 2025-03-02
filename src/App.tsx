@@ -1,31 +1,27 @@
-import { useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
-import AppRoutes from './AppRoutes';
-import './App.css';
+
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "./AppRoutes";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "./App.css";
+import { Toaster } from "./components/ui/toaster";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function App() {
-  const { initialize } = useAuthStore();
-
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await initialize();
-      } catch (error) {
-        console.error('Failed to initialize auth store:', error);
-      }
-    };
-
-    // Wrap initialization in a small timeout to ensure React is fully initialized
-    setTimeout(() => {
-      initAuth();
-    }, 0);
-  }, [initialize]);
-
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppRoutes />
+        <Toaster />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

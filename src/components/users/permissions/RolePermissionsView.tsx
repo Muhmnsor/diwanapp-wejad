@@ -5,6 +5,7 @@ import { Role } from "../types";
 import { usePermissions } from "./usePermissions";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Toaster } from "@/components/ui/toaster";
 
 interface RolePermissionsViewProps {
   role: Role;
@@ -80,11 +81,13 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
               selectedPermissions={selectedPermissions}
               onPermissionToggle={handlePermissionToggle}
               onModuleToggle={handleModuleToggle}
-              onToggleOpen={toggleModuleOpen}
+              toggleOpen={toggleModuleOpen}
             />
           ))}
         </div>
       )}
+      
+      <Toaster />
     </div>
   );
 };
