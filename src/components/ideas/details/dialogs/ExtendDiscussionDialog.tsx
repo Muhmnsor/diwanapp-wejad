@@ -32,6 +32,7 @@ export const ExtendDiscussionDialog = ({
   const [operation, setOperation] = useState<string>("add");
   const [totalCurrentHours, setTotalCurrentHours] = useState<number>(0);
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
+  const [discussionEnded, setDiscussionEnded] = useState(false);
   
   // استرجاع معلومات الفكرة والوقت المتبقي عند فتح النافذة
   useEffect(() => {
@@ -59,53 +60,68 @@ export const ExtendDiscussionDialog = ({
               console.log("Discussion period from DB:", discussion_period);
               console.log("Created at from DB:", created_at);
               
-              // حساب إجمالي الساعات الحالية
-              let totalHours = 0;
-              
-              if (discussion_period.includes('hours') || discussion_period.includes('hour')) {
-                const match = discussion_period.match(/(\d+)\s+hour/);
-                if (match) {
-                  totalHours = parseInt(match[1]);
-                }
-              } else if (discussion_period.includes('days') || discussion_period.includes('day')) {
-                const match = discussion_period.match(/(\d+)\s+day/);
-                if (match) {
-                  totalHours = parseInt(match[1]) * 24;
-                }
+              // التحقق مما إذا كانت المناقشة منتهية بالفعل (صفر ساعات)
+              if (discussion_period === "0 hours") {
+                setDiscussionEnded(true);
+                setTotalCurrentHours(0);
+                setRemainingDays(0);
+                setRemainingHours(0);
               } else {
-                totalHours = parseFloat(discussion_period);
-              }
-              
-              setTotalCurrentHours(totalHours);
-              
-              // حساب الوقت المتبقي بالساعات
-              const timeRemaining = calculateTimeRemaining(discussion_period, created_at);
-              
-              // تحويل الوقت المتبقي إلى أيام وساعات
-              const totalHoursRemaining = 
-                (timeRemaining.days * 24) + 
-                timeRemaining.hours + 
-                (timeRemaining.minutes / 60) + 
-                (timeRemaining.seconds / 3600);
-              
-              const remaining_days = Math.floor(totalHoursRemaining / 24);
-              const remaining_hours = Math.floor(totalHoursRemaining % 24);
-              
-              console.log("Calculated remaining time:", { days: remaining_days, hours: remaining_hours });
-              console.log("Total current hours in period:", totalHours);
-              
-              setRemainingDays(remaining_days);
-              setRemainingHours(remaining_hours);
-              
-              // إعداد القيم الأولية في حقول الإدخال بناءً على الوقت الحالي
-              if (totalHours >= 24) {
-                const currentDays = Math.floor(totalHours / 24);
-                const currentHoursRemainder = totalHours % 24;
-                setDays(currentDays);
-                setHours(currentHoursRemainder);
-              } else {
-                setDays(0);
-                setHours(totalHours);
+                setDiscussionEnded(false);
+                
+                // حساب إجمالي الساعات الحالية
+                let totalHours = 0;
+                
+                if (discussion_period.includes('hours') || discussion_period.includes('hour')) {
+                  const match = discussion_period.match(/(\d+)\s+hour/);
+                  if (match) {
+                    totalHours = parseInt(match[1]);
+                  }
+                } else if (discussion_period.includes('days') || discussion_period.includes('day')) {
+                  const match = discussion_period.match(/(\d+)\s+day/);
+                  if (match) {
+                    totalHours = parseInt(match[1]) * 24;
+                  }
+                } else {
+                  totalHours = parseFloat(discussion_period);
+                }
+                
+                setTotalCurrentHours(totalHours);
+                
+                // حساب الوقت المتبقي بالساعات
+                const timeRemaining = calculateTimeRemaining(discussion_period, created_at);
+                
+                // تحويل الوقت المتبقي إلى أيام وساعات
+                const totalHoursRemaining = 
+                  (timeRemaining.days * 24) + 
+                  timeRemaining.hours + 
+                  (timeRemaining.minutes / 60) + 
+                  (timeRemaining.seconds / 3600);
+                
+                const remaining_days = Math.floor(totalHoursRemaining / 24);
+                const remaining_hours = Math.floor(totalHoursRemaining % 24);
+                
+                console.log("Calculated remaining time:", { days: remaining_days, hours: remaining_hours });
+                console.log("Total current hours in period:", totalHours);
+                
+                setRemainingDays(remaining_days);
+                setRemainingHours(remaining_hours);
+                
+                // تحقق إذا كان الوقت المتبقي صفر (المناقشة انتهت)
+                if (totalHoursRemaining <= 0) {
+                  setDiscussionEnded(true);
+                }
+                
+                // إعداد القيم الأولية في حقول الإدخال بناءً على الوقت الحالي
+                if (totalHours >= 24) {
+                  const currentDays = Math.floor(totalHours / 24);
+                  const currentHoursRemainder = totalHours % 24;
+                  setDays(currentDays);
+                  setHours(currentHoursRemainder);
+                } else {
+                  setDays(0);
+                  setHours(totalHours);
+                }
               }
             }
           }
@@ -243,17 +259,23 @@ export const ExtendDiscussionDialog = ({
                 {/* عرض الوقت الحالي والمتبقي */}
                 <div className="p-3 bg-purple-50 rounded-md space-y-2">
                   <p className="text-sm font-medium text-purple-800">
-                    الفترة الكلية الحالية: {Math.floor(totalCurrentHours / 24) > 0 ? `${Math.floor(totalCurrentHours / 24)} يوم` : ""} 
-                    {Math.floor(totalCurrentHours / 24) > 0 && totalCurrentHours % 24 > 0 ? " و " : ""}
-                    {totalCurrentHours % 24 > 0 ? `${Math.floor(totalCurrentHours % 24)} ساعة` : ""}
-                    {totalCurrentHours === 0 && "غير محددة"}
+                    الفترة الكلية الحالية: {
+                      discussionEnded ? "المناقشة منتهية" : 
+                      Math.floor(totalCurrentHours / 24) > 0 ? `${Math.floor(totalCurrentHours / 24)} يوم` : "" 
+                    } 
+                    {!discussionEnded && Math.floor(totalCurrentHours / 24) > 0 && totalCurrentHours % 24 > 0 ? " و " : ""}
+                    {!discussionEnded && totalCurrentHours % 24 > 0 ? `${Math.floor(totalCurrentHours % 24)} ساعة` : ""}
+                    {totalCurrentHours === 0 && !discussionEnded && "غير محددة"}
                   </p>
                   
                   <p className="text-sm text-purple-700">
-                    الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
-                    {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
-                    {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
-                    {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+                    الوقت المتبقي حالياً: {
+                      discussionEnded ? "المناقشة منتهية" :
+                      remainingDays > 0 ? `${remainingDays} يوم` : ""
+                    } 
+                    {!discussionEnded && remainingDays > 0 && remainingHours > 0 ? " و " : ""}
+                    {!discussionEnded && remainingHours > 0 ? `${remainingHours} ساعة` : ""}
+                    {!discussionEnded && remainingDays === 0 && remainingHours === 0 && "أقل من ساعة"}
                   </p>
                 </div>
                 
