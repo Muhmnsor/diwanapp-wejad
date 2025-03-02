@@ -8,7 +8,7 @@ const UsersManagement = () => {
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
-      <div className="container mx-auto px-4 py-8 flex-grow">
+      <div className="container mx-auto px-4 py-8 flex-grow" dir="rtl">
         <div className="flex items-center justify-center gap-3 mb-8">
           <Users className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold text-center">إدارة المستخدمين</h1>
