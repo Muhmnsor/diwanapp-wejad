@@ -64,7 +64,12 @@ export const useDiscussionSubmit = (
         }
       }
 
-      // تحديث قاعدة البيانات
+      // تحديث قاعدة البيانات بشكل صريح مع تحديد الحالة
+      console.log("تحديث فترة المناقشة وحالة الفكرة:", {
+        discussion_period: newDiscussionPeriod,
+        status: newStatus
+      });
+      
       const { error: updateError } = await supabase
         .from("ideas")
         .update({ 
@@ -74,6 +79,7 @@ export const useDiscussionSubmit = (
         .eq("id", ideaId);
 
       if (updateError) {
+        console.error("خطأ في تحديث بيانات الفكرة:", updateError);
         throw updateError;
       }
 
@@ -92,6 +98,7 @@ export const useDiscussionSubmit = (
   const handleEndDiscussion = async () => {
     setIsSubmitting(true);
     try {
+      console.log("إنهاء المناقشة وتغيير الحالة إلى pending_decision");
       // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة إلى "pending_decision"
       const { error: updateError } = await supabase
         .from("ideas")
