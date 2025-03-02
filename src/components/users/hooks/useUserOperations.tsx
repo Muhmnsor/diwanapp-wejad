@@ -37,44 +37,68 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       if (selectedRole && selectedRole !== selectedUser.role) {
         console.log('Updating user role:', { userId: selectedUser.id, newRole: selectedRole });
         
-        // Check if the user already has a role assigned
-        const { data: existingRole, error: checkError } = await supabase
-          .from('user_roles')
-          .select('*')
-          .eq('user_id', selectedUser.id)
-          .single();
-          
-        if (checkError && checkError.code !== 'PGRST116') {
-          // PGRST116 means no rows returned, which is fine
-          console.error('Error checking existing role:', checkError);
-          throw checkError;
-        }
-        
-        // If user already has a role, update it instead of inserting a new one
-        if (existingRole) {
-          console.log('User has existing role, updating it:', existingRole);
-          const { error: updateRoleError } = await supabase
+        try {
+          // First, try a more direct approach with upsert - this will insert if not exists or update if exists
+          const { error: upsertError } = await supabase
             .from('user_roles')
-            .update({ role_id: selectedRole })
+            .upsert(
+              {
+                user_id: selectedUser.id,
+                role_id: selectedRole
+              },
+              {
+                onConflict: 'user_id',
+                ignoreDuplicates: false
+              }
+            );
+            
+          if (upsertError) {
+            console.error('Upsert approach failed:', upsertError);
+            throw upsertError;
+          }
+          
+          console.log('Role update/insert successful using upsert');
+        } catch (upsertError) {
+          console.error('Error with upsert approach, falling back to manual check:', upsertError);
+          
+          // Fallback to the manual check and update/insert approach
+          // Check if the user already has a role assigned
+          const { data: existingRoles, error: checkError } = await supabase
+            .from('user_roles')
+            .select('*')
             .eq('user_id', selectedUser.id);
             
-          if (updateRoleError) {
-            console.error('Error updating role:', updateRoleError);
-            throw updateRoleError;
+          if (checkError) {
+            console.error('Error checking existing roles:', checkError);
+            throw checkError;
           }
-        } else {
-          // If no existing role, insert a new one
-          console.log('No existing role, inserting new one');
-          const { error: insertRoleError } = await supabase
+          
+          if (existingRoles && existingRoles.length > 0) {
+            // If roles exist, delete them first
+            console.log('Existing roles found, deleting first:', existingRoles);
+            const { error: deleteError } = await supabase
+              .from('user_roles')
+              .delete()
+              .eq('user_id', selectedUser.id);
+              
+            if (deleteError) {
+              console.error('Error deleting existing roles:', deleteError);
+              throw deleteError;
+            }
+          }
+          
+          // Now insert the new role
+          console.log('Inserting new role');
+          const { error: insertError } = await supabase
             .from('user_roles')
             .insert({
               user_id: selectedUser.id,
               role_id: selectedRole
             });
             
-          if (insertRoleError) {
-            console.error('Error assigning new role:', insertRoleError);
-            throw insertRoleError;
+          if (insertError) {
+            console.error('Error inserting new role:', insertError);
+            throw insertError;
           }
         }
         
