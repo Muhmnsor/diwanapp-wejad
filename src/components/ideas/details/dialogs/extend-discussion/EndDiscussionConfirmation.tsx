@@ -26,13 +26,18 @@ export const EndDiscussionConfirmation = ({
   const handleConfirm = async (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // تجنب الإغلاق التلقائي قبل اكتمال العملية
+    // تجنب التنفيذ المتكرر إذا كانت العملية جارية بالفعل
     if (isSubmitting) return;
     
-    // تنفيذ إجراء التأكيد
-    await onConfirm();
-    
-    // عدم إغلاق النافذة هنا، دع الوظيفة onConfirm تتحكم في الإغلاق
+    try {
+      // تنفيذ الإجراء الذي تم تمريره من الأعلى
+      await onConfirm();
+      // لا نغلق النافذة هنا لأن onConfirm ستتولى ذلك
+    } catch (error) {
+      console.error("Error in handleConfirm:", error);
+      // في حالة الخطأ، قد نرغب في السماح للمستخدم بالمحاولة مرة أخرى
+      // لذلك لا نغلق النافذة تلقائيًا
+    }
   };
 
   return (
