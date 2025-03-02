@@ -57,25 +57,16 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
 
       console.log('تم إنشاء المستخدم بنجاح:', authUser.user.id);
 
-      // حذف أي أدوار سابقة (للتأكد)
-      console.log('حذف أي أدوار سابقة للمستخدم...');
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', authUser.user.id);
-        
-      // انتظار لضمان معالجة عملية الحذف
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // انتظار لضمان إنشاء السجل في جدول profiles
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      console.log('محاولة إضافة الدور للمستخدم الجديد...');
-      const { error: roleError, data: roleData } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authUser.user.id,
-          role_id: selectedRole
-        })
-        .select();
-      
+      // تعيين الدور للمستخدم باستخدام RPC بدلاً من الإدخال المباشر
+      console.log('تعيين الدور للمستخدم باستخدام assign_user_role...');
+      const { error: roleError, data: roleData } = await supabase.rpc('assign_user_role', {
+        p_user_id: authUser.user.id,
+        p_role_id: selectedRole
+      });
+
       if (roleError) {
         console.error('خطأ في تعيين الدور:', roleError);
         throw roleError;

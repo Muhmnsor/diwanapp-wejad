@@ -44,45 +44,41 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       }
 
       // Handle role change if selected role is different from current role
-      if (selectedRole && selectedRole !== selectedUser.role) {
+      const currentRoleObj = selectedUser.role ? { name: selectedUser.role } : null;
+      console.log('الدور الحالي:', currentRoleObj);
+      
+      if (selectedRole) {
         console.log('=== تحديث دور المستخدم ===');
         console.log('معرف المستخدم:', selectedUser.id);
-        console.log('الدور القديم:', selectedUser.role);
+        console.log('الدور الحالي:', selectedUser.role);
         console.log('الدور الجديد المحدد:', selectedRole);
         
         try {
           // أولاً، نحذف أي أدوار سابقة
           console.log('حذف الأدوار السابقة...');
-          const { error: deleteError } = await supabase
-            .from('user_roles')
-            .delete()
-            .eq('user_id', selectedUser.id);
+          const { error: deleteError } = await supabase.rpc('delete_user_roles', {
+            p_user_id: selectedUser.id
+          });
             
           if (deleteError) {
             console.error('خطأ في حذف الأدوار السابقة:', deleteError);
             throw deleteError;
           }
           
-          console.log('تم حذف الأدوار السابقة بنجاح، انتظار قبل إضافة الدور الجديد...');
+          console.log('تم حذف الأدوار السابقة بنجاح، إضافة الدور الجديد...');
           
-          // انتظار 500 مللي ثانية للتأكد من إتمام عملية الحذف
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          console.log('إضافة الدور الجديد:', selectedRole);
-          const { error: insertError, data: insertData } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: selectedUser.id,
-              role_id: selectedRole
-            })
-            .select();
+          // إضافة الدور الجديد
+          const { error: assignError } = await supabase.rpc('assign_user_role', {
+            p_user_id: selectedUser.id,
+            p_role_id: selectedRole
+          });
               
-          if (insertError) {
-            console.error('خطأ في إضافة الدور الجديد:', insertError);
-            throw insertError;
+          if (assignError) {
+            console.error('خطأ في إضافة الدور الجديد:', assignError);
+            throw assignError;
           }
           
-          console.log('تم إضافة الدور الجديد بنجاح:', insertData);
+          console.log('تم إضافة الدور الجديد بنجاح');
           
           // Log user activity for role change
           await supabase.rpc('log_user_activity', {
