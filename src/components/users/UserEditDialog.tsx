@@ -44,9 +44,10 @@ export const UserEditDialog = ({
 }: UserEditDialogProps) => {
   // تعيين الدور المحدد عند تغيير المستخدم
   useEffect(() => {
-    if (user && user.role) {
+    if (user && user.role && roles.length > 0) {
       console.log("UserEditDialog - تحميل بيانات المستخدم:", user);
       console.log("UserEditDialog - الدور الحالي للمستخدم:", user.role);
+      console.log("UserEditDialog - الأدوار المتاحة:", roles.map(r => `${r.id}: ${r.name}`));
       
       // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
       const roleObj = roles.find(r => r.name === user.role);
@@ -55,22 +56,43 @@ export const UserEditDialog = ({
         setSelectedRole(roleObj.id);
       } else {
         console.log("UserEditDialog - لم يتم العثور على الدور للمستخدم، تم مسح التحديد");
-        setSelectedRole("");
+        // إذا كانت هناك أدوار متاحة، اختر الأول كافتراضي
+        if (roles.length > 0) {
+          console.log("UserEditDialog - تعيين الدور الافتراضي:", roles[0].id);
+          setSelectedRole(roles[0].id);
+        } else {
+          setSelectedRole("");
+        }
       }
+    } else if (roles.length > 0) {
+      // إذا لم يكن هناك مستخدم أو لم يكن له دور ولكن توجد أدوار متاحة، اختر الأول كافتراضي
+      console.log("UserEditDialog - تعيين الدور الافتراضي (لا يوجد مستخدم أو دور):", roles[0].id);
+      setSelectedRole(roles[0].id);
     } else {
-      // إذا لم يكن هناك مستخدم أو لم يكن له دور، تعيين القيمة الافتراضية
-      console.log("UserEditDialog - لا يوجد مستخدم أو دور، تعيين القيمة الافتراضية");
+      // إذا لم يكن هناك مستخدم ولا أدوار متاحة
+      console.log("UserEditDialog - لا يوجد مستخدم أو أدوار متاحة");
       setSelectedRole("");
     }
   }, [user, roles, setSelectedRole]);
 
-  console.log('UserEditDialog - الأدوار المتاحة:', roles);
+  console.log('UserEditDialog - الأدوار المتاحة:', roles.map(r => `${r.id}: ${r.name}`));
   console.log('UserEditDialog - الدور المحدد:', selectedRole);
   console.log('UserEditDialog - المستخدم الحالي:', user);
 
   // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
   const validateRoleExists = (roleId: string) => {
     return roles.some(role => role.id === roleId);
+  };
+
+  // ترجمة اسم الدور للعربية
+  const getRoleDisplayName = (roleName: string) => {
+    switch (roleName) {
+      case 'admin': return 'مشرف';
+      case 'event_creator': return 'منشئ فعاليات';
+      case 'event_executor': return 'منفذ فعاليات';
+      case 'event_media': return 'إعلامي';
+      default: return roleName;
+    }
   };
 
   return (
@@ -89,34 +111,38 @@ export const UserEditDialog = ({
           </div>
           <div className="space-y-2 text-right">
             <div className="font-medium">الدور الحالي</div>
-            <div className="text-muted-foreground">{user?.role || 'لم يتم تعيين دور'}</div>
+            <div className="text-muted-foreground">{user?.role ? getRoleDisplayName(user.role) : 'لم يتم تعيين دور'}</div>
           </div>
           <div className="space-y-2 text-right">
             <div className="font-medium">الدور الجديد</div>
-            <Select
-              value={selectedRole}
-              onValueChange={(value) => {
-                console.log("UserEditDialog - تم اختيار الدور:", value);
-                if (validateRoleExists(value)) {
-                  const roleName = roles.find(r => r.id === value)?.name;
-                  console.log("UserEditDialog - الدور موجود في القائمة:", value, "- الاسم:", roleName);
-                  setSelectedRole(value);
-                } else {
-                  console.warn("UserEditDialog - تم اختيار دور غير موجود في القائمة:", value);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full text-right">
-                <SelectValue placeholder="اختر الدور" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((role) => (
-                  <SelectItem key={role.id} value={role.id}>
-                    {role.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {roles.length > 0 ? (
+              <Select
+                value={selectedRole}
+                onValueChange={(value) => {
+                  console.log("UserEditDialog - تم اختيار الدور:", value);
+                  if (validateRoleExists(value)) {
+                    const roleName = roles.find(r => r.id === value)?.name;
+                    console.log("UserEditDialog - الدور موجود في القائمة:", value, "- الاسم:", roleName);
+                    setSelectedRole(value);
+                  } else {
+                    console.warn("UserEditDialog - تم اختيار دور غير موجود في القائمة:", value);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full text-right">
+                  <SelectValue placeholder="اختر الدور" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {getRoleDisplayName(role.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="text-sm text-muted-foreground">لا توجد أدوار متاحة</div>
+            )}
           </div>
           <div className="space-y-2 text-right">
             <div className="font-medium">كلمة المرور الجديدة</div>

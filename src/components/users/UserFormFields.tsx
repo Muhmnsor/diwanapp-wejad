@@ -9,6 +9,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Role } from "./types";
+import { useEffect } from "react";
 
 interface UserFormFieldsProps {
   newUsername: string;
@@ -29,8 +30,16 @@ export const UserFormFields = ({
   setSelectedRole,
   roles,
 }: UserFormFieldsProps) => {
-  console.log('UserFormFields - الأدوار المتاحة:', roles);
+  console.log('UserFormFields - الأدوار المتاحة:', roles.map(r => `${r.id}: ${r.name}`));
   console.log('UserFormFields - الدور المحدد:', selectedRole);
+
+  // تأكد من تعيين دور افتراضي إذا كانت هناك أدوار متاحة
+  useEffect(() => {
+    if (roles.length > 0 && !selectedRole) {
+      console.log('UserFormFields - تعيين الدور الافتراضي:', roles[0].id);
+      setSelectedRole(roles[0].id);
+    }
+  }, [roles, selectedRole, setSelectedRole]);
 
   // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
   const validateRoleExists = (roleId: string) => {
@@ -79,7 +88,8 @@ export const UserFormFields = ({
             onValueChange={(value) => {
               console.log("UserFormFields - تم اختيار الدور:", value);
               if (validateRoleExists(value)) {
-                console.log("UserFormFields - الدور موجود في القائمة:", value);
+                const roleName = roles.find(r => r.id === value)?.name;
+                console.log("UserFormFields - الدور موجود في القائمة:", value, "- الاسم:", roleName);
                 setSelectedRole(value);
               } else {
                 console.warn("UserFormFields - تم اختيار دور غير موجود في القائمة:", value);
