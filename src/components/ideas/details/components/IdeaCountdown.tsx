@@ -102,6 +102,22 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     return () => clearInterval(timer);
   }, [discussion_period, created_at, isExpired, ideaId]);
 
+  // تنسيق عرض المدة بشكل موحد بين المكونات
+  const formatPeriodDisplay = (countdown: CountdownTime): string => {
+    const parts = [];
+    if (countdown.days > 0) {
+      parts.push(`${countdown.days} يوم`);
+    }
+    if (countdown.hours > 0) {
+      parts.push(`${countdown.hours} ساعة`);
+    }
+    if (countdown.minutes > 0) {
+      parts.push(`${countdown.minutes} دقيقة`);
+    }
+    
+    return parts.length > 0 ? parts.join(" و ") : "أقل من دقيقة";
+  };
+
   if (!discussion_period) {
     return (
       <div className="flex items-center gap-2 bg-purple-50 rounded-lg py-1.5 px-2 text-sm">
@@ -124,7 +140,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     <div className="flex items-center gap-2 bg-blue-50 rounded-lg py-1.5 px-2 text-sm">
       <span className="font-medium text-blue-800">متبقي للمناقشة:</span>
       <div className="font-bold text-blue-700">
-        {getCountdownDisplay(discussion_period, created_at, countdown)}
+        {formatPeriodDisplay(countdown)}
       </div>
     </div>
   );

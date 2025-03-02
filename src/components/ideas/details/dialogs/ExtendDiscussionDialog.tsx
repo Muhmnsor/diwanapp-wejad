@@ -59,20 +59,24 @@ export const ExtendDiscussionDialog = ({
               console.log("Discussion period from DB:", discussion_period);
               console.log("Created at from DB:", created_at);
               
-              // حساب إجمالي الساعات الحالية
+              // حساب إجمالي الساعات الحالية بشكل دقيق من فترة المناقشة
               let totalHours = 0;
               
+              if (discussion_period.includes('days') || discussion_period.includes('day')) {
+                const daysMatch = discussion_period.match(/(\d+)\s+day/);
+                if (daysMatch) {
+                  totalHours += parseInt(daysMatch[1]) * 24;
+                }
+              }
+              
               if (discussion_period.includes('hours') || discussion_period.includes('hour')) {
-                const match = discussion_period.match(/(\d+)\s+hour/);
-                if (match) {
-                  totalHours = parseInt(match[1]);
+                const hoursMatch = discussion_period.match(/(\d+)\s+hour/);
+                if (hoursMatch) {
+                  totalHours += parseInt(hoursMatch[1]);
                 }
-              } else if (discussion_period.includes('days') || discussion_period.includes('day')) {
-                const match = discussion_period.match(/(\d+)\s+day/);
-                if (match) {
-                  totalHours = parseInt(match[1]) * 24;
-                }
-              } else {
+              }
+              
+              if (totalHours === 0 && !isNaN(parseFloat(discussion_period))) {
                 totalHours = parseFloat(discussion_period);
               }
               
@@ -182,7 +186,11 @@ export const ExtendDiscussionDialog = ({
       // تحديث قاعدة البيانات
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: newDiscussionPeriod })
+        .update({ 
+          discussion_period: newDiscussionPeriod,
+          // إذا كانت العملية إضافة وكانت المناقشة منتهية، نعيد تفعيلها
+          status: (operation === "add" && (remainingDays === 0 && remainingHours === 0)) ? "under_review" : undefined
+        })
         .eq("id", ideaId);
 
       if (updateError) {
@@ -204,10 +212,13 @@ export const ExtendDiscussionDialog = ({
   const handleEndDiscussion = async () => {
     setIsSubmitting(true);
     try {
-      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها
+      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة إلى "pending_decision"
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: "0 hours" })
+        .update({ 
+          discussion_period: "0 hours",
+          status: "pending_decision" 
+        })
         .eq("id", ideaId);
 
       if (updateError) {
@@ -227,6 +238,23 @@ export const ExtendDiscussionDialog = ({
     }
   };
 
+  // تنسيق عرض المدة للتوحيد بين "الفترة الكلية" و"الوقت المتبقي"
+  const formatPeriodDisplay = (days: number, hours: number): string => {
+    if (days === 0 && hours === 0) {
+      return "غير محددة";
+    }
+    
+    const parts = [];
+    if (days > 0) {
+      parts.push(`${days} يوم`);
+    }
+    if (hours > 0) {
+      parts.push(`${hours} ساعة`);
+    }
+    
+    return parts.join(" و ");
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -243,17 +271,11 @@ export const ExtendDiscussionDialog = ({
                 {/* عرض الوقت الحالي والمتبقي */}
                 <div className="p-3 bg-purple-50 rounded-md space-y-2">
                   <p className="text-sm font-medium text-purple-800">
-                    الفترة الكلية الحالية: {Math.floor(totalCurrentHours / 24) > 0 ? `${Math.floor(totalCurrentHours / 24)} يوم` : ""} 
-                    {Math.floor(totalCurrentHours / 24) > 0 && totalCurrentHours % 24 > 0 ? " و " : ""}
-                    {totalCurrentHours % 24 > 0 ? `${Math.floor(totalCurrentHours % 24)} ساعة` : ""}
-                    {totalCurrentHours === 0 && "غير محددة"}
+                    الفترة الكلية الحالية: {formatPeriodDisplay(Math.floor(totalCurrentHours / 24), Math.floor(totalCurrentHours % 24))}
                   </p>
                   
                   <p className="text-sm text-purple-700">
-                    الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
-                    {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
-                    {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
-                    {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+                    الوقت المتبقي حالياً: {remainingDays === 0 && remainingHours === 0 ? "المناقشة منتهية" : formatPeriodDisplay(remainingDays, remainingHours)}
                   </p>
                 </div>
                 
