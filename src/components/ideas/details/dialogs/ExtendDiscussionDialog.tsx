@@ -212,6 +212,21 @@ export const ExtendDiscussionDialog = ({
   const handleEndDiscussion = async () => {
     setIsSubmitting(true);
     try {
+      // التحقق من وجود الفكرة قبل تحديثها
+      const { data: ideaExists, error: checkError } = await supabase
+        .from("ideas")
+        .select("id")
+        .eq("id", ideaId)
+        .single();
+      
+      if (checkError || !ideaExists) {
+        console.error("Error checking idea existence:", checkError);
+        toast.error("لم يتم العثور على الفكرة");
+        setIsSubmitting(false);
+        setIsEndDialogOpen(false);
+        return;
+      }
+      
       // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة إلى "pending_decision"
       const { error: updateError } = await supabase
         .from("ideas")
@@ -227,14 +242,23 @@ export const ExtendDiscussionDialog = ({
 
       console.log("Discussion ended successfully");
       toast.success("تم إنهاء المناقشة بنجاح");
+      
+      // إغلاق نافذة التأكيد أولاً
+      setIsEndDialogOpen(false);
+      
+      // استدعاء الدوال بعد إتمام العملية بنجاح
       onSuccess();
-      onClose();
+      
+      // إغلاق النافذة الرئيسية بعد فترة قصيرة
+      setTimeout(() => {
+        onClose();
+      }, 300);
     } catch (error) {
       console.error("Error ending discussion:", error);
       toast.error("حدث خطأ أثناء إنهاء المناقشة");
+      setIsEndDialogOpen(false);
     } finally {
       setIsSubmitting(false);
-      setIsEndDialogOpen(false);
     }
   };
 
@@ -368,9 +392,12 @@ export const ExtendDiscussionDialog = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-2 justify-between">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSubmitting}>إلغاء</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleEndDiscussion}
+              onClick={(e) => {
+                e.preventDefault();
+                handleEndDiscussion();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isSubmitting}
             >
@@ -382,3 +409,4 @@ export const ExtendDiscussionDialog = ({
     </>
   );
 };
+
