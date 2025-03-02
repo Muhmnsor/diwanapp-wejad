@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Module } from "./types";
