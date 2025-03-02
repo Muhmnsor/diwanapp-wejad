@@ -67,10 +67,15 @@ export const CreateUserDialog = ({
       console.log("الدور المحدد:", selectedRole);
       
       // 1. إنشاء المستخدم في نظام المصادقة
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: userData, error: authError } = await supabase.auth.signUp({
         email: newUsername,
         password: newPassword,
-        email_confirm: true,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            display_name: newDisplayName || null
+          }
+        }
       });
       
       if (authError) {
@@ -78,8 +83,8 @@ export const CreateUserDialog = ({
         throw authError;
       }
       
-      console.log("تم إنشاء المستخدم بنجاح:", authData.user.id);
-      const userId = authData.user.id;
+      console.log("تم إنشاء المستخدم بنجاح:", userData.user.id);
+      const userId = userData.user.id;
       
       // 2. تحديث الاسم الشخصي إذا تم إدخاله
       if (newDisplayName) {
