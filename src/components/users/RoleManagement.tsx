@@ -1,67 +1,29 @@
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RoleDialog } from "./RoleDialog";
-import { RoleDeleteDialog } from "./RoleDeleteDialog";
-import { Role } from "./types";
-import { RolesTabContent } from "./roles/RolesTabContent";
-import { PermissionsTabContent } from "./roles/PermissionsTabContent";
+import { Tabs } from "@/components/ui/tabs";
+import { useRoleManagement } from "./hooks/useRoleManagement";
+import { RoleManagementContent } from "./roles/RoleManagementContent";
+import { TabsNavigation } from "./roles/TabsNavigation";
+import { RoleDialogs } from "./roles/RoleDialogs";
 
 export const RoleManagement = () => {
-  const [roleToEdit, setRoleToEdit] = useState<Role | null>(null);
-  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("roles");
-
-  const { data: roles = [], refetch: refetchRoles, isLoading } = useQuery({
-    queryKey: ['roles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('roles')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        console.error('Error fetching roles:', error);
-        throw error;
-      }
-      
-      return data as Role[];
-    }
-  });
-
-  const handleRoleSaved = () => {
-    toast.success("تم حفظ الدور بنجاح");
-    refetchRoles();
-    setRoleToEdit(null);
-    setIsAddDialogOpen(false);
-  };
-
-  const handleRoleDeleted = () => {
-    toast.success("تم حذف الدور بنجاح");
-    refetchRoles();
-    setRoleToDelete(null);
-    if (selectedRoleId === roleToDelete?.id) {
-      setSelectedRoleId(null);
-      setActiveTab("roles");
-    }
-  };
-
-  // التبديل إلى تبويب الصلاحيات عند اختيار دور
-  const handleSelectRole = (roleId: string) => {
-    setSelectedRoleId(roleId);
-    if (roleId) {
-      setActiveTab("permissions");
-    }
-  };
-
-  // العثور على الدور المحدد حاليا من قائمة الأدوار
-  const selectedRole = roles.find(role => role.id === selectedRoleId);
+  const {
+    roles,
+    isLoading,
+    roleToEdit,
+    setRoleToEdit,
+    roleToDelete,
+    setRoleToDelete,
+    isAddDialogOpen,
+    setIsAddDialogOpen,
+    selectedRoleId,
+    activeTab,
+    setActiveTab,
+    handleAddRole,
+    handleRoleSaved,
+    handleRoleDeleted,
+    handleSelectRole
+  } = useRoleManagement();
 
   return (
     <Card className="shadow-sm" dir="rtl">
@@ -73,46 +35,32 @@ export const RoleManagement = () => {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-          <TabsList>
-            <TabsTrigger value="roles">قائمة الأدوار</TabsTrigger>
-            <TabsTrigger value="permissions" disabled={!selectedRoleId}>
-              صلاحيات الدور
-            </TabsTrigger>
-          </TabsList>
+          <TabsNavigation selectedRoleId={selectedRoleId} />
           
-          <TabsContent value="roles">
-            <RolesTabContent 
-              roles={roles}
-              isLoading={isLoading}
-              selectedRoleId={selectedRoleId}
-              onAddRole={() => setIsAddDialogOpen(true)}
-              onSelectRole={handleSelectRole}
-              onEditRole={setRoleToEdit}
-              onDeleteRole={setRoleToDelete}
-            />
-          </TabsContent>
-          
-          <TabsContent value="permissions">
-            <PermissionsTabContent selectedRole={selectedRole} />
-          </TabsContent>
+          <RoleManagementContent 
+            roles={roles}
+            isLoading={isLoading}
+            selectedRoleId={selectedRoleId}
+            activeTab={activeTab}
+            onSelectRole={handleSelectRole}
+            onEditRole={setRoleToEdit}
+            onDeleteRole={setRoleToDelete}
+            onAddRole={handleAddRole}
+          />
         </Tabs>
       </CardContent>
 
-      <RoleDialog 
-        isOpen={isAddDialogOpen || !!roleToEdit}
-        onClose={() => {
+      <RoleDialogs 
+        roleToEdit={roleToEdit}
+        roleToDelete={roleToDelete}
+        isAddDialogOpen={isAddDialogOpen}
+        onCloseEditDialog={() => {
           setIsAddDialogOpen(false);
           setRoleToEdit(null);
         }}
-        role={roleToEdit}
-        onSave={handleRoleSaved}
-      />
-
-      <RoleDeleteDialog
-        role={roleToDelete}
-        isOpen={!!roleToDelete}
-        onClose={() => setRoleToDelete(null)}
-        onDelete={handleRoleDeleted}
+        onCloseDeleteDialog={() => setRoleToDelete(null)}
+        onRoleSaved={handleRoleSaved}
+        onRoleDeleted={handleRoleDeleted}
       />
     </Card>
   );
