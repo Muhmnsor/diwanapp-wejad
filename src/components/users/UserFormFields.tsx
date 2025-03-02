@@ -18,6 +18,8 @@ interface UserFormFieldsProps {
   selectedRole: string;
   setSelectedRole: (value: string) => void;
   roles: Role[];
+  newDisplayName?: string;
+  setNewDisplayName?: (value: string) => void;
 }
 
 export const UserFormFields = ({
@@ -28,6 +30,8 @@ export const UserFormFields = ({
   selectedRole,
   setSelectedRole,
   roles,
+  newDisplayName = "",
+  setNewDisplayName = () => {},
 }: UserFormFieldsProps) => {
   console.log('Available roles:', roles);
   console.log('Selected role:', selectedRole);
@@ -52,6 +56,16 @@ export const UserFormFields = ({
           placeholder="أدخل البريد الإلكتروني"
           type="email"
           dir="ltr"
+          className="text-right"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>المسمى الوظيفي</Label>
+        <Input
+          value={newDisplayName}
+          onChange={(e) => setNewDisplayName(e.target.value)}
+          placeholder="أدخل المسمى الوظيفي"
+          dir="rtl"
           className="text-right"
         />
       </div>
