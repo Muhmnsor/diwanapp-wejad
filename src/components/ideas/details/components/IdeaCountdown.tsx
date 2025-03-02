@@ -18,12 +18,6 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     seconds: 0
   });
   const [isExpired, setIsExpired] = useState(false);
-  const [key, setKey] = useState<number>(0); // إضافة مفتاح للتحديث القسري للمكون
-
-  useEffect(() => {
-    // تحديث مفتاح عند تغير فترة المناقشة للتأكد من إعادة تشغيل المؤقت
-    setKey(prevKey => prevKey + 1);
-  }, [discussion_period]);
 
   useEffect(() => {
     // تحديث حالة الفكرة عندما تنتهي المناقشة
@@ -106,7 +100,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     const timer = setInterval(calculateTimeLeft, 1000);
     
     return () => clearInterval(timer);
-  }, [discussion_period, created_at, isExpired, ideaId, key]); // إضافة المفتاح للاعتمادات
+  }, [discussion_period, created_at, isExpired, ideaId]);
 
   if (!discussion_period) {
     return (
