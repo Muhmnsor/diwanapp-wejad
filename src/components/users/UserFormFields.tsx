@@ -29,8 +29,13 @@ export const UserFormFields = ({
   setSelectedRole,
   roles,
 }: UserFormFieldsProps) => {
-  console.log('Available roles:', roles);
-  console.log('Selected role:', selectedRole);
+  console.log('UserFormFields - الأدوار المتاحة:', roles);
+  console.log('UserFormFields - الدور المحدد:', selectedRole);
+
+  // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
+  const validateRoleExists = (roleId: string) => {
+    return roles.some(role => role.id === roleId);
+  };
 
   const getRoleDisplayName = (roleName: string) => {
     switch (roleName) {
@@ -71,7 +76,15 @@ export const UserFormFields = ({
         {roles && roles.length > 0 ? (
           <Select 
             value={selectedRole} 
-            onValueChange={setSelectedRole}
+            onValueChange={(value) => {
+              console.log("UserFormFields - تم اختيار الدور:", value);
+              if (validateRoleExists(value)) {
+                console.log("UserFormFields - الدور موجود في القائمة:", value);
+                setSelectedRole(value);
+              } else {
+                console.warn("UserFormFields - تم اختيار دور غير موجود في القائمة:", value);
+              }
+            }}
             dir="rtl"
           >
             <SelectTrigger className="w-full text-right">

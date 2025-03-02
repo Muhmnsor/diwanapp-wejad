@@ -88,6 +88,11 @@ export const useUserOperations = (onUserDeleted: () => void) => {
           console.error('خطأ في التحقق من إضافة الدور:', checkRoleError);
         }
         
+        if (!userRoles || userRoles.length === 0) {
+          console.error('لم يتم تعيين الدور بشكل صحيح رغم عدم وجود خطأ معروف');
+          throw new Error('Role assignment verification failed');
+        }
+        
         console.log('تم إضافة الدور الجديد بنجاح');
         
         // Log user activity for role change

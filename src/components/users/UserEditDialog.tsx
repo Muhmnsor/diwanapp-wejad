@@ -68,10 +68,9 @@ export const UserEditDialog = ({
   console.log('UserEditDialog - الدور المحدد:', selectedRole);
   console.log('UserEditDialog - المستخدم الحالي:', user);
 
-  // وظيفة للحصول على اسم الدور المعروض بناءً على معرفه
-  const getRoleDisplayName = (roleId: string) => {
-    const role = roles.find(r => r.id === roleId);
-    return role ? role.name : 'غير معروف';
+  // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
+  const validateRoleExists = (roleId: string) => {
+    return roles.some(role => role.id === roleId);
   };
 
   return (
@@ -97,8 +96,14 @@ export const UserEditDialog = ({
             <Select
               value={selectedRole}
               onValueChange={(value) => {
-                console.log("UserEditDialog - تم اختيار الدور:", value, "- الاسم:", getRoleDisplayName(value));
-                setSelectedRole(value);
+                console.log("UserEditDialog - تم اختيار الدور:", value);
+                if (validateRoleExists(value)) {
+                  const roleName = roles.find(r => r.id === value)?.name;
+                  console.log("UserEditDialog - الدور موجود في القائمة:", value, "- الاسم:", roleName);
+                  setSelectedRole(value);
+                } else {
+                  console.warn("UserEditDialog - تم اختيار دور غير موجود في القائمة:", value);
+                }
               }}
             >
               <SelectTrigger className="w-full text-right">
@@ -129,6 +134,12 @@ export const UserEditDialog = ({
           onClick={() => {
             console.log("UserEditDialog - تم النقر على زر التحديث");
             console.log("UserEditDialog - الدور المحدد عند التقديم:", selectedRole);
+            // تحقق إضافي قبل التقديم
+            if (selectedRole && !validateRoleExists(selectedRole)) {
+              console.error("UserEditDialog - محاولة تقديم دور غير صالح:", selectedRole);
+              alert("الدور المختار غير صالح، يرجى المحاولة مرة أخرى");
+              return;
+            }
             onSubmit();
           }}
           className="w-full"

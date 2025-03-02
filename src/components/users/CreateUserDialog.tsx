@@ -27,6 +27,11 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
   const [selectedRole, setSelectedRole] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
+  const validateRoleExists = (roleId: string) => {
+    return roles.some(role => role.id === roleId);
+  };
+
   const handleAddUser = async () => {
     if (!newUsername || !newPassword) {
       toast.error("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
@@ -35,6 +40,12 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
 
     if (!selectedRole) {
       toast.error("الرجاء اختيار دور للمستخدم");
+      return;
+    }
+
+    if (!validateRoleExists(selectedRole)) {
+      console.error("CreateUserDialog - محاولة إضافة دور غير صالح:", selectedRole);
+      toast.error("الدور المختار غير صالح، يرجى المحاولة مرة أخرى");
       return;
     }
 
@@ -70,6 +81,19 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       console.log('معرّف المستخدم:', authUser.user.id);
       console.log('معرّف الدور المراد تعيينه:', selectedRole);
       
+      // أولاً، تأكد من حذف أي أدوار سابقة
+      const { error: deleteRoleError } = await supabase.rpc('delete_user_roles', {
+        p_user_id: authUser.user.id
+      });
+      
+      if (deleteRoleError) {
+        console.error('خطأ في حذف الأدوار السابقة:', deleteRoleError);
+        throw deleteRoleError;
+      }
+      
+      console.log('تم حذف الأدوار السابقة (إن وجدت) بنجاح');
+      
+      // ثم قم بتعيين الدور الجديد
       const { error: roleError } = await supabase.rpc('assign_user_role', {
         p_user_id: authUser.user.id,
         p_role_id: selectedRole
@@ -92,6 +116,11 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       console.log('التحقق من إضافة الدور:', userRoles);
       if (checkRoleError) {
         console.error('خطأ في التحقق من إضافة الدور:', checkRoleError);
+      }
+      
+      if (!userRoles || userRoles.length === 0) {
+        console.error('لم يتم تعيين الدور بشكل صحيح رغم عدم وجود خطأ معروف');
+        throw new Error('Role assignment verification failed');
       }
 
       // تسجيل النشاط
