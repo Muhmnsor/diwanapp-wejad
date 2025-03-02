@@ -44,13 +44,32 @@ export const useDiscussionSubmit = (
         userInputHours
       );
 
+      // التحقق من حالة المناقشة للتحديث المناسب
+      let newStatus = undefined;
+      
+      // إذا كانت العملية إضافة
+      if (operation === "add") {
+        // إذا كان الوقت المتبقي صفر (المناقشة منتهية)، نعيد الحالة إلى "قيد المناقشة"
+        if (remainingDays === 0 && remainingHours === 0) {
+          newStatus = "under_review";
+          console.log("إعادة تفعيل المناقشة - الحالة الجديدة:", newStatus);
+        }
+      } 
+      // إذا كانت العملية طرح وأصبح الوقت المتبقي صفرًا
+      else if (operation === "subtract") {
+        const newRemainingHours = totalCurrentHours - userInputHours;
+        if (newRemainingHours <= 0) {
+          newStatus = "pending_decision";
+          console.log("انتهاء المناقشة بعد الطرح - الحالة الجديدة:", newStatus);
+        }
+      }
+
       // تحديث قاعدة البيانات
       const { error: updateError } = await supabase
         .from("ideas")
         .update({ 
           discussion_period: newDiscussionPeriod,
-          // إذا كانت العملية إضافة وكانت المناقشة منتهية، نعيد تفعيلها
-          status: (operation === "add" && (remainingDays === 0 && remainingHours === 0)) ? "under_review" : undefined
+          status: newStatus // إما under_review, pending_decision، أو undefined إذا لم يتغير
         })
         .eq("id", ideaId);
 
@@ -58,7 +77,7 @@ export const useDiscussionSubmit = (
         throw updateError;
       }
 
-      console.log("Discussion period updated successfully");
+      console.log("Discussion period updated successfully with status:", newStatus || "unchanged");
       toast.success(operation === "add" ? "تم تمديد فترة المناقشة بنجاح" : "تم تنقيص فترة المناقشة بنجاح");
       onSuccess();
       onClose();
