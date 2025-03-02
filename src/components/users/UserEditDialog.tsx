@@ -7,15 +7,11 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { User, Role } from "./types";
+import { RoleSelector } from "./dialog/RoleSelector";
+import { UserInfoDisplay } from "./dialog/UserInfoDisplay";
+import { PasswordInput } from "./dialog/PasswordInput";
 
 interface UserEditDialogProps {
   user: User | null;
@@ -67,17 +63,6 @@ export const UserEditDialog = ({
     }
   }, [user, roles, setSelectedRole]);
 
-  // ترجمة اسم الدور للعربية
-  const getRoleDisplayName = (roleName: string) => {
-    switch (roleName) {
-      case 'admin': return 'مشرف';
-      case 'event_creator': return 'منشئ فعاليات';
-      case 'event_executor': return 'منفذ فعاليات';
-      case 'event_media': return 'إعلامي';
-      default: return roleName;
-    }
-  };
-
   // إضافة سجل للتحقق من الدور المحدد قبل الإرسال
   const handleSubmit = () => {
     console.log('التحقق من الدور المحدد قبل الإرسال:', selectedRole);
@@ -103,52 +88,16 @@ export const UserEditDialog = ({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="space-y-2 text-right">
-            <div className="font-medium">البريد الإلكتروني</div>
-            <div>{user?.username}</div>
-          </div>
-          <div className="space-y-2 text-right">
-            <div className="font-medium">الدور الحالي</div>
-            <div className="text-muted-foreground">{user?.role ? getRoleDisplayName(user.role) : 'لم يتم تعيين دور'}</div>
-          </div>
-          <div className="space-y-2 text-right">
-            <div className="font-medium">الدور الجديد</div>
-            {roles.length > 0 ? (
-              <Select
-                value={selectedRole || ''}
-                onValueChange={(value) => {
-                  console.log('تم اختيار الدور الجديد:', value);
-                  const role = roles.find(r => r.id === value);
-                  console.log('معلومات الدور المختار:', role);
-                  setSelectedRole(value);
-                }}
-              >
-                <SelectTrigger className="w-full text-right">
-                  <SelectValue placeholder="اختر الدور" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {getRoleDisplayName(role.name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <div className="text-sm text-muted-foreground">لا توجد أدوار متاحة</div>
-            )}
-          </div>
-          <div className="space-y-2 text-right">
-            <div className="font-medium">كلمة المرور الجديدة</div>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="اترك فارغاً إذا لم ترد التغيير"
-              dir="ltr"
-              className="w-full px-3 py-2 border rounded-md text-right"
-            />
-          </div>
+          <UserInfoDisplay user={user} />
+          <RoleSelector 
+            roles={roles} 
+            selectedRole={selectedRole} 
+            onRoleChange={setSelectedRole} 
+          />
+          <PasswordInput 
+            newPassword={newPassword} 
+            setNewPassword={setNewPassword} 
+          />
         </div>
         <Button 
           onClick={handleSubmit}
