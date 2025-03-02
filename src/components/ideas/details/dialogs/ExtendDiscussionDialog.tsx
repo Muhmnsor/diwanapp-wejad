@@ -179,10 +179,28 @@ export const ExtendDiscussionDialog = ({
       
       console.log("New discussion period:", newDiscussionPeriod);
 
-      // تحديث قاعدة البيانات
+      // تحديث قاعدة البيانات - تحديث الحالة إلى draft عند التمديد والتأكد من أن الفترة أكبر من صفر
+      const updates = { discussion_period: newDiscussionPeriod };
+      
+      // إذا كان التمديد (إضافة وقت) وكانت الحالة منتهية، نعيد الحالة إلى draft
+      if (operation === "add" && newTotalHours > 0) {
+        // تحقق من حالة الفكرة الحالية
+        const { data: ideaStatus } = await supabase
+          .from("ideas")
+          .select("status")
+          .eq("id", ideaId)
+          .single();
+        
+        // إذا كانت الحالة "pending_decision" (بانتظار القرار)، نعيدها إلى "draft" (قيد المناقشة)
+        if (ideaStatus && ideaStatus.status === "pending_decision") {
+          updates.status = "draft";
+        }
+      }
+
+      // تحديث قاعدة البيانات بالقيم الجديدة
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: newDiscussionPeriod })
+        .update(updates)
         .eq("id", ideaId);
 
       if (updateError) {
@@ -204,10 +222,13 @@ export const ExtendDiscussionDialog = ({
   const handleEndDiscussion = async () => {
     setIsSubmitting(true);
     try {
-      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها
+      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتحديث الحالة إلى بانتظار القرار
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: "0 hours" })
+        .update({ 
+          discussion_period: "0 hours",
+          status: "pending_decision" 
+        })
         .eq("id", ideaId);
 
       if (updateError) {
