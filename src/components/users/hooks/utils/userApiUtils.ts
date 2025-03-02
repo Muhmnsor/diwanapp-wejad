@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "../../types";
@@ -38,6 +37,13 @@ export const assignUserRole = async (userId: string, roleId: string): Promise<bo
   });
   
   try {
+    // تسجيل حالة اتصال Supabase قبل الاستدعاء
+    console.log('فحص حالة اتصال Supabase...');
+    const { data: healthCheck, error: healthError } = await supabase.rpc('version');
+    console.log('نتيجة فحص الاتصال:', healthCheck, healthError);
+    
+    // استدعاء وظيفة RPC مع توضيح المزيد من المعلومات للتصحيح
+    console.log('استدعاء وظيفة assign_user_role...');
     const { data: roleData, error: roleError } = await supabase.rpc('assign_user_role', {
       p_user_id: userId,
       p_role_id: roleId
@@ -46,8 +52,12 @@ export const assignUserRole = async (userId: string, roleId: string): Promise<bo
     if (roleError) {
       console.error('خطأ في تعيين الدور الجديد:', roleError);
       console.error('تفاصيل الخطأ:', JSON.stringify(roleError));
+      console.error('رمز الخطأ:', roleError.code);
+      console.error('رسالة الخطأ:', roleError.message);
+      console.error('تفاصيل إضافية:', roleError.details);
       
       // محاولة تعيين الدور يدويًا إذا فشلت وظيفة RPC
+      console.log('محاولة تعيين الدور يدويًا بعد فشل RPC...');
       const manualResult = await assignUserRoleManually(userId, roleId);
       return manualResult;
     } else {
@@ -65,10 +75,13 @@ export const assignUserRole = async (userId: string, roleId: string): Promise<bo
  * Fallback manual role assignment method
  */
 export const assignUserRoleManually = async (userId: string, roleId: string): Promise<boolean> => {
-  console.log('محاولة تعيين الدور يدويًا...');
+  console.log('بدء عملية تعيين الدور يدويًا...');
+  console.log('معرف المستخدم:', userId);
+  console.log('معرف الدور:', roleId);
   
   try {
     // Delete existing roles first
+    console.log('حذف الأدوار الحالية أولاً...');
     const { error: deleteError } = await supabase
       .from('user_roles')
       .delete()
@@ -79,17 +92,26 @@ export const assignUserRoleManually = async (userId: string, roleId: string): Pr
       return false;
     }
     
+    console.log('تم حذف الأدوار الحالية بنجاح');
+    
     // Add the new role
-    const { error: insertError } = await supabase
+    console.log('إضافة الدور الجديد...');
+    const { data: insertData, error: insertError } = await supabase
       .from('user_roles')
       .insert({ user_id: userId, role_id: roleId });
       
     if (insertError) {
       console.error('خطأ في إضافة الدور الجديد:', insertError);
+      console.error('تفاصيل الخطأ:', JSON.stringify(insertError));
       return false;
     }
     
+    console.log('نتيجة إدراج الدور:', insertData);
     console.log('تم تعيين الدور يدويًا بنجاح');
+    
+    // التحقق من تحديث الدور
+    await verifyUserRoles(userId);
+    
     return true;
   } catch (error) {
     console.error('خطأ عام في تعيين الدور يدويًا:', error);
@@ -177,6 +199,8 @@ export const deleteUser = async (userId: string) => {
  * Verifies user roles after update for debugging
  */
 export const verifyUserRoles = async (userId: string) => {
+  console.log('بدء التحقق من أدوار المستخدم بعد التحديث...');
+  
   // Check roles after update
   const { data: userRolesAfter, error: rolesCheckError } = await supabase
     .from('user_roles')
@@ -187,6 +211,9 @@ export const verifyUserRoles = async (userId: string) => {
     console.error('خطأ في التحقق من الأدوار بعد التحديث:', rolesCheckError);
   } else {
     console.log('أدوار المستخدم بعد التحديث:', userRolesAfter);
+    if (userRolesAfter && userRolesAfter.length === 0) {
+      console.warn('لم يتم العثور على أدوار للمستخدم بعد التحديث!');
+    }
   }
   
   // Log user roles with role information
@@ -199,5 +226,20 @@ export const verifyUserRoles = async (userId: string) => {
     console.error('خطأ في جلب معلومات الدور الكاملة:', rolesNameError);
   } else {
     console.log('معلومات دور المستخدم الكاملة بعد التحديث:', userRolesWithName);
+    if (userRolesWithName && userRolesWithName.length === 0) {
+      console.warn('لم يتم العثور على معلومات دور للمستخدم بعد التحديث!');
+    }
+  }
+  
+  // Check auth.users table constraints
+  try {
+    const { data: userDetails, error: userError } = await supabase.auth.admin.getUserById(userId);
+    if (userError) {
+      console.error('خطأ في التحقق من بيانات المستخدم في جدول auth.users:', userError);
+    } else {
+      console.log('بيانات المستخدم في auth.users:', userDetails);
+    }
+  } catch (error) {
+    console.log('غير قادر على الوصول إلى بيانات auth.users:', error);
   }
 };

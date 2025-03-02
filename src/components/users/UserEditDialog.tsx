@@ -45,7 +45,7 @@ export const UserEditDialog = ({
       console.log('أدوار المستخدم المتاحة:', roles);
       console.log('دور المستخدم الحالي:', user.role);
 
-      if (user.role === 'لم يتم تعيين دور') {
+      if (user.role === 'لم يتم تعيين دور' || !user.role) {
         // إذا لم يكن للمستخدم دور محدد، نضبط القيمة إلى القيمة الخاصة بإزالة الدور
         console.log('المستخدم ليس له دور محدد، تعيين selectedRole للقيمة الخاصة بإزالة الدور');
         setSelectedRole('remove_role');
