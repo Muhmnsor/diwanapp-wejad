@@ -1,3 +1,4 @@
+
 import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,9 +16,12 @@ export const Navigation = () => {
     return location.pathname === path;
   };
 
+  // تحقق مما إذا كان المستخدم مديرًا ماليًا (بالإضافة إلى المسؤول)
+  const shouldShowAdminLinks = user?.isAdmin || user?.role === 'financial_manager';
+
   return (
     <nav className="flex gap-2 md:gap-4 items-center flex-wrap" dir="rtl">
-      {user?.isAdmin && <AdminNavLinks isActive={isActive} isMobile={isMobile} />}
+      {shouldShowAdminLinks && <AdminNavLinks isActive={isActive} isMobile={isMobile} />}
     </nav>
   );
 };
