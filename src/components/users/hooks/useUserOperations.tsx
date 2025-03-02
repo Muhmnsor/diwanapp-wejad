@@ -20,6 +20,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
 
     setIsSubmitting(true);
     try {
+      // Handle password change if provided
       if (newPassword) {
         const { error: passwordError } = await supabase.functions.invoke('manage-users', {
           body: {
@@ -32,18 +33,33 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         if (passwordError) throw passwordError;
       }
 
+      // Handle role change if selected role is different from current role
       if (selectedRole && selectedRole !== selectedUser.role) {
         console.log('Updating user role:', { userId: selectedUser.id, newRole: selectedRole });
         
-        const { error: roleError } = await supabase.functions.invoke('manage-users', {
-          body: {
-            operation: 'update_role',
-            userId: selectedUser.id,
-            newRole: selectedRole
-          }
-        });
-
-        if (roleError) throw roleError;
+        // First, remove any existing roles for this user
+        const { error: deleteRoleError } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', selectedUser.id);
+          
+        if (deleteRoleError) {
+          console.error('Error removing existing roles:', deleteRoleError);
+          throw deleteRoleError;
+        }
+        
+        // Then assign the new role
+        const { error: insertRoleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: selectedUser.id,
+            role_id: selectedRole
+          });
+          
+        if (insertRoleError) {
+          console.error('Error assigning new role:', insertRoleError);
+          throw insertRoleError;
+        }
         
         // Log user activity for role change
         await supabase.rpc('log_user_activity', {
@@ -66,7 +82,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       setSelectedUser(null);
       setNewPassword("");
       setSelectedRole("");
-      onUserDeleted();
+      onUserDeleted(); // Refresh the users list
     } catch (error) {
       console.error('Error updating user:', error);
       toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");

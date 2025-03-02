@@ -51,6 +51,21 @@ export const UserEditDialog = ({
     }
   };
 
+  // Set the selected role when user changes
+  React.useEffect(() => {
+    if (user && user.role) {
+      // Find role ID that matches user's role name
+      const roleObj = roles.find(r => r.name === user.role);
+      if (roleObj) {
+        setSelectedRole(roleObj.id);
+      }
+    }
+  }, [user, roles, setSelectedRole]);
+
+  console.log('Current roles:', roles);
+  console.log('Selected role:', selectedRole);
+  console.log('Current user:', user);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
