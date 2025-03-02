@@ -180,7 +180,13 @@ export const ExtendDiscussionDialog = ({
       console.log("New discussion period:", newDiscussionPeriod);
 
       // تحديث قاعدة البيانات - تحديث الحالة إلى draft عند التمديد والتأكد من أن الفترة أكبر من صفر
-      const updates = { discussion_period: newDiscussionPeriod };
+      // تعريف نوع كائن التحديثات لتجنب خطأ TypeScript
+      interface IdeaUpdates {
+        discussion_period: string;
+        status?: string;
+      }
+      
+      const updates: IdeaUpdates = { discussion_period: newDiscussionPeriod };
       
       // إذا كان التمديد (إضافة وقت) وكانت الحالة منتهية، نعيد الحالة إلى draft
       if (operation === "add" && newTotalHours > 0) {
