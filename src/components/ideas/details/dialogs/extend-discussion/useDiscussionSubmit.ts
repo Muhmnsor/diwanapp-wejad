@@ -99,23 +99,33 @@ export const useDiscussionSubmit = (
     setIsSubmitting(true);
     try {
       console.log("إنهاء المناقشة وتغيير الحالة إلى pending_decision");
+      
+      // إضافة تأخير قصير قبل الطلب لتجنب مشاكل التوقيت
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة إلى "pending_decision"
-      const { error: updateError } = await supabase
+      const { data, error: updateError } = await supabase
         .from("ideas")
         .update({ 
           discussion_period: "0 hours",
           status: "pending_decision" 
         })
-        .eq("id", ideaId);
+        .eq("id", ideaId)
+        .select();
 
       if (updateError) {
+        console.error("خطأ في إنهاء المناقشة:", updateError);
         throw updateError;
       }
 
-      console.log("Discussion ended successfully");
+      console.log("تم إنهاء المناقشة بنجاح:", data);
       toast.success("تم إنهاء المناقشة بنجاح");
-      onSuccess();
-      onClose();
+      
+      // انتظار لحظة قبل إغلاق النافذة للتأكد من تحديث الحالة
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 300);
     } catch (error) {
       console.error("Error ending discussion:", error);
       toast.error("حدث خطأ أثناء إنهاء المناقشة");

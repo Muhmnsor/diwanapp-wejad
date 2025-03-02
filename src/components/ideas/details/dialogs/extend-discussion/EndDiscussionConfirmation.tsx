@@ -23,6 +23,18 @@ export const EndDiscussionConfirmation = ({
   onConfirm,
   isSubmitting
 }: EndDiscussionConfirmationProps) => {
+  const handleConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // تجنب الإغلاق التلقائي قبل اكتمال العملية
+    if (isSubmitting) return;
+    
+    // تنفيذ إجراء التأكيد
+    await onConfirm();
+    
+    // عدم إغلاق النافذة هنا، دع الوظيفة onConfirm تتحكم في الإغلاق
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent dir="rtl">
@@ -35,7 +47,7 @@ export const EndDiscussionConfirmation = ({
         <AlertDialogFooter className="flex gap-2 justify-between">
           <AlertDialogCancel>إلغاء</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={isSubmitting}
           >
