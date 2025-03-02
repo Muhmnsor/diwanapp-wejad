@@ -18,7 +18,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
     setIsSubmitting(true);
 
     try {
-      // التعامل مع تغيير المسمى الشخصي
+      // تسجيل بيانات تحديث المستخدم
       console.log("تحديث بيانات المستخدم:", {
         id: selectedUser.id,
         displayName: selectedUser.displayName,
@@ -27,10 +27,28 @@ export const useUserOperations = (onUserDeleted: () => void) => {
 
       // تحديث اسم العرض في جدول profiles
       if (selectedUser.displayName !== undefined) {
-        const { error: displayNameError } = await supabase
+        console.log("محاولة تحديث المسمى الشخصي:", selectedUser.displayName);
+        
+        const { data: profileData, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', selectedUser.id)
+          .single();
+          
+        if (profileCheckError) {
+          console.error("خطأ في التحقق من وجود ملف التعريف:", profileCheckError);
+        }
+        
+        console.log("بيانات الملف الشخصي الحالية:", profileData);
+
+        // محاولة تحديث الملف الشخصي
+        const { data: updateResult, error: displayNameError } = await supabase
           .from('profiles')
           .update({ display_name: selectedUser.displayName })
-          .eq('id', selectedUser.id);
+          .eq('id', selectedUser.id)
+          .select();
+
+        console.log("نتيجة تحديث المسمى الشخصي:", updateResult);
 
         if (displayNameError) {
           console.error("خطأ في تحديث المسمى الشخصي:", displayNameError);

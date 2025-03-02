@@ -24,8 +24,8 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
     }
   };
 
-  // تسجيل معلومات لتتبع البيانات
-  console.log("عرض بيانات المستخدم:", {
+  // تسجيل معلومات لتتبع البيانات المعروضة
+  console.log("عرض بيانات المستخدم في صف الجدول:", {
     id: user.id,
     username: user.username,
     displayName: user.displayName,
