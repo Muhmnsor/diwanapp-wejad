@@ -28,23 +28,19 @@ export const calculateTimeRemaining = (
         discussion_period.includes('hours') || discussion_period.includes('hour')) {
       console.log("تم اكتشاف صيغة days/hours");
       
-      // التعامل مع الأيام
-      if (discussion_period.includes('day')) {
-        const daysMatch = discussion_period.match(/(\d+)\s+day/);
-        if (daysMatch) {
-          const days = parseInt(daysMatch[1]);
+      const parts = discussion_period.split(' ');
+      
+      // حساب إجمالي الساعات من الأيام والساعات
+      for (let i = 0; i < parts.length; i++) {
+        if ((parts[i] === 'days' || parts[i] === 'day') && i > 0) {
+          const days = parseInt(parts[i-1]);
           if (!isNaN(days)) {
             totalHours += days * 24;
             console.log(`تم إضافة ${days} يوم (${days * 24} ساعة) للمجموع`);
           }
         }
-      }
-      
-      // التعامل مع الساعات
-      if (discussion_period.includes('hour')) {
-        const hoursMatch = discussion_period.match(/(\d+)\s+hour/);
-        if (hoursMatch) {
-          const hours = parseInt(hoursMatch[1]);
+        if ((parts[i] === 'hours' || parts[i] === 'hour') && i > 0) {
+          const hours = parseInt(parts[i-1]);
           if (!isNaN(hours)) {
             totalHours += hours;
             console.log(`تم إضافة ${hours} ساعة للمجموع`);
