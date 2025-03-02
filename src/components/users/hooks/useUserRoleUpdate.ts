@@ -17,8 +17,8 @@ export const useUserRoleUpdate = () => {
     }
 
     try {
-      // إذا تم اختيار دور معين
-      if (selectedRole) {
+      // إذا تم اختيار دور معين وليس القيمة الخاصة بإزالة الدور
+      if (selectedRole && selectedRole !== 'remove_role') {
         console.log('تعيين الدور الجديد:', selectedRole);
         const result = await assignUserRole(selectedUser.id, selectedRole);
         
@@ -37,8 +37,8 @@ export const useUserRoleUpdate = () => {
           `تم تغيير الدور`
         );
       } else {
-        // إذا لم يتم اختيار دور، إزالة جميع الأدوار
-        console.log('لم يتم تحديد دور، إزالة جميع الأدوار...');
+        // إذا تم اختيار "إزالة الدور" أو كانت القيمة فارغة، إزالة جميع الأدوار
+        console.log('تم اختيار إزالة الدور، إزالة جميع الأدوار...');
         const result = await deleteUserRoles(selectedUser.id);
         
         if (!result) {

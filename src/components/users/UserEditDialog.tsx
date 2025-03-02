@@ -46,9 +46,9 @@ export const UserEditDialog = ({
       console.log('دور المستخدم الحالي:', user.role);
 
       if (user.role === 'لم يتم تعيين دور') {
-        // إذا لم يكن للمستخدم دور محدد، نضبط القيمة إلى فارغة (لم يتم اختيار أي دور)
-        console.log('المستخدم ليس له دور محدد، تعيين selectedRole إلى null');
-        setSelectedRole('');
+        // إذا لم يكن للمستخدم دور محدد، نضبط القيمة إلى القيمة الخاصة بإزالة الدور
+        console.log('المستخدم ليس له دور محدد، تعيين selectedRole للقيمة الخاصة بإزالة الدور');
+        setSelectedRole('remove_role');
       } else {
         // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
         const roleObj = roles.find(r => r.name === user.role);
@@ -56,19 +56,20 @@ export const UserEditDialog = ({
           console.log('تم العثور على الدور المطابق:', roleObj);
           setSelectedRole(roleObj.id);
           console.log('تم تعيين الدور المحدد إلى:', roleObj.id);
-        } else if (roles.length > 0) {
-          // إذا لم يتم العثور على الدور، استخدم أول دور متاح كافتراضي
-          console.log('لم يتم العثور على الدور المطابق، استخدام الدور الافتراضي الأول:', roles[0].id);
-          setSelectedRole(roles[0].id);
+        } else {
+          // إذا لم يتم العثور على الدور، نستخدم القيمة الخاصة بإزالة الدور
+          console.log('لم يتم العثور على الدور المطابق، تعيين قيمة إزالة الدور');
+          setSelectedRole('remove_role');
         }
       }
     } else if (roles.length > 0) {
-      // إذا لم يكن هناك مستخدم ولكن توجد أدوار، حدد الدور الأول كافتراضي
-      console.log('لا يوجد مستخدم، تعيين الدور الافتراضي الأول:', roles[0].id);
+      // إذا لم يكن هناك مستخدم محدد، ولكن توجد أدوار، نستخدم الدور الأول كافتراضي
+      console.log('لا يوجد مستخدم محدد، تعيين الدور الافتراضي الأول:', roles[0].id);
       setSelectedRole(roles[0].id);
     } else {
-      // إذا لم يكن هناك أدوار متاحة، اضبط القيمة إلى فارغة
-      setSelectedRole('');
+      // إذا لم يكن هناك أدوار متاحة، نستخدم القيمة الخاصة بإزالة الدور
+      setSelectedRole('remove_role');
+      console.log('لا توجد أدوار متاحة، تعيين قيمة إزالة الدور');
     }
   }, [user, roles, setSelectedRole]);
 
@@ -81,11 +82,11 @@ export const UserEditDialog = ({
     console.log('الأدوار المتاحة عند الإرسال:', roles);
     
     // البحث عن الدور المحدد وعرض معلوماته قبل الإرسال
-    if (selectedRole) {
+    if (selectedRole && selectedRole !== 'remove_role') {
       const selectedRoleObj = roles.find(r => r.id === selectedRole);
       console.log('الدور المحدد قبل الإرسال:', selectedRoleObj);
     } else {
-      console.log('لم يتم تحديد دور قبل الإرسال');
+      console.log('تم تحديد إزالة الدور قبل الإرسال');
     }
     
     onSubmit();
