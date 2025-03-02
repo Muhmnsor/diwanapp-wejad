@@ -45,16 +45,24 @@ export const UserEditDialog = ({
   // تعيين الدور المحدد عند فتح نافذة التعديل
   useEffect(() => {
     if (user && roles.length > 0) {
+      console.log('تهيئة مربع الحوار لتعديل المستخدم:', user.username);
+      console.log('أدوار المستخدم المتاحة:', roles);
+      console.log('دور المستخدم الحالي:', user.role);
+
       // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
       const roleObj = roles.find(r => r.name === user.role);
       if (roleObj) {
+        console.log('تم العثور على الدور المطابق:', roleObj);
         setSelectedRole(roleObj.id);
+        console.log('تم تعيين الدور المحدد إلى:', roleObj.id);
       } else if (roles.length > 0) {
         // إذا لم يتم العثور على الدور، استخدم أول دور متاح كافتراضي
+        console.log('لم يتم العثور على الدور المطابق، استخدام الدور الافتراضي الأول:', roles[0].id);
         setSelectedRole(roles[0].id);
       }
     } else if (roles.length > 0) {
       // إذا لم يكن هناك مستخدم ولكن توجد أدوار، حدد الدور الأول كافتراضي
+      console.log('لا يوجد مستخدم، تعيين الدور الافتراضي الأول:', roles[0].id);
       setSelectedRole(roles[0].id);
     }
   }, [user, roles, setSelectedRole]);
@@ -93,7 +101,10 @@ export const UserEditDialog = ({
             {roles.length > 0 ? (
               <Select
                 value={selectedRole || ''}
-                onValueChange={setSelectedRole}
+                onValueChange={(value) => {
+                  console.log('تم اختيار الدور الجديد:', value);
+                  setSelectedRole(value);
+                }}
               >
                 <SelectTrigger className="w-full text-right">
                   <SelectValue placeholder="اختر الدور" />
@@ -123,7 +134,15 @@ export const UserEditDialog = ({
           </div>
         </div>
         <Button 
-          onClick={onSubmit}
+          onClick={() => {
+            console.log('تم النقر على زر التحديث');
+            console.log('معلومات المستخدم عند التقديم:', {
+              userId: user?.id,
+              selectedRole,
+              newPassword: newPassword ? '(غير فارغ)' : '(فارغ)'
+            });
+            onSubmit();
+          }}
           className="w-full"
           disabled={isSubmitting}
         >

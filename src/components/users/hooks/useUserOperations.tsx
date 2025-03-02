@@ -43,21 +43,41 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         console.log('تم تحديث كلمة المرور بنجاح');
       }
 
-      // تحديث دور المستخدم - استخدام وظيفة قاعدة البيانات المحسنة
+      // تحديث دور المستخدم باستخدام وظيفة RPC
       if (selectedRole) {
         console.log('تعيين الدور الجديد:', selectedRole);
         
-        const { error: roleError } = await supabase.rpc('assign_user_role', {
+        // تسجيل محاولة استدعاء وظيفة تعيين الدور
+        console.log('استدعاء وظيفة assign_user_role مع المعلمات:', {
+          p_user_id: selectedUser.id,
+          p_role_id: selectedRole
+        });
+        
+        const { data: roleData, error: roleError } = await supabase.rpc('assign_user_role', {
           p_user_id: selectedUser.id,
           p_role_id: selectedRole
         });
             
         if (roleError) {
           console.error('خطأ في تعيين الدور الجديد:', roleError);
+          console.error('تفاصيل الخطأ:', JSON.stringify(roleError));
           throw roleError;
         }
         
+        console.log('نتيجة استدعاء وظيفة assign_user_role:', roleData);
         console.log('تم تعيين الدور الجديد بنجاح');
+        
+        // تحقق من الأدوار بعد التحديث
+        const { data: userRolesAfter, error: rolesCheckError } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', selectedUser.id);
+          
+        if (rolesCheckError) {
+          console.error('خطأ في التحقق من الأدوار بعد التحديث:', rolesCheckError);
+        } else {
+          console.log('أدوار المستخدم بعد التحديث:', userRolesAfter);
+        }
         
         // تسجيل نشاط تغيير الدور
         await supabase.rpc('log_user_activity', {
@@ -68,15 +88,17 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       } else {
         // إذا لم يتم تحديد دور، نقوم بحذف جميع الأدوار
         console.log('حذف جميع أدوار المستخدم...');
-        const { error: deleteRoleError } = await supabase.rpc('delete_user_roles', {
+        const { data: deleteRoleData, error: deleteRoleError } = await supabase.rpc('delete_user_roles', {
           p_user_id: selectedUser.id
         });
         
         if (deleteRoleError) {
           console.error('خطأ في حذف أدوار المستخدم:', deleteRoleError);
+          console.error('تفاصيل الخطأ:', JSON.stringify(deleteRoleError));
           throw deleteRoleError;
         }
         
+        console.log('نتيجة استدعاء وظيفة delete_user_roles:', deleteRoleData);
         console.log('تم حذف أدوار المستخدم بنجاح');
         
         // تسجيل نشاط حذف الدور
