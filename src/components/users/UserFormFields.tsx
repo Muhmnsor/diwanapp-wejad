@@ -41,11 +41,6 @@ export const UserFormFields = ({
     }
   }, [roles, selectedRole, setSelectedRole]);
 
-  // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
-  const validateRoleExists = (roleId: string) => {
-    return roles.some(role => role.id === roleId);
-  };
-
   const getRoleDisplayName = (roleName: string) => {
     switch (roleName) {
       case 'admin': return 'مشرف';
@@ -84,17 +79,8 @@ export const UserFormFields = ({
         <Label>الدور</Label>
         {roles && roles.length > 0 ? (
           <Select 
-            value={selectedRole} 
-            onValueChange={(value) => {
-              console.log("UserFormFields - تم اختيار الدور:", value);
-              if (validateRoleExists(value)) {
-                const roleName = roles.find(r => r.id === value)?.name;
-                console.log("UserFormFields - الدور موجود في القائمة:", value, "- الاسم:", roleName);
-                setSelectedRole(value);
-              } else {
-                console.warn("UserFormFields - تم اختيار دور غير موجود في القائمة:", value);
-              }
-            }}
+            value={selectedRole || ''}
+            onValueChange={setSelectedRole}
             dir="rtl"
           >
             <SelectTrigger className="w-full text-right">

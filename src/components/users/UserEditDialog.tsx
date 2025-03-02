@@ -79,11 +79,6 @@ export const UserEditDialog = ({
   console.log('UserEditDialog - الدور المحدد:', selectedRole);
   console.log('UserEditDialog - المستخدم الحالي:', user);
 
-  // تحقق مما إذا كان الدور موجوداً حقاً في القائمة
-  const validateRoleExists = (roleId: string) => {
-    return roles.some(role => role.id === roleId);
-  };
-
   // ترجمة اسم الدور للعربية
   const getRoleDisplayName = (roleName: string) => {
     switch (roleName) {
@@ -117,17 +112,8 @@ export const UserEditDialog = ({
             <div className="font-medium">الدور الجديد</div>
             {roles.length > 0 ? (
               <Select
-                value={selectedRole}
-                onValueChange={(value) => {
-                  console.log("UserEditDialog - تم اختيار الدور:", value);
-                  if (validateRoleExists(value)) {
-                    const roleName = roles.find(r => r.id === value)?.name;
-                    console.log("UserEditDialog - الدور موجود في القائمة:", value, "- الاسم:", roleName);
-                    setSelectedRole(value);
-                  } else {
-                    console.warn("UserEditDialog - تم اختيار دور غير موجود في القائمة:", value);
-                  }
-                }}
+                value={selectedRole || ''}
+                onValueChange={setSelectedRole}
               >
                 <SelectTrigger className="w-full text-right">
                   <SelectValue placeholder="اختر الدور" />
@@ -157,17 +143,7 @@ export const UserEditDialog = ({
           </div>
         </div>
         <Button 
-          onClick={() => {
-            console.log("UserEditDialog - تم النقر على زر التحديث");
-            console.log("UserEditDialog - الدور المحدد عند التقديم:", selectedRole);
-            // تحقق إضافي قبل التقديم
-            if (selectedRole && !validateRoleExists(selectedRole)) {
-              console.error("UserEditDialog - محاولة تقديم دور غير صالح:", selectedRole);
-              alert("الدور المختار غير صالح، يرجى المحاولة مرة أخرى");
-              return;
-            }
-            onSubmit();
-          }}
+          onClick={onSubmit}
           className="w-full"
           disabled={isSubmitting}
         >
