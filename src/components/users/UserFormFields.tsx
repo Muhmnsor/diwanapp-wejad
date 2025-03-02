@@ -30,17 +30,14 @@ export const UserFormFields = ({
   setSelectedRole,
   roles,
 }: UserFormFieldsProps) => {
-  console.log('UserFormFields - الأدوار المتاحة:', roles.map(r => `${r.id}: ${r.name}`));
-  console.log('UserFormFields - الدور المحدد:', selectedRole);
-
-  // تأكد من تعيين دور افتراضي إذا كانت هناك أدوار متاحة
+  // تعيين دور افتراضي إذا كانت هناك أدوار متاحة ولم يتم تحديد أي دور
   useEffect(() => {
     if (roles.length > 0 && !selectedRole) {
-      console.log('UserFormFields - تعيين الدور الافتراضي:', roles[0].id);
       setSelectedRole(roles[0].id);
     }
   }, [roles, selectedRole, setSelectedRole]);
 
+  // ترجمة اسم الدور إلى العربية
   const getRoleDisplayName = (roleName: string) => {
     switch (roleName) {
       case 'admin': return 'مشرف';

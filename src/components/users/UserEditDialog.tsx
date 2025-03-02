@@ -42,42 +42,22 @@ export const UserEditDialog = ({
   isSubmitting,
   roles = []
 }: UserEditDialogProps) => {
-  // تعيين الدور المحدد عند تغيير المستخدم
+  // تعيين الدور المحدد عند فتح نافذة التعديل
   useEffect(() => {
-    if (user && user.role && roles.length > 0) {
-      console.log("UserEditDialog - تحميل بيانات المستخدم:", user);
-      console.log("UserEditDialog - الدور الحالي للمستخدم:", user.role);
-      console.log("UserEditDialog - الأدوار المتاحة:", roles.map(r => `${r.id}: ${r.name}`));
-      
+    if (user && roles.length > 0) {
       // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
       const roleObj = roles.find(r => r.name === user.role);
       if (roleObj) {
-        console.log("UserEditDialog - تعيين الدور المحدد من بيانات المستخدم:", roleObj.id, roleObj.name);
         setSelectedRole(roleObj.id);
-      } else {
-        console.log("UserEditDialog - لم يتم العثور على الدور للمستخدم، تم مسح التحديد");
-        // إذا كانت هناك أدوار متاحة، اختر الأول كافتراضي
-        if (roles.length > 0) {
-          console.log("UserEditDialog - تعيين الدور الافتراضي:", roles[0].id);
-          setSelectedRole(roles[0].id);
-        } else {
-          setSelectedRole("");
-        }
+      } else if (roles.length > 0) {
+        // إذا لم يتم العثور على الدور، استخدم أول دور متاح كافتراضي
+        setSelectedRole(roles[0].id);
       }
     } else if (roles.length > 0) {
-      // إذا لم يكن هناك مستخدم أو لم يكن له دور ولكن توجد أدوار متاحة، اختر الأول كافتراضي
-      console.log("UserEditDialog - تعيين الدور الافتراضي (لا يوجد مستخدم أو دور):", roles[0].id);
+      // إذا لم يكن هناك مستخدم ولكن توجد أدوار، حدد الدور الأول كافتراضي
       setSelectedRole(roles[0].id);
-    } else {
-      // إذا لم يكن هناك مستخدم ولا أدوار متاحة
-      console.log("UserEditDialog - لا يوجد مستخدم أو أدوار متاحة");
-      setSelectedRole("");
     }
   }, [user, roles, setSelectedRole]);
-
-  console.log('UserEditDialog - الأدوار المتاحة:', roles.map(r => `${r.id}: ${r.name}`));
-  console.log('UserEditDialog - الدور المحدد:', selectedRole);
-  console.log('UserEditDialog - المستخدم الحالي:', user);
 
   // ترجمة اسم الدور للعربية
   const getRoleDisplayName = (roleName: string) => {
