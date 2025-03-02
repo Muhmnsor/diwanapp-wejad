@@ -42,24 +42,37 @@ export const UserEditDialog = ({
   isSubmitting,
   roles = []
 }: UserEditDialogProps) => {
-  // Set the selected role when user changes
+  // تعيين الدور المحدد عند تغيير المستخدم
   useEffect(() => {
     if (user && user.role) {
-      // Find role ID that matches user's role name
+      console.log("UserEditDialog - تحميل بيانات المستخدم:", user);
+      console.log("UserEditDialog - الدور الحالي للمستخدم:", user.role);
+      
+      // البحث عن معرف الدور الذي يطابق اسم دور المستخدم
       const roleObj = roles.find(r => r.name === user.role);
       if (roleObj) {
-        console.log("Setting selected role from user data:", roleObj.id, roleObj.name);
+        console.log("UserEditDialog - تعيين الدور المحدد من بيانات المستخدم:", roleObj.id, roleObj.name);
         setSelectedRole(roleObj.id);
       } else {
-        console.log("Role not found for user, clearing selection");
+        console.log("UserEditDialog - لم يتم العثور على الدور للمستخدم، تم مسح التحديد");
         setSelectedRole("");
       }
+    } else {
+      // إذا لم يكن هناك مستخدم أو لم يكن له دور، تعيين القيمة الافتراضية
+      console.log("UserEditDialog - لا يوجد مستخدم أو دور، تعيين القيمة الافتراضية");
+      setSelectedRole("");
     }
   }, [user, roles, setSelectedRole]);
 
-  console.log('Current roles:', roles);
-  console.log('Selected role:', selectedRole);
-  console.log('Current user:', user);
+  console.log('UserEditDialog - الأدوار المتاحة:', roles);
+  console.log('UserEditDialog - الدور المحدد:', selectedRole);
+  console.log('UserEditDialog - المستخدم الحالي:', user);
+
+  // وظيفة للحصول على اسم الدور المعروض بناءً على معرفه
+  const getRoleDisplayName = (roleId: string) => {
+    const role = roles.find(r => r.id === roleId);
+    return role ? role.name : 'غير معروف';
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -76,11 +89,15 @@ export const UserEditDialog = ({
             <div>{user?.username}</div>
           </div>
           <div className="space-y-2 text-right">
-            <div className="font-medium">الدور</div>
+            <div className="font-medium">الدور الحالي</div>
+            <div className="text-muted-foreground">{user?.role || 'لم يتم تعيين دور'}</div>
+          </div>
+          <div className="space-y-2 text-right">
+            <div className="font-medium">الدور الجديد</div>
             <Select
               value={selectedRole}
               onValueChange={(value) => {
-                console.log("Role selected:", value);
+                console.log("UserEditDialog - تم اختيار الدور:", value, "- الاسم:", getRoleDisplayName(value));
                 setSelectedRole(value);
               }}
             >
@@ -109,7 +126,11 @@ export const UserEditDialog = ({
           </div>
         </div>
         <Button 
-          onClick={onSubmit}
+          onClick={() => {
+            console.log("UserEditDialog - تم النقر على زر التحديث");
+            console.log("UserEditDialog - الدور المحدد عند التقديم:", selectedRole);
+            onSubmit();
+          }}
           className="w-full"
           disabled={isSubmitting}
         >

@@ -35,7 +35,10 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
 
     setIsSubmitting(true);
     try {
-      console.log('Creating new user with role:', selectedRole);
+      console.log('=== بدء عملية إنشاء مستخدم جديد ===');
+      console.log('البريد الإلكتروني:', newUsername);
+      console.log('الدور المحدد:', selectedRole);
+      console.log('تم إدخال كلمة مرور:', newPassword ? 'نعم' : 'لا');
       
       const { data: authUser, error: signUpError } = await supabase.auth.signUp({
         email: newUsername,
@@ -43,72 +46,60 @@ export const CreateUserDialog = ({ roles, onUserCreated }: CreateUserDialogProps
       });
 
       if (signUpError) {
-        console.error('Error creating user:', signUpError);
+        console.error('خطأ في إنشاء المستخدم:', signUpError);
         throw signUpError;
       }
 
       if (!authUser.user) {
+        console.error('لم يتم إرجاع بيانات المستخدم');
         throw new Error('No user data returned');
       }
 
-      console.log('User created successfully:', authUser.user.id);
+      console.log('تم إنشاء المستخدم بنجاح:', authUser.user.id);
 
-      // Asegurarse de que no haya roles previos (por si acaso)
+      // حذف أي أدوار سابقة (للتأكد)
+      console.log('حذف أي أدوار سابقة للمستخدم...');
       await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', authUser.user.id);
         
-      // Breve retraso para asegurar que la eliminación se procese
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // انتظار لضمان معالجة عملية الحذف
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Intentar con upsert primero
-      const { error: roleError } = await supabase
+      console.log('محاولة إضافة الدور للمستخدم الجديد...');
+      const { error: roleError, data: roleData } = await supabase
         .from('user_roles')
-        .upsert(
-          {
-            user_id: authUser.user.id,
-            role_id: selectedRole
-          },
-          {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
-          }
-        );
-
+        .insert({
+          user_id: authUser.user.id,
+          role_id: selectedRole
+        })
+        .select();
+      
       if (roleError) {
-        console.error('Error assigning role with upsert, trying with insert:', roleError);
-        
-        // Si falla upsert, intentar con insert simple
-        const { error: insertError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authUser.user.id,
-            role_id: selectedRole
-          });
-        
-        if (insertError) {
-          console.error('Error assigning role with insert:', insertError);
-          throw insertError;
-        }
+        console.error('خطأ في تعيين الدور:', roleError);
+        throw roleError;
       }
+      
+      console.log('تم تعيين الدور بنجاح:', roleData);
 
-      // Registrar la actividad
+      // تسجيل النشاط
       await supabase.rpc('log_user_activity', {
         user_id: authUser.user.id,
         activity_type: 'user_created',
         details: `تم إنشاء المستخدم مع دور: ${selectedRole}`
       });
+      console.log('تم تسجيل نشاط إنشاء المستخدم');
 
-      console.log('Role assigned successfully');
       toast.success("تم إضافة المستخدم بنجاح");
       setIsOpen(false);
       setNewUsername("");
       setNewPassword("");
       setSelectedRole("");
       onUserCreated();
+      console.log('=== انتهت عملية إنشاء المستخدم بنجاح ===');
     } catch (error) {
-      console.error('Error adding user:', error);
+      console.error('خطأ عام في إضافة المستخدم:', error);
       toast.error("حدث خطأ أثناء إضافة المستخدم");
     } finally {
       setIsSubmitting(false);

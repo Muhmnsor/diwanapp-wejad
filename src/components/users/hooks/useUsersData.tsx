@@ -7,15 +7,17 @@ export const useUsersData = () => {
   const { data: roles = [], isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
+      console.log('جلب الأدوار من قاعدة البيانات...');
       const { data, error } = await supabase
         .from('roles')
         .select('*');
       
       if (error) {
-        console.error('Error fetching roles:', error);
+        console.error('خطأ في جلب الأدوار:', error);
         throw error;
       }
       
+      console.log('تم جلب الأدوار بنجاح:', data);
       return data;
     }
   });
@@ -23,19 +25,22 @@ export const useUsersData = () => {
   const { data: users = [], isLoading: usersLoading, refetch: refetchUsers } = useQuery({
     queryKey: ['users-with-roles'],
     queryFn: async () => {
-      console.log('Fetching users with roles...');
+      console.log('جلب المستخدمين مع الأدوار...');
       
-      // Get all users from profiles
+      // جلب جميع المستخدمين من profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email');
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+        console.error('خطأ في جلب بيانات المستخدمين:', profilesError);
         throw profilesError;
       }
+      
+      console.log('تم جلب بيانات المستخدمين:', profilesData);
 
-      // Then get user roles with their role information
+      // ثم جلب أدوار المستخدمين مع معلومات الدور
+      console.log('جلب أدوار المستخدمين...');
       const { data: userRolesData, error: userRolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -48,31 +53,37 @@ export const useUsersData = () => {
         `);
 
       if (userRolesError) {
-        console.error('Error fetching user roles:', userRolesError);
+        console.error('خطأ في جلب أدوار المستخدمين:', userRolesError);
         throw userRolesError;
       }
+      
+      console.log('تم جلب أدوار المستخدمين:', userRolesData);
 
-      // Map user roles to user IDs
-      const userRolesMap = userRolesData.reduce((map, ur) => {
-        map[ur.user_id] = ur.roles;
-        return map;
-      }, {});
+      // تخطيط أدوار المستخدمين إلى معرفات المستخدمين
+      const userRolesMap: Record<string, any> = {};
+      userRolesData.forEach(ur => {
+        userRolesMap[ur.user_id] = ur.roles;
+      });
+      
+      console.log('خريطة أدوار المستخدمين:', userRolesMap);
 
-      // Combine the data - include all users, even those without roles
+      // دمج البيانات - تضمين جميع المستخدمين، حتى أولئك الذين ليس لديهم أدوار
       const transformedUsers = profilesData.map((profile) => {
         const userRole = userRolesMap[profile.id];
-        return {
+        const user = {
           id: profile.id,
           username: profile.email || 'لم يتم تعيين بريد إلكتروني',
           role: userRole?.name || 'لم يتم تعيين دور',
-          lastLogin: 'غير متوفر' // Since we can't access auth.users directly
+          lastLogin: 'غير متوفر' // نظرًا لأننا لا نستطيع الوصول إلى auth.users مباشرة
         };
+        console.log('تم إنشاء كائن المستخدم:', user);
+        return user;
       });
 
-      console.log('All users (including those without roles):', transformedUsers);
+      console.log('جميع المستخدمين (بما في ذلك الذين ليس لديهم أدوار):', transformedUsers);
       return transformedUsers as User[];
     },
-    staleTime: 1000 * 30, // Cache for 30 seconds
+    staleTime: 1000 * 30, // تخزين مؤقت لمدة 30 ثانية
   });
 
   return {
