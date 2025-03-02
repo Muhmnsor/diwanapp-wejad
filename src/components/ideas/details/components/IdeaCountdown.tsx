@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { calculateTimeRemaining, getCountdownDisplay, CountdownTime, extractTotalHours, formatTotalPeriod } from "../utils/countdownUtils";
+import { calculateTimeRemaining, getCountdownDisplay, CountdownTime } from "../utils/countdownUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -18,24 +18,6 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     seconds: 0
   });
   const [isExpired, setIsExpired] = useState(false);
-  // Add a key to force re-rendering when discussion period changes
-  const [updateKey, setUpdateKey] = useState(Date.now());
-
-  useEffect(() => {
-    // Reset countdown and force recalculation when discussion_period changes
-    setUpdateKey(Date.now());
-    console.log("🔄 Discussion period changed, resetting countdown:", discussion_period);
-    
-    // Immediately check if discussion is expired
-    const timeLeft = calculateTimeRemaining(discussion_period, created_at);
-    const nowExpired = 
-      timeLeft.days === 0 && 
-      timeLeft.hours === 0 && 
-      timeLeft.minutes === 0 && 
-      timeLeft.seconds === 0;
-    
-    setIsExpired(nowExpired);
-  }, [discussion_period, created_at]);
 
   useEffect(() => {
     // تحديث حالة الفكرة عندما تنتهي المناقشة
@@ -104,7 +86,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     };
 
     // تنفيذ الحساب فوراً عند التحميل
-    console.log("🔄 بدء حساب الوقت المتبقي للمناقشة", updateKey);
+    console.log("🔄 بدء حساب الوقت المتبقي للمناقشة");
     console.log("📅 تاريخ الإنشاء:", created_at);
     console.log("⏱️ فترة المناقشة:", discussion_period);
     calculateTimeLeft();
@@ -118,7 +100,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     const timer = setInterval(calculateTimeLeft, 1000);
     
     return () => clearInterval(timer);
-  }, [discussion_period, created_at, isExpired, ideaId, updateKey]);
+  }, [discussion_period, created_at, isExpired, ideaId]);
 
   if (!discussion_period) {
     return (
@@ -138,22 +120,11 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     );
   }
 
-  // نعرض المدة الكلية مع الوقت المتبقي للتوافق
-  const totalHours = extractTotalHours(discussion_period);
-  const totalPeriod = formatTotalPeriod(totalHours);
-
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2 bg-gray-50 rounded-lg py-1 px-2 text-xs">
-        <span className="font-medium text-gray-700">الفترة الكلية:</span>
-        <div className="font-medium text-gray-700">{totalPeriod}</div>
-      </div>
-      
-      <div className="flex items-center gap-2 bg-blue-50 rounded-lg py-1.5 px-2 text-sm">
-        <span className="font-medium text-blue-800">متبقي للمناقشة:</span>
-        <div className="font-bold text-blue-700">
-          {getCountdownDisplay(discussion_period, created_at, countdown)}
-        </div>
+    <div className="flex items-center gap-2 bg-blue-50 rounded-lg py-1.5 px-2 text-sm">
+      <span className="font-medium text-blue-800">متبقي للمناقشة:</span>
+      <div className="font-bold text-blue-700">
+        {getCountdownDisplay(discussion_period, created_at, countdown)}
       </div>
     </div>
   );

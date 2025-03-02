@@ -1,75 +1,36 @@
 
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Clock, Download } from "lucide-react";
-import { ExtendButton } from "../components/ExtendButton";
-import { IdeaExportDialog } from "../components/export/IdeaExportDialog";
-import { useIdeaStatus } from "../hooks/useIdeaStatus";
-import { ExtendDiscussionDialog } from "../dialogs/ExtendDiscussionDialog";
 
-interface SecondaryHeaderProps {
-  onIdeaUpdate?: () => void;
-}
-
-export const SecondaryHeader = ({ onIdeaUpdate }: SecondaryHeaderProps) => {
-  const { id } = useParams<{ id: string }>();
-  const [showExtendDialog, setShowExtendDialog] = useState(false);
-  const [showExportDialog, setShowExportDialog] = useState(false);
-  
-  const { isAdmin } = useIdeaStatus(id);
-  
-  const handleExtendSuccess = () => {
-    console.log("تم تمديد فترة المناقشة بنجاح");
-    // استدعاء دالة التحديث إذا كانت متوفرة
-    if (onIdeaUpdate) {
-      onIdeaUpdate();
-    }
-  };
+export const SecondaryHeader = () => {
+  const navigate = useNavigate();
   
   return (
-    <div className="bg-white border-b border-gray-200 shadow-sm py-2">
-      <div className="container mx-auto flex justify-between items-center px-4" dir="rtl">
-        <h2 className="text-xl font-semibold">تفاصيل الفكرة</h2>
-        
-        <div className="flex items-center gap-3">
-          {id && isAdmin && (
+    <div className="w-full border-b bg-white">
+      <div className="container mx-auto px-4 py-2">
+        <div className="flex items-center justify-center" dir="rtl">
+          <div className="flex items-center gap-4">
             <Button 
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-              onClick={() => setShowExtendDialog(true)}
+              variant="ghost"
+              className="gap-2"
+              onClick={() => navigate('/ideas')}
             >
-              <Clock className="h-4 w-4" /> تعديل فترة المناقشة
+              <ArrowRight className="h-4 w-4" />
+              قائمة الأفكار
             </Button>
-          )}
-          
-          <Button 
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-            onClick={() => setShowExportDialog(true)}
-          >
-            <Download className="h-4 w-4" /> تصدير الفكرة
-          </Button>
+            <Button 
+              variant="ghost" 
+              className="gap-2"
+              disabled
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              لوحة التحكم
+              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">قريباً</span>
+            </Button>
+          </div>
         </div>
       </div>
-      
-      {id && (
-        <>
-          <ExtendDiscussionDialog 
-            ideaId={id} 
-            open={showExtendDialog} 
-            onOpenChange={setShowExtendDialog}
-            onSuccess={handleExtendSuccess}
-          />
-          <IdeaExportDialog
-            ideaId={id}
-            open={showExportDialog}
-            onOpenChange={setShowExportDialog}
-          />
-        </>
-      )}
     </div>
   );
 };
