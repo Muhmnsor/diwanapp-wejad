@@ -9,7 +9,7 @@ export const useUsersRolesData = () => {
     queryFn: async () => {
       console.log('جلب المستخدمين مع الأدوار...');
       
-      // جلب جميع المستخدمين من profiles مع طباعة بيانات أكثر تفصيلاً
+      // جلب جميع المستخدمين من profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, display_name');
@@ -19,19 +19,7 @@ export const useUsersRolesData = () => {
         throw profilesError;
       }
       
-      console.log('=== بيانات المستخدمين المستلمة من قاعدة البيانات ===');
-      console.table(profilesData);
-      console.log('عدد السجلات:', profilesData.length);
-      
-      // فحص قيم display_name
-      const hasDisplayNames = profilesData.filter(profile => profile.display_name && profile.display_name.trim() !== '');
-      console.log('عدد المستخدمين الذين لديهم مسميات وظيفية:', hasDisplayNames.length);
-      if (hasDisplayNames.length > 0) {
-        console.log('المستخدمين الذين لديهم مسميات وظيفية:');
-        console.table(hasDisplayNames);
-      } else {
-        console.log('لا يوجد أي مستخدم لديه مسمى وظيفي محدد في قاعدة البيانات');
-      }
+      console.log('تم جلب بيانات المستخدمين:', profilesData);
 
       // ثم جلب أدوار المستخدمين مع معلومات الدور
       console.log('جلب أدوار المستخدمين...');
@@ -51,8 +39,7 @@ export const useUsersRolesData = () => {
         throw userRolesError;
       }
       
-      console.log('=== بيانات أدوار المستخدمين ===');
-      console.table(userRolesData);
+      console.log('تم جلب أدوار المستخدمين:', userRolesData);
 
       // تخطيط أدوار المستخدمين إلى معرفات المستخدمين
       const userRolesMap: Record<string, any> = {};
@@ -60,6 +47,8 @@ export const useUsersRolesData = () => {
         userRolesMap[ur.user_id] = ur.roles;
       });
       
+      console.log('خريطة أدوار المستخدمين:', userRolesMap);
+
       // دمج البيانات - تضمين جميع المستخدمين، حتى أولئك الذين ليس لديهم أدوار
       const transformedUsers = profilesData.map((profile) => {
         const userRole = userRolesMap[profile.id];
@@ -70,12 +59,11 @@ export const useUsersRolesData = () => {
           role: userRole?.name || 'لم يتم تعيين دور',
           lastLogin: 'غير متوفر' // نظرًا لأننا لا نستطيع الوصول إلى auth.users مباشرة
         };
+        console.log('تم إنشاء كائن المستخدم:', user);
         return user;
       });
 
-      console.log('=== بيانات المستخدمين النهائية بعد المعالجة ===');
-      console.table(transformedUsers);
-      
+      console.log('جميع المستخدمين (بما في ذلك الذين ليس لديهم أدوار):', transformedUsers);
       return transformedUsers as User[];
     },
     staleTime: 1000 * 30, // تخزين مؤقت لمدة 30 ثانية
