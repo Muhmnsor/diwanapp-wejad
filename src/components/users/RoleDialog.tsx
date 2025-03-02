@@ -83,7 +83,7 @@ export const RoleDialog = ({ isOpen, onClose, role, onSave }: RoleDialogProps) =
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>{role ? "تعديل دور" : "إضافة دور جديد"}</DialogTitle>
           <DialogDescription>
@@ -100,6 +100,7 @@ export const RoleDialog = ({ isOpen, onClose, role, onSave }: RoleDialogProps) =
                 onChange={(e) => setName(e.target.value)}
                 placeholder="مثال: مدير النظام"
                 required
+                className="text-right"
               />
             </div>
             <div className="space-y-2">
@@ -110,10 +111,17 @@ export const RoleDialog = ({ isOpen, onClose, role, onSave }: RoleDialogProps) =
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="وصف مختصر للدور والصلاحيات المرتبطة به"
                 rows={3}
+                className="text-right"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="sm:justify-start flex-row-reverse">
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+            >
+              {isLoading ? "جار الحفظ..." : "حفظ"}
+            </Button>
             <Button 
               type="button" 
               variant="outline" 
@@ -121,9 +129,6 @@ export const RoleDialog = ({ isOpen, onClose, role, onSave }: RoleDialogProps) =
               disabled={isLoading}
             >
               إلغاء
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "جار الحفظ..." : "حفظ"}
             </Button>
           </DialogFooter>
         </form>
