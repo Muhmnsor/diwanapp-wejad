@@ -54,7 +54,7 @@ export const RoleManagement = () => {
   const selectedRole = roles.find(role => role.id === selectedRoleId);
 
   return (
-    <Card className="shadow-sm">
+    <Card className="shadow-sm" dir="rtl">
       <CardHeader className="pb-2">
         <CardTitle className="text-xl">إدارة الأدوار</CardTitle>
         <CardDescription>
@@ -62,7 +62,7 @@ export const RoleManagement = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="roles">
+        <Tabs defaultValue="roles" dir="rtl">
           <TabsList>
             <TabsTrigger value="roles">قائمة الأدوار</TabsTrigger>
             <TabsTrigger value="permissions" disabled={!selectedRoleId}>

@@ -62,7 +62,7 @@ export const RoleList = ({
 
   if (isLoading) {
     return (
-      <div className="space-y-4 mt-4">
+      <div className="space-y-4 mt-4" dir="rtl">
         {[1, 2, 3].map((i) => (
           <div key={i} className="border-b border-border pb-3">
             <Skeleton className="h-6 w-48 mb-2" />
@@ -76,20 +76,20 @@ export const RoleList = ({
   if (roles.length === 0) {
     if (searchQuery) {
       return (
-        <div className="py-6 text-center text-muted-foreground bg-muted/20 rounded-md">
+        <div className="py-6 text-center text-muted-foreground bg-muted/20 rounded-md" dir="rtl">
           لا توجد نتائج مطابقة للبحث: "{searchQuery}"
         </div>
       );
     }
     return (
-      <div className="py-6 text-center text-muted-foreground bg-muted/20 rounded-md">
+      <div className="py-6 text-center text-muted-foreground bg-muted/20 rounded-md" dir="rtl">
         لا توجد أدوار محددة. قم بإضافة دور جديد للبدء.
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="space-y-4 mt-4" dir="rtl">
       {roles.map((role) => (
         <div 
           key={role.id} 
@@ -104,7 +104,7 @@ export const RoleList = ({
               <h3 className="font-medium">{role.name}</h3>
               {roleUserCounts[role.id] && (
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
+                  <User className="h-3 w-3 ml-1" />
                   {roleUserCounts[role.id]}
                 </Badge>
               )}

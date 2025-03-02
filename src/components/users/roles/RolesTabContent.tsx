@@ -34,7 +34,7 @@ export const RolesTabContent = ({
   );
 
   return (
-    <div>
+    <div dir="rtl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
         <div className="relative w-full md:w-64">
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -46,7 +46,7 @@ export const RolesTabContent = ({
           />
         </div>
         <Button onClick={onAddRole} className="gap-1 whitespace-nowrap">
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 ml-1" />
           إضافة دور جديد
         </Button>
       </div>

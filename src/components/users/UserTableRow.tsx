@@ -25,7 +25,7 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
   };
 
   return (
-    <TableRow>
+    <TableRow dir="rtl">
       <TableCell className="text-right">
         <div className="space-y-1">
           <div className="font-medium">{user.username}</div>

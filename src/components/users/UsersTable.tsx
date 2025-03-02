@@ -54,7 +54,7 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   }, [searchTerm, users]);
 
   return (
-    <>
+    <div dir="rtl">
       <SearchFilter 
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -112,6 +112,6 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         isOpen={!!userToView}
         onClose={() => setUserToView(null)}
       />
-    </>
+    </div>
   );
 };
