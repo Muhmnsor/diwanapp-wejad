@@ -9,7 +9,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToView, setUserToView] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handlePasswordChange = async () => {
@@ -44,7 +44,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       }
 
       // التحقق من وجود دور محدد وأنه ليس فارغًا
-      if (selectedRole && selectedRole.trim() !== '') {
+      if (selectedRole) {
         console.log('تعيين الدور الجديد:', selectedRole);
         
         // تسجيل محاولة استدعاء وظيفة تعيين الدور
@@ -171,7 +171,7 @@ export const useUserOperations = (onUserDeleted: () => void) => {
       toast.success("تم تحديث بيانات المستخدم بنجاح");
       setSelectedUser(null);
       setNewPassword("");
-      setSelectedRole("");
+      setSelectedRole(null);
       onUserDeleted(); // تحديث قائمة المستخدمين
     } catch (error) {
       console.error('خطأ عام في تحديث المستخدم:', error);

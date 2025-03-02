@@ -21,7 +21,7 @@ interface UserEditDialogProps {
   user: User | null;
   isOpen: boolean;
   onClose: () => void;
-  selectedRole: string;
+  selectedRole: string | null;
   setSelectedRole: (role: string) => void;
   newPassword: string;
   setNewPassword: (password: string) => void;
