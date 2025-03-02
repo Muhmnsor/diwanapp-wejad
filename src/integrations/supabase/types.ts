@@ -2740,14 +2740,17 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          created_at: string
           role_id: string
           user_id: string
         }
         Insert: {
+          created_at?: string
           role_id: string
           user_id: string
         }
         Update: {
+          created_at?: string
           role_id?: string
           user_id?: string
         }
@@ -2882,6 +2885,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_user_role: {
+        Args: {
+          p_user_id: string
+          p_role_id: string
+        }
+        Returns: boolean
+      }
+      delete_user_roles: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       generate_next_registration_number:
         | {
             Args: {
@@ -2896,6 +2912,12 @@ export type Database = {
             }
             Returns: string
           }
+      get_user_role: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: string
+      }
       handle_user_management: {
         Args: {
           operation: string
