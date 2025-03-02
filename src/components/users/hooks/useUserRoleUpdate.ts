@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { User } from "../types";
@@ -7,7 +6,7 @@ import {
   deleteUserRoles, 
   verifyUserRoles, 
   logUserActivity 
-} from "./utils/userApiUtils";
+} from "./utils";
 
 export const useUserRoleUpdate = () => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);

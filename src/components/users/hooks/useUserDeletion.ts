@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { User } from "../types";
-import { deleteUser, logUserActivity } from "./utils/userApiUtils";
+import { deleteUser, logUserActivity } from "./utils";
 
 export const useUserDeletion = (onUserDeleted: () => void) => {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);

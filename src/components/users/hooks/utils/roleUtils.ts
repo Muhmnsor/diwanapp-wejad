@@ -1,30 +1,8 @@
 
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "../../types";
 
 /**
- * Updates a user's password via Supabase Functions
- */
-export const updateUserPassword = async (userId: string, newPassword: string) => {
-  console.log('محاولة تحديث كلمة المرور...');
-  const { error: passwordError } = await supabase.functions.invoke('manage-users', {
-    body: {
-      operation: 'update_password',
-      userId,
-      newPassword
-    }
-  });
-
-  if (passwordError) {
-    console.error('خطأ في تحديث كلمة المرور:', passwordError);
-    throw passwordError;
-  }
-  console.log('تم تحديث كلمة المرور بنجاح');
-};
-
-/**
- * Assigns a role to a user using the RPC function
+ * Assigns a role to a user using direct database operations
  */
 export const assignUserRole = async (userId: string, roleId: string): Promise<boolean> => {
   if (!userId || !roleId) {
@@ -79,16 +57,7 @@ export const assignUserRole = async (userId: string, roleId: string): Promise<bo
     console.log('تم تعيين الدور الجديد بنجاح:', insertData);
     
     // التحقق من تحديث الدور
-    const { data: verifyData, error: verifyError } = await supabase
-      .from('user_roles')
-      .select('*, roles:role_id(id, name)')
-      .eq('user_id', userId);
-      
-    if (verifyError) {
-      console.error('خطأ في التحقق من تحديث الدور:', verifyError);
-    } else {
-      console.log('تحقق من أدوار المستخدم بعد التحديث:', verifyData);
-    }
+    await verifyUserRoles(userId);
     
     return true;
   } catch (error) {
@@ -173,38 +142,6 @@ export const deleteUserRoles = async (userId: string): Promise<boolean> => {
   } catch (error) {
     console.error('خطأ عام في حذف أدوار المستخدم:', error);
     return false;
-  }
-};
-
-/**
- * Logs a user activity
- */
-export const logUserActivity = async (userId: string, activityType: string, details: string) => {
-  try {
-    await supabase.rpc('log_user_activity', {
-      user_id: userId,
-      activity_type: activityType,
-      details
-    });
-  } catch (error) {
-    console.error('خطأ في تسجيل نشاط المستخدم:', error);
-  }
-};
-
-/**
- * Deletes a user using Supabase Functions
- */
-export const deleteUser = async (userId: string) => {
-  const { error } = await supabase.functions.invoke('manage-users', {
-    body: {
-      operation: 'delete_user',
-      userId
-    }
-  });
-
-  if (error) {
-    console.error('خطأ في حذف المستخدم:', error);
-    throw error;
   }
 };
 
