@@ -12,6 +12,8 @@ export const CurrentDiscussionInfo = ({
   remainingDays,
   remainingHours,
 }: CurrentDiscussionInfoProps) => {
+  const isDiscussionEnded = remainingDays === 0 && remainingHours === 0;
+  
   return (
     <div className="p-3 bg-purple-50 rounded-md space-y-2">
       <p className="text-sm font-medium text-purple-800">
@@ -19,10 +21,11 @@ export const CurrentDiscussionInfo = ({
       </p>
       
       <p className="text-sm text-purple-700">
-        الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
-        {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
-        {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
-        {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+        الوقت المتبقي حالياً: {
+          isDiscussionEnded ? 
+          "المناقشة منتهية" : 
+          `${remainingDays > 0 ? `${remainingDays} يوم` : ""}${remainingDays > 0 && remainingHours > 0 ? " و " : ""}${remainingHours > 0 ? `${remainingHours} ساعة` : ""}`
+        }
       </p>
     </div>
   );
