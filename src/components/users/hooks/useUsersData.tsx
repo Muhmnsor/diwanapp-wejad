@@ -70,6 +70,7 @@ export const useUsersData = () => {
       // دمج البيانات - تضمين جميع المستخدمين، حتى أولئك الذين ليس لديهم أدوار
       const transformedUsers = profilesData.map((profile) => {
         const userRole = userRolesMap[profile.id];
+        // تصحيح هنا: التأكد من أن displayName هو قيمة سلسلة نصية (string) وليس كائن
         const user = {
           id: profile.id,
           username: profile.email || 'لم يتم تعيين بريد إلكتروني',
