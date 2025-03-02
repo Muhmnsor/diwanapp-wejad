@@ -32,6 +32,30 @@ export const checkUserRole = async (userId: string): Promise<boolean> => {
   return roles?.name === 'admin';
 };
 
+export const getUserRole = async (userId: string): Promise<string | null> => {
+  try {
+    const { data: userRole, error } = await supabase
+      .from('user_roles')
+      .select(`
+        roles (
+          name
+        )
+      `)
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) {
+      console.error("SessionManager: Error fetching user role:", error);
+      return null;
+    }
+    
+    return userRole?.roles?.name || null;
+  } catch (error) {
+    console.error("SessionManager: Error in getUserRole:", error);
+    return null;
+  }
+};
+
 export const initializeSession = async (): Promise<{ user: User | null; isAuthenticated: boolean }> => {
   console.log("SessionManager: Initializing session");
   
@@ -49,12 +73,14 @@ export const initializeSession = async (): Promise<{ user: User | null; isAuthen
     }
 
     const isAdmin = await checkUserRole(session.user.id);
+    const role = await getUserRole(session.user.id);
 
     return {
       user: {
         id: session.user.id,
         email: session.user.email ?? '',
-        isAdmin
+        isAdmin,
+        role: role || undefined
       },
       isAuthenticated: true
     };

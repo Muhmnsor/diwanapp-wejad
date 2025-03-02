@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -6,6 +7,7 @@ interface User {
   id: string;
   email: string;
   isAdmin: boolean;
+  role?: string;
 }
 
 interface AuthState {
@@ -72,16 +74,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       const isAdmin = roles?.name === 'admin';
+      const roleName = roles?.name;
       
-      if (isAdmin) {
-        console.log("AuthStore: User is admin, updating state");
-        set(state => ({
-          user: {
-            ...state.user!,
-            isAdmin: true
-          }
-        }));
-      }
+      set(state => ({
+        user: {
+          ...state.user!,
+          isAdmin,
+          role: roleName
+        }
+      }));
 
     } catch (error) {
       console.error('AuthStore: Error initializing auth state:', error);
@@ -142,12 +143,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       const isAdmin = roles?.name === 'admin';
+      const roleName = roles?.name;
       
-      if (isAdmin) {
+      if (isAdmin || roleName) {
         set(state => ({
           user: {
             ...state.user!,
-            isAdmin: true
+            isAdmin,
+            role: roleName
           }
         }));
       }

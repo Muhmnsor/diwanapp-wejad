@@ -1,7 +1,9 @@
+
 export interface User {
   id: string;
   email: string;
   isAdmin: boolean;
+  role?: string; // Add the role property as optional
 }
 
 export interface AuthState {

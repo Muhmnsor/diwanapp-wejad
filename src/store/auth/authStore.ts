@@ -1,7 +1,8 @@
+
 import { create } from 'zustand';
 import { supabase } from "@/integrations/supabase/client";
 import { AuthState } from './types';
-import { initializeSession, clearSession, checkUserRole } from './sessionManager';
+import { initializeSession, clearSession, checkUserRole, getUserRole } from './sessionManager';
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -25,12 +26,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (!authData.user) throw new Error('No user data available');
 
       const isAdmin = await checkUserRole(authData.user.id);
+      const role = await getUserRole(authData.user.id);
 
       set({
         user: {
           id: authData.user.id,
           email: authData.user.email ?? '',
-          isAdmin
+          isAdmin,
+          role: role || undefined
         },
         isAuthenticated: true
       });
