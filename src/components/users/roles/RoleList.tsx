@@ -118,7 +118,7 @@ export const RoleList = ({
               onClick={() => onSelectRole(role.id)}
               className="h-8 gap-1"
             >
-              <ShieldCheck className="h-4 w-4" />
+              <ShieldCheck className="h-4 w-4 ml-1" />
               الصلاحيات
             </Button>
             <Button 
