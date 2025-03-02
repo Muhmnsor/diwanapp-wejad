@@ -58,13 +58,6 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     };
 
     const calculateTimeLeft = () => {
-      if (!discussion_period || discussion_period === "0 hours") {
-        // إذا كانت فترة المناقشة صفر ساعات أو غير محددة، فالمناقشة تعتبر منتهية
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        setIsExpired(true);
-        return;
-      }
-
       const timeLeft = calculateTimeRemaining(discussion_period, created_at);
       setCountdown(timeLeft);
       
@@ -118,8 +111,7 @@ export const IdeaCountdown = ({ discussion_period, created_at, ideaId }: IdeaCou
     );
   }
 
-  // إضافة تحقق صريح من قيمة discussion_period لعرض حالة انتهاء المناقشة
-  if (discussion_period === "0 hours" || isExpired) {
+  if (isExpired) {
     return (
       <div className="flex items-center gap-2 bg-amber-50 rounded-lg py-1.5 px-2 text-sm">
         <span className="font-medium text-amber-800">حالة المناقشة:</span>
