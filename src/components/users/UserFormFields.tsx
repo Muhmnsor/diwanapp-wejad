@@ -60,11 +60,11 @@ export const UserFormFields = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>المسمى الوظيفي</Label>
+        <Label>الاسم الشخصي</Label>
         <Input
           value={newDisplayName}
           onChange={(e) => setNewDisplayName(e.target.value)}
-          placeholder="أدخل المسمى الوظيفي"
+          placeholder="أدخل الاسم الشخصي"
           dir="rtl"
           className="text-right"
         />

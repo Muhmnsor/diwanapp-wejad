@@ -96,11 +96,11 @@ export const UserEditDialog = ({
             <Input value={user.username} disabled dir="ltr" className="text-right" />
           </div>
           <div className="space-y-2">
-            <Label>المسمى الوظيفي</Label>
+            <Label>الاسم الشخصي</Label>
             <Input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="أدخل المسمى الوظيفي"
+              placeholder="أدخل الاسم الشخصي"
               dir="rtl"
               className="text-right"
             />

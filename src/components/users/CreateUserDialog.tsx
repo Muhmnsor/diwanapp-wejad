@@ -63,7 +63,7 @@ export const CreateUserDialog = ({
     try {
       console.log("=== بدء عملية إنشاء مستخدم جديد ===");
       console.log("البريد الإلكتروني:", newUsername);
-      console.log("المسمى الوظيفي:", newDisplayName || "غير محدد");
+      console.log("الاسم الشخصي:", newDisplayName || "غير محدد");
       console.log("الدور المحدد:", selectedRole);
       
       // 1. إنشاء المستخدم في نظام المصادقة
@@ -81,20 +81,20 @@ export const CreateUserDialog = ({
       console.log("تم إنشاء المستخدم بنجاح:", authData.user.id);
       const userId = authData.user.id;
       
-      // 2. تحديث المسمى الوظيفي إذا تم إدخاله
+      // 2. تحديث الاسم الشخصي إذا تم إدخاله
       if (newDisplayName) {
-        console.log("تحديث المسمى الوظيفي...");
+        console.log("تحديث الاسم الشخصي...");
         const { error: displayNameError } = await supabase
           .from('profiles')
           .update({ display_name: newDisplayName })
           .eq('id', userId);
           
         if (displayNameError) {
-          console.error("خطأ في تحديث المسمى الوظيفي:", displayNameError);
-          // لا نريد إلغاء العملية إذا فشل تحديث المسمى الوظيفي
-          console.warn("تم تجاوز خطأ تحديث المسمى الوظيفي واستكمال العملية");
+          console.error("خطأ في تحديث الاسم الشخصي:", displayNameError);
+          // لا نريد إلغاء العملية إذا فشل تحديث الاسم الشخصي
+          console.warn("تم تجاوز خطأ تحديث الاسم الشخصي واستكمال العملية");
         } else {
-          console.log("تم تحديث المسمى الوظيفي بنجاح");
+          console.log("تم تحديث الاسم الشخصي بنجاح");
         }
       }
       
@@ -116,7 +116,7 @@ export const CreateUserDialog = ({
       await supabase.rpc('log_user_activity', {
         user_id: userId,
         activity_type: 'user_created',
-        details: `تم إنشاء المستخدم (البريد: ${newUsername}, الدور: ${selectedRole}, المسمى الوظيفي: ${newDisplayName || 'غير محدد'})`
+        details: `تم إنشاء المستخدم (البريد: ${newUsername}, الدور: ${selectedRole}, الاسم الشخصي: ${newDisplayName || 'غير محدد'})`
       });
       
       toast.success("تم إنشاء المستخدم بنجاح");

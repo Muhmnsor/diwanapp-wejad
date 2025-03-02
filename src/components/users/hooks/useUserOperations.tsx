@@ -20,10 +20,10 @@ export const useUserOperations = (onUserUpdated: () => void) => {
       console.log("=== بدء عملية تحديث المستخدم ===");
       console.log("معرف المستخدم:", selectedUser.id);
       console.log("الدور المحدد:", selectedRole);
-      console.log("المسمى الوظيفي:", selectedUser.displayName);
+      console.log("الاسم الشخصي:", selectedUser.displayName);
       console.log("تم إدخال كلمة مرور جديدة:", newPassword ? "نعم" : "لا");
       
-      // تحديث الدور والمسمى الوظيفي
+      // تحديث الدور والاسم الشخصي
       if (selectedRole) {
         console.log("تحديث دور المستخدم...");
         const { error: roleError } = await supabase.rpc('assign_user_role', {
@@ -38,19 +38,19 @@ export const useUserOperations = (onUserUpdated: () => void) => {
         console.log("تم تحديث دور المستخدم بنجاح");
       }
       
-      // تحديث المسمى الوظيفي إذا كان موجودًا
+      // تحديث الاسم الشخصي إذا كان موجودًا
       if (selectedUser.displayName !== undefined) {
-        console.log("تحديث المسمى الوظيفي...");
+        console.log("تحديث الاسم الشخصي...");
         const { error: displayNameError } = await supabase
           .from('profiles')
           .update({ display_name: selectedUser.displayName })
           .eq('id', selectedUser.id);
         
         if (displayNameError) {
-          console.error("خطأ في تحديث المسمى الوظيفي:", displayNameError);
+          console.error("خطأ في تحديث الاسم الشخصي:", displayNameError);
           throw displayNameError;
         }
-        console.log("تم تحديث المسمى الوظيفي بنجاح");
+        console.log("تم تحديث الاسم الشخصي بنجاح");
       }
       
       // تحديث كلمة المرور إذا تم إدخالها
@@ -72,7 +72,7 @@ export const useUserOperations = (onUserUpdated: () => void) => {
       await supabase.rpc('log_user_activity', {
         user_id: selectedUser.id,
         activity_type: 'user_updated',
-        details: `تم تحديث معلومات المستخدم (الدور: ${selectedRole || 'لم يتغير'}, كلمة المرور: ${newPassword ? 'تم التغيير' : 'لم تتغير'}, المسمى الوظيفي: ${selectedUser.displayName || 'لم يتغير'})`
+        details: `تم تحديث معلومات المستخدم (الدور: ${selectedRole || 'لم يتغير'}, كلمة المرور: ${newPassword ? 'تم التغيير' : 'لم تتغير'}, الاسم الشخصي: ${selectedUser.displayName || 'لم يتغير'})`
       });
       
       toast.success("تم تحديث بيانات المستخدم بنجاح");
