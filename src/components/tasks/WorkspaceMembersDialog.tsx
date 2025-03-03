@@ -19,12 +19,13 @@ interface WorkspaceMembersDialogProps {
 
 export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: WorkspaceMembersDialogProps) => {
   const [email, setEmail] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [role, setRole] = useState<"admin" | "member" | "viewer">("member");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
   // Obtener la lista actual de miembros
-  const { data: members, isLoading } = useQuery({
+  const { data: members, isLoading: isMembersLoading } = useQuery({
     queryKey: ['workspace-members', workspaceId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,22 +39,63 @@ export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: Work
     enabled: open // Solo consultar cuando el diálogo esté abierto
   });
 
+  // جلب قائمة المستخدمين
+  const { data: users, isLoading: isUsersLoading } = useQuery({
+    queryKey: ['users-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, display_name');
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: open
+  });
+
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    const selectedUser = users?.find(user => user.id === userId);
+    if (selectedUser) {
+      setEmail(selectedUser.email || "");
+    }
+  };
+
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim()) {
-      toast.error("يرجى إدخال البريد الإلكتروني للعضو");
+    if (!selectedUserId && !email.trim()) {
+      toast.error("يرجى اختيار مستخدم أو إدخال البريد الإلكتروني");
       return;
     }
     
     setIsSubmitting(true);
     
     try {
+      const userEmail = email.trim();
+      
       // Verificar si el correo electrónico ya existe como miembro
-      if (members?.some(member => member.user_email?.toLowerCase() === email.toLowerCase())) {
-        toast.error("هذا البريد الإلكتروني موجود بالفعل في مساحة العمل");
+      if (members?.some(member => 
+        (selectedUserId && member.user_id === selectedUserId) || 
+        (userEmail && member.user_email?.toLowerCase() === userEmail.toLowerCase())
+      )) {
+        toast.error("هذا المستخدم موجود بالفعل في مساحة العمل");
         setIsSubmitting(false);
         return;
+      }
+
+      // الحصول على معلومات المستخدم المحدد إن وجد
+      let userId = selectedUserId;
+      let userDisplayName = "";
+      
+      if (selectedUserId) {
+        const selectedUser = users?.find(user => user.id === selectedUserId);
+        if (selectedUser) {
+          userDisplayName = selectedUser.display_name || selectedUser.email?.split('@')[0] || "";
+        }
+      } else {
+        // في حالة إدخال بريد إلكتروني يدوياً
+        userDisplayName = userEmail.split('@')[0];
       }
 
       // Obtener información del usuario actual para guardarla como creador del espacio
@@ -65,10 +107,10 @@ export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: Work
         .insert([
           {
             workspace_id: workspaceId,
-            user_id: user?.id || '00000000-0000-0000-0000-000000000000', // ID temporal si no hay usuario
+            user_id: userId || user?.id || '00000000-0000-0000-0000-000000000000', // ID temporal si no hay usuario
             role,
-            user_email: email,
-            user_display_name: email.split('@')[0] // Nombre provisional basado en el email
+            user_email: userEmail || null,
+            user_display_name: userDisplayName // Nombre provisional basado en el email
           }
         ]);
       
@@ -79,6 +121,7 @@ export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: Work
       
       toast.success("تمت إضافة العضو بنجاح");
       setEmail("");
+      setSelectedUserId("");
     } catch (error) {
       console.error("Error adding member:", error);
       toast.error("حدث خطأ أثناء إضافة العضو");
@@ -115,14 +158,35 @@ export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: Work
         
         <form onSubmit={handleAddMember} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Label htmlFor="userSelect">اختر مستخدم</Label>
+            <Select value={selectedUserId} onValueChange={handleUserSelect}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر مستخدم من القائمة" />
+              </SelectTrigger>
+              <SelectContent>
+                {isUsersLoading ? (
+                  <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>
+                ) : users && users.length > 0 ? (
+                  users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.display_name || user.email || 'مستخدم بدون اسم'}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-users" disabled>لا يوجد مستخدمين</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">أو أدخل البريد الإلكتروني يدوياً</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="أدخل البريد الإلكتروني للعضو"
-              required
             />
           </div>
           
@@ -152,7 +216,7 @@ export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: Work
         <div className="mt-6">
           <h3 className="font-bold mb-2">الأعضاء الحاليين</h3>
           
-          {isLoading ? (
+          {isMembersLoading ? (
             <p className="text-gray-500 text-center py-4">جاري التحميل...</p>
           ) : !members || members.length === 0 ? (
             <p className="text-gray-500 text-center py-4">لا يوجد أعضاء حاليًا</p>
