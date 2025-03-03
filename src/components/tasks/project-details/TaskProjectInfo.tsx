@@ -12,6 +12,8 @@ import {
 import { formatDistanceToNow, format, differenceInDays } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskProject {
   id: string;
@@ -29,6 +31,51 @@ interface TaskProjectInfoProps {
 }
 
 export const TaskProjectInfo = ({ project }: TaskProjectInfoProps) => {
+  const [completedTasksCount, setCompletedTasksCount] = useState(0);
+  const [totalTasksCount, setTotalTasksCount] = useState(0);
+  const [overdueTasksCount, setOverdueTasksCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchTasksData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch tasks for this project
+        const { data: tasks, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('project_id', project.id);
+        
+        if (error) {
+          console.error("Error fetching tasks:", error);
+          return;
+        }
+
+        // Calculate metrics
+        const total = tasks ? tasks.length : 0;
+        const completed = tasks ? tasks.filter(task => task.status === 'completed').length : 0;
+        
+        // Calculate overdue tasks (tasks with due_date in the past and not completed)
+        const now = new Date();
+        const overdue = tasks ? tasks.filter(task => {
+          return task.status !== 'completed' && 
+                task.due_date && 
+                new Date(task.due_date) < now;
+        }).length : 0;
+
+        setTotalTasksCount(total);
+        setCompletedTasksCount(completed);
+        setOverdueTasksCount(overdue);
+      } catch (err) {
+        console.error("Error in fetchTasksData:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTasksData();
+  }, [project.id]);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -81,11 +128,9 @@ export const TaskProjectInfo = ({ project }: TaskProjectInfoProps) => {
     }
   };
 
-  // هذه بيانات وهمية، ستحتاج لاستبدالها بالبيانات الفعلية من قاعدة البيانات
-  const completedTasksCount = 3;
-  const totalTasksCount = 8;
-  const overdueTasksCount = 2;
-  const completionPercentage = Math.round((completedTasksCount / totalTasksCount) * 100);
+  const completionPercentage = totalTasksCount > 0 
+    ? Math.round((completedTasksCount / totalTasksCount) * 100) 
+    : 0;
   const remainingDays = getRemainingDays(project.due_date);
   const timeToDeadline = getTimeToDeadline(project.due_date);
 
