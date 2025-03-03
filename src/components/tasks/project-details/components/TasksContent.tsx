@@ -50,7 +50,6 @@ export const TasksContent = ({
   }
 
   // إذا كان التبويب النشط هو "الكل"، فسنعرض المهام مقسمة حسب المراحل
-  // وإلا سنعرض المهام كقائمة بدون تقسيم
   if (activeTab === "all" && projectStages.length > 0) {
     return (
       <div className="space-y-6" dir="rtl">
@@ -73,18 +72,38 @@ export const TasksContent = ({
 
   // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى
   return (
-    <div className="space-y-3" dir="rtl">
-      {filteredTasks.map(task => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          getStatusBadge={getStatusBadge}
-          getPriorityBadge={getPriorityBadge}
-          formatDate={formatDate}
-          onStatusChange={onStatusChange}
-          projectId={projectId || ''}
-        />
-      ))}
+    <div className="space-y-6" dir="rtl">
+      <div className="bg-white rounded-md shadow-sm overflow-hidden border">
+        <div className="p-4 bg-gray-50 border-b">
+          <h3 className="font-medium">المهام</h3>
+        </div>
+        <div className="border rounded-md overflow-hidden">
+          <Table dir="rtl">
+            <TableHeader>
+              <TableRow>
+                <TableHead>المهمة</TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead>الأولوية</TableHead>
+                <TableHead>المكلف</TableHead>
+                <TableHead>تاريخ الاستحقاق</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.map(task => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId || ''}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 };
