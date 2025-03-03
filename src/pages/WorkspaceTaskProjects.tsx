@@ -5,18 +5,18 @@ import { useParams } from "react-router-dom";
 import { TaskProjectsList } from "@/components/tasks/projects/TaskProjectsList";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { CreateTaskProjectDialog } from "@/components/tasks/projects/CreateTaskProjectDialog";
 
 const WorkspaceTaskProjects = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const navigate = useNavigate();
   const [workspaceName, setWorkspaceName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   
   useEffect(() => {
     const fetchWorkspaceName = async () => {
@@ -70,7 +70,7 @@ const WorkspaceTaskProjects = () => {
   }, [workspaceId]);
   
   const handleCreateProject = () => {
-    navigate(`/tasks/create-task-project/${workspaceId}`);
+    setIsDialogOpen(true);
   };
   
   return (
@@ -103,6 +103,14 @@ const WorkspaceTaskProjects = () => {
         </div>
       </div>
       <Footer />
+      
+      {workspaceId && (
+        <CreateTaskProjectDialog 
+          open={isDialogOpen} 
+          onOpenChange={setIsDialogOpen} 
+          workspaceId={workspaceId} 
+        />
+      )}
     </div>
   );
 };
