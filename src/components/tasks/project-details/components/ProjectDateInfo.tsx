@@ -11,52 +11,33 @@ interface ProjectDateInfoProps {
 }
 
 export const ProjectDateInfo = ({ createdAt, dueDate }: ProjectDateInfoProps) => {
-  const timeToDeadline = getTimeFromNow(dueDate);
   const remainingDays = getRemainingDays(dueDate);
 
   return (
     <div className="flex flex-wrap gap-3 bg-gray-50 p-3 rounded-md">
       <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-md">
         <CalendarIcon className="h-4 w-4 text-blue-700" />
-        <div className="flex flex-col">
-          <span className="text-xs font-medium text-blue-700">تاريخ البدء</span>
-          <span className="text-sm font-medium text-blue-900">
-            {formatDate(createdAt)}
-          </span>
-        </div>
+        <span className="text-sm font-medium text-blue-900">
+          <span className="text-xs text-blue-700 ml-1">تاريخ البدء:</span>
+          {formatDate(createdAt)}
+        </span>
       </div>
       
       <div className="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-md">
         <CalendarIcon className="h-4 w-4 text-amber-700" />
-        <div className="flex flex-col">
-          <span className="text-xs font-medium text-amber-700">تاريخ الانتهاء</span>
-          <span className="text-sm font-medium text-amber-900">
-            {formatDate(dueDate)}
-          </span>
-        </div>
+        <span className="text-sm font-medium text-amber-900">
+          <span className="text-xs text-amber-700 ml-1">تاريخ الانتهاء:</span>
+          {formatDate(dueDate)}
+        </span>
       </div>
-      
-      {timeToDeadline && (
-        <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-md">
-          <ClockIcon className="h-4 w-4 text-green-700" />
-          <div className="flex flex-col">
-            <span className="text-xs font-medium text-green-700">الوقت المتبقي</span>
-            <span className="text-sm font-medium text-green-900">
-              {timeToDeadline}
-            </span>
-          </div>
-        </div>
-      )}
       
       {remainingDays !== null && (
         <div className="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-md">
           <ClockIcon className="h-4 w-4 text-purple-700" />
-          <div className="flex flex-col">
-            <span className="text-xs font-medium text-purple-700">عدد الأيام المتبقية</span>
-            <span className="text-sm font-medium text-purple-900">
-              {remainingDays} يوم
-            </span>
-          </div>
+          <span className="text-sm font-medium text-purple-900">
+            <span className="text-xs text-purple-700 ml-1">الأيام المتبقية:</span>
+            {remainingDays} يوم
+          </span>
         </div>
       )}
     </div>
