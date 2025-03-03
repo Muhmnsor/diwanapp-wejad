@@ -6,7 +6,8 @@ import {
   Clock,
   Users,
   UserPlus,
-  AlertTriangle
+  AlertTriangle,
+  ClipboardList
 } from "lucide-react";
 import { Workspace } from "@/types/workspace";
 import { useState } from "react";
@@ -22,11 +23,11 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
 
   const handleClick = () => {
-    navigate(`/workspaces/${workspace.id}`);
+    navigate(`/tasks/create-task-project/${workspace.id}`);
   };
 
   const handleManageMembers = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Evitar la navegación a la página de detalles
+    e.stopPropagation(); // Prevent navigation to the details page
     setIsMembersDialogOpen(true);
   };
 
@@ -49,15 +50,15 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>{workspace.completed_tasks || 0} مشاريع مكتملة</span>
+                <span>{workspace.completed_tasks || 0} مهام مكتملة</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4 text-blue-500" />
-                <span>{workspace.pending_tasks || 0} مشاريع حالية</span>
+                <span>{workspace.pending_tasks || 0} مهام حالية</span>
               </div>
               <div className="flex items-center gap-1">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <span>{workspace.total_tasks - (workspace.completed_tasks || 0) - (workspace.pending_tasks || 0) || 0} مشاريع متعثرة</span>
+                <span>{workspace.total_tasks - (workspace.completed_tasks || 0) - (workspace.pending_tasks || 0) || 0} مهام متعثرة</span>
               </div>
             </div>
           </div>
