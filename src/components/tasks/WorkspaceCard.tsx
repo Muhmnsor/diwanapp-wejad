@@ -7,12 +7,14 @@ import {
   Users,
   UserPlus,
   AlertTriangle,
-  ClipboardList
+  ClipboardList,
+  PauseCircle
 } from "lucide-react";
 import { Workspace } from "@/types/workspace";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { WorkspaceMembersDialog } from "./WorkspaceMembersDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -21,6 +23,48 @@ interface WorkspaceCardProps {
 export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const navigate = useNavigate();
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+  const [projectCounts, setProjectCounts] = useState({
+    completed: 0,
+    pending: 0,
+    stopped: 0,
+    stalled: 0,
+    total: 0
+  });
+
+  useEffect(() => {
+    const fetchProjectCounts = async () => {
+      try {
+        // Fetch all projects for this workspace
+        const { data: projects, error } = await supabase
+          .from('project_tasks')
+          .select('status')
+          .eq('workspace_id', workspace.id);
+
+        if (error) {
+          console.error('Error fetching projects:', error);
+          return;
+        }
+
+        const total = projects?.length || 0;
+        const completed = projects?.filter(p => p.status === 'completed').length || 0;
+        const pending = projects?.filter(p => p.status === 'in_progress' || p.status === 'pending').length || 0;
+        const stopped = projects?.filter(p => p.status === 'stopped' || p.status === 'on_hold').length || 0;
+        const stalled = total - completed - pending - stopped;
+
+        setProjectCounts({
+          completed,
+          pending,
+          stopped,
+          stalled,
+          total
+        });
+      } catch (error) {
+        console.error('Failed to fetch project counts:', error);
+      }
+    };
+
+    fetchProjectCounts();
+  }, [workspace.id]);
 
   const handleClick = () => {
     navigate(`/tasks/workspace/${workspace.id}`);
@@ -50,15 +94,19 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>{workspace.completed_tasks || 0} مشاريع مكتملة</span>
+                <span>{projectCounts.completed} مكتملة</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4 text-blue-500" />
-                <span>{workspace.pending_tasks || 0} مشاريع جارية</span>
+                <span>{projectCounts.pending} جارية</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <PauseCircle className="h-4 w-4 text-orange-500" />
+                <span>{projectCounts.stopped} متوقفة</span>
               </div>
               <div className="flex items-center gap-1">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <span>{workspace.total_tasks - (workspace.completed_tasks || 0) - (workspace.pending_tasks || 0) || 0} مشاريع متعثرة</span>
+                <span>{projectCounts.stalled} متعثرة</span>
               </div>
             </div>
           </div>
