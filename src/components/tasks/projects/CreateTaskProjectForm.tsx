@@ -44,6 +44,9 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
     setIsLoading(true);
     
     try {
+      console.log("Creating project with workspace_id:", workspaceId);
+      console.log("Form data:", formData);
+      
       const { data, error } = await supabase
         .from('project_tasks')
         .insert([
@@ -56,8 +59,12 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
           }
         ]);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating task project:", error);
+        throw error;
+      }
       
+      console.log("Project created successfully:", data);
       toast.success("تم إنشاء مشروع المهام بنجاح");
       navigate(`/tasks/workspace/${workspaceId}`);
     } catch (error) {
@@ -101,7 +108,7 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2 md:order-2">
+        <div className="space-y-2 md:order-1">
           <Label htmlFor="start_date" className="text-right block">تاريخ البداية</Label>
           <Input
             id="start_date"
@@ -112,7 +119,7 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
             className="text-right"
           />
         </div>
-        <div className="space-y-2 md:order-1">
+        <div className="space-y-2 md:order-2">
           <Label htmlFor="end_date" className="text-right block">تاريخ النهاية</Label>
           <Input
             id="end_date"
