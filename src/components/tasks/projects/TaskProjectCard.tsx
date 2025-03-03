@@ -18,6 +18,11 @@ interface TaskProject {
   due_date: string | null;
   status: string;
   workspace_id: string;
+  project_id: string;
+  projects: {
+    title: string;
+    description: string | null;
+  }
 }
 
 interface TaskProjectCardProps {

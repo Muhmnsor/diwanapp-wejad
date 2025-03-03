@@ -2170,6 +2170,7 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           asana_gid?: string | null
@@ -2182,6 +2183,7 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           asana_gid?: string | null
@@ -2194,6 +2196,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -2201,6 +2204,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
