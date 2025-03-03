@@ -170,7 +170,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
           />
           
           <Tabs value={activeTab}>
-            <TabsContent value={activeTab} className="mt-0">
+            <TabsContent value={activeTab} className="mt-0" dir="rtl">
               <TasksContent 
                 isLoading={isLoading}
                 activeTab={activeTab}

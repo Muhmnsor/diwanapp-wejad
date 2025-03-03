@@ -25,7 +25,7 @@ export const TaskItem = ({
       <TableCell>
         {task.assigned_user_name ? (
           <div className="flex items-center">
-            <Users className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+            <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
             {task.assigned_user_name}
           </div>
         ) : (
@@ -34,7 +34,7 @@ export const TaskItem = ({
       </TableCell>
       <TableCell>
         <div className="flex items-center">
-          <Calendar className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+          <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
           {formatDate(task.due_date)}
         </div>
       </TableCell>

@@ -27,7 +27,7 @@ export const TasksContent = ({
 }: TasksContentProps) => {
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" dir="rtl">
         {[...Array(3)].map((_, index) => (
           <Skeleton key={index} className="h-24 w-full" />
         ))}
@@ -37,7 +37,7 @@ export const TasksContent = ({
 
   if (filteredTasks.length === 0) {
     return (
-      <div className="text-center py-8 bg-gray-50 rounded-md border">
+      <div className="text-center py-8 bg-gray-50 rounded-md border" dir="rtl">
         <p className="text-gray-500">لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}</p>
       </div>
     );
@@ -45,7 +45,7 @@ export const TasksContent = ({
 
   if (projectStages.length > 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => (
           <TasksStageGroup
             key={stage.id}
@@ -62,7 +62,7 @@ export const TasksContent = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" dir="rtl">
       {filteredTasks.map(task => (
         <TaskCard
           key={task.id}

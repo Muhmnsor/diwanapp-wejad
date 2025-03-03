@@ -8,7 +8,7 @@ interface TasksFilterProps {
 
 export const TasksFilter = ({ activeTab, onTabChange }: TasksFilterProps) => {
   return (
-    <Tabs defaultValue={activeTab} className="w-full" onValueChange={onTabChange}>
+    <Tabs defaultValue={activeTab} className="w-full" onValueChange={onTabChange} dir="rtl">
       <TabsList className="grid grid-cols-5 mb-4">
         <TabsTrigger value="all">الكل</TabsTrigger>
         <TabsTrigger value="pending">قيد الانتظار</TabsTrigger>
