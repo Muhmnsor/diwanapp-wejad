@@ -1,30 +1,16 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { SubtaskItem } from "./SubtaskItem";
 import { AddSubtaskForm } from "./AddSubtaskForm";
-
-interface Subtask {
-  id: string;
-  title: string;
-  status: string;
-  due_date: string | null;
-  assigned_to: string | null;
-  priority: string | null;
-}
+import { SubtaskItem } from "./SubtaskItem";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { Subtask } from "../../types/task";
 
 interface SubtasksListProps {
   taskId: string;
   subtasks: Subtask[];
   projectId?: string;
-  onAddSubtask: (
-    taskId: string, 
-    subtaskTitle: string, 
-    dueDate?: string | null, 
-    assignedTo?: string | null, 
-    priority?: string | null
-  ) => Promise<void>;
+  onAddSubtask: (taskId: string, title: string, dueDate?: string | null, assignedTo?: string | null) => Promise<void>;
   onUpdateSubtaskStatus: (subtaskId: string, newStatus: string) => Promise<void>;
   onDeleteSubtask: (subtaskId: string) => Promise<void>;
 }
@@ -37,105 +23,76 @@ export const SubtasksList = ({
   onUpdateSubtaskStatus,
   onDeleteSubtask
 }: SubtasksListProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [dueDate, setDueDate] = useState<string | null>(null);
-  const [priority, setPriority] = useState<string | null>(null);
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
+  const [priority, setPriority] = useState<string | null>(null);
 
   const handleAddSubtask = async () => {
     if (!newSubtaskTitle.trim()) return;
     
     try {
-      await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo, priority);
+      // We're no longer passing priority since it's not in the table schema
+      await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo);
       setNewSubtaskTitle("");
       setDueDate(null);
-      setPriority(null);
       setAssignedTo(null);
-      setIsAddingSubtask(false);
+      setPriority(null);
+      setShowAddForm(false);
     } catch (error) {
       console.error("Error adding subtask:", error);
     }
   };
 
-  if (subtasks.length === 0 && !isAddingSubtask) {
-    return (
-      <div className="mt-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-xs font-normal text-muted-foreground"
-          onClick={() => setIsAddingSubtask(true)}
-        >
-          <PlusCircle className="h-3.5 w-3.5 mr-1" />
-          إضافة مهمة فرعية
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-3 border-t pt-2">
-      <div className="flex items-center justify-between mb-2">
-        <button 
-          className="flex items-center text-sm font-medium text-muted-foreground"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 mr-1" />
-          ) : (
-            <ChevronDown className="h-4 w-4 mr-1" />
-          )}
-          المهام الفرعية ({subtasks.length})
-        </button>
-        
-        {!isAddingSubtask && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs h-7 px-2"
-            onClick={() => setIsAddingSubtask(true)}
+    <div className="mt-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium">المهام الفرعية</h4>
+        {!showAddForm && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            onClick={() => setShowAddForm(true)}
           >
-            <PlusCircle className="h-3.5 w-3.5 ml-1" />
-            إضافة
+            <Plus className="h-4 w-4 ml-1" />
+            إضافة مهمة فرعية
           </Button>
         )}
       </div>
-      
-      {isExpanded && (
-        <div className="space-y-2">
-          {isAddingSubtask && (
-            <AddSubtaskForm 
-              value={newSubtaskTitle}
-              onChange={setNewSubtaskTitle}
-              onSubmit={handleAddSubtask}
-              onCancel={() => {
-                setIsAddingSubtask(false);
-                setNewSubtaskTitle("");
-                setDueDate(null);
-                setPriority(null);
-                setAssignedTo(null);
-              }}
-              dueDate={dueDate}
-              setDueDate={setDueDate}
-              priority={priority}
-              setPriority={setPriority}
-              assignedTo={assignedTo}
-              setAssignedTo={setAssignedTo}
-              projectId={projectId}
-            />
-          )}
-          
-          {subtasks.map(subtask => (
-            <SubtaskItem 
+
+      {subtasks.length > 0 && (
+        <ul className="space-y-2">
+          {subtasks.map((subtask) => (
+            <SubtaskItem
               key={subtask.id}
               subtask={subtask}
               onStatusChange={onUpdateSubtaskStatus}
               onDelete={onDeleteSubtask}
             />
           ))}
-        </div>
+        </ul>
+      )}
+
+      {showAddForm && (
+        <AddSubtaskForm
+          value={newSubtaskTitle}
+          onChange={setNewSubtaskTitle}
+          onSubmit={handleAddSubtask}
+          onCancel={() => setShowAddForm(false)}
+          dueDate={dueDate}
+          setDueDate={setDueDate}
+          priority={priority}
+          setPriority={setPriority}
+          assignedTo={assignedTo}
+          setAssignedTo={setAssignedTo}
+          projectId={projectId}
+        />
+      )}
+
+      {subtasks.length === 0 && !showAddForm && (
+        <p className="text-sm text-gray-500">لا توجد مهام فرعية بعد.</p>
       )}
     </div>
   );

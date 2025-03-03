@@ -72,10 +72,10 @@ export const TaskItem = ({
     taskId: string, 
     title: string, 
     dueDate?: string | null, 
-    assignedTo?: string | null, 
-    priority?: string | null
+    assignedTo?: string | null
   ) => {
-    await addSubtask(title, dueDate || null, assignedTo || null, priority || null);
+    // We're no longer passing priority since it's not in the table schema
+    await addSubtask(title, dueDate || null, assignedTo || null);
   };
 
   const renderStatusChangeButton = () => {

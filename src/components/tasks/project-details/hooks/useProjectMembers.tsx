@@ -25,7 +25,7 @@ export const useProjectMembers = (projectId?: string) => {
         // هنا يمكن أن تحتاج لتعديل الاستعلام حسب هيكل قاعدة البيانات
         const { data, error } = await supabase
           .from('profiles')
-          .select('*');
+          .select('id, display_name, email');
 
         if (error) throw error;
 
@@ -37,6 +37,7 @@ export const useProjectMembers = (projectId?: string) => {
         }));
 
         setMembers(formattedMembers);
+        console.log("Fetched members:", formattedMembers);
       } catch (error) {
         console.error("Error fetching project members:", error);
       } finally {

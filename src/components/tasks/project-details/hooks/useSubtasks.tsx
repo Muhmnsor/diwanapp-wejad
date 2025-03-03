@@ -33,12 +33,12 @@ export const useSubtasks = (taskId: string) => {
   const addSubtask = async (
     title: string, 
     dueDate: string | null = null, 
-    assignedTo: string | null = null, 
-    priority: string | null = null
+    assignedTo: string | null = null
   ) => {
     if (!taskId || !title.trim()) return;
     
     try {
+      // Remove priority from the insert operation since it doesn't exist in the table
       const { data, error } = await supabase
         .from('task_subtasks')
         .insert([
@@ -47,8 +47,7 @@ export const useSubtasks = (taskId: string) => {
             title, 
             status: 'pending',
             due_date: dueDate,
-            assigned_to: assignedTo,
-            priority
+            assigned_to: assignedTo
           }
         ])
         .select();
