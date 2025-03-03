@@ -9,18 +9,23 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const WorkspaceTaskProjects = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
   const [workspaceName, setWorkspaceName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
   
   useEffect(() => {
     const fetchWorkspaceName = async () => {
       if (!workspaceId) return;
       
       try {
+        console.log("Fetching workspace with ID:", workspaceId);
+        
+        // Try to fetch from portfolio_workspaces table
         const { data, error } = await supabase
           .from('portfolio_workspaces')
           .select('name')
@@ -28,15 +33,34 @@ const WorkspaceTaskProjects = () => {
           .single();
         
         if (error) {
-          console.error('Error fetching workspace:', error);
-          return;
-        }
-        
-        if (data) {
+          console.error('Error fetching from portfolio_workspaces:', error);
+          
+          // If that fails, try the workspaces table
+          const { data: wsData, error: wsError } = await supabase
+            .from('workspaces')
+            .select('name')
+            .eq('id', workspaceId)
+            .single();
+            
+          if (wsError) {
+            console.error('Error fetching from workspaces:', wsError);
+            setError(true);
+            toast.error("تعذر العثور على مساحة العمل");
+            return;
+          }
+          
+          if (wsData) {
+            console.log("Found workspace in workspaces table:", wsData);
+            setWorkspaceName(wsData.name);
+          }
+        } else if (data) {
+          console.log("Found workspace in portfolio_workspaces table:", data);
           setWorkspaceName(data.name);
         }
       } catch (error) {
         console.error('Error:', error);
+        setError(true);
+        toast.error("حدث خطأ أثناء تحميل بيانات مساحة العمل");
       } finally {
         setIsLoading(false);
       }
@@ -68,7 +92,13 @@ const WorkspaceTaskProjects = () => {
                 إنشاء مشروع جديد
               </Button>
             </div>
-            {workspaceId && <TaskProjectsList workspaceId={workspaceId} />}
+            {workspaceId && !error && <TaskProjectsList workspaceId={workspaceId} />}
+            {error && (
+              <div className="text-center p-8 bg-gray-50 rounded-lg border shadow-sm">
+                <h3 className="text-lg font-medium text-gray-600 mb-2">لم يتم العثور على مساحة العمل</h3>
+                <p className="text-gray-500">تأكد من الرابط أو عد إلى الصفحة السابقة</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
