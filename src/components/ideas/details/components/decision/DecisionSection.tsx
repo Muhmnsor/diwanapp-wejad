@@ -9,6 +9,7 @@ import { AssigneeItem, Decision, DecisionProps } from "./types";
 import { DecisionForm } from "./DecisionForm";
 import { DecisionDisplay } from "./DecisionDisplay";
 import { DecisionDeleteDialog } from "./DecisionDeleteDialog";
+import { useAuthStore } from "@/store/authStore";
 
 export const DecisionSection = ({ 
   ideaId, 
@@ -31,6 +32,10 @@ export const DecisionSection = ({
   
   const [assignees, setAssignees] = useState<AssigneeItem[]>([]);
   
+  // تحقق من صلاحيات المستخدم
+  const { user } = useAuthStore();
+  const canManageDecisions = user?.isAdmin || user?.role === 'admin';
+  
   console.log("DecisionSection - لقطة الحالة الكاملة:", { 
     ideaId, 
     status, 
@@ -38,7 +43,9 @@ export const DecisionSection = ({
     hasExistingDecision: Boolean(decision?.id),  
     decisionFullDetails: decision,
     ideaStatus: status,
-    localDecision
+    localDecision,
+    userRole: user?.role,
+    canManageDecisions
   });
   
   const hasDecision = Boolean(localDecision?.id);
@@ -264,13 +271,15 @@ export const DecisionSection = ({
     }
   }, [localDecision]);
 
-  const showDecisionForm = !hasDecision || (isAdmin && isEditing);
+  // تحديث المنطق للسماح فقط للمدراء باتخاذ القرارات
+  const showDecisionForm = !hasDecision || (canManageDecisions && isEditing);
 
   console.log("DecisionSection - قرار العرض:", {
     hasDecision,
     isAdmin,
     isEditing,
     showDecisionForm,
+    canManageDecisions,
     decisionStatus: localDecision?.status || "غير محدد"
   });
 
@@ -284,7 +293,7 @@ export const DecisionSection = ({
             {ideaTitle || (hasDecision ? "القرار المتخذ" : "اتخاذ القرار")}
           </CardTitle>
           
-          {hasDecision && isAdmin && !isEditing && (
+          {hasDecision && canManageDecisions && !isEditing && (
             <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
@@ -336,7 +345,7 @@ export const DecisionSection = ({
             timeline={timeline}
             budget={budget}
           />
-        ) : isAdmin ? (
+        ) : canManageDecisions ? (
           <div className="text-center py-4">
             <p className="text-muted-foreground mb-3">لم يتم اتخاذ قرار بشأن هذه الفكرة بعد.</p>
             <Button onClick={() => setIsEditing(true)}>إضافة قرار جديد</Button>
