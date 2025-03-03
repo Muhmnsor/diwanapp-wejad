@@ -9,10 +9,13 @@ import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
 import { FolderKanban, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
 
 export const TopHeader = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
+  const [activeTab, setActiveTab] = useState("overview");
   
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
@@ -27,6 +30,24 @@ export const TopHeader = () => {
   const isTasksPage = location.pathname.includes('/tasks') ||
                      location.pathname.includes('/portfolios') ||
                      location.pathname.includes('/portfolio-workspaces');
+
+  // Set active tab based on URL hash or default to "overview"
+  useEffect(() => {
+    if (isTasksPage) {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'workspaces') {
+        setActiveTab('workspaces');
+      } else {
+        setActiveTab('overview');
+      }
+    }
+  }, [location.pathname, isTasksPage]);
+
+  // Update URL hash when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    window.location.hash = value;
+  };
 
   return (
     <div className="w-full bg-white border-b">
@@ -55,31 +76,34 @@ export const TopHeader = () => {
             </div>
           )}
 
-          {/* Tasks Secondary Header - Only show on tasks pages */}
+          {/* Tasks Secondary Header with Tabs - Only show on tasks pages */}
           {isTasksPage && (
-            <div className="flex items-center justify-center py-2 md:py-3 border-t w-full">
-              <div className="flex items-center gap-2 md:gap-4 w-full justify-center">
-                <Link to="/tasks" className="flex-1 md:flex-none">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full md:w-auto flex items-center justify-center gap-2"
-                  >
-                    <FolderKanban className="h-4 w-4" />
-                    المحافظ
-                  </Button>
-                </Link>
-                <Link to="/tasks/dashboard" className="flex-1 md:flex-none">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full md:w-auto flex items-center justify-center gap-2"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    لوحة المعلومات
-                  </Button>
-                </Link>
-              </div>
+            <div className="w-full bg-gray-50 border-t">
+              <Tabs 
+                defaultValue="overview" 
+                value={activeTab}
+                onValueChange={handleTabChange}
+                className="w-full"
+              >
+                <div className="flex justify-center">
+                  <TabsList className="grid grid-cols-2 w-full max-w-md bg-gray-100 m-3">
+                    <TabsTrigger 
+                      value="overview"
+                      className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                    >
+                      <LayoutDashboard className="h-4 w-4 ml-2" />
+                      لوحة المعلومات
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="workspaces"
+                      className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                    >
+                      <FolderKanban className="h-4 w-4 ml-2" />
+                      مساحات العمل
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </Tabs>
             </div>
           )}
         </div>
