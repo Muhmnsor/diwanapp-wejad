@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { calculateTimeRemaining, getCountdownDisplay, CountdownTime } from "../utils/countdownUtils";
+import { calculateTimeRemaining, getCountdownDisplay, CountdownTime, isDiscussionActive } from "../utils/countdownUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
