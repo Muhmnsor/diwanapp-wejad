@@ -2714,6 +2714,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          priority: string | null
           project_id: string | null
           stage_id: string | null
           status: string | null
@@ -2728,6 +2729,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          priority?: string | null
           project_id?: string | null
           stage_id?: string | null
           status?: string | null
@@ -2742,6 +2744,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          priority?: string | null
           project_id?: string | null
           stage_id?: string | null
           status?: string | null

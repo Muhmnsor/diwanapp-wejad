@@ -50,7 +50,7 @@ export const AddTaskDialog = ({
             title: formData.title,
             description: formData.description,
             due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-            priority: formData.priority,
+            priority: formData.priority || 'medium',
             project_id: projectId,
             stage_id: formData.stageId || null,
             assigned_to: formData.assignedTo,
@@ -60,6 +60,7 @@ export const AddTaskDialog = ({
         .select();
       
       if (error) {
+        console.error("Error details:", error);
         throw error;
       }
       
