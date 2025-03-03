@@ -11,11 +11,7 @@ interface TaskProject {
   due_date: string | null;
   status: string;
   workspace_id: string;
-  project_id: string;
-  projects: {
-    title: string;
-    description: string | null;
-  }
+  project_id: string | null;
 }
 
 interface TaskProjectsListProps {
@@ -28,7 +24,7 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('project_tasks')
-        .select('*, projects:project_id(title, description)')
+        .select('*')
         .eq('workspace_id', workspaceId);
       
       if (error) throw error;

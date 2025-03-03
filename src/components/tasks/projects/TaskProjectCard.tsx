@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { 
   CalendarIcon,
@@ -20,11 +21,7 @@ interface TaskProject {
   due_date: string | null;
   status: string;
   workspace_id: string;
-  project_id: string;
-  projects: {
-    title: string;
-    description: string | null;
-  }
+  project_id: string | null;
 }
 
 interface TaskProjectCardProps {
@@ -35,7 +32,7 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/projects/${project.project_id}`);
+    navigate(`/tasks/project/${project.id}`);
   };
 
   const getStatusBadge = (status: string) => {

@@ -51,49 +51,17 @@ export const CreateTaskProjectDialog = ({
     setIsLoading(true);
     
     try {
-      console.log("Creating project with workspace_id:", workspaceId);
+      console.log("Creating task project with workspace_id:", workspaceId);
       console.log("Form data:", formData);
       
-      // أولاً، نقوم بإنشاء سجل في جدول المشاريع (إذا لم يكن موجودًا)
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .insert([
-          {
-            title: formData.name,
-            description: formData.description,
-            start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
-            end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
-            image_url: '/placeholder.svg', // صورة افتراضية
-            event_type: 'task',
-            project_type: 'task_project',
-            beneficiary_type: 'both',
-            event_path: 'administrative',
-            event_category: 'administrative',
-            is_visible: true
-          }
-        ])
-        .select();
-      
-      if (projectError) {
-        console.error("Error creating project:", projectError);
-        throw projectError;
-      }
-      
-      if (!projectData || projectData.length === 0) {
-        throw new Error("فشل إنشاء المشروع، لم يتم إرجاع البيانات");
-      }
-      
-      const projectId = projectData[0].id;
-      
-      // ثم نقوم بإنشاء مهمة مرتبطة بالمشروع في جدول مهام المشاريع
+      // نقوم بإنشاء المشروع في جدول project_tasks مباشرة
       const { data: taskData, error: taskError } = await supabase
         .from('project_tasks')
         .insert([
           {
             title: formData.name,
             description: formData.description,
-            project_id: projectId, // استخدام معرف المشروع الذي تم إنشاؤه
-            workspace_id: workspaceId, // إضافة معرف مساحة العمل
+            workspace_id: workspaceId,
             due_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
             status: 'pending',
           }
@@ -104,7 +72,7 @@ export const CreateTaskProjectDialog = ({
         throw taskError;
       }
       
-      console.log("Project and task created successfully:", { project: projectData, task: taskData });
+      console.log("Task project created successfully:", taskData);
       toast.success("تم إنشاء مشروع المهام بنجاح");
       
       // إعادة تحميل قائمة المشاريع
