@@ -8,6 +8,7 @@ export interface Comment {
   idea_id?: string;
   user_name?: string;
   user_email?: string;
+  user_display_name?: string;
   attachment_url?: string | null;
   attachment_type?: string | null;
   attachment_name?: string | null;
