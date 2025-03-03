@@ -24,14 +24,6 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
     }
   };
 
-  // تسجيل معلومات لتتبع البيانات المعروضة
-  console.log("عرض بيانات المستخدم في صف الجدول:", {
-    id: user.id,
-    username: user.username,
-    displayName: user.displayName,
-    role: user.role
-  });
-
   return (
     <TableRow dir="rtl">
       <TableCell className="text-right">
@@ -50,7 +42,7 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
         </div>
       </TableCell>
       <TableCell className="text-right">
-        {user.displayName ? user.displayName : 'لا يوجد مسمى شخصي'}
+        {user.displayName ? user.displayName : 'لم يتم تعيين'}
       </TableCell>
       <TableCell className="text-right">{user.lastLogin}</TableCell>
       <TableCell className="text-center">
