@@ -25,7 +25,7 @@ export const AddSubtaskForm = ({
   const [dueDate, setDueDate] = useState<string>("");
   const [assignedTo, setAssignedTo] = useState<string>("");
   const [priority, setPriority] = useState<string>("medium");
-  const { members } = useProjectMembers(projectId);
+  const { projectMembers } = useProjectMembers(projectId);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -59,7 +59,7 @@ export const AddSubtaskForm = ({
         <TaskAssigneeField 
           assignedTo={assignedTo} 
           setAssignedTo={setAssignedTo} 
-          members={members} 
+          projectMembers={projectMembers || []} 
         />
         <TaskPriorityField priority={priority} setPriority={setPriority} />
       </div>

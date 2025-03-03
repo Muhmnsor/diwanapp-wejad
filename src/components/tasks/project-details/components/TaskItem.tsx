@@ -1,3 +1,4 @@
+
 import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
 import { useSubtasks } from "../hooks/useSubtasks";
 import { SubtasksList } from "./subtasks/SubtasksList";
+import { useParams } from "react-router-dom";
 
 interface TaskItemProps {
   task: Task;
@@ -28,6 +30,7 @@ export const TaskItem = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const { user } = useAuthStore();
+  const { projectId } = useParams<{ projectId: string }>();
   
   const { 
     subtasks, 
@@ -65,8 +68,8 @@ export const TaskItem = ({
     }
   };
 
-  const handleSubtaskAdd = async (taskId: string, title: string) => {
-    await addSubtask(title);
+  const handleSubtaskAdd = async (taskId: string, title: string, dueDate: string, assignedTo: string, priority: string) => {
+    await addSubtask(title, dueDate, assignedTo, priority);
   };
 
   const renderStatusChangeButton = () => {
@@ -142,12 +145,13 @@ export const TaskItem = ({
         </TableCell>
       </TableRow>
       
-      {isExpanded && (
+      {isExpanded && projectId && (
         <TableRow>
           <TableCell colSpan={5} className="py-0 border-t-0">
             <div className="py-3 px-4 bg-gray-50 rounded-md">
               <SubtasksList
                 taskId={task.id}
+                projectId={projectId}
                 subtasks={subtasks}
                 onAddSubtask={handleSubtaskAdd}
                 onUpdateSubtaskStatus={updateSubtaskStatus}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSubtasks } from "../hooks/useSubtasks";
 import { SubtasksList } from "./subtasks/SubtasksList";
+import { useParams } from "react-router-dom";
 
 interface TaskCardProps {
   task: Task;
@@ -23,6 +24,7 @@ export const TaskCard = ({
   onStatusChange
 }: TaskCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { projectId } = useParams<{ projectId: string }>();
   
   const { 
     subtasks, 
@@ -37,8 +39,8 @@ export const TaskCard = ({
     onStatusChange(task.id, newStatus);
   };
 
-  const handleSubtaskAdd = async (taskId: string, title: string) => {
-    await addSubtask(title);
+  const handleSubtaskAdd = async (taskId: string, title: string, dueDate: string, assignedTo: string, priority: string) => {
+    await addSubtask(title, dueDate, assignedTo, priority);
   };
   
   return (
@@ -102,9 +104,10 @@ export const TaskCard = ({
       </div>
       
       {/* المهام الفرعية */}
-      {isExpanded && (
+      {isExpanded && projectId && (
         <SubtasksList
           taskId={task.id}
+          projectId={projectId}
           subtasks={subtasks}
           onAddSubtask={handleSubtaskAdd}
           onUpdateSubtaskStatus={updateSubtaskStatus}
