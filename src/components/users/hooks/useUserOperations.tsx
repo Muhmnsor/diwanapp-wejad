@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,24 +94,17 @@ export const useUserOperations = (onUserUpdated: () => void) => {
       console.log("=== بدء عملية حذف المستخدم ===");
       console.log("معرف المستخدم:", userToDelete.id);
       
-      // حذف الأدوار أولاً
-      const { error: roleError } = await supabase.rpc('delete_user_roles', {
-        p_user_id: userToDelete.id
+      // استدعاء Edge Function لحذف المستخدم بالكامل
+      const response = await supabase.functions.invoke('manage-users', {
+        body: {
+          operation: 'delete_user',
+          userId: userToDelete.id
+        }
       });
       
-      if (roleError) {
-        console.error("خطأ في حذف أدوار المستخدم:", roleError);
-        throw roleError;
-      }
-      
-      // ثم حذف المستخدم
-      const { error: userError } = await supabase.auth.admin.deleteUser(
-        userToDelete.id
-      );
-      
-      if (userError) {
-        console.error("خطأ في حذف المستخدم:", userError);
-        throw userError;
+      if (response.error) {
+        console.error("خطأ في حذف المستخدم:", response.error);
+        throw response.error;
       }
       
       toast.success("تم حذف المستخدم بنجاح");
