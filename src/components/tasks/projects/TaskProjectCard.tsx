@@ -35,9 +35,9 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="success" className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> مكتمل</Badge>;
+        return <Badge variant="default" className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> مكتمل</Badge>;
       case 'in_progress':
-        return <Badge variant="warning" className="flex items-center gap-1"><Clock className="h-3 w-3" /> قيد التنفيذ</Badge>;
+        return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="h-3 w-3" /> قيد التنفيذ</Badge>;
       case 'pending':
       default:
         return <Badge variant="outline" className="flex items-center gap-1"><ClipboardList className="h-3 w-3" /> قيد الانتظار</Badge>;
