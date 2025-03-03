@@ -64,19 +64,12 @@ export const TasksContent = ({
     );
   }
 
-  // Create a mock onDelete function for the TaskCard component
-  const handleDeleteTask = async (id: string) => {
-    console.log("Deleting task:", id);
-    return Promise.resolve();
-  };
-
   return (
     <div className="space-y-3" dir="rtl">
       {filteredTasks.map(task => (
         <TaskCard
           key={task.id}
           task={task}
-          onDelete={handleDeleteTask}
           getStatusBadge={getStatusBadge}
           getPriorityBadge={getPriorityBadge}
           formatDate={formatDate}
