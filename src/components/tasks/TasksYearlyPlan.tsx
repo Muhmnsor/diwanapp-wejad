@@ -1,21 +1,33 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Task, Workspace } from '@/types/workspace';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, getMonth, getYear, isWithinInterval, isSameDay } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { startOfMonth, addMonths, getMonth } from 'date-fns';
+import { YearNavigation } from './yearly-plan/components/YearNavigation';
+import { MonthsHeader } from './yearly-plan/components/MonthsHeader';
+import { WorkspaceTasksRow } from './yearly-plan/components/WorkspaceTasksRow';
+import { StatusLegend } from './yearly-plan/components/StatusLegend';
 
 export const TasksYearlyPlan = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [tasks, setTasks] = useState<Task[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  
-  // تاريخ اليوم للعلامة الحالية
   const today = new Date();
 
-  // جلب البيانات الافتراضية للمساحات والمهام
+  // Get array of months for the year
+  const getMonthsOfYear = () => {
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      months.push(startOfMonth(new Date(year, i, 1)));
+    }
+    return months;
+  };
+
+  // Handle year change
+  const handleYearChange = (yearDelta: number) => {
+    setYear(prevYear => prevYear + yearDelta);
+  };
+
+  // Fetch demo data
   useEffect(() => {
     // هذه بيانات تجريبية، ستُستبدل بجلب البيانات الفعلية من قاعدة البيانات
     const demoWorkspaces: Workspace[] = [
@@ -83,203 +95,31 @@ export const TasksYearlyPlan = () => {
     setTasks(demoTasks);
   }, [year]);
 
-  // الحصول على مصفوفة من الأشهر للعام المحدد
-  const getMonthsOfYear = () => {
-    const months = [];
-    for (let i = 0; i < 12; i++) {
-      months.push(startOfMonth(new Date(year, i, 1)));
-    }
-    return months;
-  };
-
-  // تعامل مع تغيير السنة
-  const handleYearChange = (yearDelta: number) => {
-    setYear(prevYear => prevYear + yearDelta);
-  };
-
-  // التحقق مما إذا كانت المهمة تقع في نطاق تاريخ معين
-  const isTaskInDay = (task: Task, date: Date) => {
-    if (!task.start_date || !task.end_date) return false;
-    
-    const taskStartDate = new Date(task.start_date);
-    const taskEndDate = new Date(task.end_date);
-    
-    return isWithinInterval(date, { start: taskStartDate, end: taskEndDate }) ||
-           isSameDay(date, taskStartDate) ||
-           isSameDay(date, taskEndDate);
-  };
-
-  // الحصول على مهام المساحة في يوم معين
-  const getWorkspaceTasksForDay = (workspaceId: string, date: Date) => {
-    return tasks.filter(task => task.workspace_id === workspaceId && isTaskInDay(task, date));
-  };
-
-  // الحصول على لون حالة المهمة
-  const getTaskStatusColor = (status: string) => {
-    switch(status) {
-      case 'completed':
-        return 'bg-green-500';
-      case 'in_progress':
-        return 'bg-blue-500';
-      case 'pending':
-        return 'bg-amber-500';
-      default:
-        return 'bg-gray-300';
-    }
-  };
+  const months = getMonthsOfYear();
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">الخطة السنوية {year}</h2>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={() => handleYearChange(-1)}
-            className="flex items-center gap-1"
-          >
-            <ChevronRight className="h-4 w-4" />
-            السنة السابقة
-          </Button>
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={() => handleYearChange(1)}
-            className="flex items-center gap-1"
-          >
-            السنة التالية
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+      <YearNavigation year={year} onYearChange={handleYearChange} />
+      
       <Card className="p-4 overflow-auto">
         <div className="min-w-[1200px]">
-          {/* رأس الجدول مع أسماء الأشهر */}
-          <div className="flex border-b pb-2">
-            <div className="w-48 flex-shrink-0 font-bold">مساحة العمل</div>
-            <div className="flex-1 flex">
-              {getMonthsOfYear().map((month, index) => (
-                <div 
-                  key={index} 
-                  className="flex-1 text-center font-medium text-sm"
-                >
-                  {format(month, 'MMMM', { locale: ar })}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* محتوى مخطط جانت لكل مساحة عمل */}
+          <MonthsHeader months={months} />
+          
           <div className="mt-4 space-y-6">
             {workspaces.map((workspace) => (
-              <div key={workspace.id} className="space-y-2">
-                <div className="flex">
-                  <div className="w-48 flex-shrink-0 font-medium">
-                    {workspace.name}
-                  </div>
-                  <div className="flex-1 flex">
-                    {getMonthsOfYear().map((month, monthIndex) => {
-                      const daysInMonth = eachDayOfInterval({
-                        start: startOfMonth(month),
-                        end: endOfMonth(month)
-                      });
-                      
-                      return (
-                        <div key={monthIndex} className="flex-1 relative">
-                          <div className="flex h-8 border-r">
-                            {daysInMonth.map((day, dayIndex) => (
-                              <div 
-                                key={dayIndex} 
-                                className={`flex-1 h-full ${
-                                  isSameDay(day, today) ? 'bg-yellow-100' : ''
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          
-                          {/* المهام الموزعة على أيام الشهر */}
-                          <div className="relative h-8 mt-1">
-                            {tasks
-                              .filter(task => task.workspace_id === workspace.id)
-                              .map(task => {
-                                if (!task.start_date || !task.end_date) return null;
-                                
-                                const startDate = new Date(task.start_date);
-                                const endDate = new Date(task.end_date);
-                                
-                                // فحص ما إذا كانت المهمة تقع في هذا الشهر
-                                if (
-                                  (getMonth(startDate) !== monthIndex && getMonth(endDate) !== monthIndex) &&
-                                  !(getMonth(startDate) < monthIndex && getMonth(endDate) > monthIndex)
-                                ) {
-                                  return null;
-                                }
-                                
-                                // حساب موضع وعرض شريط المهمة
-                                let left = 0;
-                                let width = 0;
-                                
-                                if (getMonth(startDate) < monthIndex) {
-                                  // المهمة تبدأ قبل هذا الشهر
-                                  left = 0;
-                                } else {
-                                  // المهمة تبدأ في هذا الشهر
-                                  left = (startDate.getDate() - 1) / daysInMonth.length * 100;
-                                }
-                                
-                                if (getMonth(endDate) > monthIndex) {
-                                  // المهمة تنتهي بعد هذا الشهر
-                                  width = 100 - left;
-                                } else {
-                                  // المهمة تنتهي في هذا الشهر
-                                  width = (endDate.getDate() / daysInMonth.length * 100) - left;
-                                }
-                                
-                                return (
-                                  <div
-                                    key={task.id}
-                                    style={{
-                                      left: `${left}%`,
-                                      width: `${width}%`,
-                                    }}
-                                    className={`absolute h-6 rounded-md px-1 text-xs text-white flex items-center overflow-hidden ${getTaskStatusColor(task.status)}`}
-                                    title={`${task.title} (${task.priority === 'high' ? 'مرتفعة' : task.priority === 'medium' ? 'متوسطة' : 'منخفضة'})`}
-                                  >
-                                    <span className="truncate">{task.title}</span>
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+              <WorkspaceTasksRow
+                key={workspace.id}
+                workspace={workspace}
+                tasks={tasks}
+                months={months}
+                today={today}
+              />
             ))}
           </div>
         </div>
       </Card>
 
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">وسائل الإيضاح</h3>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-sm bg-green-500"></div>
-            <span>مكتملة</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-sm bg-blue-500"></div>
-            <span>قيد التنفيذ</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-sm bg-amber-500"></div>
-            <span>قيد الانتظار</span>
-          </div>
-        </div>
-      </div>
+      <StatusLegend />
     </div>
   );
 };
