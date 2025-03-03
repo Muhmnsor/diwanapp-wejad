@@ -11,6 +11,7 @@ export interface Task {
   stage_id: string | null;
   stage_name?: string;
   assigned_user_name?: string;
+  priority?: string | null;
 }
 
 export interface Subtask {

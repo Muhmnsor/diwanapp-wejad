@@ -68,8 +68,8 @@ export const TaskItem = ({
     }
   };
 
-  const handleSubtaskAdd = async (taskId: string, title: string, dueDate: string, assignedTo: string, priority: string) => {
-    await addSubtask(title, dueDate, assignedTo, priority);
+  const handleSubtaskAdd = async (taskId: string, title: string, dueDate: string, assignedTo: string) => {
+    await addSubtask(title, dueDate, assignedTo);
   };
 
   const renderStatusChangeButton = () => {

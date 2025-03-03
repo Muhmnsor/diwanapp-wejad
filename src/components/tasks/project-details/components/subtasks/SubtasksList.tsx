@@ -17,7 +17,7 @@ interface SubtasksListProps {
   taskId: string;
   projectId: string;
   subtasks: Subtask[];
-  onAddSubtask: (taskId: string, subtaskTitle: string, dueDate: string, assignedTo: string, priority: string) => Promise<void>;
+  onAddSubtask: (taskId: string, subtaskTitle: string, dueDate: string, assignedTo: string) => Promise<void>;
   onUpdateSubtaskStatus: (subtaskId: string, newStatus: string) => Promise<void>;
   onDeleteSubtask: (subtaskId: string) => Promise<void>;
 }
@@ -34,12 +34,12 @@ export const SubtasksList = ({
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
 
-  const handleAddSubtask = async (dueDate: string, assignedTo: string, priority: string) => {
+  const handleAddSubtask = async (dueDate: string, assignedTo: string) => {
     if (!newSubtaskTitle.trim()) return;
     
     try {
-      console.log("SubtasksList - Adding subtask:", { taskId, newSubtaskTitle, dueDate, assignedTo, priority });
-      await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo, priority);
+      console.log("SubtasksList - Adding subtask:", { taskId, newSubtaskTitle, dueDate, assignedTo });
+      await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo);
       setNewSubtaskTitle("");
       setIsAddingSubtask(false);
     } catch (error) {
