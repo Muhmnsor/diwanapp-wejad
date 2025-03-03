@@ -2,21 +2,26 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Permission } from "../types";
 import { Role } from "../../types";
+import { permissionsData } from "../data/permissionsData";
 
 // Fetch all permissions
 export const fetchPermissions = async (): Promise<Permission[]> => {
   try {
-    const { data, error } = await supabase
-      .from('permissions')
-      .select('*')
-      .order('module', { ascending: true });
+    // استخدام البيانات المعرفة مسبقاً
+    return permissionsData;
+    
+    // في المستقبل يمكن استخدام الاستعلام من قاعدة البيانات بدلاً من البيانات المحلية
+    // const { data, error } = await supabase
+    //   .from('permissions')
+    //   .select('*')
+    //   .order('module', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching permissions:', error);
-      throw error;
-    }
+    // if (error) {
+    //   console.error('Error fetching permissions:', error);
+    //   throw error;
+    // }
 
-    return data as Permission[];
+    // return data as Permission[];
   } catch (error) {
     console.error('Error in permissions query:', error);
     throw error;
