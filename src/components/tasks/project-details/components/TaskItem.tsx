@@ -2,7 +2,7 @@
 import { Calendar, Users, Check, Clock, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { Task } from "../TasksList";
+import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";

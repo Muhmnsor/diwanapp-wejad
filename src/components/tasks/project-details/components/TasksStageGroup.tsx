@@ -1,6 +1,6 @@
 
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
-import { Task } from "../TasksList";
+import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
 
 interface TasksStageGroupProps {

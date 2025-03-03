@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Users, Check, Clock, AlertCircle } from "lucide-react";
-import { Task } from "../TasksList";
+import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useAuthStore } from "@/store/authStore";

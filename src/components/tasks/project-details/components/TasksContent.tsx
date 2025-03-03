@@ -1,6 +1,6 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Task } from "../TasksList";
+import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
 import { TaskCard } from "./TaskCard";
 
