@@ -31,7 +31,7 @@ export const usePermissions = (role: Role) => {
     setSelectedPermissions,
     handlePermissionToggle,
     handleModuleToggle,
-    toggleModuleOpen: operationsToggleModuleOpen
+    toggleModuleOpen
   } = usePermissionOperations();
 
   // Update selected permissions when role permissions change
@@ -49,13 +49,6 @@ export const usePermissions = (role: Role) => {
       setModules(organizePermissionsByModule(permissions));
     }
   }, [permissions]);
-
-  // Toggle module open/closed state
-  const toggleModuleOpen = (moduleName: string) => {
-    setModules(prev => prev.map(m => 
-      m.name === moduleName ? { ...m, isOpen: !m.isOpen } : m
-    ));
-  };
 
   // Save permissions
   const handleSave = async () => {
