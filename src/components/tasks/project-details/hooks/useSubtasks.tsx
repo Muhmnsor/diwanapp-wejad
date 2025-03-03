@@ -13,6 +13,7 @@ export const useSubtasks = (taskId: string) => {
     
     setIsLoading(true);
     try {
+      console.log("Fetching subtasks for task:", taskId);
       const { data, error } = await supabase
         .from('task_subtasks')
         .select('*')
@@ -21,6 +22,7 @@ export const useSubtasks = (taskId: string) => {
       
       if (error) throw error;
       
+      console.log("Fetched subtasks:", data);
       setSubtasks(data || []);
     } catch (error) {
       console.error("Error fetching subtasks:", error);
@@ -34,22 +36,25 @@ export const useSubtasks = (taskId: string) => {
     if (!taskId || !title.trim()) return;
     
     try {
+      console.log("Adding subtask:", { taskId, title, dueDate, assignedTo, priority });
+      
+      const newSubtask = { 
+        parent_task_id: taskId, 
+        title, 
+        status: 'pending',
+        due_date: dueDate || null,
+        assigned_to: assignedTo || null,
+        priority: priority || 'medium'
+      };
+      
       const { data, error } = await supabase
         .from('task_subtasks')
-        .insert([
-          { 
-            parent_task_id: taskId, 
-            title, 
-            status: 'pending',
-            due_date: dueDate || null,
-            assigned_to: assignedTo || null,
-            priority: priority || 'medium'
-          }
-        ])
+        .insert([newSubtask])
         .select();
       
       if (error) throw error;
       
+      console.log("Subtask added successfully:", data[0]);
       setSubtasks([...subtasks, data[0]]);
       toast.success("تمت إضافة المهمة الفرعية بنجاح");
       return data[0];
@@ -62,6 +67,8 @@ export const useSubtasks = (taskId: string) => {
 
   const updateSubtaskStatus = async (subtaskId: string, newStatus: string) => {
     try {
+      console.log("Updating subtask status:", { subtaskId, newStatus });
+      
       const { error } = await supabase
         .from('task_subtasks')
         .update({ status: newStatus })
@@ -85,6 +92,8 @@ export const useSubtasks = (taskId: string) => {
 
   const deleteSubtask = async (subtaskId: string) => {
     try {
+      console.log("Deleting subtask:", subtaskId);
+      
       const { error } = await supabase
         .from('task_subtasks')
         .delete()

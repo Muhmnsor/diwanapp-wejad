@@ -39,6 +39,7 @@ export const SubtasksList = ({
     if (!newSubtaskTitle.trim()) return;
     
     try {
+      console.log("SubtasksList - Adding subtask:", { taskId, newSubtaskTitle, dueDate, assignedTo, priority });
       await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo, priority);
       setNewSubtaskTitle("");
       setIsAddingSubtask(false);

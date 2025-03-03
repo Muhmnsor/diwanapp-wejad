@@ -38,6 +38,7 @@ export const AddSubtaskForm = ({
 
   const handleSubmit = () => {
     if (value.trim()) {
+      console.log("Submitting subtask:", { value, dueDate, assignedTo, priority });
       onSubmit(dueDate, assignedTo, priority);
     }
   };
