@@ -2842,6 +2842,44 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_members: {
+        Row: {
+          id: string
+          joined_at: string
+          role: string
+          user_display_name: string | null
+          user_email: string | null
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          role?: string
+          user_display_name?: string | null
+          user_email?: string | null
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          role?: string
+          user_display_name?: string | null
+          user_email?: string | null
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_sync_status: {
         Row: {
           created_at: string

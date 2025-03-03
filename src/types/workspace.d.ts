@@ -1,4 +1,5 @@
 
+
 export interface Workspace {
   id: string;
   name: string;
@@ -49,3 +50,4 @@ export interface WorkspaceMember {
   user_email?: string;
   user_display_name?: string;
 }
+
