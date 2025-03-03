@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { 
   CalendarIcon,
@@ -36,8 +35,7 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    // في المستقبل سنقوم بتوجيه المستخدم إلى صفحة تفاصيل المشروع
-    // navigate(`/tasks/projects/${project.id}`);
+    navigate(`/projects/${project.project_id}`);
   };
 
   const getStatusBadge = (status: string) => {
@@ -81,7 +79,6 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
     }
   };
 
-  // Mock data for tasks - in a real app, this would come from the database
   const completedTasksCount = 3;
   const totalTasksCount = 8;
   const overdueTasksCount = 2;
