@@ -11,7 +11,6 @@ interface Subtask {
   status: string;
   due_date: string | null;
   assigned_to: string | null;
-  priority: string | null;
 }
 
 interface SubtasksListProps {

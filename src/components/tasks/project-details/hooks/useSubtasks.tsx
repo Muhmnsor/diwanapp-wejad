@@ -38,13 +38,14 @@ export const useSubtasks = (taskId: string) => {
     try {
       console.log("Adding subtask:", { taskId, title, dueDate, assignedTo, priority });
       
+      // Create object without the priority field since it doesn't exist in the database
       const newSubtask = { 
         parent_task_id: taskId, 
         title, 
         status: 'pending',
         due_date: dueDate || null,
-        assigned_to: assignedTo || null,
-        priority: priority || 'medium'
+        assigned_to: assignedTo || null
+        // priority field removed as it doesn't exist in the database
       };
       
       const { data, error } = await supabase

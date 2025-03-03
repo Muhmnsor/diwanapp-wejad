@@ -1,26 +1,33 @@
 
 export interface Task {
   id: string;
+  project_id: string;
   title: string;
   description: string | null;
   status: string;
+  created_at: string;
   due_date: string | null;
   assigned_to: string | null;
-  assigned_user_name?: string;
-  priority: string | null;
-  created_at: string;
   stage_id: string | null;
   stage_name?: string;
+  assigned_user_name?: string;
 }
 
 export interface Subtask {
   id: string;
   parent_task_id: string;
   title: string;
-  description: string | null;
   status: string;
+  created_at?: string;
   due_date: string | null;
   assigned_to: string | null;
-  priority: string | null;
-  created_at: string;
+  // priority field removed as it doesn't exist in the database
+}
+
+export interface ProjectMember {
+  id: string;
+  user_id: string;
+  user_email: string;
+  user_display_name: string | null;
+  role: string;
 }
