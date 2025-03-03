@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/store/authStore";
 
 interface Document {
   id: string;
@@ -61,6 +62,12 @@ export const DocumentsTable = ({
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updatedFields, setUpdatedFields] = useState<Partial<Document>>({});
+  const { user } = useAuthStore();
+
+  // التحقق من صلاحيات المستخدم
+  const isAdmin = user?.isAdmin || false;
+  const isDocumentsManager = user?.role === 'documents_manager';
+  const hasEditPermission = isAdmin || isDocumentsManager;
 
   const handleEdit = (document: Document) => {
     setEditingDocument(document);
@@ -159,22 +166,26 @@ export const DocumentsTable = ({
                         <Download className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(doc)}
-                      title="تعديل"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteClick(doc)}
-                      title="حذف"
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
+                    {hasEditPermission && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(doc)}
+                          title="تعديل"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(doc)}
+                          title="حذف"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
