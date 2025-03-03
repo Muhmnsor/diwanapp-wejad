@@ -2,14 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users } from "lucide-react";
-
-interface ProjectMember {
-  id: string;
-  user_id: string;
-  workspace_id: string;
-  user_display_name: string;
-  user_email: string;
-}
+import { ProjectMember } from "../hooks/useProjectMembers";
 
 interface TaskAssigneeFieldProps {
   assignedTo: string | null;
