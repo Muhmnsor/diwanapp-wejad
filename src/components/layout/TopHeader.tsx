@@ -77,7 +77,7 @@ export const TopHeader = () => {
 
           {/* Tasks Secondary Header with Navigation - Only show on tasks pages */}
           {isTasksPage && (
-            <div className="w-full bg-gray-50 border-t py-3">
+            <div className="w-full bg-white border-t py-3">
               <div className="flex justify-center">
                 <div className="flex gap-4 items-center">
                   <Button
