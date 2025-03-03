@@ -9,8 +9,8 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { KeyboardEvent, useState } from "react";
-import { useProjectMembers } from "../../hooks/useProjectMembers";
+import { KeyboardEvent } from "react";
+import { useProjectMembers, ProjectMember } from "../../hooks/useProjectMembers";
 
 interface AddSubtaskFormProps {
   value: string;
@@ -67,17 +67,26 @@ export const AddSubtaskForm = ({
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <div className="space-y-1">
           <Label htmlFor="assignedTo">المسؤول</Label>
-          <Select value={assignedTo || ""} onValueChange={(value) => setAssignedTo(value === "none" ? null : value)}>
+          <Select 
+            value={assignedTo || "none"} 
+            onValueChange={(value) => setAssignedTo(value === "none" ? null : value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="اختر المسؤول" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">غير معين</SelectItem>
-              {members?.map((member) => (
-                <SelectItem key={member.id} value={member.id}>
-                  {member.name || member.email}
+              {members && members.length > 0 ? (
+                members.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name || member.email || 'مستخدم'}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="none" disabled>
+                  {isLoading ? 'جاري التحميل...' : 'لا يوجد مستخدمين'}
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -95,7 +104,10 @@ export const AddSubtaskForm = ({
 
         <div className="space-y-1">
           <Label htmlFor="priority">الأولوية</Label>
-          <Select value={priority || ""} onValueChange={(value) => setPriority(value === "none" ? null : value)}>
+          <Select 
+            value={priority || "none"} 
+            onValueChange={(value) => setPriority(value === "none" ? null : value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="الأولوية" />
             </SelectTrigger>

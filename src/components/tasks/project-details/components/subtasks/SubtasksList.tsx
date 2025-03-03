@@ -33,7 +33,7 @@ export const SubtasksList = ({
     if (!newSubtaskTitle.trim()) return;
     
     try {
-      // We're no longer passing priority since it's not in the table schema
+      console.log("Adding subtask with assigned to:", assignedTo);
       await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo);
       setNewSubtaskTitle("");
       setDueDate(null);

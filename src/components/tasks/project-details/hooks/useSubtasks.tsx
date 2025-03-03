@@ -38,7 +38,13 @@ export const useSubtasks = (taskId: string) => {
     if (!taskId || !title.trim()) return;
     
     try {
-      // Remove priority from the insert operation since it doesn't exist in the table
+      console.log("Adding subtask with data:", { 
+        title, 
+        dueDate, 
+        assignedTo,
+        parent_task_id: taskId 
+      });
+
       const { data, error } = await supabase
         .from('task_subtasks')
         .insert([
