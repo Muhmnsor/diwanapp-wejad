@@ -1,10 +1,12 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle } from "lucide-react";
 import { Task } from "../TasksList";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useAuthStore } from "@/store/authStore";
+import { toast } from "sonner";
 
 interface TaskCardProps {
   task: Task;
@@ -22,13 +24,31 @@ export const TaskCard = ({
   onStatusChange
 }: TaskCardProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const { user } = useAuthStore();
+  
+  const canChangeStatus = () => {
+    // Allow status change if:
+    // 1. User is assigned to the task
+    // 2. User is an admin
+    return (
+      user?.id === task.assigned_to || 
+      user?.isAdmin || 
+      user?.role === 'admin'
+    );
+  };
 
   const handleStatusUpdate = async (newStatus: string) => {
+    if (!canChangeStatus()) {
+      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها");
+      return;
+    }
+    
     setIsUpdating(true);
     try {
       await onStatusChange(task.id, newStatus);
     } catch (error) {
       console.error("Error updating task status:", error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
     } finally {
       setIsUpdating(false);
     }
@@ -70,31 +90,33 @@ export const TaskCard = ({
             </Badge>
           )}
 
-          <div className="mt-3 flex justify-end">
-            {task.status !== 'completed' ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-7 px-3 mt-2"
-                onClick={() => handleStatusUpdate('completed')}
-                disabled={isUpdating}
-              >
-                <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
-                إكمال المهمة
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-7 px-3 mt-2"
-                onClick={() => handleStatusUpdate('in_progress')}
-                disabled={isUpdating}
-              >
-                <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
-                إعادة فتح المهمة
-              </Button>
-            )}
-          </div>
+          {canChangeStatus() && (
+            <div className="mt-3 flex justify-end">
+              {task.status !== 'completed' ? (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-3 mt-2"
+                  onClick={() => handleStatusUpdate('completed')}
+                  disabled={isUpdating}
+                >
+                  <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
+                  إكمال المهمة
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-3 mt-2"
+                  onClick={() => handleStatusUpdate('in_progress')}
+                  disabled={isUpdating}
+                >
+                  <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
+                  إعادة فتح المهمة
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
