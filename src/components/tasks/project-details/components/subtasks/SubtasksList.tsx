@@ -29,6 +29,7 @@ export const SubtasksList = ({
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const { projectMembers } = useProjectMembers(projectId);
   
   useEffect(() => {
@@ -43,7 +44,25 @@ export const SubtasksList = ({
     if (!taskId) return;
     
     setIsLoading(true);
+    setError(null);
     try {
+      // Check if subtasks table exists first
+      const { error: tableCheckError } = await supabase
+        .from('subtasks')
+        .select('count')
+        .limit(1)
+        .maybeSingle();
+      
+      if (tableCheckError) {
+        console.error("Error fetching subtasks:", tableCheckError);
+        // If table doesn't exist, just set empty array and don't show error
+        if (tableCheckError.code === '42P01') {  // Table doesn't exist error code
+          setSubtasks([]);
+          return;
+        }
+        throw tableCheckError;
+      }
+      
       const { data, error } = await supabase
         .from('subtasks')
         .select('*')
@@ -75,6 +94,7 @@ export const SubtasksList = ({
       setSubtasks(subtasksWithUserData);
     } catch (error) {
       console.error("Error fetching subtasks:", error);
+      setError("لا يمكن تحميل المهام الفرعية حالياً");
     } finally {
       setIsLoading(false);
     }
@@ -82,10 +102,30 @@ export const SubtasksList = ({
   
   const handleAddSubtask = async (title: string, dueDate?: string, assignedTo?: string) => {
     if (externalAddSubtask) {
-      await externalAddSubtask(taskId, title, dueDate, assignedTo);
+      try {
+        await externalAddSubtask(taskId, title, dueDate, assignedTo);
+        setIsAddingSubtask(false);
+      } catch (error) {
+        console.error("Error adding subtask:", error);
+        toast.error("حدث خطأ أثناء إضافة المهمة الفرعية");
+      }
     } else {
       setIsLoading(true);
       try {
+        // Check if subtasks table exists
+        const { error: tableCheckError } = await supabase
+          .from('subtasks')
+          .select('count')
+          .limit(1)
+          .maybeSingle();
+        
+        if (tableCheckError && tableCheckError.code === '42P01') {
+          // Table doesn't exist
+          toast.error("خاصية المهام الفرعية غير متوفرة حالياً، يرجى الاتصال بالمسؤول");
+          setIsAddingSubtask(false);
+          return;
+        }
+        
         const { data, error } = await supabase
           .from('subtasks')
           .insert([
@@ -166,6 +206,20 @@ export const SubtasksList = ({
       }
     }
   };
+  
+  // If there was an error checking for the subtasks table, show a meaningful message
+  if (error) {
+    return (
+      <div className="mt-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium">المهام الفرعية</h4>
+        </div>
+        <div className="text-center py-3 text-sm text-red-500 border rounded-md bg-red-50">
+          {error}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="mt-3 space-y-2">
