@@ -13,6 +13,7 @@ import { CalendarIcon, Users } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useProjectMembers } from "../../hooks/useProjectMembers";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddSubtaskFormProps {
   isOpen: boolean;
@@ -184,5 +185,3 @@ export const AddSubtaskForm = ({ isOpen, onClose, taskId, onSubtaskAdded, projec
     </Dialog>
   );
 };
-
-import { supabase } from "@/integrations/supabase/client";
