@@ -19,13 +19,13 @@ export const PendingTasksList = () => {
         .from('tasks')
         .select(`
           *,
-          project_tasks!inner (
+          project_tasks (
             id,
-            project_id
-          ),
-          project_tasks!inner(project_id (
-            title
-          ))
+            project_id,
+            projects:project_id (
+              title
+            )
+          )
         `)
         .eq('status', 'pending')
         .order('due_date', { ascending: true })
@@ -36,9 +36,10 @@ export const PendingTasksList = () => {
       // Transform the data to include the project title
       const transformedData = data?.map(task => ({
         ...task,
-        project_name: task.project_tasks?.project_id?.title || 'مشروع غير محدد'
+        project_name: task.project_tasks?.[0]?.projects?.title || 'مشروع غير محدد'
       })) || [];
       
+      console.log('Transformed task data:', transformedData);
       return transformedData;
     }
   });
