@@ -10,12 +10,21 @@ interface Subtask {
   title: string;
   status: string;
   due_date: string | null;
+  assigned_to: string | null;
+  priority: string | null;
 }
 
 interface SubtasksListProps {
   taskId: string;
   subtasks: Subtask[];
-  onAddSubtask: (taskId: string, subtaskTitle: string) => Promise<void>;
+  projectId?: string;
+  onAddSubtask: (
+    taskId: string, 
+    subtaskTitle: string, 
+    dueDate?: string | null, 
+    assignedTo?: string | null, 
+    priority?: string | null
+  ) => Promise<void>;
   onUpdateSubtaskStatus: (subtaskId: string, newStatus: string) => Promise<void>;
   onDeleteSubtask: (subtaskId: string) => Promise<void>;
 }
@@ -23,6 +32,7 @@ interface SubtasksListProps {
 export const SubtasksList = ({
   taskId,
   subtasks,
+  projectId,
   onAddSubtask,
   onUpdateSubtaskStatus,
   onDeleteSubtask
@@ -30,13 +40,19 @@ export const SubtasksList = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [dueDate, setDueDate] = useState<string | null>(null);
+  const [priority, setPriority] = useState<string | null>(null);
+  const [assignedTo, setAssignedTo] = useState<string | null>(null);
 
   const handleAddSubtask = async () => {
     if (!newSubtaskTitle.trim()) return;
     
     try {
-      await onAddSubtask(taskId, newSubtaskTitle);
+      await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo, priority);
       setNewSubtaskTitle("");
+      setDueDate(null);
+      setPriority(null);
+      setAssignedTo(null);
       setIsAddingSubtask(false);
     } catch (error) {
       console.error("Error adding subtask:", error);
@@ -97,7 +113,17 @@ export const SubtasksList = ({
               onCancel={() => {
                 setIsAddingSubtask(false);
                 setNewSubtaskTitle("");
+                setDueDate(null);
+                setPriority(null);
+                setAssignedTo(null);
               }}
+              dueDate={dueDate}
+              setDueDate={setDueDate}
+              priority={priority}
+              setPriority={setPriority}
+              assignedTo={assignedTo}
+              setAssignedTo={setAssignedTo}
+              projectId={projectId}
             />
           )}
           

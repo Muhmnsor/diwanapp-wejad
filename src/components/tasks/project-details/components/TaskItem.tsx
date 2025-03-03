@@ -1,3 +1,4 @@
+
 import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -16,6 +17,7 @@ interface TaskItemProps {
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
+  projectId?: string;
 }
 
 export const TaskItem = ({ 
@@ -23,7 +25,8 @@ export const TaskItem = ({
   getStatusBadge, 
   getPriorityBadge, 
   formatDate,
-  onStatusChange
+  onStatusChange,
+  projectId
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -65,8 +68,14 @@ export const TaskItem = ({
     }
   };
 
-  const handleSubtaskAdd = async (taskId: string, title: string) => {
-    await addSubtask(title);
+  const handleSubtaskAdd = async (
+    taskId: string, 
+    title: string, 
+    dueDate?: string | null, 
+    assignedTo?: string | null, 
+    priority?: string | null
+  ) => {
+    await addSubtask(title, dueDate || null, assignedTo || null, priority || null);
   };
 
   const renderStatusChangeButton = () => {
@@ -149,6 +158,7 @@ export const TaskItem = ({
               <SubtasksList
                 taskId={task.id}
                 subtasks={subtasks}
+                projectId={projectId}
                 onAddSubtask={handleSubtaskAdd}
                 onUpdateSubtaskStatus={updateSubtaskStatus}
                 onDeleteSubtask={deleteSubtask}

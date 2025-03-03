@@ -21,4 +21,6 @@ export interface Subtask {
   status: string;
   due_date: string | null;
   created_at: string;
+  assigned_to: string | null;
+  priority: string | null;
 }

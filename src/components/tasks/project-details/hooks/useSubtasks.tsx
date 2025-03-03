@@ -30,7 +30,12 @@ export const useSubtasks = (taskId: string) => {
     }
   };
 
-  const addSubtask = async (title: string) => {
+  const addSubtask = async (
+    title: string, 
+    dueDate: string | null = null, 
+    assignedTo: string | null = null, 
+    priority: string | null = null
+  ) => {
     if (!taskId || !title.trim()) return;
     
     try {
@@ -40,7 +45,10 @@ export const useSubtasks = (taskId: string) => {
           { 
             parent_task_id: taskId, 
             title, 
-            status: 'pending' 
+            status: 'pending',
+            due_date: dueDate,
+            assigned_to: assignedTo,
+            priority
           }
         ])
         .select();
