@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import type { IdeasTableProps } from "./types";
 import { calculateTimeRemaining, formatCountdown } from "./details/utils/countdownUtils";
 import { getStatusClass, getStatusDisplay } from "./details/utils/statusUtils";
+import { useAuthStore } from "@/store/authStore";
 
 export const IdeasTable = ({ 
   ideas,
@@ -21,6 +22,9 @@ export const IdeasTable = ({
   setFilterStatus,
   onDelete
 }: IdeasTableProps) => {
+  const { user } = useAuthStore();
+  const isAdmin = user?.isAdmin || false;
+  
   const calculateRemainingTime = (discussionPeriod: string | null, createdAt: string) => {
     if (!discussionPeriod) return "لم يتم تحديد مدة";
     
@@ -66,19 +70,19 @@ export const IdeasTable = ({
               <TableHead className="text-center">تاريخ الإنشاء</TableHead>
               <TableHead className="text-center">الوقت المتبقي للمناقشة</TableHead>
               <TableHead className="text-center">الحالة</TableHead>
-              <TableHead className="text-center">الإجراءات</TableHead>
+              {isAdmin && <TableHead className="text-center">الإجراءات</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8">
                   جاري التحميل...
                 </TableCell>
               </TableRow>
             ) : !ideas?.length ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8">
                   <div className="space-y-4">
                     <p className="text-gray-500">لا توجد أفكار حالياً</p>
                     {filterStatus && (
@@ -123,16 +127,18 @@ export const IdeasTable = ({
                       {getStatusDisplay(idea.status)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                      onClick={() => onDelete(idea)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  {isAdmin && (
+                    <TableCell className="text-center">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-100"
+                        onClick={() => onDelete(idea)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
