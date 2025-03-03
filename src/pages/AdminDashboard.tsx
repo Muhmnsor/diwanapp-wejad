@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { 
@@ -24,7 +23,34 @@ import { supabase } from "@/integrations/supabase/client";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const userName = user?.user_metadata?.name || "المستخدم";
+  
+  // Access user's name from Supabase Auth session
+  const { data: userName, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['current-user-name'],
+    queryFn: async () => {
+      try {
+        // Fetch user profile for more details if available
+        if (user?.id) {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('name, email')
+            .eq('id', user.id)
+            .single();
+          
+          if (profile?.name) {
+            return profile.name;
+          }
+        }
+        
+        // Default to user email or a generic greeting
+        return user?.email?.split('@')[0] || "المستخدم";
+      } catch (error) {
+        console.error("Error fetching user name:", error);
+        return "المستخدم";
+      }
+    },
+    initialData: "المستخدم"
+  });
 
   // Fetch notification counts
   const { data: notificationCounts } = useQuery({
@@ -146,7 +172,7 @@ const AdminDashboard = () => {
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">مرحباً بك، {userName}</h1>
+          <h1 className="text-3xl font-bold">مرحباً بك، {isLoadingUser ? "..." : userName}</h1>
           <p className="text-gray-600 mt-2">نتمنى لك يوماً مليئاً بالإنجازات في لوحة التحكم المركزية</p>
         </div>
         
