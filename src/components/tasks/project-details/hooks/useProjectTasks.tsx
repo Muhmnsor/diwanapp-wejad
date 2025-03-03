@@ -38,6 +38,40 @@ export const useProjectTasks = (projectId: string) => {
         setTotalTasksCount(total);
         setCompletedTasksCount(completed);
         setOverdueTasksCount(overdue);
+
+        // Check if project status needs updating
+        if (total > 0) {
+          let newStatus = 'pending';
+          
+          if (completed === total) {
+            newStatus = 'completed';
+          } else if (completed > 0) {
+            newStatus = 'in_progress';
+          } else if (overdue > 0) {
+            newStatus = 'delayed';
+          }
+          
+          // Get current project status
+          const { data: projectData, error: projectError } = await supabase
+            .from('project_tasks')
+            .select('status')
+            .eq('id', projectId)
+            .single();
+            
+          if (!projectError && projectData && projectData.status !== newStatus) {
+            console.log(`Updating project status from ${projectData.status} to ${newStatus}`);
+            
+            // Update project status
+            const { error: updateError } = await supabase
+              .from('project_tasks')
+              .update({ status: newStatus })
+              .eq('id', projectId);
+              
+            if (updateError) {
+              console.error("Error updating project status:", updateError);
+            }
+          }
+        }
       } catch (err) {
         console.error("Error in fetchTasksData:", err);
       } finally {
