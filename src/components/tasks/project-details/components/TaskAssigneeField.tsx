@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,10 @@ interface TaskAssigneeFieldProps {
 export const TaskAssigneeField = ({ assignedTo, setAssignedTo, projectMembers }: TaskAssigneeFieldProps) => {
   const [isCustomAssignee, setIsCustomAssignee] = useState(false);
   const [customAssigneeName, setCustomAssigneeName] = useState("");
+  
+  useEffect(() => {
+    console.log("Project members received:", projectMembers);
+  }, [projectMembers]);
 
   const handleCustomAssigneeSubmit = () => {
     if (customAssigneeName.trim()) {
@@ -86,11 +90,15 @@ export const TaskAssigneeField = ({ assignedTo, setAssignedTo, projectMembers }:
               <Plus className="w-3.5 h-3.5" />
               <span>إضافة شخص آخر</span>
             </SelectItem>
-            {projectMembers.map((member) => (
-              <SelectItem key={member.id} value={member.user_id}>
-                {member.user_display_name || member.user_email}
-              </SelectItem>
-            ))}
+            {projectMembers && projectMembers.length > 0 ? (
+              projectMembers.map((member) => (
+                <SelectItem key={member.id} value={member.user_id}>
+                  {member.user_display_name || member.user_email || 'مستخدم بلا اسم'}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="no-members" disabled>لا يوجد أعضاء</SelectItem>
+            )}
           </SelectContent>
         </Select>
       )}
