@@ -15,29 +15,15 @@ export const PendingTasksList = () => {
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['pending-tasks'],
     queryFn: async () => {
-      // First get pending tasks
       const { data, error } = await supabase
         .from('tasks')
-        .select('*, projects(title)')  // هنا نستخدم joins للحصول على عنوان المشروع مباشرة
+        .select('*')
         .eq('status', 'pending')
         .order('due_date', { ascending: true })
         .limit(5);
       
-      if (error) {
-        console.error('Error fetching pending tasks:', error);
-        throw error;
-      }
-      
-      if (!data || data.length === 0) return [];
-      
-      // تنسيق البيانات لتكون سهلة الاستخدام في الواجهة
-      const tasksWithProject = data.map(task => ({
-        ...task,
-        project_name: task.projects?.title || null
-      }));
-      
-      console.log('Tasks with project info:', tasksWithProject);
-      return tasksWithProject;
+      if (error) throw error;
+      return data || [];
     }
   });
 
@@ -81,7 +67,7 @@ export const PendingTasksList = () => {
   };
 
   return (
-    <div className="space-y-3" dir="rtl">
+    <div className="space-y-3">
       {tasks.map((task) => (
         <div 
           key={task.id} 
@@ -95,11 +81,11 @@ export const PendingTasksList = () => {
             {getPriorityBadge(task.priority)}
           </div>
           <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
-            <span>{task.project_name || 'مشروع غير محدد'}</span>
+            <span>{task.workspace_name || 'مساحة عمل غير محددة'}</span>
             <span>{formatDueDate(task.due_date)}</span>
           </div>
         </div>
       ))}
     </div>
   );
-}
+};
