@@ -36,7 +36,7 @@ export const TaskForm = ({
   const [stageId, setStageId] = useState("");
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   
-  const { projectMembers } = useProjectMembers(projectId);
+  const { members } = useProjectMembers(projectId);
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -82,7 +82,7 @@ export const TaskForm = ({
         <TaskAssigneeField 
           assignedTo={assignedTo} 
           setAssignedTo={setAssignedTo} 
-          projectMembers={projectMembers} 
+          projectMembers={members} 
         />
       </div>
       
