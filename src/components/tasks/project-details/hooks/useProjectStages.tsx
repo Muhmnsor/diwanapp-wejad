@@ -16,12 +16,54 @@ export const useProjectStages = ({ projectId, onStagesChange }: UseProjectStages
   const [isLoading, setIsLoading] = useState(true);
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [editStageName, setEditStageName] = useState("");
+  const [projectManager, setProjectManager] = useState<string | null>(null);
   const { user } = useAuthStore();
 
-  // Check if user is a workspace admin
+  // Check if user is authorized to manage stages
   const canManageStages = () => {
-    return user?.isAdmin || user?.role === 'admin';
+    // System admin or task app manager
+    if (user?.isAdmin || user?.role === 'admin') {
+      return true;
+    }
+    
+    // Project manager check - compare current user ID with project manager ID
+    if (user?.id && projectManager && user.id === projectManager) {
+      return true;
+    }
+    
+    return false;
   };
+
+  // Check if user can view stages (same permissions as manage for now)
+  const canViewStages = () => {
+    return canManageStages();
+  };
+
+  // Fetch project manager
+  useEffect(() => {
+    if (!projectId) return;
+    
+    const fetchProjectManager = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('project_tasks')
+          .select('manager_id')
+          .eq('id', projectId)
+          .single();
+        
+        if (error) {
+          console.error("Error fetching project manager:", error);
+          return;
+        }
+        
+        setProjectManager(data?.manager_id || null);
+      } catch (error) {
+        console.error("Error fetching project manager:", error);
+      }
+    };
+    
+    fetchProjectManager();
+  }, [projectId]);
 
   const fetchStages = async () => {
     if (!projectId) return;
@@ -148,6 +190,7 @@ export const useProjectStages = ({ projectId, onStagesChange }: UseProjectStages
     editStageName,
     setEditStageName,
     canManageStages,
+    canViewStages,
     fetchStages,
     addStage,
     startEdit,

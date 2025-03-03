@@ -23,11 +23,17 @@ export const ProjectStages = ({ projectId, onStagesChange }: ProjectStagesProps)
     editStageName,
     setEditStageName,
     canManageStages,
+    canViewStages,
     addStage,
     startEdit,
     saveEdit,
     deleteStage
   } = useProjectStages({ projectId, onStagesChange });
+
+  // If user doesn't have permission to view stages, don't render anything
+  if (!canViewStages()) {
+    return null;
+  }
 
   if (isLoading) {
     return <div className="text-center py-4">جاري تحميل مراحل المشروع...</div>;
