@@ -47,7 +47,9 @@ export const TasksContent = ({
     );
   }
 
-  if (projectStages.length > 0) {
+  // إذا كان التبويب النشط هو "الكل"، فسنعرض المهام مقسمة حسب المراحل
+  // وإلا سنعرض المهام كقائمة بدون تقسيم
+  if (activeTab === "all" && projectStages.length > 0) {
     return (
       <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => (
@@ -67,6 +69,7 @@ export const TasksContent = ({
     );
   }
 
+  // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى
   return (
     <div className="space-y-3" dir="rtl">
       {filteredTasks.map(task => (
