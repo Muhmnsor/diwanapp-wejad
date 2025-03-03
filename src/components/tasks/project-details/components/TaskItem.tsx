@@ -1,4 +1,3 @@
-
 import { Calendar, Users, Check, Clock, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -28,9 +27,6 @@ export const TaskItem = ({
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
-    // Allow status change if:
-    // 1. User is assigned to the task
-    // 2. User is an admin
     return (
       user?.id === task.assigned_to || 
       user?.isAdmin || 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -9,21 +8,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
 import { SubtaskItem } from "./SubtaskItem";
 
-interface Subtask {
+export interface Subtask {
   id: string;
   title: string;
   description: string | null;
   due_date: string | null;
   assigned_to: string | null;
   status: string;
+  priority?: string | null;
 }
 
 interface SubtasksListProps {
   taskId: string;
   projectId: string | undefined;
+  subtasks?: Subtask[];
+  onAddSubtask?: (taskId: string, title: string, dueDate?: string, assignedTo?: string) => Promise<void>;
+  onUpdateSubtaskStatus?: (subtaskId: string, newStatus: string) => Promise<void>;
+  onDeleteSubtask?: (subtaskId: string) => Promise<void>;
 }
 
-export const SubtasksList = ({ taskId, projectId }: SubtasksListProps) => {
+export const SubtasksList = ({ 
+  taskId, 
+  projectId, 
+  subtasks: externalSubtasks, 
+  onAddSubtask, 
+  onUpdateSubtaskStatus, 
+  onDeleteSubtask 
+}: SubtasksListProps) => {
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(true);
@@ -31,6 +42,12 @@ export const SubtasksList = ({ taskId, projectId }: SubtasksListProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchSubtasks = async () => {
+    if (externalSubtasks) {
+      setSubtasks(externalSubtasks);
+      setIsLoading(false);
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     
@@ -56,9 +73,14 @@ export const SubtasksList = ({ taskId, projectId }: SubtasksListProps) => {
     if (taskId) {
       fetchSubtasks();
     }
-  }, [taskId]);
+  }, [taskId, externalSubtasks]);
 
   const handleStatusChange = async (subtaskId: string, newStatus: string) => {
+    if (onUpdateSubtaskStatus) {
+      await onUpdateSubtaskStatus(subtaskId, newStatus);
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('task_subtasks')
@@ -67,7 +89,6 @@ export const SubtasksList = ({ taskId, projectId }: SubtasksListProps) => {
       
       if (error) throw error;
       
-      // Update locally to avoid refetching
       setSubtasks(prev => prev.map(subtask => 
         subtask.id === subtaskId 
           ? { ...subtask, status: newStatus } 
@@ -75,6 +96,19 @@ export const SubtasksList = ({ taskId, projectId }: SubtasksListProps) => {
       ));
     } catch (error) {
       console.error("Error updating subtask status:", error);
+    }
+  };
+
+  const handleAddSubtask = async (title: string, dueDate?: string, assignedTo?: string) => {
+    if (onAddSubtask) {
+      await onAddSubtask(taskId, title, dueDate, assignedTo);
+      return;
+    }
+    
+    try {
+      fetchSubtasks();
+    } catch (error) {
+      console.error("Error adding subtask:", error);
     }
   };
 
