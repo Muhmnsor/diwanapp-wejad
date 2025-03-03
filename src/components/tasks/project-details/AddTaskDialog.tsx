@@ -33,8 +33,16 @@ export const AddTaskDialog = ({
   }) => {
     if (!projectId) return;
     
+    // إذا كانت البيانات فارغة، نغلق الحوار فقط (لأن هذا يحدث عند الضغط على زر الإلغاء)
+    if (!formData.title) {
+      onOpenChange(false);
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
+      console.log("Submitting task with data:", { ...formData, project_id: projectId });
+      
       // Create the task record in Supabase
       const { data, error } = await supabase
         .from('tasks')
@@ -45,7 +53,7 @@ export const AddTaskDialog = ({
             due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
             priority: formData.priority,
             project_id: projectId,
-            stage_id: formData.stageId,
+            stage_id: formData.stageId || null,
             assigned_to: formData.assignedTo,
             status: 'pending'
           }

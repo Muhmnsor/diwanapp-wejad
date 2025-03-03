@@ -44,13 +44,10 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     
     setIsLoading(true);
     try {
-      // Get tasks with stage name via join
+      // Get tasks
       const { data, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          project_stages(name)
-        `)
+        .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
       
@@ -58,8 +55,38 @@ export const TasksList = ({ projectId }: TasksListProps) => {
         throw error;
       }
       
+      // Add stage names by fetching stages separately
+      let tasksWithStageNames = [...(data || [])];
+      
+      // Get all stage IDs used in tasks
+      const stageIds = tasksWithStageNames
+        .map(task => task.stage_id)
+        .filter(id => id !== null) as string[];
+      
+      // If there are stage IDs, fetch their names
+      if (stageIds.length > 0) {
+        const { data: stagesData, error: stagesError } = await supabase
+          .from('project_stages')
+          .select('id, name')
+          .in('id', stageIds);
+        
+        if (!stagesError && stagesData) {
+          // Create a map of stage IDs to names
+          const stageMap = stagesData.reduce((map: Record<string, string>, stage) => {
+            map[stage.id] = stage.name;
+            return map;
+          }, {});
+          
+          // Add stage names to tasks
+          tasksWithStageNames = tasksWithStageNames.map(task => ({
+            ...task,
+            stage_name: task.stage_id ? stageMap[task.stage_id] : undefined
+          }));
+        }
+      }
+      
       // Add user names for tasks with assignees
-      const tasksWithUserData = await Promise.all((data || []).map(async (task) => {
+      const tasksWithUserData = await Promise.all(tasksWithStageNames.map(async (task) => {
         if (task.assigned_to) {
           const { data: userData, error: userError } = await supabase
             .from('profiles')
@@ -70,25 +97,19 @@ export const TasksList = ({ projectId }: TasksListProps) => {
           if (!userError && userData) {
             return {
               ...task,
-              assigned_user_name: userData.display_name || userData.email,
-              stage_name: task.project_stages?.name
+              assigned_user_name: userData.display_name || userData.email
             };
           }
         }
         
-        return {
-          ...task,
-          stage_name: task.project_stages?.name
-        };
+        return task;
       }));
       
       // Process tasks by stage
       const tasksByStageMap: Record<string, Task[]> = {};
-      const stagesSet = new Set<string>();
       
       tasksWithUserData.forEach(task => {
         if (task.stage_id) {
-          stagesSet.add(task.stage_id);
           if (!tasksByStageMap[task.stage_id]) {
             tasksByStageMap[task.stage_id] = [];
           }

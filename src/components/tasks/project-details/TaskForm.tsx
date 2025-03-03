@@ -173,14 +173,14 @@ export const TaskForm = ({
           <Label htmlFor="assignedTo">الشخص المسؤول</Label>
           <Select 
             value={assignedTo || ""} 
-            onValueChange={setAssignedTo}
+            onValueChange={(value) => setAssignedTo(value || null)}
           >
             <SelectTrigger id="assignedTo" className="flex items-center">
               <Users className="w-4 h-4 me-2" />
               <SelectValue placeholder="اختر الشخص المسؤول" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">غير محدد</SelectItem>
+              <SelectItem value="unassigned">غير محدد</SelectItem>
               {projectMembers.map((member) => (
                 <SelectItem key={member.id} value={member.user_id}>
                   {member.user_display_name || member.user_email}
