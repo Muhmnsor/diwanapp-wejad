@@ -73,9 +73,9 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm space-y-6">
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm space-y-6 text-right">
       <div className="space-y-2">
-        <Label htmlFor="name">اسم المشروع</Label>
+        <Label htmlFor="name" className="text-right block">اسم المشروع</Label>
         <Input
           id="name"
           name="name"
@@ -83,11 +83,12 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
           onChange={handleChange}
           placeholder="أدخل اسم المشروع"
           required
+          className="text-right"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">وصف المشروع</Label>
+        <Label htmlFor="description" className="text-right block">وصف المشروع</Label>
         <Textarea
           id="description"
           name="description"
@@ -95,28 +96,31 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
           onChange={handleChange}
           placeholder="أدخل وصف المشروع"
           rows={4}
+          className="text-right"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="start_date">تاريخ البداية</Label>
+        <div className="space-y-2 md:order-2">
+          <Label htmlFor="start_date" className="text-right block">تاريخ البداية</Label>
           <Input
             id="start_date"
             name="start_date"
             type="date"
             value={formData.start_date}
             onChange={handleChange}
+            className="text-right"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="end_date">تاريخ النهاية</Label>
+        <div className="space-y-2 md:order-1">
+          <Label htmlFor="end_date" className="text-right block">تاريخ النهاية</Label>
           <Input
             id="end_date"
             name="end_date"
             type="date"
             value={formData.end_date}
             onChange={handleChange}
+            className="text-right"
           />
         </div>
       </div>

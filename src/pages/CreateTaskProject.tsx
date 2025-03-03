@@ -12,7 +12,7 @@ const CreateTaskProject = () => {
       <TopHeader />
       <div className="flex-grow">
         <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto" dir="rtl">
             <h1 className="text-2xl font-bold mb-6">إنشاء مشروع مهام جديد</h1>
             <CreateTaskProjectForm workspaceId={workspaceId} />
           </div>
