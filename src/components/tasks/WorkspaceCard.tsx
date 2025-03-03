@@ -39,7 +39,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         // Fetch all projects for this workspace
         const { data: projects, error } = await supabase
           .from('project_tasks')
-          .select('status, completion_percentage')
+          .select('status')
           .eq('workspace_id', workspace.id);
 
         if (error) {
@@ -49,15 +49,11 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
 
         const total = projects?.length || 0;
         
-        // Consider a project completed if status is 'completed' OR completion_percentage is 100
-        const completed = projects?.filter(p => 
-          p.status === 'completed' || 
-          (p.completion_percentage !== null && p.completion_percentage >= 100)
-        ).length || 0;
+        // Consider a project completed if status is 'completed'
+        const completed = projects?.filter(p => p.status === 'completed').length || 0;
         
         const pending = projects?.filter(p => 
-          (p.status === 'in_progress' || p.status === 'pending') && 
-          (p.completion_percentage === null || p.completion_percentage < 100)
+          p.status === 'in_progress' || p.status === 'pending'
         ).length || 0;
         
         const stopped = projects?.filter(p => p.status === 'stopped' || p.status === 'on_hold').length || 0;

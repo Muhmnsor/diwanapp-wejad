@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { 
   CalendarIcon,
@@ -79,25 +80,11 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
           // Update project status in the database
           const { error: updateError } = await supabase
             .from('project_tasks')
-            .update({ 
-              status: 'completed',
-              completion_percentage: 100 
-            })
+            .update({ status: 'completed' })
             .eq('id', project.id);
             
           if (updateError) {
             console.error("Error updating project status:", updateError);
-          }
-        } 
-        // Also make sure to store the current completion percentage
-        else if (total > 0) {
-          const { error: updateError } = await supabase
-            .from('project_tasks')
-            .update({ completion_percentage: percentage })
-            .eq('id', project.id);
-            
-          if (updateError) {
-            console.error("Error updating completion percentage:", updateError);
           }
         }
       } catch (err) {
