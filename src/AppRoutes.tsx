@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -29,6 +30,7 @@ import WebsiteManagement from "./pages/WebsiteManagement";
 import StoreManagement from "./pages/StoreManagement";
 import CreateTaskProject from "./pages/CreateTaskProject";
 import WorkspaceTaskProjects from "./pages/WorkspaceTaskProjects";
+import TaskProjectDetails from "./pages/TaskProjectDetails";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -56,6 +58,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <WorkspaceTaskProjects />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/tasks/project/:projectId" 
+        element={
+          <ProtectedRoute>
+            <TaskProjectDetails />
           </ProtectedRoute>
         } 
       />
