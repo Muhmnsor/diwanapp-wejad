@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AddTaskDialog } from "./AddTaskDialog";
 import { ProjectStages } from "./ProjectStages";
 import { TasksHeader } from "./components/TasksHeader";
@@ -156,18 +156,20 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             onTabChange={setActiveTab} 
           />
           
-          <TabsContent value={activeTab} className="mt-0">
-            <TasksContent 
-              isLoading={isLoading}
-              activeTab={activeTab}
-              filteredTasks={filteredTasks}
-              projectStages={projectStages}
-              tasksByStage={tasksByStage}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-            />
-          </TabsContent>
+          <Tabs value={activeTab}>
+            <TabsContent value={activeTab} className="mt-0">
+              <TasksContent 
+                isLoading={isLoading}
+                activeTab={activeTab}
+                filteredTasks={filteredTasks}
+                projectStages={projectStages}
+                tasksByStage={tasksByStage}
+                getStatusBadge={getStatusBadge}
+                getPriorityBadge={getPriorityBadge}
+                formatDate={formatDate}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
       
