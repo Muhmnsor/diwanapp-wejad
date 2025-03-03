@@ -149,30 +149,38 @@ export const TaskProjectInfo = ({ project }: TaskProjectInfoProps) => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-blue-50 p-4 rounded-md">
-            <h3 className="text-sm font-medium text-blue-700 mb-1">تاريخ الإنشاء</h3>
-            <p className="text-blue-900 flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" />
+        <div className="flex flex-wrap gap-3 bg-gray-50 p-3 rounded-md">
+          <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-md">
+            <CalendarIcon className="h-4 w-4 text-blue-700" />
+            <span className="text-sm font-medium text-blue-900">
               {project.created_at ? getFormattedDate(project.created_at) : 'غير محدد'}
-            </p>
+            </span>
           </div>
           
-          <div className="bg-amber-50 p-4 rounded-md">
-            <h3 className="text-sm font-medium text-amber-700 mb-1">تاريخ الانتهاء</h3>
-            <p className="text-amber-900 flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" />
+          <div className="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-md">
+            <CalendarIcon className="h-4 w-4 text-amber-700" />
+            <span className="text-sm font-medium text-amber-900">
               {getFormattedDate(project.due_date)}
-            </p>
+            </span>
           </div>
           
-          <div className="bg-green-50 p-4 rounded-md">
-            <h3 className="text-sm font-medium text-green-700 mb-1">الوقت المتبقي</h3>
-            <p className="text-green-900 flex items-center gap-2">
-              <ClockIcon className="h-4 w-4" />
-              {timeToDeadline || 'غير محدد'}
-            </p>
-          </div>
+          {timeToDeadline && (
+            <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-md">
+              <ClockIcon className="h-4 w-4 text-green-700" />
+              <span className="text-sm font-medium text-green-900">
+                {timeToDeadline}
+              </span>
+            </div>
+          )}
+          
+          {remainingDays !== null && (
+            <div className="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-md">
+              <ClockIcon className="h-4 w-4 text-purple-700" />
+              <span className="text-sm font-medium text-purple-900">
+                متبقي {remainingDays} يوم
+              </span>
+            </div>
+          )}
         </div>
         
         <div className="border p-4 rounded-md">
@@ -184,19 +192,19 @@ export const TaskProjectInfo = ({ project }: TaskProjectInfoProps) => {
             </div>
             <Progress value={completionPercentage} className="h-2" />
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-              <div className="flex items-center gap-1 text-sm">
+            <div className="flex flex-wrap gap-3 mt-3">
+              <div className="flex items-center gap-1 text-sm bg-green-50 px-2 py-1 rounded">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                 <span>{completedTasksCount} مهام منجزة</span>
               </div>
-              <div className="flex items-center gap-1 text-sm">
+              <div className="flex items-center gap-1 text-sm bg-amber-50 px-2 py-1 rounded">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
                 <span>{overdueTasksCount} مهام متأخرة</span>
               </div>
-              {remainingDays !== null && (
-                <div className="flex items-center gap-1 text-sm">
-                  <ClockIcon className="h-4 w-4 text-blue-500" />
-                  <span>متبقي {remainingDays} يوم</span>
+              {totalTasksCount > 0 && (
+                <div className="flex items-center gap-1 text-sm bg-blue-50 px-2 py-1 rounded">
+                  <ClipboardList className="h-4 w-4 text-blue-500" />
+                  <span>{totalTasksCount} إجمالي المهام</span>
                 </div>
               )}
             </div>
