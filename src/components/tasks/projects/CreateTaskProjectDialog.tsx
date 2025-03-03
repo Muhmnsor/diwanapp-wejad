@@ -54,24 +54,57 @@ export const CreateTaskProjectDialog = ({
       console.log("Creating project with workspace_id:", workspaceId);
       console.log("Form data:", formData);
       
-      const { data, error } = await supabase
+      // أولاً، نقوم بإنشاء سجل في جدول المشاريع (إذا لم يكن موجودًا)
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .insert([
+          {
+            title: formData.name,
+            description: formData.description,
+            start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
+            end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
+            image_url: '/placeholder.svg', // صورة افتراضية
+            event_type: 'task',
+            project_type: 'task_project',
+            beneficiary_type: 'both',
+            event_path: 'administrative',
+            event_category: 'administrative',
+            is_visible: true
+          }
+        ])
+        .select();
+      
+      if (projectError) {
+        console.error("Error creating project:", projectError);
+        throw projectError;
+      }
+      
+      if (!projectData || projectData.length === 0) {
+        throw new Error("فشل إنشاء المشروع، لم يتم إرجاع البيانات");
+      }
+      
+      const projectId = projectData[0].id;
+      
+      // ثم نقوم بإنشاء مهمة مرتبطة بالمشروع في جدول مهام المشاريع
+      const { data: taskData, error: taskError } = await supabase
         .from('project_tasks')
         .insert([
           {
             title: formData.name,
             description: formData.description,
-            project_id: workspaceId, // Changed from workspace_id to project_id to match the database schema
+            project_id: projectId, // استخدام معرف المشروع الذي تم إنشاؤه
+            workspace_id: workspaceId, // إضافة معرف مساحة العمل
             due_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
             status: 'pending',
           }
         ]);
       
-      if (error) {
-        console.error("Error creating task project:", error);
-        throw error;
+      if (taskError) {
+        console.error("Error creating task project:", taskError);
+        throw taskError;
       }
       
-      console.log("Project created successfully:", data);
+      console.log("Project and task created successfully:", { project: projectData, task: taskData });
       toast.success("تم إنشاء مشروع المهام بنجاح");
       
       // إعادة تحميل قائمة المشاريع
