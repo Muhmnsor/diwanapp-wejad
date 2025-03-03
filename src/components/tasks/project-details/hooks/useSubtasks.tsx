@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,11 +31,11 @@ export const useSubtasks = (taskId: string) => {
     }
   };
 
-  const addSubtask = async (title: string, dueDate: string, assignedTo: string, priority: string) => {
+  const addSubtask = async (title: string, dueDate: string, assignedTo: string) => {
     if (!taskId || !title.trim()) return;
     
     try {
-      console.log("Adding subtask:", { taskId, title, dueDate, assignedTo, priority });
+      console.log("Adding subtask:", { taskId, title, dueDate, assignedTo });
       
       // Create object without the priority field since it doesn't exist in the database
       const newSubtask = { 
@@ -45,7 +44,6 @@ export const useSubtasks = (taskId: string) => {
         status: 'pending',
         due_date: dueDate || null,
         assigned_to: assignedTo || null
-        // priority field removed as it doesn't exist in the database
       };
       
       const { data, error } = await supabase

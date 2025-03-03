@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KeyboardEvent, useState } from "react";
@@ -10,7 +9,7 @@ import { useProjectMembers } from "../../hooks/useProjectMembers";
 interface AddSubtaskFormProps {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: (dueDate: string, assignedTo: string, priority: string) => void;
+  onSubmit: (dueDate: string, assignedTo: string) => void;
   onCancel: () => void;
   projectId: string;
 }
@@ -39,7 +38,7 @@ export const AddSubtaskForm = ({
   const handleSubmit = () => {
     if (value.trim()) {
       console.log("Submitting subtask:", { value, dueDate, assignedTo, priority });
-      onSubmit(dueDate, assignedTo, priority);
+      onSubmit(dueDate, assignedTo);
     }
   };
 
