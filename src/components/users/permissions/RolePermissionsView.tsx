@@ -80,7 +80,7 @@ export const RolePermissionsView = ({ role }: RolePermissionsViewProps) => {
               module={module}
               selectedPermissions={selectedPermissions}
               onPermissionToggle={handlePermissionToggle}
-              onModuleToggle={() => handleModuleToggle(module)}
+              onModuleToggle={handleModuleToggle}
               toggleOpen={toggleModuleOpen}
             />
           ))}

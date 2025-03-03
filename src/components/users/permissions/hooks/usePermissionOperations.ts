@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Module } from "../types";
 
@@ -39,10 +40,11 @@ export const usePermissionOperations = (initialPermissions: string[] = []) => {
     }
   };
 
-  // This function is not used directly anymore, just keeping for reference
-  const toggleModuleOpen = (moduleName: string) => {
-    // Implementaion moved to usePermissions
-    console.log("toggleModuleOpen called with:", moduleName);
+  // Toggle module open/closed state
+  const toggleModuleOpen = (modules: Module[], moduleName: string): Module[] => {
+    return modules.map(m => 
+      m.name === moduleName ? { ...m, isOpen: !m.isOpen } : m
+    );
   };
 
   return {

@@ -31,8 +31,8 @@ export const usePermissions = (role: Role) => {
     setSelectedPermissions,
     handlePermissionToggle,
     handleModuleToggle,
-    toggleModuleOpen
-  } = usePermissionOperations(rolePermissions);
+    toggleModuleOpen: operationsToggleModuleOpen
+  } = usePermissionOperations();
 
   // Update selected permissions when role permissions change
   useEffect(() => {
@@ -46,18 +46,15 @@ export const usePermissions = (role: Role) => {
   // Organize permissions by module when permissions data changes
   useEffect(() => {
     if (permissions.length > 0) {
-      const organizedModules = organizePermissionsByModule(permissions);
-      setModules(organizedModules);
+      setModules(organizePermissionsByModule(permissions));
     }
   }, [permissions]);
 
   // Toggle module open/closed state
-  const handleToggleModuleOpen = (moduleName: string) => {
-    setModules(prevModules => 
-      prevModules.map(m => 
-        m.name === moduleName ? { ...m, isOpen: !m.isOpen } : m
-      )
-    );
+  const toggleModuleOpen = (moduleName: string) => {
+    setModules(prev => prev.map(m => 
+      m.name === moduleName ? { ...m, isOpen: !m.isOpen } : m
+    ));
   };
 
   // Save permissions
@@ -89,7 +86,7 @@ export const usePermissions = (role: Role) => {
     isSubmitting,
     handlePermissionToggle,
     handleModuleToggle,
-    toggleModuleOpen: handleToggleModuleOpen,
+    toggleModuleOpen,
     handleSave
   };
 };
