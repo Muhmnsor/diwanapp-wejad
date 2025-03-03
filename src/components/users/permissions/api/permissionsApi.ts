@@ -8,7 +8,7 @@ export const fetchPermissions = async (): Promise<Permission[]> => {
   try {
     const { data, error } = await supabase
       .from('permissions')
-      .select('*, application:application_id(name, code)')
+      .select('*')
       .order('module', { ascending: true });
 
     if (error) {
@@ -16,16 +16,7 @@ export const fetchPermissions = async (): Promise<Permission[]> => {
       throw error;
     }
 
-    // تحديث الاسم بإضافة اسم التطبيق إذا وجد
-    const enhancedPermissions = data.map(permission => {
-      const appName = permission.application?.name || 'النظام';
-      return {
-        ...permission,
-        module: `${appName} - ${permission.module}`
-      };
-    });
-
-    return enhancedPermissions as Permission[];
+    return data as Permission[];
   } catch (error) {
     console.error('Error in permissions query:', error);
     throw error;
