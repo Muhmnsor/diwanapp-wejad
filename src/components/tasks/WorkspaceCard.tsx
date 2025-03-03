@@ -1,14 +1,12 @@
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
-  CalendarDays,
   CheckCircle2,
   Clock,
   Users,
-  UserPlus
+  UserPlus,
+  AlertTriangle
 } from "lucide-react";
 import { Workspace } from "@/types/workspace";
 import { useState } from "react";
@@ -22,14 +20,6 @@ interface WorkspaceCardProps {
 export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const navigate = useNavigate();
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
-  
-  const calculateProgress = () => {
-    const totalTasks = workspace.total_tasks || 0;
-    const completedTasks = workspace.completed_tasks || 0;
-    
-    if (totalTasks === 0) return 0;
-    return Math.round((completedTasks / totalTasks) * 100);
-  };
 
   const handleClick = () => {
     navigate(`/workspaces/${workspace.id}`);
@@ -47,11 +37,8 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         onClick={handleClick}
       >
         <CardContent className="p-6">
-          <div className="flex justify-between items-start mb-3">
+          <div className="mb-3">
             <h3 className="font-bold text-lg">{workspace.name}</h3>
-            <Badge variant={workspace.status === 'active' ? 'default' : 'outline'}>
-              {workspace.status === 'active' ? 'نشط' : 'غير نشط'}
-            </Badge>
           </div>
           
           <p className="text-gray-500 mb-4 text-sm line-clamp-2">
@@ -62,20 +49,16 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>{workspace.completed_tasks || 0} مكتمل</span>
+                <span>{workspace.completed_tasks || 0} مشاريع مكتملة</span>
               </div>
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-yellow-500" />
-                <span>{workspace.pending_tasks || 0} قيد التنفيذ</span>
+                <Clock className="h-4 w-4 text-blue-500" />
+                <span>{workspace.pending_tasks || 0} مشاريع حالية</span>
               </div>
-            </div>
-            
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span>التقدم</span>
-                <span>{calculateProgress()}%</span>
+              <div className="flex items-center gap-1">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <span>{workspace.total_tasks - (workspace.completed_tasks || 0) - (workspace.pending_tasks || 0) || 0} مشاريع متعثرة</span>
               </div>
-              <Progress value={calculateProgress()} className="h-2" />
             </div>
           </div>
         </CardContent>
@@ -85,21 +68,15 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
             <Users className="h-4 w-4" />
             <span>{workspace.members_count || 0} عضو</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-1"
-              onClick={handleManageMembers}
-            >
-              <UserPlus className="h-4 w-4" />
-              <span className="hidden sm:inline">إدارة الأعضاء</span>
-            </Button>
-            <div className="flex items-center gap-1 text-sm text-gray-500">
-              <CalendarDays className="h-4 w-4" />
-              <span>{workspace.created_at ? new Date(workspace.created_at).toLocaleDateString('ar-SA') : ''}</span>
-            </div>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+            onClick={handleManageMembers}
+          >
+            <UserPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">إدارة الأعضاء</span>
+          </Button>
         </CardFooter>
       </Card>
 
