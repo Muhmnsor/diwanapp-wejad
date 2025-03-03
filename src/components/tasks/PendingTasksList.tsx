@@ -17,13 +17,29 @@ export const PendingTasksList = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          project_tasks!inner (
+            id,
+            project_id
+          ),
+          project_tasks!inner(project_id (
+            title
+          ))
+        `)
         .eq('status', 'pending')
         .order('due_date', { ascending: true })
         .limit(5);
       
       if (error) throw error;
-      return data || [];
+      
+      // Transform the data to include the project title
+      const transformedData = data?.map(task => ({
+        ...task,
+        project_name: task.project_tasks?.project_id?.title || 'مشروع غير محدد'
+      })) || [];
+      
+      return transformedData;
     }
   });
 
@@ -81,7 +97,7 @@ export const PendingTasksList = () => {
             {getPriorityBadge(task.priority)}
           </div>
           <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
-            <span>{task.workspace_name || 'مساحة عمل غير محددة'}</span>
+            <span>{task.project_name || 'مشروع غير محدد'}</span>
             <span>{formatDueDate(task.due_date)}</span>
           </div>
         </div>
