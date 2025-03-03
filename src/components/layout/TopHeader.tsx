@@ -109,11 +109,21 @@ export const TopHeader = () => {
                   <Tabs 
                     value={activeTab}
                     onValueChange={handleTabChange}
-                    className="flex-1 md:flex-none ml-2"
+                    className="flex-1 md:flex-none ml-2 w-full"
                   >
-                    <TabsList className="w-full">
-                      <TabsTrigger value="overview" className="flex-1">نظرة عامة</TabsTrigger>
-                      <TabsTrigger value="workspaces" className="flex-1">مساحات العمل</TabsTrigger>
+                    <TabsList className="grid grid-cols-2 bg-secondary/20 p-1 rounded-xl">
+                      <TabsTrigger 
+                        value="overview" 
+                        className="data-[state=active]:bg-white"
+                      >
+                        نظرة عامة
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="workspaces" 
+                        className="data-[state=active]:bg-white"
+                      >
+                        مساحات العمل
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 )}
