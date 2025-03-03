@@ -56,29 +56,17 @@ export const IdeasTable = ({
   };
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="rounded-md border">
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader className="bg-primary/5">
+          <TableHeader>
             <TableRow>
-              <TableHead className="text-center font-bold text-lg py-4 text-primary">
-                عنوان الفكرة
-              </TableHead>
-              <TableHead className="text-center font-bold text-lg py-4 text-primary">
-                المنشئ
-              </TableHead>
-              <TableHead className="text-center font-bold text-lg py-4 text-primary">
-                تاريخ الإنشاء
-              </TableHead>
-              <TableHead className="text-center font-bold text-lg py-4 text-primary">
-                الوقت المتبقي للمناقشة
-              </TableHead>
-              <TableHead className="text-center font-bold text-lg py-4 text-primary">
-                الحالة
-              </TableHead>
-              <TableHead className="text-center font-bold text-lg py-4 text-primary">
-                الإجراءات
-              </TableHead>
+              <TableHead className="text-center">عنوان الفكرة</TableHead>
+              <TableHead className="text-center">المنشئ</TableHead>
+              <TableHead className="text-center">تاريخ الإنشاء</TableHead>
+              <TableHead className="text-center">الوقت المتبقي للمناقشة</TableHead>
+              <TableHead className="text-center">الحالة</TableHead>
+              <TableHead className="text-center">الإجراءات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -110,12 +98,11 @@ export const IdeasTable = ({
               ideas.map((idea) => (
                 <TableRow 
                   key={idea.id}
-                  className="hover:bg-muted/50"
                 >
-                  <TableCell className="text-center">
+                  <TableCell className="text-center font-medium">
                     <Link 
                       to={`/ideas/${idea.id}`}
-                      className="font-medium text-primary hover:underline block w-full h-full"
+                      className="text-primary hover:underline"
                     >
                       {idea.title}
                     </Link>
@@ -126,10 +113,6 @@ export const IdeasTable = ({
                       year: 'numeric',
                       month: '2-digit',
                       day: '2-digit'
-                    })} | {new Date(idea.created_at).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
                     })}
                   </TableCell>
                   <TableCell className="text-center">
