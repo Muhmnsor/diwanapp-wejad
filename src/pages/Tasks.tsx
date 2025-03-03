@@ -5,7 +5,6 @@ import { TasksHeader } from "@/components/tasks/TasksHeader";
 import { TasksOverview } from "@/components/tasks/TasksOverview";
 import { TasksWorkspaces } from "@/components/tasks/TasksWorkspaces";
 import { useEffect, useState } from "react";
-import { TabsContent } from "@/components/ui/tabs";
 
 const Tasks = () => {
   const [activeTab, setActiveTab] = useState("overview");

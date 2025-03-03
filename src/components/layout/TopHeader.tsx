@@ -79,24 +79,22 @@ export const TopHeader = () => {
           {isTasksPage && (
             <div className="w-full bg-white border-t py-3">
               <div className="flex justify-center">
-                <div className="flex gap-4 items-center">
-                  <Button
-                    variant={activeTab === "overview" ? "default" : "ghost"}
-                    className="flex items-center gap-2"
+                <div className="flex gap-6 items-center">
+                  <div 
+                    className={`flex items-center gap-2 cursor-pointer ${activeTab === "overview" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("overview")}
                   >
                     <LayoutDashboard className="h-4 w-4" />
-                    لوحة المعلومات
-                  </Button>
+                    <span>لوحة المعلومات</span>
+                  </div>
                   
-                  <Button
-                    variant={activeTab === "workspaces" ? "default" : "ghost"}
-                    className="flex items-center gap-2"
+                  <div 
+                    className={`flex items-center gap-2 cursor-pointer ${activeTab === "workspaces" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("workspaces")}
                   >
                     <FolderKanban className="h-4 w-4" />
-                    مساحات العمل
-                  </Button>
+                    <span>مساحات العمل</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -106,3 +104,4 @@ export const TopHeader = () => {
     </div>
   );
 };
+
