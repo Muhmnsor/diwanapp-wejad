@@ -1,22 +1,39 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Users, Check, Clock } from "lucide-react";
 import { Task } from "../TasksList";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface TaskCardProps {
   task: Task;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
+  onStatusChange: (taskId: string, newStatus: string) => void;
 }
 
 export const TaskCard = ({ 
   task, 
   getStatusBadge, 
   getPriorityBadge, 
-  formatDate 
+  formatDate,
+  onStatusChange
 }: TaskCardProps) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    setIsUpdating(true);
+    try {
+      await onStatusChange(task.id, newStatus);
+    } catch (error) {
+      console.error("Error updating task status:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <Card className="border hover:border-primary/50 transition-colors">
       <CardContent className="p-4 text-right">
@@ -52,6 +69,32 @@ export const TaskCard = ({
               {task.stage_name}
             </Badge>
           )}
+
+          <div className="mt-3 flex justify-end">
+            {task.status !== 'completed' ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-3 mt-2"
+                onClick={() => handleStatusUpdate('completed')}
+                disabled={isUpdating}
+              >
+                <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
+                إكمال المهمة
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-3 mt-2"
+                onClick={() => handleStatusUpdate('in_progress')}
+                disabled={isUpdating}
+              >
+                <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
+                إعادة فتح المهمة
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

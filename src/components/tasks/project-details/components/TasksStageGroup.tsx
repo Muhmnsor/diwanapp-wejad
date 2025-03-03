@@ -10,6 +10,7 @@ interface TasksStageGroupProps {
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
+  onStatusChange: (taskId: string, newStatus: string) => void;
 }
 
 export const TasksStageGroup = ({
@@ -18,7 +19,8 @@ export const TasksStageGroup = ({
   activeTab,
   getStatusBadge,
   getPriorityBadge,
-  formatDate
+  formatDate,
+  onStatusChange
 }: TasksStageGroupProps) => {
   const filteredTasks = tasks.filter(task => 
     activeTab === "all" || task.status === activeTab
@@ -49,6 +51,7 @@ export const TasksStageGroup = ({
               getStatusBadge={getStatusBadge}
               getPriorityBadge={getPriorityBadge}
               formatDate={formatDate}
+              onStatusChange={onStatusChange}
             />
           ))}
         </TableBody>

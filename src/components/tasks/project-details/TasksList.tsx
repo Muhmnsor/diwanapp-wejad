@@ -9,6 +9,7 @@ import { TasksHeader } from "./components/TasksHeader";
 import { TasksFilter } from "./components/TasksFilter";
 import { TasksContent } from "./components/TasksContent";
 import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
+import { toast } from "sonner";
 
 export interface Task {
   id: string;
@@ -146,6 +147,53 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     setProjectStages(stages);
   };
 
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+
+      if (error) {
+        console.error("Error updating task status:", error);
+        toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+        return;
+      }
+
+      // Update local state to reflect the change
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId 
+            ? { ...task, status: newStatus } 
+            : task
+        )
+      );
+
+      // Update tasksByStage state
+      setTasksByStage(prevTasksByStage => {
+        const newTasksByStage = { ...prevTasksByStage };
+        
+        // Update the task status in each stage
+        Object.keys(newTasksByStage).forEach(stageId => {
+          newTasksByStage[stageId] = newTasksByStage[stageId].map(task => 
+            task.id === taskId 
+              ? { ...task, status: newStatus } 
+              : task
+          );
+        });
+        
+        return newTasksByStage;
+      });
+
+      toast.success(newStatus === 'completed' 
+        ? "تم إكمال المهمة بنجاح" 
+        : "تم تحديث حالة المهمة");
+    } catch (error) {
+      console.error("Error in handleStatusChange:", error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+    }
+  };
+
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "all") return true;
     return task.status === activeTab;
@@ -180,6 +228,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
                 getStatusBadge={getStatusBadge}
                 getPriorityBadge={getPriorityBadge}
                 formatDate={formatDate}
+                onStatusChange={handleStatusChange}
               />
             </TabsContent>
           </Tabs>

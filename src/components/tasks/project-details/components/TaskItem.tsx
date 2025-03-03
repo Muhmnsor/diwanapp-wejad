@@ -1,26 +1,73 @@
 
-import { Calendar, Users } from "lucide-react";
+import { Calendar, Users, Check, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../TasksList";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TaskItemProps {
   task: Task;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
+  onStatusChange: (taskId: string, newStatus: string) => void;
 }
 
 export const TaskItem = ({ 
   task, 
   getStatusBadge, 
   getPriorityBadge, 
-  formatDate 
+  formatDate,
+  onStatusChange
 }: TaskItemProps) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    setIsUpdating(true);
+    try {
+      await onStatusChange(task.id, newStatus);
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <TableRow key={task.id}>
       <TableCell className="font-medium">{task.title}</TableCell>
-      <TableCell>{getStatusBadge(task.status)}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          {getStatusBadge(task.status)}
+          {task.status !== 'completed' ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 px-2 ml-2"
+              onClick={() => handleStatusUpdate('completed')}
+              disabled={isUpdating}
+            >
+              <Check className="h-3.5 w-3.5 text-green-500 mr-1" />
+              إكمال
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 px-2 ml-2"
+              onClick={() => handleStatusUpdate('in_progress')}
+              disabled={isUpdating}
+            >
+              <Clock className="h-3.5 w-3.5 text-amber-500 mr-1" />
+              قيد التنفيذ
+            </Button>
+          )}
+        </div>
+      </TableCell>
       <TableCell>{getPriorityBadge(task.priority)}</TableCell>
       <TableCell>
         {task.assigned_user_name ? (
