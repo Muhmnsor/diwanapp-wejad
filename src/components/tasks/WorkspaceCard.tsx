@@ -30,7 +30,9 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     stalled: 0,
     total: 0
   });
+  const [membersCount, setMembersCount] = useState(workspace.members_count || 0);
 
+  // Fetch project counts
   useEffect(() => {
     const fetchProjectCounts = async () => {
       try {
@@ -66,6 +68,29 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     fetchProjectCounts();
   }, [workspace.id]);
 
+  // Fetch members count
+  useEffect(() => {
+    const fetchMembersCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('workspace_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('workspace_id', workspace.id);
+
+        if (error) {
+          console.error('Error fetching members count:', error);
+          return;
+        }
+
+        setMembersCount(count || 0);
+      } catch (error) {
+        console.error('Failed to fetch members count:', error);
+      }
+    };
+
+    fetchMembersCount();
+  }, [workspace.id, isMembersDialogOpen]); // Re-fetch when dialog closes
+
   const handleClick = () => {
     navigate(`/tasks/workspace/${workspace.id}`);
   };
@@ -73,6 +98,10 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const handleManageMembers = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation to the details page
     setIsMembersDialogOpen(true);
+  };
+
+  const onMembersDialogClose = (open: boolean) => {
+    setIsMembersDialogOpen(open);
   };
 
   return (
@@ -115,7 +144,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         <CardFooter className="px-6 py-4 border-t flex justify-between">
           <div className="flex items-center gap-1 text-sm text-gray-500">
             <Users className="h-4 w-4" />
-            <span>{workspace.members_count || 0} عضو</span>
+            <span>{membersCount} عضو</span>
           </div>
           <Button 
             variant="outline" 
@@ -131,7 +160,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
 
       <WorkspaceMembersDialog 
         open={isMembersDialogOpen}
-        onOpenChange={setIsMembersDialogOpen}
+        onOpenChange={onMembersDialogClose}
         workspaceId={workspace.id}
       />
     </>

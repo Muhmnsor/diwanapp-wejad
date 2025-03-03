@@ -116,6 +116,11 @@ export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: Work
       
       if (error) throw error;
       
+      // تحديث عدد الأعضاء في الجدول workspaces
+      await supabase.rpc('update_workspace_members_count', { 
+        workspace_id: workspaceId
+      });
+
       // Actualizar la interfaz
       queryClient.invalidateQueries({ queryKey: ['workspace-members', workspaceId] });
       
@@ -138,6 +143,11 @@ export const WorkspaceMembersDialog = ({ open, onOpenChange, workspaceId }: Work
         .eq('id', memberId);
       
       if (error) throw error;
+      
+      // تحديث عدد الأعضاء في الجدول workspaces
+      await supabase.rpc('update_workspace_members_count', { 
+        workspace_id: workspaceId
+      });
       
       // Actualizar la interfaz
       queryClient.invalidateQueries({ queryKey: ['workspace-members', workspaceId] });
