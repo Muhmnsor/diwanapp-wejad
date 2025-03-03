@@ -9,7 +9,6 @@ import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
 import { FolderKanban, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 
 export const TopHeader = () => {
@@ -76,34 +75,30 @@ export const TopHeader = () => {
             </div>
           )}
 
-          {/* Tasks Secondary Header with Tabs - Only show on tasks pages */}
+          {/* Tasks Secondary Header with Navigation - Only show on tasks pages */}
           {isTasksPage && (
-            <div className="w-full bg-gray-50 border-t">
-              <Tabs 
-                defaultValue="overview" 
-                value={activeTab}
-                onValueChange={handleTabChange}
-                className="w-full"
-              >
-                <div className="flex justify-center">
-                  <TabsList className="grid grid-cols-2 w-full max-w-md bg-gray-100 m-3">
-                    <TabsTrigger 
-                      value="overview"
-                      className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                    >
-                      <LayoutDashboard className="h-4 w-4 ml-2" />
-                      لوحة المعلومات
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="workspaces"
-                      className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                    >
-                      <FolderKanban className="h-4 w-4 ml-2" />
-                      مساحات العمل
-                    </TabsTrigger>
-                  </TabsList>
+            <div className="w-full bg-gray-50 border-t py-3">
+              <div className="flex justify-center">
+                <div className="flex gap-4 items-center">
+                  <Button
+                    variant={activeTab === "overview" ? "default" : "ghost"}
+                    className="flex items-center gap-2"
+                    onClick={() => handleTabChange("overview")}
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    لوحة المعلومات
+                  </Button>
+                  
+                  <Button
+                    variant={activeTab === "workspaces" ? "default" : "ghost"}
+                    className="flex items-center gap-2"
+                    onClick={() => handleTabChange("workspaces")}
+                  >
+                    <FolderKanban className="h-4 w-4" />
+                    مساحات العمل
+                  </Button>
                 </div>
-              </Tabs>
+              </div>
             </div>
           )}
         </div>
