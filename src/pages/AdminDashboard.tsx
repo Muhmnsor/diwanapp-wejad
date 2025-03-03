@@ -33,12 +33,12 @@ const AdminDashboard = () => {
         if (user?.id) {
           const { data: profile, error } = await supabase
             .from('profiles')
-            .select('name, email')
+            .select('display_name, email')
             .eq('id', user.id)
             .single();
           
-          if (profile?.name) {
-            return profile.name;
+          if (profile?.display_name) {
+            return profile.display_name;
           }
         }
         
