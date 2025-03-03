@@ -31,3 +31,12 @@ export interface Permission {
   app_name: string;
   role_id: string;
 }
+
+// إضافة واجهة للتطبيقات
+export interface Application {
+  id: string;
+  name: string;
+  description: string;
+  code: string;
+  created_at: string;
+}
