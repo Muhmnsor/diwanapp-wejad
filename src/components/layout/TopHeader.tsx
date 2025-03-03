@@ -7,7 +7,7 @@ import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
-import { FolderKanban, LayoutDashboard } from "lucide-react";
+import { Calendar, FolderKanban, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -36,6 +36,8 @@ export const TopHeader = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash === 'workspaces') {
         setActiveTab('workspaces');
+      } else if (hash === 'yearly-plan') {
+        setActiveTab('yearly-plan');
       } else {
         setActiveTab('overview');
       }
@@ -95,6 +97,14 @@ export const TopHeader = () => {
                     <FolderKanban className="h-4 w-4" />
                     <span>مساحات العمل</span>
                   </div>
+
+                  <div 
+                    className={`flex items-center gap-2 cursor-pointer ${activeTab === "yearly-plan" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
+                    onClick={() => handleTabChange("yearly-plan")}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    <span>الخطة السنوية</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -104,4 +114,3 @@ export const TopHeader = () => {
     </div>
   );
 };
-

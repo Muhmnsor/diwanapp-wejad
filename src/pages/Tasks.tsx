@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { TasksHeader } from "@/components/tasks/TasksHeader";
 import { TasksOverview } from "@/components/tasks/TasksOverview";
 import { TasksWorkspaces } from "@/components/tasks/TasksWorkspaces";
+import { TasksYearlyPlan } from "@/components/tasks/TasksYearlyPlan";
 import { useEffect, useState } from "react";
 
 const Tasks = () => {
@@ -14,6 +15,8 @@ const Tasks = () => {
     const hash = window.location.hash.replace('#', '');
     if (hash === 'workspaces') {
       setActiveTab('workspaces');
+    } else if (hash === 'yearly-plan') {
+      setActiveTab('yearly-plan');
     } else {
       setActiveTab('overview');
     }
@@ -38,6 +41,7 @@ const Tasks = () => {
         
         {activeTab === 'overview' && <TasksOverview />}
         {activeTab === 'workspaces' && <TasksWorkspaces />}
+        {activeTab === 'yearly-plan' && <TasksYearlyPlan />}
       </main>
 
       <Footer />
