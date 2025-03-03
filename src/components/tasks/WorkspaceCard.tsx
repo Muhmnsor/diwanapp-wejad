@@ -22,12 +22,11 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
 
   const handleClick = () => {
-    // Navigate to create-project page instead of workspace details
-    navigate(`/create-project?workspace=${workspace.id}`);
+    navigate(`/workspaces/${workspace.id}`);
   };
 
   const handleManageMembers = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation to create project page
+    e.stopPropagation(); // Evitar la navegación a la página de detalles
     setIsMembersDialogOpen(true);
   };
 
