@@ -59,7 +59,9 @@ const WorkspaceTaskProjects = () => {
               {isLoading ? (
                 <Skeleton className="h-8 w-64" />
               ) : (
-                <h1 className="text-2xl font-bold">مشاريع {workspaceName}</h1>
+                <h1 className="text-2xl font-bold">
+                  {workspaceName ? `مشاريع ${workspaceName}` : 'مشاريع مساحة العمل'}
+                </h1>
               )}
               <Button onClick={handleCreateProject} className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
