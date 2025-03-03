@@ -154,3 +154,41 @@ export const deleteSubtask = async (
     return { success: false, error: "حدث خطأ أثناء حذف المهمة الفرعية" };
   }
 };
+
+export const checkPendingSubtasks = async (
+  taskId: string
+): Promise<{ hasPendingSubtasks: boolean, error: string | null }> => {
+  try {
+    // Check if the subtasks table exists
+    const { error: tableCheckError } = await supabase
+      .from('subtasks')
+      .select('count')
+      .limit(1)
+      .maybeSingle();
+    
+    if (tableCheckError) {
+      // Table doesn't exist, so no pending subtasks
+      if (tableCheckError.code === '42P01') {
+        return { hasPendingSubtasks: false, error: null };
+      }
+      return { hasPendingSubtasks: false, error: "حدث خطأ أثناء التحقق من المهام الفرعية" };
+    }
+    
+    // Check for pending subtasks
+    const { data, error, count } = await supabase
+      .from('subtasks')
+      .select('id', { count: 'exact' })
+      .eq('task_id', taskId)
+      .neq('status', 'completed');
+    
+    if (error) throw error;
+    
+    return { 
+      hasPendingSubtasks: count !== null && count > 0, 
+      error: null 
+    };
+  } catch (error) {
+    console.error("Error checking pending subtasks:", error);
+    return { hasPendingSubtasks: false, error: "حدث خطأ أثناء التحقق من المهام الفرعية" };
+  }
+};

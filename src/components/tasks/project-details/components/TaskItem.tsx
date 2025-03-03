@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
 import { SubtasksList } from "./subtasks/SubtasksList";
+import { checkPendingSubtasks } from "../services/subtasksService";
 
 interface TaskItemProps {
   task: Task;
@@ -47,6 +48,23 @@ export const TaskItem = ({
     
     setIsUpdating(true);
     try {
+      // إذا كانت المهمة قيد التغيير إلى "مكتملة"، تحقق من المهام الفرعية أولاً
+      if (newStatus === 'completed') {
+        const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
+        
+        if (error) {
+          toast.error(error);
+          setIsUpdating(false);
+          return;
+        }
+        
+        if (hasPendingSubtasks) {
+          toast.error("لا يمكن إكمال المهمة حتى يتم إكمال جميع المهام الفرعية");
+          setIsUpdating(false);
+          return;
+        }
+      }
+      
       await onStatusChange(task.id, newStatus);
     } catch (error) {
       console.error("Error updating task status:", error);
