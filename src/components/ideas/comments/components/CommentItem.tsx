@@ -56,7 +56,7 @@ export const CommentItem = ({
         </Avatar>
         <div className="flex-1 text-right">
           <div className="flex items-center gap-1 mb-0.5 justify-start">
-            <span className="font-medium">{comment.user_display_name || comment.user_email || 'مستخدم'}</span>
+            <span className="font-medium">{comment.user_email || 'مستخدم'}</span>
             <span className="text-xs text-muted-foreground">
               {formatCommentDate(comment.created_at)}
             </span>
