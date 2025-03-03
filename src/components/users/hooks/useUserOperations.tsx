@@ -37,33 +37,9 @@ export const useUserOperations = (onUserDeleted: () => void) => {
           
         if (profileCheckError) {
           console.error("خطأ في التحقق من وجود ملف التعريف:", profileCheckError);
-          
-          // إذا لم يكن الملف الشخصي موجودًا، قم بإنشائه
-          if (profileCheckError.code === 'PGRST116') {
-            console.log("إنشاء ملف شخصي جديد للمستخدم:", selectedUser.id);
-            const { data: insertResult, error: insertError } = await supabase
-              .from('profiles')
-              .insert({ 
-                id: selectedUser.id, 
-                display_name: selectedUser.displayName,
-                email: selectedUser.username 
-              })
-              .select();
-              
-            if (insertError) {
-              console.error("خطأ في إنشاء ملف التعريف:", insertError);
-              toast.error("فشل في إنشاء ملف التعريف للمستخدم");
-              return;
-            }
-            
-            console.log("تم إنشاء ملف التعريف بنجاح:", insertResult);
-          } else {
-            toast.error("حدث خطأ أثناء التحقق من ملف التعريف");
-            return;
-          }
-        } else {
-          console.log("بيانات الملف الشخصي الحالية:", profileData);
         }
+        
+        console.log("بيانات الملف الشخصي الحالية:", profileData);
 
         // محاولة تحديث الملف الشخصي
         const { data: updateResult, error: displayNameError } = await supabase
@@ -137,12 +113,11 @@ export const useUserOperations = (onUserDeleted: () => void) => {
 
     try {
       setIsSubmitting(true);
-      console.log("محاولة حذف المستخدم:", userToDelete.id);
 
-      // استدعاء وظيفة حذف المستخدم من خلال Edge Function
-      const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { userId: userToDelete.id }
-      });
+      // حذف المستخدم
+      const { error } = await supabase.auth.admin.deleteUser(
+        userToDelete.id
+      );
 
       if (error) {
         console.error("خطأ في حذف المستخدم:", error);
@@ -150,15 +125,9 @@ export const useUserOperations = (onUserDeleted: () => void) => {
         return;
       }
 
-      console.log("استجابة حذف المستخدم:", data);
-      
-      if (data.success) {
-        toast.success("تم حذف المستخدم بنجاح");
-        onUserDeleted();
-        setUserToDelete(null);
-      } else {
-        toast.error(data.error || "حدث خطأ أثناء حذف المستخدم");
-      }
+      toast.success("تم حذف المستخدم بنجاح");
+      onUserDeleted();
+      setUserToDelete(null);
     } catch (error) {
       console.error("خطأ غير متوقع:", error);
       toast.error("حدث خطأ أثناء حذف المستخدم");

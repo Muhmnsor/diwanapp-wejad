@@ -1,9 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/tabs";
 import { useRoleManagement } from "./hooks/useRoleManagement";
-import { RolesTabContent } from "./roles/RolesTabContent";
-import { PermissionsTabContent } from "./roles/PermissionsTabContent";
+import { RoleManagementContent } from "./roles/RoleManagementContent";
+import { TabsNavigation } from "./roles/TabsNavigation";
 import { RoleDialogs } from "./roles/RoleDialogs";
 
 export const RoleManagement = () => {
@@ -35,31 +35,18 @@ export const RoleManagement = () => {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
-          <TabsList className="mb-4">
-            <TabsTrigger value="roles">قائمة الأدوار</TabsTrigger>
-            <TabsTrigger value="permissions" disabled={!selectedRoleId}>
-              صلاحيات الدور
-            </TabsTrigger>
-          </TabsList>
+          <TabsNavigation selectedRoleId={selectedRoleId} />
           
-          <TabsContent value="roles">
-            <RolesTabContent 
-              roles={roles}
-              isLoading={isLoading}
-              selectedRoleId={selectedRoleId}
-              onAddRole={handleAddRole}
-              onSelectRole={handleSelectRole}
-              onEditRole={setRoleToEdit}
-              onDeleteRole={setRoleToDelete}
-              searchQuery=""
-            />
-          </TabsContent>
-          
-          <TabsContent value="permissions">
-            <PermissionsTabContent 
-              selectedRole={roles.find(role => role.id === selectedRoleId) || null} 
-            />
-          </TabsContent>
+          <RoleManagementContent 
+            roles={roles}
+            isLoading={isLoading}
+            selectedRoleId={selectedRoleId}
+            activeTab={activeTab}
+            onSelectRole={handleSelectRole}
+            onEditRole={setRoleToEdit}
+            onDeleteRole={setRoleToDelete}
+            onAddRole={handleAddRole}
+          />
         </Tabs>
       </CardContent>
 
