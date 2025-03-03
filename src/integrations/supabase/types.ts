@@ -2883,6 +2883,45 @@ export type Database = {
           },
         ]
       }
+      workspaces: {
+        Row: {
+          completed_tasks: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          members_count: number | null
+          name: string
+          pending_tasks: number | null
+          status: string
+          total_tasks: number | null
+        }
+        Insert: {
+          completed_tasks?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          members_count?: number | null
+          name: string
+          pending_tasks?: number | null
+          status?: string
+          total_tasks?: number | null
+        }
+        Update: {
+          completed_tasks?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          members_count?: number | null
+          name?: string
+          pending_tasks?: number | null
+          status?: string
+          total_tasks?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
