@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ export const CreateTaskProjectDialog = ({
           {
             title: formData.name,
             description: formData.description,
-            workspace_id: workspaceId,
+            project_id: workspaceId, // Changed from workspace_id to project_id to match the database schema
             due_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
             status: 'pending',
           }
@@ -98,6 +98,7 @@ export const CreateTaskProjectDialog = ({
       <DialogContent className="sm:max-w-[600px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>إنشاء مشروع مهام جديد</DialogTitle>
+          <DialogDescription>أدخل تفاصيل المشروع الجديد</DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
