@@ -35,10 +35,13 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
     setError(null);
     
     try {
+      console.log(`Loading subtasks for task ${taskId}...`);
       const { data, error } = await fetchSubtasks(taskId);
       if (error) {
+        console.error(`Error loading subtasks for task ${taskId}:`, error);
         setError(error);
       } else {
+        console.log(`Successfully loaded ${data.length} subtasks for task ${taskId}`);
         setSubtasks(prev => ({ ...prev, [taskId]: data }));
       }
     } catch (err) {
@@ -53,12 +56,19 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
     setIsLoading(true);
     
     try {
-      const { success, error } = await addSubtask(taskId, title, dueDate, assignedTo);
+      console.log(`Adding new subtask to task ${taskId}: "${title}"`);
+      const { success, error, newSubtask } = await addSubtask(taskId, title, dueDate, assignedTo);
       
-      if (success) {
-        await loadSubtasks(taskId);
+      if (success && newSubtask) {
+        console.log(`Successfully added subtask:`, newSubtask);
+        // Update the local state with the new subtask
+        setSubtasks(prev => {
+          const taskSubtasks = [...(prev[taskId] || []), newSubtask];
+          return { ...prev, [taskId]: taskSubtasks };
+        });
         toast.success('تمت إضافة المهمة الفرعية بنجاح');
       } else if (error) {
+        console.error(`Error adding subtask to task ${taskId}:`, error);
         toast.error(error);
       }
     } catch (err) {
@@ -71,6 +81,7 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
 
   const updateStatus = async (subtaskId: string, taskId: string, newStatus: string) => {
     try {
+      console.log(`Updating status of subtask ${subtaskId} to ${newStatus}`);
       const { success, error } = await updateSubtaskStatus(subtaskId, newStatus);
       
       if (success) {
@@ -88,6 +99,7 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
           : 'تم تحديث حالة المهمة الفرعية'
         );
       } else if (error) {
+        console.error(`Error updating subtask ${subtaskId} status:`, error);
         toast.error(error);
       }
     } catch (err) {
@@ -98,6 +110,7 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
 
   const removeSubtask = async (subtaskId: string, taskId: string) => {
     try {
+      console.log(`Removing subtask ${subtaskId} from task ${taskId}`);
       const { success, error } = await deleteSubtask(subtaskId);
       
       if (success) {
@@ -110,6 +123,7 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
         
         toast.success('تم حذف المهمة الفرعية بنجاح');
       } else if (error) {
+        console.error(`Error removing subtask ${subtaskId}:`, error);
         toast.error(error);
       }
     } catch (err) {

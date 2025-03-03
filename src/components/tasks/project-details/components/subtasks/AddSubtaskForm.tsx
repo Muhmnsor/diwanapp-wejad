@@ -23,7 +23,11 @@ export const AddSubtaskForm = ({ onSubmit, onCancel, projectMembers, isLoading =
     e.preventDefault();
     if (!title.trim()) return;
     
-    await onSubmit(title, dueDate || undefined, assignedTo || undefined);
+    // If assignedTo is empty, set it to "none" to avoid issues
+    const finalAssignedTo = assignedTo || "none";
+    
+    console.log(`Submitting subtask: Title=${title}, DueDate=${dueDate || 'none'}, AssignedTo=${finalAssignedTo}`);
+    await onSubmit(title, dueDate || undefined, finalAssignedTo);
     setTitle("");
     setDueDate("");
     setAssignedTo("");

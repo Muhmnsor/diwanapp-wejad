@@ -60,7 +60,7 @@ export const addSubtask = async (
   title: string, 
   dueDate?: string, 
   assignedTo?: string
-): Promise<{ success: boolean, error: string | null }> => {
+): Promise<{ success: boolean, error: string | null, newSubtask?: Subtask }> => {
   try {
     // Check if the subtasks table exists
     const { error: tableCheckError } = await supabase
@@ -77,21 +77,41 @@ export const addSubtask = async (
       };
     }
     
-    const { error } = await supabase
+    const subtaskData = {
+      task_id: taskId,
+      title,
+      status: 'pending',
+      due_date: dueDate ? new Date(dueDate).toISOString() : null,
+      assigned_to: assignedTo && assignedTo !== 'none' ? assignedTo : null
+    };
+    
+    const { data, error } = await supabase
       .from('subtasks')
-      .insert([
-        {
-          task_id: taskId,
-          title,
-          status: 'pending',
-          due_date: dueDate ? new Date(dueDate).toISOString() : null,
-          assigned_to: assignedTo && assignedTo !== 'none' ? assignedTo : null
-        }
-      ]);
+      .insert([subtaskData])
+      .select('*')
+      .single();
     
     if (error) throw error;
     
-    return { success: true, error: null };
+    // If there's an assignee, get their name
+    let newSubtask = data as Subtask;
+    
+    if (newSubtask.assigned_to) {
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('display_name, email')
+        .eq('id', newSubtask.assigned_to)
+        .single();
+      
+      if (!userError && userData) {
+        newSubtask = {
+          ...newSubtask,
+          assigned_user_name: userData.display_name || userData.email
+        };
+      }
+    }
+    
+    return { success: true, error: null, newSubtask };
   } catch (error) {
     console.error("Error adding subtask:", error);
     return { success: false, error: "حدث خطأ أثناء إضافة المهمة الفرعية" };

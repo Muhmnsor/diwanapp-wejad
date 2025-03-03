@@ -2497,6 +2497,39 @@ export type Database = {
         }
         Relationships: []
       }
+      subtasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          due_date: string | null
+          id: string
+          status: string | null
+          task_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          task_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          task_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sync_status: {
         Row: {
           created_at: string

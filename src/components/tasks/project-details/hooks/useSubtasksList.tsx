@@ -32,22 +32,43 @@ export const useSubtasksList = (
     }
   }, [taskId, externalSubtasks]);
   
+  // When context subtasks change, update local state if we're using context
+  useEffect(() => {
+    if (subtasksContext && !externalSubtasks) {
+      const contextSubtasks = subtasksContext.subtasks[taskId] || [];
+      if (contextSubtasks.length > 0) {
+        setSubtasks(contextSubtasks);
+      }
+    }
+  }, [subtasksContext?.subtasks[taskId]]);
+  
   const fetchSubtasksData = async () => {
     if (!taskId) return;
     
     // If we have context and no external subtasks, use that
     if (subtasksContext && !externalSubtasks) {
+      console.log(`Using context to load subtasks for task ${taskId}`);
       await subtasksContext.loadSubtasks(taskId);
       return;
     }
     
     // Otherwise, fetch directly
+    console.log(`Directly fetching subtasks for task ${taskId}`);
     setIsLoading(true);
     setError(null);
-    const { data, error } = await fetchSubtasks(taskId);
-    setSubtasks(data);
-    setError(error);
-    setIsLoading(false);
+    try {
+      const { data, error } = await fetchSubtasks(taskId);
+      if (error) {
+        setError(error);
+      } else {
+        setSubtasks(data);
+      }
+    } catch (e) {
+      console.error("Error in fetchSubtasksData:", e);
+      setError("حدث خطأ أثناء جلب المهام الفرعية");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleAddSubtask = async (title: string, dueDate?: string, assignedTo?: string) => {
@@ -68,17 +89,23 @@ export const useSubtasksList = (
       }
     } else {
       setIsLoading(true);
-      const { success, error } = await addSubtask(taskId, title, dueDate, assignedTo);
-      
-      if (success) {
-        toast.success("تمت إضافة المهمة الفرعية");
-        await fetchSubtasksData();
-      } else if (error) {
-        toast.error(error);
+      try {
+        const { success, error, newSubtask } = await addSubtask(taskId, title, dueDate, assignedTo);
+        
+        if (success && newSubtask) {
+          toast.success("تمت إضافة المهمة الفرعية");
+          // Update local state directly with the new subtask
+          setSubtasks(prev => [...prev, newSubtask]);
+          setIsAddingSubtask(false);
+        } else if (error) {
+          toast.error(error);
+        }
+      } catch (e) {
+        console.error("Error in handleAddSubtask:", e);
+        toast.error("حدث خطأ أثناء إضافة المهمة الفرعية");
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
-      setIsAddingSubtask(false);
     }
   };
   
