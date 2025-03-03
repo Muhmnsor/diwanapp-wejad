@@ -9,6 +9,7 @@ import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
 import { FolderKanban, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const TopHeader = () => {
   const location = useLocation();
@@ -79,6 +80,19 @@ export const TopHeader = () => {
                     لوحة المعلومات
                   </Button>
                 </Link>
+                
+                {/* نضيف هنا عنصر التبويب للتنقل بين النظرة العامة ومساحات العمل */}
+                {location.pathname === "/tasks" && (
+                  <Tabs 
+                    defaultValue="overview"
+                    className="flex-1 md:flex-none ml-2"
+                  >
+                    <TabsList className="w-full">
+                      <TabsTrigger value="overview" className="flex-1">نظرة عامة</TabsTrigger>
+                      <TabsTrigger value="workspaces" className="flex-1">مساحات العمل</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                )}
               </div>
             </div>
           )}
