@@ -1,3 +1,4 @@
+
 import { Project } from "@/types/project";
 import { ProjectFormFields } from "@/components/projects/ProjectFormFields";
 import { handleImageUpload } from "@/components/events/form/EventImageUpload";
@@ -6,7 +7,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const CreateProjectForm = () => {
+interface CreateProjectFormProps {
+  initialWorkspaceId?: string | null;
+}
+
+export const CreateProjectForm = ({ initialWorkspaceId }: CreateProjectFormProps) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Project>({
@@ -57,7 +62,7 @@ export const CreateProjectForm = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      // Insert project data
+      // Insert project data with workspace_id if provided
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert([{
@@ -74,7 +79,8 @@ export const CreateProjectForm = () => {
           event_path: formData.event_path,
           event_category: formData.event_category,
           registration_start_date: formData.registration_start_date,
-          registration_end_date: formData.registration_end_date
+          registration_end_date: formData.registration_end_date,
+          workspace_id: initialWorkspaceId // Add workspace_id if provided
         }])
         .select()
         .single();
