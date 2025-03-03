@@ -20,11 +20,6 @@ const Tasks = () => {
     }
   }, [location]);
 
-  // تحديث هاش URL عند تغيير التبويب
-  useEffect(() => {
-    window.location.hash = activeTab;
-  }, [activeTab]);
-
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
