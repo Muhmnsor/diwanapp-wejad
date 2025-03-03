@@ -1,26 +1,17 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
-import { AddSubtaskForm } from "./AddSubtaskForm";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert } from "@/components/ui/alert";
-import { SubtaskItem } from "./SubtaskItem";
 
-export interface Subtask {
-  id: string;
-  title: string;
-  description: string | null;
-  due_date: string | null;
-  assigned_to: string | null;
-  status: string;
-  priority?: string | null;
-}
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SubtaskItem } from "./SubtaskItem";
+import { AddSubtaskForm } from "./AddSubtaskForm";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Subtask } from "../../types/subtask";
+import { useProjectMembers } from "../../hooks/useProjectMembers";
 
 interface SubtasksListProps {
   taskId: string;
-  projectId: string | undefined;
+  projectId: string;
   subtasks?: Subtask[];
   onAddSubtask?: (taskId: string, title: string, dueDate?: string, assignedTo?: string) => Promise<void>;
   onUpdateSubtaskStatus?: (subtaskId: string, newStatus: string) => Promise<void>;
@@ -29,144 +20,198 @@ interface SubtasksListProps {
 
 export const SubtasksList = ({ 
   taskId, 
-  projectId, 
-  subtasks: externalSubtasks, 
-  onAddSubtask, 
-  onUpdateSubtaskStatus, 
-  onDeleteSubtask 
+  projectId,
+  subtasks: externalSubtasks,
+  onAddSubtask: externalAddSubtask,
+  onUpdateSubtaskStatus: externalUpdateStatus,
+  onDeleteSubtask: externalDeleteSubtask
 }: SubtasksListProps) => {
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isOpen, setIsOpen] = useState(true);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchSubtasks = async () => {
+  const { projectMembers } = useProjectMembers(projectId);
+  
+  useEffect(() => {
     if (externalSubtasks) {
       setSubtasks(externalSubtasks);
-      setIsLoading(false);
-      return;
+    } else {
+      fetchSubtasks();
     }
+  }, [taskId, externalSubtasks]);
+  
+  const fetchSubtasks = async () => {
+    if (!taskId) return;
     
     setIsLoading(true);
-    setError(null);
-    
     try {
       const { data, error } = await supabase
-        .from('task_subtasks')
+        .from('subtasks')
         .select('*')
-        .eq('parent_task_id', taskId)
-        .order('created_at', { ascending: false });
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true });
       
       if (error) throw error;
       
-      setSubtasks(data || []);
+      // Add user names for subtasks with assignees
+      const subtasksWithUserData = await Promise.all((data || []).map(async (subtask) => {
+        if (subtask.assigned_to) {
+          const { data: userData, error: userError } = await supabase
+            .from('profiles')
+            .select('display_name, email')
+            .eq('id', subtask.assigned_to)
+            .single();
+          
+          if (!userError && userData) {
+            return {
+              ...subtask,
+              assigned_user_name: userData.display_name || userData.email
+            };
+          }
+        }
+        
+        return subtask;
+      }));
+      
+      setSubtasks(subtasksWithUserData);
     } catch (error) {
       console.error("Error fetching subtasks:", error);
-      setError("فشل في جلب المهام الفرعية");
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (taskId) {
-      fetchSubtasks();
-    }
-  }, [taskId, externalSubtasks]);
-
-  const handleStatusChange = async (subtaskId: string, newStatus: string) => {
-    if (onUpdateSubtaskStatus) {
-      await onUpdateSubtaskStatus(subtaskId, newStatus);
-      return;
-    }
-    
-    try {
-      const { error } = await supabase
-        .from('task_subtasks')
-        .update({ status: newStatus })
-        .eq('id', subtaskId);
-      
-      if (error) throw error;
-      
-      setSubtasks(prev => prev.map(subtask => 
-        subtask.id === subtaskId 
-          ? { ...subtask, status: newStatus } 
-          : subtask
-      ));
-    } catch (error) {
-      console.error("Error updating subtask status:", error);
-    }
-  };
-
+  
   const handleAddSubtask = async (title: string, dueDate?: string, assignedTo?: string) => {
-    if (onAddSubtask) {
-      await onAddSubtask(taskId, title, dueDate, assignedTo);
-      return;
-    }
-    
-    try {
-      fetchSubtasks();
-    } catch (error) {
-      console.error("Error adding subtask:", error);
+    if (externalAddSubtask) {
+      await externalAddSubtask(taskId, title, dueDate, assignedTo);
+    } else {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('subtasks')
+          .insert([
+            {
+              task_id: taskId,
+              title,
+              status: 'pending',
+              due_date: dueDate ? new Date(dueDate).toISOString() : null,
+              assigned_to: assignedTo || null
+            }
+          ])
+          .select();
+        
+        if (error) throw error;
+        
+        toast.success("تمت إضافة المهمة الفرعية");
+        await fetchSubtasks();
+      } catch (error) {
+        console.error("Error adding subtask:", error);
+        toast.error("حدث خطأ أثناء إضافة المهمة الفرعية");
+      } finally {
+        setIsLoading(false);
+        setIsAddingSubtask(false);
+      }
     }
   };
-
-  return (
-    <div className="mt-4 border rounded-md p-4">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="flex items-center justify-between">
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent">
-              {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-              <span className="ms-2 font-medium">المهام الفرعية ({subtasks.length})</span>
-            </Button>
-          </CollapsibleTrigger>
-          
-          <Button 
-            size="sm" 
-            className="flex items-center gap-1" 
-            onClick={() => setIsAddDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            <span>إضافة مهمة فرعية</span>
-          </Button>
-        </div>
+  
+  const handleUpdateStatus = async (subtaskId: string, newStatus: string) => {
+    if (externalUpdateStatus) {
+      await externalUpdateStatus(subtaskId, newStatus);
+    } else {
+      try {
+        const { error } = await supabase
+          .from('subtasks')
+          .update({ status: newStatus })
+          .eq('id', subtaskId);
         
-        <CollapsibleContent className="mt-4">
-          {isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : error ? (
-            <Alert>{error}</Alert>
-          ) : subtasks.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              لا توجد مهام فرعية
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {subtasks.map(subtask => (
-                <SubtaskItem 
-                  key={subtask.id}
-                  subtask={subtask}
-                  onStatusChange={handleStatusChange}
-                />
-              ))}
-            </div>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
+        if (error) throw error;
+        
+        setSubtasks(prevSubtasks => 
+          prevSubtasks.map(subtask => 
+            subtask.id === subtaskId 
+              ? { ...subtask, status: newStatus } 
+              : subtask
+          )
+        );
+        
+        toast.success(newStatus === 'completed' 
+          ? "تم إكمال المهمة الفرعية" 
+          : "تم تحديث حالة المهمة الفرعية");
+      } catch (error) {
+        console.error("Error updating subtask status:", error);
+        toast.error("حدث خطأ أثناء تحديث حالة المهمة الفرعية");
+      }
+    }
+  };
+  
+  const handleDeleteSubtask = async (subtaskId: string) => {
+    if (externalDeleteSubtask) {
+      await externalDeleteSubtask(subtaskId);
+    } else {
+      try {
+        const { error } = await supabase
+          .from('subtasks')
+          .delete()
+          .eq('id', subtaskId);
+        
+        if (error) throw error;
+        
+        setSubtasks(prevSubtasks => 
+          prevSubtasks.filter(subtask => subtask.id !== subtaskId)
+        );
+        
+        toast.success("تم حذف المهمة الفرعية");
+      } catch (error) {
+        console.error("Error deleting subtask:", error);
+        toast.error("حدث خطأ أثناء حذف المهمة الفرعية");
+      }
+    }
+  };
+  
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium">المهام الفرعية</h4>
+        
+        {!isAddingSubtask && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 text-xs"
+            onClick={() => setIsAddingSubtask(true)}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            إضافة مهمة فرعية
+          </Button>
+        )}
+      </div>
       
-      <AddSubtaskForm
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        taskId={taskId}
-        onSubtaskAdded={fetchSubtasks}
-        projectId={projectId}
-      />
+      {isAddingSubtask && (
+        <AddSubtaskForm 
+          onSubmit={handleAddSubtask}
+          onCancel={() => setIsAddingSubtask(false)}
+          projectMembers={projectMembers}
+          isLoading={isLoading}
+        />
+      )}
+      
+      {subtasks.length > 0 ? (
+        <div className="border rounded-md bg-white">
+          {subtasks.map(subtask => (
+            <SubtaskItem
+              key={subtask.id}
+              subtask={subtask}
+              onUpdateStatus={handleUpdateStatus}
+              onDelete={handleDeleteSubtask}
+            />
+          ))}
+        </div>
+      ) : (
+        !isAddingSubtask && (
+          <div className="text-center py-3 text-sm text-gray-500 border rounded-md bg-gray-50">
+            لا توجد مهام فرعية
+          </div>
+        )
+      )}
     </div>
   );
 };

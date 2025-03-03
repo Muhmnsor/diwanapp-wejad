@@ -1,11 +1,13 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, AlertCircle } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+import { SubtasksList } from "./subtasks/SubtasksList";
 
 interface TaskCardProps {
   task: Task;
@@ -13,6 +15,7 @@ interface TaskCardProps {
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
+  projectId: string;
 }
 
 export const TaskCard = ({ 
@@ -20,9 +23,11 @@ export const TaskCard = ({
   getStatusBadge, 
   getPriorityBadge, 
   formatDate,
-  onStatusChange
+  onStatusChange,
+  projectId
 }: TaskCardProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showSubtasks, setShowSubtasks] = useState(false);
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
@@ -58,7 +63,13 @@ export const TaskCard = ({
             {getStatusBadge(task.status)}
             {getPriorityBadge(task.priority)}
           </div>
-          <h3 className="font-semibold text-lg">{task.title}</h3>
+          <div className="flex items-center cursor-pointer" onClick={() => setShowSubtasks(!showSubtasks)}>
+            <h3 className="font-semibold text-lg">{task.title}</h3>
+            {showSubtasks ? 
+              <ChevronUp className="h-4 w-4 text-gray-500 mr-1" /> : 
+              <ChevronDown className="h-4 w-4 text-gray-500 mr-1" />
+            }
+          </div>
         </div>
         
         {task.description && (
@@ -111,6 +122,15 @@ export const TaskCard = ({
                   إعادة فتح المهمة
                 </Button>
               )}
+            </div>
+          )}
+          
+          {showSubtasks && (
+            <div className="w-full mt-3">
+              <SubtasksList 
+                taskId={task.id}
+                projectId={projectId}
+              />
             </div>
           )}
         </div>

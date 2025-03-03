@@ -1,92 +1,92 @@
 
-import React from 'react';
-import { Badge } from "@/components/ui/badge";
+import { Check, Clock, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Check, Clock, Calendar, User } from "lucide-react";
-import { Subtask } from './SubtasksList';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { Subtask } from "../../types/subtask";
+import { formatDate } from "../../utils/taskFormatters";
+import { useState } from "react";
 
 interface SubtaskItemProps {
   subtask: Subtask;
-  onStatusChange: (subtaskId: string, newStatus: string) => void;
+  onUpdateStatus: (subtaskId: string, newStatus: string) => Promise<void>;
+  onDelete: (subtaskId: string) => Promise<void>;
 }
 
-export const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, onStatusChange }) => {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">مكتمل</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">قيد التنفيذ</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">معلق</Badge>;
-    }
-  };
-
-  const formatDate = (date: string | null) => {
-    if (!date) return 'غير محدد';
+export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete }: SubtaskItemProps) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const handleStatusUpdate = async (newStatus: string) => {
+    setIsUpdating(true);
     try {
-      return format(new Date(date), 'PPP', { locale: ar });
-    } catch (e) {
-      return date;
+      await onUpdateStatus(subtask.id, newStatus);
+    } finally {
+      setIsUpdating(false);
     }
   };
-
+  
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(subtask.id);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+  
   return (
-    <div className="p-3 border rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <h4 className="font-medium">{subtask.title}</h4>
-          {subtask.description && (
-            <p className="text-sm text-gray-600">{subtask.description}</p>
-          )}
-          <div className="flex flex-wrap gap-2 mt-1">
-            {subtask.due_date && (
-              <div className="text-xs flex items-center gap-1 text-gray-600">
-                <Calendar className="h-3 w-3" />
-                <span>{formatDate(subtask.due_date)}</span>
-              </div>
-            )}
-            {subtask.assigned_to && (
-              <div className="text-xs flex items-center gap-1 text-gray-600">
-                <User className="h-3 w-3" />
-                <span>{subtask.assigned_to}</span>
-              </div>
-            )}
-            {subtask.priority && (
-              <Badge variant="outline" className="text-xs">
-                {subtask.priority === 'high' ? 'عالي' : 
-                 subtask.priority === 'medium' ? 'متوسط' : 'منخفض'}
-              </Badge>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {getStatusBadge(subtask.status)}
-          {subtask.status !== 'completed' ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-2"
-              onClick={() => onStatusChange(subtask.id, 'completed')}
-            >
-              <Check className="h-4 w-4 text-green-500 mr-1" />
-              <span className="text-xs">إكمال</span>
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-2"
-              onClick={() => onStatusChange(subtask.id, 'in_progress')}
-            >
-              <Clock className="h-4 w-4 text-amber-500 mr-1" />
-              <span className="text-xs">إعادة فتح</span>
-            </Button>
-          )}
-        </div>
+    <div className="flex items-center justify-between py-2 border-b last:border-0 text-sm">
+      <div className="flex items-center">
+        <div className={`w-2 h-2 rounded-full mr-2 ${subtask.status === 'completed' ? 'bg-green-500' : 'bg-amber-500'}`} />
+        <span className={subtask.status === 'completed' ? 'line-through text-gray-500' : ''}>
+          {subtask.title}
+        </span>
+        
+        {subtask.assigned_user_name && (
+          <span className="mr-2 text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-sm mr-2">
+            {subtask.assigned_user_name}
+          </span>
+        )}
+        
+        {subtask.due_date && (
+          <span className="text-xs text-gray-500">
+            {formatDate(subtask.due_date)}
+          </span>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-1">
+        {subtask.status !== 'completed' ? (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0"
+            onClick={() => handleStatusUpdate('completed')}
+            disabled={isUpdating}
+          >
+            <Check className="h-3.5 w-3.5 text-green-500" />
+          </Button>
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0"
+            onClick={() => handleStatusUpdate('pending')}
+            disabled={isUpdating}
+          >
+            <Clock className="h-3.5 w-3.5 text-amber-500" />
+          </Button>
+        )}
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-6 w-6 p-0 text-red-500"
+          onClick={handleDelete}
+          disabled={isDeleting}
+        >
+          <Trash className="h-3.5 w-3.5" />
+        </Button>
       </div>
     </div>
   );
-}
+};

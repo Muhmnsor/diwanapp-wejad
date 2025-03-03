@@ -64,6 +64,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             getPriorityBadge={getPriorityBadge}
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
+            projectId={projectId}
           />
         </CardContent>
       </Card>

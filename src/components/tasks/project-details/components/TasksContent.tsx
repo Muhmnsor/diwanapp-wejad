@@ -14,6 +14,7 @@ interface TasksContentProps {
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
+  projectId: string | undefined;
 }
 
 export const TasksContent = ({
@@ -25,7 +26,8 @@ export const TasksContent = ({
   getStatusBadge,
   getPriorityBadge,
   formatDate,
-  onStatusChange
+  onStatusChange,
+  projectId
 }: TasksContentProps) => {
   if (isLoading) {
     return (
@@ -58,6 +60,7 @@ export const TasksContent = ({
             getPriorityBadge={getPriorityBadge}
             formatDate={formatDate}
             onStatusChange={onStatusChange}
+            projectId={projectId || ''}
           />
         ))}
       </div>
@@ -74,6 +77,7 @@ export const TasksContent = ({
           getPriorityBadge={getPriorityBadge}
           formatDate={formatDate}
           onStatusChange={onStatusChange}
+          projectId={projectId || ''}
         />
       ))}
     </div>

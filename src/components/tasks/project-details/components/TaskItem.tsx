@@ -1,4 +1,5 @@
-import { Calendar, Users, Check, Clock, AlertCircle } from "lucide-react";
+
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -7,6 +8,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
+import { SubtasksList } from "./subtasks/SubtasksList";
 
 interface TaskItemProps {
   task: Task;
@@ -14,6 +16,7 @@ interface TaskItemProps {
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
+  projectId: string;
 }
 
 export const TaskItem = ({ 
@@ -21,9 +24,11 @@ export const TaskItem = ({
   getStatusBadge, 
   getPriorityBadge, 
   formatDate,
-  onStatusChange
+  onStatusChange,
+  projectId
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showSubtasks, setShowSubtasks] = useState(false);
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
@@ -82,31 +87,54 @@ export const TaskItem = ({
   };
 
   return (
-    <TableRow key={task.id}>
-      <TableCell className="font-medium">{task.title}</TableCell>
-      <TableCell>
-        <div className="flex items-center gap-2">
-          {getStatusBadge(task.status)}
-          {renderStatusChangeButton()}
-        </div>
-      </TableCell>
-      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-      <TableCell>
-        {task.assigned_user_name ? (
+    <>
+      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setShowSubtasks(!showSubtasks)}>
+        <TableCell className="font-medium">
           <div className="flex items-center">
-            <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-            {task.assigned_user_name}
+            <span className="mr-1">{task.title}</span>
+            {showSubtasks ? 
+              <ChevronUp className="h-4 w-4 text-gray-500 mr-1" /> : 
+              <ChevronDown className="h-4 w-4 text-gray-500 mr-1" />
+            }
           </div>
-        ) : (
-          <span className="text-gray-400">غير محدد</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center">
-          <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-          {formatDate(task.due_date)}
-        </div>
-      </TableCell>
-    </TableRow>
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            {getStatusBadge(task.status)}
+            {renderStatusChangeButton()}
+          </div>
+        </TableCell>
+        <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+        <TableCell>
+          {task.assigned_user_name ? (
+            <div className="flex items-center">
+              <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
+              {task.assigned_user_name}
+            </div>
+          ) : (
+            <span className="text-gray-400">غير محدد</span>
+          )}
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center">
+            <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
+            {formatDate(task.due_date)}
+          </div>
+        </TableCell>
+      </TableRow>
+      
+      {showSubtasks && (
+        <TableRow>
+          <TableCell colSpan={5} className="bg-gray-50 p-0">
+            <div className="p-3">
+              <SubtasksList 
+                taskId={task.id} 
+                projectId={projectId}
+              />
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 };
