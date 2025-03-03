@@ -18,37 +18,26 @@ export const PendingTasksList = () => {
       // First get pending tasks
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('*, projects(title)')  // هنا نستخدم joins للحصول على عنوان المشروع مباشرة
         .eq('status', 'pending')
         .order('due_date', { ascending: true })
         .limit(5);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching pending tasks:', error);
+        throw error;
+      }
       
       if (!data || data.length === 0) return [];
       
-      // For each task with a project_id, fetch the project name
-      const tasksWithDetails = await Promise.all(data.map(async (task) => {
-        if (task.project_id) {
-          // Fetch project by ID to get its title
-          const { data: projectData, error: projectError } = await supabase
-            .from('projects')
-            .select('title')
-            .eq('id', task.project_id)
-            .single();
-          
-          if (!projectError && projectData) {
-            return {
-              ...task,
-              project_name: projectData.title
-            };
-          }
-        }
-        
-        return task;
+      // تنسيق البيانات لتكون سهلة الاستخدام في الواجهة
+      const tasksWithProject = data.map(task => ({
+        ...task,
+        project_name: task.projects?.title || null
       }));
       
-      return tasksWithDetails;
+      console.log('Tasks with project info:', tasksWithProject);
+      return tasksWithProject;
     }
   });
 
