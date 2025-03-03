@@ -25,13 +25,13 @@ export const TaskAssigneeField = ({
       <FormLabel>المسؤول</FormLabel>
       <Select 
         value={assignedTo || ""} 
-        onValueChange={(value) => setAssignedTo(value || null)}
+        onValueChange={(value) => setAssignedTo(value === "none" ? null : value)}
       >
         <SelectTrigger>
           <SelectValue placeholder="اختر المسؤول" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">غير معين</SelectItem>
+          <SelectItem value="none">غير معين</SelectItem>
           {projectMembers?.map((member) => (
             <SelectItem key={member.id} value={member.id}>
               {member.name || member.email || 'مستخدم'}

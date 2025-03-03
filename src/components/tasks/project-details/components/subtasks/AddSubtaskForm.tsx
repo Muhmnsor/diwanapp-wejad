@@ -67,12 +67,12 @@ export const AddSubtaskForm = ({
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <div className="space-y-1">
           <Label htmlFor="assignedTo">المسؤول</Label>
-          <Select value={assignedTo || ""} onValueChange={setAssignedTo}>
+          <Select value={assignedTo || ""} onValueChange={(value) => setAssignedTo(value === "none" ? null : value)}>
             <SelectTrigger>
               <SelectValue placeholder="اختر المسؤول" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">غير معين</SelectItem>
+              <SelectItem value="none">غير معين</SelectItem>
               {members?.map((member) => (
                 <SelectItem key={member.id} value={member.id}>
                   {member.name || member.email}
@@ -95,12 +95,12 @@ export const AddSubtaskForm = ({
 
         <div className="space-y-1">
           <Label htmlFor="priority">الأولوية</Label>
-          <Select value={priority || ""} onValueChange={setPriority}>
+          <Select value={priority || ""} onValueChange={(value) => setPriority(value === "none" ? null : value)}>
             <SelectTrigger>
               <SelectValue placeholder="الأولوية" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">غير محدد</SelectItem>
+              <SelectItem value="none">غير محدد</SelectItem>
               <SelectItem value="high">عالية</SelectItem>
               <SelectItem value="medium">متوسطة</SelectItem>
               <SelectItem value="low">منخفضة</SelectItem>
