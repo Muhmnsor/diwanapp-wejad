@@ -1,166 +1,97 @@
-
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { TableRow, TableCell } from "@/components/ui/table";
-import { Task } from "../types/task";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuthStore } from "@/store/authStore";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit, MessageSquare, CheckCircle, Trash2, XCircle } from "lucide-react";
+import { Task } from "../types/task";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useSubtasks } from "../hooks/useSubtasks";
 import { SubtasksList } from "./subtasks/SubtasksList";
-import { useParams } from "react-router-dom";
+import { AddSubtaskForm } from "./subtasks/AddSubtaskForm";
 
 interface TaskItemProps {
   task: Task;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
-  formatDate: (date: string | null) => string;
-  onStatusChange: (taskId: string, newStatus: string) => void;
+  projectId: string;
 }
 
-export const TaskItem = ({ 
-  task, 
-  getStatusBadge, 
-  getPriorityBadge, 
-  formatDate,
-  onStatusChange
-}: TaskItemProps) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { user } = useAuthStore();
-  const { projectId } = useParams<{ projectId: string }>();
-  
-  const { 
-    subtasks, 
-    isLoading: isLoadingSubtasks, 
-    addSubtask, 
-    updateSubtaskStatus, 
-    deleteSubtask 
-  } = useSubtasks(task.id);
-  
-  const canChangeStatus = () => {
-    // Allow status change if:
-    // 1. User is assigned to the task
-    // 2. User is an admin
-    return (
-      user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
-    );
-  };
+export const TaskItem = ({ task, projectId }: TaskItemProps) => {
+  const [open, setOpen] = useState(false);
+  const { subtasks, isLoading, addSubtask, updateSubtaskStatus, deleteSubtask, refreshSubtasks } = useSubtasks(task.id);
 
-  const handleStatusUpdate = async (newStatus: string) => {
-    if (!canChangeStatus()) {
-      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها");
-      return;
+  // Update the handleAddSubtask function to have the correct parameter signature
+  const handleAddSubtask = async (title: string, dueDate: string, assignedTo: string) => {
+    if (task) {
+      try {
+        await addSubtask(title, dueDate, assignedTo);
+        // Refresh subtasks after adding
+        refreshSubtasks();
+      } catch (error) {
+        console.error("Error adding subtask:", error);
+      }
     }
-    
-    setIsUpdating(true);
-    try {
-      await onStatusChange(task.id, newStatus);
-    } catch (error) {
-      console.error("Error updating task status:", error);
-      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleSubtaskAdd = async (taskId: string, title: string, dueDate: string, assignedTo: string) => {
-    await addSubtask(title, dueDate, assignedTo);
-  };
-
-  const renderStatusChangeButton = () => {
-    if (!canChangeStatus()) {
-      return null;
-    }
-    
-    return task.status !== 'completed' ? (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="h-7 px-2 ml-2"
-        onClick={() => handleStatusUpdate('completed')}
-        disabled={isUpdating}
-      >
-        <Check className="h-3.5 w-3.5 text-green-500 mr-1" />
-        إكمال
-      </Button>
-    ) : (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="h-7 px-2 ml-2"
-        onClick={() => handleStatusUpdate('in_progress')}
-        disabled={isUpdating}
-      >
-        <Clock className="h-3.5 w-3.5 text-amber-500 mr-1" />
-        قيد التنفيذ
-      </Button>
-    );
   };
 
   return (
-    <>
-      <TableRow key={task.id}>
-        <TableCell className="font-medium flex items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 ml-2"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-          {task.title}
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(task.status)}
-            {renderStatusChangeButton()}
+    <Card className="w-full shadow-md">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>{task.title}</CardTitle>
+          <Badge variant="secondary">{task.status}</Badge>
+        </div>
+        <CardDescription>{task.description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center space-x-4">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-medium leading-none">{task.assigned_user_name || 'Unassigned'}</p>
+            <p className="text-sm text-muted-foreground">
+              {task.assigned_to}
+            </p>
           </div>
-        </TableCell>
-        <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-        <TableCell>
-          {task.assigned_user_name ? (
-            <div className="flex items-center">
-              <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-              {task.assigned_user_name}
-            </div>
-          ) : (
-            <span className="text-gray-400">غير محدد</span>
-          )}
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center">
-            <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-            {formatDate(task.due_date)}
-          </div>
-        </TableCell>
-      </TableRow>
-      
-      {isExpanded && projectId && (
-        <TableRow>
-          <TableCell colSpan={5} className="py-0 border-t-0">
-            <div className="py-3 px-4 bg-gray-50 rounded-md">
-              <SubtasksList
-                taskId={task.id}
-                projectId={projectId}
-                subtasks={subtasks}
-                onAddSubtask={handleSubtaskAdd}
-                onUpdateSubtaskStatus={updateSubtaskStatus}
-                onDeleteSubtask={deleteSubtask}
-              />
-            </div>
-          </TableCell>
-        </TableRow>
-      )}
-    </>
+        </div>
+
+        <SubtasksList 
+          taskId={task.id}
+          projectId={projectId}
+          subtasks={subtasks}
+          onAddSubtask={handleAddSubtask}
+          onUpdateSubtaskStatus={updateSubtaskStatus}
+          onDeleteSubtask={deleteSubtask}
+        />
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="ghost">
+          <Edit className="w-4 h-4 mr-2" />
+          تعديل
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">
+              <Trash2 className="w-4 h-4 mr-2" />
+              حذف
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>هل أنت متأكد تماما؟</AlertDialogTitle>
+              <AlertDialogDescription>
+                سيؤدي هذا الإجراء إلى حذف مهمتك بشكل دائم.
+                <br />
+                هل أنت متأكد؟
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>إلغاء</AlertDialogCancel>
+              <AlertDialogAction>حذف</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardFooter>
+    </Card>
   );
 };

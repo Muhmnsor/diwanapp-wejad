@@ -1,119 +1,156 @@
-
-import { Card } from "@/components/ui/card";
-import { Task } from "../types/task";
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { MoreVertical, Edit, Trash, User, Calendar, CheckCircle, XCircle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Task } from "../types/task";
+import { Button } from "@/components/ui/button";
+import { useTaskModal } from "../hooks/useTaskModal";
+import { toast } from "sonner";
 import { useSubtasks } from "../hooks/useSubtasks";
 import { SubtasksList } from "./subtasks/SubtasksList";
-import { useParams } from "react-router-dom";
 
 interface TaskCardProps {
   task: Task;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
-  formatDate: (date: string | null) => string;
-  onStatusChange: (taskId: string, newStatus: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export const TaskCard = ({ 
-  task, 
-  getStatusBadge, 
-  getPriorityBadge, 
-  formatDate,
-  onStatusChange
-}: TaskCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { projectId } = useParams<{ projectId: string }>();
-  
+export const TaskCard = ({ task, onDelete }: TaskCardProps) => {
+  const { onOpen } = useTaskModal();
   const { 
     subtasks, 
-    isLoading: isLoadingSubtasks, 
+    isLoading, 
     addSubtask, 
     updateSubtaskStatus, 
-    deleteSubtask 
+    deleteSubtask,
+    refreshSubtasks 
   } = useSubtasks(task.id);
-  
-  const handleStatusToggle = () => {
-    const newStatus = task.status === 'completed' ? 'in_progress' : 'completed';
-    onStatusChange(task.id, newStatus);
+  const [isSubtasksExpanded, setIsSubtasksExpanded] = useState(false);
+
+  const handleEdit = () => {
+    onOpen(task.id);
   };
 
-  const handleSubtaskAdd = async (taskId: string, title: string, dueDate: string, assignedTo: string) => {
-    await addSubtask(title, dueDate, assignedTo);
+  const handleDelete = async () => {
+    try {
+      await onDelete(task.id);
+      toast.success("Task deleted successfully.");
+    } catch (error) {
+      toast.error("Failed to delete task.");
+    }
   };
-  
+
+  // Update the handleAddSubtask function to have the correct parameter signature
+  const handleAddSubtask = async (title: string, dueDate: string, assignedTo: string) => {
+    if (task) {
+      try {
+        await addSubtask(title, dueDate, assignedTo);
+        // Refresh subtasks after adding
+        refreshSubtasks();
+      } catch (error) {
+        console.error("Error adding subtask:", error);
+      }
+    }
+  };
+
+  const handleUpdateSubtaskStatus = async (subtaskId: string, newStatus: string) => {
+    try {
+      await updateSubtaskStatus(subtaskId, newStatus);
+    } catch (error) {
+      console.error("Error updating subtask status:", error);
+    }
+  };
+
+  const handleDeleteSubtask = async (subtaskId: string) => {
+    try {
+      await deleteSubtask(subtaskId);
+    } catch (error) {
+      console.error("Error deleting subtask:", error);
+    }
+  };
+
   return (
-    <Card className="p-4 hover:shadow-md transition-all duration-200">
-      <div className="flex justify-between items-start">
-        <div className="space-y-3 flex-1">
-          <div className="flex justify-between">
-            <h3 className="font-medium">{task.title}</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 ms-2"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
+    <Card className="bg-card text-card-foreground shadow-md">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreVertical className="h-4 w-4" />
             </Button>
-          </div>
-          
-          {isExpanded && task.description && (
-            <p className="text-sm text-gray-600">{task.description}</p>
-          )}
-          
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            {getStatusBadge(task.status)}
-            {getPriorityBadge(task.priority)}
-          </div>
-          
-          <div className="flex flex-col gap-2 text-sm">
-            {task.assigned_user_name && (
-              <div className="flex items-center">
-                <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-                <span className="text-gray-600">{task.assigned_user_name}</span>
-              </div>
-            )}
-            
-            {task.due_date && (
-              <div className="flex items-center">
-                <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-                <span className="text-gray-600">{formatDate(task.due_date)}</span>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-9 w-9 p-0 flex-shrink-0"
-          onClick={handleStatusToggle}
-        >
-          {task.status === 'completed' ? (
-            <Clock className="h-5 w-5 text-amber-500" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={handleEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              <span>Edit</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:bg-destructive/20">
+              <Trash className="h-4 w-4 mr-2" />
+              <span>Delete</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+      <CardContent>
+        <CardDescription className="text-xs text-muted-foreground">
+          {task.description || "No description provided."}
+        </CardDescription>
+        <div className="flex items-center mt-4">
+          {task.assigned_to ? (
+            <Avatar className="mr-2 h-6 w-6">
+              <AvatarImage src={`https://avatar.vercel.sh/${task.assigned_user_name}.png`} alt={task.assigned_user_name || "Assigned User"} />
+              <AvatarFallback>{task.assigned_user_name?.substring(0, 2).toUpperCase() || 'UN'}</AvatarFallback>
+            </Avatar>
           ) : (
-            <Check className="h-5 w-5 text-green-500" />
+            <User className="mr-2 h-4 w-4 text-muted-foreground" />
           )}
-        </Button>
-      </div>
-      
-      {/* المهام الفرعية */}
-      {isExpanded && projectId && (
-        <SubtasksList
-          taskId={task.id}
-          projectId={projectId}
-          subtasks={subtasks}
-          onAddSubtask={handleSubtaskAdd}
-          onUpdateSubtaskStatus={updateSubtaskStatus}
-          onDeleteSubtask={deleteSubtask}
-        />
-      )}
+          <span className="text-xs text-gray-500">
+            {task.assigned_user_name || "Unassigned"}
+          </span>
+        </div>
+        {task.due_date && (
+          <div className="flex items-center mt-2">
+            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-gray-500">
+              {new Date(task.due_date).toLocaleDateString()}
+            </span>
+          </div>
+        )}
+        <div className="mt-3">
+          {task.priority && (
+            <Badge variant="secondary">
+              {task.priority}
+            </Badge>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between items-center">
+        <Badge variant="outline">
+          {task.stage_name || "No Stage"}
+        </Badge>
+        {task.status === 'completed' ? (
+          <div className="flex items-center text-green-500">
+            <CheckCircle className="mr-1 h-4 w-4" />
+            <span>Completed</span>
+          </div>
+        ) : (
+          <div className="flex items-center text-red-500">
+            <XCircle className="mr-1 h-4 w-4" />
+            <span>Pending</span>
+          </div>
+        )}
+      </CardFooter>
+      <SubtasksList
+        taskId={task.id}
+        projectId={task.project_id}
+        subtasks={subtasks}
+        onAddSubtask={handleAddSubtask}
+        onUpdateSubtaskStatus={handleUpdateSubtaskStatus}
+        onDeleteSubtask={handleDeleteSubtask}
+      />
     </Card>
   );
 };

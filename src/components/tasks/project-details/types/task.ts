@@ -1,4 +1,5 @@
 
+
 export interface Task {
   id: string;
   project_id: string;
@@ -22,7 +23,6 @@ export interface Subtask {
   created_at?: string;
   due_date: string | null;
   assigned_to: string | null;
-  // priority field removed as it doesn't exist in the database
 }
 
 export interface ProjectMember {
