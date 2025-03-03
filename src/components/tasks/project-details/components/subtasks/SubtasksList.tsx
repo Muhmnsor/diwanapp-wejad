@@ -10,18 +10,22 @@ interface Subtask {
   title: string;
   status: string;
   due_date: string | null;
+  assigned_to: string | null;
+  priority: string | null;
 }
 
 interface SubtasksListProps {
   taskId: string;
+  projectId: string;
   subtasks: Subtask[];
-  onAddSubtask: (taskId: string, subtaskTitle: string) => Promise<void>;
+  onAddSubtask: (taskId: string, subtaskTitle: string, dueDate: string, assignedTo: string, priority: string) => Promise<void>;
   onUpdateSubtaskStatus: (subtaskId: string, newStatus: string) => Promise<void>;
   onDeleteSubtask: (subtaskId: string) => Promise<void>;
 }
 
 export const SubtasksList = ({
   taskId,
+  projectId,
   subtasks,
   onAddSubtask,
   onUpdateSubtaskStatus,
@@ -31,11 +35,11 @@ export const SubtasksList = ({
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
 
-  const handleAddSubtask = async () => {
+  const handleAddSubtask = async (dueDate: string, assignedTo: string, priority: string) => {
     if (!newSubtaskTitle.trim()) return;
     
     try {
-      await onAddSubtask(taskId, newSubtaskTitle);
+      await onAddSubtask(taskId, newSubtaskTitle, dueDate, assignedTo, priority);
       setNewSubtaskTitle("");
       setIsAddingSubtask(false);
     } catch (error) {
@@ -98,6 +102,7 @@ export const SubtasksList = ({
                 setIsAddingSubtask(false);
                 setNewSubtaskTitle("");
               }}
+              projectId={projectId}
             />
           )}
           

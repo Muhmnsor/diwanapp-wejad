@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Trash, Check, Clock, AlertCircle } from "lucide-react";
+import { Trash, Check, Clock, AlertCircle, User, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "../../utils/taskFormatters";
@@ -11,6 +11,8 @@ interface SubtaskProps {
     title: string;
     status: string;
     due_date: string | null;
+    assigned_to: string | null;
+    priority: string | null;
   };
   onStatusChange: (subtaskId: string, newStatus: string) => Promise<void>;
   onDelete: (subtaskId: string) => Promise<void>;
@@ -43,6 +45,33 @@ export const SubtaskItem = ({ subtask, onStatusChange, onDelete }: SubtaskProps)
     }
   };
 
+  const getPriorityBadge = (priority: string | null) => {
+    if (!priority) return null;
+    
+    switch (priority) {
+      case 'high':
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+            <Flag className="h-3 w-3 mr-1" /> عالية
+          </Badge>
+        );
+      case 'medium':
+        return (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            <Flag className="h-3 w-3 mr-1" /> متوسطة
+          </Badge>
+        );
+      case 'low':
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Flag className="h-3 w-3 mr-1" /> منخفضة
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     if (subtask.status === newStatus) return;
     
@@ -70,14 +99,22 @@ export const SubtaskItem = ({ subtask, onStatusChange, onDelete }: SubtaskProps)
   };
 
   return (
-    <div className="flex items-center justify-between p-2 rounded-md bg-gray-50">
+    <div className="flex items-start justify-between p-2 rounded-md bg-gray-50">
       <div className="flex-1">
         <div className="text-sm font-medium">{subtask.title}</div>
-        {subtask.due_date && (
-          <div className="text-xs text-gray-500 mt-1">
-            تاريخ الاستحقاق: {formatDate(subtask.due_date)}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 mt-1">
+          {subtask.due_date && (
+            <div className="text-xs text-gray-500">
+              تاريخ الاستحقاق: {formatDate(subtask.due_date)}
+            </div>
+          )}
+          {subtask.assigned_to && (
+            <div className="text-xs text-gray-500 flex items-center">
+              <User className="h-3 w-3 mr-1" /> مكلف
+            </div>
+          )}
+          {getPriorityBadge(subtask.priority)}
+        </div>
       </div>
       
       <div className="flex items-center gap-2">
