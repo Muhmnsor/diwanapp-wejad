@@ -59,7 +59,7 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
       if (error) throw error;
       
       toast.success("تم إنشاء مشروع المهام بنجاح");
-      navigate("/tasks");
+      navigate(`/tasks/workspace/${workspaceId}`);
     } catch (error) {
       console.error("Error creating task project:", error);
       toast.error("حدث خطأ أثناء إنشاء مشروع المهام");
@@ -69,7 +69,7 @@ export const CreateTaskProjectForm = ({ workspaceId }: CreateTaskProjectFormProp
   };
 
   const handleCancel = () => {
-    navigate("/tasks");
+    navigate(`/tasks/workspace/${workspaceId}`);
   };
 
   return (

@@ -28,6 +28,7 @@ import UsersManagement from "./pages/UsersManagement";
 import WebsiteManagement from "./pages/WebsiteManagement";
 import StoreManagement from "./pages/StoreManagement";
 import CreateTaskProject from "./pages/CreateTaskProject";
+import WorkspaceTaskProjects from "./pages/WorkspaceTaskProjects";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -47,6 +48,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <CreateTaskProject />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/tasks/workspace/:workspaceId" 
+        element={
+          <ProtectedRoute>
+            <WorkspaceTaskProjects />
           </ProtectedRoute>
         } 
       />

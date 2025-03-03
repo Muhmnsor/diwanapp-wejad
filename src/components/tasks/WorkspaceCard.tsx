@@ -23,7 +23,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
 
   const handleClick = () => {
-    navigate(`/tasks/create-task-project/${workspace.id}`);
+    navigate(`/tasks/workspace/${workspace.id}`);
   };
 
   const handleManageMembers = (e: React.MouseEvent) => {
