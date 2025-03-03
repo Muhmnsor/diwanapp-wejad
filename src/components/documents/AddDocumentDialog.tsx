@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuthStore } from "@/store/authStore";
 
 interface NewDocument {
   name: string;
@@ -48,6 +49,19 @@ export const AddDocumentDialog = ({
   open,
   onOpenChange
 }: AddDocumentDialogProps) => {
+  // استخدام متجر المصادقة للتحقق من دور المستخدم
+  const { user } = useAuthStore();
+  
+  // التحقق من صلاحيات المستخدم
+  const isAdmin = user?.isAdmin || false;
+  const isDocumentsManager = user?.role === 'documents_manager';
+  const hasAddPermission = isAdmin || isDocumentsManager;
+  
+  // إذا لم يكن المستخدم يملك صلاحيات الإضافة، فلا نعرض الزر
+  if (!hasAddPermission) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
