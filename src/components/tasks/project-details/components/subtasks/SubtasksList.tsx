@@ -4,10 +4,15 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubtaskItem } from "./SubtaskItem";
 import { AddSubtaskForm } from "./AddSubtaskForm";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Subtask } from "../../types/subtask";
 import { useProjectMembers } from "../../hooks/useProjectMembers";
+import { 
+  fetchSubtasks, 
+  addSubtask, 
+  updateSubtaskStatus, 
+  deleteSubtask 
+} from "../../services/subtasksService";
 
 interface SubtasksListProps {
   taskId: string;
@@ -36,68 +41,18 @@ export const SubtasksList = ({
     if (externalSubtasks) {
       setSubtasks(externalSubtasks);
     } else {
-      fetchSubtasks();
+      fetchSubtasksData();
     }
   }, [taskId, externalSubtasks]);
   
-  const fetchSubtasks = async () => {
+  const fetchSubtasksData = async () => {
     if (!taskId) return;
     
     setIsLoading(true);
-    setError(null);
-    try {
-      // Check if subtasks table exists first
-      const { error: tableCheckError } = await supabase
-        .from('subtasks')
-        .select('count')
-        .limit(1)
-        .maybeSingle();
-      
-      if (tableCheckError) {
-        console.error("Error fetching subtasks:", tableCheckError);
-        // If table doesn't exist, just set empty array and don't show error
-        if (tableCheckError.code === '42P01') {  // Table doesn't exist error code
-          setSubtasks([]);
-          return;
-        }
-        throw tableCheckError;
-      }
-      
-      const { data, error } = await supabase
-        .from('subtasks')
-        .select('*')
-        .eq('task_id', taskId)
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      
-      // Add user names for subtasks with assignees
-      const subtasksWithUserData = await Promise.all((data || []).map(async (subtask) => {
-        if (subtask.assigned_to) {
-          const { data: userData, error: userError } = await supabase
-            .from('profiles')
-            .select('display_name, email')
-            .eq('id', subtask.assigned_to)
-            .single();
-          
-          if (!userError && userData) {
-            return {
-              ...subtask,
-              assigned_user_name: userData.display_name || userData.email
-            };
-          }
-        }
-        
-        return subtask;
-      }));
-      
-      setSubtasks(subtasksWithUserData);
-    } catch (error) {
-      console.error("Error fetching subtasks:", error);
-      setError("لا يمكن تحميل المهام الفرعية حالياً");
-    } finally {
-      setIsLoading(false);
-    }
+    const { data, error } = await fetchSubtasks(taskId);
+    setSubtasks(data);
+    setError(error);
+    setIsLoading(false);
   };
   
   const handleAddSubtask = async (title: string, dueDate?: string, assignedTo?: string) => {
@@ -111,45 +66,17 @@ export const SubtasksList = ({
       }
     } else {
       setIsLoading(true);
-      try {
-        // Check if subtasks table exists
-        const { error: tableCheckError } = await supabase
-          .from('subtasks')
-          .select('count')
-          .limit(1)
-          .maybeSingle();
-        
-        if (tableCheckError && tableCheckError.code === '42P01') {
-          // Table doesn't exist
-          toast.error("خاصية المهام الفرعية غير متوفرة حالياً، يرجى الاتصال بالمسؤول");
-          setIsAddingSubtask(false);
-          return;
-        }
-        
-        const { data, error } = await supabase
-          .from('subtasks')
-          .insert([
-            {
-              task_id: taskId,
-              title,
-              status: 'pending',
-              due_date: dueDate ? new Date(dueDate).toISOString() : null,
-              assigned_to: assignedTo || null
-            }
-          ])
-          .select();
-        
-        if (error) throw error;
-        
+      const { success, error } = await addSubtask(taskId, title, dueDate, assignedTo);
+      
+      if (success) {
         toast.success("تمت إضافة المهمة الفرعية");
-        await fetchSubtasks();
-      } catch (error) {
-        console.error("Error adding subtask:", error);
-        toast.error("حدث خطأ أثناء إضافة المهمة الفرعية");
-      } finally {
-        setIsLoading(false);
-        setIsAddingSubtask(false);
+        await fetchSubtasksData();
+      } else if (error) {
+        toast.error(error);
       }
+      
+      setIsLoading(false);
+      setIsAddingSubtask(false);
     }
   };
   
@@ -157,14 +84,9 @@ export const SubtasksList = ({
     if (externalUpdateStatus) {
       await externalUpdateStatus(subtaskId, newStatus);
     } else {
-      try {
-        const { error } = await supabase
-          .from('subtasks')
-          .update({ status: newStatus })
-          .eq('id', subtaskId);
-        
-        if (error) throw error;
-        
+      const { success, error } = await updateSubtaskStatus(subtaskId, newStatus);
+      
+      if (success) {
         setSubtasks(prevSubtasks => 
           prevSubtasks.map(subtask => 
             subtask.id === subtaskId 
@@ -176,9 +98,8 @@ export const SubtasksList = ({
         toast.success(newStatus === 'completed' 
           ? "تم إكمال المهمة الفرعية" 
           : "تم تحديث حالة المهمة الفرعية");
-      } catch (error) {
-        console.error("Error updating subtask status:", error);
-        toast.error("حدث خطأ أثناء تحديث حالة المهمة الفرعية");
+      } else if (error) {
+        toast.error(error);
       }
     }
   };
@@ -187,22 +108,16 @@ export const SubtasksList = ({
     if (externalDeleteSubtask) {
       await externalDeleteSubtask(subtaskId);
     } else {
-      try {
-        const { error } = await supabase
-          .from('subtasks')
-          .delete()
-          .eq('id', subtaskId);
-        
-        if (error) throw error;
-        
+      const { success, error } = await deleteSubtask(subtaskId);
+      
+      if (success) {
         setSubtasks(prevSubtasks => 
           prevSubtasks.filter(subtask => subtask.id !== subtaskId)
         );
         
         toast.success("تم حذف المهمة الفرعية");
-      } catch (error) {
-        console.error("Error deleting subtask:", error);
-        toast.error("حدث خطأ أثناء حذف المهمة الفرعية");
+      } else if (error) {
+        toast.error(error);
       }
     }
   };

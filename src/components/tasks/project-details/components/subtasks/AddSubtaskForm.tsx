@@ -63,7 +63,7 @@ export const AddSubtaskForm = ({ onSubmit, onCancel, projectMembers, isLoading =
               <SelectValue placeholder="اختر المكلف" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">غير محدد</SelectItem>
+              <SelectItem value="none">غير محدد</SelectItem>
               {projectMembers.map((member) => (
                 <SelectItem key={member.user_id} value={member.user_id}>
                   {member.user_display_name}
