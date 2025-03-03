@@ -42,7 +42,7 @@ export const TopHeader = () => {
         setActiveTab('overview');
       }
     }
-  }, [location.pathname, isTasksPage]);
+  }, [location.pathname, location.hash, isTasksPage]);
 
   // Update URL hash when tab changes
   const handleTabChange = (value: string) => {
@@ -82,29 +82,32 @@ export const TopHeader = () => {
             <div className="w-full bg-white border-t py-3">
               <div className="flex justify-center">
                 <div className="flex gap-6 items-center">
-                  <div 
+                  <Link 
+                    to="/tasks#overview" 
                     className={`flex items-center gap-2 cursor-pointer ${activeTab === "overview" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("overview")}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     <span>لوحة المعلومات</span>
-                  </div>
+                  </Link>
                   
-                  <div 
+                  <Link 
+                    to="/tasks#workspaces" 
                     className={`flex items-center gap-2 cursor-pointer ${activeTab === "workspaces" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("workspaces")}
                   >
                     <FolderKanban className="h-4 w-4" />
                     <span>مساحات العمل</span>
-                  </div>
+                  </Link>
 
-                  <div 
+                  <Link 
+                    to="/tasks#yearly-plan" 
                     className={`flex items-center gap-2 cursor-pointer ${activeTab === "yearly-plan" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("yearly-plan")}
                   >
                     <Calendar className="h-4 w-4" />
                     <span>الخطة السنوية</span>
-                  </div>
+                  </Link>
                 </div>
               </div>
             </div>
