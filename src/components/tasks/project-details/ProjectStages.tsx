@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2 } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 
 interface ProjectStagesProps {
   projectId: string | undefined;
@@ -19,6 +20,12 @@ export const ProjectStages = ({ projectId, onStagesChange }: ProjectStagesProps)
   const [isLoading, setIsLoading] = useState(true);
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
   const [editStageName, setEditStageName] = useState("");
+  const { user } = useAuthStore();
+
+  // Check if user is a workspace admin
+  const canManageStages = () => {
+    return user?.isAdmin || user?.role === 'admin';
+  };
 
   useEffect(() => {
     fetchStages();
@@ -142,7 +149,7 @@ export const ProjectStages = ({ projectId, onStagesChange }: ProjectStagesProps)
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">مراحل المشروع</h3>
-          {!isAdding && (
+          {canManageStages() && !isAdding && (
             <Button 
               size="sm" 
               variant="outline" 
@@ -154,7 +161,7 @@ export const ProjectStages = ({ projectId, onStagesChange }: ProjectStagesProps)
           )}
         </div>
         
-        {isAdding && (
+        {isAdding && canManageStages() && (
           <div className="flex gap-2 mb-4">
             <Input
               value={newStageName}
@@ -172,23 +179,24 @@ export const ProjectStages = ({ projectId, onStagesChange }: ProjectStagesProps)
         
         {stages.length === 0 ? (
           <div className="text-center py-4 bg-gray-50 rounded-md">
-            <p className="text-gray-500">لا توجد مراحل للمشروع. أضف مرحلة جديدة للبدء.</p>
+            <p className="text-gray-500">لا توجد مراحل للمشروع. {canManageStages() ? 'أضف مرحلة جديدة للبدء.' : ''}</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2 rtl">
             {stages.map((stage) => (
-              <div key={stage.id} className="flex items-center justify-between p-3 border rounded-md">
+              <div key={stage.id} className="border rounded-md p-2 bg-gray-50 flex items-center justify-between">
                 {editingStageId === stage.id ? (
-                  <div className="flex gap-2 w-full">
+                  <div className="flex gap-2">
                     <Input
                       value={editStageName}
                       onChange={(e) => setEditStageName(e.target.value)}
-                      className="flex-grow"
+                      className="w-32 h-8"
                     />
-                    <Button size="sm" onClick={saveEdit}>حفظ</Button>
+                    <Button size="sm" className="h-8 px-2" onClick={saveEdit}>حفظ</Button>
                     <Button 
                       size="sm" 
                       variant="outline" 
+                      className="h-8 px-2"
                       onClick={() => setEditingStageId(null)}
                     >
                       إلغاء
@@ -196,24 +204,27 @@ export const ProjectStages = ({ projectId, onStagesChange }: ProjectStagesProps)
                   </div>
                 ) : (
                   <>
-                    <span className="font-medium">{stage.name}</span>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => startEdit(stage)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => deleteStage(stage.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <span className="font-medium px-2">{stage.name}</span>
+                    {canManageStages() && (
+                      <div className="flex gap-1 mr-1">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-6 w-6 p-0"
+                          onClick={() => startEdit(stage)}
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                          onClick={() => deleteStage(stage.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
