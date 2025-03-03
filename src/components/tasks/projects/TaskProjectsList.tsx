@@ -12,6 +12,10 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string;
+  projects: {
+    title: string;
+    description: string | null;
+  }
 }
 
 interface TaskProjectsListProps {
