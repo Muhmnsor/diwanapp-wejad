@@ -1,12 +1,14 @@
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
-import { CalendarIcon, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TaskTitleField } from "./components/TaskTitleField";
+import { TaskDescriptionField } from "./components/TaskDescriptionField";
+import { TaskDateField } from "./components/TaskDateField";
+import { TaskPriorityField } from "./components/TaskPriorityField";
+import { TaskStageField } from "./components/TaskStageField";
+import { TaskAssigneeField } from "./components/TaskAssigneeField";
+import { TaskFormActions } from "./components/TaskFormActions";
 
 interface TaskFormProps {
   onSubmit: (formData: {
@@ -99,111 +101,37 @@ export const TaskForm = ({
     });
   };
 
+  const handleCancel = () => {
+    onSubmit({ 
+      title: "", 
+      description: "", 
+      dueDate: "", 
+      priority: "medium", 
+      stageId: "", 
+      assignedTo: null 
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">عنوان المهمة</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="أدخل عنوان المهمة"
-          required
-        />
-      </div>
+      <TaskTitleField title={title} setTitle={setTitle} />
+      <TaskDescriptionField description={description} setDescription={setDescription} />
       
-      <div className="space-y-2">
-        <Label htmlFor="description">وصف المهمة</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="أدخل وصف المهمة"
-          rows={3}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TaskDateField dueDate={dueDate} setDueDate={setDueDate} />
+        <TaskPriorityField priority={priority} setPriority={setPriority} />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="dueDate">تاريخ الاستحقاق</Label>
-          <div className="flex items-center">
-            <CalendarIcon className="w-4 h-4 me-2 text-gray-500" />
-            <Input
-              id="dueDate"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="priority">الأولوية</Label>
-          <Select value={priority} onValueChange={setPriority}>
-            <SelectTrigger id="priority">
-              <SelectValue placeholder="اختر الأولوية" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="low">منخفضة</SelectItem>
-              <SelectItem value="medium">متوسطة</SelectItem>
-              <SelectItem value="high">عالية</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <TaskStageField stageId={stageId} setStageId={setStageId} projectStages={projectStages} />
+        <TaskAssigneeField 
+          assignedTo={assignedTo} 
+          setAssignedTo={setAssignedTo} 
+          projectMembers={projectMembers} 
+        />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="stage">المرحلة</Label>
-          <Select value={stageId} onValueChange={setStageId}>
-            <SelectTrigger id="stage">
-              <SelectValue placeholder="اختر المرحلة" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectStages.map((stage) => (
-                <SelectItem key={stage.id} value={stage.id}>
-                  {stage.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="assignedTo">الشخص المسؤول</Label>
-          <Select 
-            value={assignedTo || ""} 
-            onValueChange={(value) => setAssignedTo(value || null)}
-          >
-            <SelectTrigger id="assignedTo" className="flex items-center">
-              <Users className="w-4 h-4 me-2" />
-              <SelectValue placeholder="اختر الشخص المسؤول" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unassigned">غير محدد</SelectItem>
-              {projectMembers.map((member) => (
-                <SelectItem key={member.id} value={member.user_id}>
-                  {member.user_display_name || member.user_email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => onSubmit({ title: "", description: "", dueDate: "", priority: "medium", stageId: "", assignedTo: null })}
-          disabled={isSubmitting}
-        >
-          إلغاء
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "جاري الإضافة..." : "إضافة المهمة"}
-        </Button>
-      </div>
+      <TaskFormActions isSubmitting={isSubmitting} onCancel={handleCancel} />
     </form>
   );
 };
