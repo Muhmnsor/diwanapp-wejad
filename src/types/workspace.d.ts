@@ -1,5 +1,4 @@
 
-
 export interface Workspace {
   id: string;
   name: string;
@@ -27,6 +26,8 @@ export interface Task {
   workspace_name?: string;
   project_id?: string;
   project_name?: string;
+  start_date?: string; // تاريخ بداية المهمة لمخطط جانت
+  end_date?: string; // تاريخ نهاية المهمة لمخطط جانت
 }
 
 export interface Project {
