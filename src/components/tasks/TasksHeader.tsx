@@ -4,8 +4,14 @@ import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const TasksHeader = () => {
+interface TasksHeaderProps {
+  activeTab: string;
+  setActiveTab: (value: string) => void;
+}
+
+export const TasksHeader = ({ activeTab, setActiveTab }: TasksHeaderProps) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   return (
@@ -28,6 +34,17 @@ export const TasksHeader = () => {
           className="pr-10 w-full"
         />
       </div>
+
+      <Tabs 
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="mt-2"
+      >
+        <TabsList>
+          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="workspaces">مساحات العمل</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <CreateWorkspaceDialog 
         open={isCreateDialogOpen} 
