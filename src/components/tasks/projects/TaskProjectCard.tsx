@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { 
   CalendarIcon,
@@ -36,6 +35,7 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
   const [totalTasksCount, setTotalTasksCount] = useState(0);
   const [overdueTasksCount, setOverdueTasksCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [completionPercentage, setCompletionPercentage] = useState(0);
 
   useEffect(() => {
     const fetchTasksData = async () => {
@@ -67,6 +67,39 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
         setTotalTasksCount(total);
         setCompletedTasksCount(completed);
         setOverdueTasksCount(overdue);
+        
+        // Calculate completion percentage
+        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+        setCompletionPercentage(percentage);
+        
+        // If completion percentage is 100% but status is not 'completed', update it
+        if (percentage === 100 && project.status !== 'completed' && total > 0) {
+          console.log(`Project ${project.id} is 100% complete, updating status to completed`);
+          
+          // Update project status in the database
+          const { error: updateError } = await supabase
+            .from('project_tasks')
+            .update({ 
+              status: 'completed',
+              completion_percentage: 100 
+            })
+            .eq('id', project.id);
+            
+          if (updateError) {
+            console.error("Error updating project status:", updateError);
+          }
+        } 
+        // Also make sure to store the current completion percentage
+        else if (total > 0) {
+          const { error: updateError } = await supabase
+            .from('project_tasks')
+            .update({ completion_percentage: percentage })
+            .eq('id', project.id);
+            
+          if (updateError) {
+            console.error("Error updating completion percentage:", updateError);
+          }
+        }
       } catch (err) {
         console.error("Error in fetchTasksData:", err);
       } finally {
@@ -75,7 +108,7 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
     };
 
     fetchTasksData();
-  }, [project.id]);
+  }, [project.id, project.status]);
 
   const handleClick = () => {
     navigate(`/tasks/project/${project.id}`);
@@ -122,9 +155,6 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
     }
   };
 
-  const completionPercentage = totalTasksCount > 0 
-    ? Math.round((completedTasksCount / totalTasksCount) * 100) 
-    : 0;
   const remainingDays = getRemainingDays(project.due_date);
 
   return (
