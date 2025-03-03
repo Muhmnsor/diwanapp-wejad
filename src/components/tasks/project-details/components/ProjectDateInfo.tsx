@@ -3,8 +3,7 @@ import {
   CalendarIcon,
   Clock as ClockIcon
 } from "lucide-react";
-import { format, formatDistanceToNow, differenceInDays } from "date-fns";
-import { ar } from "date-fns/locale";
+import { formatDate, getTimeFromNow, getRemainingDays } from "@/utils/formatters";
 
 interface ProjectDateInfoProps {
   createdAt?: string;
@@ -12,42 +11,7 @@ interface ProjectDateInfoProps {
 }
 
 export const ProjectDateInfo = ({ createdAt, dueDate }: ProjectDateInfoProps) => {
-  const getFormattedDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'غير محدد';
-    
-    try {
-      const date = new Date(dateString);
-      return format(date, 'dd/MM/yyyy', { locale: ar });
-    } catch (error) {
-      return 'تاريخ غير صالح';
-    }
-  };
-  
-  const getTimeToDeadline = (dateString: string | null) => {
-    if (!dateString) return null;
-    
-    try {
-      const date = new Date(dateString);
-      return formatDistanceToNow(date, { addSuffix: true, locale: ar });
-    } catch (error) {
-      return null;
-    }
-  };
-
-  const getRemainingDays = (dateString: string | null) => {
-    if (!dateString) return null;
-    
-    try {
-      const dueDate = new Date(dateString);
-      const today = new Date();
-      const days = differenceInDays(dueDate, today);
-      return days <= 0 ? 0 : days;
-    } catch (error) {
-      return null;
-    }
-  };
-  
-  const timeToDeadline = getTimeToDeadline(dueDate);
+  const timeToDeadline = getTimeFromNow(dueDate);
   const remainingDays = getRemainingDays(dueDate);
 
   return (
@@ -55,14 +19,14 @@ export const ProjectDateInfo = ({ createdAt, dueDate }: ProjectDateInfoProps) =>
       <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-md">
         <CalendarIcon className="h-4 w-4 text-blue-700" />
         <span className="text-sm font-medium text-blue-900">
-          {getFormattedDate(createdAt)}
+          {formatDate(createdAt)}
         </span>
       </div>
       
       <div className="flex items-center gap-2 bg-amber-50 px-3 py-2 rounded-md">
         <CalendarIcon className="h-4 w-4 text-amber-700" />
         <span className="text-sm font-medium text-amber-900">
-          {getFormattedDate(dueDate)}
+          {formatDate(dueDate)}
         </span>
       </div>
       

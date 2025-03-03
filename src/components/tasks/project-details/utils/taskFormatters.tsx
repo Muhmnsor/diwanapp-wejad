@@ -1,8 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
 import { CheckCircle2, Clock, ClipboardList, AlertTriangle } from "lucide-react";
+import { formatDate } from "@/utils/formatters";
 
 export const getStatusBadge = (status: string) => {
   switch (status) {
@@ -34,11 +33,5 @@ export const getPriorityBadge = (priority: string | null) => {
   }
 };
 
-export const formatDate = (dateString: string | null) => {
-  if (!dateString) return 'غير محدد';
-  try {
-    return format(new Date(dateString), 'dd/MM/yyyy', { locale: ar });
-  } catch (error) {
-    return 'تاريخ غير صالح';
-  }
-};
+// Use the new utility function for formatting dates
+export { formatDate };
