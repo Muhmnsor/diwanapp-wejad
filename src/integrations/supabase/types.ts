@@ -3051,6 +3051,12 @@ export type Database = {
         }
         Returns: string
       }
+      update_workspace_members_count: {
+        Args: {
+          workspace_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
