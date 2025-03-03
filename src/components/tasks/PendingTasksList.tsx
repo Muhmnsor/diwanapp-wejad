@@ -15,6 +15,7 @@ export const PendingTasksList = () => {
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['pending-tasks'],
     queryFn: async () => {
+      // First get pending tasks
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -23,7 +24,31 @@ export const PendingTasksList = () => {
         .limit(5);
       
       if (error) throw error;
-      return data || [];
+      
+      if (!data || data.length === 0) return [];
+      
+      // For each task with a project_id, fetch the project name
+      const tasksWithDetails = await Promise.all(data.map(async (task) => {
+        if (task.project_id) {
+          // Fetch project by ID to get its title
+          const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .select('title')
+            .eq('id', task.project_id)
+            .single();
+          
+          if (!projectError && projectData) {
+            return {
+              ...task,
+              project_name: projectData.title
+            };
+          }
+        }
+        
+        return task;
+      }));
+      
+      return tasksWithDetails;
     }
   });
 
@@ -67,7 +92,7 @@ export const PendingTasksList = () => {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" dir="rtl">
       {tasks.map((task) => (
         <div 
           key={task.id} 
@@ -81,11 +106,11 @@ export const PendingTasksList = () => {
             {getPriorityBadge(task.priority)}
           </div>
           <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
-            <span>{task.workspace_name || 'مساحة عمل غير محددة'}</span>
+            <span>{task.project_name || 'مشروع غير محدد'}</span>
             <span>{formatDueDate(task.due_date)}</span>
           </div>
         </div>
       ))}
     </div>
   );
-};
+}
