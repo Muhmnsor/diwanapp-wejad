@@ -2158,6 +2158,27 @@ export type Database = {
           },
         ]
       }
+      project_stages: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          project_id?: string
+        }
+        Relationships: []
+      }
       project_tasks: {
         Row: {
           asana_gid: string | null
