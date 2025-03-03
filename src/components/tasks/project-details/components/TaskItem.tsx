@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, MessageSquare, CheckCircle, Trash2, XCircle } from "lucide-react";
 import { Task } from "../types/task";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSubtasks } from "../hooks/useSubtasks";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { AddSubtaskForm } from "./subtasks/AddSubtaskForm";
@@ -13,9 +14,20 @@ import { AddSubtaskForm } from "./subtasks/AddSubtaskForm";
 interface TaskItemProps {
   task: Task;
   projectId: string;
+  getStatusBadge?: (status: string) => JSX.Element;
+  getPriorityBadge?: (priority: string | null) => JSX.Element | null;
+  formatDate?: (date: string | null) => string;
+  onStatusChange?: (taskId: string, newStatus: string) => void;
 }
 
-export const TaskItem = ({ task, projectId }: TaskItemProps) => {
+export const TaskItem = ({ 
+  task, 
+  projectId,
+  getStatusBadge,
+  getPriorityBadge,
+  formatDate,
+  onStatusChange
+}: TaskItemProps) => {
   const [open, setOpen] = useState(false);
   const { subtasks, isLoading, addSubtask, updateSubtaskStatus, deleteSubtask, refreshSubtasks } = useSubtasks(task.id);
 

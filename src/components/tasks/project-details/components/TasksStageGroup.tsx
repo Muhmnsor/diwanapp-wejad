@@ -48,6 +48,7 @@ export const TasksStageGroup = ({
             <TaskItem
               key={task.id}
               task={task}
+              projectId={task.project_id}
               getStatusBadge={getStatusBadge}
               getPriorityBadge={getPriorityBadge}
               formatDate={formatDate}

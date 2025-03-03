@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,9 +15,20 @@ import { SubtasksList } from "./subtasks/SubtasksList";
 interface TaskCardProps {
   task: Task;
   onDelete: (id: string) => Promise<void>;
+  getStatusBadge?: (status: string) => JSX.Element;
+  getPriorityBadge?: (priority: string | null) => JSX.Element | null;
+  formatDate?: (date: string | null) => string;
+  onStatusChange?: (taskId: string, newStatus: string) => void;
 }
 
-export const TaskCard = ({ task, onDelete }: TaskCardProps) => {
+export const TaskCard = ({ 
+  task, 
+  onDelete,
+  getStatusBadge,
+  getPriorityBadge,
+  formatDate,
+  onStatusChange
+}: TaskCardProps) => {
   const { onOpen } = useTaskModal();
   const { 
     subtasks, 
@@ -115,16 +127,12 @@ export const TaskCard = ({ task, onDelete }: TaskCardProps) => {
           <div className="flex items-center mt-2">
             <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
             <span className="text-xs text-gray-500">
-              {new Date(task.due_date).toLocaleDateString()}
+              {formatDate ? formatDate(task.due_date) : new Date(task.due_date).toLocaleDateString()}
             </span>
           </div>
         )}
         <div className="mt-3">
-          {task.priority && (
-            <Badge variant="secondary">
-              {task.priority}
-            </Badge>
-          )}
+          {task.priority && getPriorityBadge && getPriorityBadge(task.priority)}
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
