@@ -38,7 +38,7 @@ export const TaskProjectInfo = ({ project }: TaskProjectInfoProps) => {
         <div className="flex justify-between items-start">
           <h1 className="text-2xl font-bold">{project.title}</h1>
           <div className="flex items-center gap-2">
-            <Link to={`/workspace-tasks/${project.workspace_id}`}>
+            <Link to={`/portfolio-workspaces/${project.workspace_id}`}>
               <Button 
                 variant="outline" 
                 size="sm" 
