@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ar } from 'date-fns/locale';
 import { useState, useEffect } from "react";
 
@@ -17,7 +17,7 @@ interface SubtaskDueDateFieldProps {
 export const SubtaskDueDateField = ({ dueDate, setDueDate }: SubtaskDueDateFieldProps) => {
   // تحويل النص إلى كائن تاريخ لاستخدامه مع مكون التقويم
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    dueDate ? new Date(dueDate) : undefined
+    dueDate && isValid(new Date(dueDate)) ? new Date(dueDate) : undefined
   );
 
   // عند تغيير التاريخ المحدد، قم بتحديث قيمة النص
@@ -48,9 +48,10 @@ export const SubtaskDueDateField = ({ dueDate, setDueDate }: SubtaskDueDateField
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={setSelectedDate}
+            onSelect={(date) => setSelectedDate(date)}
             locale={ar}
-            className="w-full dir-rtl"
+            dir="rtl"
+            className="border-none"
             initialFocus
           />
         </PopoverContent>

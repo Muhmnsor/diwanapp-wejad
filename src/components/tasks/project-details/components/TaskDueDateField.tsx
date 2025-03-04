@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ar } from 'date-fns/locale';
 
 interface TaskDueDateFieldProps {
@@ -27,7 +27,7 @@ export const TaskDueDateField = ({ dueDate, setDueDate }: TaskDueDateFieldProps)
             )}
           >
             <CalendarIcon className="ml-2 h-4 w-4" />
-            {dueDate ? format(dueDate, "PPP", { locale: ar }) : <span>اختر تاريخ التسليم</span>}
+            {dueDate && isValid(dueDate) ? format(dueDate, "PPP", { locale: ar }) : <span>اختر تاريخ التسليم</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -36,7 +36,8 @@ export const TaskDueDateField = ({ dueDate, setDueDate }: TaskDueDateFieldProps)
             selected={dueDate}
             onSelect={setDueDate}
             locale={ar}
-            className="w-full dir-rtl"
+            dir="rtl"
+            className="border-none"
             initialFocus
           />
         </PopoverContent>

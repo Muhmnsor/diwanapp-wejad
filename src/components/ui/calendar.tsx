@@ -56,7 +56,7 @@ function Calendar({
         IconLeft: ({ ..._props }) => <ChevronRight className="h-4 w-4 rtl:transform rtl:rotate-180" />,
         IconRight: ({ ..._props }) => <ChevronLeft className="h-4 w-4 rtl:transform rtl:rotate-180" />,
       }}
-      dir="rtl"
+      dir={props.dir || "rtl"}
       {...props}
     />
   );
