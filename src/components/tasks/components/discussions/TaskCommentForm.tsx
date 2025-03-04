@@ -43,9 +43,18 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         }
       }
       
-      // تحديد نوع المهمة - مهمة مشروع أم مهمة محفظة أم مهمة فرعية
-      let taskTable = null;
-      let commentTable = null;
+      // إنشاء كائن التعليق
+      const commentData = {
+        task_id: task.id,
+        content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
+        created_by: userId,
+        attachment_url: attachmentUrl,
+        attachment_name: attachmentName,
+        attachment_type: attachmentType,
+        task_table: 'portfolio_tasks' // القيمة الافتراضية، سيتم تحديثها أدناه
+      };
+
+      // تحديد نوع جدول المهمة بناءً على وجود المهمة في الجداول المختلفة
       
       // فحص ما إذا كانت المهمة في جدول portfolio_tasks
       const { data: portfolioTask, error: portfolioError } = await supabase
@@ -55,8 +64,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         .single();
         
       if (!portfolioError && portfolioTask) {
-        taskTable = "portfolio_tasks";
-        commentTable = "portfolio_task_comments";
+        commentData.task_table = "portfolio_tasks";
       } else {
         // فحص ما إذا كانت المهمة في جدول project_tasks
         const { data: projectTask, error: projectError } = await supabase
@@ -66,8 +74,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
           .single();
           
         if (!projectError && projectTask) {
-          taskTable = "project_tasks";
-          commentTable = "task_comments";
+          commentData.task_table = "project_tasks";
         } else {
           // فحص ما إذا كانت المهمة في جدول tasks
           const { data: normalTask, error: normalTaskError } = await supabase
@@ -77,8 +84,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
             .single();
             
           if (!normalTaskError && normalTask) {
-            taskTable = "tasks";
-            commentTable = "task_comments";
+            commentData.task_table = "tasks";
           } else {
             // فحص ما إذا كانت المهمة في جدول subtasks
             const { data: subTask, error: subTaskError } = await supabase
@@ -88,41 +94,18 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
               .single();
               
             if (!subTaskError && subTask) {
-              taskTable = "subtasks";
-              commentTable = "task_comments";
+              commentData.task_table = "subtasks";
             }
           }
         }
       }
       
-      console.log("Task table identified:", taskTable);
-      console.log("Comment table to use:", commentTable);
+      console.log("Task table identified:", commentData.task_table);
+      console.log("Adding comment to unified_task_comments:", commentData);
       
-      if (!taskTable || !commentTable) {
-        console.error("Task not found in any table", {
-          portfolioError,
-          projectError: task.project_id ? undefined : "Not checked - No project_id",
-          normalTaskError: task.assigned_to ? undefined : "Not checked - No assigned_to",
-          subTaskError: task.id ? undefined : "Not checked - No task_id"
-        });
-        throw new Error("المهمة غير موجودة في قاعدة البيانات");
-      }
-      
-      // إنشاء تعليق جديد في الجدول المناسب
-      const commentData = {
-        task_id: task.id,
-        content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
-        created_at: new Date().toISOString(),
-        created_by: userId,
-        attachment_url: attachmentUrl,
-        attachment_name: attachmentName,
-        attachment_type: attachmentType
-      };
-
-      console.log("Inserting comment data:", commentData);
-      
+      // إضافة التعليق إلى جدول التعليقات الموحد
       const { error: insertError } = await supabase
-        .from(commentTable)
+        .from("unified_task_comments")
         .insert(commentData);
         
       if (insertError) {

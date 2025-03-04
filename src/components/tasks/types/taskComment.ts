@@ -11,4 +11,6 @@ export interface TaskComment {
   // معلومات المستخدم المضافة من الـ profiles
   user_name?: string; // اسم المستخدم المعروض
   user_email?: string; // البريد الإلكتروني للمستخدم
+  // حقل إضافي للجدول الموحد
+  task_table?: string; // يشير إلى الجدول الذي تنتمي إليه المهمة
 }

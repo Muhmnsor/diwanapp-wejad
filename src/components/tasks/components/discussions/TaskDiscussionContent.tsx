@@ -25,8 +25,22 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
     try {
       console.log("Fetching comments for task:", task.id);
       
-      // جلب التعليقات من جميع الجداول المحتملة
-      const sources = [
+      // استرجاع التعليقات من الجدول الموحد
+      const { data: unifiedComments, error: unifiedError } = await supabase
+        .from("unified_task_comments")
+        .select("*")
+        .eq("task_id", task.id)
+        .order("created_at", { ascending: true });
+      
+      if (unifiedError) {
+        console.error("Error fetching from unified_task_comments:", unifiedError);
+        throw unifiedError;
+      }
+      
+      console.log("Found unified comments:", unifiedComments);
+      
+      // للتوافق مع الكود القديم، سنقوم أيضًا بالبحث في الجداول القديمة
+      const oldSources = [
         {
           table: "portfolio_task_comments",
           field: "task_id"
@@ -37,10 +51,10 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
         }
       ];
       
-      let allComments: any[] = [];
+      let oldComments: any[] = [];
       
-      // جلب التعليقات من كل جدول
-      for (const source of sources) {
+      // استرجاع التعليقات من الجداول القديمة
+      for (const source of oldSources) {
         const { data, error } = await supabase
           .from(source.table)
           .select("*")
@@ -48,13 +62,15 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
           .order("created_at", { ascending: true });
         
         if (error) {
-          console.error(`Error fetching from ${source.table}:`, error);
+          console.warn(`Error fetching from ${source.table}:`, error);
         } else if (data && data.length > 0) {
           console.log(`Found ${data.length} comments in ${source.table}`);
-          allComments = [...allComments, ...data];
+          oldComments = [...oldComments, ...data];
         }
       }
       
+      // دمج التعليقات من كلا المصدرين
+      const allComments = [...(unifiedComments || []), ...(oldComments || [])];
       console.log("Combined comments data:", allComments);
       
       // إذا كان هناك بيانات، سنقوم بتحميل معلومات المستخدمين

@@ -2805,6 +2805,42 @@ export type Database = {
         }
         Relationships: []
       }
+      unified_task_comments: {
+        Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          task_id: string
+          task_table: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          task_id: string
+          task_table: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          task_id?: string
+          task_table?: string
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           activity_type: string
