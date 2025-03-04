@@ -45,11 +45,15 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
   const getStatusVariant = (taskStatus: string) => {
     switch (taskStatus) {
       case "completed":
-        return "outline";
+        return "bg-green-100 text-green-800 border-green-300";
       case "delayed":
-        return "destructive";
+        return "bg-red-100 text-red-800 border-red-300";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "upcoming":
+        return "bg-blue-100 text-blue-800 border-blue-300";
       default:
-        return "default";
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
     }
   };
 
@@ -123,7 +127,7 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
                 <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
               )}
             </div>
-            <Badge variant={getStatusVariant(currentStatus)} className="text-xs">
+            <Badge className={`text-xs ${getStatusVariant(currentStatus)}`}>
               {getStatusText(currentStatus)}
             </Badge>
           </div>
