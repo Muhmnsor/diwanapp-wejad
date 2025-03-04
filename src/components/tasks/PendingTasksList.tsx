@@ -18,6 +18,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export const PendingTasksList = () => {
   const { user } = useAuthStore();
@@ -29,15 +34,12 @@ export const PendingTasksList = () => {
       
       console.log('Fetching tasks for user:', user.id);
       
+      // تبسيط الاستعلام للحصول على المهام المسندة للمستخدم
       const { data, error } = await supabase
         .from('tasks')
         .select(`
           *,
-          project_tasks!project_id(
-            projects(
-              title
-            )
-          )
+          projects(title)
         `)
         .eq('assigned_to', user.id)
         .order('due_date', { ascending: true });
@@ -47,10 +49,10 @@ export const PendingTasksList = () => {
         throw error;
       }
       
-      // Transform the data to include the project title
+      // تحويل البيانات لتتضمن اسم المشروع
       const transformedData = data?.map(task => ({
         ...task,
-        project_name: task.project_tasks?.projects?.title || 'مشروع غير محدد'
+        project_name: task.projects?.title || 'مشروع غير محدد'
       })) || [];
       
       console.log('Transformed assigned tasks data:', transformedData);
@@ -114,30 +116,52 @@ export const PendingTasksList = () => {
   return (
     <div className="space-y-3">
       {tasks.map((task) => (
-        <TooltipProvider key={task.id}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div 
-                className="p-3 border rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(task.status)}
-                    <h3 className="font-medium">{task.title}</h3>
-                  </div>
-                  {getPriorityBadge(task.priority)}
+        <Popover key={task.id}>
+          <PopoverTrigger asChild>
+            <div 
+              className="p-3 border rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(task.status)}
+                  <h3 className="font-medium">{task.title}</h3>
                 </div>
-                <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
-                  <span>{task.project_name || 'مشروع غير محدد'}</span>
-                  <span>{task.due_date ? formatDueDate(task.due_date) : 'بدون تاريخ'}</span>
+                {getPriorityBadge(task.priority)}
+              </div>
+              <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
+                <span>{task.project_name || 'مشروع غير محدد'}</span>
+                <span>{task.due_date ? formatDueDate(task.due_date) : 'بدون تاريخ'}</span>
+              </div>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4">
+            <div className="space-y-2">
+              <h4 className="font-bold text-lg">{task.title}</h4>
+              
+              <div className="text-sm text-gray-700 border-t pt-2">
+                <p className="mb-2">{task.description || 'لا يوجد وصف للمهمة'}</p>
+                
+                <div className="flex justify-between items-center mt-3 pt-2 border-t text-xs text-gray-500">
+                  <div className="flex items-center">
+                    <span className="ml-1 font-medium">المشروع:</span>
+                    <span>{task.project_name}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="ml-1 font-medium">الحالة:</span>
+                    <div className="flex items-center">
+                      {getStatusIcon(task.status)}
+                      <span className="mr-1">
+                        {task.status === 'completed' ? 'مكتملة' : 
+                         task.status === 'pending' ? 'قيد الانتظار' : 
+                         task.status === 'delayed' ? 'متأخرة' : 'قيد التنفيذ'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{task.description || 'لا يوجد وصف'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </div>
+          </PopoverContent>
+        </Popover>
       ))}
     </div>
   );
