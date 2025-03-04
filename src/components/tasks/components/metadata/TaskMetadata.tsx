@@ -11,12 +11,9 @@ interface TaskMetadataProps {
 }
 
 export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: TaskMetadataProps) => {
-  // Debug: log the incoming projectName prop to see what we're getting
-  console.log("TaskMetadata received projectName:", projectName);
-  
   return (
     <div className="space-y-2">
-      {projectName && (
+      {projectName && projectName !== 'مشروع غير محدد' && (
         <Badge variant="outline" className="flex items-center text-sm bg-blue-50 hover:bg-blue-100 border-blue-200">
           <Briefcase className="h-3.5 w-3.5 ml-1 text-blue-500" />
           <span className="font-medium">{projectName}</span>
@@ -35,6 +32,14 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: 
           <div className="flex items-center text-sm text-blue-500">
             <ArrowRight className="h-4 w-4 ml-1" />
             <span>تابعة لمهمة رئيسية</span>
+          </div>
+        )}
+        
+        {/* Add the project name inside the flex container as well for better visibility */}
+        {projectName && projectName !== 'مشروع غير محدد' && (
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Briefcase className="h-4 w-4 ml-1" />
+            <span>{projectName}</span>
           </div>
         )}
       </div>
