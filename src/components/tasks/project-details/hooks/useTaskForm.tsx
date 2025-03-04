@@ -24,6 +24,7 @@ export const useTaskForm = ({
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [stageId, setStageId] = useState(projectStages[0]?.id || "");
   const [assignedTo, setAssignedTo] = useState("");
+  const [attachments, setAttachments] = useState<{ url: string; name: string; type: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
   
@@ -98,6 +99,25 @@ export const useTaskForm = ({
         return;
       }
 
+      // إذا كانت هناك مرفقات، قم بإضافتها
+      if (formData.attachments && formData.attachments.length > 0) {
+        const attachmentsData = formData.attachments.map(attachment => ({
+          task_id: data.id,
+          file_name: attachment.name,
+          file_url: attachment.url,
+          created_by: null
+        }));
+
+        const { error: attachmentsError } = await supabase
+          .from("task_attachments")
+          .insert(attachmentsData);
+
+        if (attachmentsError) {
+          console.error("Error adding attachments:", attachmentsError);
+          toast.error("تم إنشاء المهمة ولكن حدث خطأ أثناء إضافة المرفقات");
+        }
+      }
+
       toast.success("تم إنشاء المهمة بنجاح");
       
       // Update project status to in_progress if it was previously completed
@@ -138,6 +158,7 @@ export const useTaskForm = ({
     setDueDate(null);
     setStageId(projectStages[0]?.id || "");
     setAssignedTo("");
+    setAttachments([]);
   };
 
   return {
@@ -153,6 +174,8 @@ export const useTaskForm = ({
     setStageId,
     assignedTo,
     setAssignedTo,
+    attachments,
+    setAttachments,
     isSubmitting,
     projectMembers,
     handleFormSubmit,
