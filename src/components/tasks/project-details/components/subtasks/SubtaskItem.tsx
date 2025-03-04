@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Subtask } from "../../types/subtask";
 import { formatDate } from "../../utils/taskFormatters";
 import { useState } from "react";
-import { usePermissionCheck } from "../../hooks/usePermissionCheck";
-import { Tooltip } from "@/components/ui/tooltip";
 
 interface SubtaskItemProps {
   subtask: Subtask;
@@ -17,12 +15,7 @@ export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete }: SubtaskItemPr
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // استخدام هوك التحقق من الصلاحيات
-  const { hasPermission, isLoading } = usePermissionCheck(subtask.assigned_to);
-  
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!hasPermission) return;
-    
     setIsUpdating(true);
     try {
       await onUpdateStatus(subtask.id, newStatus);
@@ -32,8 +25,6 @@ export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete }: SubtaskItemPr
   };
   
   const handleDelete = async () => {
-    if (!hasPermission) return;
-    
     setIsDeleting(true);
     try {
       await onDelete(subtask.id);
@@ -64,43 +55,37 @@ export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete }: SubtaskItemPr
       </div>
       
       <div className="flex items-center gap-1">
-        {isLoading ? (
-          <div className="h-6 w-12 bg-gray-100 animate-pulse rounded"></div>
-        ) : hasPermission ? (
-          <>
-            {subtask.status !== 'completed' ? (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 w-6 p-0"
-                onClick={() => handleStatusUpdate('completed')}
-                disabled={isUpdating}
-              >
-                <Check className="h-3.5 w-3.5 text-green-500" />
-              </Button>
-            ) : (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 w-6 p-0"
-                onClick={() => handleStatusUpdate('pending')}
-                disabled={isUpdating}
-              >
-                <Clock className="h-3.5 w-3.5 text-amber-500" />
-              </Button>
-            )}
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-6 w-6 p-0 text-red-500"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              <Trash className="h-3.5 w-3.5" />
-            </Button>
-          </>
-        ) : null}
+        {subtask.status !== 'completed' ? (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0"
+            onClick={() => handleStatusUpdate('completed')}
+            disabled={isUpdating}
+          >
+            <Check className="h-3.5 w-3.5 text-green-500" />
+          </Button>
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0"
+            onClick={() => handleStatusUpdate('pending')}
+            disabled={isUpdating}
+          >
+            <Clock className="h-3.5 w-3.5 text-amber-500" />
+          </Button>
+        )}
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-6 w-6 p-0 text-red-500"
+          onClick={handleDelete}
+          disabled={isDeleting}
+        >
+          <Trash className="h-3.5 w-3.5" />
+        </Button>
       </div>
     </div>
   );
