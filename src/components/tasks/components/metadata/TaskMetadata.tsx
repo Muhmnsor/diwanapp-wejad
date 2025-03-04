@@ -35,3 +35,4 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: 
     </div>
   );
 };
+

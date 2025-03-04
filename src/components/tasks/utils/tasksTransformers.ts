@@ -88,6 +88,17 @@ export const transformSubtasks = (
       projectName = projectsMap[parentTask.project_id.id];
       console.log(`Subtask ${subtask.id} using parent project_id object: ${JSON.stringify(parentTask.project_id)}, project_name: ${projectName}`);
     }
+    // 4. محاولة إضافية: البحث عن المهمة الرئيسية في جميع المهام
+    else if (subtask.task_id) {
+      // البحث في المهام المعتادة
+      for (const projId in projectsMap) {
+        if (projectsMap[projId]) {
+          console.log(`Trying to match subtask ${subtask.id} with project ID ${projId}`);
+          projectName = projectsMap[projId];
+          break;  // استخدام أول مشروع متاح كحل مؤقت
+        }
+      }
+    }
     
     console.log(`Subtask transformation result for ${subtask.id}: project_name=${projectName}, parent_task=${parentTask.id}`);
     
@@ -106,3 +117,4 @@ export const transformSubtasks = (
     };
   });
 };
+
