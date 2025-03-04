@@ -45,8 +45,23 @@ export const TasksOverview = () => {
         throw tasksError;
       }
       
-      // Combine both tasks arrays
-      const allTasks = [...(userTasks || []), ...(regularTasks || [])];
+      // Fetch subtasks assigned to the user
+      const { data: subtasks, error: subtasksError } = await supabase
+        .from('subtasks')
+        .select('status, due_date')
+        .eq('assigned_to', user.id);
+      
+      if (subtasksError) {
+        console.error("Error fetching subtasks stats:", subtasksError);
+        throw subtasksError;
+      }
+      
+      // Combine all tasks arrays
+      const allTasks = [
+        ...(userTasks || []), 
+        ...(regularTasks || []),
+        ...(subtasks || [])
+      ];
       
       const now = new Date();
       const oneWeekFromNow = new Date();

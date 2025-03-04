@@ -4,7 +4,7 @@ import { Task } from "../hooks/useAssignedTasks";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Clock, Briefcase } from "lucide-react";
+import { Calendar, Check, Clock, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
 import { formatDueDate, getStatusBadge } from "../utils/taskFormatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,14 +16,14 @@ interface TaskListItemProps {
 export const TaskListItem = ({ task }: TaskListItemProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [status, setStatus] = useState(task.status);
-
+  
   const handleCompleteTask = async () => {
     if (isCompleting) return;
     
     setIsCompleting(true);
     
     try {
-      let tableName = "portfolio_tasks";
+      let tableName = task.is_subtask ? "subtasks" : "portfolio_tasks";
       let query = supabase
         .from(tableName)
         .update({ status: status === "completed" ? "pending" : "completed" })
@@ -31,7 +31,7 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
       
       let { error } = await query;
       
-      // إذا لم يتم العثور على المهمة في جدول portfolio_tasks، حاول في جدول tasks
+      // إذا لم يتم العثور على المهمة في الجدول الأول، حاول في الجدول الآخر
       if (error && error.code === "PGRST116") {
         tableName = "tasks";
         query = supabase
@@ -62,12 +62,20 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
     }
   };
 
+  // Add a special style or indicator for subtasks
+  const itemClassName = task.is_subtask 
+    ? "hover:shadow-md transition-shadow border-r-4 border-r-blue-400" 
+    : "hover:shadow-md transition-shadow";
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={itemClassName}>
       <CardContent className="p-5">
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-start">
             <div>
+              {task.is_subtask && (
+                <Badge variant="outline" className="text-xs mb-1">مهمة فرعية</Badge>
+              )}
               <h3 className="font-semibold text-lg">{task.title}</h3>
               {task.description && (
                 <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
