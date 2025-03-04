@@ -6,7 +6,9 @@ import {
   Clock,
   ClipboardList,
   AlertTriangle,
-  CheckSquare 
+  CheckSquare,
+  Edit,
+  Trash2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow, differenceInDays } from "date-fns";
@@ -15,6 +17,10 @@ import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { EditTaskProjectDialog } from "./EditTaskProjectDialog";
+import { DeleteTaskProjectDialog } from "./DeleteTaskProjectDialog";
+import { toast } from "sonner";
 
 interface TaskProject {
   id: string;
@@ -28,15 +34,19 @@ interface TaskProject {
 
 interface TaskProjectCardProps {
   project: TaskProject;
+  onProjectUpdated?: () => void;
 }
 
-export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
+export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardProps) => {
   const navigate = useNavigate();
   const [completedTasksCount, setCompletedTasksCount] = useState(0);
   const [totalTasksCount, setTotalTasksCount] = useState(0);
   const [overdueTasksCount, setOverdueTasksCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [projectOwner, setProjectOwner] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchTasksData = async () => {
@@ -87,6 +97,9 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
             console.error("Error updating project status:", updateError);
           }
         }
+
+        // Fetch project owner information
+        await fetchProjectOwner();
       } catch (err) {
         console.error("Error in fetchTasksData:", err);
       } finally {
@@ -97,8 +110,75 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
     fetchTasksData();
   }, [project.id, project.status]);
 
-  const handleClick = () => {
+  const fetchProjectOwner = async () => {
+    try {
+      // First, try to find the project manager (owner) from tasks assignments
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('assigned_to')
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) {
+        console.error("Error fetching tasks for project owner:", error);
+        return;
+      }
+
+      // If we have a task with an assignee, get their profile
+      if (tasks && tasks.length > 0 && tasks[0].assigned_to) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('display_name, email')
+          .eq('id', tasks[0].assigned_to)
+          .single();
+          
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return;
+        }
+        
+        setProjectOwner(profile?.display_name || profile?.email || "مدير المشروع");
+      } else {
+        setProjectOwner("غير محدد");
+      }
+    } catch (err) {
+      console.error("Error in fetchProjectOwner:", err);
+      setProjectOwner("غير محدد");
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // If the click originated from one of our action buttons, stop propagation
+    if ((e.target as HTMLElement).closest('.project-actions')) {
+      e.stopPropagation();
+      return;
+    }
     navigate(`/tasks/project/${project.id}`);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleProjectUpdated = () => {
+    toast.success("تم تحديث المشروع بنجاح");
+    if (onProjectUpdated) {
+      onProjectUpdated();
+    }
+  };
+
+  const handleProjectDeleted = () => {
+    toast.success("تم حذف المشروع بنجاح");
+    if (onProjectUpdated) {
+      onProjectUpdated();
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -129,26 +209,30 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
     }
   };
 
-  const getRemainingDays = (dateString: string | null) => {
-    if (!dateString) return null;
-    
-    try {
-      const dueDate = new Date(dateString);
-      const today = new Date();
-      const days = differenceInDays(dueDate, today);
-      return days <= 0 ? 0 : days;
-    } catch (error) {
-      return null;
-    }
-  };
-
-  const remainingDays = getRemainingDays(project.due_date);
-
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer"
+      className="hover:shadow-md transition-shadow cursor-pointer relative"
       onClick={handleClick}
     >
+      <div className="absolute top-2 left-2 flex gap-1 z-10 project-actions">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+          onClick={handleEditClick}
+        >
+          <Edit className="h-4 w-4 text-gray-500" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+          onClick={handleDeleteClick}
+        >
+          <Trash2 className="h-4 w-4 text-red-500" />
+        </Button>
+      </div>
+      
       <CardContent className="p-6">
         <div className="mb-3 flex justify-between items-start">
           <h3 className="font-bold text-lg">{project.title}</h3>
@@ -188,12 +272,25 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
               : 'غير محدد'}
           </span>
         </div>
-        {remainingDays !== null && (
-          <div className="text-sm font-medium">
-            متبقي {remainingDays} يوم
-          </div>
-        )}
+        <div className="text-sm font-medium">
+          {projectOwner || 'غير محدد'}
+        </div>
       </CardFooter>
+
+      <EditTaskProjectDialog 
+        isOpen={isEditDialogOpen} 
+        onClose={() => setIsEditDialogOpen(false)} 
+        project={project}
+        onSuccess={handleProjectUpdated}
+      />
+
+      <DeleteTaskProjectDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        projectId={project.id}
+        projectTitle={project.title}
+        onSuccess={handleProjectDeleted}
+      />
     </Card>
   );
 };

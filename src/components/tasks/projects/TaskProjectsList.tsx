@@ -1,5 +1,5 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskProjectCard } from "./TaskProjectCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +19,8 @@ interface TaskProjectsListProps {
 }
 
 export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
+  const queryClient = useQueryClient();
+  
   const { data: projects, isLoading } = useQuery({
     queryKey: ['task-projects', workspaceId],
     queryFn: async () => {
@@ -31,6 +33,11 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
       return data || [];
     }
   });
+
+  const handleProjectUpdated = () => {
+    // Refetch the projects list
+    queryClient.invalidateQueries({ queryKey: ['task-projects', workspaceId] });
+  };
 
   if (isLoading) {
     return (
@@ -54,7 +61,11 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
   return (
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {projects.map((project: TaskProject) => (
-        <TaskProjectCard key={project.id} project={project} />
+        <TaskProjectCard 
+          key={project.id} 
+          project={project} 
+          onProjectUpdated={handleProjectUpdated}
+        />
       ))}
     </div>
   );
