@@ -68,25 +68,9 @@ export const transformSubtasks = (
     const parentTask = parentTasksMap[subtask.task_id] || {};
     const parentProjectId = parentTask.project_id;
     
-    // تحسين الوصول إلى اسم المشروع للمهام الفرعية بشكل كبير
-    let projectName = null;
-    
-    // محاولة الحصول على اسم المشروع من المهمة الأصلية مباشرة
-    if (parentTask.project_name) {
-      projectName = parentTask.project_name;
-      console.log(`Subtask ${subtask.id} got project name ${projectName} from parent task`);
-    } 
-    // إذا لم يكن متاحًا في المهمة الأصلية، حاول الحصول عليه من معرف المشروع باستخدام خريطة المشاريع
-    else if (parentProjectId && projectsMap[parentProjectId]) {
+    let projectName = parentTask.project_name || null;
+    if (!parentTask.project_name && parentProjectId && projectsMap[parentProjectId]) {
       projectName = projectsMap[parentProjectId];
-      console.log(`Subtask ${subtask.id} got project name ${projectName} from projects map`);
-    }
-
-    // التأكد من وجود اسم المشروع
-    if (!projectName) {
-      console.log(`⚠️ No project name found for subtask ${subtask.id}, parent task: ${subtask.task_id}`);
-      console.log('Parent task data:', parentTask);
-      console.log('Project ID from parent:', parentProjectId);
     }
     
     return {

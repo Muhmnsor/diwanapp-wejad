@@ -47,7 +47,7 @@ export const useAssignedTasks = () => {
       const { data: portfolioTasks, error: portfolioError } = await supabase
         .from('portfolio_tasks')
         .select(`
-          id, title, description, status, priority, due_date, project_id,
+          id, title, description, status, priority, due_date,
           portfolio_only_projects (id, name),
           portfolio_workspaces (id, name)
         `)
@@ -60,11 +60,7 @@ export const useAssignedTasks = () => {
         
         // تخزين المهام الأساسية للرجوع إليها لاحقًا
         portfolioTasks?.forEach(task => {
-          parentTasks[task.id] = {
-            ...task,
-            project_name: task.portfolio_only_projects?.[0]?.name || null,
-            project_id: task.project_id
-          };
+          parentTasks[task.id] = task;
         });
         
         const transformedPortfolioTasks = transformPortfolioTasks(portfolioTasks || []);
@@ -80,24 +76,10 @@ export const useAssignedTasks = () => {
         } else {
           console.log("Regular tasks fetched:", regularTasks);
           
-          // تخزين المهام الأساسية للرجوع إليها لاحقًا وإضافة اسم المشروع
+          // تخزين المهام الأساسية للرجوع إليها لاحقًا
           regularTasks?.forEach(task => {
-            const projectName = task.project_id && projects[task.project_id] 
-              ? projects[task.project_id] 
-              : null;
-              
-            parentTasks[task.id] = {
-              ...task,
-              project_name: projectName
-            };
+            parentTasks[task.id] = task;
           });
-          
-          console.log("Parent tasks with project names:", Object.values(parentTasks).map(t => ({
-            id: t.id,
-            title: t.title,
-            project_name: t.project_name,
-            project_id: t.project_id
-          })));
           
           const transformedRegularTasks = transformRegularTasks(regularTasks || [], projects);
           
@@ -113,14 +95,6 @@ export const useAssignedTasks = () => {
             console.log("Subtasks fetched:", subtasks);
             
             const transformedSubtasks = transformSubtasks(subtasks || [], parentTasks, projects);
-            
-            // Log subtasks with their project names for debugging
-            console.log("Transformed subtasks with project names:", transformedSubtasks.map(t => ({
-              id: t.id,
-              title: t.title,
-              project_name: t.project_name,
-              parent_task_id: t.parent_task_id
-            })));
             
             // 5. دمج المهام وترتيبها حسب تاريخ الاستحقاق
             const allTasks = [
@@ -141,9 +115,7 @@ export const useAssignedTasks = () => {
               id: t.id,
               title: t.title,
               project_name: t.project_name,
-              project_id: t.project_id,
-              is_subtask: t.is_subtask,
-              parent_task_id: t.parent_task_id
+              project_id: t.project_id
             })));
             
             setTasks(allTasks);
