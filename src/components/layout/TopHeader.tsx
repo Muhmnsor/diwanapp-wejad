@@ -1,20 +1,23 @@
 
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
-import { Calendar, FolderKanban, LayoutDashboard } from "lucide-react";
+import { Calendar, ChevronRight, FolderKanban, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TopHeader = () => {
   const location = useLocation();
+  const { projectId } = useParams<{ projectId: string }>();
   const { isAuthenticated } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
@@ -29,6 +32,45 @@ export const TopHeader = () => {
   const isTasksPage = location.pathname.includes('/tasks') ||
                      location.pathname.includes('/portfolios') ||
                      location.pathname.includes('/portfolio-workspaces');
+                     
+  const isTaskProjectDetails = location.pathname.includes('/tasks/project/');
+
+  // Fetch workspace ID for task project details page
+  useEffect(() => {
+    if (isTaskProjectDetails && projectId) {
+      const fetchWorkspaceId = async () => {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('project_id')
+          .eq('id', projectId)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching task:', error);
+          return;
+        }
+        
+        if (data) {
+          const { data: projectData, error: projectError } = await supabase
+            .from('project_tasks')
+            .select('workspace_id')
+            .eq('id', data.project_id)
+            .single();
+            
+          if (projectError) {
+            console.error('Error fetching project:', projectError);
+            return;
+          }
+          
+          if (projectData) {
+            setWorkspaceId(projectData.workspace_id);
+          }
+        }
+      };
+      
+      fetchWorkspaceId();
+    }
+  }, [isTaskProjectDetails, projectId]);
 
   // Set active tab based on URL hash or default to "overview"
   useEffect(() => {
@@ -82,6 +124,16 @@ export const TopHeader = () => {
             <div className="w-full bg-white border-t py-3">
               <div className="flex justify-center">
                 <div className="flex gap-6 items-center">
+                  {isTaskProjectDetails && workspaceId && (
+                    <Link 
+                      to={`/tasks/workspace/${workspaceId}`}
+                      className="flex items-center gap-2 text-primary font-medium ml-4"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <span>العودة إلى المشاريع</span>
+                    </Link>
+                  )}
+                
                   <Link 
                     to="/tasks#overview" 
                     className={`flex items-center gap-2 cursor-pointer ${activeTab === "overview" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
