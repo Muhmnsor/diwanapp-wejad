@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskForm } from "./components/TaskForm";
 import { TaskFormData } from "./types/addTask";
+import { useProjectMembers } from "./hooks/useProjectMembers";
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -39,6 +40,9 @@ export const AddTaskDialog = ({
   const [stageId, setStageId] = useState(projectStages[0]?.id || "");
   const [assignedTo, setAssignedTo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Fetch project members
+  const { projectMembers } = useProjectMembers(projectId);
   
   const handleFormSubmit = async (formData: TaskFormData) => {
     if (!projectId) {
@@ -131,6 +135,7 @@ export const AddTaskDialog = ({
           assignedTo={assignedTo}
           setAssignedTo={setAssignedTo}
           projectStages={projectStages}
+          projectMembers={projectMembers}
         />
         
         <AlertDialogFooter>

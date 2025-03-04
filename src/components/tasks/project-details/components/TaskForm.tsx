@@ -22,6 +22,7 @@ interface TaskFormProps {
   assignedTo: string;
   setAssignedTo: (assignedTo: string) => void;
   projectStages: { id: string; name: string }[];
+  projectMembers: { id: string; display_name?: string; email?: string }[];
 }
 
 export const TaskForm = ({
@@ -38,6 +39,7 @@ export const TaskForm = ({
   assignedTo,
   setAssignedTo,
   projectStages,
+  projectMembers,
 }: TaskFormProps) => {
   return (
     <div className="grid gap-4 py-4">
@@ -78,7 +80,8 @@ export const TaskForm = ({
 
       <TaskAssigneeField 
         assignedTo={assignedTo} 
-        onAssignedToChange={setAssignedTo} 
+        onAssignedToChange={setAssignedTo}
+        projectMembers={projectMembers}
       />
     </div>
   );
