@@ -5,7 +5,7 @@ import { Task } from "../types/task";
 export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
   return portfolioTasks.map(task => {
     // الوصول الآمن للخصائص المتداخلة
-    let projectName = 'مشروع غير محدد';
+    let projectName = null;
     if (task.portfolio_only_projects && 
         Array.isArray(task.portfolio_only_projects) && 
         task.portfolio_only_projects.length > 0 && 
@@ -41,7 +41,7 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
   return regularTasks.map(task => {
     const projectName = task.project_id && projectsMap[task.project_id] 
       ? projectsMap[task.project_id] 
-      : 'مشروع غير محدد';
+      : null;
       
     return {
       id: task.id,
@@ -68,7 +68,7 @@ export const transformSubtasks = (
     const parentTask = parentTasksMap[subtask.task_id] || {};
     const parentProjectId = parentTask.project_id;
     
-    let projectName = parentTask.project_name || 'مشروع غير محدد';
+    let projectName = parentTask.project_name || null;
     if (!parentTask.project_name && parentProjectId && projectsMap[parentProjectId]) {
       projectName = projectsMap[parentProjectId];
     }

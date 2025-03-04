@@ -19,7 +19,7 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: 
         </div>
       )}
       
-      {projectName && projectName !== 'مشروع غير محدد' && (
+      {projectName && (
         <div className="flex items-center text-sm text-muted-foreground">
           <Briefcase className="h-4 w-4 ml-1" />
           <span>{projectName}</span>
