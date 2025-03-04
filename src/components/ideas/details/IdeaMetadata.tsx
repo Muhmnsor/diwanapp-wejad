@@ -35,6 +35,8 @@ export const IdeaMetadata = ({
   const handleExtendSuccess = () => {
     // يمكن إضافة أي منطق إضافي هنا بعد نجاح عملية التمديد
     console.log("Discussion period extended successfully");
+    // We don't need to manually refresh the page or refetch data since
+    // the real-time subscription in useIdeaStatusUpdater will handle updates
   };
   
   return <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border border-purple-100 my-[7px]">
