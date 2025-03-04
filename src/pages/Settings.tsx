@@ -1,8 +1,8 @@
-
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppSettings } from "@/components/settings/WhatsAppSettings";
 import { WhatsAppTemplates } from "@/components/settings/WhatsAppTemplates";
+import { UsersManagement } from "@/components/settings/UsersManagement";
 import { CertificateSignatures } from "@/components/certificates/signatures/CertificateSignatures";
 import { CertificateTemplates } from "@/components/certificates/templates/CertificateTemplates";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +34,7 @@ const Settings = () => {
           <TabsList className="w-full justify-stretch bg-secondary/50">
             <TabsTrigger value="whatsapp" className="flex-1">إعدادات الواتساب</TabsTrigger>
             <TabsTrigger value="templates" className="flex-1">قوالب الرسائل</TabsTrigger>
+            <TabsTrigger value="users" className="flex-1">إدارة المستخدمين</TabsTrigger>
             <TabsTrigger value="signatures" className="flex-1">التوقيعات</TabsTrigger>
             <TabsTrigger value="certificate-templates" className="flex-1">قوالب الشهادات</TabsTrigger>
           </TabsList>
@@ -42,6 +43,9 @@ const Settings = () => {
           </TabsContent>
           <TabsContent value="templates">
             <WhatsAppTemplates />
+          </TabsContent>
+          <TabsContent value="users">
+            <UsersManagement />
           </TabsContent>
           <TabsContent value="signatures">
             <CertificateSignatures />
