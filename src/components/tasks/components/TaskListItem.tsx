@@ -41,6 +41,9 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
+  // Log the project name to debug
+  console.log("Task project name:", task.project_name);
+
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />

@@ -34,6 +34,14 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: 
             <span>تابعة لمهمة رئيسية</span>
           </div>
         )}
+        
+        {/* Add the project name inside the flex container as well for better visibility */}
+        {projectName && projectName !== 'مشروع غير محدد' && (
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Briefcase className="h-4 w-4 ml-1" />
+            <span>{projectName}</span>
+          </div>
+        )}
       </div>
     </div>
   );
