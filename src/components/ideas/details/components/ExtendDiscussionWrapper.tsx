@@ -34,21 +34,15 @@ export const ExtendDiscussionWrapper: React.FC<ExtendDiscussionWrapperProps> = (
     onSuccess
   });
 
-  // Let's simplify and pass only the props that are likely to be expected
-  // based on naming conventions and common dialog patterns
   return (
     <ExtendDiscussionDialog
       isOpen={isOpen}
       onClose={onClose}
-      ideaId={ideaId}
-      onSubmit={async (data: any) => {
-        // Set our local state based on the dialog's form data
-        if (data.days !== undefined) setDays(data.days);
-        if (data.hours !== undefined) setHours(data.hours);
-        
-        // Then call our extension logic
-        return await handleExtendDiscussion();
-      }}
+      days={days}
+      hours={hours}
+      onDaysChange={setDays}
+      onHoursChange={setHours}
+      onExtend={handleExtendDiscussion}
       isSubmitting={isSubmitting}
     />
   );
