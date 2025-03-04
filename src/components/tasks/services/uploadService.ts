@@ -6,10 +6,10 @@ export const uploadAttachment = async (file: File): Promise<{ url: string; error
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 11)}_${Date.now()}.${fileExt}`;
-    const filePath = `task-attachments/${fileName}`;
+    const filePath = `${fileName}`;
 
     const { data, error } = await supabase.storage
-      .from('event-images') // استخدام مخزن الصور الموجود
+      .from('task-attachments') // استخدام المخزن الجديد الذي أنشأناه
       .upload(filePath, file);
 
     if (error) {
@@ -20,7 +20,7 @@ export const uploadAttachment = async (file: File): Promise<{ url: string; error
 
     // الحصول على الرابط العام للملف
     const { data: { publicUrl } } = supabase.storage
-      .from('event-images')
+      .from('task-attachments')
       .getPublicUrl(filePath);
 
     return { url: publicUrl, error: null };

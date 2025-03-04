@@ -2205,7 +2205,9 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          priority: string | null
           project_id: string | null
+          stage_id: string | null
           status: string | null
           title: string
           updated_at: string
@@ -2218,7 +2220,9 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          priority?: string | null
           project_id?: string | null
+          stage_id?: string | null
           status?: string | null
           title: string
           updated_at?: string
@@ -2231,7 +2235,9 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          priority?: string | null
           project_id?: string | null
+          stage_id?: string | null
           status?: string | null
           title?: string
           updated_at?: string
@@ -2243,6 +2249,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "project_stages"
             referencedColumns: ["id"]
           },
           {

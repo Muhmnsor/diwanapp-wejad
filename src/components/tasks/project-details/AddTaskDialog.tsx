@@ -75,6 +75,7 @@ export function AddTaskDialog({
           assigned_to: formData.assignedTo,
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
           stage_id: formData.stageId,
+          priority: formData.priority, // نضيف الحقل مرة أخرى بعد إضافته في قاعدة البيانات
           status: 'pending'
         })
         .select()
