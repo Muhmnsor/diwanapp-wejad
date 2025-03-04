@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Task } from "../types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Clock, Briefcase, ChevronDown, ChevronUp, ArrowRight, GitMerge } from "lucide-react";
-import { formatDueDate, getStatusBadge } from "../utils/taskFormatters";
+import { Calendar, Check, Clock, Briefcase, GitMerge, ArrowRight } from "lucide-react";
+import { formatDueDate } from "../utils/taskFormatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -16,7 +15,44 @@ interface TaskListItemProps {
 export const TaskListItem = ({ task }: TaskListItemProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [status, setStatus] = useState(task.status);
-  
+
+  const getTaskStatus = () => {
+    if (status === "completed") return "completed";
+    
+    const dueDate = task.due_date ? new Date(task.due_date) : null;
+    const now = new Date();
+    
+    if (dueDate && dueDate < now) {
+      return "delayed";
+    }
+    
+    return status;
+  };
+
+  const getStatusText = (taskStatus: string) => {
+    switch (taskStatus) {
+      case "completed":
+        return "مكتملة";
+      case "delayed":
+        return "متأخرة";
+      case "pending":
+        return "قيد التنفيذ";
+      default:
+        return "قيد التنفيذ";
+    }
+  };
+
+  const getStatusVariant = (taskStatus: string) => {
+    switch (taskStatus) {
+      case "completed":
+        return "outline";
+      case "delayed":
+        return "destructive";
+      default:
+        return "default";
+    }
+  };
+
   const handleCompleteTask = async () => {
     if (isCompleting) return;
     
@@ -31,7 +67,6 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
       
       let { error } = await query;
       
-      // إذا لم يتم العثور على المهمة في الجدول الأول، حاول في الجدول الآخر
       if (error && error.code === "PGRST116") {
         tableName = "tasks";
         query = supabase
@@ -62,7 +97,6 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
     }
   };
 
-  // أسلوب خاص للمهام الفرعية
   const getBorderStyle = () => {
     if (task.is_subtask) {
       return "hover:shadow-md transition-shadow border-r-4 border-r-blue-400 bg-blue-50";
@@ -70,35 +104,7 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
     return "hover:shadow-md transition-shadow";
   };
 
-  // تحديد نص حالة المهمة بناءً على قيمة status
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "مكتملة";
-      case "delayed":
-        return "متأخرة";
-      case "pending":
-        return "قيد التنفيذ";
-      case "upcoming":
-        return "قادمة";
-      default:
-        return "قيد التنفيذ";
-    }
-  };
-
-  // تحديد لون وأسلوب بادج الحالة
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "outline";
-      case "delayed":
-        return "destructive";
-      case "upcoming":
-        return "secondary";
-      default:
-        return "default";
-    }
-  };
+  const currentStatus = getTaskStatus();
 
   return (
     <Card className={getBorderStyle()}>
@@ -117,8 +123,8 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
                 <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
               )}
             </div>
-            <Badge variant={getStatusVariant(status)} className="text-xs">
-              {getStatusText(status)}
+            <Badge variant={getStatusVariant(currentStatus)} className="text-xs">
+              {getStatusText(currentStatus)}
             </Badge>
           </div>
           
