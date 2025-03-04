@@ -6,7 +6,9 @@ import {
   CheckCircle2, 
   Clock,
   AlertCircle,
-  User
+  User,
+  Calendar,
+  XCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -34,7 +36,7 @@ export const PendingTasksList = () => {
       
       console.log('Fetching tasks for user:', user.id);
       
-      // تبسيط الاستعلام للحصول على المهام المسندة للمستخدم
+      // استعلام للحصول على جميع المهام المسندة للمستخدم بغض النظر عن حالتها
       const { data, error } = await supabase
         .from('portfolio_tasks')
         .select(`
@@ -79,10 +81,21 @@ export const PendingTasksList = () => {
           }
         }
         
+        // إضافة حالة إضافية للمهام المتأخرة
+        let taskStatus = task.status;
+        if (task.due_date && task.status !== 'completed') {
+          const dueDate = new Date(task.due_date);
+          const today = new Date();
+          if (dueDate < today) {
+            taskStatus = 'delayed';
+          }
+        }
+        
         return {
           ...task,
           project_name: projectName,
-          workspace_name: workspaceName
+          workspace_name: workspaceName,
+          status: taskStatus
         };
       }));
       
@@ -149,8 +162,29 @@ export const PendingTasksList = () => {
         return <Clock className="h-4 w-4 text-blue-500" />;
       case 'delayed':
         return <AlertCircle className="h-4 w-4 text-amber-500" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'upcoming':
+        return <Calendar className="h-4 w-4 text-purple-500" />;
       default:
         return <Clock className="h-4 w-4 text-blue-500" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'مكتملة';
+      case 'pending':
+        return 'قيد التنفيذ';
+      case 'delayed':
+        return 'متأخرة';
+      case 'cancelled':
+        return 'ملغية';
+      case 'upcoming':
+        return 'قادمة';
+      default:
+        return 'قيد التنفيذ';
     }
   };
 
@@ -160,7 +194,11 @@ export const PendingTasksList = () => {
         <Popover key={task.id}>
           <PopoverTrigger asChild>
             <div 
-              className="p-3 border rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+              className={`p-3 border rounded-md hover:bg-gray-50 transition-colors cursor-pointer ${
+                task.status === 'delayed' ? 'border-amber-300 bg-amber-50' : 
+                task.status === 'completed' ? 'border-green-300 bg-green-50' : 
+                ''
+              }`}
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -192,9 +230,7 @@ export const PendingTasksList = () => {
                     <div className="flex items-center">
                       {getStatusIcon(task.status)}
                       <span className="mr-1">
-                        {task.status === 'completed' ? 'مكتملة' : 
-                         task.status === 'pending' ? 'قيد الانتظار' : 
-                         task.status === 'delayed' ? 'متأخرة' : 'قيد التنفيذ'}
+                        {getStatusText(task.status)}
                       </span>
                     </div>
                   </div>

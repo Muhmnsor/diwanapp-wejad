@@ -18,7 +18,8 @@ export const TasksOverview = () => {
           totalTasks: 0,
           completedTasks: 0,
           pendingTasks: 0,
-          upcomingDeadlines: 0
+          upcomingDeadlines: 0,
+          delayedTasks: 0
         };
       }
       
@@ -41,19 +42,34 @@ export const TasksOverview = () => {
       const totalTasks = userTasks?.length || 0;
       const completedTasks = userTasks?.filter(task => task.status === 'completed').length || 0;
       const pendingTasks = userTasks?.filter(task => task.status === 'pending').length || 0;
+      
+      // Calculate delayed tasks (due date is in the past and not completed)
+      const delayedTasks = userTasks?.filter(task => {
+        if (!task.due_date) return false;
+        const dueDate = new Date(task.due_date);
+        return dueDate < now && task.status !== 'completed';
+      }).length || 0;
+      
       const upcomingDeadlines = userTasks?.filter(task => {
         if (!task.due_date) return false;
         const dueDate = new Date(task.due_date);
-        return dueDate > now && dueDate <= oneWeekFromNow;
+        return dueDate > now && dueDate <= oneWeekFromNow && task.status !== 'completed';
       }).length || 0;
       
-      console.log('Calculated user tasks stats:', { totalTasks, completedTasks, pendingTasks, upcomingDeadlines });
+      console.log('Calculated user tasks stats:', { 
+        totalTasks, 
+        completedTasks, 
+        pendingTasks, 
+        upcomingDeadlines,
+        delayedTasks
+      });
       
       return {
         totalTasks,
         completedTasks,
         pendingTasks,
-        upcomingDeadlines
+        upcomingDeadlines,
+        delayedTasks
       };
     },
     enabled: !!user?.id

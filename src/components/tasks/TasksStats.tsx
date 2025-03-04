@@ -3,7 +3,8 @@ import {
   CheckCircle2, 
   Clock, 
   FileText, 
-  Calendar 
+  Calendar,
+  AlertCircle
 } from "lucide-react";
 
 interface StatsProps {
@@ -12,6 +13,7 @@ interface StatsProps {
     completedTasks: number;
     pendingTasks: number;
     upcomingDeadlines: number;
+    delayedTasks?: number;
   }
 }
 
@@ -54,14 +56,14 @@ export const TasksStats = ({ stats }: StatsProps) => {
         </div>
       </div>
       
-      <div className="p-3 bg-purple-50 rounded-lg">
+      <div className="p-3 bg-amber-50 rounded-lg">
         <div className="flex items-center gap-2">
-          <div className="bg-purple-100 p-2 rounded-full">
-            <Calendar className="h-5 w-5 text-purple-600" />
+          <div className="bg-amber-100 p-2 rounded-full">
+            <AlertCircle className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">مواعيد قادمة</p>
-            <p className="font-bold text-lg">{stats.upcomingDeadlines}</p>
+            <p className="text-sm text-gray-500">مهام متأخرة</p>
+            <p className="font-bold text-lg">{stats.delayedTasks || 0}</p>
           </div>
         </div>
       </div>
