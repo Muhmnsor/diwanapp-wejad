@@ -51,7 +51,7 @@ export const AssignedTasksList = () => {
       
       console.log('Fetching all assigned tasks for user:', user.id);
       
-      // Fetch tasks from both tables: tasks and portfolio_tasks
+      // Fetch tasks from portfolio_tasks table
       const { data: portfolioTasks, error: portfolioError } = await supabase
         .from('portfolio_tasks')
         .select(`
@@ -63,8 +63,8 @@ export const AssignedTasksList = () => {
           priority,
           project_id,
           workspace_id,
-          portfolio_projects!project_id(portfolio_only_projects(name)),
-          portfolio_workspaces!workspace_id(name)
+          portfolio_projects(portfolio_only_projects(name)),
+          portfolio_workspaces(name)
         `)
         .eq('assigned_to', user.id);
       
@@ -74,16 +74,22 @@ export const AssignedTasksList = () => {
       }
       
       // Format the portfolio tasks
-      const formattedPortfolioTasks = portfolioTasks?.map(task => ({
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        status: task.status as TaskStatus,
-        due_date: task.due_date,
-        priority: task.priority,
-        project_name: task.portfolio_projects?.portfolio_only_projects?.name || 'مشروع غير محدد',
-        workspace_name: task.portfolio_workspaces?.name || 'مساحة غير محددة'
-      })) || [];
+      const formattedPortfolioTasks = portfolioTasks?.map(task => {
+        // Safely access nested properties
+        const projectName = task.portfolio_projects?.portfolio_only_projects?.[0]?.name || 'مشروع غير محدد';
+        const workspaceName = task.portfolio_workspaces?.name || 'مساحة غير محددة';
+        
+        return {
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          status: task.status as TaskStatus,
+          due_date: task.due_date,
+          priority: task.priority,
+          project_name: projectName,
+          workspace_name: workspaceName
+        };
+      }) || [];
       
       // Get tasks from the regular tasks table
       const { data: regularTasks, error: tasksError } = await supabase

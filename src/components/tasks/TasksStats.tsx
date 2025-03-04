@@ -19,8 +19,8 @@ interface StatsProps {
 
 export const TasksStats = ({ stats }: StatsProps) => {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <div className="p-3 bg-blue-50 rounded-lg">
+    <div className="flex flex-nowrap gap-4 overflow-x-auto pb-2">
+      <div className="p-3 bg-blue-50 rounded-lg min-w-[200px]">
         <div className="flex items-center gap-2">
           <div className="bg-blue-100 p-2 rounded-full">
             <FileText className="h-5 w-5 text-blue-600" />
@@ -32,7 +32,7 @@ export const TasksStats = ({ stats }: StatsProps) => {
         </div>
       </div>
       
-      <div className="p-3 bg-green-50 rounded-lg">
+      <div className="p-3 bg-green-50 rounded-lg min-w-[200px]">
         <div className="flex items-center gap-2">
           <div className="bg-green-100 p-2 rounded-full">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -44,7 +44,7 @@ export const TasksStats = ({ stats }: StatsProps) => {
         </div>
       </div>
       
-      <div className="p-3 bg-yellow-50 rounded-lg">
+      <div className="p-3 bg-yellow-50 rounded-lg min-w-[200px]">
         <div className="flex items-center gap-2">
           <div className="bg-yellow-100 p-2 rounded-full">
             <Clock className="h-5 w-5 text-yellow-600" />
@@ -56,7 +56,7 @@ export const TasksStats = ({ stats }: StatsProps) => {
         </div>
       </div>
       
-      <div className="p-3 bg-red-50 rounded-lg">
+      <div className="p-3 bg-red-50 rounded-lg min-w-[200px]">
         <div className="flex items-center gap-2">
           <div className="bg-red-100 p-2 rounded-full">
             <AlertCircle className="h-5 w-5 text-red-600" />
@@ -68,7 +68,7 @@ export const TasksStats = ({ stats }: StatsProps) => {
         </div>
       </div>
       
-      <div className="p-3 bg-purple-50 rounded-lg col-span-2">
+      <div className="p-3 bg-purple-50 rounded-lg min-w-[200px]">
         <div className="flex items-center gap-2">
           <div className="bg-purple-100 p-2 rounded-full">
             <Calendar className="h-5 w-5 text-purple-600" />
