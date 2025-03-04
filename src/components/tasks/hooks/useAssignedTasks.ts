@@ -31,8 +31,8 @@ interface PortfolioTaskResponse {
   status: TaskStatus;
   due_date: string | null;
   priority: string;
-  portfolio_only_projects?: PortfolioProject[];
-  portfolio_workspaces?: PortfolioWorkspace | null;
+  portfolio_only_projects: PortfolioProject[] | null;
+  portfolio_workspaces: PortfolioWorkspace | null;
 }
 
 export const useAssignedTasks = () => {
@@ -68,8 +68,11 @@ export const useAssignedTasks = () => {
         
         // Format the portfolio tasks
         const formattedPortfolioTasks = (portfolioTasks || []).map(task => {
-          // Safely access nested properties
-          const projectName = task.portfolio_only_projects?.[0]?.name || 'مشروع غير محدد';
+          // Safely access nested properties - fix the array access
+          const projectName = task.portfolio_only_projects && 
+                            task.portfolio_only_projects.length > 0 ? 
+                            task.portfolio_only_projects[0].name : 'مشروع غير محدد';
+          
           const workspaceName = task.portfolio_workspaces?.name || 'مساحة غير محددة';
           
           return {
