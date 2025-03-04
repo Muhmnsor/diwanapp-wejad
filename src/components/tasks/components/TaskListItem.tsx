@@ -70,6 +70,36 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
     return "hover:shadow-md transition-shadow";
   };
 
+  // تحديد نص حالة المهمة بناءً على قيمة status
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "مكتملة";
+      case "delayed":
+        return "متأخرة";
+      case "pending":
+        return "قيد التنفيذ";
+      case "upcoming":
+        return "قادمة";
+      default:
+        return "قيد التنفيذ";
+    }
+  };
+
+  // تحديد لون وأسلوب بادج الحالة
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "outline";
+      case "delayed":
+        return "destructive";
+      case "upcoming":
+        return "secondary";
+      default:
+        return "default";
+    }
+  };
+
   return (
     <Card className={getBorderStyle()}>
       <CardContent className="p-5">
@@ -87,8 +117,8 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
                 <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
               )}
             </div>
-            <Badge variant={status === "completed" ? "outline" : "default"} className="text-xs">
-              {status === "completed" ? "مكتملة" : "قيد التنفيذ"}
+            <Badge variant={getStatusVariant(status)} className="text-xs">
+              {getStatusText(status)}
             </Badge>
           </div>
           
