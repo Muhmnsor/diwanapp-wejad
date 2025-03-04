@@ -23,7 +23,9 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
   const fetchComments = async () => {
     setLoading(true);
     try {
-      // استعلام مبسط بدون JOIN
+      console.log("Fetching comments for task:", task.id);
+      
+      // استعلام مبسط
       const { data, error } = await supabase
         .from("task_comments")
         .select("*")
@@ -31,24 +33,45 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
         .order("created_at", { ascending: true });
           
       if (error) {
+        console.error("Error details:", error);
         throw error;
       }
+      
+      console.log("Comments data:", data);
       
       // إذا كان هناك بيانات، سنقوم بتحميل معلومات المستخدمين
       const commentsWithUserInfo = await Promise.all((data || []).map(async (comment) => {
         // إذا كان هناك معرف للمستخدم، فسنجلب معلومات المستخدم
         if (comment.created_by) {
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("display_name, email")
-            .eq("id", comment.created_by)
-            .single();
-          
-          return {
-            ...comment,
-            user_name: profileData?.display_name || profileData?.email || "مستخدم",
-            user_email: profileData?.email
-          };
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("display_name, email")
+              .eq("id", comment.created_by)
+              .single();
+            
+            if (profileError) {
+              console.warn("Error fetching profile:", profileError);
+              return {
+                ...comment,
+                user_name: "مستخدم",
+                user_email: null
+              };
+            }
+            
+            return {
+              ...comment,
+              user_name: profileData?.display_name || profileData?.email || "مستخدم",
+              user_email: profileData?.email
+            };
+          } catch (profileErr) {
+            console.error("Error in profile fetch:", profileErr);
+            return {
+              ...comment,
+              user_name: "مستخدم",
+              user_email: null
+            };
+          }
         }
         
         // إذا لم يكن هناك معرف للمستخدم، فسنعيد البيانات كما هي
@@ -59,6 +82,7 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
         };
       }));
       
+      console.log("Comments with user info:", commentsWithUserInfo);
       setComments(commentsWithUserInfo as TaskComment[]);
     } catch (error) {
       console.error("Error fetching comments:", error);
