@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { 
-  MoreHorizontal, 
   MessageCircle,
   Check,
   Clock,
@@ -13,7 +12,6 @@ import { Task } from "../types/task";
 import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
 import { TaskHeader } from "./header/TaskHeader";
 import { TaskMetadata } from "./metadata/TaskMetadata";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface TaskListItemProps {
   task: Task;
@@ -69,38 +67,41 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           </Button>
         </div>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              className="gap-2"
+        <div className="flex gap-2">
+          {currentStatus !== "completed" ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs flex items-center gap-1"
               onClick={() => handleStatusChange("completed")}
             >
-              <Check className="h-4 w-4 text-green-500" />
-              <span>تمت</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="gap-2"
+              <Check className="h-3.5 w-3.5 text-green-500" />
+              تمت
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs flex items-center gap-1"
               onClick={() => handleStatusChange("pending")}
             >
-              <Clock className="h-4 w-4 text-amber-500" />
-              <span>قيد التنفيذ</span>
-            </DropdownMenuItem>
-            {onDelete && (
-              <DropdownMenuItem 
-                className="gap-2 text-red-500 focus:text-red-500"
-                onClick={() => onDelete(task.id)}
-              >
-                <XCircle className="h-4 w-4" />
-                <span>حذف</span>
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <Clock className="h-3.5 w-3.5 text-amber-500" />
+              قيد التنفيذ
+            </Button>
+          )}
+          
+          {onDelete && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs flex items-center gap-1 text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={() => onDelete(task.id)}
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              حذف
+            </Button>
+          )}
+        </div>
       </div>
       
       <TaskDiscussionDialog 
