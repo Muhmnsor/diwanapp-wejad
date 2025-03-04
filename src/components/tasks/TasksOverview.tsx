@@ -5,74 +5,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PendingTasksList } from "./PendingTasksList";
 import { TasksStats } from "./TasksStats";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuthStore } from "@/store/refactored-auth";
 
 export const TasksOverview = () => {
-  const { user } = useAuthStore();
-  
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['tasks-stats', user?.id],
+    queryKey: ['tasks-stats'],
     queryFn: async () => {
-      if (!user?.id) {
-        return {
-          totalTasks: 0,
-          completedTasks: 0,
-          pendingTasks: 0,
-          upcomingDeadlines: 0,
-          delayedTasks: 0
-        };
-      }
-      
-      // Fetch actual stats from the portfolio_tasks table based on user
-      const { data: userTasks, error } = await supabase
-        .from('portfolio_tasks')
-        .select('status, due_date')
-        .eq('assigned_to', user.id);
-      
-      if (error) {
-        console.error("Error fetching tasks stats:", error);
-        throw error;
-      }
-      
-      const now = new Date();
-      const oneWeekFromNow = new Date();
-      oneWeekFromNow.setDate(now.getDate() + 7);
-      
-      // Calculate stats from the fetched data
-      const totalTasks = userTasks?.length || 0;
-      const completedTasks = userTasks?.filter(task => task.status === 'completed').length || 0;
-      const pendingTasks = userTasks?.filter(task => task.status === 'pending').length || 0;
-      
-      // Calculate delayed tasks (due date is in the past and not completed)
-      const delayedTasks = userTasks?.filter(task => {
-        if (!task.due_date) return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate < now && task.status !== 'completed';
-      }).length || 0;
-      
-      const upcomingDeadlines = userTasks?.filter(task => {
-        if (!task.due_date) return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate > now && dueDate <= oneWeekFromNow && task.status !== 'completed';
-      }).length || 0;
-      
-      console.log('Calculated user tasks stats:', { 
-        totalTasks, 
-        completedTasks, 
-        pendingTasks, 
-        upcomingDeadlines,
-        delayedTasks
-      });
-      
+      // في المستقبل سنقوم بجلب إحصائيات المهام من قاعدة البيانات
+      // هذه بيانات وهمية مؤقتة
       return {
-        totalTasks,
-        completedTasks,
-        pendingTasks,
-        upcomingDeadlines,
-        delayedTasks
+        totalTasks: 24,
+        completedTasks: 16,
+        pendingTasks: 8,
+        upcomingDeadlines: 3
       };
-    },
-    enabled: !!user?.id
+    }
   });
 
   if (isLoading) {
