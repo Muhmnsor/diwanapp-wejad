@@ -26,6 +26,9 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || null;
       
+      console.log("Current user ID:", userId);
+      console.log("Task ID:", task.id);
+      
       // رفع المرفق إذا كان موجودًا
       let attachmentUrl = null;
       let attachmentName = null;
@@ -40,7 +43,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         }
       }
       
-      // إنشاء تعليق جديد
+      // إنشاء تعليق جديد - مع التأكد من أن task_id هو string
       const { error } = await supabase
         .from("task_comments")
         .insert({
@@ -54,6 +57,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         });
       
       if (error) {
+        console.error("Error details:", error);
         throw error;
       }
       

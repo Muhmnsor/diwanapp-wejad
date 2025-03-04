@@ -23,19 +23,10 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
   const fetchComments = async () => {
     setLoading(true);
     try {
+      // استعلام مبسط بدون JOIN
       const { data, error } = await supabase
         .from("task_comments")
-        .select(`
-          id,
-          task_id,
-          content,
-          created_at,
-          created_by,
-          attachment_url,
-          attachment_name,
-          attachment_type,
-          profiles(display_name, email)
-        `)
+        .select("*")
         .eq("task_id", task.id)
         .order("created_at", { ascending: true });
           
@@ -43,9 +34,32 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
         throw error;
       }
       
-      // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
-      const commentsData = data as TaskComment[];
-      setComments(commentsData);
+      // إذا كان هناك بيانات، سنقوم بتحميل معلومات المستخدمين
+      const commentsWithUserInfo = await Promise.all((data || []).map(async (comment) => {
+        // إذا كان هناك معرف للمستخدم، فسنجلب معلومات المستخدم
+        if (comment.created_by) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("display_name, email")
+            .eq("id", comment.created_by)
+            .single();
+          
+          return {
+            ...comment,
+            user_name: profileData?.display_name || profileData?.email || "مستخدم",
+            user_email: profileData?.email
+          };
+        }
+        
+        // إذا لم يكن هناك معرف للمستخدم، فسنعيد البيانات كما هي
+        return {
+          ...comment,
+          user_name: "مستخدم",
+          user_email: null
+        };
+      }));
+      
+      setComments(commentsWithUserInfo as TaskComment[]);
     } catch (error) {
       console.error("Error fetching comments:", error);
       toast.error("حدث خطأ أثناء استرجاع التعليقات");

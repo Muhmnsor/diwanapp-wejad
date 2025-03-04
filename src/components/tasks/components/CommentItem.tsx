@@ -15,8 +15,8 @@ export const CommentItem = ({ comment }: CommentItemProps) => {
       })
     : "الآن";
 
-  // استخدام اسم المستخدم من profiles إذا كان متاحًا
-  const userName = comment.profiles?.display_name || comment.profiles?.email || "مستخدم";
+  // استخدام اسم المستخدم المضاف من معالجة البيانات
+  const userName = comment.user_name || "مستخدم";
 
   return (
     <div className="border rounded-lg p-3 bg-card">

@@ -8,8 +8,7 @@ export interface TaskComment {
   attachment_url?: string;
   attachment_name?: string;
   attachment_type?: string;
-  profiles?: {
-    display_name?: string;
-    email?: string;
-  } | null;
+  // معلومات المستخدم المضافة من الـ profiles
+  user_name?: string; // اسم المستخدم المعروض
+  user_email?: string; // البريد الإلكتروني للمستخدم
 }
