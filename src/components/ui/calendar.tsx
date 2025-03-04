@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -27,8 +28,8 @@ function Calendar({
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
         ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
+        nav_button_previous: "absolute left-1 rtl:right-1 rtl:left-auto",
+        nav_button_next: "absolute right-1 rtl:left-1 rtl:right-auto",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
@@ -52,8 +53,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        IconLeft: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        IconRight: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
       }}
       {...props}
     />

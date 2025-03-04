@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,6 +22,10 @@ import { CalendarIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ar } from 'date-fns/locale';
+import { TaskPriorityField } from "./components/TaskPriorityField";
+import { TaskStageField } from "./components/TaskStageField";
+import { TaskAssigneeField } from "./components/TaskAssigneeField";
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -189,33 +192,16 @@ export const AddTaskDialog = ({
             />
           </div>
           
-          <div className="grid gap-2">
-            <Label htmlFor="stage">المرحلة</Label>
-            <Select onValueChange={(value) => setStageId(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر المرحلة" />
-              </SelectTrigger>
-              <SelectContent>
-                {projectStages.map(stage => (
-                  <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TaskStageField 
+            stageId={stageId} 
+            setStageId={setStageId} 
+            projectStages={projectStages} 
+          />
           
-          <div className="grid gap-2">
-            <Label htmlFor="priority">الأولوية</Label>
-            <Select onValueChange={(value) => setPriority(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر الأولوية" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">منخفضة</SelectItem>
-                <SelectItem value="medium">متوسطة</SelectItem>
-                <SelectItem value="high">عالية</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <TaskPriorityField 
+            priority={priority} 
+            setPriority={setPriority} 
+          />
           
           <div className="grid gap-2">
             <Label htmlFor="due-date">تاريخ التسليم</Label>
@@ -224,45 +210,39 @@ export const AddTaskDialog = ({
                 <Button
                   variant={"outline"}
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-right font-normal",
                     !dueDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>اختر تاريخ التسليم</span>}
+                  <CalendarIcon className="ml-2 h-4 w-4" />
+                  {dueDate ? format(dueDate, "PPP", { locale: ar }) : <span>اختر تاريخ التسليم</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="center" side="bottom">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                />
+              <PopoverContent className="w-auto p-0" align="start">
+                <div dir="rtl">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    locale={ar}
+                    className="rtl"
+                    initialFocus
+                  />
+                </div>
               </PopoverContent>
             </Popover>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="assigned-to">تعيين إلى</Label>
-            <Select 
-              value={assignedTo} 
-              onValueChange={(value) => setAssignedTo(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="اختر المسؤول عن المهمة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" key="none">غير مسند</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.display_name || user.email || user.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TaskAssigneeField 
+            assignedTo={assignedTo} 
+            setAssignedTo={setAssignedTo} 
+            projectMembers={users.map(user => ({
+              id: user.id,
+              user_id: user.id,
+              user_display_name: user.display_name || user.email || 'مستخدم بلا اسم',
+              user_email: user.email
+            }))} 
+          />
         </div>
         
         <AlertDialogFooter>
