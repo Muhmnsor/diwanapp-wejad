@@ -9,7 +9,7 @@ import { TaskAssigneeField } from "./components/TaskAssigneeField";
 import { TaskFormActions } from "./components/TaskFormActions";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 
-interface TaskFormProps {
+export interface TaskFormProps {
   onSubmit: (formData: {
     title: string;
     description: string;
@@ -57,18 +57,12 @@ export const TaskForm = ({
   };
 
   const handleCancel = () => {
-    onSubmit({ 
-      title: "", 
-      description: "", 
-      dueDate: "", 
-      priority: "medium", 
-      stageId: "", 
-      assignedTo: null 
-    });
+    // Reset form or handle cancel
+    console.log("Form cancelled");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
       <TaskTitleField title={title} setTitle={setTitle} />
       <TaskDescriptionField description={description} setDescription={setDescription} />
       

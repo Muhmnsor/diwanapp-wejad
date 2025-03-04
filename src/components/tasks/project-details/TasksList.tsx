@@ -72,9 +72,10 @@ export const TasksList = ({ projectId }: TasksListProps) => {
       <AddTaskDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        projectId={projectId}
+        projectId={projectId || ""}
         projectStages={projectStages}
-        onSuccess={fetchTasks}
+        onTaskAdded={fetchTasks}
+        projectMembers={[]} // Pass empty array or fetch project members
       />
     </>
   );

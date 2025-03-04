@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
@@ -34,6 +35,7 @@ export function AddTaskDialog({
     // After submission, call onTaskAdded and reset form
     setIsSubmitting(false);
     onOpenChange(false);
+    onTaskAdded();
   };
 
   return (
@@ -45,39 +47,26 @@ export function AddTaskDialog({
             أضف مهمة جديدة إلى المشروع. اضغط إرسال عند الانتهاء.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-auto">
           <TaskForm
-            title={title}
-            setTitle={setTitle}
-            description={description}
-            setDescription={setDescription}
-            priority={priority}
-            setPriority={setPriority}
-            dueDate={dueDate}
-            setDueDate={setDueDate}
-            stageId={stageId}
-            setStageId={setStageId}
-            assignedTo={assignedTo}
-            setAssignedTo={setAssignedTo}
-            attachment={attachment}
-            setAttachment={setAttachment}
+            onSubmit={async (formData) => {
+              setIsSubmitting(true);
+              try {
+                // Logic to handle task submission would go here
+                console.log("Submitting form data:", formData);
+                onTaskAdded();
+              } catch (error) {
+                console.error("Error submitting task:", error);
+              } finally {
+                setIsSubmitting(false);
+                onOpenChange(false);
+              }
+            }}
+            isSubmitting={isSubmitting}
             projectStages={projectStages}
-            projectMembers={projectMembers}
+            projectId={projectId}
           />
         </div>
-        <DialogFooter className="sm:justify-end mt-2">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-          >
-            إلغاء
-          </Button>
-          <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            إرسال
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
