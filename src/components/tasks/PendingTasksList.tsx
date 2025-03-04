@@ -12,6 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useAuthStore } from "@/store/refactored-auth";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const PendingTasksList = () => {
   const { user } = useAuthStore();
@@ -20,6 +26,8 @@ export const PendingTasksList = () => {
     queryKey: ['assigned-tasks', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
+      
+      console.log('Fetching tasks for user:', user.id);
       
       const { data, error } = await supabase
         .from('tasks')
@@ -34,7 +42,10 @@ export const PendingTasksList = () => {
         .eq('assigned_to', user.id)
         .order('due_date', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching assigned tasks:", error);
+        throw error;
+      }
       
       // Transform the data to include the project title
       const transformedData = data?.map(task => ({
@@ -103,22 +114,30 @@ export const PendingTasksList = () => {
   return (
     <div className="space-y-3">
       {tasks.map((task) => (
-        <div 
-          key={task.id} 
-          className="p-3 border rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-        >
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              {getStatusIcon(task.status)}
-              <h3 className="font-medium">{task.title}</h3>
-            </div>
-            {getPriorityBadge(task.priority)}
-          </div>
-          <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
-            <span>{task.project_name || 'مشروع غير محدد'}</span>
-            <span>{formatDueDate(task.due_date)}</span>
-          </div>
-        </div>
+        <TooltipProvider key={task.id}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className="p-3 border rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(task.status)}
+                    <h3 className="font-medium">{task.title}</h3>
+                  </div>
+                  {getPriorityBadge(task.priority)}
+                </div>
+                <div className="mt-2 flex justify-between items-center text-sm text-gray-500">
+                  <span>{task.project_name || 'مشروع غير محدد'}</span>
+                  <span>{task.due_date ? formatDueDate(task.due_date) : 'بدون تاريخ'}</span>
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{task.description || 'لا يوجد وصف'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ))}
     </div>
   );

@@ -5,20 +5,58 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PendingTasksList } from "./PendingTasksList";
 import { TasksStats } from "./TasksStats";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export const TasksOverview = () => {
+  const { user } = useAuthStore();
+  
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['tasks-stats'],
+    queryKey: ['tasks-stats', user?.id],
     queryFn: async () => {
-      // في المستقبل سنقوم بجلب إحصائيات المهام من قاعدة البيانات
-      // هذه بيانات وهمية مؤقتة
+      if (!user?.id) {
+        return {
+          totalTasks: 0,
+          completedTasks: 0,
+          pendingTasks: 0,
+          upcomingDeadlines: 0
+        };
+      }
+      
+      // Fetch actual stats from the database based on user
+      const { data: userTasks, error } = await supabase
+        .from('tasks')
+        .select('status, due_date')
+        .eq('assigned_to', user.id);
+      
+      if (error) {
+        console.error("Error fetching tasks stats:", error);
+        throw error;
+      }
+      
+      const now = new Date();
+      const oneWeekFromNow = new Date();
+      oneWeekFromNow.setDate(now.getDate() + 7);
+      
+      // Calculate stats from the fetched data
+      const totalTasks = userTasks?.length || 0;
+      const completedTasks = userTasks?.filter(task => task.status === 'completed').length || 0;
+      const pendingTasks = userTasks?.filter(task => task.status === 'pending').length || 0;
+      const upcomingDeadlines = userTasks?.filter(task => {
+        if (!task.due_date) return false;
+        const dueDate = new Date(task.due_date);
+        return dueDate > now && dueDate <= oneWeekFromNow;
+      }).length || 0;
+      
+      console.log('Calculated user tasks stats:', { totalTasks, completedTasks, pendingTasks, upcomingDeadlines });
+      
       return {
-        totalTasks: 24,
-        completedTasks: 16,
-        pendingTasks: 8,
-        upcomingDeadlines: 3
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+        upcomingDeadlines
       };
-    }
+    },
+    enabled: !!user?.id
   });
 
   if (isLoading) {
