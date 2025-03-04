@@ -29,16 +29,19 @@ export const useAssignedTasks = () => {
       // 1. استرجاع المشاريع الخاصة بالمستخدم وتخزينها في قاموس
       const { data: projectsData } = await supabase
         .from('project_tasks')
-        .select('id, name')
+        .select('id, title')
         .eq('is_active', true);
         
       if (projectsData) {
         projectsData.forEach(project => {
-          if (project.id && project.name) {
-            projects[project.id] = project.name;
+          if (project.id && project.title) {
+            projects[project.id] = project.title;
           }
         });
       }
+
+      console.log("Projects data:", projectsData);
+      console.log("Projects map:", projects);
       
       // 2. استرجاع مهام المحفظة المسندة إلى المستخدم
       const { data: portfolioTasks, error: portfolioError } = await supabase
@@ -65,7 +68,7 @@ export const useAssignedTasks = () => {
         // 3. استرجاع المهام العادية المسندة إلى المستخدم
         const { data: regularTasks, error: regularError } = await supabase
           .from('tasks')
-          .select('*')
+          .select('*, project_tasks:project_id(id, title)')
           .eq('assigned_to', userId);
           
         if (regularError) {
@@ -73,8 +76,12 @@ export const useAssignedTasks = () => {
         } else {
           console.log("Regular tasks fetched:", regularTasks);
           
-          // تخزين المهام الأساسية للرجوع إليها لاحقًا
+          // تحديث خريطة المشاريع من البيانات الجديدة
           regularTasks?.forEach(task => {
+            if (task.project_tasks && task.project_tasks.title) {
+              projects[task.project_id] = task.project_tasks.title;
+            }
+            // تخزين المهام الأساسية للرجوع إليها لاحقًا
             parentTasks[task.id] = task;
           });
           
@@ -82,7 +89,7 @@ export const useAssignedTasks = () => {
           
           // 4. استرجاع المهام الفرعية المسندة إلى المستخدم
           const { data: subtasks, error: subtasksError } = await supabase
-            .from('subtasks')  // تغيير من task_subtasks إلى subtasks
+            .from('subtasks')
             .select('*')
             .eq('assigned_to', userId);
             
@@ -108,24 +115,7 @@ export const useAssignedTasks = () => {
               return new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime();
             });
             
-            console.log("Calculated user tasks stats:", {
-              totalTasks: allTasks.length,
-              completedTasks: allTasks.filter(t => t.status === 'completed').length,
-              pendingTasks: allTasks.filter(t => t.status === 'pending').length,
-              upcomingDeadlines: allTasks.filter(t => {
-                if (!t.due_date) return false;
-                const dueDate = new Date(t.due_date);
-                const today = new Date();
-                const diff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                return diff <= 3 && diff >= 0 && t.status !== 'completed';
-              }).length,
-              delayedTasks: allTasks.filter(t => {
-                if (!t.due_date) return false;
-                const dueDate = new Date(t.due_date);
-                const today = new Date();
-                return dueDate < today && t.status !== 'completed';
-              }).length
-            });
+            console.log("All tasks:", allTasks);
             
             setTasks(allTasks);
           }
