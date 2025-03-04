@@ -191,7 +191,7 @@ export const AddTaskDialog = ({
           
           <div className="grid gap-2">
             <Label htmlFor="stage">المرحلة</Label>
-            <Select onValueChange={(value) => setStageId(value)}>
+            <Select onValueChange={(value) => setStageId(value)} defaultValue={stageId}>
               <SelectTrigger>
                 <SelectValue placeholder="اختر المرحلة" />
               </SelectTrigger>
@@ -205,7 +205,7 @@ export const AddTaskDialog = ({
           
           <div className="grid gap-2">
             <Label htmlFor="priority">الأولوية</Label>
-            <Select onValueChange={(value) => setPriority(value)}>
+            <Select onValueChange={(value) => setPriority(value)} defaultValue={priority}>
               <SelectTrigger>
                 <SelectValue placeholder="اختر الأولوية" />
               </SelectTrigger>
@@ -222,22 +222,22 @@ export const AddTaskDialog = ({
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant={"outline"}
+                  id="due-date"
+                  variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
                     !dueDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="ml-2 h-4 w-4" />
                   {dueDate ? format(dueDate, "PPP") : <span>اختر تاريخ التسليم</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="center" side="bottom">
+              <PopoverContent className="w-auto p-0" align="end">
                 <Calendar
                   mode="single"
                   selected={dueDate}
                   onSelect={setDueDate}
-                  disabled={(date) => date < new Date()}
                   initialFocus
                 />
               </PopoverContent>
