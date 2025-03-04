@@ -187,7 +187,7 @@ export const CreateTaskProjectDialog = ({
                 <SelectValue placeholder="اختر مدير المشروع" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">بدون مدير</SelectItem>
+                <SelectItem value="no_manager" key="no_manager">بدون مدير</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.display_name || user.email || user.id}
