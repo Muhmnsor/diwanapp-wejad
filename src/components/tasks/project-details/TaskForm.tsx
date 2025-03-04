@@ -18,13 +18,13 @@ export interface TaskFormProps {
     priority: string;
     stageId: string;
     assignedTo: string | null;
-    attachment?: File | null;
+    attachment?: File[] | null;
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
   projectId: string | undefined;
-  attachment?: File | null;
-  setAttachment?: (file: File | null) => void;
+  attachment?: File[] | null;
+  setAttachment?: (file: File[] | null) => void;
 }
 
 export const TaskForm = ({ 
@@ -41,7 +41,7 @@ export const TaskForm = ({
   const [priority, setPriority] = useState("medium");
   const [stageId, setStageId] = useState("");
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
-  const [localAttachment, setLocalAttachment] = useState<File | null>(null);
+  const [localAttachment, setLocalAttachment] = useState<File[] | null>(null);
   
   const { projectMembers } = useProjectMembers(projectId);
   

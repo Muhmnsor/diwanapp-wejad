@@ -4,6 +4,7 @@ import { TaskForm } from "./TaskForm";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { uploadAttachment } from "../services/uploadService";
 
 export function AddTaskDialog({ 
   open, 
@@ -26,7 +27,7 @@ export function AddTaskDialog({
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [stageId, setStageId] = useState(projectStages[0]?.id || "");
   const [assignedTo, setAssignedTo] = useState(projectMembers[0]?.id || "");
-  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachment, setAttachment] = useState<File[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -55,11 +56,19 @@ export function AddTaskDialog({
                 // Logic to handle task submission would go here
                 console.log("Submitting form data:", formData);
                 
-                // إذا كان هناك مرفق، قم برفعه
-                if (attachment) {
-                  console.log("Uploading attachment:", attachment);
-                  // هنا يمكن إضافة منطق رفع المرفق
+                // رفع المرفقات إذا وجدت
+                const attachmentUrls: string[] = [];
+                if (attachment && attachment.length > 0) {
+                  for (const file of attachment) {
+                    console.log("Uploading attachment:", file);
+                    const uploadResult = await uploadAttachment(file);
+                    if (uploadResult?.url) {
+                      attachmentUrls.push(uploadResult.url);
+                    }
+                  }
                 }
+                
+                // هنا يمكن إضافة المرفقات إلى بيانات المهمة قبل الحفظ
                 
                 onTaskAdded();
               } catch (error) {

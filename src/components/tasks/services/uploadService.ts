@@ -6,7 +6,7 @@ export const uploadAttachment = async (file: File): Promise<{ url: string; error
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 11)}_${Date.now()}.${fileExt}`;
-    const filePath = `task-comments/${fileName}`;
+    const filePath = `task-attachments/${fileName}`;
 
     const { data, error } = await supabase.storage
       .from('event-images') // استخدام مخزن الصور الموجود
