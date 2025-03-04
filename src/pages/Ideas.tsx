@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddIdeaDialog } from "@/components/ideas/AddIdeaDialog";
 import { toast } from "sonner";
 import { IdeasTable } from "@/components/ideas/IdeasTable";
@@ -18,9 +18,10 @@ const Ideas = () => {
   const [ideaToDelete, setIdeaToDelete] = useState<Idea | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: ideas, isLoading, refetch } = useQuery({
+  const { data: ideas, isLoading, refetch, error } = useQuery({
     queryKey: ['ideas', filterStatus],
     queryFn: async () => {
+      console.log("Fetching ideas with filter:", filterStatus);
       let query = supabase
         .from('ideas')
         .select(`
@@ -41,12 +42,20 @@ const Ideas = () => {
         throw error;
       }
       
+      console.log("Ideas fetched:", data?.length || 0);
       return data.map(idea => ({
         ...idea,
         creator_email: idea.profiles?.email || 'غير معروف'
       }));
     }
   });
+
+  useEffect(() => {
+    if (error) {
+      console.error("Query error:", error);
+      toast.error("حدث خطأ أثناء تحميل الأفكار");
+    }
+  }, [error]);
 
   const handleDelete = async (idea: Idea) => {
     setIdeaToDelete(idea);
@@ -99,13 +108,26 @@ const Ideas = () => {
           onOpenChange={setIsAddDialogOpen}
         />
 
-        <IdeasTable 
-          ideas={ideas || []}
-          isLoading={isLoading}
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
-          onDelete={handleDelete}
-        />
+        {error ? (
+          <div className="bg-red-50 p-4 rounded-md text-red-800 text-center">
+            <p>حدث خطأ أثناء تحميل الأفكار</p>
+            <Button 
+              variant="outline" 
+              className="mt-2" 
+              onClick={() => refetch()}
+            >
+              إعادة المحاولة
+            </Button>
+          </div>
+        ) : (
+          <IdeasTable 
+            ideas={ideas || []}
+            isLoading={isLoading}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            onDelete={handleDelete}
+          />
+        )}
 
         <DeleteIdeaDialog 
           isOpen={!!ideaToDelete}
