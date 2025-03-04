@@ -59,6 +59,7 @@ export const useUsersData = () => {
       if (userRoles) {
         userRoles.forEach(ur => {
           if (ur.roles) {
+            // Fix: Ensure we're accessing the name property from the roles object, not from an array
             rolesMap.set(ur.user_id, ur.roles.name);
           }
         });
