@@ -1,3 +1,4 @@
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,6 +42,12 @@ type TaskFormData = {
   assignedTo: string;
 };
 
+interface User {
+  id: string;
+  display_name?: string;
+  email?: string;
+}
+
 export const AddTaskDialog = ({ 
   open, 
   onOpenChange, 
@@ -55,6 +62,35 @@ export const AddTaskDialog = ({
   const [stageId, setStageId] = useState(projectStages[0]?.id || "");
   const [assignedTo, setAssignedTo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  
+  // جلب قائمة المستخدمين
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, display_name, email')
+          .eq('is_active', true)
+          .order('display_name', { ascending: true });
+
+        if (error) {
+          console.error("خطأ في جلب المستخدمين:", error);
+          return;
+        }
+
+        if (data) {
+          setUsers(data);
+        }
+      } catch (error) {
+        console.error("خطأ في جلب المستخدمين:", error);
+      }
+    };
+
+    if (open) {
+      fetchUsers();
+    }
+  }, [open]);
   
   const handleFormSubmit = async (formData: TaskFormData) => {
     if (!projectId) {
@@ -76,7 +112,7 @@ export const AddTaskDialog = ({
           due_date: formData.dueDate,
           project_id: projectId,
           stage_id: formData.stageId,
-          assigned_to: formData.assignedTo,
+          assigned_to: formData.assignedTo === "none" ? null : formData.assignedTo,
           workspace_id: null
         })
         .select()
@@ -210,13 +246,22 @@ export const AddTaskDialog = ({
 
           <div className="grid gap-2">
             <Label htmlFor="assigned-to">تعيين إلى</Label>
-            <Input
-              type="text"
-              id="assigned-to"
-              placeholder="اسم المستخدم أو البريد الإلكتروني"
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-            />
+            <Select 
+              value={assignedTo} 
+              onValueChange={(value) => setAssignedTo(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر المسؤول عن المهمة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" key="none">غير مسند</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.display_name || user.email || user.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         
