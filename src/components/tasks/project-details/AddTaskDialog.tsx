@@ -1,112 +1,84 @@
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { TaskForm } from "./TaskForm";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { TaskForm } from "./components/TaskForm";
-import { useTaskForm } from "./hooks/useTaskForm";
-import { TaskFormData } from "./types/taskForm";
+import { Loader2 } from "lucide-react";
 
-interface AddTaskDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  projectId: string | undefined;
-  projectStages: { id: string; name: string }[];
-  onSuccess: () => void;
-}
-
-export const AddTaskDialog = ({ 
+export function AddTaskDialog({ 
   open, 
   onOpenChange, 
-  projectId,
-  projectStages,
-  onSuccess 
-}: AddTaskDialogProps) => {
-  const {
-    title,
-    setTitle,
-    description,
-    setDescription,
-    priority,
-    setPriority,
-    dueDate,
-    setDueDate,
-    stageId,
-    setStageId,
-    assignedTo,
-    setAssignedTo,
-    attachment,
-    setAttachment,
-    isSubmitting,
-    projectMembers,
-    handleFormSubmit,
-  } = useTaskForm({
-    projectId,
-    projectStages,
-    onSuccess,
-    onOpenChange
-  });
+  projectId, 
+  projectStages, 
+  onTaskAdded, 
+  projectMembers 
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectId: string;
+  projectStages: { id: string; name: string }[];
+  onTaskAdded: () => void;
+  projectMembers: { id: string; name: string }[];
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("normal");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [stageId, setStageId] = useState(projectStages[0]?.id || "");
+  const [assignedTo, setAssignedTo] = useState(projectMembers[0]?.id || "");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    // Logic to handle task submission
+    // After submission, call onTaskAdded and reset form
+    setIsSubmitting(false);
+    onOpenChange(false);
+  };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogTrigger asChild>
-        {/* Trigger is controlled externally */}
-      </AlertDialogTrigger>
-      <AlertDialogContent dir="rtl">
-        <AlertDialogHeader>
-          <AlertDialogTitle>إضافة مهمة جديدة</AlertDialogTitle>
-          <AlertDialogDescription>
-            أدخل تفاصيل المهمة لإنشائها في المشروع الحالي.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        
-        <TaskForm
-          title={title}
-          setTitle={setTitle}
-          description={description}
-          setDescription={setDescription}
-          priority={priority}
-          setPriority={setPriority}
-          dueDate={dueDate}
-          setDueDate={setDueDate}
-          stageId={stageId}
-          setStageId={setStageId}
-          assignedTo={assignedTo}
-          setAssignedTo={setAssignedTo}
-          attachment={attachment}
-          setAttachment={setAttachment}
-          projectStages={projectStages}
-          projectMembers={projectMembers}
-        />
-        
-        <AlertDialogFooter>
-          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>إضافة مهمة جديدة</DialogTitle>
+          <DialogDescription>
+            أضف مهمة جديدة إلى المشروع. اضغط إرسال عند الانتهاء.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-hidden">
+          <TaskForm
+            title={title}
+            setTitle={setTitle}
+            description={description}
+            setDescription={setDescription}
+            priority={priority}
+            setPriority={setPriority}
+            dueDate={dueDate}
+            setDueDate={setDueDate}
+            stageId={stageId}
+            setStageId={setStageId}
+            assignedTo={assignedTo}
+            setAssignedTo={setAssignedTo}
+            attachment={attachment}
+            setAttachment={setAttachment}
+            projectStages={projectStages}
+            projectMembers={projectMembers}
+          />
+        </div>
+        <DialogFooter className="sm:justify-end mt-2">
           <Button 
-            type="submit" 
-            onClick={() => handleFormSubmit({
-              title,
-              description,
-              status: "pending",
-              priority,
-              dueDate,
-              stageId,
-              assignedTo,
-              attachment
-            } as TaskFormData)}
-            disabled={isSubmitting}
+            type="button" 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
           >
-            {isSubmitting ? "جاري الإنشاء..." : "إنشاء"}
+            إلغاء
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            إرسال
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
-};
+}

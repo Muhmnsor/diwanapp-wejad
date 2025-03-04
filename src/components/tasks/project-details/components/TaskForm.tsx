@@ -28,7 +28,7 @@ export const TaskForm = ({
   projectMembers
 }: TaskFormProps) => {
   return (
-    <div className="grid gap-4 py-4">
+    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
       <div className="grid gap-2">
         <Label htmlFor="name">عنوان المهمة</Label>
         <Input 
@@ -45,6 +45,7 @@ export const TaskForm = ({
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          className="min-h-20 resize-none"
         />
       </div>
       

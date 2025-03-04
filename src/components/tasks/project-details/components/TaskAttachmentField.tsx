@@ -50,14 +50,14 @@ export const TaskAttachmentField = ({ attachment, setAttachment }: TaskAttachmen
         </div>
         
         {attachment && (
-          <div className="flex items-center gap-2 mt-2 p-2 border rounded-md bg-gray-50">
+          <div className="flex items-center gap-2 mt-2 p-2 border rounded-md bg-gray-50 break-all">
             <span className="flex-1 truncate text-sm">{attachment.name}</span>
             <Button 
               type="button" 
               variant="ghost" 
               size="sm" 
               onClick={handleRemoveFile} 
-              className="h-7 w-7 p-0"
+              className="h-7 w-7 p-0 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
