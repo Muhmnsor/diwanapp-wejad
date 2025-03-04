@@ -40,30 +40,36 @@ export const UsersHeader = ({ roles, users, onUserCreated }: UsersHeaderProps) =
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 mb-8" style={{ direction: 'rtl' }}>
-        <div className="bg-primary/10 rounded-lg p-4 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">إجمالي المستخدمين</span>
+        <div className="bg-primary/10 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UserIcon className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">إجمالي المستخدمين</span>
+            </div>
+            <span className="text-xl font-bold">{users.length}</span>
           </div>
-          <span className="text-2xl font-bold">{users.length}</span>
         </div>
         
-        <div className="bg-primary/10 rounded-lg p-4 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">الأدوار والصلاحيات</span>
+        <div className="bg-primary/10 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">الأدوار والصلاحيات</span>
+            </div>
+            <span className="text-xl font-bold">{roles.length}</span>
           </div>
-          <span className="text-2xl font-bold">{roles.length}</span>
         </div>
         
         {/* عرض عدد المستخدمين حسب الدور */}
         {Object.entries(rolesCounts).map(([role, count]) => (
-          <div key={role} className="bg-primary/10 rounded-lg p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">{getRoleDisplayName(role)}</span>
+          <div key={role} className="bg-primary/10 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">{getRoleDisplayName(role)}</span>
+              </div>
+              <span className="text-xl font-bold">{count}</span>
             </div>
-            <span className="text-2xl font-bold">{count}</span>
           </div>
         ))}
       </div>
