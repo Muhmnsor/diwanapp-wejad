@@ -22,9 +22,9 @@ export const TasksOverview = () => {
         };
       }
       
-      // Fetch actual stats from the database based on user
+      // Fetch actual stats from the portfolio_tasks table based on user
       const { data: userTasks, error } = await supabase
-        .from('tasks')
+        .from('portfolio_tasks')
         .select('status, due_date')
         .eq('assigned_to', user.id);
       

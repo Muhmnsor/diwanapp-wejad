@@ -27,7 +27,7 @@ import {
 export const PendingTasksList = () => {
   const { user } = useAuthStore();
   
-  const { data: tasks, isLoading } = useQuery({
+  const { data: tasks, isLoading, error } = useQuery({
     queryKey: ['assigned-tasks', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -36,10 +36,11 @@ export const PendingTasksList = () => {
       
       // تبسيط الاستعلام للحصول على المهام المسندة للمستخدم
       const { data, error } = await supabase
-        .from('tasks')
+        .from('portfolio_tasks')
         .select(`
           *,
-          projects(title)
+          workspace_id,
+          project_id
         `)
         .eq('assigned_to', user.id)
         .order('due_date', { ascending: true });
@@ -49,14 +50,44 @@ export const PendingTasksList = () => {
         throw error;
       }
       
-      // تحويل البيانات لتتضمن اسم المشروع
-      const transformedData = data?.map(task => ({
-        ...task,
-        project_name: task.projects?.title || 'مشروع غير محدد'
-      })) || [];
+      // Get workspace and project info for each task
+      const enhancedData = await Promise.all(data.map(async (task) => {
+        let projectName = 'مشروع غير محدد';
+        let workspaceName = 'مساحة عمل غير محددة';
+        
+        if (task.workspace_id) {
+          const { data: workspace } = await supabase
+            .from('workspaces')
+            .select('name')
+            .eq('id', task.workspace_id)
+            .single();
+          
+          if (workspace) {
+            workspaceName = workspace.name;
+          }
+        }
+        
+        if (task.project_id) {
+          const { data: project } = await supabase
+            .from('portfolio_only_projects')
+            .select('name')
+            .eq('id', task.project_id)
+            .single();
+          
+          if (project) {
+            projectName = project.name;
+          }
+        }
+        
+        return {
+          ...task,
+          project_name: projectName,
+          workspace_name: workspaceName
+        };
+      }));
       
-      console.log('Transformed assigned tasks data:', transformedData);
-      return transformedData;
+      console.log('Enhanced tasks data:', enhancedData);
+      return enhancedData;
     },
     enabled: !!user?.id
   });
@@ -67,6 +98,16 @@ export const PendingTasksList = () => {
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-14 w-full" />
         ))}
+      </div>
+    );
+  }
+  
+  if (error) {
+    console.error("Error in tasks query:", error);
+    return (
+      <div className="text-center py-4 text-red-500">
+        <p>حدث خطأ أثناء تحميل المهام</p>
+        <p className="text-sm">{error.message}</p>
       </div>
     );
   }
