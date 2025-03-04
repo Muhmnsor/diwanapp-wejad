@@ -4,6 +4,9 @@ import { useProjectTasks } from "./hooks/useProjectTasks";
 import { ProjectStatusBadge } from "./components/ProjectStatusBadge";
 import { ProjectDateInfo } from "./components/ProjectDateInfo";
 import { ProjectProgress } from "./components/ProjectProgress";
+import { Button } from "@/components/ui/button";
+import { ChevronRight, Folder } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface TaskProject {
   id: string;
@@ -34,7 +37,20 @@ export const TaskProjectInfo = ({ project }: TaskProjectInfoProps) => {
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <h1 className="text-2xl font-bold">{project.title}</h1>
-          <ProjectStatusBadge status={project.status} />
+          <div className="flex items-center gap-2">
+            <Link to={`/workspace-tasks/${project.workspace_id}`}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1"
+              >
+                <Folder className="h-4 w-4" />
+                <span>العودة للمشاريع</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <ProjectStatusBadge status={project.status} />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
