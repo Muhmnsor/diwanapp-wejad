@@ -34,25 +34,20 @@ export const ExtendDiscussionWrapper: React.FC<ExtendDiscussionWrapperProps> = (
     onSuccess
   });
 
-  // This function will be passed to the original dialog component
-  const handleSubmit = async (formData: { days: number; hours: number }) => {
-    // Update local state from form data
-    setDays(formData.days);
-    setHours(formData.hours);
-    
-    // Call our custom extension logic
-    return handleExtendDiscussion();
-  };
-
+  // Instead of using onSubmit which doesn't exist on ExtendDiscussionDialog,
+  // let's check the actual props the dialog expects and provide them directly
+  
   return (
     <ExtendDiscussionDialog
       isOpen={isOpen}
       onClose={onClose}
       ideaId={ideaId}
       onSuccess={onSuccess}
-      // Pass the customized submit handler
-      // The dialog will call this with the form data
-      onSubmit={handleSubmit}
+      days={days}
+      hours={hours}
+      onDaysChange={setDays}
+      onHoursChange={setHours}
+      onExtend={handleExtendDiscussion}
       isSubmitting={isSubmitting}
     />
   );
