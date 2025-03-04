@@ -15,6 +15,9 @@ export const CommentItem = ({ comment }: CommentItemProps) => {
       })
     : "الآن";
 
+  // استخدام اسم المستخدم من profiles إذا كان متاحًا
+  const userName = comment.profiles?.display_name || comment.profiles?.email || "مستخدم";
+
   return (
     <div className="border rounded-lg p-3 bg-card">
       <div className="flex items-center justify-between mb-2">
@@ -23,7 +26,7 @@ export const CommentItem = ({ comment }: CommentItemProps) => {
             <User className="h-4 w-4 text-primary" />
           </div>
           <div className="text-sm font-medium">
-            مستخدم
+            {userName}
           </div>
         </div>
         <div className="text-xs text-muted-foreground">{formattedDate}</div>

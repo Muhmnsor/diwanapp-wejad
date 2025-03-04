@@ -33,7 +33,8 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
           created_by,
           attachment_url,
           attachment_name,
-          attachment_type
+          attachment_type,
+          profiles(display_name, email)
         `)
         .eq("task_id", task.id)
         .order("created_at", { ascending: true });
@@ -43,18 +44,7 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
       }
       
       // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
-      const formattedData: TaskComment[] = (data || []).map((item: any) => ({
-        id: item.id,
-        task_id: item.task_id,
-        content: item.content,
-        created_at: item.created_at,
-        created_by: item.created_by,
-        attachment_url: item.attachment_url,
-        attachment_name: item.attachment_name,
-        attachment_type: item.attachment_type,
-      }));
-      
-      setComments(formattedData);
+      setComments(data || []);
     } catch (error) {
       console.error("Error fetching comments:", error);
       toast.error("حدث خطأ أثناء استرجاع التعليقات");

@@ -22,6 +22,10 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
     setIsSubmitting(true);
     
     try {
+      // الحصول على معرف المستخدم الحالي
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || null;
+      
       // رفع المرفق إذا كان موجودًا
       let attachmentUrl = null;
       let attachmentName = null;
@@ -36,18 +40,14 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         }
       }
       
-      // تحديد الجدول المناسب بناءً على نوع المهمة
-      const tableName = task.parent_task_id ? "subtasks" : "tasks";
-      const taskId = task.id;
-      
       // إنشاء تعليق جديد
       const { error } = await supabase
         .from("task_comments")
         .insert({
-          task_id: taskId,
+          task_id: task.id,
           content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
           created_at: new Date().toISOString(),
-          created_by: supabase.auth.getUser().then(resp => resp.data.user?.id),
+          created_by: userId,
           attachment_url: attachmentUrl,
           attachment_name: attachmentName,
           attachment_type: attachmentType
