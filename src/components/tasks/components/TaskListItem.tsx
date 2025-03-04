@@ -87,10 +87,11 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
                 </div>
               )}
               
-              <div className="flex items-center text-sm text-muted-foreground">
-                <span className="ml-1">{task.project_name || "مشروع غير محدد"}</span>
-                {task.workspace_name && <span className="mr-1"> | {task.workspace_name}</span>}
-              </div>
+              {task.project_name && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <span>{task.project_name}</span>
+                </div>
+              )}
             </div>
             
             <Button 

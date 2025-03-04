@@ -31,7 +31,7 @@ interface PortfolioTaskResponse {
   status: TaskStatus;
   due_date: string | null;
   priority: string;
-  portfolio_only_projects: PortfolioProject[] | null;
+  portfolio_only_projects: { name: string }[] | null;
   portfolio_workspaces: PortfolioWorkspace | null;
 }
 
@@ -68,12 +68,14 @@ export const useAssignedTasks = () => {
         
         // Format the portfolio tasks
         const formattedPortfolioTasks = (portfolioTasks || []).map(task => {
-          // Safely access nested properties - fix the array access
-          const projectName = task.portfolio_only_projects && 
-                            task.portfolio_only_projects.length > 0 ? 
-                            task.portfolio_only_projects[0].name : 'مشروع غير محدد';
-          
-          const workspaceName = task.portfolio_workspaces?.name || 'مساحة غير محددة';
+          // Safely access nested properties
+          let projectName = 'مشروع غير محدد';
+          if (task.portfolio_only_projects && 
+              Array.isArray(task.portfolio_only_projects) && 
+              task.portfolio_only_projects.length > 0 && 
+              task.portfolio_only_projects[0].name) {
+            projectName = task.portfolio_only_projects[0].name;
+          }
           
           return {
             id: task.id,
@@ -82,8 +84,7 @@ export const useAssignedTasks = () => {
             status: task.status,
             due_date: task.due_date,
             priority: task.priority,
-            project_name: projectName,
-            workspace_name: workspaceName
+            project_name: projectName
           };
         });
         
@@ -106,8 +107,7 @@ export const useAssignedTasks = () => {
           status: task.status as TaskStatus,
           due_date: task.due_date,
           priority: task.priority,
-          project_name: task.project_id || 'غير مرتبط بمشروع',
-          workspace_name: task.workspace_id || 'غير مرتبط بمساحة'
+          project_name: task.project_id || 'غير مرتبط بمشروع'
         }));
         
         // Combine both types of tasks
