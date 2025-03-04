@@ -1,92 +1,88 @@
 
-import { useState, useEffect } from "react";
-import { TaskTitleField } from "./components/TaskTitleField";
-import { TaskDescriptionField } from "./components/TaskDescriptionField";
-import { TaskDateField } from "./components/TaskDateField";
-import { TaskPriorityField } from "./components/TaskPriorityField";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { TaskStageField } from "./components/TaskStageField";
+import { TaskPriorityField } from "./components/TaskPriorityField";
+import { TaskDueDateField } from "./components/TaskDueDateField";
 import { TaskAssigneeField } from "./components/TaskAssigneeField";
-import { TaskFormActions } from "./components/TaskFormActions";
-import { useProjectMembers } from "./hooks/useProjectMembers";
+import { TaskFormData } from "./types/addTask";
 
 interface TaskFormProps {
-  onSubmit: (formData: {
-    title: string;
-    description: string;
-    dueDate: string;
-    priority: string;
-    stageId: string;
-    assignedTo: string | null;
-  }) => Promise<void>;
-  isSubmitting: boolean;
+  title: string;
+  setTitle: (title: string) => void;
+  description: string;
+  setDescription: (description: string) => void;
+  priority: string;
+  setPriority: (priority: string) => void;
+  dueDate: Date | null;
+  setDueDate: (dueDate: Date | null) => void;
+  stageId: string;
+  setStageId: (stageId: string) => void;
+  assignedTo: string;
+  setAssignedTo: (assignedTo: string) => void;
   projectStages: { id: string; name: string }[];
-  projectId: string | undefined;
+  projectMembers: { id: string; display_name?: string; email?: string }[];
 }
 
-export const TaskForm = ({ 
-  onSubmit, 
-  isSubmitting, 
+export const TaskForm = ({
+  title,
+  setTitle,
+  description,
+  setDescription,
+  priority,
+  setPriority,
+  dueDate,
+  setDueDate,
+  stageId,
+  setStageId,
+  assignedTo,
+  setAssignedTo,
   projectStages,
-  projectId
+  projectMembers,
 }: TaskFormProps) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [priority, setPriority] = useState("medium");
-  const [stageId, setStageId] = useState("");
-  const [assignedTo, setAssignedTo] = useState<string | null>(null);
-  
-  const { projectMembers } = useProjectMembers(projectId);
-  
-  useEffect(() => {
-    if (projectStages.length > 0 && !stageId) {
-      setStageId(projectStages[0].id);
-    }
-  }, [projectStages, stageId]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit({ 
-      title, 
-      description, 
-      dueDate, 
-      priority, 
-      stageId,
-      assignedTo 
-    });
-  };
-
-  const handleCancel = () => {
-    onSubmit({ 
-      title: "", 
-      description: "", 
-      dueDate: "", 
-      priority: "medium", 
-      stageId: "", 
-      assignedTo: null 
-    });
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <TaskTitleField title={title} setTitle={setTitle} />
-      <TaskDescriptionField description={description} setDescription={setDescription} />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TaskDateField dueDate={dueDate} setDueDate={setDueDate} />
-        <TaskPriorityField priority={priority} setPriority={setPriority} />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TaskStageField stageId={stageId} setStageId={setStageId} projectStages={projectStages} />
-        <TaskAssigneeField 
-          assignedTo={assignedTo} 
-          setAssignedTo={setAssignedTo} 
-          projectMembers={projectMembers} 
+    <div className="grid gap-4 py-4">
+      <div className="grid gap-2">
+        <Label htmlFor="name">عنوان المهمة</Label>
+        <Input 
+          type="text" 
+          id="name" 
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
       </div>
       
-      <TaskFormActions isSubmitting={isSubmitting} onCancel={handleCancel} />
-    </form>
+      <div className="grid gap-2">
+        <Label htmlFor="description">وصف المهمة</Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+      
+      <TaskStageField 
+        stageId={stageId} 
+        onStageIdChange={setStageId} 
+        projectStages={projectStages} 
+      />
+      
+      <TaskPriorityField 
+        priority={priority} 
+        onPriorityChange={setPriority} 
+      />
+      
+      <TaskDueDateField 
+        dueDate={dueDate} 
+        onDueDateChange={setDueDate} 
+      />
+
+      <TaskAssigneeField 
+        assignedTo={assignedTo} 
+        onAssignedToChange={setAssignedTo}
+        projectMembers={projectMembers}
+      />
+    </div>
   );
 };

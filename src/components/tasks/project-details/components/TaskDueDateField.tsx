@@ -38,6 +38,8 @@ export const TaskDueDateField = ({ dueDate, onDueDateChange }: TaskDueDateFieldP
             onSelect={onDueDateChange}
             initialFocus
             locale={ar}
+            className="rtl"
+            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
           />
         </PopoverContent>
       </Popover>
