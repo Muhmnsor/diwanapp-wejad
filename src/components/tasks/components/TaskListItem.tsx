@@ -4,11 +4,10 @@ import { Task } from "../hooks/useAssignedTasks";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Clock, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Check, Clock, Briefcase } from "lucide-react";
 import { formatDueDate, getStatusBadge } from "../utils/taskFormatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SubtasksList } from "../project-details/components/subtasks/SubtasksList";
 
 interface TaskListItemProps {
   task: Task;
@@ -17,7 +16,6 @@ interface TaskListItemProps {
 export const TaskListItem = ({ task }: TaskListItemProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [status, setStatus] = useState(task.status);
-  const [showSubtasks, setShowSubtasks] = useState(false);
 
   const handleCompleteTask = async () => {
     if (isCompleting) return;
@@ -65,25 +63,20 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow mb-3">
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-5">
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-start">
-            <div className="flex items-center cursor-pointer" onClick={() => setShowSubtasks(!showSubtasks)}>
+            <div>
               <h3 className="font-semibold text-lg">{task.title}</h3>
-              {showSubtasks ? 
-                <ChevronUp className="h-4 w-4 text-gray-500 mr-1" /> : 
-                <ChevronDown className="h-4 w-4 text-gray-500 mr-1" />
-              }
+              {task.description && (
+                <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
+              )}
             </div>
             <Badge variant={status === "completed" ? "outline" : "default"} className="text-xs">
               {status === "completed" ? "مكتملة" : "قيد التنفيذ"}
             </Badge>
           </div>
-          
-          {task.description && (
-            <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
-          )}
           
           <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
             <div className="flex items-center gap-4">
@@ -122,15 +115,6 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
               )}
             </Button>
           </div>
-          
-          {showSubtasks && (
-            <div className="mt-3 border-t pt-3">
-              <SubtasksList 
-                taskId={task.id} 
-                projectId={typeof task.project_id === 'string' ? task.project_id : ""}
-              />
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

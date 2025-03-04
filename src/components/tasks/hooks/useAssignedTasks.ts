@@ -14,7 +14,6 @@ export interface Task {
   priority: string;
   project_name?: string;
   workspace_name?: string;
-  project_id?: string; // إضافة حقل معرف المشروع
 }
 
 export const useAssignedTasks = () => {
@@ -38,7 +37,6 @@ export const useAssignedTasks = () => {
             status,
             due_date,
             priority,
-            project_id,
             portfolio_only_projects(name),
             portfolio_workspaces(name)
           `)
@@ -77,8 +75,7 @@ export const useAssignedTasks = () => {
             due_date: task.due_date,
             priority: task.priority,
             project_name: projectName,
-            workspace_name: workspaceName,
-            project_id: task.project_id
+            workspace_name: workspaceName
           };
         });
         
@@ -148,8 +145,7 @@ export const useAssignedTasks = () => {
             due_date: task.due_date,
             priority: task.priority,
             project_name: projectName,
-            workspace_name: 'مساحة عمل افتراضية', // Default workspace name
-            project_id: task.project_id  // إضافة معرف المشروع
+            workspace_name: 'مساحة عمل افتراضية' // Default workspace name
           };
         });
         
