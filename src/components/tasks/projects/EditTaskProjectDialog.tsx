@@ -1,34 +1,15 @@
 
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { Label } from "@/components/ui/label";
-import { ClipboardList } from "lucide-react";
-
-interface TaskProject {
-  id: string;
-  title: string;
-  description: string | null;
-  due_date: string | null;
-  status: string;
-  workspace_id: string;
-  project_id: string | null;
-  project_manager?: string | null;
-  start_date?: string | null;
-}
+import { Form } from "@/components/ui/form";
+import { EditTaskProjectFields } from "./form/EditTaskProjectFields";
+import { EditTaskProjectActions } from "./form/EditTaskProjectActions";
+import { useEditTaskProject, TaskProject } from "./hooks/useEditTaskProject";
 
 interface EditTaskProjectDialogProps {
   isOpen: boolean;
@@ -43,69 +24,12 @@ export const EditTaskProjectDialog = ({
   project,
   onSuccess,
 }: EditTaskProjectDialogProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm({
-    defaultValues: {
-      name: project.title,
-      description: project.description || "",
-      project_manager: project.project_manager || "",
-      start_date: project.start_date ? project.start_date.split('T')[0] : "",
-      end_date: project.due_date ? project.due_date.split('T')[0] : "",
-    }
+  const { form, isSubmitting, handleSubmit } = useEditTaskProject({
+    project,
+    onSuccess,
+    onClose,
+    isOpen
   });
-
-  // Reset form when project changes
-  useEffect(() => {
-    if (isOpen) {
-      form.reset({
-        name: project.title,
-        description: project.description || "",
-        project_manager: project.project_manager || "",
-        start_date: project.start_date ? project.start_date.split('T')[0] : "",
-        end_date: project.due_date ? project.due_date.split('T')[0] : "",
-      });
-    }
-  }, [isOpen, project, form]);
-
-  const handleSubmit = async (values: any) => {
-    if (!values.name.trim()) {
-      toast.error("عنوان المشروع مطلوب");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await supabase
-        .from("project_tasks")
-        .update({
-          title: values.name,
-          description: values.description,
-          project_manager: values.project_manager,
-          start_date: values.start_date || null,
-          due_date: values.end_date || null,
-        })
-        .eq("id", project.id);
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast.success("تم تحديث المشروع بنجاح");
-      
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      onClose();
-    } catch (error) {
-      console.error("Error updating project:", error);
-      toast.error("حدث خطأ أثناء تحديث المشروع");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -118,124 +42,12 @@ export const EditTaskProjectDialog = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="name" className="text-right block">اسم المشروع</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="name"
-                        placeholder="أدخل اسم المشروع"
-                        required
-                        className="text-right"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="description" className="text-right block">وصف المشروع</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        id="description"
-                        placeholder="أدخل وصف المشروع"
-                        rows={4}
-                        className="text-right"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="project_manager"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="project_manager" className="text-right block">مدير المشروع</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="project_manager"
-                        placeholder="أدخل اسم مدير المشروع"
-                        className="text-right"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="start_date"
-                render={({ field }) => (
-                  <FormItem className="space-y-2 md:order-1">
-                    <FormLabel htmlFor="start_date" className="text-right block">تاريخ البداية</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="start_date"
-                        type="date"
-                        className="text-right"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="end_date"
-                render={({ field }) => (
-                  <FormItem className="space-y-2 md:order-2">
-                    <FormLabel htmlFor="end_date" className="text-right block">تاريخ النهاية</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="end_date"
-                        type="date"
-                        className="text-right"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <DialogFooter className="flex justify-start gap-2 mt-6">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="gap-2"
-              >
-                <ClipboardList className="h-4 w-4" />
-                {isSubmitting ? "جاري التحديث..." : "تحديث المشروع"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                إلغاء
-              </Button>
-            </DialogFooter>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <EditTaskProjectFields form={form} />
+            <EditTaskProjectActions 
+              isSubmitting={isSubmitting} 
+              onClose={onClose} 
+            />
           </form>
         </Form>
       </DialogContent>
