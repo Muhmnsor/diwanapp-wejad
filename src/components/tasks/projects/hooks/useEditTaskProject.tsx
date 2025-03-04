@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDate } from "@/utils/formatters";
 
 export interface TaskProject {
   id: string;
@@ -67,13 +68,33 @@ export const useEditTaskProject = ({
     }
   }, [isOpen]);
   
+  // Helper function to format date from database to YYYY-MM-DD format for input[type="date"]
+  const formatDateForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return "";
+    
+    try {
+      // Handle both full ISO string and date-only formats
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.log('Invalid date:', dateString);
+        return "";
+      }
+      
+      // Format as YYYY-MM-DD for input[type="date"]
+      return date.toISOString().split('T')[0];
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return "";
+    }
+  };
+  
   const form = useForm({
     defaultValues: {
       name: project.title,
       description: project.description || "",
       project_manager: project.project_manager || "",
-      start_date: project.start_date ? project.start_date.split('T')[0] : "",
-      end_date: project.due_date ? project.due_date.split('T')[0] : "",
+      start_date: formatDateForInput(project.start_date),
+      end_date: formatDateForInput(project.due_date),
     }
   });
 
@@ -82,13 +103,16 @@ export const useEditTaskProject = ({
     if (isOpen && project) {
       console.log("Project data:", project);
       console.log("Start date from API:", project.start_date);
+      console.log("Due date from API:", project.due_date);
+      console.log("Formatted start date:", formatDateForInput(project.start_date));
+      console.log("Formatted due date:", formatDateForInput(project.due_date));
       
       form.reset({
         name: project.title,
         description: project.description || "",
         project_manager: project.project_manager || "",
-        start_date: project.start_date ? project.start_date.split('T')[0] : "",
-        end_date: project.due_date ? project.due_date.split('T')[0] : "",
+        start_date: formatDateForInput(project.start_date),
+        end_date: formatDateForInput(project.due_date),
       });
     }
   }, [isOpen, project, form]);
