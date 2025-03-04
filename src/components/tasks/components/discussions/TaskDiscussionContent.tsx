@@ -23,9 +23,8 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
   const fetchComments = async () => {
     setLoading(true);
     try {
-      let tableName = task.is_subtask ? "portfolio_task_comments" : "task_comments";
-      let query = supabase
-        .from(tableName)
+      const { data, error } = await supabase
+        .from("task_comments")
         .select(`
           id,
           task_id,
@@ -34,67 +33,28 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
           created_by,
           attachment_url,
           attachment_name,
-          attachment_type,
-          profiles (display_name, email)
+          attachment_type
         `)
         .eq("task_id", task.id)
         .order("created_at", { ascending: true });
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        // محاولة استخدام جدول آخر إذا لم يعثر على الأول
-        tableName = "task_comments";
-        const { data: secondData, error: secondError } = await supabase
-          .from(tableName)
-          .select(`
-            id,
-            task_id,
-            content,
-            created_at,
-            created_by,
-            attachment_url,
-            attachment_name,
-            attachment_type,
-            profiles (display_name, email)
-          `)
-          .eq("task_id", task.id)
-          .order("created_at", { ascending: true });
           
-        if (secondError) {
-          throw secondError;
-        }
-        
-        // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
-        const formattedData: TaskComment[] = (secondData || []).map((item: any) => ({
-          id: item.id,
-          task_id: item.task_id,
-          content: item.content,
-          created_at: item.created_at,
-          created_by: item.created_by,
-          attachment_url: item.attachment_url,
-          attachment_name: item.attachment_name,
-          attachment_type: item.attachment_type,
-          profiles: item.profiles,
-        }));
-        
-        setComments(formattedData);
-      } else {
-        // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
-        const formattedData: TaskComment[] = (data || []).map((item: any) => ({
-          id: item.id,
-          task_id: item.task_id,
-          content: item.content,
-          created_at: item.created_at,
-          created_by: item.created_by,
-          attachment_url: item.attachment_url,
-          attachment_name: item.attachment_name,
-          attachment_type: item.attachment_type,
-          profiles: item.profiles,
-        }));
-        
-        setComments(formattedData);
+      if (error) {
+        throw error;
       }
+      
+      // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
+      const formattedData: TaskComment[] = (data || []).map((item: any) => ({
+        id: item.id,
+        task_id: item.task_id,
+        content: item.content,
+        created_at: item.created_at,
+        created_by: item.created_by,
+        attachment_url: item.attachment_url,
+        attachment_name: item.attachment_name,
+        attachment_type: item.attachment_type,
+      }));
+      
+      setComments(formattedData);
     } catch (error) {
       console.error("Error fetching comments:", error);
       toast.error("حدث خطأ أثناء استرجاع التعليقات");

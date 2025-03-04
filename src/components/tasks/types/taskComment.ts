@@ -4,12 +4,12 @@ export interface TaskComment {
   task_id: string;
   content: string;
   created_at: string;
-  created_by: string | null;
-  attachment_url?: string | null;
-  attachment_name?: string | null;
-  attachment_type?: string | null;
+  created_by?: string;
+  attachment_url?: string;
+  attachment_name?: string;
+  attachment_type?: string;
   profiles?: {
-    display_name: string | null;
-    email: string | null;
+    display_name?: string;
+    email?: string;
   } | null;
 }
