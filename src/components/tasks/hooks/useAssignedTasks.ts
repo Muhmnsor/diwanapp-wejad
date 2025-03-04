@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
 
-export type TaskStatus = 'pending' | 'completed' | 'delayed' | 'upcoming';
+export type TaskStatus = 'pending' | 'completed' | 'delayed' | 'upcoming' | 'in_progress';
 
 export interface Task {
   id: string;
@@ -79,8 +79,7 @@ export const useAssignedTasks = () => {
           };
         });
         
-        // Get tasks from the regular tasks table and add project names
-        // تغيير طريقة الاستعلام لأن هناك مشكلة في العلاقة بين tasks و projects
+        // Get tasks from the regular tasks table
         const { data: regularTasks, error: tasksError } = await supabase
           .from('tasks')
           .select(`
@@ -99,8 +98,45 @@ export const useAssignedTasks = () => {
           throw tasksError;
         }
         
+        // Get project details for regular tasks
+        const projectIds = regularTasks
+          ?.filter(task => task.project_id)
+          .map(task => task.project_id) || [];
+        
+        let projectsMap = {};
+        
+        if (projectIds.length > 0) {
+          // First try to fetch from project_tasks table
+          const { data: projectTasksData } = await supabase
+            .from('project_tasks')
+            .select('id, title')
+            .in('id', projectIds);
+            
+          if (projectTasksData && projectTasksData.length > 0) {
+            projectTasksData.forEach(project => {
+              projectsMap[project.id] = project.title;
+            });
+          }
+          
+          // Then try to fetch from projects table
+          const { data: projectsData } = await supabase
+            .from('projects')
+            .select('id, title')
+            .in('id', projectIds);
+            
+          if (projectsData && projectsData.length > 0) {
+            projectsData.forEach(project => {
+              projectsMap[project.id] = project.title;
+            });
+          }
+        }
+        
         // Format the regular tasks
         const formattedRegularTasks = (regularTasks || []).map(task => {
+          const projectName = task.project_id && projectsMap[task.project_id] 
+            ? projectsMap[task.project_id] 
+            : 'مشروع غير محدد';
+            
           return {
             id: task.id,
             title: task.title,
@@ -108,8 +144,8 @@ export const useAssignedTasks = () => {
             status: task.status as TaskStatus,
             due_date: task.due_date,
             priority: task.priority,
-            project_name: 'غير مرتبط بمشروع', // استخدام قيمة افتراضية
-            workspace_name: 'مساحة عمل افتراضية' // قيمة افتراضية لمساحة العمل
+            project_name: projectName,
+            workspace_name: 'مساحة عمل افتراضية' // Default workspace name
           };
         });
         

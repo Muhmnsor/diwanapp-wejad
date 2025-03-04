@@ -87,7 +87,7 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
                 </div>
               )}
               
-              {task.project_name && (
+              {task.project_name && task.project_name !== 'مشروع غير محدد' && (
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Briefcase className="h-4 w-4 ml-1" />
                   <span>{task.project_name}</span>
