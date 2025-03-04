@@ -30,7 +30,7 @@ export const useAssignedTasks = () => {
       const { data: projectsData } = await supabase
         .from('project_tasks')
         .select('id, title');
-      
+        
       console.log("Projects data:", projectsData);
         
       if (projectsData) {
@@ -47,7 +47,7 @@ export const useAssignedTasks = () => {
       const { data: portfolioTasks, error: portfolioError } = await supabase
         .from('portfolio_tasks')
         .select(`
-          id, title, description, status, priority, due_date,
+          id, title, description, status, priority, due_date, project_id,
           portfolio_only_projects (id, name),
           portfolio_workspaces (id, name)
         `)
@@ -60,7 +60,10 @@ export const useAssignedTasks = () => {
         
         // تخزين المهام الأساسية للرجوع إليها لاحقًا
         portfolioTasks?.forEach(task => {
-          parentTasks[task.id] = task;
+          parentTasks[task.id] = {
+            ...task,
+            project_name: task.portfolio_only_projects && task.portfolio_only_projects[0]?.name || null
+          };
         });
         
         const transformedPortfolioTasks = transformPortfolioTasks(portfolioTasks || []);
@@ -76,9 +79,14 @@ export const useAssignedTasks = () => {
         } else {
           console.log("Regular tasks fetched:", regularTasks);
           
-          // تخزين المهام الأساسية للرجوع إليها لاحقًا
+          // تخزين المهام الأساسية للرجوع إليها لاحقًا مع إضافة اسم المشروع
           regularTasks?.forEach(task => {
-            parentTasks[task.id] = task;
+            const projectName = task.project_id && projects[task.project_id] ? projects[task.project_id] : null;
+            parentTasks[task.id] = {
+              ...task,
+              project_name: projectName
+            };
+            console.log(`Stored parent task ${task.id} with project_name: ${projectName}`);
           });
           
           const transformedRegularTasks = transformRegularTasks(regularTasks || [], projects);
@@ -93,6 +101,20 @@ export const useAssignedTasks = () => {
             console.error("Error fetching subtasks:", subtasksError);
           } else {
             console.log("Subtasks fetched:", subtasks);
+            
+            // طباعة معلومات المهام الرئيسية للتأكد من توفر البيانات للمهام الفرعية
+            if (subtasks && subtasks.length > 0) {
+              subtasks.forEach(subtask => {
+                const parentTaskInfo = parentTasks[subtask.task_id];
+                console.log(`Subtask ${subtask.id} parent task info:`, 
+                  parentTaskInfo ? {
+                    id: parentTaskInfo.id,
+                    title: parentTaskInfo.title,
+                    project_id: parentTaskInfo.project_id,
+                    project_name: parentTaskInfo.project_name
+                  } : 'Parent task not found');
+              });
+            }
             
             const transformedSubtasks = transformSubtasks(subtasks || [], parentTasks, projects);
             
@@ -115,7 +137,9 @@ export const useAssignedTasks = () => {
               id: t.id,
               title: t.title,
               project_name: t.project_name,
-              project_id: t.project_id
+              project_id: t.project_id,
+              is_subtask: t.is_subtask,
+              parent_task_id: t.parent_task_id
             })));
             
             setTasks(allTasks);
