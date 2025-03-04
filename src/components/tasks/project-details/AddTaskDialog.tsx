@@ -65,7 +65,7 @@ export function AddTaskDialog({
         }
       }
 
-      // إنشاء المهمة في قاعدة البيانات
+      // إنشاء المهمة في قاعدة البيانات - نحذف حقل priority لأنه غير موجود في الجدول
       const { data: taskData, error: taskError } = await supabase
         .from('project_tasks')
         .insert({
@@ -74,7 +74,6 @@ export function AddTaskDialog({
           description: formData.description,
           assigned_to: formData.assignedTo,
           due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-          priority: formData.priority,
           stage_id: formData.stageId,
           status: 'pending'
         })
