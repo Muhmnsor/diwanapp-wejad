@@ -60,10 +60,14 @@ export const UserEditDialog = ({
         const userRole = roles.find(r => r.name === user.role);
         if (userRole) {
           setSelectedRole(userRole.id);
+        } else {
+          // If no matching role is found, reset the selection
+          setSelectedRole("");
         }
       }
     } else {
       setDisplayName("");
+      setSelectedRole("");
     }
   }, [user, roles, setSelectedRole]);
 

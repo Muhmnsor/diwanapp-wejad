@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       throw new Error('Invalid request body')
     }
 
-    const { operation, userId, newPassword, newRole } = requestData
+    const { operation, userId, newPassword, roleId } = requestData
     console.log('Managing user:', { operation, userId })
 
     if (operation === 'get_users') {
@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
     }
 
     if (operation === 'update_password' && userId && newPassword) {
+      console.log('Updating password for user:', userId)
       const { error: updateError } = await supabaseClient.auth.admin.updateUserById(
         userId,
         { password: newPassword }
@@ -81,26 +82,14 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (operation === 'update_role' && userId && newRole) {
-      // الحصول على معرف الدور الجديد
-      const { data: roles, error: rolesError } = await supabaseClient
-        .from('roles')
-        .select('id')
-        .eq('name', newRole)
-        .single()
-
-      if (rolesError) {
-        console.error('Error fetching role:', rolesError)
-        throw rolesError
-      }
-
-      // تحديث دور المستخدم
-      const { error: updateError } = await supabaseClient
-        .from('user_roles')
-        .upsert({
-          user_id: userId,
-          role_id: roles.id
-        })
+    if (operation === 'update_role' && userId && roleId) {
+      console.log('Updating role for user:', userId, 'to role ID:', roleId)
+      
+      // تعيين دور للمستخدم باستخدام وظيفة قاعدة البيانات
+      const { data, error: updateError } = await supabaseClient.rpc('assign_user_role', {
+        p_user_id: userId,
+        p_role_id: roleId
+      })
 
       if (updateError) {
         console.error('Error updating role:', updateError)
