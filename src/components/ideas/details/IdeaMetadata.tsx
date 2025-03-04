@@ -3,7 +3,7 @@ import { useState } from "react";
 import { IdeaCountdown } from "./components/IdeaCountdown";
 import { StatusBadge } from "./components/StatusBadge";
 import { ExtendButton } from "./components/ExtendButton";
-import { ExtendDiscussionDialog } from "./dialogs/ExtendDiscussionDialog";
+import { ExtendDiscussionWrapper } from "./components/ExtendDiscussionWrapper";
 
 interface IdeaMetadataProps {
   id: string;
@@ -35,6 +35,7 @@ export const IdeaMetadata = ({
   const handleExtendSuccess = () => {
     // يمكن إضافة أي منطق إضافي هنا بعد نجاح عملية التمديد
     console.log("Discussion period extended successfully");
+    setIsExtendDialogOpen(false);
   };
   
   return <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 border border-purple-100 my-[7px]">
@@ -53,11 +54,13 @@ export const IdeaMetadata = ({
         </div>
       </div>
       
-      <ExtendDiscussionDialog 
+      <ExtendDiscussionWrapper 
         isOpen={isExtendDialogOpen} 
         onClose={handleExtendDialogClose} 
         ideaId={id} 
-        onSuccess={handleExtendSuccess} 
+        onSuccess={handleExtendSuccess}
+        currentDiscussionPeriod={discussion_period}
+        createdAt={created_at}
       />
     </div>;
 };
