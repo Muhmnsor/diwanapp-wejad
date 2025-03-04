@@ -51,7 +51,7 @@ export const MentionInput = ({
           .ilike('profiles.display_name', `%${mentionText}%`);
           
         if (!error && data) {
-          // تنسيق البيانات
+          // تنسيق البيانات - Fix: Process each item individually
           const formattedData: MentionUser[] = data.map(item => ({
             id: item.profiles?.id,
             email: item.profiles?.email,
