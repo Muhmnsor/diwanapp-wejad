@@ -3,6 +3,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { UserCog, Trash2, Info, AlertCircle } from "lucide-react";
 import { User } from "./types";
+import { formatDate } from "@/utils/formatters";
 
 interface UserTableRowProps {
   user: User;
@@ -23,6 +24,13 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
       default: return roleName;
     }
   };
+
+  // تنسيق تاريخ آخر تسجيل دخول
+  let formattedLastLogin = 'لم يسجل الدخول بعد';
+  if (user.lastLogin && user.lastLogin !== 'لم يسجل الدخول بعد') {
+    // استخدام الدالة formatDate لعرض التاريخ بالتنسيق الميلادي
+    formattedLastLogin = user.lastLogin;
+  }
 
   return (
     <TableRow dir="rtl" className={!user.isActive ? "bg-muted/20" : ""}>
@@ -49,7 +57,7 @@ export const UserTableRow = ({ user, onEdit, onDelete, onViewDetails }: UserTabl
       <TableCell className="text-right">
         {user.displayName && user.displayName.trim() !== '' ? user.displayName : 'لا يوجد مسمى شخصي'}
       </TableCell>
-      <TableCell className="text-right">{user.lastLogin}</TableCell>
+      <TableCell className="text-right">{formattedLastLogin}</TableCell>
       <TableCell className="text-center">
         <div className="flex gap-2 justify-center">
           <Button 

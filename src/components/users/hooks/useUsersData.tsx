@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Role, User } from "../types";
+import { formatDate } from "@/utils/formatters";
 
 export const useUsersData = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -88,14 +89,18 @@ export const useUsersData = () => {
         
         let lastLoginDisplay = 'لم يسجل الدخول بعد';
         if (user.last_sign_in_at) {
+          // تنسيق التاريخ بالميلادي باستخدام تنسيق dd/MM/yyyy والوقت بنظام 12 ساعة
           const date = new Date(user.last_sign_in_at);
-          lastLoginDisplay = date.toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          });
+          
+          // تنسيق الوقت بنظام 12 ساعة
+          const hours = date.getHours();
+          const minutes = date.getMinutes().toString().padStart(2, '0');
+          const ampm = hours >= 12 ? 'م' : 'ص';
+          const hours12 = hours % 12 || 12;
+          
+          // استخدام تنسيق التاريخ الميلادي
+          const formattedDate = formatDate(user.last_sign_in_at);
+          lastLoginDisplay = `${formattedDate} ${hours12}:${minutes} ${ampm}`;
         }
         
         return {
