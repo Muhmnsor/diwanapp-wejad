@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface TaskFormActionsProps {
   isSubmitting: boolean;
@@ -8,7 +9,7 @@ interface TaskFormActionsProps {
 
 export const TaskFormActions = ({ isSubmitting, onCancel }: TaskFormActionsProps) => {
   return (
-    <div className="flex justify-end space-x-2 pt-4">
+    <div className="flex justify-end space-x-reverse space-x-2 pt-4">
       <Button 
         type="button" 
         variant="outline" 
@@ -18,7 +19,8 @@ export const TaskFormActions = ({ isSubmitting, onCancel }: TaskFormActionsProps
         إلغاء
       </Button>
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "جاري الإضافة..." : "إضافة المهمة"}
+        {isSubmitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
+        إضافة المهمة
       </Button>
     </div>
   );

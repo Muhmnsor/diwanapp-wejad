@@ -8,6 +8,7 @@ import { TaskStageField } from "./components/TaskStageField";
 import { TaskAssigneeField } from "./components/TaskAssigneeField";
 import { TaskFormActions } from "./components/TaskFormActions";
 import { useProjectMembers } from "./hooks/useProjectMembers";
+import { TaskAttachmentField } from "./components/TaskAttachmentField";
 
 export interface TaskFormProps {
   onSubmit: (formData: {
@@ -17,17 +18,22 @@ export interface TaskFormProps {
     priority: string;
     stageId: string;
     assignedTo: string | null;
+    attachment?: File | null;
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
   projectId: string | undefined;
+  attachment?: File | null;
+  setAttachment?: (file: File | null) => void;
 }
 
 export const TaskForm = ({ 
   onSubmit, 
   isSubmitting, 
   projectStages,
-  projectId
+  projectId,
+  attachment,
+  setAttachment
 }: TaskFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -35,8 +41,13 @@ export const TaskForm = ({
   const [priority, setPriority] = useState("medium");
   const [stageId, setStageId] = useState("");
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
+  const [localAttachment, setLocalAttachment] = useState<File | null>(null);
   
   const { projectMembers } = useProjectMembers(projectId);
+  
+  // استخدم ملف المرفق من الخارج إذا تم توفيره
+  const fileAttachment = attachment !== undefined ? attachment : localAttachment;
+  const setFileAttachment = setAttachment || setLocalAttachment;
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -52,7 +63,8 @@ export const TaskForm = ({
       dueDate, 
       priority, 
       stageId,
-      assignedTo 
+      assignedTo,
+      attachment: fileAttachment
     });
   };
 
@@ -62,7 +74,7 @@ export const TaskForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto p-1 rtl">
       <TaskTitleField title={title} setTitle={setTitle} />
       <TaskDescriptionField description={description} setDescription={setDescription} />
       
@@ -79,6 +91,11 @@ export const TaskForm = ({
           projectMembers={projectMembers} 
         />
       </div>
+      
+      <TaskAttachmentField
+        attachment={fileAttachment}
+        setAttachment={setFileAttachment}
+      />
       
       <TaskFormActions isSubmitting={isSubmitting} onCancel={handleCancel} />
     </form>

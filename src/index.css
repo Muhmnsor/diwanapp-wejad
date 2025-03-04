@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -38,6 +39,12 @@
 
   /* Optimize for Arabic text */
   html[dir="rtl"] {
+    text-align: right;
+  }
+
+  /* Add RTL support */
+  .rtl {
+    direction: rtl;
     text-align: right;
   }
 

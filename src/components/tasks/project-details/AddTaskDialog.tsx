@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export function AddTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col rtl">
         <DialogHeader>
           <DialogTitle>إضافة مهمة جديدة</DialogTitle>
           <DialogDescription>
@@ -54,6 +54,13 @@ export function AddTaskDialog({
               try {
                 // Logic to handle task submission would go here
                 console.log("Submitting form data:", formData);
+                
+                // إذا كان هناك مرفق، قم برفعه
+                if (attachment) {
+                  console.log("Uploading attachment:", attachment);
+                  // هنا يمكن إضافة منطق رفع المرفق
+                }
+                
                 onTaskAdded();
               } catch (error) {
                 console.error("Error submitting task:", error);
@@ -65,6 +72,8 @@ export function AddTaskDialog({
             isSubmitting={isSubmitting}
             projectStages={projectStages}
             projectId={projectId}
+            attachment={attachment}
+            setAttachment={setAttachment}
           />
         </div>
       </DialogContent>
