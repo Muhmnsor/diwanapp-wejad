@@ -4,7 +4,7 @@ import { Task } from "../hooks/useAssignedTasks";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Clock } from "lucide-react";
+import { Calendar, Check, Clock, Briefcase } from "lucide-react";
 import { formatDueDate, getStatusBadge } from "../utils/taskFormatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -89,6 +89,7 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
               
               {task.project_name && (
                 <div className="flex items-center text-sm text-muted-foreground">
+                  <Briefcase className="h-4 w-4 ml-1" />
                   <span>{task.project_name}</span>
                 </div>
               )}

@@ -13,26 +13,10 @@ export interface Task {
   due_date: string | null;
   priority: string;
   project_name?: string;
-  workspace_name?: string;
-}
-
-interface PortfolioProject {
-  name: string;
 }
 
 interface PortfolioWorkspace {
   name: string;
-}
-
-interface PortfolioTaskResponse {
-  id: string;
-  title: string;
-  description: string | null;
-  status: TaskStatus;
-  due_date: string | null;
-  priority: string;
-  portfolio_only_projects: { name: string }[] | null;
-  portfolio_workspaces: PortfolioWorkspace | null;
 }
 
 export const useAssignedTasks = () => {
@@ -88,10 +72,19 @@ export const useAssignedTasks = () => {
           };
         });
         
-        // Get tasks from the regular tasks table
+        // Get tasks from the regular tasks table and join with projects to get project names
         const { data: regularTasks, error: tasksError } = await supabase
           .from('tasks')
-          .select('*')
+          .select(`
+            id,
+            title,
+            description,
+            status,
+            due_date,
+            priority,
+            project_id,
+            projects(title)
+          `)
           .eq('assigned_to', user.id);
         
         if (tasksError) {
@@ -100,15 +93,23 @@ export const useAssignedTasks = () => {
         }
         
         // Format the regular tasks
-        const formattedRegularTasks = (regularTasks || []).map(task => ({
-          id: task.id,
-          title: task.title,
-          description: task.description,
-          status: task.status as TaskStatus,
-          due_date: task.due_date,
-          priority: task.priority,
-          project_name: task.project_id || 'غير مرتبط بمشروع'
-        }));
+        const formattedRegularTasks = (regularTasks || []).map(task => {
+          // Get project name from the joined projects table or use default text
+          let projectName = 'غير مرتبط بمشروع';
+          if (task.projects && task.projects.title) {
+            projectName = task.projects.title;
+          }
+          
+          return {
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            status: task.status as TaskStatus,
+            due_date: task.due_date,
+            priority: task.priority,
+            project_name: projectName
+          };
+        });
         
         // Combine both types of tasks
         const allTasks = [...formattedPortfolioTasks, ...formattedRegularTasks];
