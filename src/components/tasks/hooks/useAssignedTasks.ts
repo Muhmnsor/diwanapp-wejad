@@ -13,6 +13,7 @@ export interface Task {
   due_date: string | null;
   priority: string;
   project_name?: string;
+  workspace_name?: string; // Adding workspace_name property to fix TaskTableRow error
 }
 
 interface PortfolioWorkspace {
@@ -57,8 +58,17 @@ export const useAssignedTasks = () => {
           if (task.portfolio_only_projects && 
               Array.isArray(task.portfolio_only_projects) && 
               task.portfolio_only_projects.length > 0 && 
-              task.portfolio_only_projects[0].name) {
+              task.portfolio_only_projects[0]?.name) {
             projectName = task.portfolio_only_projects[0].name;
+          }
+          
+          // Also get workspace name if available
+          let workspaceName = '';
+          if (task.portfolio_workspaces && 
+              Array.isArray(task.portfolio_workspaces) && 
+              task.portfolio_workspaces.length > 0 && 
+              task.portfolio_workspaces[0]?.name) {
+            workspaceName = task.portfolio_workspaces[0].name;
           }
           
           return {
@@ -68,7 +78,8 @@ export const useAssignedTasks = () => {
             status: task.status,
             due_date: task.due_date,
             priority: task.priority,
-            project_name: projectName
+            project_name: projectName,
+            workspace_name: workspaceName
           };
         });
         
@@ -96,7 +107,9 @@ export const useAssignedTasks = () => {
         const formattedRegularTasks = (regularTasks || []).map(task => {
           // Get project name from the joined projects table or use default text
           let projectName = 'غير مرتبط بمشروع';
-          if (task.projects && task.projects.title) {
+          // Fix the way we access the title from projects
+          if (task.projects && 
+              task.projects.title) {
             projectName = task.projects.title;
           }
           
@@ -107,7 +120,8 @@ export const useAssignedTasks = () => {
             status: task.status as TaskStatus,
             due_date: task.due_date,
             priority: task.priority,
-            project_name: projectName
+            project_name: projectName,
+            workspace_name: 'مساحة عمل افتراضية' // Default workspace name for regular tasks
           };
         });
         

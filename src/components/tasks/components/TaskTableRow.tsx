@@ -27,8 +27,8 @@ export const TaskTableRow = ({ task }: TaskTableRowProps) => {
       </TableCell>
       <TableCell>{getPriorityBadge(task.priority)}</TableCell>
       <TableCell>{formatDueDate(task.due_date)}</TableCell>
-      <TableCell>{task.project_name}</TableCell>
-      <TableCell>{task.workspace_name}</TableCell>
+      <TableCell>{task.project_name || 'غير مرتبط بمشروع'}</TableCell>
+      <TableCell>{task.workspace_name || 'مساحة عمل افتراضية'}</TableCell>
     </TableRow>
   );
 };
