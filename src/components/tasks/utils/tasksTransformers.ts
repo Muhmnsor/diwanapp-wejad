@@ -68,8 +68,15 @@ export const transformSubtasks = (
     const parentTask = parentTasksMap[subtask.task_id] || {};
     const parentProjectId = parentTask.project_id;
     
-    let projectName = parentTask.project_name || null;
-    if (!parentTask.project_name && parentProjectId && projectsMap[parentProjectId]) {
+    // تحسين الوصول إلى اسم المشروع للمهام الفرعية
+    let projectName = null;
+    
+    // محاولة الحصول على اسم المشروع من المهمة الأصلية أولاً
+    if (parentTask.project_name) {
+      projectName = parentTask.project_name;
+    } 
+    // إذا لم يكن متاحًا، حاول الحصول عليه من معرف المشروع باستخدام خريطة المشاريع
+    else if (parentProjectId && projectsMap[parentProjectId]) {
       projectName = projectsMap[parentProjectId];
     }
     
