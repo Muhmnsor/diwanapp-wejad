@@ -1,59 +1,30 @@
-
-import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "../types/addTask";
+
+interface User {
+  id: string;
+  display_name?: string;
+  email?: string;
+}
 
 interface TaskAssigneeFieldProps {
   assignedTo: string;
-  onAssignedToChange: (userId: string) => void;
+  onAssignedToChange: (assignedTo: string) => void;
+  projectMembers: User[];
 }
 
-export const TaskAssigneeField = ({ assignedTo, onAssignedToChange }: TaskAssigneeFieldProps) => {
-  const [users, setUsers] = useState<User[]>([]);
-  
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, display_name, email')
-          .eq('is_active', true)
-          .order('display_name', { ascending: true });
-
-        if (error) {
-          console.error("خطأ في جلب المستخدمين:", error);
-          return;
-        }
-
-        if (data) {
-          setUsers(data);
-        }
-      } catch (error) {
-        console.error("خطأ في جلب المستخدمين:", error);
-      }
-    };
-
-    fetchUsers();
-  }, []);
-  
+export const TaskAssigneeField = ({ assignedTo, onAssignedToChange, projectMembers }: TaskAssigneeFieldProps) => {
   return (
     <div className="grid gap-2">
-      <Label htmlFor="assigned-to">تعيين إلى</Label>
-      <Select 
-        value={assignedTo} 
-        onValueChange={onAssignedToChange}
-      >
+      <Label htmlFor="assignee">المسؤول</Label>
+      <Select onValueChange={onAssignedToChange} defaultValue={assignedTo}>
         <SelectTrigger>
-          <SelectValue placeholder="اختر المسؤول عن المهمة" />
+          <SelectValue placeholder="اختر المسؤول" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="none" key="none">غير مسند</SelectItem>
-          {users.map((user) => (
-            <SelectItem key={user.id} value={user.id}>
-              {user.display_name || user.email || user.id}
-            </SelectItem>
+          <SelectItem value="none">غير محدد</SelectItem>
+          {projectMembers.map(member => (
+            <SelectItem key={member.id} value={member.id}>{member.display_name || member.email}</SelectItem>
           ))}
         </SelectContent>
       </Select>
