@@ -49,7 +49,7 @@ export const fetchPortfolioTasks = async (userId: string) => {
   return portfolioTasks || [];
 };
 
-// استرجاع المهام الفرعية - تم تعديل الاستعلام لحذف حقل description
+// استرجاع المهام الفرعية - تم تعديل الاستعلام لحذف حقل description و priority
 export const fetchSubtasks = async (userId: string) => {
   const { data: subtasks, error: subtasksError } = await supabase
     .from('subtasks')
@@ -58,7 +58,6 @@ export const fetchSubtasks = async (userId: string) => {
       title,
       status,
       due_date,
-      priority,
       task_id
     `)
     .eq('assigned_to', userId);

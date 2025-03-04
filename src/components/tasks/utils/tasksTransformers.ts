@@ -79,7 +79,7 @@ export const transformSubtasks = (
       description: null, // تعيين قيمة افتراضية للوصف كـ null
       status: subtask.status as Task['status'],
       due_date: subtask.due_date,
-      priority: subtask.priority || 'medium',
+      priority: 'medium', // تعيين قيمة افتراضية للأولوية
       project_name: projectName,
       workspace_name: parentTask.workspace_name || 'مساحة عمل افتراضية',
       is_subtask: true,
