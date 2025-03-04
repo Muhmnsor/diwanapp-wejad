@@ -3,7 +3,7 @@ import { Task } from "../types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Clock, Briefcase, GitMerge, ArrowRight } from "lucide-react";
+import { Calendar, Check, Clock, Briefcase, GitMerge, ArrowRight, Flag } from "lucide-react";
 import { formatDueDate } from "../utils/taskFormatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -54,6 +54,32 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
         return "bg-blue-100 text-blue-800 border-blue-300";
       default:
         return "bg-yellow-100 text-yellow-800 border-yellow-300";
+    }
+  };
+
+  const getPriorityVariant = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-50 text-red-700 border-red-200";
+      case "medium":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "low":
+        return "bg-green-50 text-green-700 border-green-200";
+      default:
+        return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "عالية";
+      case "medium":
+        return "متوسطة";
+      case "low":
+        return "منخفضة";
+      default:
+        return "غير محددة";
     }
   };
 
@@ -127,9 +153,15 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
                 <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
               )}
             </div>
-            <Badge className={`text-xs ${getStatusVariant(currentStatus)}`}>
-              {getStatusText(currentStatus)}
-            </Badge>
+            <div className="flex flex-col gap-2">
+              <Badge className={`text-xs ${getStatusVariant(currentStatus)}`}>
+                {getStatusText(currentStatus)}
+              </Badge>
+              <Badge className={`text-xs flex items-center gap-1 ${getPriorityVariant(task.priority)}`}>
+                <Flag className="h-3 w-3" />
+                {getPriorityText(task.priority)}
+              </Badge>
+            </div>
           </div>
           
           <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
