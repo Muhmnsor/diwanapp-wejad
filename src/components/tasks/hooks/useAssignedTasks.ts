@@ -14,6 +14,15 @@ export const useAssignedTasks = () => {
   const fetchTasks = async () => {
     setLoading(true);
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+      
+      console.log("Fetching tasks for user:", userId);
+      
       const projects: Record<string, string> = {};
       const parentTasks: Record<string, any> = {};
       
@@ -30,67 +39,100 @@ export const useAssignedTasks = () => {
       }
       
       // 2. استرجاع مهام المحفظة المسندة إلى المستخدم
-      const { data: portfolioTasks, error: portfolioError } = await supabase
-        .from('portfolio_tasks')
-        .select(`
-          id, title, description, status, priority, due_date,
-          portfolio_only_projects (id, name),
-          portfolio_workspaces (id, name)
-        `)
-        .eq('assigned_to', supabase.auth.getUser().then(res => res.data.user?.id))
-        .is('is_subtask', false);
-        
-      if (portfolioError) {
-        console.error("Error fetching portfolio tasks:", portfolioError);
+      try {
+        const { data: portfolioTasks, error: portfolioError } = await supabase
+          .from('portfolio_tasks')
+          .select(`
+            id, title, description, status, priority, due_date,
+            portfolio_only_projects (id, name),
+            portfolio_workspaces (id, name)
+          `)
+          .eq('assigned_to', userId);
+          
+        if (portfolioError) {
+          console.error("Error fetching portfolio tasks:", portfolioError);
+        } else {
+          console.log("Portfolio tasks fetched:", portfolioTasks);
+          
+          // تخزين المهام الأساسية للرجوع إليها لاحقًا
+          portfolioTasks?.forEach(task => {
+            parentTasks[task.id] = task;
+          });
+          
+          const transformedPortfolioTasks = transformPortfolioTasks(portfolioTasks || []);
+          
+          // 3. استرجاع المهام العادية المسندة إلى المستخدم
+          const { data: regularTasks, error: regularError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('assigned_to', userId);
+            
+          if (regularError) {
+            console.error("Error fetching regular tasks:", regularError);
+          } else {
+            console.log("Regular tasks fetched:", regularTasks);
+            
+            // تخزين المهام الأساسية للرجوع إليها لاحقًا
+            regularTasks?.forEach(task => {
+              parentTasks[task.id] = task;
+            });
+            
+            const transformedRegularTasks = transformRegularTasks(regularTasks || [], projects);
+            
+            // 4. استرجاع المهام الفرعية المسندة إلى المستخدم
+            const { data: subtasks, error: subtasksError } = await supabase
+              .from('task_subtasks')
+              .select('*')
+              .eq('assigned_to', userId);
+              
+            if (subtasksError) {
+              console.error("Error fetching subtasks:", subtasksError);
+            } else {
+              console.log("Subtasks fetched:", subtasks);
+              
+              const transformedSubtasks = transformSubtasks(subtasks || [], parentTasks, projects);
+              
+              // 5. دمج المهام وترتيبها حسب تاريخ الاستحقاق
+              const allTasks = [
+                ...transformedPortfolioTasks,
+                ...transformedRegularTasks,
+                ...transformedSubtasks
+              ].sort((a, b) => {
+                // المهام التي لها تاريخ استحقاق تأتي أولاً
+                if (a.due_date && !b.due_date) return -1;
+                if (!a.due_date && b.due_date) return 1;
+                if (!a.due_date && !b.due_date) return 0;
+                
+                // ترتيب تصاعدي حسب تاريخ الاستحقاق
+                return new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime();
+              });
+              
+              console.log("Calculated user tasks stats:", {
+                totalTasks: allTasks.length,
+                completedTasks: allTasks.filter(t => t.status === 'completed').length,
+                pendingTasks: allTasks.filter(t => t.status === 'pending').length,
+                upcomingDeadlines: allTasks.filter(t => {
+                  if (!t.due_date) return false;
+                  const dueDate = new Date(t.due_date);
+                  const today = new Date();
+                  const diff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  return diff <= 3 && diff >= 0 && t.status !== 'completed';
+                }).length,
+                delayedTasks: allTasks.filter(t => {
+                  if (!t.due_date) return false;
+                  const dueDate = new Date(t.due_date);
+                  const today = new Date();
+                  return dueDate < today && t.status !== 'completed';
+                }).length
+              });
+              
+              setTasks(allTasks);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching portfolio tasks:", err);
       }
-      
-      // 3. استرجاع المهام العادية المسندة إلى المستخدم
-      const { data: regularTasks, error: regularError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('assigned_to', supabase.auth.getUser().then(res => res.data.user?.id));
-        
-      if (regularError) {
-        console.error("Error fetching regular tasks:", regularError);
-      }
-      
-      // 4. تخزين المهام الأساسية للرجوع إليها لاحقًا
-      const allParentTasks = [...(portfolioTasks || []), ...(regularTasks || [])];
-      allParentTasks.forEach(task => {
-        parentTasks[task.id] = task;
-      });
-      
-      // 5. استرجاع المهام الفرعية المسندة إلى المستخدم
-      const { data: subtasks, error: subtasksError } = await supabase
-        .from('task_subtasks')
-        .select('*')
-        .eq('assigned_to', supabase.auth.getUser().then(res => res.data.user?.id));
-        
-      if (subtasksError) {
-        console.error("Error fetching subtasks:", subtasksError);
-      }
-      
-      // 6. تحويل البيانات إلى تنسيق موحد
-      const transformedPortfolioTasks = transformPortfolioTasks(portfolioTasks || []);
-      const transformedRegularTasks = transformRegularTasks(regularTasks || [], projects);
-      const transformedSubtasks = transformSubtasks(subtasks || [], parentTasks, projects);
-      
-      // 7. دمج المهام وترتيبها حسب تاريخ الاستحقاق
-      const allTasks = [
-        ...transformedPortfolioTasks,
-        ...transformedRegularTasks,
-        ...transformedSubtasks
-      ].sort((a, b) => {
-        // المهام التي لها تاريخ استحقاق تأتي أولاً
-        if (a.due_date && !b.due_date) return -1;
-        if (!a.due_date && b.due_date) return 1;
-        if (!a.due_date && !b.due_date) return 0;
-        
-        // ترتيب تصاعدي حسب تاريخ الاستحقاق
-        return new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime();
-      });
-      
-      setTasks(allTasks);
     } catch (err) {
       console.error("Error in useAssignedTasks:", err);
       setError(err as Error);
