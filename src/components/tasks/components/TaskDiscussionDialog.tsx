@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TaskComment } from "../types/taskComment";
 import { CommentForm } from "@/components/ideas/comments/components/CommentForm";
-import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import { CommentItem } from "./CommentItem";
 import { Separator } from "@/components/ui/separator";
@@ -39,6 +38,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         .from(tableName)
         .select(`
           id,
+          task_id,
           content,
           created_at,
           created_by,
@@ -56,6 +56,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
           .from(tableName)
           .select(`
             id,
+            task_id,
             content,
             created_at,
             created_by,

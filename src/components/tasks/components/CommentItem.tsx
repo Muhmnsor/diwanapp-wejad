@@ -1,6 +1,5 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { TaskComment } from "../types/taskComment";
