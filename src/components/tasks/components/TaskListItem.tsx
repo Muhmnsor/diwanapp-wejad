@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   MessageCircle,
@@ -41,8 +40,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
-  // Log the project name to debug
-  console.log("Task project name:", task.project_name);
+  // تصحيح: تسجيل اسم المشروع للتصحيح
+  console.log("Task details:", {
+    id: task.id,
+    title: task.title,
+    project_name: task.project_name,
+    project_id: task.project_id
+  });
 
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
