@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,12 +50,12 @@ export const MentionInput = ({
           .ilike('profiles.display_name', `%${mentionText}%`);
           
         if (!error && data) {
-          // تنسيق البيانات - Fix: Process each item individually
+          // تنسيق البيانات - Process each item individually
           const formattedData: MentionUser[] = data.map(item => ({
-            id: item.profiles?.id,
-            email: item.profiles?.email,
-            display_name: item.profiles?.display_name
-          })).filter(item => item.id !== null) as MentionUser[];
+            id: item.profiles?.id || '',
+            email: item.profiles?.email || null,
+            display_name: item.profiles?.display_name || null
+          })).filter(item => !!item.id);
           
           setMentionOptions(formattedData);
         }
