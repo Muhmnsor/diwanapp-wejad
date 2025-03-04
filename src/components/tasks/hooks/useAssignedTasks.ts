@@ -92,6 +92,13 @@ export const useAssignedTasks = () => {
             };
           });
           
+          console.log("Parent tasks with project names:", Object.values(parentTasks).map(t => ({
+            id: t.id,
+            title: t.title,
+            project_name: t.project_name,
+            project_id: t.project_id
+          })));
+          
           const transformedRegularTasks = transformRegularTasks(regularTasks || [], projects);
           
           // 4. استرجاع المهام الفرعية المسندة إلى المستخدم
