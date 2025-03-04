@@ -34,7 +34,9 @@ export const useAssignedTasks = () => {
         
       if (projectsData) {
         projectsData.forEach(project => {
-          projects[project.id] = project.name;
+          if (project.id && project.name) {
+            projects[project.id] = project.name;
+          }
         });
       }
       
@@ -80,7 +82,7 @@ export const useAssignedTasks = () => {
           
           // 4. استرجاع المهام الفرعية المسندة إلى المستخدم
           const { data: subtasks, error: subtasksError } = await supabase
-            .from('task_subtasks')
+            .from('subtasks')  // تغيير من task_subtasks إلى subtasks
             .select('*')
             .eq('assigned_to', userId);
             
