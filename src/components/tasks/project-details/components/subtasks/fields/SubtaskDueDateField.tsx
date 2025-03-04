@@ -44,16 +44,18 @@ export const SubtaskDueDateField = ({ dueDate, setDueDate }: SubtaskDueDateField
             {selectedDate ? format(selectedDate, "PPP", { locale: ar }) : <span>اختر تاريخ الاستحقاق</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => setSelectedDate(date)}
-            locale={ar}
-            dir="rtl"
-            className="border-none"
-            initialFocus
-          />
+        <PopoverContent className="w-auto p-0 z-50" align="start">
+          <div className="select-none pointer-events-auto">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => setSelectedDate(date)}
+              locale={ar}
+              dir="rtl"
+              className="border-none pointer-events-auto"
+              initialFocus
+            />
+          </div>
         </PopoverContent>
       </Popover>
     </div>

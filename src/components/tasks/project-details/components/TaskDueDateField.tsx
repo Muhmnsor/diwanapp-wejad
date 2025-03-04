@@ -37,7 +37,7 @@ export const TaskDueDateField = ({ dueDate, setDueDate }: TaskDueDateFieldProps)
             onSelect={setDueDate}
             locale={ar}
             dir="rtl"
-            className="border-none"
+            className="border-none pointer-events-auto"
             initialFocus
           />
         </PopoverContent>
