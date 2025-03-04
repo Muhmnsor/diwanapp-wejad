@@ -23,6 +23,7 @@ interface UsersTableProps {
 
 export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showActiveOnly, setShowActiveOnly] = useState(true);
   const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
   
   // Get roles data for UserEditDialog
@@ -45,18 +46,23 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
   } = useUserOperations(onUserDeleted);
 
   useEffect(() => {
-    // Filter users based on search term
-    if (searchTerm.trim() === "") {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter(user => 
+    // Filter users based on search term and active status
+    let filtered = users;
+    
+    if (showActiveOnly) {
+      filtered = filtered.filter(user => user.isActive !== false);
+    }
+    
+    if (searchTerm.trim() !== "") {
+      filtered = filtered.filter(user => 
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (user.displayName && user.displayName.toLowerCase().includes(searchTerm.toLowerCase()))
       );
-      setFilteredUsers(filtered);
     }
-  }, [searchTerm, users]);
+    
+    setFilteredUsers(filtered);
+  }, [searchTerm, users, showActiveOnly]);
 
   return (
     <div className="w-full" dir="rtl">
@@ -65,6 +71,8 @@ export const UsersTable = ({ users, onUserDeleted }: UsersTableProps) => {
         onSearchChange={setSearchTerm}
         totalCount={users.length}
         filteredCount={filteredUsers.length}
+        showActiveOnly={showActiveOnly}
+        onToggleActiveFilter={setShowActiveOnly}
       />
 
       <div className="rounded-md border w-full">

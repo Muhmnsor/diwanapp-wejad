@@ -1894,21 +1894,30 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          deleted_at: string | null
           display_name: string | null
           email: string | null
           id: string
+          is_active: boolean | null
+          is_anonymized: boolean | null
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           email?: string | null
           id: string
+          is_active?: boolean | null
+          is_anonymized?: boolean | null
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
+          is_active?: boolean | null
+          is_anonymized?: boolean | null
         }
         Relationships: []
       }
@@ -3089,6 +3098,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anonymize_user_data: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
       assign_user_role: {
         Args: {
           p_user_id: string
@@ -3137,6 +3152,12 @@ export type Database = {
           details: string
         }
         Returns: string
+      }
+      soft_delete_user: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
       }
       update_workspace_members_count: {
         Args: {

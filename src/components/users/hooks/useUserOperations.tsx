@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,33 +94,28 @@ export const useUserOperations = (onUserUpdated: () => void) => {
       console.log("=== بدء عملية حذف المستخدم ===");
       console.log("معرف المستخدم:", userToDelete.id);
       
-      // حذف الأدوار أولاً
-      const { error: roleError } = await supabase.rpc('delete_user_roles', {
-        p_user_id: userToDelete.id
+      // استخدام وظيفة الحذف المنطقي بدلاً من الحذف الفعلي
+      const { data, error } = await supabase.rpc('soft_delete_user', {
+        user_id: userToDelete.id
       });
       
-      if (roleError) {
-        console.error("خطأ في حذف أدوار المستخدم:", roleError);
-        throw roleError;
+      if (error) {
+        console.error("خطأ في تنفيذ الحذف المنطقي للمستخدم:", error);
+        throw error;
       }
       
-      // ثم حذف المستخدم
-      const { error: userError } = await supabase.auth.admin.deleteUser(
-        userToDelete.id
-      );
-      
-      if (userError) {
-        console.error("خطأ في حذف المستخدم:", userError);
-        throw userError;
+      if (!data) {
+        console.error("فشل تنفيذ الحذف المنطقي: لم يتم إرجاع نتيجة");
+        throw new Error("فشل تنفيذ الحذف المنطقي");
       }
       
-      toast.success("تم حذف المستخدم بنجاح");
+      toast.success("تم تعطيل المستخدم وإخفاء هويته بنجاح");
       setUserToDelete(null);
       onUserUpdated();
-      console.log("=== تمت عملية حذف المستخدم بنجاح ===");
+      console.log("=== تمت عملية الحذف المنطقي للمستخدم بنجاح ===");
     } catch (error) {
-      console.error("خطأ عام في حذف المستخدم:", error);
-      toast.error("حدث خطأ أثناء حذف المستخدم");
+      console.error("خطأ عام في تنفيذ الحذف المنطقي للمستخدم:", error);
+      toast.error("حدث خطأ أثناء تعطيل المستخدم");
     }
   };
 

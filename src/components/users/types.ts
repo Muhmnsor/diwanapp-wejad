@@ -5,6 +5,7 @@ export interface User {
   role: string;
   lastLogin: string;
   displayName?: string;  // إضافة حقل المسمى الوظيفي
+  isActive?: boolean;    // إضافة حقل حالة المستخدم
 }
 
 export interface Role {
