@@ -10,8 +10,6 @@ interface TaskMetadataProps {
 }
 
 export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: TaskMetadataProps) => {
-  console.log("TaskMetadata received projectName:", projectName);
-  
   return (
     <div className="flex flex-wrap items-center gap-4">
       {dueDate && (
@@ -21,7 +19,7 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: 
         </div>
       )}
       
-      {projectName && (
+      {projectName && projectName !== 'مشروع غير محدد' && (
         <div className="flex items-center text-sm text-muted-foreground">
           <Briefcase className="h-4 w-4 ml-1" />
           <span>{projectName}</span>

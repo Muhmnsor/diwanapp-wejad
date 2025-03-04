@@ -22,9 +22,6 @@ interface TaskListItemProps {
 export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemProps) => {
   const [showDiscussion, setShowDiscussion] = useState(false);
   const currentStatus = task.status || "pending";
-  
-  console.log("TaskListItem - task object:", task);
-  console.log("TaskListItem - project_name:", task.project_name);
 
   // Custom function to handle status change
   const handleStatusChange = (status: string) => {

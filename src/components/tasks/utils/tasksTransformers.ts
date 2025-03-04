@@ -39,7 +39,6 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
 // تحويل المهام العادية إلى تنسيق موحد
 export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<string, string>): Task[] => {
   return regularTasks.map(task => {
-    // تصحيح هنا: قد يكون project_id هو string وليس uuid
     const projectName = task.project_id && projectsMap[task.project_id] 
       ? projectsMap[task.project_id] 
       : 'مشروع غير محدد';
