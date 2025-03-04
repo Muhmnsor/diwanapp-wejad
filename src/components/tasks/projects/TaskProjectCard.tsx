@@ -6,8 +6,7 @@ import {
   Clock,
   ClipboardList,
   AlertTriangle,
-  CheckSquare, 
-  User
+  CheckSquare 
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow, differenceInDays } from "date-fns";
@@ -25,7 +24,6 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
-  created_by?: string | null;
 }
 
 interface TaskProjectCardProps {
@@ -39,38 +37,12 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
   const [overdueTasksCount, setOverdueTasksCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [completionPercentage, setCompletionPercentage] = useState(0);
-  const [projectManager, setProjectManager] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const fetchProjectManagerInfo = async () => {
-      if (project.created_by) {
-        // استعلام معلومات مدير المشروع من جدول profiles
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('display_name, email')
-          .eq('id', project.created_by)
-          .single();
-          
-        if (error) {
-          console.error("Error fetching project manager info:", error);
-          return;
-        }
-        
-        if (data) {
-          // استخدام اسم العرض إذا كان متاحًا، وإلا استخدام البريد الإلكتروني
-          setProjectManager(data.display_name || data.email || "غير معروف");
-        }
-      }
-    };
-    
-    fetchProjectManagerInfo();
-  }, [project.created_by]);
 
   useEffect(() => {
     const fetchTasksData = async () => {
       setIsLoading(true);
       try {
-        // استعلام المهام لهذا المشروع
+        // Fetch tasks for this project
         const { data: tasks, error } = await supabase
           .from('tasks')
           .select('*')
@@ -81,11 +53,11 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
           return;
         }
 
-        // حساب المقاييس
+        // Calculate metrics
         const total = tasks ? tasks.length : 0;
         const completed = tasks ? tasks.filter(task => task.status === 'completed').length : 0;
         
-        // حساب المهام المتأخرة (المهام ذات تاريخ الاستحقاق في الماضي وغير مكتملة)
+        // Calculate overdue tasks (tasks with due_date in the past and not completed)
         const now = new Date();
         const overdue = tasks ? tasks.filter(task => {
           return task.status !== 'completed' && 
@@ -97,15 +69,15 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
         setCompletedTasksCount(completed);
         setOverdueTasksCount(overdue);
         
-        // حساب نسبة الإكمال
+        // Calculate completion percentage
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
         setCompletionPercentage(percentage);
         
-        // إذا كانت نسبة الإكمال 100٪ ولكن الحالة ليست "مكتملة"، فقم بتحديثها
+        // If completion percentage is 100% but status is not 'completed', update it
         if (percentage === 100 && project.status !== 'completed' && total > 0) {
           console.log(`Project ${project.id} is 100% complete, updating status to completed`);
           
-          // تحديث حالة المشروع في قاعدة البيانات
+          // Update project status in the database
           const { error: updateError } = await supabase
             .from('project_tasks')
             .update({ status: 'completed' })
@@ -157,7 +129,6 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
     }
   };
 
-  // هذه الدالة لن نستخدمها بعد الآن
   const getRemainingDays = (dateString: string | null) => {
     if (!dateString) return null;
     
@@ -170,6 +141,8 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
       return null;
     }
   };
+
+  const remainingDays = getRemainingDays(project.due_date);
 
   return (
     <Card 
@@ -215,12 +188,9 @@ export const TaskProjectCard = ({ project }: TaskProjectCardProps) => {
               : 'غير محدد'}
           </span>
         </div>
-        
-        {/* بدلاً من عرض الأيام المتبقية، نعرض اسم مدير المشروع */}
-        {projectManager && (
-          <div className="flex items-center gap-1 text-sm font-medium">
-            <User className="h-4 w-4 text-blue-500" />
-            <span>{projectManager}</span>
+        {remainingDays !== null && (
+          <div className="text-sm font-medium">
+            متبقي {remainingDays} يوم
           </div>
         )}
       </CardFooter>
