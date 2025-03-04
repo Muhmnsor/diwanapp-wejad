@@ -70,11 +70,14 @@ export const useUsersData = () => {
             if (Array.isArray(ur.roles)) {
               // إذا كان مصفوفة، استخدم الكائن الأول إذا كان موجودًا
               if (ur.roles.length > 0) {
-                rolesMap.set(ur.user_id, ur.roles[0].name);
+                // تحديد النوع بشكل صريح للتأكد من أن TypeScript يفهم البنية
+                const role = ur.roles[0] as { id: string, name: string };
+                rolesMap.set(ur.user_id, role.name);
               }
             } else {
               // إذا كان كائنًا فرديًا
-              rolesMap.set(ur.user_id, ur.roles.name);
+              const role = ur.roles as { id: string, name: string };
+              rolesMap.set(ur.user_id, role.name);
             }
           }
         });
