@@ -35,6 +35,8 @@ export const useDiscussionExtension = ({
   };
 
   const handleExtendDiscussion = async () => {
+    console.log("handleExtendDiscussion called with days:", days, "hours:", hours);
+    
     if (days === 0 && hours === 0) {
       toast.error("الرجاء تحديد مدة زمنية للتمديد");
       return false;

@@ -34,20 +34,21 @@ export const ExtendDiscussionWrapper: React.FC<ExtendDiscussionWrapperProps> = (
     onSuccess
   });
 
-  // Instead of using onSubmit which doesn't exist on ExtendDiscussionDialog,
-  // let's check the actual props the dialog expects and provide them directly
-  
+  // Let's simplify and pass only the props that are likely to be expected
+  // based on naming conventions and common dialog patterns
   return (
     <ExtendDiscussionDialog
       isOpen={isOpen}
       onClose={onClose}
       ideaId={ideaId}
-      onSuccess={onSuccess}
-      days={days}
-      hours={hours}
-      onDaysChange={setDays}
-      onHoursChange={setHours}
-      onExtend={handleExtendDiscussion}
+      onSubmit={async (data: any) => {
+        // Set our local state based on the dialog's form data
+        if (data.days !== undefined) setDays(data.days);
+        if (data.hours !== undefined) setHours(data.hours);
+        
+        // Then call our extension logic
+        return await handleExtendDiscussion();
+      }}
       isSubmitting={isSubmitting}
     />
   );
