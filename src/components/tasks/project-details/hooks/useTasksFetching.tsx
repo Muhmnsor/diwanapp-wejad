@@ -18,7 +18,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
       // Get tasks
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('*, attachments:task_attachments(url)')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
       
@@ -29,8 +29,22 @@ export const useTasksFetching = (projectId: string | undefined) => {
       
       console.log("Fetched tasks:", data);
       
+      // Transform task attachments
+      const tasksWithAttachments = data?.map(task => {
+        // Handle attachments if they exist
+        let attachments = null;
+        if (task.attachments && Array.isArray(task.attachments) && task.attachments.length > 0) {
+          attachments = task.attachments.map((attachment: any) => attachment.url).filter(Boolean);
+        }
+        
+        return {
+          ...task,
+          attachments
+        };
+      }) || [];
+      
       // Add stage names by fetching stages separately
-      let tasksWithStageNames = [...(data || [])];
+      let tasksWithStageNames = [...tasksWithAttachments];
       
       // Get all stage IDs used in tasks
       const stageIds = tasksWithStageNames
@@ -99,6 +113,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
         }
       });
       
+      console.log("Processed tasks with attachments:", tasksWithUserData);
       setTasks(tasksWithUserData);
       setTasksByStage(tasksByStageMap);
       

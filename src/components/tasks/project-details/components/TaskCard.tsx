@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -73,13 +73,45 @@ export const TaskCard = ({
     }
   };
 
+  const handleDownloadAttachment = async (attachmentUrl: string) => {
+    try {
+      // استخراج اسم الملف من الرابط
+      const fileName = attachmentUrl.split('/').pop() || 'attachment';
+      
+      // تنزيل الملف
+      const response = await fetch(attachmentUrl);
+      if (!response.ok) throw new Error('فشل تنزيل الملف');
+      
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      
+      // إنشاء رابط وهمي لتنزيل الملف
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      
+      // تنظيف
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+      
+      toast.success('جاري تنزيل الملف');
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      toast.error('حدث خطأ أثناء تنزيل الملف');
+    }
+  };
+
+  const hasAttachments = task.attachments && task.attachments.length > 0;
+
   return (
     <Card className="border hover:border-primary/50 transition-colors">
       <CardContent className="p-4 text-right">
         <div className="flex justify-between items-start mb-2">
           <div className="flex gap-2">
-            {getStatusBadge(task.status)}
             {getPriorityBadge(task.priority)}
+            {!hasAttachments && getStatusBadge(task.status)}
           </div>
           <div className="flex items-center cursor-pointer" onClick={() => setShowSubtasks(!showSubtasks)}>
             <h3 className="font-semibold text-lg">{task.title}</h3>
@@ -115,33 +147,50 @@ export const TaskCard = ({
             </Badge>
           )}
 
-          {canChangeStatus() && (
-            <div className="mt-3 flex justify-end">
-              {task.status !== 'completed' ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-7 px-3 mt-2"
-                  onClick={() => handleStatusUpdate('completed')}
-                  disabled={isUpdating}
-                >
-                  <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
-                  إكمال المهمة
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-7 px-3 mt-2"
-                  onClick={() => handleStatusUpdate('in_progress')}
-                  disabled={isUpdating}
-                >
-                  <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
-                  إعادة فتح المهمة
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="mt-3 flex justify-end gap-2">
+            {hasAttachments && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-3"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownloadAttachment(task.attachments![0]);
+                }}
+              >
+                <Download className="h-3.5 w-3.5 ml-1 text-primary" />
+                تنزيل المرفق
+              </Button>
+            )}
+            
+            {canChangeStatus() && (
+              <>
+                {task.status !== 'completed' ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 px-3"
+                    onClick={() => handleStatusUpdate('completed')}
+                    disabled={isUpdating}
+                  >
+                    <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
+                    إكمال المهمة
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 px-3"
+                    onClick={() => handleStatusUpdate('in_progress')}
+                    disabled={isUpdating}
+                  >
+                    <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
+                    إعادة فتح المهمة
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
           
           {showSubtasks && (
             <div className="w-full mt-3">

@@ -11,4 +11,5 @@ export interface Task {
   created_at: string;
   stage_id: string | null;
   stage_name?: string;
+  attachments?: string[] | null;
 }
