@@ -16,7 +16,8 @@ import {
 } from "../utils/tasksTransformers";
 
 export type { Task };
-export { default as TaskStatus } from "../types/task";
+// إزالة التصدير الافتراضي الذي يسبب الخطأ
+export { TaskStatus } from "../types/task";
 
 export const useAssignedTasks = () => {
   const { user } = useAuthStore();
