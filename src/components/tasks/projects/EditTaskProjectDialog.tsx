@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 interface TaskProject {
   id: string;
@@ -31,30 +33,45 @@ interface EditTaskProjectDialogProps {
   onSuccess?: () => void;
 }
 
+const statusOptions = [
+  { value: "pending", label: "قيد الانتظار" },
+  { value: "in_progress", label: "قيد التنفيذ" },
+  { value: "delayed", label: "متعثر" },
+  { value: "completed", label: "مكتمل" },
+  { value: "stopped", label: "متوقف" },
+];
+
 export const EditTaskProjectDialog = ({
   isOpen,
   onClose,
   project,
   onSuccess,
 }: EditTaskProjectDialogProps) => {
-  const [title, setTitle] = useState(project.title);
-  const [description, setDescription] = useState(project.description || "");
-  const [dueDate, setDueDate] = useState(project.due_date || "");
-  const [status, setStatus] = useState(project.status);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const form = useForm({
+    defaultValues: {
+      title: project.title,
+      description: project.description || "",
+      due_date: project.due_date ? project.due_date.split('T')[0] : "",
+      status: project.status,
+    }
+  });
 
-  const statusOptions = [
-    { value: "pending", label: "قيد الانتظار" },
-    { value: "in_progress", label: "قيد التنفيذ" },
-    { value: "delayed", label: "متعثر" },
-    { value: "completed", label: "مكتمل" },
-    { value: "stopped", label: "متوقف" },
-  ];
+  // Reset form when project changes
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        title: project.title,
+        description: project.description || "",
+        due_date: project.due_date ? project.due_date.split('T')[0] : "",
+        status: project.status,
+      });
+    }
+  }, [isOpen, project, form]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!title.trim()) {
+  const handleSubmit = async (values: any) => {
+    if (!values.title.trim()) {
       toast.error("عنوان المشروع مطلوب");
       return;
     }
@@ -65,16 +82,18 @@ export const EditTaskProjectDialog = ({
       const { error } = await supabase
         .from("project_tasks")
         .update({
-          title,
-          description,
-          due_date: dueDate || null,
-          status,
+          title: values.title,
+          description: values.description,
+          due_date: values.due_date || null,
+          status: values.status,
         })
         .eq("id", project.id);
       
       if (error) {
         throw error;
       }
+      
+      toast.success("تم تحديث المشروع بنجاح");
       
       if (onSuccess) {
         onSuccess();
@@ -99,77 +118,107 @@ export const EditTaskProjectDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="title" className="block text-sm font-medium">
-              عنوان المشروع
-            </label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="أدخل عنوان المشروع"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel htmlFor="title" className="block text-sm font-medium">
+                    عنوان المشروع
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      id="title"
+                      placeholder="أدخل عنوان المشروع"
+                      required
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="description" className="block text-sm font-medium">
-              وصف المشروع
-            </label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="أدخل وصف المشروع"
-              rows={3}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel htmlFor="description" className="block text-sm font-medium">
+                    وصف المشروع
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      id="description"
+                      placeholder="أدخل وصف المشروع"
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="dueDate" className="block text-sm font-medium">
-              تاريخ الاستحقاق
-            </label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={dueDate ? dueDate.split('T')[0] : ""}
-              onChange={(e) => setDueDate(e.target.value)}
+            <FormField
+              control={form.control}
+              name="due_date"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel htmlFor="dueDate" className="block text-sm font-medium">
+                    تاريخ الاستحقاق
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      id="dueDate"
+                      type="date"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="status" className="block text-sm font-medium">
-              الحالة
-            </label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel htmlFor="status" className="block text-sm font-medium">
+                    الحالة
+                  </FormLabel>
+                  <FormControl>
+                    <select
+                      id="status"
+                      className="w-full p-2 border rounded-md"
+                      {...field}
+                    >
+                      {statusOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              إلغاء
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "جارٍ الحفظ..." : "حفظ التغييرات"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                إلغاء
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "جارٍ الحفظ..." : "حفظ التغييرات"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
