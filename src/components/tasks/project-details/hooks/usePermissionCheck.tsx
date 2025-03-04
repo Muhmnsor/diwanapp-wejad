@@ -40,9 +40,15 @@ export const usePermissionCheck = ({ assignedTo }: UsePermissionCheckProps) => {
             .single();
           
           if (!error && userRole?.roles) {
-            // تحقق مما إذا كان الدور هو 'admin' أو 'app_admin'
+            // تصحيح المشكلة هنا: التحقق من نوع البيانات قبل استخدامها
             const roleName = typeof userRole.roles === 'object' ? 
-              (userRole.roles as { name: string }).name : '';
+              // إذا كان userRole.roles كائن، نتحقق مما إذا كان مصفوفة أولاً
+              Array.isArray(userRole.roles) ? 
+                // إذا كانت مصفوفة، نأخذ الاسم من العنصر الأول إذا وجد
+                (userRole.roles[0] && userRole.roles[0].name) : 
+                // وإلا نعامله ككائن مفرد
+                (userRole.roles as { name: string }).name 
+              : '';
             
             isAdmin = ['admin', 'app_admin'].includes(roleName);
           }
