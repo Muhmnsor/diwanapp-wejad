@@ -4,7 +4,7 @@ import { Task } from "../hooks/useAssignedTasks";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Clock, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Check, Clock, Briefcase, ChevronDown, ChevronUp, ArrowRight, GitMerge } from "lucide-react";
 import { formatDueDate, getStatusBadge } from "../utils/taskFormatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -62,19 +62,25 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
     }
   };
 
-  // Add a special style or indicator for subtasks
-  const itemClassName = task.is_subtask 
-    ? "hover:shadow-md transition-shadow border-r-4 border-r-blue-400" 
-    : "hover:shadow-md transition-shadow";
+  // أسلوب خاص للمهام الفرعية
+  const getBorderStyle = () => {
+    if (task.is_subtask) {
+      return "hover:shadow-md transition-shadow border-r-4 border-r-blue-400 bg-blue-50";
+    }
+    return "hover:shadow-md transition-shadow";
+  };
 
   return (
-    <Card className={itemClassName}>
+    <Card className={getBorderStyle()}>
       <CardContent className="p-5">
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-start">
             <div>
               {task.is_subtask && (
-                <Badge variant="outline" className="text-xs mb-1">مهمة فرعية</Badge>
+                <div className="flex items-center gap-1 mb-1">
+                  <GitMerge className="h-4 w-4 text-blue-500" />
+                  <Badge variant="outline" className="text-xs bg-blue-50">مهمة فرعية</Badge>
+                </div>
               )}
               <h3 className="font-semibold text-lg">{task.title}</h3>
               {task.description && (
@@ -87,7 +93,7 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
           </div>
           
           <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               {task.due_date && (
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4 ml-1" />
@@ -99,6 +105,13 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Briefcase className="h-4 w-4 ml-1" />
                   <span>{task.project_name}</span>
+                </div>
+              )}
+              
+              {task.is_subtask && task.parent_task_id && (
+                <div className="flex items-center text-sm text-blue-500">
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                  <span>تابعة لمهمة رئيسية</span>
                 </div>
               )}
             </div>
