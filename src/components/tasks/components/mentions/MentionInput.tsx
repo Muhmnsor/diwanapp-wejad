@@ -11,6 +11,12 @@ interface MentionInputProps {
   isSubmitting?: boolean;
 }
 
+interface MentionUser {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+}
+
 export const MentionInput = ({
   value,
   onChange,
@@ -20,7 +26,7 @@ export const MentionInput = ({
 }: MentionInputProps) => {
   const [mentionMode, setMentionMode] = useState(false);
   const [mentionText, setMentionText] = useState("");
-  const [mentionOptions, setMentionOptions] = useState<any[]>([]);
+  const [mentionOptions, setMentionOptions] = useState<MentionUser[]>([]);
   const [cursorPosition, setCursorPosition] = useState<number | null>(null);
 
   useEffect(() => {
@@ -33,8 +39,6 @@ export const MentionInput = ({
 
   const fetchUsers = async () => {
     try {
-      let query;
-      
       // إذا كان هناك معرف لمساحة العمل، نبحث عن المستخدمين في هذه المساحة
       if (workspaceId) {
         const { data, error } = await supabase
@@ -48,11 +52,11 @@ export const MentionInput = ({
           
         if (!error && data) {
           // تنسيق البيانات
-          const formattedData = data.map(item => ({
+          const formattedData: MentionUser[] = data.map(item => ({
             id: item.profiles?.id,
             email: item.profiles?.email,
             display_name: item.profiles?.display_name
-          })).filter(item => item.id !== null);
+          })).filter(item => item.id !== null) as MentionUser[];
           
           setMentionOptions(formattedData);
         }
@@ -65,7 +69,7 @@ export const MentionInput = ({
           .limit(5);
           
         if (!error && data) {
-          setMentionOptions(data);
+          setMentionOptions(data as MentionUser[]);
         }
       }
     } catch (error) {
@@ -123,7 +127,7 @@ export const MentionInput = ({
     }
   };
 
-  const insertMention = (user: any) => {
+  const insertMention = (user: MentionUser) => {
     if (!cursorPosition) return;
     
     // نستخرج النص قبل وبعد اسم المستخدم

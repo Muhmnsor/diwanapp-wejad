@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { transformPortfolioTasks, transformRegularTasks, transformSubtasks } from "../utils/tasksTransformers";
-import { Task } from "../types/task";
+import type { Task } from "../types/task";
 
-export { Task };
+export type { Task };
 
 export const useAssignedTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);

@@ -1,15 +1,11 @@
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Task } from "../types/task";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { TaskComment } from "../types/taskComment";
-import { MessageCircle } from "lucide-react";
-import { CommentItem } from "./CommentItem";
 import { Separator } from "@/components/ui/separator";
-import { CommentForm } from "./comments/CommentForm";
-import { uploadAttachment } from "../services/uploadService";
+import { TaskDiscussionHeader } from "./discussions/TaskDiscussionHeader";
+import { TaskDiscussionContent } from "./discussions/TaskDiscussionContent";
+import { TaskCommentForm } from "./discussions/TaskCommentForm";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
@@ -18,210 +14,27 @@ interface TaskDiscussionDialogProps {
 }
 
 export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussionDialogProps) => {
-  const [comments, setComments] = useState<TaskComment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // استرجاع التعليقات عند فتح مربع الحوار
-  useEffect(() => {
-    if (open) {
-      fetchComments();
-    }
-  }, [open, task.id]);
-
-  const fetchComments = async () => {
-    setLoading(true);
-    try {
-      let tableName = task.is_subtask ? "portfolio_task_comments" : "task_comments";
-      let query = supabase
-        .from(tableName)
-        .select(`
-          id,
-          task_id,
-          content,
-          created_at,
-          created_by,
-          attachment_url,
-          attachment_name,
-          attachment_type,
-          profiles (display_name, email)
-        `)
-        .eq("task_id", task.id)
-        .order("created_at", { ascending: true });
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        // محاولة استخدام جدول آخر إذا لم يعثر على الأول
-        tableName = "task_comments";
-        const { data: secondData, error: secondError } = await supabase
-          .from(tableName)
-          .select(`
-            id,
-            task_id,
-            content,
-            created_at,
-            created_by,
-            attachment_url,
-            attachment_name,
-            attachment_type,
-            profiles (display_name, email)
-          `)
-          .eq("task_id", task.id)
-          .order("created_at", { ascending: true });
-          
-        if (secondError) {
-          throw secondError;
-        }
-        
-        // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
-        const formattedData: TaskComment[] = (secondData || []).map((item: any) => ({
-          id: item.id,
-          task_id: item.task_id,
-          content: item.content,
-          created_at: item.created_at,
-          created_by: item.created_by,
-          attachment_url: item.attachment_url,
-          attachment_name: item.attachment_name,
-          attachment_type: item.attachment_type,
-          profiles: item.profiles,
-        }));
-        
-        setComments(formattedData);
-      } else {
-        // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
-        const formattedData: TaskComment[] = (data || []).map((item: any) => ({
-          id: item.id,
-          task_id: item.task_id,
-          content: item.content,
-          created_at: item.created_at,
-          created_by: item.created_by,
-          attachment_url: item.attachment_url,
-          attachment_name: item.attachment_name,
-          attachment_type: item.attachment_type,
-          profiles: item.profiles,
-        }));
-        
-        setComments(formattedData);
-      }
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      toast.error("حدث خطأ أثناء استرجاع التعليقات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmitComment = async () => {
-    if (!commentText.trim() && !selectedFile) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // رفع المرفق إذا كان موجودًا
-      let attachmentUrl = null;
-      let attachmentName = null;
-      let attachmentType = null;
-
-      if (selectedFile) {
-        const uploadResult = await uploadAttachment(selectedFile);
-        if (uploadResult && !uploadResult.error) {
-          attachmentUrl = uploadResult.url;
-          attachmentName = selectedFile.name;
-          attachmentType = selectedFile.type;
-        }
-      }
-      
-      // تحديد الجدول المناسب بناءً على نوع المهمة
-      const tableName = task.is_subtask ? "portfolio_task_comments" : "task_comments";
-      
-      const { error } = await supabase
-        .from(tableName)
-        .insert({
-          task_id: task.id,
-          content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
-          created_at: new Date().toISOString(),
-          attachment_url: attachmentUrl,
-          attachment_name: attachmentName,
-          attachment_type: attachmentType
-        });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // مسح حقل التعليق والملف بعد النجاح
-      setCommentText("");
-      setSelectedFile(null);
-      
-      // إعادة تحميل التعليقات
-      fetchComments();
-      
-      toast.success("تم إضافة التعليق بنجاح");
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      toast.error("حدث خطأ أثناء إضافة التعليق");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleFileRemove = () => {
-    setSelectedFile(null);
+  const handleCommentAdded = () => {
+    // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[650px] max-h-[80vh] overflow-hidden flex flex-col" dir="rtl">
-        <DialogHeader>
-          <DialogTitle className="text-xl flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            <span>مناقشة حول: {task.title}</span>
-          </DialogTitle>
-        </DialogHeader>
+        <TaskDiscussionHeader task={task} />
         
         <Separator className="my-4" />
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
-          {loading ? (
-            <div className="flex justify-center items-center h-40">
-              <p className="text-muted-foreground">جاري تحميل المناقشات...</p>
-            </div>
-          ) : comments.length === 0 ? (
-            <div className="flex flex-col justify-center items-center h-40">
-              <MessageCircle className="h-10 w-10 text-muted-foreground mb-2 opacity-50" />
-              <p className="text-muted-foreground">لا توجد مناقشات حول هذه المهمة بعد</p>
-              <p className="text-xs text-muted-foreground mt-1">كن أول من يضيف تعليقًا</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} />
-              ))}
-            </div>
-          )}
+          {/* استخدام refreshKey كمفتاح لإعادة تحميل المحتوى عند إضافة تعليق جديد */}
+          <TaskDiscussionContent key={refreshKey} task={task} />
         </div>
         
         <div className="mt-auto">
-          <CommentForm
-            onSubmit={handleSubmitComment}
-            text={commentText}
-            onTextChange={setCommentText}
-            selectedFile={selectedFile}
-            onFileChange={handleFileChange}
-            onFileRemove={handleFileRemove}
-            isSubmitting={isSubmitting}
-            placeholder="أضف تعليقك حول المهمة..."
-            workspaceId={task.workspace_id}
-          />
+          <TaskCommentForm task={task} onCommentAdded={handleCommentAdded} />
         </div>
       </DialogContent>
     </Dialog>
