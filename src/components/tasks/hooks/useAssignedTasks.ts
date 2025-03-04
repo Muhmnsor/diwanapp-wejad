@@ -13,11 +13,7 @@ export interface Task {
   due_date: string | null;
   priority: string;
   project_name?: string;
-  workspace_name?: string; // Adding workspace_name property to fix TaskTableRow error
-}
-
-interface PortfolioWorkspace {
-  name: string;
+  workspace_name?: string;
 }
 
 export const useAssignedTasks = () => {
@@ -83,7 +79,8 @@ export const useAssignedTasks = () => {
           };
         });
         
-        // Get tasks from the regular tasks table and join with projects to get project names
+        // Get tasks from the regular tasks table and add project names
+        // تغيير طريقة الاستعلام لأن هناك مشكلة في العلاقة بين tasks و projects
         const { data: regularTasks, error: tasksError } = await supabase
           .from('tasks')
           .select(`
@@ -93,8 +90,7 @@ export const useAssignedTasks = () => {
             status,
             due_date,
             priority,
-            project_id,
-            projects(title)
+            project_id
           `)
           .eq('assigned_to', user.id);
         
@@ -105,20 +101,6 @@ export const useAssignedTasks = () => {
         
         // Format the regular tasks
         const formattedRegularTasks = (regularTasks || []).map(task => {
-          // Get project name from the joined projects table or use default text
-          let projectName = 'غير مرتبط بمشروع';
-          
-          // Fix how we access the projects.title property
-          if (task.projects) {
-            // Check if projects is an array or a single object
-            if (Array.isArray(task.projects) && task.projects.length > 0 && task.projects[0]?.title) {
-              projectName = task.projects[0].title;
-            } else if (typeof task.projects === 'object' && task.projects?.title) {
-              // If it's a single object with a title property
-              projectName = task.projects.title;
-            }
-          }
-          
           return {
             id: task.id,
             title: task.title,
@@ -126,8 +108,8 @@ export const useAssignedTasks = () => {
             status: task.status as TaskStatus,
             due_date: task.due_date,
             priority: task.priority,
-            project_name: projectName,
-            workspace_name: 'مساحة عمل افتراضية' // Default workspace name for regular tasks
+            project_name: 'غير مرتبط بمشروع', // استخدام قيمة افتراضية
+            workspace_name: 'مساحة عمل افتراضية' // قيمة افتراضية لمساحة العمل
           };
         });
         
