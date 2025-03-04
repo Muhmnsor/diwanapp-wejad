@@ -1,6 +1,4 @@
 
-import { User } from "../hooks/useProjectMembers";
-
 export type TaskFormData = {
   title: string;
   description: string;
