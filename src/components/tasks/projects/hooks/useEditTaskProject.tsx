@@ -30,6 +30,29 @@ export const useEditTaskProject = ({
   isOpen
 }: UseEditTaskProjectProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [managers, setManagers] = useState<{ id: string; name: string }[]>([]);
+  
+  // Fetch managers list
+  useEffect(() => {
+    const fetchManagers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('team_members')
+          .select('id, name')
+          .order('name');
+          
+        if (error) throw error;
+        setManagers(data || []);
+      } catch (error) {
+        console.error('Error fetching managers:', error);
+        setManagers([]);
+      }
+    };
+
+    if (isOpen) {
+      fetchManagers();
+    }
+  }, [isOpen]);
   
   const form = useForm({
     defaultValues: {
@@ -102,5 +125,6 @@ export const useEditTaskProject = ({
     form,
     isSubmitting,
     handleSubmit: form.handleSubmit(handleSubmit),
+    managers
   };
 };

@@ -3,6 +3,13 @@ import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/for
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface EditTaskProjectFieldsProps {
   form: UseFormReturn<{
@@ -12,9 +19,10 @@ interface EditTaskProjectFieldsProps {
     start_date: string;
     end_date: string;
   }>;
+  managers?: { id: string; name: string }[];
 }
 
-export const EditTaskProjectFields = ({ form }: EditTaskProjectFieldsProps) => {
+export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFieldsProps) => {
   return (
     <>
       <div className="space-y-2">
@@ -66,14 +74,29 @@ export const EditTaskProjectFields = ({ form }: EditTaskProjectFieldsProps) => {
           render={({ field }) => (
             <FormItem className="space-y-2">
               <FormLabel htmlFor="project_manager" className="text-right block">مدير المشروع</FormLabel>
-              <FormControl>
-                <Input
-                  id="project_manager"
-                  placeholder="أدخل اسم مدير المشروع"
-                  className="text-right"
-                  {...field}
-                />
-              </FormControl>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger className="text-right">
+                    <SelectValue placeholder="اختر مدير المشروع" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {managers.length > 0 ? (
+                    managers.map((manager) => (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        {manager.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      لا يوجد مدراء متاحين
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </FormItem>
           )}
         />

@@ -24,7 +24,7 @@ export const EditTaskProjectDialog = ({
   project,
   onSuccess,
 }: EditTaskProjectDialogProps) => {
-  const { form, isSubmitting, handleSubmit } = useEditTaskProject({
+  const { form, isSubmitting, handleSubmit, managers } = useEditTaskProject({
     project,
     onSuccess,
     onClose,
@@ -43,7 +43,7 @@ export const EditTaskProjectDialog = ({
 
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <EditTaskProjectFields form={form} />
+            <EditTaskProjectFields form={form} managers={managers} />
             <EditTaskProjectActions 
               isSubmitting={isSubmitting} 
               onClose={onClose} 
