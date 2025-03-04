@@ -9,7 +9,6 @@ export type TaskFormData = {
   dueDate: Date | null;
   stageId: string;
   assignedTo: string;
-  attachments: { url: string; name: string; type: string }[];
 };
 
 export interface TaskFormProps {
@@ -25,8 +24,6 @@ export interface TaskFormProps {
   setStageId: (value: string) => void;
   assignedTo: string;
   setAssignedTo: (value: string) => void;
-  attachments: { url: string; name: string; type: string }[];
-  setAttachments: React.Dispatch<React.SetStateAction<{ url: string; name: string; type: string }[]>>;
   projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
 }
