@@ -37,7 +37,7 @@ export const useDiscussionExtension = ({
   const handleExtendDiscussion = async () => {
     if (days === 0 && hours === 0) {
       toast.error("الرجاء تحديد مدة زمنية للتمديد");
-      return;
+      return false;
     }
 
     setIsSubmitting(true);
@@ -84,14 +84,18 @@ export const useDiscussionExtension = ({
       if (onSuccess) {
         onSuccess();
       }
-    } catch (error) {
-      console.error("Failed to extend discussion period:", error);
-      toast.error("حدث خطأ أثناء تمديد فترة المناقشة");
-    } finally {
-      setIsSubmitting(false);
+      
       // Reset form
       setDays(0);
       setHours(0);
+      
+      return true;
+    } catch (error) {
+      console.error("Failed to extend discussion period:", error);
+      toast.error("حدث خطأ أثناء تمديد فترة المناقشة");
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
