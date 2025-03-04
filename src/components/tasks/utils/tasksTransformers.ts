@@ -76,7 +76,7 @@ export const transformSubtasks = (
     return {
       id: subtask.id,
       title: subtask.title,
-      description: subtask.description,
+      description: null, // تعيين قيمة افتراضية للوصف كـ null
       status: subtask.status as Task['status'],
       due_date: subtask.due_date,
       priority: subtask.priority || 'medium',
