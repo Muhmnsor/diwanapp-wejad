@@ -26,9 +26,7 @@ export const TaskHeader = ({ task, status }: TaskHeaderProps) => {
         )}
       </div>
       <div className="flex flex-col gap-2">
-        <Badge className={`text-xs`}>
-          <TaskStatusBadge status={status} dueDate={task.due_date} />
-        </Badge>
+        <TaskStatusBadge status={status} dueDate={task.due_date} />
         <TaskPriorityBadge priority={task.priority} />
       </div>
     </div>
