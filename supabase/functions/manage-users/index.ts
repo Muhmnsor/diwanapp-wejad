@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
@@ -113,11 +114,14 @@ Deno.serve(async (req) => {
     }
 
     if (operation === 'delete_user' && userId) {
-      const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId)
+      // استخدام وظيفة الحذف المنطقي بدلاً من الحذف الفعلي
+      const { data, error } = await supabaseClient.rpc('soft_delete_user', {
+        user_id: userId
+      })
 
-      if (deleteError) {
-        console.error('Error deleting user:', deleteError)
-        throw deleteError
+      if (error) {
+        console.error('Error soft deleting user:', error)
+        throw error
       }
 
       return new Response(

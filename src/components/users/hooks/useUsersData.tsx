@@ -11,22 +11,39 @@ export const useUsersData = () => {
   const fetchUsers = async () => {
     try {
       console.log("بدء جلب بيانات المستخدمين");
+
+      // 1. استخدام واجهة Edge Function لجلب المستخدمين
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/manage-users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({
+          operation: 'get_users'
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("خطأ في جلب المستخدمين:", errorText);
+        throw new Error(errorText);
+      }
+
+      const { users: authUsers } = await response.json();
       
-      // 1. جلب المستخدمين من Supabase Auth
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error("خطأ في جلب المستخدمين:", authError);
-        throw authError;
+      if (!authUsers || !Array.isArray(authUsers)) {
+        console.error("خطأ: لم يتم استلام بيانات المستخدمين بشكل صحيح");
+        throw new Error("بيانات المستخدمين غير صالحة");
       }
       
-      console.log(`تم جلب ${authUsers.users.length} مستخدم من نظام المصادقة`);
+      console.log(`تم جلب ${authUsers.length} مستخدم من نظام المصادقة`);
       
       // 2. جلب الملفات الشخصية للمستخدمين
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name, is_active')
-        .in('id', authUsers.users.map(u => u.id));
+        .in('id', authUsers.map(u => u.id));
       
       if (profilesError) {
         console.error("خطأ في جلب الملفات الشخصية:", profilesError);
@@ -59,14 +76,14 @@ export const useUsersData = () => {
       if (userRoles) {
         userRoles.forEach(ur => {
           if (ur.roles) {
-            // Fix: Ensure we're accessing the name property from the roles object, not from an array
+            // الوصول إلى حقل الاسم من كائن الدور وليس من المصفوفة
             rolesMap.set(ur.user_id, ur.roles.name);
           }
         });
       }
       
       // 6. جمع البيانات وتنسيقها
-      const formattedUsers = authUsers.users.map(user => {
+      const formattedUsers = authUsers.map(user => {
         const profileData = profilesMap.get(user.id) || {};
         
         // تحويل تاريخ آخر تسجيل دخول إلى تنسيق قابل للقراءة
