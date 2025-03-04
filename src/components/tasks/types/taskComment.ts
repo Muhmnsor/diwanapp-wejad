@@ -11,5 +11,5 @@ export interface TaskComment {
   profiles?: {
     display_name: string | null;
     email: string | null;
-  };
+  } | null;
 }

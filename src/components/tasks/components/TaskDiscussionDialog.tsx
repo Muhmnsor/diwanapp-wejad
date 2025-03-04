@@ -76,9 +76,35 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
           throw secondError;
         }
         
-        setComments(secondData || []);
+        // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
+        const formattedData: TaskComment[] = (secondData || []).map((item: any) => ({
+          id: item.id,
+          task_id: item.task_id,
+          content: item.content,
+          created_at: item.created_at,
+          created_by: item.created_by,
+          attachment_url: item.attachment_url,
+          attachment_name: item.attachment_name,
+          attachment_type: item.attachment_type,
+          profiles: item.profiles,
+        }));
+        
+        setComments(formattedData);
       } else {
-        setComments(data || []);
+        // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
+        const formattedData: TaskComment[] = (data || []).map((item: any) => ({
+          id: item.id,
+          task_id: item.task_id,
+          content: item.content,
+          created_at: item.created_at,
+          created_by: item.created_by,
+          attachment_url: item.attachment_url,
+          attachment_name: item.attachment_name,
+          attachment_type: item.attachment_type,
+          profiles: item.profiles,
+        }));
+        
+        setComments(formattedData);
       }
     } catch (error) {
       console.error("Error fetching comments:", error);

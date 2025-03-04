@@ -1,17 +1,7 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "lucide-react";
-
-interface MentionUser {
-  id: string;
-  email: string;
-  display_name: string | null;
-}
 
 interface MentionInputProps {
   value: string;
@@ -24,201 +14,166 @@ interface MentionInputProps {
 export const MentionInput = ({
   value,
   onChange,
-  placeholder = "أضف تعليقًا...",
+  placeholder = "اكتب تعليقك هنا...",
   workspaceId,
-  isSubmitting
+  isSubmitting = false
 }: MentionInputProps) => {
-  const [users, setUsers] = useState<MentionUser[]>([]);
-  const [mentionActive, setMentionActive] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [cursorPosition, setCursorPosition] = useState(0);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
-  
-  // Fetch workspace members when component mounts
+  const [mentionMode, setMentionMode] = useState(false);
+  const [mentionText, setMentionText] = useState("");
+  const [mentionOptions, setMentionOptions] = useState<any[]>([]);
+  const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+
   useEffect(() => {
-    if (workspaceId) {
-      fetchWorkspaceMembers();
+    if (mentionMode && mentionText.length > 0) {
+      fetchUsers();
     } else {
-      fetchAllUsers();
+      setMentionOptions([]);
     }
-  }, [workspaceId]);
-  
-  const fetchWorkspaceMembers = async () => {
-    if (!workspaceId) return;
+  }, [mentionMode, mentionText, workspaceId]);
+
+  const fetchUsers = async () => {
+    try {
+      let query;
+      
+      // إذا كان هناك معرف لمساحة العمل، نبحث عن المستخدمين في هذه المساحة
+      if (workspaceId) {
+        const { data, error } = await supabase
+          .from('workspace_members')
+          .select(`
+            user_id,
+            profiles (id, email, display_name)
+          `)
+          .eq('workspace_id', workspaceId)
+          .ilike('profiles.display_name', `%${mentionText}%`);
+          
+        if (!error && data) {
+          // تنسيق البيانات
+          const formattedData = data.map(item => ({
+            id: item.profiles?.id,
+            email: item.profiles?.email,
+            display_name: item.profiles?.display_name
+          })).filter(item => item.id !== null);
+          
+          setMentionOptions(formattedData);
+        }
+      } else {
+        // إذا لم يكن هناك معرف لمساحة العمل، نبحث في جميع الملفات الشخصية
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, email, display_name')
+          .ilike('display_name', `%${mentionText}%`)
+          .limit(5);
+          
+        if (!error && data) {
+          setMentionOptions(data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching users for mentions:", error);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const textArea = e.currentTarget;
+    setCursorPosition(textArea.selectionStart);
     
-    try {
-      const { data, error } = await supabase
-        .from('workspace_members')
-        .select(`
-          user_id,
-          user_email,
-          user_display_name,
-          profiles:user_id (
-            id,
-            email,
-            display_name
-          )
-        `)
-        .eq('workspace_id', workspaceId);
-        
-      if (error) throw error;
-      
-      const formattedUsers: MentionUser[] = data.map(member => ({
-        id: member.user_id,
-        email: member.user_email || (member.profiles?.email as string) || "",
-        display_name: member.user_display_name || (member.profiles?.display_name as string) || ""
-      }));
-      
-      setUsers(formattedUsers);
-    } catch (error) {
-      console.error("Error fetching workspace members:", error);
+    // إذا كتب المستخدم @ نبدأ وضع الإشارة
+    if (e.key === '@' && !mentionMode) {
+      setMentionMode(true);
+      setMentionText("");
+    }
+    // إذا كان في وضع الإشارة ويضغط مفتاح Escape أو Space
+    else if (mentionMode && (e.key === 'Escape' || e.key === ' ')) {
+      setMentionMode(false);
+    }
+    // إذا كان في وضع الإشارة ويضغط Enter بينما هناك خيارات
+    else if (mentionMode && e.key === 'Enter' && mentionOptions.length > 0) {
+      e.preventDefault();
+      insertMention(mentionOptions[0]); // إدراج الخيار الأول
+    }
+    // إذا كان في وضع الإشارة وكتب أي حرف
+    else if (mentionMode) {
+      // لا نفعل شيئًا هنا، سيتم معالجة تغيير النص في onChange
     }
   };
-  
-  const fetchAllUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, display_name');
-        
-      if (error) throw error;
-      
-      const formattedUsers: MentionUser[] = data.map(profile => ({
-        id: profile.id,
-        email: profile.email || "",
-        display_name: profile.display_name || ""
-      }));
-      
-      setUsers(formattedUsers);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-  
-  // Check if we should activate mention feature
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    const cursorPos = e.target.selectionStart || 0;
-    setCursorPosition(cursorPos);
-    
-    // Find the current word being typed
-    const textUpToCursor = newValue.substring(0, cursorPos);
-    const words = textUpToCursor.split(/\s+/);
-    const currentWord = words[words.length - 1];
-    
-    // Check if the current word starts with @ and has at least one character after it
-    if (currentWord.startsWith('@') && currentWord.length > 1) {
-      setMentionActive(true);
-      // Extract the search term (remove the @)
-      setSearchQuery(currentWord.substring(1));
-      
-      // Calculate the position for the popover
-      if (textareaRef.current) {
-        const textareaRect = textareaRef.current.getBoundingClientRect();
-        // Try to position near cursor (this is approximate)
-        // For RTL support, you may need additional logic here
-        setPopoverPosition({
-          top: textareaRect.top + 30, // Approximate position below the line
-          left: textareaRect.left + 20 // Approximate position from left
-        });
-      }
-    } else {
-      setMentionActive(false);
-    }
-    
     onChange(newValue);
-  };
-  
-  const insertMention = (user: MentionUser) => {
-    // Get the text before the cursor
-    const textBeforeCursor = value.substring(0, cursorPosition);
-    // Find the last @ before the cursor
-    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
     
-    if (lastAtIndex >= 0) {
-      // Create the new text by replacing the @query with @username
-      const textBeforeMention = value.substring(0, lastAtIndex);
-      const textAfterMention = value.substring(cursorPosition);
+    if (mentionMode && cursorPosition !== null) {
+      // استخراج النص بعد @ وقبل موضع المؤشر الحالي
+      const currentPos = e.target.selectionStart;
+      const lastAtPos = newValue.lastIndexOf('@', currentPos - 1);
       
-      const displayName = user.display_name || user.email;
-      const newText = `${textBeforeMention}@${displayName} ${textAfterMention}`;
-      
-      onChange(newText);
-      
-      // Reset mention state
-      setMentionActive(false);
-      
-      // Set focus back to textarea
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-        // Calculate new cursor position
-        const newPosition = lastAtIndex + displayName.length + 2; // +2 for @ and space
-        setTimeout(() => {
-          textareaRef.current?.setSelectionRange(newPosition, newPosition);
-        }, 0);
+      if (lastAtPos !== -1) {
+        const mentionString = newValue.substring(lastAtPos + 1, currentPos);
+        
+        // تحديث نص الإشارة
+        setMentionText(mentionString);
+        
+        // إذا وجدنا مسافة أو حرف سطر جديد، نخرج من وضع الإشارة
+        if (/[\s\n]/.test(mentionString)) {
+          setMentionMode(false);
+        }
+      } else {
+        // إذا لم نعثر على @ قبل الموضع الحالي
+        setMentionMode(false);
       }
     }
   };
-  
-  // Filter users based on search query
-  const filteredUsers = users.filter(user => {
-    const displayName = user.display_name || user.email;
-    return displayName.toLowerCase().includes(searchQuery.toLowerCase());
-  });
-  
+
+  const insertMention = (user: any) => {
+    if (!cursorPosition) return;
+    
+    // نستخرج النص قبل وبعد اسم المستخدم
+    const beforeText = value.substring(0, cursorPosition - mentionText.length - 1); // -1 للـ @
+    const afterText = value.substring(cursorPosition);
+    
+    // استخدام اسم العرض إذا كان موجودًا، وإلا نستخدم البريد الإلكتروني
+    const displayText = user.display_name || user.email || 'مستخدم';
+    
+    // ندرج الإشارة الجديدة
+    const newText = `${beforeText}@${displayText} ${afterText}`;
+    onChange(newText);
+    
+    // إعادة تعيين حالة الإشارة
+    setMentionMode(false);
+    setMentionText("");
+  };
+
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <Textarea
-        ref={textareaRef}
         value={value}
-        onChange={handleTextChange}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="min-h-[80px] w-full resize-none rounded-xl text-right px-4 py-3"
-        disabled={isSubmitting}
+        className="resize-none min-h-[100px] pr-8 text-right"
         dir="rtl"
+        disabled={isSubmitting}
       />
       
-      {mentionActive && (
-        <Popover open={mentionActive} onOpenChange={setMentionActive}>
-          <PopoverTrigger asChild>
-            <div></div>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="p-0 w-[200px] border" 
-            side="top"
-            style={{
-              maxHeight: '200px',
-              overflowY: 'auto',
-            }}
-          >
-            <Command>
-              <CommandGroup>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map(user => (
-                    <CommandItem
-                      key={user.id}
-                      value={user.display_name || user.email}
-                      onSelect={() => insertMention(user)}
-                      className="flex items-center gap-2 py-2 cursor-pointer"
-                    >
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-xs">
-                          {user.display_name ? user.display_name[0].toUpperCase() : <User className="h-3 w-3" />}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{user.display_name || user.email}</span>
-                    </CommandItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-3 text-center text-sm text-muted-foreground">
-                    لا يوجد مستخدمين مطابقين
-                  </div>
-                )}
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
+      {/* عرض خيارات الإشارة */}
+      {mentionMode && mentionOptions.length > 0 && (
+        <div className="absolute bottom-full mb-1 right-0 bg-background border rounded-md shadow-md min-w-[200px] max-w-full z-10">
+          <ul className="py-1">
+            {mentionOptions.map((user) => (
+              <li 
+                key={user.id} 
+                className="px-3 py-2 hover:bg-muted cursor-pointer flex items-center gap-2"
+                onClick={() => insertMention(user)}
+              >
+                <div className="flex-shrink-0 h-5 w-5 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs">
+                  {(user.display_name || user.email || 'م').charAt(0).toUpperCase()}
+                </div>
+                <span className="truncate">
+                  {user.display_name || user.email || 'مستخدم'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
