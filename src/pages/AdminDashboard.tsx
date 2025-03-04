@@ -24,12 +24,10 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   
-  // Access user's name from Supabase Auth session
   const { data: userName, isLoading: isLoadingUser } = useQuery({
     queryKey: ['current-user-name'],
     queryFn: async () => {
       try {
-        // Fetch user profile for more details if available
         if (user?.id) {
           const { data: profile, error } = await supabase
             .from('profiles')
@@ -42,7 +40,6 @@ const AdminDashboard = () => {
           }
         }
         
-        // Default to user email or a generic greeting
         return user?.email?.split('@')[0] || "المستخدم";
       } catch (error) {
         console.error("Error fetching user name:", error);
@@ -52,30 +49,49 @@ const AdminDashboard = () => {
     initialData: "المستخدم"
   });
 
-  // Fetch notification counts
   const { data: notificationCounts } = useQuery({
     queryKey: ['notification-counts'],
     queryFn: async () => {
-      // Fetch pending tasks count
-      const { data: pendingTasks, error: tasksError } = await supabase
+      const { data: pendingPortfolioTasks, error: portfolioError } = await supabase
+        .from('portfolio_tasks')
+        .select('id', { count: 'exact' })
+        .eq('assigned_to', user?.id)
+        .neq('status', 'completed');
+
+      const { data: pendingRegularTasks, error: tasksError } = await supabase
         .from('tasks')
         .select('id', { count: 'exact' })
-        .eq('status', 'pending');
+        .eq('assigned_to', user?.id)
+        .neq('status', 'completed');
 
-      // Fetch unread notifications count
+      const { data: pendingSubtasks, error: subtasksError } = await supabase
+        .from('subtasks')
+        .select('id', { count: 'exact' })
+        .eq('assigned_to', user?.id)
+        .neq('status', 'completed');
+
+      if (portfolioError || tasksError || subtasksError) {
+        console.error("Error fetching tasks counts:", 
+          portfolioError || tasksError || subtasksError
+        );
+      }
+
+      const totalPendingTasks = 
+        (pendingPortfolioTasks?.length || 0) + 
+        (pendingRegularTasks?.length || 0) + 
+        (pendingSubtasks?.length || 0);
+
       const { data: unreadNotifications, error: notificationsError } = await supabase
         .from('notifications')
         .select('id', { count: 'exact' })
         .eq('is_read', false)
         .eq('user_id', user?.id);
 
-      // Fetch new ideas count
       const { data: newIdeas, error: ideasError } = await supabase
         .from('ideas')
         .select('id', { count: 'exact' })
         .eq('status', 'new');
 
-      // Fetch pending finance approvals
       const { data: pendingFinance, error: financeError } = await supabase
         .from('financial_resources')
         .select('id', { count: 'exact' })
@@ -86,7 +102,7 @@ const AdminDashboard = () => {
       }
 
       return {
-        tasks: pendingTasks?.length || 0,
+        tasks: totalPendingTasks,
         notifications: unreadNotifications?.length || 0,
         ideas: newIdeas?.length || 0,
         finance: pendingFinance?.length || 0,
