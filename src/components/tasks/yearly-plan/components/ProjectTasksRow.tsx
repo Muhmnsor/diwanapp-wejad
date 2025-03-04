@@ -14,12 +14,24 @@ export const ProjectTasksRow = ({ project, months, today }: ProjectTasksRowProps
   const projectEndDate = new Date(project.end_date);
   const projectStatus = determineProjectStatus(project);
   
+  // Determine project category based on event_path
+  const getProjectCategory = () => {
+    if (project.event_path === "individual_event") {
+      return "الفعاليات المنفردة";
+    } else if (project.event_path === "task_project") {
+      return "مشاريع المهام";
+    } else {
+      return "المشاريع";
+    }
+  };
+  
   return (
     <div className="space-y-2">
       <div className="flex">
-        <div className="w-48 flex-shrink-0 font-medium cursor-pointer" 
+        <div className="w-48 flex-shrink-0 font-medium cursor-pointer flex flex-col" 
              onClick={() => window.location.href = `/projects/${project.id}`}>
-          {project.title}
+          <span className="text-xs text-gray-500 mb-1">{getProjectCategory()}</span>
+          <span>{project.title}</span>
         </div>
         <div className="flex-1 flex">
           {months.map((month, monthIndex) => {
