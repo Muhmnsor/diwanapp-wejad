@@ -107,10 +107,16 @@ export const useAssignedTasks = () => {
         const formattedRegularTasks = (regularTasks || []).map(task => {
           // Get project name from the joined projects table or use default text
           let projectName = 'غير مرتبط بمشروع';
-          // Fix the way we access the title from projects
-          if (task.projects && 
-              task.projects.title) {
-            projectName = task.projects.title;
+          
+          // Fix how we access the projects.title property
+          if (task.projects) {
+            // Check if projects is an array or a single object
+            if (Array.isArray(task.projects) && task.projects.length > 0 && task.projects[0]?.title) {
+              projectName = task.projects[0].title;
+            } else if (typeof task.projects === 'object' && task.projects?.title) {
+              // If it's a single object with a title property
+              projectName = task.projects.title;
+            }
           }
           
           return {
