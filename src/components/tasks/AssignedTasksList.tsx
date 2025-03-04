@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 export const AssignedTasksList = () => {
   const { tasks, loading, error, refetch } = useAssignedTasks();
+  const [showCompleted, setShowCompleted] = useState(false);
   
   const handleStatusChange = async (taskId: string, status: string) => {
     try {
@@ -46,15 +47,52 @@ export const AssignedTasksList = () => {
     return <TasksEmptyState message="لا توجد لديك مهام مسندة حالياً" />;
   }
   
+  // Filter out completed tasks unless showCompleted is true
+  const filteredTasks = tasks.filter(task => showCompleted || task.status !== 'completed');
+  
+  // If there are no tasks after filtering
+  if (filteredTasks.length === 0) {
+    return (
+      <>
+        <div className="flex justify-end mb-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowCompleted(!showCompleted)}
+            className="text-xs"
+          >
+            {showCompleted ? 'إخفاء المهام المكتملة' : 'إظهار المهام المكتملة'}
+          </Button>
+        </div>
+        <TasksEmptyState message="لا توجد لديك مهام قيد التنفيذ" />
+      </>
+    );
+  }
+  
   return (
-    <div className="space-y-4">
-      {tasks.map((task) => (
-        <TaskListItem 
-          key={task.id} 
-          task={task} 
-          onStatusChange={handleStatusChange}
-        />
-      ))}
-    </div>
+    <>
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setShowCompleted(!showCompleted)}
+          className="text-xs"
+        >
+          {showCompleted ? 'إخفاء المهام المكتملة' : 'إظهار المهام المكتملة'}
+        </Button>
+      </div>
+      <div className="space-y-4">
+        {filteredTasks.map((task) => (
+          <TaskListItem 
+            key={task.id} 
+            task={task} 
+            onStatusChange={handleStatusChange}
+          />
+        ))}
+      </div>
+    </>
   );
 };
+
+// Don't forget to add Button import
+import { Button } from "@/components/ui/button";
