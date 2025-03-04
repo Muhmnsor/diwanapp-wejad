@@ -3,10 +3,11 @@ import { Task } from "../types/task";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Check, Clock, Briefcase, GitMerge, ArrowRight, Flag } from "lucide-react";
+import { Calendar, Check, Clock, Briefcase, GitMerge, ArrowRight, Flag, MessageCircle } from "lucide-react";
 import { formatDueDate } from "../utils/taskFormatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
 
 interface TaskListItemProps {
   task: Task;
@@ -15,6 +16,7 @@ interface TaskListItemProps {
 export const TaskListItem = ({ task }: TaskListItemProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [status, setStatus] = useState(task.status);
+  const [showDiscussion, setShowDiscussion] = useState(false);
 
   const getTaskStatus = () => {
     if (status === "completed") return "completed";
@@ -137,79 +139,99 @@ export const TaskListItem = ({ task }: TaskListItemProps) => {
   const currentStatus = getTaskStatus();
 
   return (
-    <Card className={getBorderStyle()}>
-      <CardContent className="p-5">
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-start">
-            <div>
-              {task.is_subtask && (
-                <div className="flex items-center gap-1 mb-1">
-                  <GitMerge className="h-4 w-4 text-blue-500" />
-                  <Badge variant="outline" className="text-xs bg-blue-50">مهمة فرعية</Badge>
-                </div>
-              )}
-              <h3 className="font-semibold text-lg">{task.title}</h3>
-              {task.description && (
-                <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Badge className={`text-xs ${getStatusVariant(currentStatus)}`}>
-                {getStatusText(currentStatus)}
-              </Badge>
-              <Badge className={`text-xs flex items-center gap-1 ${getPriorityVariant(task.priority)}`}>
-                <Flag className="h-3 w-3" />
-                {getPriorityText(task.priority)}
-              </Badge>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
-            <div className="flex flex-wrap items-center gap-4">
-              {task.due_date && (
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4 ml-1" />
-                  <span>{formatDueDate(task.due_date)}</span>
-                </div>
-              )}
-              
-              {task.project_name && task.project_name !== 'مشروع غير محدد' && (
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Briefcase className="h-4 w-4 ml-1" />
-                  <span>{task.project_name}</span>
-                </div>
-              )}
-              
-              {task.is_subtask && task.parent_task_id && (
-                <div className="flex items-center text-sm text-blue-500">
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                  <span>تابعة لمهمة رئيسية</span>
-                </div>
-              )}
+    <>
+      <Card className={getBorderStyle()}>
+        <CardContent className="p-5">
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between items-start">
+              <div>
+                {task.is_subtask && (
+                  <div className="flex items-center gap-1 mb-1">
+                    <GitMerge className="h-4 w-4 text-blue-500" />
+                    <Badge variant="outline" className="text-xs bg-blue-50">مهمة فرعية</Badge>
+                  </div>
+                )}
+                <h3 className="font-semibold text-lg">{task.title}</h3>
+                {task.description && (
+                  <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Badge className={`text-xs ${getStatusVariant(currentStatus)}`}>
+                  {getStatusText(currentStatus)}
+                </Badge>
+                <Badge className={`text-xs flex items-center gap-1 ${getPriorityVariant(task.priority)}`}>
+                  <Flag className="h-3 w-3" />
+                  {getPriorityText(task.priority)}
+                </Badge>
+              </div>
             </div>
             
-            <Button 
-              onClick={handleCompleteTask}
-              disabled={isCompleting}
-              variant={status === "completed" ? "outline" : "default"}
-              size="sm"
-              className="h-8"
-            >
-              {status === "completed" ? (
-                <>
-                  <Clock className="h-4 w-4 ml-1" />
-                  إعادة فتح
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 ml-1" />
-                  إتمام
-                </>
-              )}
-            </Button>
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-4">
+                {task.due_date && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4 ml-1" />
+                    <span>{formatDueDate(task.due_date)}</span>
+                  </div>
+                )}
+                
+                {task.project_name && task.project_name !== 'مشروع غير محدد' && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Briefcase className="h-4 w-4 ml-1" />
+                    <span>{task.project_name}</span>
+                  </div>
+                )}
+                
+                {task.is_subtask && task.parent_task_id && (
+                  <div className="flex items-center text-sm text-blue-500">
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                    <span>تابعة لمهمة رئيسية</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setShowDiscussion(true)}
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                >
+                  <MessageCircle className="h-4 w-4 ml-1" />
+                  مناقشة
+                </Button>
+                
+                <Button 
+                  onClick={handleCompleteTask}
+                  disabled={isCompleting}
+                  variant={status === "completed" ? "outline" : "default"}
+                  size="sm"
+                  className="h-8"
+                >
+                  {status === "completed" ? (
+                    <>
+                      <Clock className="h-4 w-4 ml-1" />
+                      إعادة فتح
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 ml-1" />
+                      إتمام
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <TaskDiscussionDialog 
+        open={showDiscussion}
+        onOpenChange={setShowDiscussion}
+        task={task}
+      />
+    </>
   );
 };
