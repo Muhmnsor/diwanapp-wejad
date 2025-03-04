@@ -9,6 +9,7 @@ export type TaskFormData = {
   dueDate: Date | null;
   stageId: string;
   assignedTo: string;
+  attachment?: File | null;
 };
 
 export interface TaskFormProps {
@@ -24,6 +25,8 @@ export interface TaskFormProps {
   setStageId: (value: string) => void;
   assignedTo: string;
   setAssignedTo: (value: string) => void;
+  attachment: File | null;
+  setAttachment: (file: File | null) => void;
   projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
 }

@@ -43,6 +43,8 @@ export const AddTaskDialog = ({
     setStageId,
     assignedTo,
     setAssignedTo,
+    attachment,
+    setAttachment,
     isSubmitting,
     projectMembers,
     handleFormSubmit,
@@ -79,6 +81,8 @@ export const AddTaskDialog = ({
           setStageId={setStageId}
           assignedTo={assignedTo}
           setAssignedTo={setAssignedTo}
+          attachment={attachment}
+          setAttachment={setAttachment}
           projectStages={projectStages}
           projectMembers={projectMembers}
         />
@@ -94,7 +98,8 @@ export const AddTaskDialog = ({
               priority,
               dueDate,
               stageId,
-              assignedTo
+              assignedTo,
+              attachment
             } as TaskFormData)}
             disabled={isSubmitting}
           >

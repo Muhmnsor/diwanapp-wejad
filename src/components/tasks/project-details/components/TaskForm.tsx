@@ -6,6 +6,7 @@ import { TaskPriorityField } from "./TaskPriorityField";
 import { TaskStageField } from "./TaskStageField";
 import { TaskAssigneeField } from "./TaskAssigneeField";
 import { TaskDueDateField } from "./TaskDueDateField";
+import { TaskAttachmentField } from "./TaskAttachmentField";
 import { TaskFormProps } from "../types/taskForm";
 
 export const TaskForm = ({
@@ -21,6 +22,8 @@ export const TaskForm = ({
   setStageId,
   assignedTo,
   setAssignedTo,
+  attachment,
+  setAttachment,
   projectStages,
   projectMembers
 }: TaskFormProps) => {
@@ -65,6 +68,11 @@ export const TaskForm = ({
         assignedTo={assignedTo} 
         setAssignedTo={setAssignedTo} 
         projectMembers={projectMembers} 
+      />
+
+      <TaskAttachmentField
+        attachment={attachment}
+        setAttachment={setAttachment}
       />
     </div>
   );

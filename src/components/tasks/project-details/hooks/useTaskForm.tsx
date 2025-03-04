@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskFormData } from "../types/taskForm";
 import { ProjectMember } from "./useProjectMembers";
 import { toast } from "sonner";
+import { uploadAttachment } from "@/components/tasks/services/uploadService";
 
 interface UseTaskFormProps {
   projectId: string | undefined;
@@ -24,6 +24,7 @@ export const useTaskForm = ({
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [stageId, setStageId] = useState(projectStages[0]?.id || "");
   const [assignedTo, setAssignedTo] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
   
@@ -98,10 +99,30 @@ export const useTaskForm = ({
         return;
       }
 
+      // Upload attachment if exists
+      if (formData.attachment) {
+        const uploadResult = await uploadAttachment(formData.attachment);
+        if (uploadResult && uploadResult.url) {
+          // Save attachment info to task_attachments table
+          const { error: attachmentError } = await supabase
+            .from("task_attachments")
+            .insert({
+              task_id: data.id,
+              file_name: formData.attachment.name,
+              file_url: uploadResult.url,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            });
+
+          if (attachmentError) {
+            console.error("Error saving attachment:", attachmentError);
+            toast.error("تم إنشاء المهمة لكن حدث خطأ أثناء حفظ المرفق");
+          }
+        }
+      }
+
       toast.success("تم إنشاء المهمة بنجاح");
       
       // Update project status to in_progress if it was previously completed
-      // since adding a new task means the project is no longer complete
       const { data: projectData, error: projectError } = await supabase
         .from('project_tasks')
         .select('status')
@@ -138,6 +159,7 @@ export const useTaskForm = ({
     setDueDate(null);
     setStageId(projectStages[0]?.id || "");
     setAssignedTo("");
+    setAttachment(null);
   };
 
   return {
@@ -153,6 +175,8 @@ export const useTaskForm = ({
     setStageId,
     assignedTo,
     setAssignedTo,
+    attachment,
+    setAttachment,
     isSubmitting,
     projectMembers,
     handleFormSubmit,
