@@ -53,7 +53,7 @@ export const EditTaskProjectDialog = ({
   
   const form = useForm({
     defaultValues: {
-      title: project.title,
+      name: project.title,
       description: project.description || "",
       start_date: "",
       end_date: project.due_date ? project.due_date.split('T')[0] : "",
@@ -65,7 +65,7 @@ export const EditTaskProjectDialog = ({
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        title: project.title,
+        name: project.title,
         description: project.description || "",
         start_date: "",
         end_date: project.due_date ? project.due_date.split('T')[0] : "",
@@ -75,7 +75,7 @@ export const EditTaskProjectDialog = ({
   }, [isOpen, project, form]);
 
   const handleSubmit = async (values: any) => {
-    if (!values.title.trim()) {
+    if (!values.name.trim()) {
       toast.error("عنوان المشروع مطلوب");
       return;
     }
@@ -86,7 +86,7 @@ export const EditTaskProjectDialog = ({
       const { error } = await supabase
         .from("project_tasks")
         .update({
-          title: values.title,
+          title: values.name,
           description: values.description,
           due_date: values.end_date || null,
           status: values.status,
@@ -127,13 +127,13 @@ export const EditTaskProjectDialog = ({
             <div className="space-y-2">
               <FormField
                 control={form.control}
-                name="title"
+                name="name"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel htmlFor="title" className="text-right block">اسم المشروع</FormLabel>
+                    <FormLabel htmlFor="name" className="text-right block">اسم المشروع</FormLabel>
                     <FormControl>
                       <Input
-                        id="title"
+                        id="name"
                         placeholder="أدخل اسم المشروع"
                         required
                         className="text-right"
@@ -203,28 +203,30 @@ export const EditTaskProjectDialog = ({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel htmlFor="status" className="text-right block">الحالة</FormLabel>
-                  <FormControl>
-                    <select
-                      id="status"
-                      className="w-full p-2 border rounded-md text-right"
-                      {...field}
-                    >
-                      {statusOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel htmlFor="status" className="text-right block">الحالة</FormLabel>
+                    <FormControl>
+                      <select
+                        id="status"
+                        className="w-full p-2 border rounded-md text-right"
+                        {...field}
+                      >
+                        {statusOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <DialogFooter className="flex justify-start gap-2 mt-6">
               <Button 
