@@ -8,6 +8,7 @@ import { TasksContent } from "./components/TasksContent";
 import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
 import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
+import { useProjectMembers } from "./hooks/useProjectMembers";
 
 interface TasksListProps {
   projectId: string | undefined;
@@ -30,6 +31,9 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     handleStatusChange,
     fetchTasks
   } = useTasksList(projectId);
+
+  // Fetch project members
+  const { projectMembers } = useProjectMembers(projectId);
 
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "all") return true;
@@ -75,7 +79,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
         projectId={projectId || ""}
         projectStages={projectStages}
         onTaskAdded={fetchTasks}
-        projectMembers={[]} // Pass empty array or fetch project members
+        projectMembers={projectMembers}
       />
     </>
   );

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { uploadAttachment } from "../services/uploadService";
+import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 
 export function AddTaskDialog({ 
   open, 
@@ -19,7 +20,7 @@ export function AddTaskDialog({
   projectId: string;
   projectStages: { id: string; name: string }[];
   onTaskAdded: () => void;
-  projectMembers: { id: string; name: string }[];
+  projectMembers: ProjectMember[];
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -80,7 +81,7 @@ export function AddTaskDialog({
             }}
             isSubmitting={isSubmitting}
             projectStages={projectStages}
-            projectId={projectId}
+            projectMembers={projectMembers}
             attachment={attachment}
             setAttachment={setAttachment}
           />

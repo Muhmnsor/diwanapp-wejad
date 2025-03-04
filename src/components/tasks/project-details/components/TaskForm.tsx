@@ -8,6 +8,7 @@ import { TaskStageField } from "./TaskStageField";
 import { TaskAssigneeField } from "./TaskAssigneeField";
 import { TaskFormActions } from "./TaskFormActions";
 import { TaskAttachmentField } from "./TaskAttachmentField";
+import { ProjectMember } from "../hooks/useProjectMembers";
 
 export interface TaskFormProps {
   onSubmit: (formData: {
@@ -21,7 +22,7 @@ export interface TaskFormProps {
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
-  projectMembers: { id: string; name: string }[];
+  projectMembers: ProjectMember[];
   attachment?: File[] | null;
   setAttachment?: (files: File[] | null) => void;
 }
@@ -52,7 +53,7 @@ export const TaskForm = ({
     }
     
     if (projectMembers.length > 0 && assignedTo === null) {
-      setAssignedTo(projectMembers[0].id);
+      setAssignedTo(projectMembers[0].user_id);
     }
   }, [projectStages, stageId, projectMembers, assignedTo]);
 
