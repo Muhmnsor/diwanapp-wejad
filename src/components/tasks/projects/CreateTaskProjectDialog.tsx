@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,18 @@ import { Label } from "@/components/ui/label";
 import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CreateTaskProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
+}
+
+interface User {
+  id: string;
+  display_name?: string;
+  email?: string;
 }
 
 export const CreateTaskProjectDialog = ({ 
@@ -22,16 +29,50 @@ export const CreateTaskProjectDialog = ({
   workspaceId 
 }: CreateTaskProjectDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     start_date: "",
     end_date: "",
+    manager_id: "",
   });
+
+  // جلب قائمة المستخدمين
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, display_name, email')
+          .eq('is_active', true)
+          .order('display_name', { ascending: true });
+
+        if (error) {
+          console.error("خطأ في جلب المستخدمين:", error);
+          return;
+        }
+
+        if (data) {
+          setUsers(data);
+        }
+      } catch (error) {
+        console.error("خطأ في جلب المستخدمين:", error);
+      }
+    };
+
+    if (open) {
+      fetchUsers();
+    }
+  }, [open]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -64,6 +105,7 @@ export const CreateTaskProjectDialog = ({
             workspace_id: workspaceId,
             due_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
             status: 'pending',
+            assigned_to: formData.manager_id || null,
           }
         ]);
       
@@ -85,6 +127,7 @@ export const CreateTaskProjectDialog = ({
         description: "",
         start_date: "",
         end_date: "",
+        manager_id: "",
       });
     } catch (error) {
       console.error("Error creating task project:", error);
@@ -92,6 +135,11 @@ export const CreateTaskProjectDialog = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getUserDisplayName = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    return user?.display_name || user?.email || 'مستخدم غير معروف';
   };
 
   return (
@@ -127,6 +175,26 @@ export const CreateTaskProjectDialog = ({
               rows={4}
               className="text-right"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="manager_id" className="text-right block">مدير المشروع</Label>
+            <Select 
+              value={formData.manager_id} 
+              onValueChange={(value) => handleSelectChange('manager_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر مدير المشروع" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">بدون مدير</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.display_name || user.email || user.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
