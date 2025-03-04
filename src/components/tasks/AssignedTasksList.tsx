@@ -3,7 +3,6 @@ import { useAssignedTasks } from "./hooks/useAssignedTasks";
 import { TasksLoadingState } from "./components/TasksLoadingState";
 import { TasksEmptyState } from "./components/TasksEmptyState";
 import { TaskListItem } from "./components/TaskListItem";
-import { Card } from "@/components/ui/card";
 
 export const AssignedTasksList = () => {
   const { data: tasks, isLoading } = useAssignedTasks();
