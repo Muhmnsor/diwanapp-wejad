@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { Label } from "@/components/ui/label";
+import { ClipboardList } from "lucide-react";
 
 interface TaskProject {
   id: string;
@@ -53,7 +55,8 @@ export const EditTaskProjectDialog = ({
     defaultValues: {
       title: project.title,
       description: project.description || "",
-      due_date: project.due_date ? project.due_date.split('T')[0] : "",
+      start_date: "",
+      end_date: project.due_date ? project.due_date.split('T')[0] : "",
       status: project.status,
     }
   });
@@ -64,7 +67,8 @@ export const EditTaskProjectDialog = ({
       form.reset({
         title: project.title,
         description: project.description || "",
-        due_date: project.due_date ? project.due_date.split('T')[0] : "",
+        start_date: "",
+        end_date: project.due_date ? project.due_date.split('T')[0] : "",
         status: project.status,
       });
     }
@@ -84,7 +88,7 @@ export const EditTaskProjectDialog = ({
         .update({
           title: values.title,
           description: values.description,
-          due_date: values.due_date || null,
+          due_date: values.end_date || null,
           status: values.status,
         })
         .eq("id", project.id);
@@ -119,78 +123,96 @@ export const EditTaskProjectDialog = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel htmlFor="title" className="block text-sm font-medium">
-                    عنوان المشروع
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id="title"
-                      placeholder="أدخل عنوان المشروع"
-                      required
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel htmlFor="title" className="text-right block">اسم المشروع</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="title"
+                        placeholder="أدخل اسم المشروع"
+                        required
+                        className="text-right"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel htmlFor="description" className="block text-sm font-medium">
-                    وصف المشروع
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      id="description"
-                      placeholder="أدخل وصف المشروع"
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel htmlFor="description" className="text-right block">وصف المشروع</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="description"
+                        placeholder="أدخل وصف المشروع"
+                        rows={4}
+                        className="text-right"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <FormField
-              control={form.control}
-              name="due_date"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel htmlFor="dueDate" className="block text-sm font-medium">
-                    تاريخ الاستحقاق
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="start_date"
+                render={({ field }) => (
+                  <FormItem className="space-y-2 md:order-1">
+                    <FormLabel htmlFor="start_date" className="text-right block">تاريخ البداية</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="start_date"
+                        type="date"
+                        className="text-right"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="end_date"
+                render={({ field }) => (
+                  <FormItem className="space-y-2 md:order-2">
+                    <FormLabel htmlFor="end_date" className="text-right block">تاريخ النهاية</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="end_date"
+                        type="date"
+                        className="text-right"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
               name="status"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel htmlFor="status" className="block text-sm font-medium">
-                    الحالة
-                  </FormLabel>
+                  <FormLabel htmlFor="status" className="text-right block">الحالة</FormLabel>
                   <FormControl>
                     <select
                       id="status"
-                      className="w-full p-2 border rounded-md"
+                      className="w-full p-2 border rounded-md text-right"
                       {...field}
                     >
                       {statusOptions.map((option) => (
@@ -204,7 +226,15 @@ export const EditTaskProjectDialog = ({
               )}
             />
 
-            <DialogFooter className="mt-6">
+            <DialogFooter className="flex justify-start gap-2 mt-6">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="gap-2"
+              >
+                <ClipboardList className="h-4 w-4" />
+                {isSubmitting ? "جاري التحديث..." : "تحديث المشروع"}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -212,9 +242,6 @@ export const EditTaskProjectDialog = ({
                 disabled={isSubmitting}
               >
                 إلغاء
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "جارٍ الحفظ..." : "حفظ التغييرات"}
               </Button>
             </DialogFooter>
           </form>
