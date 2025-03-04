@@ -32,18 +32,19 @@ export const useEditTaskProject = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [managers, setManagers] = useState<{ id: string; name: string }[]>([]);
   
-  // Fetch managers list
+  // Fetch users list
   useEffect(() => {
-    const fetchManagers = async () => {
+    const fetchUsers = async () => {
       try {
-        // Try to fetch from users table as fallback
+        // Fetch users from profiles table
         const { data, error } = await supabase
-          .from('users')
-          .select('id, email')
-          .order('email');
+          .from('profiles')
+          .select('id, display_name, email')
+          .eq('is_active', true)
+          .order('display_name');
           
         if (error) {
-          console.error('Error fetching managers from users table:', error);
+          console.error('Error fetching users:', error);
           setManagers([]);
           return;
         }
@@ -51,7 +52,7 @@ export const useEditTaskProject = ({
         // Transform the data for display
         const formattedManagers = data.map(user => ({
           id: user.id,
-          name: user.email // Use email as name since we don't have actual names
+          name: user.display_name || user.email || 'مستخدم بدون اسم'
         }));
         
         setManagers(formattedManagers || []);
@@ -62,7 +63,7 @@ export const useEditTaskProject = ({
     };
 
     if (isOpen) {
-      fetchManagers();
+      fetchUsers();
     }
   }, [isOpen]);
   

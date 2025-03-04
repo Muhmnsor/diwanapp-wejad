@@ -103,6 +103,9 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent onClick={(e) => e.stopPropagation()}>
+                  <SelectItem value="no-manager" onClick={(e) => e.stopPropagation()}>
+                    بدون مدير
+                  </SelectItem>
                   {managers.length > 0 ? (
                     managers.map((manager) => (
                       <SelectItem key={manager.id} value={manager.id} onClick={(e) => e.stopPropagation()}>
@@ -110,8 +113,8 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem key="no-manager" value="no-manager" onClick={(e) => e.stopPropagation()}>
-                      لا يوجد مدراء متاحين
+                    <SelectItem value="loading" disabled onClick={(e) => e.stopPropagation()}>
+                      جاري تحميل المستخدمين...
                     </SelectItem>
                   )}
                 </SelectContent>
