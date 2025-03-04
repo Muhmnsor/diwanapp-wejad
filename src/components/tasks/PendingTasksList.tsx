@@ -5,16 +5,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   CheckCircle2, 
   Clock,
-  AlertCircle
+  AlertCircle,
+  User
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useAuthStore } from "@/store/refactored-auth";
 
 export const PendingTasksList = () => {
+  const { user } = useAuthStore();
+  
   const { data: tasks, isLoading } = useQuery({
-    queryKey: ['pending-tasks'],
+    queryKey: ['assigned-tasks', user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from('tasks')
         .select(`
@@ -25,9 +31,8 @@ export const PendingTasksList = () => {
             )
           )
         `)
-        .eq('status', 'pending')
-        .order('due_date', { ascending: true })
-        .limit(5);
+        .eq('assigned_to', user.id)
+        .order('due_date', { ascending: true });
       
       if (error) throw error;
       
@@ -37,9 +42,10 @@ export const PendingTasksList = () => {
         project_name: task.project_tasks?.projects?.title || 'مشروع غير محدد'
       })) || [];
       
-      console.log('Transformed task data:', transformedData);
+      console.log('Transformed assigned tasks data:', transformedData);
       return transformedData;
-    }
+    },
+    enabled: !!user?.id
   });
 
   if (isLoading) {
@@ -55,7 +61,7 @@ export const PendingTasksList = () => {
   if (!tasks || tasks.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-gray-500">لا توجد مهام قيد التنفيذ</p>
+        <p className="text-gray-500">لا توجد مهام مكلف بها</p>
       </div>
     );
   }
@@ -81,6 +87,19 @@ export const PendingTasksList = () => {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-blue-500" />;
+      case 'delayed':
+        return <AlertCircle className="h-4 w-4 text-amber-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-blue-500" />;
+    }
+  };
+
   return (
     <div className="space-y-3">
       {tasks.map((task) => (
@@ -90,7 +109,7 @@ export const PendingTasksList = () => {
         >
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
+              {getStatusIcon(task.status)}
               <h3 className="font-medium">{task.title}</h3>
             </div>
             {getPriorityBadge(task.priority)}

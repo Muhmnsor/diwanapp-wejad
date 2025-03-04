@@ -41,7 +41,7 @@ export const TasksOverview = () => {
       
       <Card>
         <CardContent className="p-6">
-          <h2 className="text-xl font-bold mb-4">المهام قيد التنفيذ</h2>
+          <h2 className="text-xl font-bold mb-4">المهام المكلف بها</h2>
           <PendingTasksList />
         </CardContent>
       </Card>
