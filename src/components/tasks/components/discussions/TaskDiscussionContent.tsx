@@ -25,22 +25,33 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
     try {
       console.log("Fetching comments for task:", task.id);
       
-      // استعلام مبسط
-      const { data, error } = await supabase
+      // أولاً نحاول البحث في جدول portfolio_task_comments
+      const { data: portfolioComments, error: portfolioError } = await supabase
+        .from("portfolio_task_comments")
+        .select("*")
+        .eq("task_id", task.id)
+        .order("created_at", { ascending: true });
+      
+      // ثم نحاول البحث في جدول task_comments
+      const { data: taskComments, error: taskError } = await supabase
         .from("task_comments")
         .select("*")
         .eq("task_id", task.id)
         .order("created_at", { ascending: true });
           
-      if (error) {
-        console.error("Error details:", error);
-        throw error;
+      if (portfolioError && taskError) {
+        console.error("Portfolio comments error:", portfolioError);
+        console.error("Task comments error:", taskError);
+        throw portfolioError;
       }
       
-      console.log("Comments data:", data);
+      // دمج النتائج من كلا الجدولين
+      const allComments = [...(portfolioComments || []), ...(taskComments || [])];
+      
+      console.log("Combined comments data:", allComments);
       
       // إذا كان هناك بيانات، سنقوم بتحميل معلومات المستخدمين
-      const commentsWithUserInfo = await Promise.all((data || []).map(async (comment) => {
+      const commentsWithUserInfo = await Promise.all((allComments || []).map(async (comment) => {
         // إذا كان هناك معرف للمستخدم، فسنجلب معلومات المستخدم
         if (comment.created_by) {
           try {
@@ -82,8 +93,15 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
         };
       }));
       
-      console.log("Comments with user info:", commentsWithUserInfo);
-      setComments(commentsWithUserInfo as TaskComment[]);
+      // ترتيب التعليقات حسب تاريخ الإنشاء
+      const sortedComments = commentsWithUserInfo.sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateA.getTime() - dateB.getTime();
+      });
+      
+      console.log("Comments with user info:", sortedComments);
+      setComments(sortedComments as TaskComment[]);
     } catch (error) {
       console.error("Error fetching comments:", error);
       toast.error("حدث خطأ أثناء استرجاع التعليقات");

@@ -43,22 +43,61 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         }
       }
       
-      // إنشاء تعليق جديد - مع التأكد من أن task_id هو string
-      const { error } = await supabase
-        .from("task_comments")
-        .insert({
-          task_id: task.id,
-          content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
-          created_at: new Date().toISOString(),
-          created_by: userId,
-          attachment_url: attachmentUrl,
-          attachment_name: attachmentName,
-          attachment_type: attachmentType
-        });
-      
-      if (error) {
-        console.error("Error details:", error);
-        throw error;
+      // تحقق من وجود المهمة في جدول portfolio_tasks
+      const { data: portfolioTask } = await supabase
+        .from("portfolio_tasks")
+        .select("id")
+        .eq("id", task.id)
+        .single();
+        
+      if (portfolioTask) {
+        // إنشاء تعليق جديد في جدول portfolio_task_comments
+        const { error } = await supabase
+          .from("portfolio_task_comments")
+          .insert({
+            task_id: task.id,
+            content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
+            created_at: new Date().toISOString(),
+            created_by: userId,
+            attachment_url: attachmentUrl,
+            attachment_name: attachmentName,
+            attachment_type: attachmentType
+          });
+        
+        if (error) {
+          console.error("Error details:", error);
+          throw error;
+        }
+      } else {
+        // المهمة غير موجودة في جدول portfolio_tasks، قم بالتحقق من جدول project_tasks
+        const { data: projectTask } = await supabase
+          .from("project_tasks")
+          .select("id")
+          .eq("id", task.id)
+          .single();
+          
+        if (projectTask) {
+          // إنشاء تعليق جديد في جدول task_comments
+          const { error } = await supabase
+            .from("task_comments")
+            .insert({
+              task_id: task.id,
+              content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
+              created_at: new Date().toISOString(),
+              created_by: userId,
+              attachment_url: attachmentUrl,
+              attachment_name: attachmentName,
+              attachment_type: attachmentType
+            });
+          
+          if (error) {
+            console.error("Error details:", error);
+            throw error;
+          }
+        } else {
+          // المهمة غير موجودة في أي من الجدولين
+          throw new Error("Task not found in any tables");
+        }
       }
       
       // مسح حقل التعليق والملف بعد النجاح
