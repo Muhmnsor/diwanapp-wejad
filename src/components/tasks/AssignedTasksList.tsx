@@ -19,15 +19,26 @@ export const AssignedTasksList = () => {
       
       if (!task) return;
       
-      const isPortfolioTask = task.workspace_id ? true : false;
-      const tableName = isPortfolioTask ? 'portfolio_tasks' : 'tasks';
-      
-      const { error } = await supabase
-        .from(tableName)
-        .update({ status })
-        .eq('id', taskId);
+      if (task.is_subtask) {
+        // If it's a subtask, update in the subtasks table
+        const { error } = await supabase
+          .from('subtasks')
+          .update({ status })
+          .eq('id', taskId);
+          
+        if (error) throw error;
+      } else {
+        // For regular tasks or portfolio tasks
+        const isPortfolioTask = task.workspace_id ? true : false;
+        const tableName = isPortfolioTask ? 'portfolio_tasks' : 'tasks';
         
-      if (error) throw error;
+        const { error } = await supabase
+          .from(tableName)
+          .update({ status })
+          .eq('id', taskId);
+            
+        if (error) throw error;
+      }
       
       // تحديث القائمة
       refetch();

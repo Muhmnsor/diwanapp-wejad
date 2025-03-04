@@ -12,6 +12,8 @@ import { Task } from "../types/task";
 import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
 import { TaskHeader } from "./header/TaskHeader";
 import { TaskMetadata } from "./metadata/TaskMetadata";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TaskListItemProps {
   task: Task;
@@ -21,11 +23,35 @@ interface TaskListItemProps {
 
 export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemProps) => {
   const [showDiscussion, setShowDiscussion] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const currentStatus = task.status || "pending";
 
   // Custom function to handle status change
-  const handleStatusChange = (status: string) => {
-    onStatusChange(task.id, status);
+  const handleStatusChange = async (status: string) => {
+    setIsUpdating(true);
+    try {
+      // Check if the task is a subtask and use the correct table
+      if (task.is_subtask) {
+        const { error } = await supabase
+          .from('subtasks')
+          .update({ status })
+          .eq('id', task.id);
+          
+        if (error) throw error;
+        
+        // We need to call the onStatusChange to update the UI
+        onStatusChange(task.id, status);
+        toast.success('تم تحديث حالة المهمة الفرعية');
+      } else {
+        // Regular tasks use the parent component's handler
+        onStatusChange(task.id, status);
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error('حدث خطأ أثناء تحديث حالة المهمة');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -74,6 +100,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
               size="sm" 
               className="text-xs flex items-center gap-1"
               onClick={() => handleStatusChange("completed")}
+              disabled={isUpdating}
             >
               <Check className="h-3.5 w-3.5 text-green-500" />
               تمت
@@ -84,6 +111,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
               size="sm" 
               className="text-xs flex items-center gap-1"
               onClick={() => handleStatusChange("pending")}
+              disabled={isUpdating}
             >
               <Clock className="h-3.5 w-3.5 text-amber-500" />
               قيد التنفيذ
