@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import { ProjectMember } from "../hooks/useProjectMembers";
 
-interface TaskAssigneeFieldProps {
+export interface TaskAssigneeFieldProps {
   assignedTo: string | null;
   setAssignedTo: (value: string | null) => void;
   projectMembers: ProjectMember[];

@@ -2,7 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface TaskStageFieldProps {
+export interface TaskStageFieldProps {
   stageId: string;
   setStageId: (value: string) => void;
   projectStages: { id: string; name: string }[];
