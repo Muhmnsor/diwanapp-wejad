@@ -1,58 +1,113 @@
 
 import { useState } from "react";
+import { 
+  MoreHorizontal, 
+  MessageCircle,
+  Check,
+  Clock,
+  CalendarClock,
+  XCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Task } from "../types/task";
-import { Card, CardContent } from "@/components/ui/card";
+import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
 import { TaskHeader } from "./header/TaskHeader";
 import { TaskMetadata } from "./metadata/TaskMetadata";
-import { TaskActions } from "./actions/TaskActions";
-import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface TaskListItemProps {
   task: Task;
+  onStatusChange: (taskId: string, status: string) => void;
+  onDelete?: (taskId: string) => void;
 }
 
-export const TaskListItem = ({ task }: TaskListItemProps) => {
-  const [status, setStatus] = useState(task.status);
+export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemProps) => {
   const [showDiscussion, setShowDiscussion] = useState(false);
+  const currentStatus = task.status || "pending";
 
-  const getBorderStyle = () => {
-    if (task.is_subtask) {
-      return "hover:shadow-md transition-shadow border-r-4 border-r-blue-400 bg-blue-50";
+  // Custom function to handle status change
+  const handleStatusChange = (status: string) => {
+    onStatusChange(task.id, status);
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Check className="h-4 w-4 text-green-500" />;
+      case "pending":
+        return <Clock className="h-4 w-4 text-amber-500" />;
+      case "delayed":
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <CalendarClock className="h-4 w-4 text-blue-500" />;
     }
-    return "hover:shadow-md transition-shadow";
   };
 
   return (
-    <>
-      <Card className={getBorderStyle()}>
-        <CardContent className="p-5">
-          <div className="flex flex-col gap-3">
-            <TaskHeader task={task} status={status} />
-            
-            <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
-              <TaskMetadata 
-                dueDate={task.due_date}
-                projectName={task.project_name}
-                isSubtask={task.is_subtask || false}
-                parentTaskId={task.parent_task_id}
-              />
-              
-              <TaskActions 
-                task={task}
-                status={status}
-                setStatus={setStatus}
-                onShowDiscussion={() => setShowDiscussion(true)}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+    <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
+      <TaskHeader task={task} status={currentStatus} />
+      
+      <div className="mt-3">
+        <TaskMetadata
+          dueDate={task.due_date}
+          projectName={task.project_name}
+          isSubtask={!!task.parent_task_id}
+          parentTaskId={task.parent_task_id}
+        />
+      </div>
+      
+      <div className="flex justify-between items-center mt-3 pt-3 border-t">
+        <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowDiscussion(true)}
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            مناقشة
+          </Button>
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem 
+              className="gap-2"
+              onClick={() => handleStatusChange("completed")}
+            >
+              <Check className="h-4 w-4 text-green-500" />
+              <span>تمت</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="gap-2"
+              onClick={() => handleStatusChange("pending")}
+            >
+              <Clock className="h-4 w-4 text-amber-500" />
+              <span>قيد التنفيذ</span>
+            </DropdownMenuItem>
+            {onDelete && (
+              <DropdownMenuItem 
+                className="gap-2 text-red-500 focus:text-red-500"
+                onClick={() => onDelete(task.id)}
+              >
+                <XCircle className="h-4 w-4" />
+                <span>حذف</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      
       <TaskDiscussionDialog 
-        open={showDiscussion}
+        open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
       />
-    </>
+    </div>
   );
 };

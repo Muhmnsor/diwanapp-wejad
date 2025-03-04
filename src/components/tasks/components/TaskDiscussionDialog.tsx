@@ -5,10 +5,10 @@ import { Task } from "../types/task";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TaskComment } from "../types/taskComment";
-import { CommentForm } from "@/components/ideas/comments/components/CommentForm";
 import { MessageCircle } from "lucide-react";
 import { CommentItem } from "./CommentItem";
 import { Separator } from "@/components/ui/separator";
+import { CommentForm } from "./comments/CommentForm";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
@@ -69,9 +69,25 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
           throw secondError;
         }
         
-        setComments(secondData || []);
+        const formattedData = (secondData || []).map(item => ({
+          ...item,
+          profiles: item.profiles ? {
+            display_name: item.profiles.display_name,
+            email: item.profiles.email
+          } : undefined
+        }));
+        
+        setComments(formattedData);
       } else {
-        setComments(data || []);
+        const formattedData = (data || []).map(item => ({
+          ...item,
+          profiles: item.profiles ? {
+            display_name: item.profiles.display_name,
+            email: item.profiles.email
+          } : undefined
+        }));
+        
+        setComments(formattedData);
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
@@ -170,6 +186,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
             onFileRemove={handleFileRemove}
             isSubmitting={isSubmitting}
             placeholder="أضف تعليقك حول المهمة..."
+            workspaceId={task.workspace_id}
           />
         </div>
       </DialogContent>

@@ -1,16 +1,17 @@
 
-export type TaskStatus = 'pending' | 'completed' | 'delayed' | 'upcoming' | 'in_progress';
-
 export interface Task {
   id: string;
   title: string;
-  description: string | null;
-  status: TaskStatus;
-  due_date: string | null;
-  priority: string;
-  project_name?: string;
-  workspace_name?: string;
-  project_id?: string;
+  description?: string | null;
+  status?: string;
+  priority?: string;
+  due_date?: string | null;
+  assigned_to?: string | null;
+  created_at?: string;
+  updated_at?: string;
   is_subtask?: boolean;
-  parent_task_id?: string;
+  parent_task_id?: string | null;
+  workspace_id?: string | null;
+  project_id?: string | null;
+  project_name?: string | null;
 }
