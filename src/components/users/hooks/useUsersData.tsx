@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Role, User } from "../types";
@@ -12,25 +11,18 @@ export const useUsersData = () => {
     try {
       console.log("بدء جلب بيانات المستخدمين");
 
-      // 1. استخدام واجهة Edge Function لجلب المستخدمين
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/manage-users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`
-        },
+      const response = await supabase.functions.invoke('manage-users', {
         body: JSON.stringify({
           operation: 'get_users'
         })
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("خطأ في جلب المستخدمين:", errorText);
-        throw new Error(errorText);
+      if (response.error) {
+        console.error("خطأ في جلب المستخدمين:", response.error);
+        throw response.error;
       }
 
-      const { users: authUsers } = await response.json();
+      const { users: authUsers } = response.data;
       
       if (!authUsers || !Array.isArray(authUsers)) {
         console.error("خطأ: لم يتم استلام بيانات المستخدمين بشكل صحيح");
@@ -39,7 +31,6 @@ export const useUsersData = () => {
       
       console.log(`تم جلب ${authUsers.length} مستخدم من نظام المصادقة`);
       
-      // 2. جلب الملفات الشخصية للمستخدمين
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name, is_active')
@@ -50,18 +41,16 @@ export const useUsersData = () => {
         throw profilesError;
       }
       
-      // 3. إنشاء خريطة لبيانات الملفات الشخصية للمستخدمين
       const profilesMap = new Map();
       if (profiles) {
         profiles.forEach(profile => {
           profilesMap.set(profile.id, {
             displayName: profile.display_name,
-            isActive: profile.is_active !== false // افتراضي true إذا لم يكن محددًا
+            isActive: profile.is_active !== false
           });
         });
       }
       
-      // 4. جلب أدوار المستخدمين
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, roles:role_id(id, name)');
@@ -71,22 +60,18 @@ export const useUsersData = () => {
         throw rolesError;
       }
       
-      // 5. إنشاء خريطة لأدوار المستخدمين
       const rolesMap = new Map();
       if (userRoles) {
         userRoles.forEach(ur => {
           if (ur.roles) {
-            // الوصول إلى حقل الاسم من كائن الدور وليس من المصفوفة
             rolesMap.set(ur.user_id, ur.roles.name);
           }
         });
       }
       
-      // 6. جمع البيانات وتنسيقها
       const formattedUsers = authUsers.map(user => {
         const profileData = profilesMap.get(user.id) || {};
         
-        // تحويل تاريخ آخر تسجيل دخول إلى تنسيق قابل للقراءة
         let lastLoginDisplay = 'لم يسجل الدخول بعد';
         if (user.last_sign_in_at) {
           const date = new Date(user.last_sign_in_at);
@@ -105,7 +90,7 @@ export const useUsersData = () => {
           role: rolesMap.get(user.id) || 'لم يتم تعيين دور',
           lastLogin: lastLoginDisplay,
           displayName: profileData.displayName || '',
-          isActive: profileData.isActive !== false // افتراضي true إذا لم يكن محددًا
+          isActive: profileData.isActive !== false
         };
       });
       

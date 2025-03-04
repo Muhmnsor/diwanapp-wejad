@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,69 +17,55 @@ export const useUserOperations = (onUserUpdated: () => void) => {
     setIsSubmitting(true);
     try {
       console.log("=== بدء عملية تحديث المستخدم ===");
-      console.log("معرف المستخدم:", selectedUser.id);
-      console.log("الدور المحدد:", selectedRole);
-      console.log("الاسم الشخصي:", selectedUser.displayName);
-      console.log("تم إدخال كلمة مرور جديدة:", newPassword ? "نعم" : "لا");
       
-      // تحديث الدور والاسم الشخصي
-      if (selectedRole) {
-        console.log("تحديث دور المستخدم...");
-        const { error: roleError } = await supabase.rpc('assign_user_role', {
-          p_user_id: selectedUser.id,
-          p_role_id: selectedRole,
+      // تحديث كلمة المرور إذا تم إدخالها
+      if (newPassword) {
+        const response = await supabase.functions.invoke('manage-users', {
+          body: JSON.stringify({
+            operation: 'update_password',
+            userId: selectedUser.id,
+            newPassword: newPassword
+          })
         });
-        
-        if (roleError) {
-          console.error("خطأ في تعيين الدور:", roleError);
-          throw roleError;
+
+        if (response.error) {
+          throw response.error;
         }
-        console.log("تم تحديث دور المستخدم بنجاح");
       }
       
-      // تحديث الاسم الشخصي إذا كان موجودًا
-      console.log("تحديث الاسم الشخصي...");
+      // تحديث الدور إذا تم تحديده
+      if (selectedRole) {
+        const response = await supabase.functions.invoke('manage-users', {
+          body: JSON.stringify({
+            operation: 'update_role',
+            userId: selectedUser.id,
+            newRole: selectedRole
+          })
+        });
+
+        if (response.error) {
+          throw response.error;
+        }
+      }
+      
+      // تحديث الاسم الشخصي
       const { error: displayNameError } = await supabase
         .from('profiles')
         .update({ display_name: selectedUser.displayName })
         .eq('id', selectedUser.id);
       
       if (displayNameError) {
-        console.error("خطأ في تحديث الاسم الشخصي:", displayNameError);
         throw displayNameError;
       }
-      console.log("تم تحديث الاسم الشخصي بنجاح");
-      
-      // تحديث كلمة المرور إذا تم إدخالها
-      if (newPassword) {
-        console.log("تحديث كلمة المرور...");
-        const { error: passwordError } = await supabase.auth.admin.updateUserById(
-          selectedUser.id,
-          { password: newPassword }
-        );
-        
-        if (passwordError) {
-          console.error("خطأ في تحديث كلمة المرور:", passwordError);
-          throw passwordError;
-        }
-        console.log("تم تحديث كلمة المرور بنجاح");
-      }
-      
-      // تسجيل النشاط
-      await supabase.rpc('log_user_activity', {
-        user_id: selectedUser.id,
-        activity_type: 'user_updated',
-        details: `تم تحديث معلومات المستخدم (الدور: ${selectedRole || 'لم يتغير'}, كلمة المرور: ${newPassword ? 'تم التغيير' : 'لم تتغير'}, الاسم الشخصي: ${selectedUser.displayName || 'لم يتغير'})`
-      });
-      
+
       toast.success("تم تحديث بيانات المستخدم بنجاح");
       setSelectedUser(null);
       setNewPassword("");
       setSelectedRole("");
       onUserUpdated();
-      console.log("=== تمت عملية تحديث المستخدم بنجاح ===");
+      
     } catch (error) {
-      console.error("خطأ عام في تحديث المستخدم:", error);
+      console.error("خطأ في تحديث بيانات المستخدم:", error);
       toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
     } finally {
       setIsSubmitting(false);
