@@ -11,18 +11,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { TaskForm } from "./components/TaskForm";
+import { TaskFormData } from "./types/addTask";
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -30,22 +23,6 @@ interface AddTaskDialogProps {
   projectId: string | undefined;
   projectStages: { id: string; name: string }[];
   onSuccess: () => void;
-}
-
-type TaskFormData = {
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  dueDate: Date | null;
-  stageId: string;
-  assignedTo: string;
-};
-
-interface User {
-  id: string;
-  display_name?: string;
-  email?: string;
 }
 
 export const AddTaskDialog = ({ 
@@ -62,35 +39,6 @@ export const AddTaskDialog = ({
   const [stageId, setStageId] = useState(projectStages[0]?.id || "");
   const [assignedTo, setAssignedTo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  
-  // جلب قائمة المستخدمين
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, display_name, email')
-          .eq('is_active', true)
-          .order('display_name', { ascending: true });
-
-        if (error) {
-          console.error("خطأ في جلب المستخدمين:", error);
-          return;
-        }
-
-        if (data) {
-          setUsers(data);
-        }
-      } catch (error) {
-        console.error("خطأ في جلب المستخدمين:", error);
-      }
-    };
-
-    if (open) {
-      fetchUsers();
-    }
-  }, [open]);
   
   const handleFormSubmit = async (formData: TaskFormData) => {
     if (!projectId) {
@@ -169,101 +117,21 @@ export const AddTaskDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">عنوان المهمة</Label>
-            <Input 
-              type="text" 
-              id="name" 
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="description">وصف المهمة</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="stage">المرحلة</Label>
-            <Select onValueChange={(value) => setStageId(value)} defaultValue={stageId}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر المرحلة" />
-              </SelectTrigger>
-              <SelectContent>
-                {projectStages.map(stage => (
-                  <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="priority">الأولوية</Label>
-            <Select onValueChange={(value) => setPriority(value)} defaultValue={priority}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر الأولوية" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">منخفضة</SelectItem>
-                <SelectItem value="medium">متوسطة</SelectItem>
-                <SelectItem value="high">عالية</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="due-date">تاريخ التسليم</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="due-date"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="ml-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>اختر تاريخ التسليم</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="assigned-to">تعيين إلى</Label>
-            <Select 
-              value={assignedTo} 
-              onValueChange={(value) => setAssignedTo(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="اختر المسؤول عن المهمة" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" key="none">غير مسند</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.display_name || user.email || user.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <TaskForm 
+          title={title}
+          setTitle={setTitle}
+          description={description}
+          setDescription={setDescription}
+          priority={priority}
+          setPriority={setPriority}
+          dueDate={dueDate}
+          setDueDate={setDueDate}
+          stageId={stageId}
+          setStageId={setStageId}
+          assignedTo={assignedTo}
+          setAssignedTo={setAssignedTo}
+          projectStages={projectStages}
+        />
         
         <AlertDialogFooter>
           <AlertDialogCancel>إلغاء</AlertDialogCancel>
