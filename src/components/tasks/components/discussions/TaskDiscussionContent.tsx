@@ -44,7 +44,8 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
       }
       
       // تحويل البيانات إلى التنسيق المطلوب للـ TaskComment
-      setComments(data || []);
+      const commentsData = data as TaskComment[];
+      setComments(commentsData);
     } catch (error) {
       console.error("Error fetching comments:", error);
       toast.error("حدث خطأ أثناء استرجاع التعليقات");
