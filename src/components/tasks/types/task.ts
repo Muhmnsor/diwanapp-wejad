@@ -14,4 +14,5 @@ export interface Task {
   workspace_id?: string | null;
   project_id?: string | null;
   project_name?: string | null;
+  workspace_name?: string | null;
 }

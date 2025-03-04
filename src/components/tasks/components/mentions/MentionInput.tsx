@@ -64,10 +64,10 @@ export const MentionInput = ({
         
       if (error) throw error;
       
-      const formattedUsers = data.map(member => ({
+      const formattedUsers: MentionUser[] = data.map(member => ({
         id: member.user_id,
-        email: member.user_email || member.profiles?.email || "",
-        display_name: member.user_display_name || member.profiles?.display_name || ""
+        email: member.user_email || (member.profiles?.email as string) || "",
+        display_name: member.user_display_name || (member.profiles?.display_name as string) || ""
       }));
       
       setUsers(formattedUsers);
@@ -84,11 +84,13 @@ export const MentionInput = ({
         
       if (error) throw error;
       
-      setUsers(data.map(profile => ({
+      const formattedUsers: MentionUser[] = data.map(profile => ({
         id: profile.id,
         email: profile.email || "",
         display_name: profile.display_name || ""
-      })));
+      }));
+      
+      setUsers(formattedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
     }

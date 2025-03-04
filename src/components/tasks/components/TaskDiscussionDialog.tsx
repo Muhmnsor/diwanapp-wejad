@@ -9,6 +9,7 @@ import { MessageCircle } from "lucide-react";
 import { CommentItem } from "./CommentItem";
 import { Separator } from "@/components/ui/separator";
 import { CommentForm } from "./comments/CommentForm";
+import { uploadAttachment } from "../services/uploadService";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
@@ -42,6 +43,9 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
           content,
           created_at,
           created_by,
+          attachment_url,
+          attachment_name,
+          attachment_type,
           profiles (display_name, email)
         `)
         .eq("task_id", task.id)
@@ -60,6 +64,9 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
             content,
             created_at,
             created_by,
+            attachment_url,
+            attachment_name,
+            attachment_type,
             profiles (display_name, email)
           `)
           .eq("task_id", task.id)
@@ -69,25 +76,9 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
           throw secondError;
         }
         
-        const formattedData = (secondData || []).map(item => ({
-          ...item,
-          profiles: item.profiles ? {
-            display_name: item.profiles.display_name,
-            email: item.profiles.email
-          } : undefined
-        }));
-        
-        setComments(formattedData);
+        setComments(secondData || []);
       } else {
-        const formattedData = (data || []).map(item => ({
-          ...item,
-          profiles: item.profiles ? {
-            display_name: item.profiles.display_name,
-            email: item.profiles.email
-          } : undefined
-        }));
-        
-        setComments(formattedData);
+        setComments(data || []);
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
@@ -98,11 +89,25 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
   };
 
   const handleSubmitComment = async () => {
-    if (!commentText.trim()) return;
+    if (!commentText.trim() && !selectedFile) return;
     
     setIsSubmitting(true);
     
     try {
+      // رفع المرفق إذا كان موجودًا
+      let attachmentUrl = null;
+      let attachmentName = null;
+      let attachmentType = null;
+
+      if (selectedFile) {
+        const uploadResult = await uploadAttachment(selectedFile);
+        if (uploadResult && !uploadResult.error) {
+          attachmentUrl = uploadResult.url;
+          attachmentName = selectedFile.name;
+          attachmentType = selectedFile.type;
+        }
+      }
+      
       // تحديد الجدول المناسب بناءً على نوع المهمة
       const tableName = task.is_subtask ? "portfolio_task_comments" : "task_comments";
       
@@ -110,15 +115,18 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         .from(tableName)
         .insert({
           task_id: task.id,
-          content: commentText.trim(),
-          created_at: new Date().toISOString()
+          content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
+          created_at: new Date().toISOString(),
+          attachment_url: attachmentUrl,
+          attachment_name: attachmentName,
+          attachment_type: attachmentType
         });
       
       if (error) {
         throw error;
       }
       
-      // مسح حقل التعليق بعد النجاح
+      // مسح حقل التعليق والملف بعد النجاح
       setCommentText("");
       setSelectedFile(null);
       
