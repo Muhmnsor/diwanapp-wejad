@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +39,6 @@ export const MentionInput = ({
 
   const fetchUsers = async () => {
     try {
-      // إذا كان هناك معرف لمساحة العمل، نبحث عن المستخدمين في هذه المساحة
       if (workspaceId) {
         const { data, error } = await supabase
           .from('workspace_members')
@@ -50,17 +50,18 @@ export const MentionInput = ({
           .ilike('profiles.display_name', `%${mentionText}%`);
           
         if (!error && data) {
-          // تنسيق البيانات - Process each item individually
-          const formattedData: MentionUser[] = data.map(item => ({
-            id: item.profiles?.id || '',
-            email: item.profiles?.email || null,
-            display_name: item.profiles?.display_name || null
-          })).filter(item => !!item.id);
+          // Process each item individually and ensure proper typing
+          const formattedData: MentionUser[] = data
+            .map(item => ({
+              id: item.profiles?.id || '',
+              email: item.profiles?.email || null,
+              display_name: item.profiles?.display_name || null
+            }))
+            .filter(item => item.id !== ''); // Remove items with empty IDs
           
           setMentionOptions(formattedData);
         }
       } else {
-        // إذا لم يكن هناك معرف لمساحة العمل، نبحث في جميع الملفات الشخصية
         const { data, error } = await supabase
           .from('profiles')
           .select('id, email, display_name')
