@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { uploadAttachment } from "../services/uploadService";
 import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AddTaskDialog({ 
   open, 
@@ -31,13 +33,89 @@ export function AddTaskDialog({
   const [attachment, setAttachment] = useState<File[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (formData: {
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: string;
+    stageId: string;
+    assignedTo: string | null;
+    attachment?: File[] | null;
+  }) => {
     setIsSubmitting(true);
-    // Logic to handle task submission
-    // After submission, call onTaskAdded and reset form
-    setIsSubmitting(false);
-    onOpenChange(false);
-    onTaskAdded();
+    
+    try {
+      console.log("Submitting task data:", formData);
+      
+      // رفع المرفقات إذا وجدت
+      const attachmentUrls: string[] = [];
+      if (formData.attachment && formData.attachment.length > 0) {
+        for (const file of formData.attachment) {
+          console.log("Uploading attachment:", file);
+          try {
+            const uploadResult = await uploadAttachment(file);
+            if (uploadResult?.url) {
+              attachmentUrls.push(uploadResult.url);
+              console.log("Upload successful:", uploadResult.url);
+            }
+          } catch (uploadError) {
+            console.error("Error uploading file:", uploadError);
+            toast.error("حدث خطأ أثناء رفع الملف");
+          }
+        }
+      }
+
+      // إنشاء المهمة في قاعدة البيانات
+      const { data: taskData, error: taskError } = await supabase
+        .from('project_tasks')
+        .insert({
+          project_id: projectId,
+          title: formData.title,
+          description: formData.description,
+          assigned_to: formData.assignedTo,
+          due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+          priority: formData.priority,
+          stage_id: formData.stageId,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (taskError) {
+        console.error("Error creating task:", taskError);
+        toast.error("فشل في إنشاء المهمة");
+        return;
+      }
+
+      console.log("Task created successfully:", taskData);
+
+      // إضافة المرفقات للمهمة إذا وجدت
+      if (attachmentUrls.length > 0 && taskData) {
+        for (const fileUrl of attachmentUrls) {
+          const { error: attachmentError } = await supabase
+            .from('task_attachments')
+            .insert({
+              task_id: taskData.id,
+              file_url: fileUrl,
+              file_name: fileUrl.split('/').pop() || 'attachment',
+              created_by: await supabase.auth.getUser().then(res => res.data.user?.id)
+            });
+
+          if (attachmentError) {
+            console.error("Error saving attachment reference:", attachmentError);
+          }
+        }
+      }
+
+      toast.success("تم إضافة المهمة بنجاح");
+      onTaskAdded();
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error submitting task:", error);
+      toast.error("حدث خطأ أثناء حفظ المهمة");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,34 +129,7 @@ export function AddTaskDialog({
         </DialogHeader>
         <div className="flex-1 overflow-auto">
           <TaskForm
-            onSubmit={async (formData) => {
-              setIsSubmitting(true);
-              try {
-                // Logic to handle task submission would go here
-                console.log("Submitting form data:", formData);
-                
-                // رفع المرفقات إذا وجدت
-                const attachmentUrls: string[] = [];
-                if (attachment && attachment.length > 0) {
-                  for (const file of attachment) {
-                    console.log("Uploading attachment:", file);
-                    const uploadResult = await uploadAttachment(file);
-                    if (uploadResult?.url) {
-                      attachmentUrls.push(uploadResult.url);
-                    }
-                  }
-                }
-                
-                // هنا يمكن إضافة المرفقات إلى بيانات المهمة قبل الحفظ
-                
-                onTaskAdded();
-              } catch (error) {
-                console.error("Error submitting task:", error);
-              } finally {
-                setIsSubmitting(false);
-                onOpenChange(false);
-              }
-            }}
+            onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             projectStages={projectStages}
             attachment={attachment}

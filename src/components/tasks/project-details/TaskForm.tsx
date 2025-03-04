@@ -59,6 +59,16 @@ export const TaskForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting form with data:", { 
+      title, 
+      description, 
+      dueDate, 
+      priority, 
+      stageId,
+      assignedTo,
+      attachment: fileAttachment 
+    });
+    
     await onSubmit({ 
       title, 
       description, 
