@@ -91,7 +91,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="" disabled>
+                    <SelectItem key="no-manager" value="no-manager">
                       لا يوجد مدراء متاحين
                     </SelectItem>
                   )}
