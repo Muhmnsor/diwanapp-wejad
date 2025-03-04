@@ -18,9 +18,7 @@ export interface Task {
 
 // Define types for the nested Supabase response
 interface PortfolioProject {
-  portfolio_only_projects: {
-    name: string;
-  }[];
+  name: string;
 }
 
 interface PortfolioTaskResponse {
@@ -30,7 +28,9 @@ interface PortfolioTaskResponse {
   status: TaskStatus;
   due_date: string | null;
   priority: string;
-  portfolio_projects: PortfolioProject | null;
+  portfolio_projects: {
+    portfolio_only_projects: PortfolioProject[];
+  } | null;
   portfolio_workspaces: {
     name: string;
   } | null;
@@ -69,7 +69,7 @@ export const useAssignedTasks = () => {
       }
       
       // Format the portfolio tasks with proper type checking
-      const formattedPortfolioTasks = (portfolioTasks as PortfolioTaskResponse[] || []).map(task => {
+      const formattedPortfolioTasks = (portfolioTasks as unknown as PortfolioTaskResponse[] || []).map(task => {
         // Safely access nested properties with proper type checking
         const projectName = task.portfolio_projects?.portfolio_only_projects?.[0]?.name || 'مشروع غير محدد';
         const workspaceName = task.portfolio_workspaces?.name || 'مساحة غير محددة';
