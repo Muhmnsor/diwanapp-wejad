@@ -37,14 +37,6 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId }: 
             <span>تابعة لمهمة رئيسية</span>
           </div>
         )}
-        
-        {/* عرض اسم المشروع دائماً إذا كان موجوداً، بغض النظر عن قيمته */}
-        {projectName && (
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Briefcase className="h-4 w-4 ml-1" />
-            <span>{projectName}</span>
-          </div>
-        )}
       </div>
     </div>
   );
