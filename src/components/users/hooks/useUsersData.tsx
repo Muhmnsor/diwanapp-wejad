@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Role, User } from "../types";
@@ -63,8 +64,18 @@ export const useUsersData = () => {
       const rolesMap = new Map();
       if (userRoles) {
         userRoles.forEach(ur => {
+          // تعديل للتعامل مع حالة كون roles مصفوفة أو كائن فردي
           if (ur.roles) {
-            rolesMap.set(ur.user_id, ur.roles.name);
+            // تحقق مما إذا كان roles مصفوفة
+            if (Array.isArray(ur.roles)) {
+              // إذا كان مصفوفة، استخدم الكائن الأول إذا كان موجودًا
+              if (ur.roles.length > 0) {
+                rolesMap.set(ur.user_id, ur.roles[0].name);
+              }
+            } else {
+              // إذا كان كائنًا فرديًا
+              rolesMap.set(ur.user_id, ur.roles.name);
+            }
           }
         });
       }
