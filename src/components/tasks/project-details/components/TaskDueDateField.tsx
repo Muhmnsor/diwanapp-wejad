@@ -31,16 +31,14 @@ export const TaskDueDateField = ({ dueDate, setDueDate }: TaskDueDateFieldProps)
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <div dir="rtl">
-            <Calendar
-              mode="single"
-              selected={dueDate}
-              onSelect={setDueDate}
-              locale={ar}
-              className="rtl"
-              initialFocus
-            />
-          </div>
+          <Calendar
+            mode="single"
+            selected={dueDate}
+            onSelect={setDueDate}
+            locale={ar}
+            className="w-full dir-rtl"
+            initialFocus
+          />
         </PopoverContent>
       </Popover>
     </div>

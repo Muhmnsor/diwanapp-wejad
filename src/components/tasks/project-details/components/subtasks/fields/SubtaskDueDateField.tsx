@@ -18,7 +18,8 @@ export const SubtaskDueDateField = ({ dueDate, setDueDate }: SubtaskDueDateField
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full"
+          className="w-full text-right"
+          dir="rtl"
         />
       </div>
     </div>
