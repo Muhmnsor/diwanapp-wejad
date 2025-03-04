@@ -28,15 +28,15 @@ export const UsersHeader = ({ roles, users, onUserCreated }: UsersHeaderProps) =
 
   return (
     <div className="mb-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <div className="flex items-center gap-2 mb-4 sm:mb-0">
-          <Users className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">إدارة المستخدمين</h2>
-        </div>
+      <div className="flex flex-col sm:flex-row-reverse justify-between items-start sm:items-center mb-4">
         <CreateUserDialog 
           roles={roles} 
           onSuccess={onUserCreated} 
         />
+        <div className="flex items-center gap-2 mb-4 sm:mb-0">
+          <Users className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">إدارة المستخدمين</h2>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 mb-8" style={{ direction: 'rtl' }}>
