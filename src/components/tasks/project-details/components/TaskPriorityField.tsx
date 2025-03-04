@@ -4,15 +4,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface TaskPriorityFieldProps {
   priority: string;
-  onPriorityChange: (priority: string) => void;
+  setPriority: (value: string) => void;
 }
 
-export const TaskPriorityField = ({ priority, onPriorityChange }: TaskPriorityFieldProps) => {
+export const TaskPriorityField = ({ priority, setPriority }: TaskPriorityFieldProps) => {
   return (
-    <div className="grid gap-2">
+    <div className="space-y-2">
       <Label htmlFor="priority">الأولوية</Label>
-      <Select onValueChange={onPriorityChange} defaultValue={priority}>
-        <SelectTrigger>
+      <Select value={priority} onValueChange={setPriority}>
+        <SelectTrigger id="priority">
           <SelectValue placeholder="اختر الأولوية" />
         </SelectTrigger>
         <SelectContent>

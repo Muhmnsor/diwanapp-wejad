@@ -4,21 +4,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface TaskStageFieldProps {
   stageId: string;
-  onStageIdChange: (stageId: string) => void;
+  setStageId: (value: string) => void;
   projectStages: { id: string; name: string }[];
 }
 
-export const TaskStageField = ({ stageId, onStageIdChange, projectStages }: TaskStageFieldProps) => {
+export const TaskStageField = ({ stageId, setStageId, projectStages }: TaskStageFieldProps) => {
   return (
-    <div className="grid gap-2">
+    <div className="space-y-2">
       <Label htmlFor="stage">المرحلة</Label>
-      <Select onValueChange={onStageIdChange} defaultValue={stageId}>
-        <SelectTrigger>
+      <Select value={stageId} onValueChange={setStageId}>
+        <SelectTrigger id="stage">
           <SelectValue placeholder="اختر المرحلة" />
         </SelectTrigger>
         <SelectContent>
-          {projectStages.map(stage => (
-            <SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>
+          {projectStages.map((stage) => (
+            <SelectItem key={stage.id} value={stage.id}>
+              {stage.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
