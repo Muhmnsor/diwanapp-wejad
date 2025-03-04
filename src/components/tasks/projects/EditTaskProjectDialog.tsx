@@ -31,9 +31,14 @@ export const EditTaskProjectDialog = ({
     isOpen
   });
 
+  // منع انتشار الأحداث من النموذج
+  const preventPropagation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+      <DialogContent className="sm:max-w-[500px]" dir="rtl" onClick={preventPropagation}>
         <DialogHeader>
           <DialogTitle>تعديل المشروع</DialogTitle>
           <DialogDescription>
@@ -42,7 +47,7 @@ export const EditTaskProjectDialog = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" onClick={preventPropagation}>
             <EditTaskProjectFields form={form} managers={managers} />
             <EditTaskProjectActions 
               isSubmitting={isSubmitting} 

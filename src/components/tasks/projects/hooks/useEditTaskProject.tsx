@@ -36,13 +36,25 @@ export const useEditTaskProject = ({
   useEffect(() => {
     const fetchManagers = async () => {
       try {
+        // Try to fetch from users table as fallback
         const { data, error } = await supabase
-          .from('team_members')
-          .select('id, name')
-          .order('name');
+          .from('users')
+          .select('id, email')
+          .order('email');
           
-        if (error) throw error;
-        setManagers(data || []);
+        if (error) {
+          console.error('Error fetching managers from users table:', error);
+          setManagers([]);
+          return;
+        }
+        
+        // Transform the data for display
+        const formattedManagers = data.map(user => ({
+          id: user.id,
+          name: user.email // Use email as name since we don't have actual names
+        }));
+        
+        setManagers(formattedManagers || []);
       } catch (error) {
         console.error('Error fetching managers:', error);
         setManagers([]);
@@ -66,7 +78,7 @@ export const useEditTaskProject = ({
 
   // Reset form when project changes
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && project) {
       console.log("Project data:", project);
       console.log("Start date from API:", project.start_date);
       
@@ -96,7 +108,7 @@ export const useEditTaskProject = ({
         .update({
           title: values.name,
           description: values.description,
-          project_manager: values.project_manager,
+          project_manager: values.project_manager === "no-manager" ? null : values.project_manager,
           start_date: values.start_date || null,
           due_date: values.end_date || null,
         })

@@ -12,12 +12,18 @@ export const EditTaskProjectActions = ({
   isSubmitting,
   onClose,
 }: EditTaskProjectActionsProps) => {
+  // منع انتشار الأحداث
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <DialogFooter className="flex justify-start gap-2 mt-6">
       <Button 
         type="submit" 
         disabled={isSubmitting}
         className="gap-2"
+        onClick={handleButtonClick}
       >
         <ClipboardList className="h-4 w-4" />
         {isSubmitting ? "جاري التحديث..." : "تحديث المشروع"}
@@ -25,7 +31,10 @@ export const EditTaskProjectActions = ({
       <Button
         type="button"
         variant="outline"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         disabled={isSubmitting}
       >
         إلغاء

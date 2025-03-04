@@ -23,9 +23,14 @@ interface EditTaskProjectFieldsProps {
 }
 
 export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFieldsProps) => {
+  // Prevent default form submission behavior that might cause page navigation
+  const handleFormFieldClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <>
-      <div className="space-y-2">
+      <div className="space-y-2" onClick={handleFormFieldClick}>
         <FormField
           control={form.control}
           name="name"
@@ -39,6 +44,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
                   required
                   className="text-right"
                   {...field}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </FormControl>
             </FormItem>
@@ -46,7 +52,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2" onClick={handleFormFieldClick}>
         <FormField
           control={form.control}
           name="description"
@@ -60,6 +66,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
                   rows={4}
                   className="text-right"
                   {...field}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </FormControl>
             </FormItem>
@@ -67,7 +74,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2" onClick={handleFormFieldClick}>
         <FormField
           control={form.control}
           name="project_manager"
@@ -77,21 +84,33 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
+                value={field.value}
+                onOpenChange={(open) => {
+                  if (open) {
+                    // إيقاف انتشار الحدث عند فتح القائمة المنسدلة
+                    setTimeout(() => {
+                      const popover = document.querySelector("[data-radix-popper-content-wrapper]");
+                      if (popover) {
+                        popover.addEventListener("click", (e) => e.stopPropagation(), { once: true });
+                      }
+                    }, 0);
+                  }
+                }}
               >
                 <FormControl>
-                  <SelectTrigger className="text-right">
+                  <SelectTrigger className="text-right" onClick={(e) => e.stopPropagation()}>
                     <SelectValue placeholder="اختر مدير المشروع" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent onClick={(e) => e.stopPropagation()}>
                   {managers.length > 0 ? (
                     managers.map((manager) => (
-                      <SelectItem key={manager.id} value={manager.id}>
+                      <SelectItem key={manager.id} value={manager.id} onClick={(e) => e.stopPropagation()}>
                         {manager.name}
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem key="no-manager" value="no-manager">
+                    <SelectItem key="no-manager" value="no-manager" onClick={(e) => e.stopPropagation()}>
                       لا يوجد مدراء متاحين
                     </SelectItem>
                   )}
@@ -102,7 +121,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" onClick={handleFormFieldClick}>
         <FormField
           control={form.control}
           name="start_date"
@@ -115,6 +134,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
                   type="date"
                   className="text-right"
                   {...field}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </FormControl>
             </FormItem>
@@ -132,6 +152,7 @@ export const EditTaskProjectFields = ({ form, managers = [] }: EditTaskProjectFi
                   type="date"
                   className="text-right"
                   {...field}
+                  onClick={(e) => e.stopPropagation()}
                 />
               </FormControl>
             </FormItem>
