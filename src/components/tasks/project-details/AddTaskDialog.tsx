@@ -81,9 +81,9 @@ export function AddTaskDialog({
             }}
             isSubmitting={isSubmitting}
             projectStages={projectStages}
-            projectMembers={projectMembers}
             attachment={attachment}
             setAttachment={setAttachment}
+            projectMembers={projectMembers}
           />
         </div>
       </DialogContent>

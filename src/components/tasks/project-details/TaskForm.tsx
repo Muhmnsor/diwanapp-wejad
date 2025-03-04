@@ -7,8 +7,8 @@ import { TaskPriorityField } from "./components/TaskPriorityField";
 import { TaskStageField } from "./components/TaskStageField";
 import { TaskAssigneeField } from "./components/TaskAssigneeField";
 import { TaskFormActions } from "./components/TaskFormActions";
-import { useProjectMembers } from "./hooks/useProjectMembers";
 import { TaskAttachmentField } from "./components/TaskAttachmentField";
+import { ProjectMember } from "./hooks/useProjectMembers";
 
 export interface TaskFormProps {
   onSubmit: (formData: {
@@ -22,16 +22,16 @@ export interface TaskFormProps {
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
-  projectId: string | undefined;
+  projectMembers: ProjectMember[];
   attachment?: File[] | null;
-  setAttachment?: (file: File[] | null) => void;
+  setAttachment?: (files: File[] | null) => void;
 }
 
 export const TaskForm = ({ 
   onSubmit, 
   isSubmitting, 
   projectStages,
-  projectId,
+  projectMembers,
   attachment,
   setAttachment
 }: TaskFormProps) => {
@@ -43,8 +43,6 @@ export const TaskForm = ({
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [localAttachment, setLocalAttachment] = useState<File[] | null>(null);
   
-  const { projectMembers } = useProjectMembers(projectId);
-  
   // استخدم ملف المرفق من الخارج إذا تم توفيره
   const fileAttachment = attachment !== undefined ? attachment : localAttachment;
   const setFileAttachment = setAttachment || setLocalAttachment;
@@ -53,7 +51,11 @@ export const TaskForm = ({
     if (projectStages.length > 0 && !stageId) {
       setStageId(projectStages[0].id);
     }
-  }, [projectStages, stageId]);
+    
+    if (projectMembers.length > 0 && assignedTo === null) {
+      setAssignedTo(projectMembers[0].user_id);
+    }
+  }, [projectStages, stageId, projectMembers, assignedTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,11 +68,6 @@ export const TaskForm = ({
       assignedTo,
       attachment: fileAttachment
     });
-  };
-
-  const handleCancel = () => {
-    // Reset form or handle cancel
-    console.log("Form cancelled");
   };
 
   return (
@@ -97,7 +94,7 @@ export const TaskForm = ({
         setAttachment={setFileAttachment}
       />
       
-      <TaskFormActions isSubmitting={isSubmitting} onCancel={handleCancel} />
+      <TaskFormActions isSubmitting={isSubmitting} onCancel={() => console.log("Form cancelled")} />
     </form>
   );
 };
