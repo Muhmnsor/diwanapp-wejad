@@ -26,6 +26,8 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
+  project_manager?: string | null;
+  start_date?: string | null;
 }
 
 interface EditTaskProjectDialogProps {
@@ -34,14 +36,6 @@ interface EditTaskProjectDialogProps {
   project: TaskProject;
   onSuccess?: () => void;
 }
-
-const statusOptions = [
-  { value: "pending", label: "قيد الانتظار" },
-  { value: "in_progress", label: "قيد التنفيذ" },
-  { value: "delayed", label: "متعثر" },
-  { value: "completed", label: "مكتمل" },
-  { value: "stopped", label: "متوقف" },
-];
 
 export const EditTaskProjectDialog = ({
   isOpen,
@@ -55,9 +49,9 @@ export const EditTaskProjectDialog = ({
     defaultValues: {
       name: project.title,
       description: project.description || "",
-      start_date: "",
+      project_manager: project.project_manager || "",
+      start_date: project.start_date ? project.start_date.split('T')[0] : "",
       end_date: project.due_date ? project.due_date.split('T')[0] : "",
-      status: project.status,
     }
   });
 
@@ -67,9 +61,9 @@ export const EditTaskProjectDialog = ({
       form.reset({
         name: project.title,
         description: project.description || "",
-        start_date: "",
+        project_manager: project.project_manager || "",
+        start_date: project.start_date ? project.start_date.split('T')[0] : "",
         end_date: project.due_date ? project.due_date.split('T')[0] : "",
-        status: project.status,
       });
     }
   }, [isOpen, project, form]);
@@ -88,8 +82,9 @@ export const EditTaskProjectDialog = ({
         .update({
           title: values.name,
           description: values.description,
+          project_manager: values.project_manager,
+          start_date: values.start_date || null,
           due_date: values.end_date || null,
-          status: values.status,
         })
         .eq("id", project.id);
       
@@ -166,6 +161,26 @@ export const EditTaskProjectDialog = ({
               />
             </div>
 
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="project_manager"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel htmlFor="project_manager" className="text-right block">مدير المشروع</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="project_manager"
+                        placeholder="أدخل اسم مدير المشروع"
+                        className="text-right"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -197,31 +212,6 @@ export const EditTaskProjectDialog = ({
                         className="text-right"
                         {...field}
                       />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="status" className="text-right block">الحالة</FormLabel>
-                    <FormControl>
-                      <select
-                        id="status"
-                        className="w-full p-2 border rounded-md text-right"
-                        {...field}
-                      >
-                        {statusOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
                     </FormControl>
                   </FormItem>
                 )}
