@@ -29,31 +29,8 @@ export const useTasksFetching = (projectId: string | undefined) => {
       
       console.log("Fetched tasks:", data);
       
-      // Fetch attachments separately for each task
-      const tasksWithAttachments = await Promise.all((data || []).map(async (task) => {
-        // Get attachments for the task
-        const { data: attachmentsData, error: attachmentsError } = await supabase
-          .from('task_attachments')
-          .select('file_url')
-          .eq('task_id', task.id);
-          
-        if (attachmentsError) {
-          console.error("Error fetching attachments for task:", task.id, attachmentsError);
-          return { ...task, attachments: null };
-        }
-        
-        const attachments = attachmentsData && attachmentsData.length > 0 
-          ? attachmentsData.map(attachment => attachment.file_url) 
-          : null;
-          
-        return {
-          ...task,
-          attachments
-        };
-      }));
-      
       // Add stage names by fetching stages separately
-      let tasksWithStageNames = [...tasksWithAttachments];
+      let tasksWithStageNames = [...(data || [])];
       
       // Get all stage IDs used in tasks
       const stageIds = tasksWithStageNames
@@ -122,7 +99,6 @@ export const useTasksFetching = (projectId: string | undefined) => {
         }
       });
       
-      console.log("Processed tasks with attachments:", tasksWithUserData);
       setTasks(tasksWithUserData);
       setTasksByStage(tasksByStageMap);
       

@@ -1,5 +1,5 @@
 
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -74,36 +74,6 @@ export const TaskItem = ({
     }
   };
 
-  const handleDownloadAttachment = async (attachmentUrl: string) => {
-    try {
-      // استخراج اسم الملف من الرابط
-      const fileName = attachmentUrl.split('/').pop() || 'attachment';
-      
-      // تنزيل الملف
-      const response = await fetch(attachmentUrl);
-      if (!response.ok) throw new Error('فشل تنزيل الملف');
-      
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-      
-      // إنشاء رابط وهمي لتنزيل الملف
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      
-      // تنظيف
-      document.body.removeChild(a);
-      URL.revokeObjectURL(downloadUrl);
-      
-      toast.success('جاري تنزيل الملف');
-    } catch (error) {
-      console.error('Error downloading attachment:', error);
-      toast.error('حدث خطأ أثناء تنزيل الملف');
-    }
-  };
-
   const renderStatusChangeButton = () => {
     if (!canChangeStatus()) {
       return null;
@@ -134,8 +104,6 @@ export const TaskItem = ({
     );
   };
 
-  const hasAttachments = task.attachments && task.attachments.length > 0;
-
   return (
     <>
       <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setShowSubtasks(!showSubtasks)}>
@@ -149,27 +117,10 @@ export const TaskItem = ({
           </div>
         </TableCell>
         <TableCell>
-          {hasAttachments ? (
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 px-2 flex items-center gap-1 text-primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownloadAttachment(task.attachments![0]);
-                }}
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>تنزيل المرفق</span>
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              {getStatusBadge(task.status)}
-              {renderStatusChangeButton()}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {getStatusBadge(task.status)}
+            {renderStatusChangeButton()}
+          </div>
         </TableCell>
         <TableCell>{getPriorityBadge(task.priority)}</TableCell>
         <TableCell>

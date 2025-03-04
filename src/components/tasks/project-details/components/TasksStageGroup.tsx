@@ -39,7 +39,7 @@ export const TasksStageGroup = ({
         <TableHeader>
           <TableRow>
             <TableHead>المهمة</TableHead>
-            <TableHead>المرفقات/الحالة</TableHead>
+            <TableHead>الحالة</TableHead>
             <TableHead>الأولوية</TableHead>
             <TableHead>المكلف</TableHead>
             <TableHead>تاريخ الاستحقاق</TableHead>
