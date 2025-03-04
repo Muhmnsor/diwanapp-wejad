@@ -43,61 +43,91 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         }
       }
       
-      // تحقق من وجود المهمة في جدول portfolio_tasks
-      const { data: portfolioTask } = await supabase
+      // تحديد نوع المهمة - مهمة مشروع أم مهمة محفظة أم مهمة فرعية
+      let taskTable = null;
+      let commentTable = null;
+      
+      // فحص ما إذا كانت المهمة في جدول portfolio_tasks
+      const { data: portfolioTask, error: portfolioError } = await supabase
         .from("portfolio_tasks")
         .select("id")
         .eq("id", task.id)
         .single();
         
-      if (portfolioTask) {
-        // إنشاء تعليق جديد في جدول portfolio_task_comments
-        const { error } = await supabase
-          .from("portfolio_task_comments")
-          .insert({
-            task_id: task.id,
-            content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
-            created_at: new Date().toISOString(),
-            created_by: userId,
-            attachment_url: attachmentUrl,
-            attachment_name: attachmentName,
-            attachment_type: attachmentType
-          });
-        
-        if (error) {
-          console.error("Error details:", error);
-          throw error;
-        }
+      if (!portfolioError && portfolioTask) {
+        taskTable = "portfolio_tasks";
+        commentTable = "portfolio_task_comments";
       } else {
-        // المهمة غير موجودة في جدول portfolio_tasks، قم بالتحقق من جدول project_tasks
-        const { data: projectTask } = await supabase
+        // فحص ما إذا كانت المهمة في جدول project_tasks
+        const { data: projectTask, error: projectError } = await supabase
           .from("project_tasks")
           .select("id")
           .eq("id", task.id)
           .single();
           
-        if (projectTask) {
-          // إنشاء تعليق جديد في جدول task_comments
-          const { error } = await supabase
-            .from("task_comments")
-            .insert({
-              task_id: task.id,
-              content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
-              created_at: new Date().toISOString(),
-              created_by: userId,
-              attachment_url: attachmentUrl,
-              attachment_name: attachmentName,
-              attachment_type: attachmentType
-            });
-          
-          if (error) {
-            console.error("Error details:", error);
-            throw error;
-          }
+        if (!projectError && projectTask) {
+          taskTable = "project_tasks";
+          commentTable = "task_comments";
         } else {
-          // المهمة غير موجودة في أي من الجدولين
-          throw new Error("Task not found in any tables");
+          // فحص ما إذا كانت المهمة في جدول tasks
+          const { data: normalTask, error: normalTaskError } = await supabase
+            .from("tasks")
+            .select("id")
+            .eq("id", task.id)
+            .single();
+            
+          if (!normalTaskError && normalTask) {
+            taskTable = "tasks";
+            commentTable = "task_comments";
+          } else {
+            // فحص ما إذا كانت المهمة في جدول subtasks
+            const { data: subTask, error: subTaskError } = await supabase
+              .from("subtasks")
+              .select("id")
+              .eq("id", task.id)
+              .single();
+              
+            if (!subTaskError && subTask) {
+              taskTable = "subtasks";
+              commentTable = "task_comments";
+            }
+          }
         }
+      }
+      
+      console.log("Task table identified:", taskTable);
+      console.log("Comment table to use:", commentTable);
+      
+      if (!taskTable || !commentTable) {
+        console.error("Task not found in any table", {
+          portfolioError,
+          projectError: task.project_id ? undefined : "Not checked - No project_id",
+          normalTaskError: task.assigned_to ? undefined : "Not checked - No assigned_to",
+          subTaskError: task.id ? undefined : "Not checked - No task_id"
+        });
+        throw new Error("المهمة غير موجودة في قاعدة البيانات");
+      }
+      
+      // إنشاء تعليق جديد في الجدول المناسب
+      const commentData = {
+        task_id: task.id,
+        content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
+        created_at: new Date().toISOString(),
+        created_by: userId,
+        attachment_url: attachmentUrl,
+        attachment_name: attachmentName,
+        attachment_type: attachmentType
+      };
+
+      console.log("Inserting comment data:", commentData);
+      
+      const { error: insertError } = await supabase
+        .from(commentTable)
+        .insert(commentData);
+        
+      if (insertError) {
+        console.error("Error details for insert:", insertError);
+        throw insertError;
       }
       
       // مسح حقل التعليق والملف بعد النجاح

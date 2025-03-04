@@ -25,28 +25,35 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
     try {
       console.log("Fetching comments for task:", task.id);
       
-      // أولاً نحاول البحث في جدول portfolio_task_comments
-      const { data: portfolioComments, error: portfolioError } = await supabase
-        .from("portfolio_task_comments")
-        .select("*")
-        .eq("task_id", task.id)
-        .order("created_at", { ascending: true });
+      // جلب التعليقات من جميع الجداول المحتملة
+      const sources = [
+        {
+          table: "portfolio_task_comments",
+          field: "task_id"
+        },
+        {
+          table: "task_comments",
+          field: "task_id"
+        }
+      ];
       
-      // ثم نحاول البحث في جدول task_comments
-      const { data: taskComments, error: taskError } = await supabase
-        .from("task_comments")
-        .select("*")
-        .eq("task_id", task.id)
-        .order("created_at", { ascending: true });
-          
-      if (portfolioError && taskError) {
-        console.error("Portfolio comments error:", portfolioError);
-        console.error("Task comments error:", taskError);
-        throw portfolioError;
+      let allComments: any[] = [];
+      
+      // جلب التعليقات من كل جدول
+      for (const source of sources) {
+        const { data, error } = await supabase
+          .from(source.table)
+          .select("*")
+          .eq(source.field, task.id)
+          .order("created_at", { ascending: true });
+        
+        if (error) {
+          console.error(`Error fetching from ${source.table}:`, error);
+        } else if (data && data.length > 0) {
+          console.log(`Found ${data.length} comments in ${source.table}`);
+          allComments = [...allComments, ...data];
+        }
       }
-      
-      // دمج النتائج من كلا الجدولين
-      const allComments = [...(portfolioComments || []), ...(taskComments || [])];
       
       console.log("Combined comments data:", allComments);
       
