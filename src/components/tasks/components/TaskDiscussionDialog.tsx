@@ -82,9 +82,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
           </div>
         ) : loadingDeliverables ? (
           <div className="mb-4 text-sm text-gray-500">جاري تحميل المستلمات...</div>
-        ) : (
-          <div className="mb-4 text-sm text-gray-500">لا توجد مستلمات للمهمة</div>
-        )}
+        ) : null}
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
           {/* استخدام refreshKey كمفتاح لإعادة تحميل المحتوى عند إضافة تعليق جديد */}
