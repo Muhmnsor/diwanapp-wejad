@@ -4,13 +4,9 @@ export interface TaskComment {
   task_id: string;
   content: string;
   created_at: string;
-  created_by: string | null;
+  created_by: string;
+  user_name?: string;
   attachment_url?: string;
   attachment_name?: string;
   attachment_type?: string;
-  // معلومات المستخدم المضافة من الـ profiles
-  user_name?: string; // اسم المستخدم المعروض
-  user_email?: string; // البريد الإلكتروني للمستخدم
-  // حقل إضافي للجدول الموحد
-  task_table?: string; // يشير إلى الجدول الذي تنتمي إليه المهمة
 }

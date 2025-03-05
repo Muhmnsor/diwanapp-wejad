@@ -9,7 +9,7 @@ export const uploadAttachment = async (file: File): Promise<{ url: string; error
     const filePath = `${fileName}`;
 
     const { data, error } = await supabase.storage
-      .from('task-attachments') // استخدام المخزن الجديد الذي أنشأناه
+      .from('task-attachments')
       .upload(filePath, file);
 
     if (error) {
