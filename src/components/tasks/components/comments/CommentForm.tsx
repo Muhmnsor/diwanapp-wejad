@@ -1,7 +1,9 @@
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User, Paperclip, X } from "lucide-react";
 import { MentionInput } from "../mentions/MentionInput";
+
 interface CommentFormProps {
   onSubmit: () => Promise<void>;
   text: string;
@@ -15,6 +17,7 @@ interface CommentFormProps {
   inputId?: string;
   submitLabel?: string;
 }
+
 export const CommentForm = ({
   onSubmit,
   text,
@@ -35,29 +38,29 @@ export const CommentForm = ({
       const file = e.target.files[0];
       // TypeScript doesn't allow direct properties assignment to File objects
       // We can use a workaround with Object.defineProperty if needed
-      const fileWithCategory = Object.assign(file, {
-        category: 'comment'
-      });
-      onFileChange({
-        ...e,
-        target: {
-          ...e.target,
-          files: [fileWithCategory]
-        }
-      } as any);
+      const fileWithCategory = Object.assign(file, { category: 'comment' });
+      onFileChange({ ...e, target: { ...e.target, files: [fileWithCategory] } } as any);
     } else {
       onFileChange(e);
     }
   };
-  return <div className="flex gap-2 w-full">
+
+  return (
+    <div className="flex gap-2 w-full">
       <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarFallback>
           <User className="h-4 w-4" />
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 w-full py-0 px-0 my-[6px]">
+      <div className="flex-1 w-full">
         <div className="relative">
-          <MentionInput value={text} onChange={onTextChange} placeholder={placeholder} workspaceId={workspaceId} isSubmitting={isSubmitting} />
+          <MentionInput 
+            value={text}
+            onChange={onTextChange}
+            placeholder={placeholder}
+            workspaceId={workspaceId}
+            isSubmitting={isSubmitting}
+          />
           <div className="absolute left-2 bottom-2">
             <input type="file" id={inputId} className="hidden" onChange={handleFileChangeWithCategory} accept="image/*,.pdf,.docx,.xlsx" />
             <Button type="button" variant="ghost" size="sm" className="h-6 hover:bg-accent/10 rounded-full" onClick={() => document.getElementById(inputId)?.click()}>
@@ -79,5 +82,6 @@ export const CommentForm = ({
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
