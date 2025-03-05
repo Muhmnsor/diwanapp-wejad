@@ -281,32 +281,6 @@ export const saveTaskTemplate = async (
     // الحصول على معرف المستخدم الحالي
     const { data: { user } } = await supabase.auth.getUser();
     
-    // تحديد نوع جدول المهمة
-    let taskTable = 'tasks';
-    
-    // التحقق من وجود المهمة في جداول مختلفة لتحديد النوع المناسب
-    const { data: portfolioTask } = await supabase
-      .from('portfolio_tasks')
-      .select('id')
-      .eq('id', taskId)
-      .single();
-      
-    if (portfolioTask) {
-      taskTable = 'portfolio_tasks';
-    } else {
-      const { data: projectTask } = await supabase
-        .from('project_tasks')
-        .select('id')
-        .eq('id', taskId)
-        .single();
-        
-      if (projectTask) {
-        taskTable = 'project_tasks';
-      }
-    }
-    
-    console.log("Using task table type for template:", taskTable);
-    
     // حفظ النموذج في جدول نماذج المهمة
     const { data, error } = await supabase
       .from('task_templates')
@@ -316,7 +290,7 @@ export const saveTaskTemplate = async (
         file_name: fileName,
         file_type: fileType,
         created_by: user?.id,
-        task_table: taskTable
+        task_table: 'tasks'
       });
       
     if (error) {

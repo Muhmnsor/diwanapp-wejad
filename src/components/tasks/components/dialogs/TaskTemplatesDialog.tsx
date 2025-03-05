@@ -33,19 +33,12 @@ export const TaskTemplatesDialog = ({
     if (!task?.id) return;
     setIsLoading(true);
     try {
-      console.log("Fetching templates for task:", task.id);
-      
-      // Determine the task table type to ensure we check for the correct task_table value
       let taskTable = 'tasks';
       if (task.is_subtask) {
         taskTable = 'subtasks';
       } else if (task.workspace_id) {
         taskTable = 'portfolio_tasks';
-      } else if (task.project_id) {
-        taskTable = 'project_tasks';
       }
-      
-      console.log("Using task table:", taskTable);
       
       const { data, error } = await supabase
         .from('task_templates')
@@ -59,7 +52,6 @@ export const TaskTemplatesDialog = ({
         return;
       }
       
-      console.log("Templates found:", data);
       setTemplates(data || []);
     } catch (error) {
       console.error('Error in fetchTemplates:', error);
