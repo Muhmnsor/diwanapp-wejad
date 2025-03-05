@@ -7,13 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { AttachmentsByCategory } from "../metadata/AttachmentsByCategory";
 import { useAuthStore } from "@/store/authStore";
-
 interface TaskAttachmentDialogProps {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
 export const TaskAttachmentDialog = ({
   task,
   open,
@@ -37,7 +35,6 @@ export const TaskAttachmentDialog = ({
   }, () => {
     fetchAttachments();
   });
-
   const fetchAttachments = async () => {
     if (!task?.id) return;
     setIsLoading(true);
@@ -67,54 +64,46 @@ export const TaskAttachmentDialog = ({
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     if (open && task) {
       fetchAttachments();
     }
   }, [open, task]);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
     }
   };
-
   const handleUpload = async () => {
     if (!selectedFile || !task.id) return;
-
     let taskTable = 'tasks';
     if (task.is_subtask) {
       taskTable = 'subtasks';
     } else if (task.workspace_id) {
       taskTable = 'portfolio_tasks';
     }
-    const success = await uploadAttachment(selectedFile, task.id, 'general',
-    taskTable);
+    const success = await uploadAttachment(selectedFile, task.id, 'general', taskTable);
     if (success) {
       setSelectedFile(null);
       setIsUploadDialogOpen(false);
     }
   };
-
   const creatorAttachments = attachments.filter(att => att.attachment_category === 'creator' || !att.attachment_category);
   const assigneeAttachments = attachments.filter(att => att.attachment_category === 'assignee');
   const commentAttachments = attachments.filter(att => att.attachment_category === 'comment');
   const generalAttachments = attachments.filter(att => att.attachment_category === 'general');
-
   const canDeleteAttachment = (attachment: Attachment) => {
     return user?.id === attachment.created_by || user?.isAdmin || user?.role === 'admin';
   };
-
   return <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg" dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="text-xl"> مستلمات المهمة</DialogTitle>
+          <DialogHeader className="py-0 my-0">
+            <DialogTitle className="text-xl py-0 my-0"> مستلمات المهمة</DialogTitle>
           </DialogHeader>
 
-          <div className="py-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="py-0 px-0 my-[3px]">
+            <div className="flex justify-between items-center mb-4 my-0">
               <h3 className="text-lg font-semibold">{task.title}</h3>
             </div>
 
