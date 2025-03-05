@@ -5,6 +5,7 @@ import { TasksHeader } from "@/components/tasks/TasksHeader";
 import { TasksOverview } from "@/components/tasks/TasksOverview";
 import { TasksWorkspaces } from "@/components/tasks/TasksWorkspaces";
 import { TasksYearlyPlan } from "@/components/tasks/TasksYearlyPlan";
+import { TasksReports } from "@/components/tasks/TasksReports";
 import { useEffect, useState } from "react";
 
 const Tasks = () => {
@@ -17,6 +18,8 @@ const Tasks = () => {
       setActiveTab('workspaces');
     } else if (hash === 'yearly-plan') {
       setActiveTab('yearly-plan');
+    } else if (hash === 'reports') {
+      setActiveTab('reports');
     } else {
       setActiveTab('overview');
     }
@@ -56,6 +59,7 @@ const Tasks = () => {
         {activeTab === 'overview' && <TasksOverview />}
         {activeTab === 'workspaces' && <TasksWorkspaces />}
         {activeTab === 'yearly-plan' && <TasksYearlyPlan />}
+        {activeTab === 'reports' && <TasksReports />}
       </main>
 
       <Footer />

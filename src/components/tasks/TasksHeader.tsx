@@ -16,6 +16,8 @@ export const TasksHeader = () => {
       setActiveTab('workspaces');
     } else if (hash === 'yearly-plan') {
       setActiveTab('yearly-plan');
+    } else if (hash === 'reports') {
+      setActiveTab('reports');
     } else {
       setActiveTab('overview');
     }
@@ -44,6 +46,11 @@ export const TasksHeader = () => {
             <Plus className="h-4 w-4" />
             إنشاء مساحة عمل
           </Button>
+        )}
+        
+        {/* You could add a reports-specific button here if needed */}
+        {activeTab === 'reports' && (
+          <div></div> // مكان محجوز لأزرار تبويب التقارير في المستقبل
         )}
       </div>
       
