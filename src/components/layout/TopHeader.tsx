@@ -63,7 +63,7 @@ export const TopHeader = () => {
               {isAuthenticated && user && (
                 <div className="flex items-center gap-2 text-sm text-gray-600 ms-2">
                   <User className="h-4 w-4" />
-                  <span>{user.email}</span>
+                  <span>{user.role ? user.role : 'مستخدم'}</span>
                 </div>
               )}
               <HomeButton 
