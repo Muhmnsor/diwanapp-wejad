@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
@@ -47,15 +46,23 @@ export function AddTaskDialog({
     try {
       console.log("Submitting task data:", formData);
       
-      // رفع المرفقات إذا وجدت
       const attachmentUrls: string[] = [];
+      const attachmentDetails: Array<{ url: string, name: string, category: string }> = [];
+      
       if (formData.attachment && formData.attachment.length > 0) {
         for (const file of formData.attachment) {
           console.log("Uploading attachment:", file);
           try {
-            const uploadResult = await uploadAttachment(file);
+            const fileCategory = (file as any).category || 'creator';
+            const uploadResult = await uploadAttachment(file, fileCategory);
+            
             if (uploadResult?.url) {
               attachmentUrls.push(uploadResult.url);
+              attachmentDetails.push({
+                url: uploadResult.url,
+                name: file.name,
+                category: fileCategory
+              });
               console.log("Upload successful:", uploadResult.url);
             }
           } catch (uploadError) {
@@ -65,7 +72,6 @@ export function AddTaskDialog({
         }
       }
 
-      // إنشاء المهمة في قاعدة البيانات - نستخدم جدول "tasks" بدلاً من "project_tasks"
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .insert({
@@ -89,15 +95,15 @@ export function AddTaskDialog({
 
       console.log("Task created successfully:", taskData);
 
-      // إضافة المرفقات للمهمة إذا وجدت
-      if (attachmentUrls.length > 0 && taskData) {
-        for (const fileUrl of attachmentUrls) {
+      if (attachmentDetails.length > 0 && taskData) {
+        for (const attachment of attachmentDetails) {
           const { error: attachmentError } = await supabase
             .from('task_attachments')
             .insert({
               task_id: taskData.id,
-              file_url: fileUrl,
-              file_name: fileUrl.split('/').pop() || 'attachment',
+              file_url: attachment.url,
+              file_name: attachment.name,
+              attachment_category: attachment.category,
               created_by: await supabase.auth.getUser().then(res => res.data.user?.id)
             });
 

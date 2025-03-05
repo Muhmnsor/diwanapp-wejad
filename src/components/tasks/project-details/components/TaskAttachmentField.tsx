@@ -8,9 +8,14 @@ import { toast } from "sonner";
 interface TaskAttachmentFieldProps {
   attachment: File[] | null;
   setAttachment: (file: File[] | null) => void;
+  category?: 'creator' | 'assignee' | 'comment';
 }
 
-export const TaskAttachmentField = ({ attachment, setAttachment }: TaskAttachmentFieldProps) => {
+export const TaskAttachmentField = ({ 
+  attachment, 
+  setAttachment, 
+  category = 'creator' 
+}: TaskAttachmentFieldProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -20,8 +25,9 @@ export const TaskAttachmentField = ({ attachment, setAttachment }: TaskAttachmen
         return;
       }
       
-      // Add new file to existing files array
-      const updatedAttachments = attachment ? [...attachment, selectedFile] : [selectedFile];
+      // Add new file to existing files array with category metadata
+      const fileWithMetadata = Object.assign(selectedFile, { category });
+      const updatedAttachments = attachment ? [...attachment, fileWithMetadata] : [fileWithMetadata];
       setAttachment(updatedAttachments);
     }
     

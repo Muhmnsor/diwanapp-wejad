@@ -31,6 +31,20 @@ export const CommentForm = ({
   inputId = "comment-file",
   submitLabel = "تعليق"
 }: CommentFormProps) => {
+  // تعديل معالج تغيير الملف لإضافة تصنيف "comment" للملف
+  const handleFileChangeWithCategory = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      // إضافة وصف التصنيف للملف
+      const file = e.target.files[0];
+      // TypeScript doesn't allow direct properties assignment to File objects
+      // We can use a workaround with Object.defineProperty if needed
+      const fileWithCategory = Object.assign(file, { category: 'comment' });
+      onFileChange({ ...e, target: { ...e.target, files: [fileWithCategory] } } as any);
+    } else {
+      onFileChange(e);
+    }
+  };
+
   return (
     <div className="flex gap-2 w-full">
       <Avatar className="h-8 w-8 flex-shrink-0">
@@ -48,7 +62,7 @@ export const CommentForm = ({
             isSubmitting={isSubmitting}
           />
           <div className="absolute left-2 bottom-2">
-            <input type="file" id={inputId} className="hidden" onChange={onFileChange} accept="image/*,.pdf,.docx,.xlsx" />
+            <input type="file" id={inputId} className="hidden" onChange={handleFileChangeWithCategory} accept="image/*,.pdf,.docx,.xlsx" />
             <Button type="button" variant="ghost" size="sm" className="h-6 hover:bg-accent/10 rounded-full" onClick={() => document.getElementById(inputId)?.click()}>
               <Paperclip className="h-4 w-4" />
             </Button>

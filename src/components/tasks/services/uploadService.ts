@@ -2,7 +2,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const uploadAttachment = async (file: File): Promise<{ url: string; error: any } | null> => {
+export const uploadAttachment = async (
+  file: File, 
+  category: 'creator' | 'assignee' | 'comment' = 'comment'
+): Promise<{ url: string; error: any } | null> => {
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 11)}_${Date.now()}.${fileExt}`;
@@ -23,7 +26,11 @@ export const uploadAttachment = async (file: File): Promise<{ url: string; error
       .from('task-attachments')
       .getPublicUrl(filePath);
 
-    return { url: publicUrl, error: null };
+    return { 
+      url: publicUrl, 
+      error: null,
+      category
+    };
   } catch (error) {
     console.error("Error handling file upload:", error);
     toast.error("حدث خطأ غير متوقع أثناء رفع الملف");

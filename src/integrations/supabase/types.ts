@@ -1657,6 +1657,7 @@ export type Database = {
       portfolio_task_attachments: {
         Row: {
           asana_gid: string | null
+          attachment_category: string | null
           created_at: string
           created_by: string | null
           file_name: string
@@ -1666,6 +1667,7 @@ export type Database = {
         }
         Insert: {
           asana_gid?: string | null
+          attachment_category?: string | null
           created_at?: string
           created_by?: string | null
           file_name: string
@@ -1675,6 +1677,7 @@ export type Database = {
         }
         Update: {
           asana_gid?: string | null
+          attachment_category?: string | null
           created_at?: string
           created_by?: string | null
           file_name?: string
@@ -2605,6 +2608,7 @@ export type Database = {
       task_attachments: {
         Row: {
           asana_gid: string | null
+          attachment_category: string | null
           created_at: string
           created_by: string | null
           file_name: string
@@ -2614,6 +2618,7 @@ export type Database = {
         }
         Insert: {
           asana_gid?: string | null
+          attachment_category?: string | null
           created_at?: string
           created_by?: string | null
           file_name: string
@@ -2623,6 +2628,7 @@ export type Database = {
         }
         Update: {
           asana_gid?: string | null
+          attachment_category?: string | null
           created_at?: string
           created_by?: string | null
           file_name?: string

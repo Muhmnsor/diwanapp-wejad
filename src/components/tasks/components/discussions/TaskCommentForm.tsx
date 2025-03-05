@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CommentForm } from "../comments/CommentForm";
 import { uploadAttachment } from "../../services/uploadService";
@@ -35,7 +34,9 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
       let attachmentType = null;
 
       if (selectedFile) {
-        const uploadResult = await uploadAttachment(selectedFile);
+        // التأكد من إضافة تصنيف 'comment' للمرفق
+        const category = (selectedFile as any).category || 'comment';
+        const uploadResult = await uploadAttachment(selectedFile, category);
         if (uploadResult && !uploadResult.error) {
           attachmentUrl = uploadResult.url;
           attachmentName = selectedFile.name;
@@ -54,7 +55,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         task_table: 'portfolio_tasks' // القيمة الافتراضية، سيتم تحديثها أدناه
       };
 
-      // تحديد نوع جدول المهمة بناءً على وجود المهمة في الجداول المختلفة
+      // تحديد نوع جدول المهمة بناءً على وجود المهمة في الجداول ا��مختلفة
       
       // فحص ما إذا كانت المهمة في جدول portfolio_tasks
       const { data: portfolioTask, error: portfolioError } = await supabase
@@ -131,7 +132,12 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      // ضمان تعيين تصنيف 'comment' للملف
+      const file = e.target.files[0];
+      // لا يمكن إضافة خصائص إضافية مباشرة إلى كائن File 
+      // لذلك نستخدم خاصية تُحفظ في الذاكرة
+      const fileWithCategory = Object.assign(file, { category: 'comment' });
+      setSelectedFile(fileWithCategory);
     }
   };
 
