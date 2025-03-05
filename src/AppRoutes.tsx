@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -31,6 +30,7 @@ import StoreManagement from "./pages/StoreManagement";
 import CreateTaskProject from "./pages/CreateTaskProject";
 import WorkspaceTaskProjects from "./pages/WorkspaceTaskProjects";
 import TaskProjectDetails from "./pages/TaskProjectDetails";
+import Documentation from "./pages/Documentation";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -174,6 +174,7 @@ const AppRoutes = () => {
         } 
       />
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/documentation" element={<Documentation />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
