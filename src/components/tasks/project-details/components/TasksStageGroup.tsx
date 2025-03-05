@@ -87,21 +87,19 @@ export const TasksStageGroup = ({
                   <div className="flex gap-2 justify-end">
                     <Button 
                       variant="ghost" 
-                      size="sm"
-                      className="text-xs flex items-center gap-1"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => toggleAttachments(task.id)}
                     >
-                      <Paperclip className="h-3.5 w-3.5" />
-                      المرفقات
+                      <Paperclip className="h-4 w-4" />
                     </Button>
                     <Button 
                       variant="ghost" 
-                      size="sm"
-                      className="text-xs flex items-center gap-1"
+                      size="icon"
+                      className="h-8 w-8"
                       onClick={() => toggleDiscussion(task.id)}
                     >
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      مناقشة
+                      <MessageCircle className="h-4 w-4" />
                     </Button>
                     
                     {/* Additional actions as needed */}
