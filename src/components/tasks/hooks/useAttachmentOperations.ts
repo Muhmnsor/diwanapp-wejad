@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { deleteAttachment } from '../services/uploadService';
 
 export interface Attachment {
   id: string;
@@ -14,42 +14,44 @@ export interface Attachment {
   created_at: string;
 }
 
-export function useAttachmentOperations(onDeleteCallback?: () => void) {
-  const [isDeleting, setIsDeleting] = useState(false);
+export const useAttachmentOperations = (onDeleteSuccess?: () => void) => {
+  const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
 
-  const handleDeleteAttachment = async (id: string, tableName: string = 'unified_task_attachments') => {
-    if (isDeleting) return;
-    
-    setIsDeleting(true);
+  const handleDeleteAttachment = async (attachmentId: string) => {
     try {
-      const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', id);
-        
-      if (error) {
-        if (tableName === 'unified_task_attachments') {
-          // Try with the fallback table
-          return handleDeleteAttachment(id, 'task_attachments');
-        }
-        throw error;
-      }
+      setIsDeleting(prev => ({ ...prev, [attachmentId]: true }));
+      
+      await deleteAttachment(attachmentId);
       
       toast.success('تم حذف المرفق بنجاح');
       
-      if (onDeleteCallback) {
-        onDeleteCallback();
+      if (onDeleteSuccess) {
+        onDeleteSuccess();
       }
+      
+      return true;
     } catch (error) {
       console.error('Error deleting attachment:', error);
-      toast.error('فشل حذف المرفق');
+      toast.error('حدث خطأ أثناء حذف المرفق');
+      return false;
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(prev => ({ ...prev, [attachmentId]: false }));
+    }
+  };
+
+  const handleDownloadAttachment = (fileUrl: string, fileName: string) => {
+    try {
+      // فتح الملف في نافذة جديدة
+      window.open(fileUrl, '_blank');
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      toast.error('حدث خطأ أثناء تنزيل المرفق');
     }
   };
 
   return {
+    isDeleting,
     handleDeleteAttachment,
-    isDeleting
+    handleDownloadAttachment
   };
-}
+};

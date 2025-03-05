@@ -2,176 +2,268 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const uploadAttachment = async (
-  file: File, 
-  category: 'creator' | 'assignee' | 'comment' = 'comment'
-): Promise<{ url: string; error: any; category?: string } | null> => {
+// رفع ملف مرفق
+export const uploadAttachment = async (file: File, category = 'creator') => {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 11)}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
     console.log("Uploading file:", file.name, "with category:", category);
-
-    // تحقق من وجود الملف
-    if (!file) {
-      console.error("No file provided");
-      return { url: '', error: "No file provided" };
-    }
-
-    // رفع الملف إلى التخزين
+    
+    // إنشاء اسم فريد للملف
+    const fileExt = file.name.split('.').pop();
+    const uniqueId = Math.random().toString(36).substring(2, 11);
+    const fileName = `${uniqueId}_${Date.now()}.${fileExt}`;
+    
+    // محاولة رفع الملف إلى حاوية التخزين
     console.log("Attempting to upload file to storage bucket: task-attachments");
+    
     const { data, error } = await supabase.storage
       .from('task-attachments')
-      .upload(filePath, file, {
-        contentType: file.type,
-        upsert: false
-      });
-
+      .upload(fileName, file);
+    
     if (error) {
-      console.error("Error uploading file:", JSON.stringify(error));
-      toast.error("حدث خطأ أثناء رفع الملف");
-      return { url: '', error };
+      console.error("Storage upload error:", error);
+      throw error;
     }
-
-    // الحصول على الرابط العام للملف
-    const { data: { publicUrl } } = supabase.storage
+    
+    // إنشاء الرابط العام للملف
+    const publicURL = supabase.storage
       .from('task-attachments')
-      .getPublicUrl(filePath);
-
-    console.log("File uploaded successfully. Public URL:", publicUrl);
-
-    return { 
-      url: publicUrl, 
-      error: null,
-      category 
+      .getPublicUrl(fileName).data.publicUrl;
+    
+    console.log("File uploaded successfully. Public URL:", publicURL);
+    
+    return {
+      url: publicURL,
+      name: file.name,
+      type: file.type,
+      category,
+      error: null
     };
   } catch (error) {
-    console.error("Error handling file upload:", error);
-    toast.error("حدث خطأ غير متوقع أثناء رفع الملف");
-    return { url: '', error };
+    console.error("Error uploading attachment:", error);
+    return {
+      url: null,
+      name: null,
+      type: null,
+      category,
+      error
+    };
   }
 };
 
-// حفظ معلومات المرفق في قاعدة البيانات
+// حفظ مرجع المرفق في قاعدة البيانات
 export const saveAttachmentReference = async (
-  taskId: string,
-  fileUrl: string,
-  fileName: string,
-  fileType: string | undefined,
-  category: string = 'creator'
+  taskId: string, 
+  fileUrl: string, 
+  fileName: string, 
+  fileType: string, 
+  category = 'creator'
 ) => {
   try {
-    // Get current user ID from auth
-    const currentUser = await supabase.auth.getUser();
-    const userId = currentUser.data.user?.id;
+    console.log("Saving attachment reference for task:", taskId);
+    console.log("File details:", { fileName, fileType, category });
     
-    // Check if the unified_task_attachments table exists first
+    // الحصول على معرف المستخدم الحالي
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // تحديد أي جدول يجب استخدامه
     const { data: tableExists } = await supabase.rpc('check_table_exists', {
       table_name: 'unified_task_attachments'
     });
     
-    console.log("Table check result:", tableExists);
-    
     if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
-      console.log("Using unified_task_attachments table");
-      
-      // Prepare attachment data for unified table
-      const attachmentData = {
-        task_id: taskId,
-        file_url: fileUrl,
-        file_name: fileName,
-        file_type: fileType,
-        attachment_category: category,
-        task_table: 'tasks', // Default value
-        created_by: userId
-      };
-      
-      console.log("Saving attachment reference:", attachmentData);
-      
-      const { data: unifiedData, error: unifiedError } = await supabase
+      console.log("Inserting into unified_task_attachments");
+      const { data, error } = await supabase
         .from('unified_task_attachments')
-        .insert(attachmentData)
-        .select();
+        .insert({
+          task_id: taskId,
+          file_url: fileUrl,
+          file_name: fileName,
+          file_type: fileType,
+          attachment_category: category,
+          created_by: user?.id
+        });
         
-      if (unifiedError) {
-        console.error("Error saving to unified_task_attachments:", unifiedError.message);
-        throw unifiedError;
+      if (error) {
+        console.error("Error saving to unified_task_attachments:", error);
+        throw error;
       }
       
-      console.log("Attachment reference saved to unified_task_attachments:", unifiedData);
-      return unifiedData;
+      return data;
     } else {
-      console.log("Using task_attachments table (fallback)");
+      // تحديد ما إذا كان الملف مرتبط بمهمة عادية أو مهمة محفظة
+      const { data: portfolioTask } = await supabase
+        .from('portfolio_tasks')
+        .select('id')
+        .eq('id', taskId)
+        .single();
       
-      // Prepare attachment data for legacy table
-      const attachmentData = {
-        task_id: taskId,
-        file_url: fileUrl,
-        file_name: fileName,
-        file_type: fileType,
-        category, // This must match exactly with the column name in task_attachments
-        created_by: userId
-      };
-      
-      console.log("Saving to task_attachments:", attachmentData);
-      
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('task_attachments')
-        .insert(attachmentData)
-        .select();
+      if (portfolioTask) {
+        console.log("Inserting into portfolio_task_attachments");
+        const { data, error } = await supabase
+          .from('portfolio_task_attachments')
+          .insert({
+            task_id: taskId,
+            file_url: fileUrl,
+            file_name: fileName,
+            file_type: fileType,
+            attachment_category: category,
+            created_by: user?.id
+          });
+          
+        if (error) {
+          console.error("Error saving to portfolio_task_attachments:", error);
+          throw error;
+        }
         
-      if (fallbackError) {
-        console.error("Fallback also failed:", fallbackError.message);
-        throw fallbackError;
+        return data;
+      } else {
+        console.log("Inserting into task_attachments");
+        // محاولة حفظ المرفق في جدول المرفقات
+        const { data, error } = await supabase
+          .from('task_attachments')
+          .insert({
+            task_id: taskId,
+            file_url: fileUrl,
+            file_name: fileName,
+            file_type: fileType,
+            attachment_category: category,
+            created_by: user?.id
+          });
+          
+        if (error) {
+          console.error("Error saving to task_attachments:", error);
+          throw error;
+        }
+        
+        return data;
       }
-      
-      console.log("Attachment reference saved to task_attachments:", fallbackData);
-      return fallbackData;
     }
   } catch (error) {
-    console.error("Error in saveAttachmentReference:", error);
+    console.error("Error saving attachment reference:", error);
     throw error;
   }
 };
 
-// إضافة دالة مساعدة للتحقق من وجود مرفقات
+// جلب مرفقات المهمة
 export const getTaskAttachments = async (taskId: string) => {
   try {
-    // Check if unified_task_attachments exists first
+    // التحقق من وجود جدول unified_task_attachments
     const { data: tableExists } = await supabase.rpc('check_table_exists', {
       table_name: 'unified_task_attachments'
     });
     
     if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
+      // استخدام الجدول الموحد
       const { data, error } = await supabase
         .from('unified_task_attachments')
         .select('*')
         .eq('task_id', taskId)
         .order('created_at', { ascending: false });
         
-      if (error) {
-        console.error("Error fetching from unified_task_attachments:", error);
-        return [];
-      }
-      
-      return data || [];
+      if (error) throw error;
+      return data;
     } else {
-      const { data, error } = await supabase
+      // محاولة جلب المرفقات من جدول مرفقات المهام العادية
+      const { data: taskAttachments, error: taskError } = await supabase
         .from('task_attachments')
         .select('*')
         .eq('task_id', taskId)
         .order('created_at', { ascending: false });
-        
-      if (error) {
-        console.error("Error fetching from task_attachments:", error);
-        return [];
+      
+      if (taskError) {
+        console.warn("Error fetching from task_attachments:", taskError);
       }
       
-      return data || [];
+      // محاولة جلب المرفقات من جدول مرفقات المهام من المحفظة
+      const { data: portfolioAttachments, error: portfolioError } = await supabase
+        .from('portfolio_task_attachments')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: false });
+      
+      if (portfolioError) {
+        console.warn("Error fetching from portfolio_task_attachments:", portfolioError);
+      }
+      
+      // جمع المرفقات من كلا المصدرين
+      return [
+        ...(taskAttachments || []),
+        ...(portfolioAttachments || [])
+      ];
     }
   } catch (error) {
     console.error("Error fetching task attachments:", error);
-    return [];
+    throw error;
+  }
+};
+
+// حذف مرفق
+export const deleteAttachment = async (attachmentId: string) => {
+  try {
+    // التحقق من وجود جدول unified_task_attachments
+    const { data: tableExists } = await supabase.rpc('check_table_exists', {
+      table_name: 'unified_task_attachments'
+    });
+    
+    if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
+      // محاولة العثور على المرفق في الجدول الموحد
+      const { data: attachment } = await supabase
+        .from('unified_task_attachments')
+        .select('file_url')
+        .eq('id', attachmentId)
+        .single();
+      
+      if (attachment) {
+        // حذف المرفق من الجدول الموحد
+        const { error } = await supabase
+          .from('unified_task_attachments')
+          .delete()
+          .eq('id', attachmentId);
+          
+        if (error) throw error;
+        return true;
+      }
+    }
+    
+    // محاولة العثور على المرفق في جدول مرفقات المهام العادية
+    const { data: taskAttachment } = await supabase
+      .from('task_attachments')
+      .select('file_url')
+      .eq('id', attachmentId)
+      .single();
+    
+    if (taskAttachment) {
+      // حذف المرفق من جدول مرفقات المهام العادية
+      const { error } = await supabase
+        .from('task_attachments')
+        .delete()
+        .eq('id', attachmentId);
+        
+      if (error) throw error;
+      return true;
+    }
+    
+    // محاولة العثور على المرفق في جدول مرفقات المهام من المحفظة
+    const { data: portfolioAttachment } = await supabase
+      .from('portfolio_task_attachments')
+      .select('file_url')
+      .eq('id', attachmentId)
+      .single();
+    
+    if (portfolioAttachment) {
+      // حذف المرفق من جدول مرفقات المهام من المحفظة
+      const { error } = await supabase
+        .from('portfolio_task_attachments')
+        .delete()
+        .eq('id', attachmentId);
+        
+      if (error) throw error;
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error("Error deleting attachment:", error);
+    throw error;
   }
 };
