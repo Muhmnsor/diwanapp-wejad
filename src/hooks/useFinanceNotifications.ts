@@ -1,3 +1,4 @@
+
 import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
 
 interface FinanceNotificationParams {
