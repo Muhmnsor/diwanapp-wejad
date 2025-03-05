@@ -1,6 +1,4 @@
 
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 import { Task } from "@/types/workspace";
 import { isWithinInterval, isSameDay } from "date-fns";
 
@@ -26,11 +24,4 @@ export const getTaskStatusColor = (status: string) => {
     default:
       return 'bg-gray-300';
   }
-};
-
-export const formatDateRange = (startDate: string, endDate: string) => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  
-  return `${format(start, 'yyyy/MM/dd', { locale: ar })} - ${format(end, 'yyyy/MM/dd', { locale: ar })}`;
 };
