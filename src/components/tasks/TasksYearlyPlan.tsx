@@ -27,6 +27,7 @@ export const TasksYearlyPlan = () => {
     workspace: [] as string[],
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [showAllProjects, setShowAllProjects] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const today = new Date();
 
@@ -65,6 +66,11 @@ export const TasksYearlyPlan = () => {
   const getFilteredAndGroupedData = () => {
     if (!taskProjects) return [];
 
+    // If showAllProjects is true, return all projects
+    if (showAllProjects) {
+      return taskProjects;
+    }
+
     // Filter tasks based on search query and filters
     let filteredProjects = taskProjects.filter(project => {
       // Filter by search query
@@ -75,8 +81,12 @@ export const TasksYearlyPlan = () => {
       const matchesStatus = filters.status.length === 0 || 
         filters.status.includes(project.status);
       
+      // Filter by workspace if any workspace filters are active
+      const matchesWorkspace = filters.workspace.length === 0 || 
+        filters.workspace.includes(project.workspace_id);
+      
       // Return true if all conditions match
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesWorkspace;
     });
 
     return filteredProjects;
@@ -100,6 +110,7 @@ export const TasksYearlyPlan = () => {
                 className="pr-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={showAllProjects}
               />
             </div>
             <Button 
@@ -123,6 +134,8 @@ export const TasksYearlyPlan = () => {
             filters={filters} 
             setFilters={setFilters}
             projects={taskProjects || []}
+            showAllProjects={showAllProjects}
+            setShowAllProjects={setShowAllProjects}
           />
         )}
       </div>

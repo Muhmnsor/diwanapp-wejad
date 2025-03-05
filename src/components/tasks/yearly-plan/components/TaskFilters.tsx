@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Task } from '@/types/workspace';
+import { Button } from '@/components/ui/button';
 
 interface TaskFiltersProps {
   filters: {
@@ -17,9 +18,17 @@ interface TaskFiltersProps {
     workspace: string[];
   }>>;
   projects: any[]; // Using any for project type
+  showAllProjects: boolean;
+  setShowAllProjects: (show: boolean) => void;
 }
 
-export const TaskFilters = ({ filters, setFilters, projects }: TaskFiltersProps) => {
+export const TaskFilters = ({ 
+  filters, 
+  setFilters, 
+  projects, 
+  showAllProjects, 
+  setShowAllProjects 
+}: TaskFiltersProps) => {
   const [statuses, setStatuses] = useState<string[]>([]);
   const [workspaces, setWorkspaces] = useState<string[]>([]);
 
@@ -69,6 +78,10 @@ export const TaskFilters = ({ filters, setFilters, projects }: TaskFiltersProps)
     return project?.workspace_name || workspaceId;
   };
 
+  const handleShowAllToggle = () => {
+    setShowAllProjects(!showAllProjects);
+  };
+
   return (
     <Card className="p-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -81,6 +94,7 @@ export const TaskFilters = ({ filters, setFilters, projects }: TaskFiltersProps)
                   id={`status-${status}`}
                   checked={filters.status.includes(status)}
                   onCheckedChange={() => handleStatusChange(status)}
+                  disabled={showAllProjects}
                 />
                 <Label 
                   htmlFor={`status-${status}`}
@@ -102,6 +116,7 @@ export const TaskFilters = ({ filters, setFilters, projects }: TaskFiltersProps)
                   id={`workspace-${workspace}`}
                   checked={filters.workspace.includes(workspace)}
                   onCheckedChange={() => handleWorkspaceChange(workspace)}
+                  disabled={showAllProjects}
                 />
                 <Label 
                   htmlFor={`workspace-${workspace}`}
@@ -112,6 +127,17 @@ export const TaskFilters = ({ filters, setFilters, projects }: TaskFiltersProps)
               </div>
             ))}
           </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">عرض جميع المشاريع</h3>
+          <Button 
+            variant={showAllProjects ? "default" : "outline"} 
+            onClick={handleShowAllToggle}
+            className="w-full"
+          >
+            {showAllProjects ? "إظهار جميع المشاريع" : "تطبيق التصفية"}
+          </Button>
         </div>
       </div>
     </Card>
