@@ -1,9 +1,7 @@
 
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
-import { useState } from "react";
-import { TaskAttachmentButton } from "./TaskAttachmentButton";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -45,25 +43,20 @@ export const TasksStageGroup = ({
             <TableHead>الأولوية</TableHead>
             <TableHead>المكلف</TableHead>
             <TableHead>تاريخ الاستحقاق</TableHead>
-            <TableHead>المرفقات</TableHead>
+            <TableHead>الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredTasks.map(task => (
-            <tr key={task.id}>
-              <TaskItem
-                key={task.id}
-                task={task}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                formatDate={formatDate}
-                onStatusChange={onStatusChange}
-                projectId={projectId}
-              />
-              <TableCell className="text-left">
-                <TaskAttachmentButton task={task} />
-              </TableCell>
-            </tr>
+            <TaskItem
+              key={task.id}
+              task={task}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              formatDate={formatDate}
+              onStatusChange={onStatusChange}
+              projectId={projectId}
+            />
           ))}
         </TableBody>
       </Table>

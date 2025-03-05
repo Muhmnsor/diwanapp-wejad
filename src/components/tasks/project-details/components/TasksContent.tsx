@@ -2,9 +2,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { TaskCard } from "./TaskCard";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
-import { TaskAttachmentButton } from "./TaskAttachmentButton";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -86,25 +86,20 @@ export const TasksContent = ({
                 <TableHead>الأولوية</TableHead>
                 <TableHead>المكلف</TableHead>
                 <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>المرفقات</TableHead>
+                <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
-                <tr key={task.id}>
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    getStatusBadge={getStatusBadge}
-                    getPriorityBadge={getPriorityBadge}
-                    formatDate={formatDate}
-                    onStatusChange={onStatusChange}
-                    projectId={projectId || ''}
-                  />
-                  <TableCell className="text-left">
-                    <TaskAttachmentButton task={task} />
-                  </TableCell>
-                </tr>
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId || ''}
+                />
               ))}
             </TableBody>
           </Table>

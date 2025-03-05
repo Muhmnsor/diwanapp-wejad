@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip } from "lucide-react";
+import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
-import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
 
 interface TaskCardProps {
   task: Task;
@@ -32,7 +31,6 @@ export const TaskCard = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
-  const [showAttachments, setShowAttachments] = useState(false);
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
@@ -120,47 +118,41 @@ export const TaskCard = ({
           )}
 
           <div className="mt-3 flex justify-end gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="px-2"
-              onClick={() => setShowAttachments(true)}
-            >
-              <Paperclip className="h-3.5 w-3.5 text-gray-500" />
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="px-2"
-              onClick={() => setShowDiscussion(true)}
-            >
-              <MessageCircle className="h-3.5 w-3.5 text-gray-500" />
-            </Button>
-
             {canChangeStatus() && (
               task.status !== 'completed' ? (
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-2"
+                  className="h-7 px-3"
                   onClick={() => handleStatusUpdate('completed')}
                   disabled={isUpdating}
                 >
-                  <Check className="h-3.5 w-3.5 text-green-500" />
+                  <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
+                  إكمال المهمة
                 </Button>
               ) : (
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-2"
+                  className="h-7 px-3"
                   onClick={() => handleStatusUpdate('in_progress')}
                   disabled={isUpdating}
                 >
-                  <Clock className="h-3.5 w-3.5 text-amber-500" />
+                  <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
+                  إعادة فتح المهمة
                 </Button>
               )
             )}
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowDiscussion(true)}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              مناقشة
+            </Button>
           </div>
           
           {showSubtasks && (
@@ -179,13 +171,6 @@ export const TaskCard = ({
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
-      />
-      
-      {/* Task Attachment Dialog */}
-      <TaskAttachmentDialog
-        task={task}
-        open={showAttachments}
-        onOpenChange={setShowAttachments}
       />
     </Card>
   );
