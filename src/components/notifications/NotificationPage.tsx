@@ -9,6 +9,8 @@ import { CheckCheck, Loader2, Search, Filter, SortDesc } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NotificationTester } from './NotificationTester';
+import { useAuthStore } from '@/store/authStore';
 
 export const NotificationPage: React.FC = () => {
   const { 
@@ -26,6 +28,8 @@ export const NotificationPage: React.FC = () => {
     showUnreadOnly,
     setShowUnreadOnly
   } = useNotifications();
+  
+  const { user } = useAuthStore();
   
   useEffect(() => {
     // Refresh notifications when this page loads
@@ -143,6 +147,10 @@ export const NotificationPage: React.FC = () => {
               {renderNotificationContent(loading, displayedNotifications, showUnreadOnly)}
             </CardContent>
           </Card>
+          
+          {user && (
+            <NotificationTester />
+          )}
         </div>
       </div>
       <Footer />
