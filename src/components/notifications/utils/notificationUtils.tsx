@@ -25,5 +25,10 @@ export const getNotificationIcon = (notificationType: string) => {
 };
 
 export const formatNotificationDate = (dateString: string) => {
-  return format(new Date(dateString), 'dd MMM yyyy، HH:mm', { locale: ar });
+  try {
+    return format(new Date(dateString), 'dd MMM yyyy، HH:mm', { locale: ar });
+  } catch (error) {
+    console.error('Error formatting date:', error, dateString);
+    return dateString; // Return original string if formatting fails
+  }
 };

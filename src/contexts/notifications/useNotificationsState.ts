@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
@@ -14,10 +14,15 @@ export const useNotificationsState = () => {
   const [showUnreadOnly, setShowUnreadOnly] = useState<boolean>(false);
   const { user, isAuthenticated } = useAuthStore();
   
-  const fetchNotifications = async () => {
-    if (!isAuthenticated || !user) return;
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      console.log('Not authenticated or no user, skipping fetch');
+      setLoading(false);
+      return;
+    }
     
     try {
+      console.log('Fetching notifications for user:', user.id);
       setLoading(true);
       const { data, error } = await supabase
         .from('in_app_notifications')
@@ -26,15 +31,20 @@ export const useNotificationsState = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+      }
       
+      console.log('Fetched notifications:', data?.length || 0);
       setNotifications(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      toast.error('حدث خطأ أثناء تحميل الإشعارات');
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated, user]);
 
   const markAsRead = async (id: string) => {
     if (!user) return;
@@ -88,6 +98,12 @@ export const useNotificationsState = () => {
 
   // Filter, sort and search notifications
   const filteredNotifications = useMemo(() => {
+    console.log('Filtering notifications:', {
+      total: notifications.length,
+      filter: filterType,
+      searchQuery
+    });
+    
     return notifications
       .filter(notification => {
         // Filter by type
@@ -130,8 +146,13 @@ export const useNotificationsState = () => {
 
   // Subscribe to real-time notifications
   useEffect(() => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user) {
+      console.log('Not authenticated or no user, skipping subscription');
+      return;
+    }
 
+    console.log('Setting up notification subscription for user:', user.id);
+    
     // Initial fetch
     fetchNotifications();
 
@@ -147,6 +168,7 @@ export const useNotificationsState = () => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
+          console.log('Received new notification:', payload);
           const newNotification = payload.new as Notification;
           setNotifications(prev => [newNotification, ...prev]);
           
@@ -160,9 +182,10 @@ export const useNotificationsState = () => {
       .subscribe();
 
     return () => {
+      console.log('Cleaning up notification subscription');
       supabase.removeChannel(channel);
     };
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, fetchNotifications]);
 
   return {
     notifications: filteredNotifications,

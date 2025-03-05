@@ -29,6 +29,7 @@ export const NotificationPage: React.FC = () => {
   
   useEffect(() => {
     // Refresh notifications when this page loads
+    console.log('Fetching notifications on page load');
     fetchNotifications();
   }, [fetchNotifications]);
   
@@ -47,6 +48,8 @@ export const NotificationPage: React.FC = () => {
   const displayedNotifications = showUnreadOnly 
     ? notifications.filter(n => !n.read) 
     : notifications;
+  
+  console.log('NotificationPage render:', { loading, notificationsCount: notifications.length, displayedCount: displayedNotifications.length });
   
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -148,6 +151,8 @@ export const NotificationPage: React.FC = () => {
 };
 
 function renderNotificationContent(loading: boolean, notifications: any[], unreadOnly: boolean) {
+  console.log('Rendering notification content:', { loading, notificationCount: notifications.length });
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
