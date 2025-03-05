@@ -49,6 +49,9 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   // Get base color based on status
   const statusColor = getTaskStatusColor(task.status);
   
+  // Format the percentage display value - ensure it's a whole number
+  const displayPercentage = Math.round(progressValue);
+  
   return (
     <div 
       style={{
@@ -69,13 +72,13 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
       {/* Progress bar (completed portion) */}
       <div 
         className={`absolute top-0 left-0 h-full ${statusColor} rounded-md transition-all duration-300`}
-        style={{ width: `${progressValue}%` }}
+        style={{ width: `${displayPercentage}%` }}
       />
       
       {/* Small label showing percentage */}
       <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-xs font-medium">
-        <span className={`${parseInt(progressValue) > 50 ? 'text-white' : 'text-gray-700'}`}>
-          {parseInt(progressValue)}%
+        <span className={`${displayPercentage > 50 ? 'text-white' : 'text-gray-700'}`}>
+          {displayPercentage}%
         </span>
       </div>
     </div>
