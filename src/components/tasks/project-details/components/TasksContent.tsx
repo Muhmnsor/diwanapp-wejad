@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
 import { useState } from "react";
 import { Paperclip } from "lucide-react";
@@ -82,21 +82,21 @@ export const TasksContent = ({
         <div className="p-4 bg-gray-50 border-b">
           <h3 className="font-medium">المهام</h3>
         </div>
-        <div className="overflow-x-auto">
+        <div className="border rounded-md overflow-hidden">
           <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/3">المهمة</TableHead>
-                <TableHead className="w-1/6">الحالة</TableHead>
-                <TableHead className="w-1/6">الأولوية</TableHead>
-                <TableHead className="w-1/6">المكلف</TableHead>
-                <TableHead className="w-1/6">تاريخ الاستحقاق</TableHead>
-                <TableHead className="w-[80px] text-center">الإجراءات</TableHead>
+                <TableHead>المهمة</TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead>الأولوية</TableHead>
+                <TableHead>المكلف</TableHead>
+                <TableHead>تاريخ الاستحقاق</TableHead>
+                <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
-                <TableRow key={task.id}>
+                <tr key={task.id}>
                   <TaskItem
                     key={task.id}
                     task={task}
@@ -106,17 +106,17 @@ export const TasksContent = ({
                     onStatusChange={onStatusChange}
                     projectId={projectId || ''}
                   />
-                  <TableCell className="text-center">
+                  <td className="text-left">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="px-2 mr-1"
+                      className="px-2"
                       onClick={() => setShowAttachments(task.id)}
                     >
                       <Paperclip className="h-4 w-4 text-gray-500" />
                     </Button>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
             </TableBody>
           </Table>
