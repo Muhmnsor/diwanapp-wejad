@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip } from "lucide-react";
+import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
-import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
 
 interface TaskCardProps {
   task: Task;
@@ -32,7 +31,6 @@ export const TaskCard = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
-  const [showAttachments, setShowAttachments] = useState(false);
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
@@ -145,16 +143,6 @@ export const TaskCard = ({
                 </Button>
               )
             )}
-
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowAttachments(true)}
-            >
-              <Paperclip className="h-3.5 w-3.5" />
-              المرفقات
-            </Button>
             
             <Button 
               variant="ghost" 
@@ -183,13 +171,6 @@ export const TaskCard = ({
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
-      />
-      
-      {/* Task Attachment Dialog */}
-      <TaskAttachmentDialog
-        task={task}
-        open={showAttachments}
-        onOpenChange={setShowAttachments}
       />
     </Card>
   );
