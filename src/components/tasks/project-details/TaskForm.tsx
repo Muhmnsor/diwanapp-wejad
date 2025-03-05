@@ -42,6 +42,7 @@ export const TaskForm = ({
   const [stageId, setStageId] = useState("");
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [localAttachment, setLocalAttachment] = useState<File[] | null>(null);
+  const [templates, setTemplates] = useState<File[] | null>(null);
   
   // استخدم ملف المرفق من الخارج إذا تم توفيره
   const fileAttachment = attachment !== undefined ? attachment : localAttachment;
@@ -59,6 +60,22 @@ export const TaskForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // جمع جميع الملفات - المرفقات والنماذج
+    const allFiles = [];
+    
+    if (fileAttachment) {
+      allFiles.push(...fileAttachment);
+    }
+    
+    if (templates) {
+      // إضافة علامة للنماذج
+      const templatesWithCategory = templates.map(file => 
+        Object.assign(file, { category: 'template' })
+      );
+      allFiles.push(...templatesWithCategory);
+    }
+    
     console.log("Submitting form with data:", { 
       title, 
       description, 
@@ -66,7 +83,7 @@ export const TaskForm = ({
       priority, 
       stageId,
       assignedTo,
-      attachment: fileAttachment 
+      attachment: allFiles.length > 0 ? allFiles : null
     });
     
     await onSubmit({ 
@@ -76,7 +93,7 @@ export const TaskForm = ({
       priority, 
       stageId,
       assignedTo,
-      attachment: fileAttachment
+      attachment: allFiles.length > 0 ? allFiles : null
     });
   };
 
@@ -99,9 +116,18 @@ export const TaskForm = ({
         />
       </div>
       
+      {/* حقل المرفقات */}
       <TaskAttachmentField
         attachment={fileAttachment}
         setAttachment={setFileAttachment}
+        category="creator"
+      />
+      
+      {/* حقل النماذج */}
+      <TaskAttachmentField
+        attachment={templates}
+        setAttachment={setTemplates}
+        category="template"
       />
       
       <TaskFormActions isSubmitting={isSubmitting} onCancel={() => console.log("Form cancelled")} />
