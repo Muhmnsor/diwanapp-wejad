@@ -1,30 +1,46 @@
 
 import { Badge } from "@/components/ui/badge";
-import { 
-  CheckCircle2, 
-  Clock, 
-  ClipboardList, 
-  AlertTriangle,
-  Clock as ClockIcon
-} from "lucide-react";
 
 interface ProjectStatusBadgeProps {
   status: string;
 }
 
 export const ProjectStatusBadge = ({ status }: ProjectStatusBadgeProps) => {
+  let badgeClass = "";
+  let statusText = "";
+
   switch (status) {
-    case 'completed':
-      return <Badge variant="default" className="flex items-center gap-1 bg-green-500"><CheckCircle2 className="h-3 w-3" /> مكتمل</Badge>;
-    case 'in_progress':
-      return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="h-3 w-3" /> قيد التنفيذ</Badge>;
-    case 'pending':
-      return <Badge variant="outline" className="flex items-center gap-1"><ClipboardList className="h-3 w-3" /> قيد الانتظار</Badge>;
-    case 'delayed':
-      return <Badge variant="destructive" className="flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> متعثر</Badge>;
-    case 'stopped':
-      return <Badge variant="outline" className="flex items-center gap-1 border-red-500 text-red-500"><ClockIcon className="h-3 w-3" /> متوقف</Badge>;
+    case "planned":
+      badgeClass = "bg-blue-100 text-blue-800 border-blue-200";
+      statusText = "مخطط";
+      break;
+    case "in_progress":
+      badgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+      statusText = "قيد التنفيذ";
+      break;
+    case "completed":
+      badgeClass = "bg-green-100 text-green-800 border-green-200";
+      statusText = "مكتمل";
+      break;
+    case "on_hold":
+      badgeClass = "bg-purple-100 text-purple-800 border-purple-200";
+      statusText = "معلق";
+      break;
+    case "cancelled":
+      badgeClass = "bg-red-100 text-red-800 border-red-200";
+      statusText = "ملغي";
+      break;
     default:
-      return <Badge variant="outline" className="flex items-center gap-1"><ClipboardList className="h-3 w-3" /> قيد الانتظار</Badge>;
+      badgeClass = "bg-gray-100 text-gray-800 border-gray-200";
+      statusText = status || "غير محدد";
   }
+
+  return (
+    <Badge
+      variant="outline"
+      className={`px-3 py-1 h-9 border ${badgeClass} rounded-md font-medium text-sm whitespace-nowrap`}
+    >
+      {statusText}
+    </Badge>
+  );
 };
