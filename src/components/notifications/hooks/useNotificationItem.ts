@@ -10,18 +10,22 @@ export const useNotificationItem = (notification: Notification) => {
   const navigate = useNavigate();
 
   const handleNotificationClick = async () => {
+    // إذا كان الإشعار مقروءًا بالفعل، انتقل مباشرة إلى العنصر المرتبط
     if (notification.read) {
+      console.log('الإشعار مقروء بالفعل، التنقل مباشرة', notification.id);
       navigateToRelatedEntity();
       return;
     }
 
+    // وضع علامة على الإشعار كمقروء فقط إذا لم يكن مقروءًا بالفعل
     setIsMarking(true);
     try {
-      await markAsRead(notification.id);
-      console.log('Notification marked as read:', notification.id);
+      console.log('وضع علامة على الإشعار كمقروء:', notification.id);
+      const success = await markAsRead(notification.id);
+      console.log('تم وضع علامة على الإشعار:', notification.id, 'نجاح:', success);
       navigateToRelatedEntity();
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('خطأ في وضع علامة على الإشعار كمقروء:', error);
     } finally {
       setIsMarking(false);
     }
@@ -29,15 +33,16 @@ export const useNotificationItem = (notification: Notification) => {
 
   const navigateToRelatedEntity = () => {
     if (!notification.related_entity_id || !notification.related_entity_type) {
+      console.log('لا توجد معلومات تنقل للإشعار:', notification.id);
       return;
     }
 
-    console.log('Navigating to related entity:', {
+    console.log('التنقل إلى الكيان المرتبط:', {
       type: notification.related_entity_type,
       id: notification.related_entity_id
     });
 
-    // Navigate based on entity type
+    // التنقل بناءً على نوع الكيان
     switch (notification.related_entity_type) {
       case 'event':
         navigate(`/events/${notification.related_entity_id}`);
@@ -52,10 +57,14 @@ export const useNotificationItem = (notification: Notification) => {
         navigate(`/profile/${notification.related_entity_id}`);
         break;
       case 'comment':
-        // For comments, we might need to navigate to the parent entity
+        // للتعليقات، قد نحتاج إلى التنقل إلى الكيان الأصلي
+        break;
+      case 'system':
+        // للإشعارات النظامية، قد لا نتنقل إلى أي مكان
+        console.log('إشعار نظام، لا يوجد تنقل');
         break;
       default:
-        console.log('No navigation action for type:', notification.related_entity_type);
+        console.log('لا يوجد إجراء تنقل للنوع:', notification.related_entity_type);
     }
   };
 

@@ -23,9 +23,16 @@ export const NotificationList: React.FC = () => {
     setShowUnreadOnly(value === 'unread');
   };
   
+  // إظهار جميع الإشعارات في البوبوفر
   const displayedNotifications = showUnreadOnly 
     ? notifications.filter(n => !n.read) 
     : notifications;
+  
+  console.log('NotificationList - الإشعارات المعروضة:', { 
+    total: notifications.length, 
+    displayed: displayedNotifications.length,
+    showUnreadOnly
+  });
   
   if (loading) {
     return (
@@ -64,9 +71,8 @@ export const NotificationList: React.FC = () => {
           </Select>
           
           <Select 
-            defaultValue="all" 
+            value={showUnreadOnly ? 'unread' : 'all'} 
             onValueChange={handleReadStatusChange}
-            value={showUnreadOnly ? 'unread' : 'all'}
           >
             <SelectTrigger className="h-7 text-xs w-28">
               <CheckCheck className="h-3 w-3 ml-1" />
@@ -115,4 +121,3 @@ export const NotificationList: React.FC = () => {
     </div>
   );
 };
-

@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
           notification_type: type,
           related_entity_type: notificationTypes[type].related_entity_type,
           related_entity_id: crypto.randomUUID(),
-          read: Math.random() > 0.7 // 30% chance to be read
+          read: false // تعيين جميع الإشعارات كغير مقروءة
         }
         notificationsToCreate.push(notification)
       }
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
           notification_type: notifType,
           related_entity_type: notificationTypes[notifType].related_entity_type,
           related_entity_id: crypto.randomUUID(),
-          read: false
+          read: false // تعيين جميع الإشعارات كغير مقروءة
         }
         notificationsToCreate.push(notification)
       })

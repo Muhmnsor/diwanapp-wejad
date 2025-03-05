@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -16,13 +15,13 @@ export const useNotificationsState = () => {
   
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated || !user) {
-      console.log('Not authenticated or no user, skipping fetch');
+      console.log('لم يتم تسجيل الدخول أو لا يوجد مستخدم، تخطي الجلب');
       setLoading(false);
       return;
     }
     
     try {
-      console.log('Fetching notifications for user:', user.id);
+      console.log('جلب الإشعارات للمستخدم:', user.id);
       setLoading(true);
       const { data, error } = await supabase
         .from('in_app_notifications')
@@ -32,14 +31,14 @@ export const useNotificationsState = () => {
         .limit(50);
 
       if (error) {
-        console.error('Error fetching notifications:', error);
+        console.error('خطأ في جلب الإشعارات:', error);
         throw error;
       }
       
-      console.log('Fetched notifications:', data?.length || 0);
+      console.log('تم جلب الإشعارات:', data?.length || 0, 'الإشعارات غير المقروءة:', data?.filter(n => !n.read).length || 0);
       setNotifications(data || []);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('خطأ في جلب الإشعارات:', error);
       toast.error('حدث خطأ أثناء تحميل الإشعارات');
     } finally {
       setLoading(false);
@@ -50,6 +49,7 @@ export const useNotificationsState = () => {
     if (!user) return;
     
     try {
+      console.log('تعليم الإشعار كمقروء:', id);
       const { error } = await supabase
         .from('in_app_notifications')
         .update({ read: true })
@@ -58,7 +58,7 @@ export const useNotificationsState = () => {
 
       if (error) throw error;
       
-      // Update local state
+      // تحديث الحالة المحلية
       setNotifications(prev => 
         prev.map(notification => 
           notification.id === id 
@@ -66,9 +66,13 @@ export const useNotificationsState = () => {
             : notification
         )
       );
+      
+      console.log('تم تعليم الإشعار كمقروء بنجاح');
+      return true;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('خطأ في تعليم الإشعار كمقروء:', error);
       toast.error('حدث خطأ أثناء تحديث الإشعار');
+      return false;
     }
   };
 
@@ -84,7 +88,7 @@ export const useNotificationsState = () => {
 
       if (error) throw error;
       
-      // Update local state
+      // تحديث الحالة المحلية
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, read: true }))
       );
@@ -96,22 +100,24 @@ export const useNotificationsState = () => {
     }
   };
 
-  // Filter, sort and search notifications
   const filteredNotifications = useMemo(() => {
-    console.log('Filtering notifications:', {
+    console.log('تصفية الإشعارات:', {
       total: notifications.length,
       filter: filterType,
-      searchQuery
+      searchQuery,
+      showUnreadOnly
     });
     
     return notifications
       .filter(notification => {
-        // Filter by type
         if (filterType !== 'all' && notification.notification_type !== filterType) {
           return false;
         }
         
-        // Search in title and message
+        if (showUnreadOnly && notification.read) {
+          return false;
+        }
+        
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
           return (
@@ -123,13 +129,11 @@ export const useNotificationsState = () => {
         return true;
       })
       .sort((a, b) => {
-        // Sort by selected method
         if (sortBy === 'newest') {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         } else if (sortBy === 'oldest') {
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         } else if (sortBy === 'unread') {
-          // Sort unread first, then by date
           if (a.read !== b.read) {
             return a.read ? 1 : -1;
           }
@@ -138,25 +142,22 @@ export const useNotificationsState = () => {
         
         return 0;
       });
-  }, [notifications, filterType, sortBy, searchQuery]);
+  }, [notifications, filterType, sortBy, searchQuery, showUnreadOnly]);
   
   const unreadCount = useMemo(() => {
     return notifications.filter(n => !n.read).length;
   }, [notifications]);
 
-  // Subscribe to real-time notifications
   useEffect(() => {
     if (!isAuthenticated || !user) {
-      console.log('Not authenticated or no user, skipping subscription');
+      console.log('لم يتم تسجيل الدخول أو لا يوجد مستخدم، تخطي الاشتراك');
       return;
     }
 
-    console.log('Setting up notification subscription for user:', user.id);
+    console.log('إعداد اشتراك الإشعارات للمستخدم:', user.id);
     
-    // Initial fetch
     fetchNotifications();
 
-    // Subscribe to new notifications
     const channel = supabase
       .channel('in_app_notification_changes')
       .on(
@@ -168,11 +169,10 @@ export const useNotificationsState = () => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Received new notification:', payload);
+          console.log('تم استلام إشعار جديد:', payload);
           const newNotification = payload.new as Notification;
           setNotifications(prev => [newNotification, ...prev]);
           
-          // Show toast for new notification
           toast.info(newNotification.title, {
             description: newNotification.message,
             duration: 5000,
@@ -182,7 +182,7 @@ export const useNotificationsState = () => {
       .subscribe();
 
     return () => {
-      console.log('Cleaning up notification subscription');
+      console.log('إلغاء اشتراك الإشعارات');
       supabase.removeChannel(channel);
     };
   }, [isAuthenticated, user, fetchNotifications]);
