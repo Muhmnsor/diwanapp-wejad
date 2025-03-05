@@ -34,7 +34,7 @@ export const AttachmentsByCategory = ({
   
   return (
     <div className="w-full mt-2">
-      <div className="text-sm font-medium mb-1">{title}</div>
+      <div className="text-sm font-medium mb-1">{title.replace('مرفقات', 'مستلمات')}</div>
       <div className="space-y-1">
         {attachments.map((attachment) => (
           <div key={attachment.id} className={`flex items-center ${bgColor} rounded p-1.5 text-sm`}>
