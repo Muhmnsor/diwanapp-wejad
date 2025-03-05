@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -75,7 +76,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     }
   };
 
-  // جلب المستلمات من جدول task_deliverables وليس من جداول المرفقات
+  // التحقق من جدول task_deliverables مباشرة
   const fetchTaskDeliverables = async () => {
     if (!taskId) return;
     
@@ -83,7 +84,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
-      // جلب المستلمات من جدول task_deliverables بشكل مباشر
+      // الاستعلام من جدول task_deliverables بدون فلترة إضافية للـ task_table
       const { data: taskDeliverables, error } = await supabase
         .from("task_deliverables")
         .select("*")
@@ -95,6 +96,17 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
       } else {
         console.log("Found deliverables:", taskDeliverables);
         setDeliverables(taskDeliverables || []);
+      }
+      
+      // إضافة استعلام ثاني للتحقق من محتوى الجدول
+      const { count, error: countError } = await supabase
+        .from("task_deliverables")
+        .select("*", { count: 'exact', head: true });
+      
+      console.log("Total deliverables in the table:", count);
+      
+      if (countError) {
+        console.error("Error getting deliverables count:", countError);
       }
     } catch (error) {
       console.error("Error in fetchTaskDeliverables:", error);

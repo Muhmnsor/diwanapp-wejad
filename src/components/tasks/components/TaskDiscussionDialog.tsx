@@ -80,7 +80,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
               ))}
             </div>
           ) : (
-            <div className="mb-4 text-sm text-gray-500">لا توجد مستلمات للمهمة</div>
+            <div className="text-sm text-gray-500">لا توجد مستلمات للمهمة</div>
           )}
         </div>
         
