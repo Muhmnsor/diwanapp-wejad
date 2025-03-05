@@ -34,7 +34,7 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
-  status: 'active' | 'completed' | 'cancelled';
+  status: 'active' | 'completed' | 'cancelled' | 'in_progress' | 'pending' | 'delayed' | 'stopped';
   start_date?: string;
   end_date?: string;
   created_at: string;
@@ -51,4 +51,3 @@ export interface WorkspaceMember {
   user_email?: string;
   user_display_name?: string;
 }
-

@@ -71,7 +71,7 @@ export const useYearlyPlanData = (year: number) => {
         const startDate = new Date(year, randomMonth, randomDay);
         const endDate = new Date(year, randomMonth, randomDay + randomDuration);
         
-        const statuses = ['pending', 'in_progress', 'completed', 'delayed', 'stopped'];
+        const statuses: Project['status'][] = ['pending', 'in_progress', 'completed', 'delayed', 'stopped'];
         const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
         
         demoProjects.push({
