@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip } from "lucide-react";
+import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip, FileCheck } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
+import { TaskDeliverablesDialog } from "../../components/dialogs/TaskDeliverablesDialog";
 
 interface TaskCardProps {
   task: Task;
@@ -33,6 +34,7 @@ export const TaskCard = ({
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
+  const [showDeliverables, setShowDeliverables] = useState(false);
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
@@ -124,6 +126,16 @@ export const TaskCard = ({
               variant="ghost" 
               size="sm" 
               className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowDeliverables(true)}
+            >
+              <FileCheck className="h-3.5 w-3.5" />
+              المستلمات
+            </Button>
+          
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShowAttachments(true)}
             >
               <Paperclip className="h-3.5 w-3.5" />
@@ -190,6 +202,13 @@ export const TaskCard = ({
         task={task}
         open={showAttachments}
         onOpenChange={setShowAttachments}
+      />
+      
+      {/* Task Deliverables Dialog */}
+      <TaskDeliverablesDialog
+        task={task}
+        open={showDeliverables}
+        onOpenChange={setShowDeliverables}
       />
     </Card>
   );
