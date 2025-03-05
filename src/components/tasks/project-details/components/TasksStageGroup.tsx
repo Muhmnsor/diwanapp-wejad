@@ -37,20 +37,20 @@ export const TasksStageGroup = ({
   if (filteredTasks.length === 0) return null;
   
   return (
-    <div className="border rounded-md overflow-hidden" dir="rtl">
+    <div className="border rounded-md overflow-hidden mb-4">
       <div className="bg-gray-50 p-3 border-b">
-        <h3 className="font-medium">{stage.name}</h3>
+        <h3 className="font-medium text-right">{stage.name}</h3>
       </div>
       <div className="overflow-x-auto">
-        <Table dir="rtl">
+        <Table dir="rtl" className="w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-1/3 text-right">المهمة</TableHead>
-              <TableHead className="w-1/6 text-right">الحالة</TableHead>
-              <TableHead className="w-1/6 text-right">الأولوية</TableHead>
-              <TableHead className="w-1/6 text-right">المكلف</TableHead>
-              <TableHead className="w-1/6 text-right">تاريخ الاستحقاق</TableHead>
-              <TableHead className="w-[80px] text-center">المرفقات</TableHead>
+              <TableHead className="w-[35%] text-right font-medium">المهمة</TableHead>
+              <TableHead className="w-[12%] text-right font-medium">الحالة</TableHead>
+              <TableHead className="w-[12%] text-right font-medium">الأولوية</TableHead>
+              <TableHead className="w-[15%] text-right font-medium">المكلف</TableHead>
+              <TableHead className="w-[18%] text-right font-medium">تاريخ الاستحقاق</TableHead>
+              <TableHead className="w-[8%] text-center font-medium">المرفقات</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -64,7 +64,7 @@ export const TasksStageGroup = ({
                   onStatusChange={onStatusChange}
                   projectId={projectId}
                 />
-                <TableCell className="text-center p-2 w-[80px]">
+                <TableCell className="text-center p-2 w-[8%]">
                   <Button 
                     variant="ghost" 
                     size="sm" 

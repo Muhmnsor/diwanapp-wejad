@@ -57,7 +57,7 @@ export const TasksContent = ({
   // إذا كان التبويب النشط هو "الكل"، فسنعرض المهام مقسمة حسب المراحل
   if (activeTab === "all" && projectStages.length > 0) {
     return (
-      <div className="space-y-6" dir="rtl">
+      <div className="space-y-4" dir="rtl">
         {projectStages.map(stage => (
           <TasksStageGroup
             key={stage.id}
@@ -77,21 +77,21 @@ export const TasksContent = ({
 
   // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-4" dir="rtl">
       <div className="bg-white rounded-md shadow-sm overflow-hidden border">
         <div className="p-4 bg-gray-50 border-b">
-          <h3 className="font-medium">المهام</h3>
+          <h3 className="font-medium text-right">المهام</h3>
         </div>
-        <div className="border rounded-md overflow-x-auto">
-          <Table dir="rtl">
+        <div className="overflow-x-auto">
+          <Table dir="rtl" className="w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/3 text-right">المهمة</TableHead>
-                <TableHead className="w-1/6 text-right">الحالة</TableHead>
-                <TableHead className="w-1/6 text-right">الأولوية</TableHead>
-                <TableHead className="w-1/6 text-right">المكلف</TableHead>
-                <TableHead className="w-1/6 text-right">تاريخ الاستحقاق</TableHead>
-                <TableHead className="w-[80px] text-center">المرفقات</TableHead>
+                <TableHead className="w-[35%] text-right font-medium">المهمة</TableHead>
+                <TableHead className="w-[12%] text-right font-medium">الحالة</TableHead>
+                <TableHead className="w-[12%] text-right font-medium">الأولوية</TableHead>
+                <TableHead className="w-[15%] text-right font-medium">المكلف</TableHead>
+                <TableHead className="w-[18%] text-right font-medium">تاريخ الاستحقاق</TableHead>
+                <TableHead className="w-[8%] text-center font-medium">المرفقات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,7 +105,7 @@ export const TasksContent = ({
                     onStatusChange={onStatusChange}
                     projectId={projectId || ''}
                   />
-                  <TableCell className="text-center p-2 w-[80px]">
+                  <TableCell className="text-center p-2 w-[8%]">
                     <Button 
                       variant="ghost" 
                       size="sm" 
