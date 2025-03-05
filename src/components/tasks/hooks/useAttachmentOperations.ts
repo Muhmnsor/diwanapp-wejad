@@ -1,7 +1,9 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { deleteAttachment } from '../services/uploadService';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { useAuthStore } from '@/store/authStore';
 
 export interface Attachment {
   id: string;
@@ -14,14 +16,140 @@ export interface Attachment {
   created_at: string;
 }
 
-export const useAttachmentOperations = (onDeleteSuccess?: () => void) => {
+export const useAttachmentOperations = (onDeleteSuccess?: () => void, onUploadSuccess?: () => void) => {
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const { user } = useAuthStore();
 
-  const handleDeleteAttachment = async (attachmentId: string) => {
+  // Function to upload attachment
+  const uploadAttachment = async (
+    file: File, 
+    taskId: string, 
+    category: string = 'general',
+    taskTable: string = 'tasks'
+  ) => {
+    try {
+      console.log('Starting file upload process for task:', taskId);
+      setIsUploading(true);
+      
+      // Generate unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${taskId}/${fileName}`;
+      
+      // Upload file to storage
+      console.log('Uploading file to storage:', filePath);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('task-attachments')
+        .upload(filePath, file);
+        
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`خطأ في رفع الملف: ${uploadError.message}`);
+      }
+      
+      if (!uploadData) {
+        throw new Error('فشل في رفع الملف: لم يتم استلام بيانات التحميل');
+      }
+      
+      console.log('File uploaded successfully:', uploadData.path);
+      
+      // Get public URL for the file
+      const { data: publicUrlData } = supabase.storage
+        .from('task-attachments')
+        .getPublicUrl(filePath);
+        
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        throw new Error('فشل في الحصول على الرابط العام للملف');
+      }
+      
+      const fileUrl = publicUrlData.publicUrl;
+      console.log('File public URL:', fileUrl);
+      
+      // Save file reference to database in unified_task_attachments table
+      console.log('Saving attachment reference to database, task_id:', taskId, 'file_url:', fileUrl);
+      const { error: dbError } = await supabase
+        .from('unified_task_attachments')
+        .insert({
+          task_id: taskId,
+          task_table: taskTable,
+          file_url: fileUrl,
+          file_name: file.name,
+          file_type: file.type,
+          attachment_category: category,
+          created_by: user?.id || null
+        });
+        
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw new Error(`خطأ في حفظ بيانات الملف: ${dbError.message}`);
+      }
+      
+      toast.success('تم رفع المرفق بنجاح');
+      
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in uploadAttachment:', error);
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء رفع المرفق');
+      return false;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const deleteAttachment = async (attachmentId: string) => {
     try {
       setIsDeleting(prev => ({ ...prev, [attachmentId]: true }));
       
-      await deleteAttachment(attachmentId);
+      console.log('Deleting attachment with ID:', attachmentId);
+      
+      // First, get the attachment to retrieve the file URL
+      const { data: attachment, error: fetchError } = await supabase
+        .from('unified_task_attachments')
+        .select('file_url')
+        .eq('id', attachmentId)
+        .single();
+      
+      if (fetchError) {
+        console.error('Error fetching attachment for deletion:', fetchError);
+        throw new Error('فشل في العثور على المرفق للحذف');
+      }
+      
+      if (!attachment) {
+        throw new Error('لم يتم العثور على المرفق');
+      }
+      
+      // Extract file path from URL
+      const storageUrl = supabase.storage.from('task-attachments').getPublicUrl('test').data.publicUrl;
+      const baseUrl = storageUrl.split('/test')[0];
+      let filePath = attachment.file_url.replace(baseUrl + '/', '');
+      
+      console.log('Attempting to delete file from storage, path:', filePath);
+      
+      // Delete file from storage
+      const { error: storageError } = await supabase.storage
+        .from('task-attachments')
+        .remove([filePath]);
+      
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continue with DB deletion even if storage deletion fails
+      }
+      
+      // Delete reference from database
+      const { error: dbError } = await supabase
+        .from('unified_task_attachments')
+        .delete()
+        .eq('id', attachmentId);
+      
+      if (dbError) {
+        console.error('Error deleting attachment from database:', dbError);
+        throw new Error('فشل في حذف المرفق من قاعدة البيانات');
+      }
       
       toast.success('تم حذف المرفق بنجاح');
       
@@ -32,7 +160,7 @@ export const useAttachmentOperations = (onDeleteSuccess?: () => void) => {
       return true;
     } catch (error) {
       console.error('Error deleting attachment:', error);
-      toast.error('حدث خطأ أثناء حذف المرفق');
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء حذف المرفق');
       return false;
     } finally {
       setIsDeleting(prev => ({ ...prev, [attachmentId]: false }));
@@ -51,7 +179,9 @@ export const useAttachmentOperations = (onDeleteSuccess?: () => void) => {
 
   return {
     isDeleting,
-    handleDeleteAttachment,
+    isUploading,
+    uploadAttachment,
+    deleteAttachment,
     handleDownloadAttachment
   };
 };
