@@ -83,14 +83,20 @@ export function AddTaskDialog({
             if (uploadResult?.url) {
               console.log("Attachment uploaded successfully:", uploadResult.url);
               
-              // حفظ معلومات المرفق في قاعدة البيانات
-              await saveAttachmentReference(
-                taskData.id,
-                uploadResult.url,
-                file.name,
-                file.type,
-                fileCategory
-              );
+              try {
+                // حفظ معلومات المرفق في قاعدة البيانات
+                await saveAttachmentReference(
+                  taskData.id,
+                  uploadResult.url,
+                  file.name,
+                  file.type,
+                  fileCategory
+                );
+                console.log("Attachment reference saved successfully");
+              } catch (refError) {
+                console.error("Error saving attachment reference:", refError);
+                // استمر في تنفيذ الكود حتى مع وجود خطأ في حفظ مرجع الملف
+              }
             }
           } catch (uploadError) {
             console.error("Error handling attachment:", uploadError);

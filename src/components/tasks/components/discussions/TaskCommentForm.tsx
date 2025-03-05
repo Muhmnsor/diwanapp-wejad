@@ -48,14 +48,20 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
           
           console.log("Comment attachment uploaded successfully:", attachmentUrl);
           
-          // حفظ معلومات المرفق في قاعدة البيانات task_attachments
-          await saveAttachmentReference(
-            task.id,
-            attachmentUrl,
-            attachmentName,
-            attachmentType,
-            category
-          );
+          try {
+            // حفظ معلومات المرفق في قاعدة البيانات task_attachments
+            await saveAttachmentReference(
+              task.id,
+              attachmentUrl,
+              attachmentName,
+              attachmentType,
+              category
+            );
+            console.log("Attachment reference saved for comment");
+          } catch (refError) {
+            console.error("Failed to save attachment reference:", refError);
+            // استمر في تنفيذ الكود حتى مع وجود خطأ في حفظ مرجع الملف
+          }
         }
       }
       

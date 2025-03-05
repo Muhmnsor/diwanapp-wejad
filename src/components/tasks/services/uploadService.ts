@@ -13,6 +13,15 @@ export const uploadAttachment = async (
 
     console.log("Uploading file:", file.name, "with category:", category);
 
+    // تحقق أولاً من وجود الـ bucket، وإذا لم يكن موجودًا قم بإنشائه
+    const { data: bucketExists } = await supabase.storage
+      .getBucket('task-attachments');
+    
+    if (!bucketExists) {
+      console.log("Bucket does not exist, creating it...");
+      await supabase.storage.createBucket('task-attachments', { public: true });
+    }
+
     const { data, error } = await supabase.storage
       .from('task-attachments')
       .upload(filePath, file, {
@@ -65,7 +74,39 @@ export const saveAttachmentReference = async (
       created_by: userId
     });
 
-    // تعديل هذا الجزء للتأكد من استخدام أسماء الحقول الصحيحة في قاعدة البيانات
+    // فحص وجود الجدول task_attachments
+    const { data: tableInfo, error: tableError } = await supabase
+      .from('task_attachments')
+      .select('*')
+      .limit(1);
+
+    if (tableError) {
+      console.error("Error checking task_attachments table:", tableError);
+      
+      // جرب استخدام اسم جدول مختلف إذا كان الخطأ يتعلق بوجود الجدول
+      console.log("Trying alternative table name: unified_task_attachments");
+      
+      const { data, error } = await supabase
+        .from('unified_task_attachments')
+        .insert({
+          task_id: taskId,
+          file_url: fileUrl,
+          file_name: fileName,
+          file_type: fileType,
+          attachment_category: category,
+          created_by: userId
+        });
+        
+      if (error) {
+        console.error("Error saving to unified_task_attachments:", error);
+        throw error;
+      }
+      
+      console.log("Attachment reference saved successfully to unified_task_attachments:", data);
+      return data;
+    }
+    
+    // استخدم الجدول الأصلي إذا كان موجودًا
     const { data, error } = await supabase
       .from('task_attachments')
       .insert({
