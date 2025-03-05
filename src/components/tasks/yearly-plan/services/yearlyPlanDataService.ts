@@ -28,7 +28,6 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
         title,
         description,
         status,
-        start_date,
         due_date,
         workspace_id,
         priority,
@@ -40,8 +39,14 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
       throw error;
     }
 
+    // Process the data to include start_date (using created_at as a fallback)
+    const processedProjects = projects.map(project => ({
+      ...project,
+      start_date: project.created_at || new Date().toISOString().split('T')[0] // Use created_at as start_date or today
+    })) as TaskProject[];
+
     // Get workspace names for each project
-    for (let project of projects as TaskProject[]) {
+    for (let project of processedProjects) {
       if (project.workspace_id) {
         const { data: workspace, error: workspaceError } = await supabase
           .from('workspaces')
@@ -68,7 +73,7 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
       }
     }
 
-    return projects as TaskProject[] || [];
+    return processedProjects || [];
   } catch (error) {
     console.error('Error in fetchTaskProjects:', error);
     throw error;
