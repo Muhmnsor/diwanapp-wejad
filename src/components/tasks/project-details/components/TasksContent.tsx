@@ -2,12 +2,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
-import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
-import { useState } from "react";
-import { Paperclip } from "lucide-react";
-import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
+import { TaskAttachmentButton } from "./TaskAttachmentButton";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -34,8 +31,6 @@ export const TasksContent = ({
   onStatusChange,
   projectId
 }: TasksContentProps) => {
-  const [showAttachments, setShowAttachments] = useState<string | null>(null);
-  
   if (isLoading) {
     return (
       <div className="space-y-3" dir="rtl">
@@ -106,32 +101,15 @@ export const TasksContent = ({
                     onStatusChange={onStatusChange}
                     projectId={projectId || ''}
                   />
-                  <td className="text-left">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="px-2"
-                      onClick={() => setShowAttachments(task.id)}
-                    >
-                      <Paperclip className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </td>
+                  <TableCell className="text-left">
+                    <TaskAttachmentButton task={task} />
+                  </TableCell>
                 </tr>
               ))}
             </TableBody>
           </Table>
         </div>
       </div>
-
-      {showAttachments && (
-        <TaskAttachmentDialog
-          task={filteredTasks.find(t => t.id === showAttachments) || filteredTasks[0]}
-          open={!!showAttachments}
-          onOpenChange={(open) => {
-            if (!open) setShowAttachments(null);
-          }}
-        />
-      )}
     </div>
   );
 };

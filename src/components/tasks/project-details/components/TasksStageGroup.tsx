@@ -1,11 +1,9 @@
 
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
 import { useState } from "react";
-import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
-import { Paperclip } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { TaskAttachmentButton } from "./TaskAttachmentButton";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -31,8 +29,6 @@ export const TasksStageGroup = ({
   const filteredTasks = tasks.filter(task => 
     activeTab === "all" || task.status === activeTab
   );
-  
-  const [showAttachments, setShowAttachments] = useState<string | null>(null);
   
   if (filteredTasks.length === 0) return null;
   
@@ -64,30 +60,13 @@ export const TasksStageGroup = ({
                 onStatusChange={onStatusChange}
                 projectId={projectId}
               />
-              <td className="text-left">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="px-2"
-                  onClick={() => setShowAttachments(task.id)}
-                >
-                  <Paperclip className="h-4 w-4 text-gray-500" />
-                </Button>
-              </td>
+              <TableCell className="text-left">
+                <TaskAttachmentButton task={task} />
+              </TableCell>
             </tr>
           ))}
         </TableBody>
       </Table>
-
-      {showAttachments && (
-        <TaskAttachmentDialog
-          task={filteredTasks.find(t => t.id === showAttachments) || filteredTasks[0]}
-          open={!!showAttachments}
-          onOpenChange={(open) => {
-            if (!open) setShowAttachments(null);
-          }}
-        />
-      )}
     </div>
   );
 };
