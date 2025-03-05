@@ -6,6 +6,14 @@ import { Comment } from '../types';
 import { toast } from 'sonner';
 import { useIdeaNotifications } from '@/hooks/useIdeaNotifications';
 
+// Define a type for the profiles object to help TypeScript understand the structure
+type ProfileData = {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string | null;
+};
+
 export const useComments = (ideaId: string, creatorId?: string) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,11 +67,11 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         attachment_url: comment.attachment_url,
         attachment_name: comment.attachment_name,
         user: comment.profiles ? {
-          // Handle profiles correctly - it could be an object or an array
-          id: Array.isArray(comment.profiles) ? comment.profiles[0]?.id : comment.profiles.id,
-          email: Array.isArray(comment.profiles) ? comment.profiles[0]?.email : comment.profiles.email,
-          name: Array.isArray(comment.profiles) ? comment.profiles[0]?.full_name : comment.profiles.full_name,
-          avatar_url: Array.isArray(comment.profiles) ? comment.profiles[0]?.avatar_url : comment.profiles.avatar_url
+          // Handle profiles safely - could be an object or potentially an array
+          id: comment.profiles?.id,
+          email: comment.profiles?.email,
+          name: comment.profiles?.full_name,
+          avatar_url: comment.profiles?.avatar_url
         } : null
       }));
       
@@ -166,11 +174,11 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         attachment_url: data.attachment_url,
         attachment_name: data.attachment_name,
         user: data.profiles ? {
-          // Handle profiles correctly - it could be an object or an array
-          id: Array.isArray(data.profiles) ? data.profiles[0]?.id : data.profiles.id,
-          email: Array.isArray(data.profiles) ? data.profiles[0]?.email : data.profiles.email,
-          name: Array.isArray(data.profiles) ? data.profiles[0]?.full_name : data.profiles.full_name,
-          avatar_url: Array.isArray(data.profiles) ? data.profiles[0]?.avatar_url : data.profiles.avatar_url
+          // Access profiles directly since it should be an object from .single()
+          id: data.profiles?.id,
+          email: data.profiles?.email,
+          name: data.profiles?.full_name,
+          avatar_url: data.profiles?.avatar_url
         } : null
       };
       
