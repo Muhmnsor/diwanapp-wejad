@@ -98,12 +98,15 @@ export const useFormSubmit = (
           // Send notification to each finance team member
           for (const financeUser of financeUsers) {
             if (financeUser.user_id !== user.id) { // Don't notify the user who created the resource
+              const userData = await supabase.auth.getUser(user.id);
+              const userName = userData.data?.user?.email || 'مستخدم';
+              
               await sendNewResourceNotification({
                 resourceId,
                 resourceTitle: entity || source,
                 amount: totalAmount,
                 userId: financeUser.user_id,
-                updatedByUserName: user.user_metadata?.name || user.email
+                updatedByUserName: userName
               });
             }
           }

@@ -1,122 +1,145 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
-import { Comment } from '../types';
 import { useIdeaNotifications } from '@/hooks/useIdeaNotifications';
 
-export const useComments = (ideaId: string, ideaOwnerId: string, ideaTitle: string) => {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export const useComments = (ideaId: string) => {
+  const [comments, setComments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuthStore();
-  const { sendNewCommentNotification } = useIdeaNotifications();
+  const { sendIdeaCommentNotification } = useIdeaNotifications();
+
+  useEffect(() => {
+    fetchComments();
+
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('idea-comments')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'idea_comments',
+          filter: `idea_id=eq.${ideaId}`
+        },
+        (payload) => {
+          console.log('New comment added:', payload);
+          // Add the new comment to the list
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [ideaId]);
 
   const fetchComments = async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('idea_comments')
-        .select('*, profiles:user_id(display_name)')
+        .select(`*, profiles(*)`)
         .eq('idea_id', ideaId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-
-      // Transform the data to match our Comment type
-      const transformedComments = data.map((comment: any) => ({
-        ...comment,
-        user_name: comment.profiles?.display_name || comment.user_email || 'مستخدم',
-      }));
       
-      setComments(transformedComments);
+      setComments(data || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
-      toast.error('فشل في تحميل التعليقات');
+      toast.error('حدث خطأ أثناء استرجاع التعليقات');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addComment = async (content: string, parentId?: string, file?: File) => {
+  const addComment = async (comment: string, file?: File) => {
     if (!user) {
       toast.error('يجب تسجيل الدخول لإضافة تعليق');
       return;
     }
 
     setIsSubmitting(true);
+    let fileUrl = null;
+    let fileName = null;
 
     try {
-      let attachmentUrl = null;
-      let attachmentName = null;
-      let attachmentType = null;
-
       // Upload file if provided
       if (file) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `idea-comments/${ideaId}/${fileName}`;
-
+        const filePath = `idea-comments/${ideaId}/${Math.random()}.${fileExt}`;
+        
         const { error: uploadError, data } = await supabase.storage
-          .from('uploads')
+          .from('attachments')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
-
-        attachmentUrl = data?.path 
-          ? `${supabase.storageUrl}/object/public/uploads/${data.path}`
-          : null;
-        attachmentName = file.name;
-        attachmentType = file.type;
+        
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('attachments')
+          .getPublicUrl(filePath);
+          
+        fileUrl = urlData.publicUrl;
+        fileName = file.name;
       }
 
-      const newComment = {
-        idea_id: ideaId,
-        parent_id: parentId || null,
-        content,
-        user_id: user.id,
-        attachment_url: attachmentUrl,
-        attachment_name: attachmentName,
-        attachment_type: attachmentType
-      };
-
-      const { error, data } = await supabase
+      // Add comment to database
+      const { data: commentData, error: commentError } = await supabase
         .from('idea_comments')
-        .insert([newComment])
-        .select('*, profiles:user_id(display_name)')
+        .insert({
+          idea_id: ideaId,
+          user_id: user.id,
+          comment,
+          file_url: fileUrl,
+          file_name: fileName
+        })
+        .select()
         .single();
 
-      if (error) throw error;
-
-      // Transform the returned comment
-      const transformedComment = {
-        ...data,
-        user_name: data.profiles?.display_name || data.user_email || 'مستخدم',
-      };
-
-      setComments([...comments, transformedComment]);
+      if (commentError) throw commentError;
       
-      // Send notification to idea owner if the commenter is not the owner
-      if (user.id !== ideaOwnerId) {
-        await sendNewCommentNotification({
+      // Get idea details
+      const { data: ideaData, error: ideaError } = await supabase
+        .from('ideas')
+        .select('title, created_by')
+        .eq('id', ideaId)
+        .single();
+        
+      if (ideaError) throw ideaError;
+      
+      // Send notification to idea creator
+      if (ideaData.created_by && ideaData.created_by !== user.id) {
+        const userData = await supabase.auth.getUser(user.id);
+        const userName = userData.data?.user?.email || 'مستخدم';
+        
+        await sendIdeaCommentNotification({
           ideaId,
-          ideaTitle,
-          ownerId: ideaOwnerId,
+          ideaTitle: ideaData.title,
+          userId: ideaData.created_by,
           updatedByUserId: user.id,
-          updatedByUserName: user.user_metadata?.name || user.email,
-          commentContent: content
+          updatedByUserName: userName
         });
       }
-      
+
       toast.success('تم إضافة التعليق بنجاح');
-    } catch (error) {
+      
+      // Clear form (handled by parent component)
+      return commentData;
+    } catch (error: any) {
       console.error('Error adding comment:', error);
-      toast.error('فشل في إضافة التعليق');
+      toast.error(error.message || 'حدث خطأ أثناء إضافة التعليق');
+      return null;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return { comments, isLoading, isSubmitting, fetchComments, addComment };
+  return { comments, isLoading, isSubmitting, addComment };
 };

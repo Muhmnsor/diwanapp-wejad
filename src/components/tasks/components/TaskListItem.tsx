@@ -48,12 +48,15 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         
         // Send notification if there's an assigned user
         if (task.assigned_to && task.assigned_to !== user?.id) {
+          const userData = await supabase.auth.getUser(user?.id || '');
+          const userName = userData.data?.user?.email || 'مستخدم';
+          
           await sendTaskStatusUpdateNotification({
             taskId: task.id,
             taskTitle: task.title,
             assignedUserId: task.assigned_to,
             updatedByUserId: user?.id,
-            updatedByUserName: user?.user_metadata?.name || user?.email
+            updatedByUserName: userName
           }, status);
         }
       } else {
@@ -62,6 +65,9 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         
         // Send notification if there's an assigned user
         if (task.assigned_to && task.assigned_to !== user?.id) {
+          const userData = await supabase.auth.getUser(user?.id || '');
+          const userName = userData.data?.user?.email || 'مستخدم';
+          
           await sendTaskStatusUpdateNotification({
             taskId: task.id,
             taskTitle: task.title,
@@ -69,7 +75,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
             projectTitle: task.project_name,
             assignedUserId: task.assigned_to,
             updatedByUserId: user?.id,
-            updatedByUserName: user?.user_metadata?.name || user?.email
+            updatedByUserName: userName
           }, status);
         }
       }
