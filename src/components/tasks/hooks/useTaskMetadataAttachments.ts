@@ -77,7 +77,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     }
   };
 
-  // تحسين طريقة جلب المستلمات من جدول task_deliverables
+  // تحسين طريقة جلب المستلمات مع تجربة عدة أنماط للاستعلام
   const fetchTaskDeliverables = async () => {
     if (!taskId) return;
     
@@ -85,37 +85,66 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
-      // استخدام طريقة مباشرة وبسيطة لجلب المستلمات
-      const { data: taskDeliverables, error } = await supabase
+      // محاولات متعددة لجلب المستلمات باستخدام استراتيجيات مختلفة
+      
+      // محاولة 1: الاستعلام المباشر دون فلترة task_table
+      const { data: directDeliverables, error: directError } = await supabase
         .from("task_deliverables")
         .select("*")
         .eq("task_id", taskId);
       
-      // محاولة جلب المستلمات من جدول موحد إذا لم يتم العثور عليها
-      if (!taskDeliverables || taskDeliverables.length === 0) {
-        console.log("No deliverables found with default query, trying unified query...");
-        const { data: unifiedDeliverables, error: unifiedError } = await supabase
+      if (directError) {
+        console.error("Error with direct query:", directError);
+      } else if (directDeliverables && directDeliverables.length > 0) {
+        console.log("Found deliverables with direct query:", directDeliverables);
+        setDeliverables(directDeliverables);
+        setLoadingDeliverables(false);
+        return;
+      }
+      
+      // محاولة 2: الاستعلام مع فلترة task_table
+      const { data: taskDeliverables, error } = await supabase
+        .from("task_deliverables")
+        .select("*")
+        .eq("task_id", taskId)
+        .eq("task_table", "tasks");
+      
+      if (error) {
+        console.error("Error fetching task deliverables with task_table filter:", error);
+      } else if (taskDeliverables && taskDeliverables.length > 0) {
+        console.log("Found deliverables with task_table filter:", taskDeliverables);
+        setDeliverables(taskDeliverables);
+        setLoadingDeliverables(false);
+        return;
+      }
+      
+      // محاولة 3: البحث في جميع أنواع الجداول المحتملة
+      const tableTypes = ['tasks', 'portfolio_tasks', 'subtasks', 'project_tasks'];
+      let allDeliverables: any[] = [];
+      
+      for (const tableType of tableTypes) {
+        const { data: tableSpecificDeliverables, error: tableError } = await supabase
           .from("task_deliverables")
           .select("*")
           .eq("task_id", taskId)
-          .eq("task_table", "tasks");
+          .eq("task_table", tableType);
         
-        if (unifiedError) {
-          console.error("Error fetching unified task deliverables:", unifiedError);
-        } else if (unifiedDeliverables && unifiedDeliverables.length > 0) {
-          console.log("Found deliverables with unified query:", unifiedDeliverables);
-          setDeliverables(unifiedDeliverables);
-          setLoadingDeliverables(false);
-          return;
+        if (!tableError && tableSpecificDeliverables && tableSpecificDeliverables.length > 0) {
+          console.log(`Found deliverables for table type ${tableType}:`, tableSpecificDeliverables);
+          allDeliverables = [...allDeliverables, ...tableSpecificDeliverables];
         }
       }
       
-      if (error) {
-        console.error("Error fetching task deliverables:", error);
-      } else {
-        console.log("Found deliverables:", taskDeliverables);
-        setDeliverables(taskDeliverables || []);
+      if (allDeliverables.length > 0) {
+        console.log("Found deliverables from multiple table types:", allDeliverables);
+        setDeliverables(allDeliverables);
+        return;
       }
+      
+      // لو وصلنا هنا فمعناه أنه لم يتم العثور على أي مستلمات
+      console.log("No deliverables found for task after multiple attempts:", taskId);
+      setDeliverables([]);
+      
     } catch (error) {
       console.error("Error in fetchTaskDeliverables:", error);
     } finally {

@@ -32,13 +32,14 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
 
   // إضافة سجل للتحقق من المرفقات والمستلمات
   useEffect(() => {
-    if (task.id) {
-      console.log("Task ID:", task.id);
+    if (task.id && open) {
+      console.log("Dialog opened for Task ID:", task.id);
+      console.log("Task data:", task);
       console.log("Creator Attachments:", creatorAttachments);
       console.log("Assignee Attachments:", assigneeAttachments);
       console.log("Deliverables:", deliverables);
     }
-  }, [task.id, creatorAttachments, assigneeAttachments, deliverables]);
+  }, [task.id, creatorAttachments, assigneeAttachments, deliverables, open]);
 
   const handleCommentAdded = () => {
     // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
@@ -101,7 +102,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
               ))}
             </div>
           ) : (
-            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">لا توجد مستلمات للمهمة</div>
+            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">لا توجد مستلمات للمهمة - قد تحتاج إلى رفع بعض المستلمات أو تحقق من صلاحيات الوصول</div>
           )}
         </div>
         
