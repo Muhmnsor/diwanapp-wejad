@@ -16,7 +16,7 @@ export const AttachmentListLoading = ({
       {showTitle && (
         <div className="flex items-center text-sm font-medium mb-2">
           <Paperclip className="h-4 w-4 ml-1" />
-          <span>المرفقات</span>
+          <span>المستلمات</span>
         </div>
       )}
       
