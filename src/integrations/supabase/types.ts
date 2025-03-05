@@ -1658,9 +1658,12 @@ export type Database = {
         Row: {
           asana_gid: string | null
           attachment_category: string | null
+          content_type: string | null
           created_at: string
           created_by: string | null
           file_name: string
+          file_size: number | null
+          file_type: string | null
           file_url: string
           id: string
           task_id: string | null
@@ -1668,9 +1671,12 @@ export type Database = {
         Insert: {
           asana_gid?: string | null
           attachment_category?: string | null
+          content_type?: string | null
           created_at?: string
           created_by?: string | null
           file_name: string
+          file_size?: number | null
+          file_type?: string | null
           file_url: string
           id?: string
           task_id?: string | null
@@ -1678,9 +1684,12 @@ export type Database = {
         Update: {
           asana_gid?: string | null
           attachment_category?: string | null
+          content_type?: string | null
           created_at?: string
           created_by?: string | null
           file_name?: string
+          file_size?: number | null
+          file_type?: string | null
           file_url?: string
           id?: string
           task_id?: string | null
@@ -2609,9 +2618,12 @@ export type Database = {
         Row: {
           asana_gid: string | null
           attachment_category: string | null
+          content_type: string | null
           created_at: string
           created_by: string | null
           file_name: string
+          file_size: number | null
+          file_type: string | null
           file_url: string
           id: string
           task_id: string | null
@@ -2619,9 +2631,12 @@ export type Database = {
         Insert: {
           asana_gid?: string | null
           attachment_category?: string | null
+          content_type?: string | null
           created_at?: string
           created_by?: string | null
           file_name: string
+          file_size?: number | null
+          file_type?: string | null
           file_url: string
           id?: string
           task_id?: string | null
@@ -2629,9 +2644,12 @@ export type Database = {
         Update: {
           asana_gid?: string | null
           attachment_category?: string | null
+          content_type?: string | null
           created_at?: string
           created_by?: string | null
           file_name?: string
+          file_size?: number | null
+          file_type?: string | null
           file_url?: string
           id?: string
           task_id?: string | null

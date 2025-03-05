@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CommentForm } from "../comments/CommentForm";
-import { uploadAttachment } from "../../services/uploadService";
+import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
 import { Task } from "../../types/task";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,10 +37,20 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         // التأكد من إضافة تصنيف 'comment' للمرفق
         const category = (selectedFile as any).category || 'comment';
         const uploadResult = await uploadAttachment(selectedFile, category);
+        
         if (uploadResult && !uploadResult.error) {
           attachmentUrl = uploadResult.url;
           attachmentName = selectedFile.name;
           attachmentType = selectedFile.type;
+          
+          // حفظ معلومات المرفق في قاعدة البيانات task_attachments
+          await saveAttachmentReference(
+            task.id,
+            attachmentUrl,
+            attachmentName,
+            attachmentType,
+            category
+          );
         }
       }
       
@@ -55,7 +65,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         task_table: 'portfolio_tasks' // القيمة الافتراضية، سيتم تحديثها أدناه
       };
 
-      // تحديد نوع جدول المهمة بناءً على وجود المهمة في الجداول ا��مختلفة
+      // تحديد نوع جدول المهمة بناءً على وجود المهمة في الجداول المختلفة
       
       // فحص ما إذا كانت المهمة في جدول portfolio_tasks
       const { data: portfolioTask, error: portfolioError } = await supabase

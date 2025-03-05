@@ -1,9 +1,10 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { uploadAttachment } from "../services/uploadService";
+import { uploadAttachment, saveAttachmentReference } from "../services/uploadService";
 import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,32 +47,7 @@ export function AddTaskDialog({
     try {
       console.log("Submitting task data:", formData);
       
-      const attachmentUrls: string[] = [];
-      const attachmentDetails: Array<{ url: string, name: string, category: string }> = [];
-      
-      if (formData.attachment && formData.attachment.length > 0) {
-        for (const file of formData.attachment) {
-          console.log("Uploading attachment:", file);
-          try {
-            const fileCategory = (file as any).category || 'creator';
-            const uploadResult = await uploadAttachment(file, fileCategory);
-            
-            if (uploadResult?.url) {
-              attachmentUrls.push(uploadResult.url);
-              attachmentDetails.push({
-                url: uploadResult.url,
-                name: file.name,
-                category: fileCategory
-              });
-              console.log("Upload successful:", uploadResult.url);
-            }
-          } catch (uploadError) {
-            console.error("Error uploading file:", uploadError);
-            toast.error("حدث خطأ أثناء رفع الملف");
-          }
-        }
-      }
-
+      // إنشاء المهمة أولاً
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .insert({
@@ -95,20 +71,26 @@ export function AddTaskDialog({
 
       console.log("Task created successfully:", taskData);
 
-      if (attachmentDetails.length > 0 && taskData) {
-        for (const attachment of attachmentDetails) {
-          const { error: attachmentError } = await supabase
-            .from('task_attachments')
-            .insert({
-              task_id: taskData.id,
-              file_url: attachment.url,
-              file_name: attachment.name,
-              attachment_category: attachment.category,
-              created_by: await supabase.auth.getUser().then(res => res.data.user?.id)
-            });
-
-          if (attachmentError) {
-            console.error("Error saving attachment reference:", attachmentError);
+      // معالجة المرفقات إذا وجدت
+      if (formData.attachment && formData.attachment.length > 0 && taskData) {
+        for (const file of formData.attachment) {
+          try {
+            const fileCategory = (file as any).category || 'creator';
+            const uploadResult = await uploadAttachment(file, fileCategory);
+            
+            if (uploadResult?.url) {
+              // حفظ معلومات المرفق في قاعدة البيانات
+              await saveAttachmentReference(
+                taskData.id,
+                uploadResult.url,
+                file.name,
+                file.type,
+                fileCategory
+              );
+            }
+          } catch (uploadError) {
+            console.error("Error handling attachment:", uploadError);
+            toast.error("حدث خطأ أثناء معالجة المرفق");
           }
         }
       }

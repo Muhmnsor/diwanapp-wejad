@@ -19,6 +19,7 @@ interface TaskAttachment {
   file_url: string;
   created_at: string;
   attachment_category?: string;
+  file_type?: string;
 }
 
 export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId, taskId }: TaskMetadataProps) => {
@@ -36,27 +37,38 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId, ta
     
     setLoading(true);
     try {
-      // First try to fetch from portfolio_task_attachments
+      console.log("Fetching attachments for task:", taskId);
+      
+      // جلب المرفقات من جدول task_attachments
+      const { data: taskAttachments, error: taskAttachmentsError } = await supabase
+        .from("task_attachments")
+        .select("*")
+        .eq("task_id", taskId);
+      
+      if (taskAttachmentsError) {
+        console.error("Error fetching task attachments:", taskAttachmentsError);
+      }
+      
+      // جلب المرفقات من جدول portfolio_task_attachments
       const { data: portfolioAttachments, error: portfolioError } = await supabase
         .from("portfolio_task_attachments")
         .select("*")
         .eq("task_id", taskId);
-
-      // Then try to fetch from task_attachments
-      const { data: taskAttachments, error: taskError } = await supabase
-        .from("task_attachments")
-        .select("*")
-        .eq("task_id", taskId);
-
-      // Combine both sources of attachments
+      
+      if (portfolioError) {
+        console.error("Error fetching portfolio task attachments:", portfolioError);
+      }
+      
+      // دمج المرفقات من كلا المصدرين
       const combinedAttachments = [
-        ...(portfolioAttachments || []),
-        ...(taskAttachments || [])
+        ...(taskAttachments || []),
+        ...(portfolioAttachments || [])
       ];
-
+      
+      console.log("Found attachments:", combinedAttachments);
       setAttachments(combinedAttachments as TaskAttachment[]);
     } catch (error) {
-      console.error("Error fetching task attachments:", error);
+      console.error("Error in fetchTaskAttachments:", error);
     } finally {
       setLoading(false);
     }
@@ -78,6 +90,8 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId, ta
     att.attachment_category === 'creator' || !att.attachment_category);
   const assigneeAttachments = attachments.filter(att => 
     att.attachment_category === 'assignee');
+  const commentAttachments = attachments.filter(att => 
+    att.attachment_category === 'comment');
 
   return (
     <div className="flex flex-wrap items-center gap-4">
@@ -132,6 +146,29 @@ export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId, ta
             {assigneeAttachments.map((attachment) => (
               <div key={attachment.id} className="flex items-center bg-green-50 rounded p-1.5 text-sm">
                 <FileIcon className="h-4 w-4 text-green-500 ml-2 flex-shrink-0" />
+                <span className="flex-1 truncate">{attachment.file_name}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => handleDownload(attachment.file_url, attachment.file_name)}
+                  title="تنزيل الملف"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {commentAttachments.length > 0 && (
+        <div className="w-full mt-2">
+          <div className="text-sm font-medium mb-1">مرفقات التعليقات:</div>
+          <div className="space-y-1">
+            {commentAttachments.map((attachment) => (
+              <div key={attachment.id} className="flex items-center bg-gray-50 rounded p-1.5 text-sm">
+                <FileIcon className="h-4 w-4 text-gray-500 ml-2 flex-shrink-0" />
                 <span className="flex-1 truncate">{attachment.file_name}</span>
                 <Button 
                   variant="ghost" 
