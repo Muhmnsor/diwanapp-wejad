@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { 
   CalendarIcon,
@@ -8,7 +7,8 @@ import {
   AlertTriangle,
   CheckSquare,
   Edit,
-  Trash2
+  Trash2,
+  ListTodo
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow, differenceInDays } from "date-fns";
@@ -52,7 +52,6 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
     const fetchTasksData = async () => {
       setIsLoading(true);
       try {
-        // Fetch tasks for this project
         const { data: tasks, error } = await supabase
           .from('tasks')
           .select('*')
@@ -63,11 +62,9 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
           return;
         }
 
-        // Calculate metrics
         const total = tasks ? tasks.length : 0;
         const completed = tasks ? tasks.filter(task => task.status === 'completed').length : 0;
         
-        // Calculate overdue tasks (tasks with due_date in the past and not completed)
         const now = new Date();
         const overdue = tasks ? tasks.filter(task => {
           return task.status !== 'completed' && 
@@ -79,15 +76,12 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
         setCompletedTasksCount(completed);
         setOverdueTasksCount(overdue);
         
-        // Calculate completion percentage
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
         setCompletionPercentage(percentage);
         
-        // If completion percentage is 100% but status is not 'completed', update it
         if (percentage === 100 && project.status !== 'completed' && total > 0) {
           console.log(`Project ${project.id} is 100% complete, updating status to completed`);
           
-          // Update project status in the database
           const { error: updateError } = await supabase
             .from('project_tasks')
             .update({ status: 'completed' })
@@ -98,7 +92,6 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
           }
         }
 
-        // Fetch project owner information
         await fetchProjectOwner();
       } catch (err) {
         console.error("Error in fetchTasksData:", err);
@@ -112,7 +105,6 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
 
   const fetchProjectOwner = async () => {
     try {
-      // First, try to find the project manager (owner) from tasks assignments
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select('assigned_to')
@@ -125,7 +117,6 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
         return;
       }
 
-      // If we have a task with an assignee, get their profile
       if (tasks && tasks.length > 0 && tasks[0].assigned_to) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -149,7 +140,6 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    // If the click originated from one of our action buttons, stop propagation
     if ((e.target as HTMLElement).closest('.project-actions')) {
       e.stopPropagation();
       return;
@@ -250,7 +240,7 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
           </div>
           <Progress value={completionPercentage} className="h-2" />
           
-          <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="grid grid-cols-3 gap-3 mt-3">
             <div className="flex items-center gap-1 text-sm">
               <CheckSquare className="h-4 w-4 text-green-500" />
               <span>{completedTasksCount} مهام منجزة</span>
@@ -258,6 +248,10 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
             <div className="flex items-center gap-1 text-sm">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
               <span>{overdueTasksCount} مهام متأخرة</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              <ListTodo className="h-4 w-4 text-blue-500" />
+              <span>{totalTasksCount} إجمالي المهام</span>
             </div>
           </div>
         </div>
