@@ -36,7 +36,7 @@ export const TaskMetadata = ({
       />
 
       <AttachmentsByCategory
-        title="مرفقات منشئ المهمة:"
+        title="مستلمات منشئ المهمة:"
         attachments={creatorAttachments}
         bgColor="bg-blue-50"
         iconColor="text-blue-500"
@@ -44,7 +44,7 @@ export const TaskMetadata = ({
       />
 
       <AttachmentsByCategory
-        title="مرفقات المكلف بالمهمة:"
+        title="مستلمات المكلف بالمهمة:"
         attachments={assigneeAttachments}
         bgColor="bg-green-50"
         iconColor="text-green-500"
@@ -52,7 +52,7 @@ export const TaskMetadata = ({
       />
 
       <AttachmentsByCategory
-        title="مرفقات التعليقات:"
+        title="مستلمات التعليقات:"
         attachments={commentAttachments}
         bgColor="bg-gray-50"
         iconColor="text-gray-500"
