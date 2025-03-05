@@ -1,3 +1,4 @@
+
 import { Card } from '@/components/ui/card';
 import { TaskHeader } from './components/TaskHeader';
 import { TaskDescription } from './components/TaskDescription';
@@ -34,6 +35,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           dueDate={task.due_date}
           assignedTo={task.assigned_to}
           updatedAt={task.updated_at}
+          taskId={task.id}
         />
       </div>
     </Card>

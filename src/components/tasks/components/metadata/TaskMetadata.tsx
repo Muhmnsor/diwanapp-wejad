@@ -1,9 +1,7 @@
 
-import { ArrowRight, Briefcase, Calendar, FileIcon, Download } from "lucide-react";
-import { formatDueDate } from "../../utils/taskFormatters";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useTaskMetadataAttachments } from "../../hooks/useTaskMetadataAttachments";
+import { BasicMetadata } from "./BasicMetadata";
+import { AttachmentsByCategory } from "./AttachmentsByCategory";
 
 interface TaskMetadataProps {
   dueDate?: string | null;
@@ -13,177 +11,53 @@ interface TaskMetadataProps {
   taskId?: string | null;
 }
 
-interface TaskAttachment {
-  id: string;
-  file_name: string;
-  file_url: string;
-  created_at: string;
-  attachment_category?: string;
-  file_type?: string;
-}
-
-export const TaskMetadata = ({ dueDate, projectName, isSubtask, parentTaskId, taskId }: TaskMetadataProps) => {
-  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (taskId) {
-      fetchTaskAttachments();
-    }
-  }, [taskId]);
-
-  const fetchTaskAttachments = async () => {
-    if (!taskId) return;
-    
-    setLoading(true);
-    try {
-      console.log("Fetching attachments for task:", taskId);
-      
-      // جلب المرفقات من جدول task_attachments
-      const { data: taskAttachments, error: taskAttachmentsError } = await supabase
-        .from("task_attachments")
-        .select("*")
-        .eq("task_id", taskId);
-      
-      if (taskAttachmentsError) {
-        console.error("Error fetching task attachments:", taskAttachmentsError);
-      }
-      
-      // جلب المرفقات من جدول portfolio_task_attachments
-      const { data: portfolioAttachments, error: portfolioError } = await supabase
-        .from("portfolio_task_attachments")
-        .select("*")
-        .eq("task_id", taskId);
-      
-      if (portfolioError) {
-        console.error("Error fetching portfolio task attachments:", portfolioError);
-      }
-      
-      // دمج المرفقات من كلا المصدرين
-      const combinedAttachments = [
-        ...(taskAttachments || []),
-        ...(portfolioAttachments || [])
-      ];
-      
-      console.log("Found attachments:", combinedAttachments);
-      setAttachments(combinedAttachments as TaskAttachment[]);
-    } catch (error) {
-      console.error("Error in fetchTaskAttachments:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDownload = (fileUrl: string, fileName: string) => {
-    // Create a temporary anchor element
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.target = '_blank';
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // تصنيف المرفقات حسب النوع
-  const creatorAttachments = attachments.filter(att => 
-    att.attachment_category === 'creator' || !att.attachment_category);
-  const assigneeAttachments = attachments.filter(att => 
-    att.attachment_category === 'assignee');
-  const commentAttachments = attachments.filter(att => 
-    att.attachment_category === 'comment');
+export const TaskMetadata = ({ 
+  dueDate, 
+  projectName, 
+  isSubtask, 
+  parentTaskId, 
+  taskId 
+}: TaskMetadataProps) => {
+  const {
+    loading,
+    creatorAttachments,
+    assigneeAttachments,
+    commentAttachments,
+    handleDownload
+  } = useTaskMetadataAttachments(taskId || undefined);
 
   return (
     <div className="flex flex-wrap items-center gap-4">
-      {dueDate && (
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4 ml-1" />
-          <span>{formatDueDate(dueDate)}</span>
-        </div>
-      )}
-      
-      {projectName && (
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Briefcase className="h-4 w-4 ml-1" />
-          <span>{projectName}</span>
-        </div>
-      )}
-      
-      {isSubtask && parentTaskId && (
-        <div className="flex items-center text-sm text-blue-500">
-          <ArrowRight className="h-4 w-4 ml-1" />
-          <span>تابعة لمهمة رئيسية</span>
-        </div>
-      )}
+      <BasicMetadata 
+        dueDate={dueDate}
+        projectName={projectName}
+        isSubtask={isSubtask}
+        parentTaskId={parentTaskId}
+      />
 
-      {creatorAttachments.length > 0 && (
-        <div className="w-full mt-2">
-          <div className="text-sm font-medium mb-1">مرفقات منشئ المهمة:</div>
-          <div className="space-y-1">
-            {creatorAttachments.map((attachment) => (
-              <div key={attachment.id} className="flex items-center bg-blue-50 rounded p-1.5 text-sm">
-                <FileIcon className="h-4 w-4 text-blue-500 ml-2 flex-shrink-0" />
-                <span className="flex-1 truncate">{attachment.file_name}</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => handleDownload(attachment.file_url, attachment.file_name)}
-                  title="تنزيل الملف"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <AttachmentsByCategory
+        title="مرفقات منشئ المهمة:"
+        attachments={creatorAttachments}
+        bgColor="bg-blue-50"
+        iconColor="text-blue-500"
+        onDownload={handleDownload}
+      />
 
-      {assigneeAttachments.length > 0 && (
-        <div className="w-full mt-2">
-          <div className="text-sm font-medium mb-1">مرفقات المكلف بالمهمة:</div>
-          <div className="space-y-1">
-            {assigneeAttachments.map((attachment) => (
-              <div key={attachment.id} className="flex items-center bg-green-50 rounded p-1.5 text-sm">
-                <FileIcon className="h-4 w-4 text-green-500 ml-2 flex-shrink-0" />
-                <span className="flex-1 truncate">{attachment.file_name}</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => handleDownload(attachment.file_url, attachment.file_name)}
-                  title="تنزيل الملف"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <AttachmentsByCategory
+        title="مرفقات المكلف بالمهمة:"
+        attachments={assigneeAttachments}
+        bgColor="bg-green-50"
+        iconColor="text-green-500"
+        onDownload={handleDownload}
+      />
 
-      {commentAttachments.length > 0 && (
-        <div className="w-full mt-2">
-          <div className="text-sm font-medium mb-1">مرفقات التعليقات:</div>
-          <div className="space-y-1">
-            {commentAttachments.map((attachment) => (
-              <div key={attachment.id} className="flex items-center bg-gray-50 rounded p-1.5 text-sm">
-                <FileIcon className="h-4 w-4 text-gray-500 ml-2 flex-shrink-0" />
-                <span className="flex-1 truncate">{attachment.file_name}</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => handleDownload(attachment.file_url, attachment.file_name)}
-                  title="تنزيل الملف"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <AttachmentsByCategory
+        title="مرفقات التعليقات:"
+        attachments={commentAttachments}
+        bgColor="bg-gray-50"
+        iconColor="text-gray-500"
+        onDownload={handleDownload}
+      />
     </div>
   );
 };

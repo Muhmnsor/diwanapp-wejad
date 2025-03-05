@@ -1,0 +1,93 @@
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface TaskAttachment {
+  id: string;
+  file_name: string;
+  file_url: string;
+  created_at: string;
+  attachment_category?: string;
+  file_type?: string;
+}
+
+export function useTaskMetadataAttachments(taskId: string | undefined) {
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (taskId) {
+      fetchTaskAttachments();
+    }
+  }, [taskId]);
+
+  const fetchTaskAttachments = async () => {
+    if (!taskId) return;
+    
+    setLoading(true);
+    try {
+      console.log("Fetching attachments for task:", taskId);
+      
+      // جلب المرفقات من جدول task_attachments
+      const { data: taskAttachments, error: taskAttachmentsError } = await supabase
+        .from("task_attachments")
+        .select("*")
+        .eq("task_id", taskId);
+      
+      if (taskAttachmentsError) {
+        console.error("Error fetching task attachments:", taskAttachmentsError);
+      }
+      
+      // جلب المرفقات من جدول portfolio_task_attachments
+      const { data: portfolioAttachments, error: portfolioError } = await supabase
+        .from("portfolio_task_attachments")
+        .select("*")
+        .eq("task_id", taskId);
+      
+      if (portfolioError) {
+        console.error("Error fetching portfolio task attachments:", portfolioError);
+      }
+      
+      // دمج المرفقات من كلا المصدرين
+      const combinedAttachments = [
+        ...(taskAttachments || []),
+        ...(portfolioAttachments || [])
+      ];
+      
+      console.log("Found attachments:", combinedAttachments);
+      setAttachments(combinedAttachments as TaskAttachment[]);
+    } catch (error) {
+      console.error("Error in fetchTaskAttachments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = (fileUrl: string, fileName: string) => {
+    // Create a temporary anchor element
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // تصنيف المرفقات حسب النوع
+  const creatorAttachments = attachments.filter(att => 
+    att.attachment_category === 'creator' || !att.attachment_category);
+  const assigneeAttachments = attachments.filter(att => 
+    att.attachment_category === 'assignee');
+  const commentAttachments = attachments.filter(att => 
+    att.attachment_category === 'comment');
+
+  return {
+    attachments,
+    loading,
+    creatorAttachments,
+    assigneeAttachments,
+    commentAttachments,
+    handleDownload
+  };
+}
