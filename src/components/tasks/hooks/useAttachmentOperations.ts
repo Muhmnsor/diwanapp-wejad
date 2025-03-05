@@ -4,10 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 
-type AttachmentCategory = 'creator' | 'comment' | 'assignee';
+export type AttachmentCategory = 'creator' | 'comment' | 'assignee';
+
+export interface Attachment {
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_path?: string;
+  file_type?: string | null;
+  file_size?: number;
+  attachment_category?: AttachmentCategory;
+  created_by?: string | null;
+  created_at?: string;
+  task_id?: string;
+}
 
 export const useAttachmentOperations = (onSuccess?: () => void) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
 
   const uploadAttachment = async (file: File, taskId: string, category: AttachmentCategory) => {
     if (!file || !taskId) return { error: "Missing file or task ID" };
@@ -69,6 +83,7 @@ export const useAttachmentOperations = (onSuccess?: () => void) => {
   };
 
   const deleteAttachment = async (attachmentId: string) => {
+    setIsDeleting(prev => ({ ...prev, [attachmentId]: true }));
     try {
       // Get the attachment details to get the file path
       const { data: attachment, error: fetchError } = await supabase
@@ -112,12 +127,27 @@ export const useAttachmentOperations = (onSuccess?: () => void) => {
       console.error("Error deleting attachment:", error);
       toast.error("حدث خطأ أثناء حذف المرفق");
       return { error };
+    } finally {
+      setIsDeleting(prev => ({ ...prev, [attachmentId]: false }));
     }
+  };
+
+  const handleDownloadAttachment = (fileUrl: string, fileName: string) => {
+    // Create a temporary anchor element
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return {
     uploadAttachment,
     deleteAttachment,
-    isUploading
+    isUploading,
+    isDeleting,
+    handleDownloadAttachment
   };
 };
