@@ -72,7 +72,7 @@ export const TopHeader = () => {
             <div className="flex items-center justify-center gap-2 mt-1 xs:mt-0 md:mt-0 flex-wrap xs:flex-nowrap">
               {isAuthenticated && user && <div className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-100 py-1.5 rounded-md shadow-sm ms-2 mx-[63px] px-[114px]">
                   <User className="h-4 w-4 text-primary" />
-                  <span>{displayName || user.email || 'مستخدم'}</span>
+                  <span className="mx-0 py-0 px-[105px] text-xs">{displayName || user.email || 'مستخدم'}</span>
                 </div>}
               <HomeButton isEventOrProjectDetails={isEventOrProjectDetails} isAuthenticated={isAuthenticated} />
               <Navigation />
