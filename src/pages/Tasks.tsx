@@ -32,6 +32,22 @@ const Tasks = () => {
     };
   }, []);
 
+  // Inject a global style to hide the button directly in TaskListItem
+  useEffect(() => {
+    // Create style element to hide the deliverables button
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
+      .task-list-item .task-deliverables-button {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
       <TopHeader />
