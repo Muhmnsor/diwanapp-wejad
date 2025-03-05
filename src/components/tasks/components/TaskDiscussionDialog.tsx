@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { TaskDiscussionHeader } from "./discussions/TaskDiscussionHeader";
 import { TaskDiscussionContent } from "./discussions/TaskDiscussionContent";
 import { TaskCommentForm } from "./discussions/TaskCommentForm";
+import { useTaskMetadataAttachments } from "../hooks/useTaskMetadataAttachments";
+import { AttachmentsByCategory } from "./metadata/AttachmentsByCategory";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
@@ -15,6 +17,7 @@ interface TaskDiscussionDialogProps {
 
 export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussionDialogProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
+  const { assigneeAttachments, handleDownload } = useTaskMetadataAttachments(task?.id);
 
   const handleCommentAdded = () => {
     // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
@@ -25,6 +28,19 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[650px] max-h-[80vh] overflow-hidden flex flex-col" dir="rtl">
         <TaskDiscussionHeader task={task} />
+        
+        {/* Display assignee attachments section */}
+        {assigneeAttachments && assigneeAttachments.length > 0 && (
+          <div className="mt-2 mb-1 px-1">
+            <AttachmentsByCategory
+              title="مستلمات المكلف بالمهمة"
+              attachments={assigneeAttachments}
+              bgColor="bg-blue-50"
+              iconColor="text-blue-600"
+              onDownload={handleDownload}
+            />
+          </div>
+        )}
         
         <Separator className="my-4" />
         
