@@ -3,7 +3,9 @@ import { FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useEventNotifications } from "@/hooks/useEventNotifications";
 import { RegistrationFormData } from "../types/registration";
+import { useAuthStore } from "@/store/authStore";
 
 interface UseRegistrationSubmitProps {
   eventTitle: string;
@@ -23,6 +25,8 @@ export const useRegistrationSubmit = ({
   onSubmit
 }: UseRegistrationSubmitProps) => {
   const { sendNotification } = useNotifications();
+  const { sendRegistrationNotification } = useEventNotifications();
+  const { user } = useAuthStore();
   const eventId = window.location.pathname.split('/').pop();
 
   const handleSubmit = async (
@@ -50,7 +54,8 @@ export const useRegistrationSubmit = ({
         birth_date: birthDate,
         national_id: formData.nationalId || null,
         gender: formData.gender || null,
-        work_status: formData.workStatus || null
+        work_status: formData.workStatus || null,
+        user_id: user?.id // Add user_id if the user is logged in
       };
 
       console.log('Registration data being sent:', registrationData);
@@ -86,36 +91,18 @@ export const useRegistrationSubmit = ({
         }
       }
 
-      // Get default registration template
-      const { data: template } = await supabase
-        .from('whatsapp_templates')
-        .select('id')
-        .eq('notification_type', 'event_registration')
-        .eq('is_default', true)
-        .maybeSingle();
-
-      // Send WhatsApp notification if template exists
-      if (template) {
-        try {
-          await sendNotification({
-            type: 'registration',
-            eventId,
-            registrationId: registration.id,
-            recipientPhone: formData.phone,
-            templateId: template.id,
-            variables: {
-              name: formData.arabicName,
-              event_title: eventTitle,
-              event_date: eventDate || '',
-              event_time: eventTime || '',
-              event_location: eventLocation || '',
-            }
-          });
-        } catch (notificationError) {
-          console.error('Error sending notification:', notificationError);
-          // Continue with registration even if notification fails
-        }
-      }
+      // Send notifications (both in-app and WhatsApp)
+      await sendRegistrationNotification({
+        eventId: eventId || '',
+        eventTitle,
+        eventDate,
+        eventTime,
+        eventLocation,
+        recipientName: formData.arabicName,
+        recipientPhone: formData.phone,
+        recipientId: user?.id,
+        registrationId: registration.id
+      });
 
       toast.success('تم التسجيل بنجاح');
       

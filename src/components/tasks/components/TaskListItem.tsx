@@ -10,6 +10,8 @@ import { TaskAttachmentDialog } from "./dialogs/TaskAttachmentDialog";
 import { FileUploadDialog } from "./dialogs/FileUploadDialog";
 import { TaskActionButtons } from "./actions/TaskActionButtons";
 import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
+import { useTaskNotifications } from "@/hooks/useTaskNotifications";
+import { useAuthStore } from "@/store/authStore";
 
 interface TaskListItemProps {
   task: Task;
@@ -24,6 +26,8 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
+  const { sendTaskStatusUpdateNotification } = useTaskNotifications();
+  const { user } = useAuthStore();
 
   // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
@@ -41,9 +45,33 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         // We need to call the onStatusChange to update the UI
         onStatusChange(task.id, status);
         toast.success('تم تحديث حالة المهمة الفرعية');
+        
+        // Send notification if there's an assigned user
+        if (task.assigned_to && task.assigned_to !== user?.id) {
+          await sendTaskStatusUpdateNotification({
+            taskId: task.id,
+            taskTitle: task.title,
+            assignedUserId: task.assigned_to,
+            updatedByUserId: user?.id,
+            updatedByUserName: user?.user_metadata?.name || user?.email
+          }, status);
+        }
       } else {
         // Regular tasks use the parent component's handler
         onStatusChange(task.id, status);
+        
+        // Send notification if there's an assigned user
+        if (task.assigned_to && task.assigned_to !== user?.id) {
+          await sendTaskStatusUpdateNotification({
+            taskId: task.id,
+            taskTitle: task.title,
+            projectId: task.project_id,
+            projectTitle: task.project_name,
+            assignedUserId: task.assigned_to,
+            updatedByUserId: user?.id,
+            updatedByUserName: user?.user_metadata?.name || user?.email
+          }, status);
+        }
       }
     } catch (error) {
       console.error("Error updating task status:", error);

@@ -3,6 +3,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BudgetItem } from "../types";
+import { useFinanceNotifications } from "@/hooks/useFinanceNotifications";
+import { useAuthStore } from "@/store/authStore";
 
 export const useFormSubmit = (
   totalAmount: number | "",
@@ -13,6 +15,8 @@ export const useFormSubmit = (
   onSubmit: () => void
 ) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { sendNewResourceNotification } = useFinanceNotifications();
+  const { user } = useAuthStore();
   
   // Calculate total percentage
   const totalPercentage = budgetItems.reduce(
@@ -81,6 +85,30 @@ export const useFormSubmit = (
         .insert(distributions);
       
       if (distributionError) throw distributionError;
+      
+      // 3. Send notification to finance team and admin users
+      if (user) {
+        // Get users with finance or admin roles
+        const { data: financeUsers } = await supabase
+          .from('user_roles')
+          .select('user_id, roles (name)')
+          .or('roles.name.eq.finance,roles.name.eq.admin')
+        
+        if (financeUsers && financeUsers.length > 0) {
+          // Send notification to each finance team member
+          for (const financeUser of financeUsers) {
+            if (financeUser.user_id !== user.id) { // Don't notify the user who created the resource
+              await sendNewResourceNotification({
+                resourceId,
+                resourceTitle: entity || source,
+                amount: totalAmount,
+                userId: financeUser.user_id,
+                updatedByUserName: user.user_metadata?.name || user.email
+              });
+            }
+          }
+        }
+      }
       
       toast.success("تم إضافة المورد بنجاح");
       onSubmit();
