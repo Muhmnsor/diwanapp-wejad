@@ -9,10 +9,9 @@ interface TaskActionButtonsProps {
   onOpenFileUploader: () => void;
   onOpenAttachments: () => void;
   onStatusChange: (status: string) => void;
-  onDownloadTemplate?: () => void; // Template download handler
+  onOpenTemplates: () => void; // New prop for templates dialog
   onDelete?: (taskId: string) => void;
   taskId: string;
-  hasTemplate?: boolean; // Flag to control template button visibility
 }
 
 export const TaskActionButtons = ({
@@ -22,10 +21,9 @@ export const TaskActionButtons = ({
   onOpenFileUploader,
   onOpenAttachments,
   onStatusChange,
-  onDownloadTemplate,
+  onOpenTemplates, // New prop for templates dialog
   onDelete,
   taskId,
-  hasTemplate = false // Default to false if not provided
 }: TaskActionButtonsProps) => {
   return (
     <div className="flex justify-between items-center mt-3 pt-3 border-t">
@@ -60,12 +58,12 @@ export const TaskActionButtons = ({
           المستلمات
         </Button>
 
-        {/* Task templates button - always visible */}
+        {/* Task templates button */}
         <Button
           variant="ghost"
           size="sm"
           className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-          onClick={onDownloadTemplate}
+          onClick={onOpenTemplates}
         >
           <FileDown className="h-3.5 w-3.5" />
           نماذج المهمة

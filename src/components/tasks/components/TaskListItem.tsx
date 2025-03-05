@@ -9,6 +9,7 @@ import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "./dialogs/TaskAttachmentDialog";
 import { FileUploadDialog } from "./dialogs/FileUploadDialog";
 import { TaskActionButtons } from "./actions/TaskActionButtons";
+import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
 
 interface TaskListItemProps {
   task: Task;
@@ -21,14 +22,8 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
-  
-  // Check if task has template files (with proper optional chaining)
-  const hasTemplateFiles = Boolean(
-    task.attachment_url || 
-    task.form_template || 
-    (task.templates && task.templates.length > 0)
-  );
 
   // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
@@ -58,37 +53,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
-  // Function to handle template download
-  const handleTemplateDownload = () => {
-    // Check which template field exists and use it (with proper optional chaining)
-    const templateUrl = task.attachment_url || task.form_template || 
-                       (task.templates && task.templates.length > 0 ? task.templates[0].url : null);
-    
-    if (!templateUrl) {
-      toast.info('لا يوجد نموذج متاح لهذه المهمة');
-      return;
-    }
-    
-    // Create a temporary link to download the file
-    const link = document.createElement('a');
-    link.href = templateUrl;
-    link.target = '_blank';
-    link.download = `template-${task.id}.pdf`; // Default name, adjust as needed
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success('جاري تنزيل نموذج المهمة');
-  };
-
-  // Check template files and log for debugging
-  console.log('Task templates:', {
-    hasTemplateFiles,
-    attachmentUrl: task.attachment_url,
-    formTemplate: task.form_template,
-    templates: task.templates
-  });
-
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />
@@ -108,9 +72,8 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         onShowDiscussion={() => setShowDiscussion(true)}
         onOpenFileUploader={() => setIsUploadDialogOpen(true)}
         onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
+        onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
         onStatusChange={handleStatusChange}
-        onDownloadTemplate={handleTemplateDownload}
-        hasTemplate={hasTemplateFiles}
         onDelete={onDelete}
         taskId={task.id}
       />
@@ -137,6 +100,15 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           isOpen={isUploadDialogOpen}
           onClose={() => setIsUploadDialogOpen(false)}
           task={task}
+        />
+      )}
+
+      {/* Templates Dialog */}
+      {task && (
+        <TaskTemplatesDialog
+          task={task}
+          open={isTemplatesDialogOpen}
+          onOpenChange={setIsTemplatesDialogOpen}
         />
       )}
     </div>
