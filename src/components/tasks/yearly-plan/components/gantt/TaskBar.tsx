@@ -43,12 +43,23 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   // Calculate real-time progress value (between 0-100)
   let progressValue = 0;
   
+  // Debug the task data - especially for the جدييييييددددددددد project
+  console.log(`Task ${task.title} (${task.status}) - Project: ${task.project_name || 'Unknown'}`);
+  console.log(`Completion percentage from DB: ${task.completion_percentage}`);
+  
   if (task.status === 'completed') {
     // If task is marked as completed, show 100% regardless of other fields
     progressValue = 100;
   } else if (task.completion_percentage !== undefined && task.completion_percentage !== null) {
     // If completion_percentage is available, use it (this is the real-time value from the database)
-    progressValue = task.completion_percentage;
+    progressValue = parseFloat(task.completion_percentage);
+    
+    // Ensure it's a valid number between 0-100
+    if (isNaN(progressValue)) {
+      progressValue = 0;
+    } else {
+      progressValue = Math.max(0, Math.min(100, progressValue));
+    }
   } else {
     // Otherwise fall back to time-based calculation
     progressValue = getTimeBasedProgress(startDate, endDate);
