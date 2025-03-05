@@ -1,7 +1,6 @@
 
 import { FileIcon, Download, Trash2, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TaskDeliverablesButton } from "../deliverables/TaskDeliverablesButton";
 
 interface Attachment {
   id: string;
@@ -21,7 +20,6 @@ interface AttachmentsByCategoryProps {
   canDelete?: boolean;
   isDeliverables?: boolean;
   onShowDeliverables?: () => void;
-  taskId?: string;
 }
 
 export const AttachmentsByCategory = ({
@@ -34,8 +32,7 @@ export const AttachmentsByCategory = ({
   isDeleting = {},
   canDelete = false,
   isDeliverables = false,
-  onShowDeliverables,
-  taskId
+  onShowDeliverables
 }: AttachmentsByCategoryProps) => {
   if (attachments.length === 0 && !isDeliverables) return null;
   
@@ -43,8 +40,16 @@ export const AttachmentsByCategory = ({
     <div className="w-full mt-2">
       <div className="text-sm font-medium mb-1 flex justify-between items-center">
         <span>{title}</span>
-        {isDeliverables && taskId && (
-          <TaskDeliverablesButton taskId={taskId} />
+        {isDeliverables && onShowDeliverables && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onShowDeliverables}
+            className="h-6 text-xs text-gray-500 hover:text-gray-700"
+          >
+            <FileCheck className="h-3.5 w-3.5 mr-1" />
+            المستلمات
+          </Button>
         )}
       </div>
       <div className="space-y-1">

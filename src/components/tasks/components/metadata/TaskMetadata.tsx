@@ -2,7 +2,6 @@
 import { useTaskMetadataAttachments } from "../../hooks/useTaskMetadataAttachments";
 import { BasicMetadata } from "./BasicMetadata";
 import { AttachmentsByCategory } from "./AttachmentsByCategory";
-import { TaskDeliverablesButton } from "../deliverables/TaskDeliverablesButton";
 
 interface TaskMetadataProps {
   dueDate?: string | null;
@@ -59,18 +58,6 @@ export const TaskMetadata = ({
         iconColor="text-gray-500"
         onDownload={handleDownload}
       />
-
-      {taskId && (
-        <AttachmentsByCategory
-          title="مستلمات المهمة:"
-          attachments={[]}
-          bgColor="bg-purple-50"
-          iconColor="text-purple-500"
-          onDownload={handleDownload}
-          isDeliverables={true}
-          onShowDeliverables={() => {}}
-        />
-      )}
     </div>
   );
 };

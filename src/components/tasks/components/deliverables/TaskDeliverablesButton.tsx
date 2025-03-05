@@ -3,30 +3,22 @@ import { Button } from "@/components/ui/button";
 import { FileCheck } from "lucide-react";
 import { useState } from "react";
 import { TaskDeliverablesDialog } from "../dialogs/TaskDeliverablesDialog";
-import { Task } from "../../types/task";
+import { Task } from "../../types/task";  // Using the correct Task type
 
 interface TaskDeliverablesButtonProps {
   taskId?: string | null;
   task?: Task;
-  hideInTasksList?: boolean;
+  hideInTasksList?: boolean; // Add this prop to conditionally hide the button in task list contexts
 }
 
 export const TaskDeliverablesButton = ({ taskId, task, hideInTasksList = false }: TaskDeliverablesButtonProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   
-  // لو تم طلب إخفاء الزر في قائمة المهام، قم بإرجاع null (لا تعرض شيء)
+  // If hideInTasksList is true, return null (render nothing)
   if (hideInTasksList) return null;
   
   if (!taskId && !task) return null;
   
-  // إذا تم توفير taskId فقط، قم بإنشاء كائن task أساسي
-  const taskToUse = task || {
-    id: taskId as string,
-    title: "المهمة",
-    assigned_to: null,
-    created_at: ""
-  };
-
   const handleOpenDialog = () => {
     setDialogOpen(true);
   };
@@ -37,15 +29,26 @@ export const TaskDeliverablesButton = ({ taskId, task, hideInTasksList = false }
         variant="ghost" 
         size="sm" 
         onClick={handleOpenDialog}
-        className="h-6 text-xs text-gray-500 hover:text-gray-700 task-deliverables-button"
+        className="h-6 text-xs text-gray-500 hover:text-gray-700"
       >
         <FileCheck className="h-3.5 w-3.5 mr-1" />
         المستلمات
       </Button>
       
-      {dialogOpen && (
+      {task && dialogOpen && (
         <TaskDeliverablesDialog 
-          task={taskToUse} 
+          task={{
+            id: task.id,
+            title: task.title,
+            description: task.description || null,
+            status: task.status || "",
+            due_date: task.due_date || null,
+            assigned_to: task.assigned_to || null,
+            priority: task.priority || null,
+            created_at: task.created_at || "",
+            stage_id: null,  // Adding the missing required property
+            stage_name: undefined
+          }} 
           open={dialogOpen} 
           onOpenChange={setDialogOpen} 
         />
