@@ -38,30 +38,30 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
       <DialogContent className="sm:max-w-[650px] max-h-[80vh] overflow-hidden flex flex-col" dir="rtl">
         <TaskDiscussionHeader task={task} />
         
+        <Separator className="my-4" />
+        
+        {/* قسم المستلمات (يظهر بين معلومات المهمة ومساحة النقاش) */}
         {hasAttachments && (
-          <>
-            <div className="mt-2">
-              <h3 className="text-sm font-medium mb-2">مرفقات المهمة:</h3>
-              <div className="space-y-2">
-                <AttachmentsByCategory
-                  title="مرفقات منشئ المهمة:"
-                  attachments={creatorAttachments}
-                  bgColor="bg-blue-50"
-                  iconColor="text-blue-500"
-                  onDownload={handleDownload}
-                />
+          <div className="mb-4">
+            <h3 className="text-sm font-medium mb-2">مرفقات المهمة:</h3>
+            <div className="space-y-2">
+              <AttachmentsByCategory
+                title="مرفقات منشئ المهمة:"
+                attachments={creatorAttachments}
+                bgColor="bg-blue-50"
+                iconColor="text-blue-500"
+                onDownload={handleDownload}
+              />
 
-                <AttachmentsByCategory
-                  title="مرفقات المكلف بالمهمة:"
-                  attachments={assigneeAttachments}
-                  bgColor="bg-green-50"
-                  iconColor="text-green-500"
-                  onDownload={handleDownload}
-                />
-              </div>
+              <AttachmentsByCategory
+                title="مرفقات المكلف بالمهمة:"
+                attachments={assigneeAttachments}
+                bgColor="bg-green-50"
+                iconColor="text-green-500"
+                onDownload={handleDownload}
+              />
             </div>
-            <Separator className="my-4" />
-          </>
+          </div>
         )}
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
