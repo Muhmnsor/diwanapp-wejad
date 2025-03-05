@@ -2,9 +2,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
-import { TaskCard } from "./TaskCard";
+import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
+import { useState } from "react";
+import { Paperclip } from "lucide-react";
+import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -31,6 +34,8 @@ export const TasksContent = ({
   onStatusChange,
   projectId
 }: TasksContentProps) => {
+  const [showAttachments, setShowAttachments] = useState<string | null>(null);
+  
   if (isLoading) {
     return (
       <div className="space-y-3" dir="rtl">
@@ -99,12 +104,34 @@ export const TasksContent = ({
                   formatDate={formatDate}
                   onStatusChange={onStatusChange}
                   projectId={projectId || ''}
+                  renderActions={(task) => (
+                    <>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="px-2"
+                        onClick={() => setShowAttachments(task.id)}
+                      >
+                        <Paperclip className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </>
+                  )}
                 />
               ))}
             </TableBody>
           </Table>
         </div>
       </div>
+
+      {showAttachments && (
+        <TaskAttachmentDialog
+          task={filteredTasks.find(t => t.id === showAttachments) || filteredTasks[0]}
+          open={!!showAttachments}
+          onOpenChange={(open) => {
+            if (!open) setShowAttachments(null);
+          }}
+        />
+      )}
     </div>
   );
 };
