@@ -60,18 +60,16 @@ export const TaskActionButtons = ({
           المستلمات
         </Button>
 
-        {/* Task templates button - ensuring it's visible */}
-        {hasTemplate && onDownloadTemplate && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-            onClick={onDownloadTemplate}
-          >
-            <FileDown className="h-3.5 w-3.5" />
-            نماذج المهمة
-          </Button>
-        )}
+        {/* Task templates button - always visible */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+          onClick={onDownloadTemplate}
+        >
+          <FileDown className="h-3.5 w-3.5" />
+          نماذج المهمة
+        </Button>
       </div>
       
       <div className="flex gap-2">

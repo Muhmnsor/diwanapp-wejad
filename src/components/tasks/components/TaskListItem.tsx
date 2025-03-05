@@ -65,7 +65,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
                        (task.templates && task.templates.length > 0 ? task.templates[0].url : null);
     
     if (!templateUrl) {
-      toast.error('لا يوجد نموذج متاح لهذه المهمة');
+      toast.info('لا يوجد نموذج متاح لهذه المهمة');
       return;
     }
     
