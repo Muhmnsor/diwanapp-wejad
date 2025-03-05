@@ -12,6 +12,7 @@ interface TaskProject {
   workspace_id: string | null;
   priority: string;
   assigned_to: string | null;
+  created_at?: string | null; // Add created_at property
   // Add the properties that will be populated dynamically
   workspace_name?: string;
   assigned_user_name?: string;
@@ -31,7 +32,8 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
         due_date,
         workspace_id,
         priority,
-        assigned_to
+        assigned_to,
+        created_at
       `);
 
     if (error) {
