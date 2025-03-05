@@ -243,15 +243,15 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
           <div className="grid grid-cols-3 gap-3 mt-3">
             <div className="flex items-center gap-1 text-sm">
               <CheckSquare className="h-4 w-4 text-green-500" />
-              <span>{completedTasksCount} مهام منجزة</span>
+              <span>{completedTasksCount} منجزة</span>
             </div>
             <div className="flex items-center gap-1 text-sm">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span>{overdueTasksCount} مهام متأخرة</span>
+              <span>{overdueTasksCount} متأخرة</span>
             </div>
             <div className="flex items-center gap-1 text-sm">
               <ListTodo className="h-4 w-4 text-blue-500" />
-              <span>{totalTasksCount} إجمالي المهام</span>
+              <span>{totalTasksCount} الكل</span>
             </div>
           </div>
         </div>
