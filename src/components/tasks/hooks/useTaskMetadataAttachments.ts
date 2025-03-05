@@ -11,13 +11,26 @@ interface TaskAttachment {
   file_type?: string;
 }
 
+interface TaskDeliverable {
+  id: string;
+  file_name: string;
+  file_url: string;
+  created_at: string;
+  status?: string;
+  file_type?: string;
+  feedback?: string;
+}
+
 export function useTaskMetadataAttachments(taskId: string | undefined) {
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const [deliverables, setDeliverables] = useState<TaskDeliverable[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingDeliverables, setLoadingDeliverables] = useState(false);
 
   useEffect(() => {
     if (taskId) {
       fetchTaskAttachments();
+      fetchTaskDeliverables();
     }
   }, [taskId]);
 
@@ -63,6 +76,33 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     }
   };
 
+  // جلب المستلمات من جدول task_deliverables
+  const fetchTaskDeliverables = async () => {
+    if (!taskId) return;
+    
+    setLoadingDeliverables(true);
+    try {
+      console.log("Fetching deliverables for task:", taskId);
+      
+      const { data: taskDeliverables, error } = await supabase
+        .from("task_deliverables")
+        .select("*")
+        .eq("task_id", taskId)
+        .eq("task_table", "tasks");
+      
+      if (error) {
+        console.error("Error fetching task deliverables:", error);
+      } else {
+        console.log("Found deliverables:", taskDeliverables);
+        setDeliverables(taskDeliverables || []);
+      }
+    } catch (error) {
+      console.error("Error in fetchTaskDeliverables:", error);
+    } finally {
+      setLoadingDeliverables(false);
+    }
+  };
+
   const handleDownload = (fileUrl: string, fileName: string) => {
     // Create a temporary anchor element
     const link = document.createElement('a');
@@ -85,6 +125,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
   // إضافة وظيفة لإعادة تحميل المرفقات
   const refreshAttachments = () => {
     fetchTaskAttachments();
+    fetchTaskDeliverables();
   };
 
   return {
@@ -94,6 +135,8 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     assigneeAttachments,
     commentAttachments,
     handleDownload,
-    refreshAttachments
+    refreshAttachments,
+    deliverables,
+    loadingDeliverables
   };
 }
