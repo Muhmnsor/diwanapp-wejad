@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CommentForm } from "../comments/CommentForm";
 import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
@@ -34,14 +35,18 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
       let attachmentType = null;
 
       if (selectedFile) {
+        console.log("Starting to upload comment attachment:", selectedFile.name);
+        
         // التأكد من إضافة تصنيف 'comment' للمرفق
-        const category = (selectedFile as any).category || 'comment';
+        const category = 'comment';
         const uploadResult = await uploadAttachment(selectedFile, category);
         
         if (uploadResult && !uploadResult.error) {
           attachmentUrl = uploadResult.url;
           attachmentName = selectedFile.name;
           attachmentType = selectedFile.type;
+          
+          console.log("Comment attachment uploaded successfully:", attachmentUrl);
           
           // حفظ معلومات المرفق في قاعدة البيانات task_attachments
           await saveAttachmentReference(
@@ -142,12 +147,8 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      // ضمان تعيين تصنيف 'comment' للملف
-      const file = e.target.files[0];
-      // لا يمكن إضافة خصائص إضافية مباشرة إلى كائن File 
-      // لذلك نستخدم خاصية تُحفظ في الذاكرة
-      const fileWithCategory = Object.assign(file, { category: 'comment' });
-      setSelectedFile(fileWithCategory);
+      console.log("File selected for comment:", e.target.files[0].name);
+      setSelectedFile(e.target.files[0]);
     }
   };
 

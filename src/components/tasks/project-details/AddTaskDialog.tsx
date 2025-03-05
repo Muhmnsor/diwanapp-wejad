@@ -76,9 +76,13 @@ export function AddTaskDialog({
         for (const file of formData.attachment) {
           try {
             const fileCategory = (file as any).category || 'creator';
+            console.log("Processing attachment with category:", fileCategory);
+            
             const uploadResult = await uploadAttachment(file, fileCategory);
             
             if (uploadResult?.url) {
+              console.log("Attachment uploaded successfully:", uploadResult.url);
+              
               // حفظ معلومات المرفق في قاعدة البيانات
               await saveAttachmentReference(
                 taskData.id,

@@ -11,10 +11,12 @@ export const uploadAttachment = async (
     const fileName = `${Math.random().toString(36).substring(2, 11)}_${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
+    console.log("Uploading file:", file.name, "with category:", category);
+
     const { data, error } = await supabase.storage
       .from('task-attachments')
       .upload(filePath, file, {
-        contentType: file.type // إضافة نوع المحتوى
+        contentType: file.type
       });
 
     if (error) {
@@ -27,6 +29,8 @@ export const uploadAttachment = async (
     const { data: { publicUrl } } = supabase.storage
       .from('task-attachments')
       .getPublicUrl(filePath);
+
+    console.log("File uploaded successfully. Public URL:", publicUrl);
 
     return { 
       url: publicUrl, 
@@ -57,11 +61,11 @@ export const saveAttachmentReference = async (
       file_url: fileUrl,
       file_name: fileName,
       file_type: fileType,
-      content_type: fileType,
       attachment_category: category,
       created_by: userId
     });
 
+    // تعديل هذا الجزء للتأكد من استخدام أسماء الحقول الصحيحة في قاعدة البيانات
     const { data, error } = await supabase
       .from('task_attachments')
       .insert({
@@ -69,7 +73,6 @@ export const saveAttachmentReference = async (
         file_url: fileUrl,
         file_name: fileName,
         file_type: fileType,
-        content_type: fileType,
         attachment_category: category,
         created_by: userId
       });
