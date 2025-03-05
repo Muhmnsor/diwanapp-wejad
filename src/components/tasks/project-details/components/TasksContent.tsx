@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
 import { useState } from "react";
 import { Paperclip } from "lucide-react";
@@ -82,23 +82,22 @@ export const TasksContent = ({
         <div className="p-4 bg-gray-50 border-b">
           <h3 className="font-medium">المهام</h3>
         </div>
-        <div className="border rounded-md overflow-hidden">
+        <div className="border rounded-md overflow-x-auto">
           <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead>المهمة</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead>الأولوية</TableHead>
-                <TableHead>المكلف</TableHead>
-                <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>الإجراءات</TableHead>
+                <TableHead className="w-1/3 text-right">المهمة</TableHead>
+                <TableHead className="w-1/6 text-right">الحالة</TableHead>
+                <TableHead className="w-1/6 text-right">الأولوية</TableHead>
+                <TableHead className="w-1/6 text-right">المكلف</TableHead>
+                <TableHead className="w-1/6 text-right">تاريخ الاستحقاق</TableHead>
+                <TableHead className="w-[80px] text-center">المرفقات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
-                <tr key={task.id}>
+                <TableRow key={task.id}>
                   <TaskItem
-                    key={task.id}
                     task={task}
                     getStatusBadge={getStatusBadge}
                     getPriorityBadge={getPriorityBadge}
@@ -106,17 +105,17 @@ export const TasksContent = ({
                     onStatusChange={onStatusChange}
                     projectId={projectId || ''}
                   />
-                  <td className="text-left">
+                  <TableCell className="text-center p-2 w-[80px]">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="px-2"
+                      className="px-2 mx-auto"
                       onClick={() => setShowAttachments(task.id)}
                     >
                       <Paperclip className="h-4 w-4 text-gray-500" />
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
             </TableBody>
           </Table>
