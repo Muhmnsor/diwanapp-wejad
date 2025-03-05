@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -243,7 +242,7 @@ export const deleteAttachment = async (attachmentId: string) => {
       return true;
     }
     
-    // محاولة العثور على المرفق في جدول مرفقات المهام من المحفظة
+    // مح��ولة العثور على المرفق في جدول مرفقات المهام من المحفظة
     const { data: portfolioAttachment } = await supabase
       .from('portfolio_task_attachments')
       .select('file_url')
@@ -264,6 +263,44 @@ export const deleteAttachment = async (attachmentId: string) => {
     return false;
   } catch (error) {
     console.error("Error deleting attachment:", error);
+    throw error;
+  }
+};
+
+// حفظ نموذج المهمة في قاعدة البيانات
+export const saveTaskTemplate = async (
+  taskId: string, 
+  fileUrl: string, 
+  fileName: string, 
+  fileType: string
+) => {
+  try {
+    console.log("Saving task template for task:", taskId);
+    console.log("File details:", { fileName, fileType });
+    
+    // الحصول على معرف المستخدم الحالي
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // حفظ النموذج في جدول نماذج المهمة
+    const { data, error } = await supabase
+      .from('task_templates')
+      .insert({
+        task_id: taskId,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_type: fileType,
+        created_by: user?.id,
+        task_table: 'tasks'
+      });
+      
+    if (error) {
+      console.error("Error saving to task_templates:", error);
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error saving task template:", error);
     throw error;
   }
 };
