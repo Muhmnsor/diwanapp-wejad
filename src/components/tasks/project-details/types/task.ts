@@ -11,4 +11,8 @@ export interface Task {
   created_at: string;
   stage_id: string | null;
   stage_name?: string;
+  // Add missing properties for templates and attachments
+  attachment_url?: string | null;
+  form_template?: string | null;
+  templates?: Array<{ url: string }> | null;
 }

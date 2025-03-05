@@ -23,8 +23,12 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
   
-  // Check if task has template files (simplified version - you might need to adjust based on your data structure)
-  const hasTemplateFiles = task.attachment_url || task.form_template || (task.templates && task.templates.length > 0);
+  // Check if task has template files (with proper optional chaining)
+  const hasTemplateFiles = Boolean(
+    task.attachment_url || 
+    task.form_template || 
+    (task.templates && task.templates.length > 0)
+  );
 
   // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
@@ -56,9 +60,9 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
 
   // Function to handle template download
   const handleTemplateDownload = () => {
-    // Check which template field exists and use it
+    // Check which template field exists and use it (with proper optional chaining)
     const templateUrl = task.attachment_url || task.form_template || 
-                         (task.templates && task.templates.length > 0 ? task.templates[0].url : null);
+                       (task.templates && task.templates.length > 0 ? task.templates[0].url : null);
     
     if (!templateUrl) {
       toast.error('لا يوجد نموذج متاح لهذه المهمة');

@@ -15,4 +15,8 @@ export interface Task {
   project_id?: string | null;
   project_name?: string | null;
   workspace_name?: string | null;
+  // Add missing properties for templates and attachments
+  attachment_url?: string | null;
+  form_template?: string | null;
+  templates?: Array<{ url: string }> | null;
 }
