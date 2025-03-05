@@ -24,13 +24,13 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     loading,
     creatorAttachments,
     assigneeAttachments,
-    handleDownload,
     deliverables,
     loadingDeliverables,
+    handleDownload,
     refreshAttachments
   } = useTaskMetadataAttachments(task.id || undefined);
 
-  // إضافة سجل للتحقق من المرفقات والمستلمات
+  // سجلات التحقق عند الفتح
   useEffect(() => {
     if (task.id && open) {
       console.log("Dialog opened for Task ID:", task.id);
@@ -74,7 +74,10 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
           </div>
           
           {loadingDeliverables ? (
-            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">جاري تحميل المستلمات...</div>
+            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded flex items-center justify-center">
+              <span className="h-4 w-4 mr-2 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></span>
+              جاري تحميل المستلمات...
+            </div>
           ) : deliverables && deliverables.length > 0 ? (
             <div className="space-y-2">
               {deliverables.map((deliverable) => (
@@ -102,7 +105,9 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
               ))}
             </div>
           ) : (
-            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">لا توجد مستلمات للمهمة - قد تحتاج إلى رفع بعض المستلمات أو تحقق من صلاحيات الوصول</div>
+            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">
+              لا توجد مستلمات للمهمة - يمكنك رفع المستلمات عبر زر "المرفقات" في صفحة المهام
+            </div>
           )}
         </div>
         

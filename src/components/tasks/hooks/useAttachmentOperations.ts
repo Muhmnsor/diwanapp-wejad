@@ -21,6 +21,85 @@ export const useAttachmentOperations = (onDeleteSuccess?: () => void, onUploadSu
   const [isUploading, setIsUploading] = useState(false);
   const { user } = useAuthStore();
 
+  // وظيفة رفع مستلم المهمة 
+  const uploadDeliverable = async (
+    file: File, 
+    taskId: string,
+    taskTable: string = 'tasks'
+  ) => {
+    try {
+      console.log('Starting deliverable upload process for task:', taskId);
+      setIsUploading(true);
+      
+      // توليد اسم فريد للملف
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${uuidv4()}.${fileExt}`;
+      const filePath = `${taskId}/deliverables/${fileName}`;
+      
+      // رفع الملف للتخزين
+      console.log('Uploading deliverable to storage:', filePath);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('task-attachments')
+        .upload(filePath, file);
+        
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`خطأ في رفع المستلم: ${uploadError.message}`);
+      }
+      
+      if (!uploadData) {
+        throw new Error('فشل في رفع المستلم: لم يتم استلام بيانات التحميل');
+      }
+      
+      console.log('Deliverable uploaded successfully:', uploadData.path);
+      
+      // الحصول على الرابط العام للملف
+      const { data: publicUrlData } = supabase.storage
+        .from('task-attachments')
+        .getPublicUrl(filePath);
+        
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        throw new Error('فشل في الحصول على الرابط العام للمستلم');
+      }
+      
+      const fileUrl = publicUrlData.publicUrl;
+      console.log('Deliverable public URL:', fileUrl);
+      
+      // حفظ مرجع الملف في قاعدة البيانات في جدول task_deliverables
+      console.log('Saving deliverable reference to database, task_id:', taskId, 'file_url:', fileUrl);
+      const { error: dbError } = await supabase
+        .from('task_deliverables')
+        .insert({
+          task_id: taskId,
+          task_table: taskTable,
+          file_url: fileUrl,
+          file_name: file.name,
+          file_type: file.type,
+          created_by: user?.id || null,
+          status: 'pending'
+        });
+        
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw new Error(`خطأ في حفظ بيانات المستلم: ${dbError.message}`);
+      }
+      
+      toast.success('تم رفع المستلم بنجاح');
+      
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in uploadDeliverable:', error);
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء رفع المستلم');
+      return false;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Function to upload attachment
   const uploadAttachment = async (
     file: File, 
@@ -181,6 +260,7 @@ export const useAttachmentOperations = (onDeleteSuccess?: () => void, onUploadSu
     isDeleting,
     isUploading,
     uploadAttachment,
+    uploadDeliverable,
     deleteAttachment,
     handleDownloadAttachment
   };

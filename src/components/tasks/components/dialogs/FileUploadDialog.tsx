@@ -1,10 +1,11 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { XCircle } from "lucide-react";
 import { Task } from "../../types/task";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useAttachmentOperations } from "../../hooks/useAttachmentOperations";
-import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Upload, FileUp, Package } from "lucide-react";
 
 interface FileUploadDialogProps {
   isOpen: boolean;
@@ -14,11 +15,12 @@ interface FileUploadDialogProps {
 
 export const FileUploadDialog = ({ isOpen, onClose, task }: FileUploadDialogProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
-  const { uploadAttachment, isUploading } = useAttachmentOperations(
+  const [fileCategory, setFileCategory] = useState("creator");
+  const [activeTab, setActiveTab] = useState("attachment");
+  const { uploadAttachment, uploadDeliverable, isUploading } = useAttachmentOperations(
     undefined,
     () => {
-      toast.success('تم رفع الملف بنجاح');
+      setSelectedFile(null);
       onClose();
     }
   );
@@ -30,72 +32,110 @@ export const FileUploadDialog = ({ isOpen, onClose, task }: FileUploadDialogProp
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !task) return;
-    
-    // Determine which table the task belongs to
-    let taskTable = 'tasks';
-    if (task.is_subtask) {
-      taskTable = 'subtasks';
-    } else if (task.workspace_id) {
-      taskTable = 'portfolio_tasks';
-    }
-    
-    const success = await uploadAttachment(
-      selectedFile, 
-      task.id,
-      'assignee', // Category for files uploaded by assignee
-      taskTable
-    );
-    
-    if (success) {
-      setSelectedFile(null);
+    if (!selectedFile || !task.id) return;
+
+    if (activeTab === "attachment") {
+      await uploadAttachment(
+        selectedFile,
+        task.id,
+        fileCategory,
+        task.is_subtask ? "subtasks" : "tasks"
+      );
+    } else {
+      await uploadDeliverable(
+        selectedFile,
+        task.id,
+        task.is_subtask ? "subtasks" : "tasks"
+      );
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-4 rounded-md w-96 max-w-full" dir="rtl">
-        <h3 className="text-lg font-medium mb-4">رفع ملف للمهمة</h3>
-        <p className="text-sm text-gray-500 mb-4">يمكنك رفع ملف واحد في كل مرة</p>
-        
-        <div className="space-y-4">
-          <div>
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="w-full border p-2 rounded"
-            />
-          </div>
-          
-          {selectedFile && (
-            <div className="text-sm bg-gray-50 p-2 rounded">
-              {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+        <DialogHeader>
+          <DialogTitle>رفع ملف</DialogTitle>
+        </DialogHeader>
+
+        <Tabs defaultValue="attachment" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="attachment" className="flex items-center gap-2">
+              <FileUp className="h-4 w-4" />
+              مرفق عادي
+            </TabsTrigger>
+            <TabsTrigger value="deliverable" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              مستلم المهمة
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="attachment">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">نوع المرفق:</label>
+                <select
+                  value={fileCategory}
+                  onChange={(e) => setFileCategory(e.target.value)}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="creator">مرفق منشئ المهمة</option>
+                  <option value="assignee">مرفق المكلف بالمهمة</option>
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">اختر ملفًا:</label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-          )}
-          
-          <div className="flex justify-end space-x-2 space-x-reverse">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                onClose();
-                setSelectedFile(null);
-              }}
-            >
-              إلغاء
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-            >
-              {isUploading ? 'جاري الرفع...' : 'رفع الملف'}
-            </Button>
-          </div>
+          </TabsContent>
+
+          <TabsContent value="deliverable">
+            <div className="space-y-4">
+              <div className="bg-amber-50 p-3 rounded-md text-sm border border-amber-200 mb-2">
+                <p className="font-medium text-amber-700">معلومات عن المستلمات:</p>
+                <p className="text-amber-600 mt-1">المستلمات هي الملفات النهائية التي يتم تسليمها كإنجاز للمهمة، وتخضع للمراجعة والاعتماد من منشئ المهمة.</p>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">اختر ملف المستلم:</label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end gap-2 mt-2">
+          <Button variant="outline" onClick={onClose} disabled={isUploading}>
+            إلغاء
+          </Button>
+          <Button
+            onClick={handleUpload}
+            disabled={!selectedFile || isUploading}
+            className="flex items-center gap-2"
+          >
+            {isUploading ? (
+              <>
+                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                جاري الرفع...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" />
+                {activeTab === "attachment" ? "رفع المرفق" : "رفع المستلم"}
+              </>
+            )}
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
