@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
+import { TaskAttachmentButtons } from "../../components/attachments/TaskAttachmentButtons";
 
 interface TaskCardProps {
   task: Task;
@@ -144,15 +145,19 @@ export const TaskCard = ({
               )
             )}
             
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowDiscussion(true)}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              مناقشة
-            </Button>
+            <div className="flex items-center gap-2">
+              <TaskAttachmentButtons task={task} />
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowDiscussion(true)}
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                مناقشة
+              </Button>
+            </div>
           </div>
           
           {showSubtasks && (
