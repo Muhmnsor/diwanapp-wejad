@@ -28,11 +28,12 @@ export const UserNav = () => {
 
   return (
     <Button
-      variant="ghost"
+      variant="outline"
+      size="sm"
       onClick={handleLogout}
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100 hover:text-red-600 hover:border-red-200"
     >
-      <LogOut className="h-4 w-4" />
+      <LogOut className="h-4 w-4 text-primary" />
       <span className="hidden md:inline">تسجيل الخروج</span>
     </Button>
   );

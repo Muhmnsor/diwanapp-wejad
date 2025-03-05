@@ -86,8 +86,8 @@ export const TopHeader = () => {
             <Logo />
             <div className="flex items-center justify-center gap-2 mt-1 xs:mt-0 md:mt-0 flex-wrap xs:flex-nowrap">
               {isAuthenticated && user && (
-                <div className="flex items-center gap-2 text-sm text-gray-600 ms-2">
-                  <User className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-md shadow-sm ms-2">
+                  <User className="h-4 w-4 text-primary" />
                   <span>{displayName || user.email || 'مستخدم'}</span>
                 </div>
               )}
@@ -117,7 +117,7 @@ export const TopHeader = () => {
                 <div className="flex gap-6 items-center">
                   <Link 
                     to="/tasks#overview" 
-                    className={`flex items-center gap-2 cursor-pointer ${activeTab === "overview" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
+                    className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "overview" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("overview")}
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -126,7 +126,7 @@ export const TopHeader = () => {
                   
                   <Link 
                     to="/tasks#workspaces" 
-                    className={`flex items-center gap-2 cursor-pointer ${activeTab === "workspaces" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
+                    className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "workspaces" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("workspaces")}
                   >
                     <FolderKanban className="h-4 w-4" />
@@ -135,7 +135,7 @@ export const TopHeader = () => {
 
                   <Link 
                     to="/tasks#yearly-plan" 
-                    className={`flex items-center gap-2 cursor-pointer ${activeTab === "yearly-plan" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
+                    className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "yearly-plan" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("yearly-plan")}
                   >
                     <Calendar className="h-4 w-4" />
@@ -144,7 +144,7 @@ export const TopHeader = () => {
                   
                   <Link 
                     to="/tasks#reports" 
-                    className={`flex items-center gap-2 cursor-pointer ${activeTab === "reports" ? "text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
+                    className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}
                     onClick={() => handleTabChange("reports")}
                   >
                     <FileText className="h-4 w-4" />
