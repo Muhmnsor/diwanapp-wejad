@@ -49,7 +49,7 @@ export const CommentForm = ({
           />
           <div className="absolute left-2 bottom-2">
             <input type="file" id={inputId} className="hidden" onChange={onFileChange} accept="image/*,.pdf,.docx,.xlsx" />
-            <Button type="button" variant="ghost" size="sm" className="h-6 hover:bg-accent/10 rounded-full" onClick={() => document.getElementById(inputId)?.click()}>
+            <Button type="button" variant="ghost" size="sm" className="h-6 hover:bg-accent/10 rounded-full" onClick={() => document.getElementById(inputId)?.click()} title="إرفاق ملف">
               <Paperclip className="h-4 w-4" />
             </Button>
           </div>
@@ -58,12 +58,12 @@ export const CommentForm = ({
           <div className="flex gap-2 items-center">
             {selectedFile && <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <span className="truncate max-w-[120px]">{selectedFile.name}</span>
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={onFileRemove}>
+                <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={onFileRemove} title="إزالة المرفق">
                   <X className="h-3 w-3" />
                 </Button>
               </div>}
           </div>
-          <Button onClick={onSubmit} disabled={isSubmitting || !text.trim()} className="rounded-full text-sm" size="sm">
+          <Button onClick={onSubmit} disabled={isSubmitting || (!text.trim() && !selectedFile)} className="rounded-full text-sm" size="sm">
             {submitLabel}
           </Button>
         </div>

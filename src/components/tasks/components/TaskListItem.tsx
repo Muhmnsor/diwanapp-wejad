@@ -87,6 +87,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
             size="sm" 
             className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
             onClick={() => setShowDiscussion(true)}
+            title="مناقشة المهمة وإرفاق الملفات"
           >
             <MessageCircle className="h-3.5 w-3.5" />
             مناقشة
