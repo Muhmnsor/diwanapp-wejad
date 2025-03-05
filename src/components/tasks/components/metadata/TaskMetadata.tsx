@@ -9,6 +9,8 @@ interface TaskMetadataProps {
   isSubtask: boolean;
   parentTaskId?: string | null;
   taskId?: string | null;
+  showFileUploadButton?: boolean;
+  onFileUpload?: () => void;
 }
 
 export const TaskMetadata = ({ 
@@ -16,7 +18,9 @@ export const TaskMetadata = ({
   projectName, 
   isSubtask, 
   parentTaskId, 
-  taskId 
+  taskId,
+  showFileUploadButton,
+  onFileUpload
 }: TaskMetadataProps) => {
   const {
     loading,
@@ -33,6 +37,8 @@ export const TaskMetadata = ({
         projectName={projectName}
         isSubtask={isSubtask}
         parentTaskId={parentTaskId}
+        showFileUploadButton={showFileUploadButton}
+        onFileUpload={onFileUpload}
       />
 
       <AttachmentsByCategory

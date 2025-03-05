@@ -8,7 +8,7 @@ import { TasksEmptyState } from "./components/TasksEmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Paperclip, Upload } from "lucide-react";
+import { Paperclip, Upload, MessageCircle } from "lucide-react";
 import { TaskAttachmentDialog } from "./components/dialogs/TaskAttachmentDialog";
 import { useAttachmentOperations } from "./hooks/useAttachmentOperations";
 

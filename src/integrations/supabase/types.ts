@@ -2708,6 +2708,81 @@ export type Database = {
           },
         ]
       }
+      task_deliverables: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          feedback: string | null
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          status: string | null
+          task_id: string
+          task_table: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          feedback?: string | null
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          status?: string | null
+          task_id: string
+          task_table?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          feedback?: string | null
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          status?: string | null
+          task_id?: string
+          task_table?: string
+        }
+        Relationships: []
+      }
+      task_discussion_attachments: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          task_id: string
+          task_table: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          task_id: string
+          task_table?: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          task_id?: string
+          task_table?: string
+        }
+        Relationships: []
+      }
       task_history: {
         Row: {
           action: string
@@ -2802,6 +2877,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      task_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          task_id: string
+          task_table: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          task_id: string
+          task_table?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          task_id?: string
+          task_table?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {

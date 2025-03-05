@@ -21,6 +21,19 @@ const Tasks = () => {
       setActiveTab('overview');
     }
 
+    // Add custom CSS for task list item buttons
+    const style = document.createElement('style');
+    style.textContent = `
+      .task-list-item-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .task-list-item-buttons .file-upload-btn {
+        margin-left: 0.5rem;
+      }
+    `;
+    document.head.appendChild(style);
+
     const handleHashChange = () => {
       const newHash = window.location.hash.replace('#', '');
       setActiveTab(newHash || 'overview');
@@ -29,6 +42,7 @@ const Tasks = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
+      document.head.removeChild(style);
     };
   }, []);
 
