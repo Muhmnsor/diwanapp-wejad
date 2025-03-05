@@ -15,13 +15,8 @@ interface FileUploadDialogProps {
 export const FileUploadDialog = ({ isOpen, onClose, task }: FileUploadDialogProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { uploadDeliverable, isUploading } = useAttachmentOperations(
+    undefined,
     () => {
-      // This callback will be executed after successful deletion
-      console.log("Delete callback called");
-    },
-    () => {
-      // This callback will be executed after successful upload
-      console.log("Upload callback executed successfully");
       setSelectedFile(null);
       onClose();
     }
@@ -36,22 +31,10 @@ export const FileUploadDialog = ({ isOpen, onClose, task }: FileUploadDialogProp
   const handleUpload = async () => {
     if (!selectedFile || !task.id) return;
     
-    console.log("Starting deliverable upload for task:", task.id);
-    console.log("Is task a subtask?", task.is_subtask);
-    
-    let taskTable = 'tasks';
-    if (task.is_subtask) {
-      taskTable = 'subtasks';
-    } else if (task.workspace_id) {
-      taskTable = 'portfolio_tasks';
-    }
-    
-    console.log("Using task table:", taskTable);
-    
     await uploadDeliverable(
       selectedFile,
       task.id,
-      taskTable
+      task.is_subtask ? "subtasks" : "tasks"
     );
   };
 

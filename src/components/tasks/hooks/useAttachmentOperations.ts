@@ -29,7 +29,6 @@ export const useAttachmentOperations = (onDeleteSuccess?: () => void, onUploadSu
   ) => {
     try {
       console.log('Starting deliverable upload process for task:', taskId);
-      console.log('Using task table:', taskTable);
       setIsUploading(true);
       
       // توليد اسم فريد للملف
@@ -67,7 +66,7 @@ export const useAttachmentOperations = (onDeleteSuccess?: () => void, onUploadSu
       console.log('Deliverable public URL:', fileUrl);
       
       // حفظ مرجع الملف في قاعدة البيانات في جدول task_deliverables
-      console.log('Saving deliverable reference to database, task_id:', taskId, 'file_url:', fileUrl, 'task_table:', taskTable);
+      console.log('Saving deliverable reference to database, task_id:', taskId, 'file_url:', fileUrl);
       const { error: dbError } = await supabase
         .from('task_deliverables')
         .insert({
@@ -88,7 +87,6 @@ export const useAttachmentOperations = (onDeleteSuccess?: () => void, onUploadSu
       toast.success('تم رفع المستلم بنجاح');
       
       if (onUploadSuccess) {
-        console.log('Calling upload success callback');
         onUploadSuccess();
       }
       

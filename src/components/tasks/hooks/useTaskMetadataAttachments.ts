@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -102,8 +103,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
       const { data, error } = await supabase
         .from("task_deliverables")
         .select("*")
-        .eq("task_id", taskId)
-        .order('created_at', { ascending: false });
+        .eq("task_id", taskId);
       
       if (error) {
         console.error("Error fetching task deliverables:", error);
@@ -141,7 +141,6 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
 
   // إضافة وظيفة لإعادة تحميل المرفقات
   const refreshAttachments = () => {
-    console.log("Refreshing attachments and deliverables");
     setLastRefreshed(Date.now());
   };
 
