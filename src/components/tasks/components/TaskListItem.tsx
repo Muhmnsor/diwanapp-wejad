@@ -6,6 +6,7 @@ import {
   Clock,
   CalendarClock,
   XCircle,
+  Paperclip,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Task } from "../types/task";
@@ -14,6 +15,9 @@ import { TaskHeader } from "./header/TaskHeader";
 import { TaskMetadata } from "./metadata/TaskMetadata";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { uploadAttachment } from "../services/uploadService";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface TaskListItemProps {
   task: Task;
@@ -24,6 +28,9 @@ interface TaskListItemProps {
 export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemProps) => {
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showAttachmentDialog, setShowAttachmentDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const currentStatus = task.status || "pending";
 
   // Custom function to handle status change
@@ -67,6 +74,61 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleFileRemove = () => {
+    setSelectedFile(null);
+  };
+
+  const handleUploadAttachment = async () => {
+    if (!selectedFile) return;
+    
+    setIsUploading(true);
+    try {
+      // Upload the file
+      const uploadResult = await uploadAttachment(selectedFile);
+      
+      if (!uploadResult || uploadResult.error) {
+        throw new Error("فشل رفع الملف");
+      }
+      
+      // Add attachment record to database
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      
+      const attachmentData = {
+        task_id: task.id,
+        name: selectedFile.name,
+        url: uploadResult.url,
+        content_type: selectedFile.type,
+        size: selectedFile.size,
+        created_by: userId,
+      };
+      
+      const { error } = await supabase
+        .from('task_attachments')
+        .insert(attachmentData);
+        
+      if (error) throw error;
+      
+      // Show success notification
+      toast.success('تم رفع المرفق بنجاح');
+      
+      // Close dialog and reset state
+      setSelectedFile(null);
+      setShowAttachmentDialog(false);
+    } catch (error) {
+      console.error("Error uploading attachment:", error);
+      toast.error('حدث خطأ أثناء رفع المرفق');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />
@@ -90,6 +152,16 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           >
             <MessageCircle className="h-3.5 w-3.5" />
             مناقشة
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowAttachmentDialog(true)}
+          >
+            <Paperclip className="h-3.5 w-3.5" />
+            إرفاق ملف
           </Button>
         </div>
         
@@ -132,11 +204,72 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         </div>
       </div>
       
+      {/* Task Discussion Dialog */}
       <TaskDiscussionDialog 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
       />
+      
+      {/* Attachment Upload Dialog */}
+      <Dialog open={showAttachmentDialog} onOpenChange={setShowAttachmentDialog}>
+        <DialogContent className="sm:max-w-[450px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>إرفاق ملف</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              {selectedFile ? (
+                <div className="flex items-center justify-between p-2 border rounded-md">
+                  <span className="text-sm truncate max-w-[250px]">{selectedFile.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleFileRemove}
+                    className="h-8 w-8 p-0"
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-md">
+                  <Paperclip className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">اسحب الملف هنا أو اضغط لاختيار ملف</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('attachment-upload')?.click()}
+                  >
+                    اختيار ملف
+                  </Button>
+                  <Input
+                    id="attachment-upload"
+                    type="file"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowAttachmentDialog(false)}
+              >
+                إلغاء
+              </Button>
+              <Button
+                onClick={handleUploadAttachment}
+                disabled={!selectedFile || isUploading}
+              >
+                {isUploading ? 'جاري الرفع...' : 'رفع الملف'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
