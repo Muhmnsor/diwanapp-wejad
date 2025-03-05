@@ -1,5 +1,5 @@
 
-import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown } from "lucide-react";
+import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TaskActionButtonsProps {
@@ -9,10 +9,8 @@ interface TaskActionButtonsProps {
   onOpenFileUploader: () => void;
   onOpenAttachments: () => void;
   onStatusChange: (status: string) => void;
-  onDownloadTemplate?: () => void; // New prop for downloading template
   onDelete?: (taskId: string) => void;
   taskId: string;
-  hasTemplate?: boolean; // To check if the task has a template
 }
 
 export const TaskActionButtons = ({
@@ -22,10 +20,8 @@ export const TaskActionButtons = ({
   onOpenFileUploader,
   onOpenAttachments,
   onStatusChange,
-  onDownloadTemplate,
   onDelete,
-  taskId,
-  hasTemplate = false // Default to false if not provided
+  taskId
 }: TaskActionButtonsProps) => {
   return (
     <div className="flex justify-between items-center mt-3 pt-3 border-t">
@@ -59,18 +55,6 @@ export const TaskActionButtons = ({
           <Paperclip className="h-3.5 w-3.5" />
           المستلمات
         </Button>
-
-        {hasTemplate && onDownloadTemplate && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-            onClick={onDownloadTemplate}
-          >
-            <FileDown className="h-3.5 w-3.5" />
-            نماذج المهمة
-          </Button>
-        )}
       </div>
       
       <div className="flex gap-2">

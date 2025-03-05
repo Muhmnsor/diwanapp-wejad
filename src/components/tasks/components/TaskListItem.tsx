@@ -22,9 +22,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
-  
-  // Check if task has template files (simplified version - you might need to adjust based on your data structure)
-  const hasTemplateFiles = task.attachment_url || task.form_template || (task.templates && task.templates.length > 0);
 
   // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
@@ -54,29 +51,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
-  // Function to handle template download
-  const handleTemplateDownload = () => {
-    // Check which template field exists and use it
-    const templateUrl = task.attachment_url || task.form_template || 
-                         (task.templates && task.templates.length > 0 ? task.templates[0].url : null);
-    
-    if (!templateUrl) {
-      toast.error('لا يوجد نموذج متاح لهذه المهمة');
-      return;
-    }
-    
-    // Create a temporary link to download the file
-    const link = document.createElement('a');
-    link.href = templateUrl;
-    link.target = '_blank';
-    link.download = `template-${task.id}.pdf`; // Default name, adjust as needed
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast.success('جاري تنزيل نموذج المهمة');
-  };
-
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />
@@ -97,8 +71,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         onOpenFileUploader={() => setIsUploadDialogOpen(true)}
         onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
         onStatusChange={handleStatusChange}
-        onDownloadTemplate={handleTemplateDownload}
-        hasTemplate={hasTemplateFiles}
         onDelete={onDelete}
         taskId={task.id}
       />
