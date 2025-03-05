@@ -40,9 +40,6 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     setRefreshKey(prev => prev + 1);
   };
 
-  // التحقق من وجود مستلمات
-  const hasDeliverables = deliverables && deliverables.length > 0;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[650px] max-h-[80vh] overflow-hidden flex flex-col" dir="rtl">
@@ -50,10 +47,13 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         
         <Separator className="my-4" />
         
-        {/* قسم المستلمات (يظهر بين معلومات المهمة ومساحة النقاش) */}
-        {hasDeliverables ? (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium mb-2">مستلمات المهمة:</h3>
+        {/* قسم المستلمات (يظهر دائمًا، مع رسائل مختلفة حسب الحالة) */}
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2">مستلمات المهمة:</h3>
+          
+          {loadingDeliverables ? (
+            <div className="text-sm text-gray-500">جاري تحميل المستلمات...</div>
+          ) : deliverables && deliverables.length > 0 ? (
             <div className="space-y-2">
               {deliverables.map((deliverable) => (
                 <div key={deliverable.id} className="flex items-center bg-purple-50 rounded p-1.5 text-sm">
@@ -79,10 +79,10 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
                 </div>
               ))}
             </div>
-          </div>
-        ) : loadingDeliverables ? (
-          <div className="mb-4 text-sm text-gray-500">جاري تحميل المستلمات...</div>
-        ) : null}
+          ) : (
+            <div className="text-sm text-gray-500">لا توجد مستلمات للمهمة</div>
+          )}
+        </div>
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
           {/* استخدام refreshKey كمفتاح لإعادة تحميل المحتوى عند إضافة تعليق جديد */}
