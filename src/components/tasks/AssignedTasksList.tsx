@@ -7,10 +7,15 @@ import { TasksLoadingState } from "./components/TasksLoadingState";
 import { TasksEmptyState } from "./components/TasksEmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Paperclip } from "lucide-react";
+import { TaskAttachmentDialog } from "./components/dialogs/TaskAttachmentDialog";
 
 export const AssignedTasksList = () => {
   const { tasks, loading, error, refetch } = useAssignedTasks();
   const [showCompleted, setShowCompleted] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   
   const handleStatusChange = async (taskId: string, status: string) => {
     try {
@@ -48,6 +53,11 @@ export const AssignedTasksList = () => {
       console.error("Error updating task status:", error);
       toast.error('حدث خطأ أثناء تحديث حالة المهمة');
     }
+  };
+  
+  const openAttachmentsDialog = (task: Task) => {
+    setSelectedTask(task);
+    setIsAttachmentDialogOpen(true);
   };
   
   if (loading) {
@@ -94,16 +104,36 @@ export const AssignedTasksList = () => {
       </div>
       <div className="space-y-4">
         {filteredTasks.map((task) => (
-          <TaskListItem 
-            key={task.id} 
-            task={task} 
-            onStatusChange={handleStatusChange}
-          />
+          <div key={task.id}>
+            <TaskListItem 
+              key={task.id} 
+              task={task} 
+              onStatusChange={handleStatusChange}
+            />
+            {/* Add attachment button for each task (won't modify protected component) */}
+            <div className="mt-1 flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-gray-500"
+                onClick={() => openAttachmentsDialog(task)}
+              >
+                <Paperclip className="h-3 w-3 ml-1" />
+                المرفقات
+              </Button>
+            </div>
+          </div>
         ))}
       </div>
+      
+      {/* Attachment dialog */}
+      {selectedTask && (
+        <TaskAttachmentDialog
+          task={selectedTask}
+          open={isAttachmentDialogOpen}
+          onOpenChange={setIsAttachmentDialogOpen}
+        />
+      )}
     </>
   );
 };
-
-// Don't forget to add Button import
-import { Button } from "@/components/ui/button";

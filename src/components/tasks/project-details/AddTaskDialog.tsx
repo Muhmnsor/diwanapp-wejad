@@ -39,6 +39,13 @@ export function AddTaskDialog({
     try {
       console.log("Submitting task data:", formData);
       
+      // Check if unified_task_attachments exists first
+      const { data: tableExists } = await supabase.rpc('check_table_exists', {
+        table_name: 'unified_task_attachments'
+      });
+      
+      console.log("Table check result:", tableExists);
+      
       // إنشاء المهمة أولاً
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
@@ -139,4 +146,4 @@ export function AddTaskDialog({
       </DialogContent>
     </Dialog>
   );
-}
+};

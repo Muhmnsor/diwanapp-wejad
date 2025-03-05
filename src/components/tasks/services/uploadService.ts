@@ -78,18 +78,27 @@ export const saveAttachmentReference = async (
     
     console.log("Saving attachment reference:", attachmentData);
 
-    // Try direct insert to unified_task_attachments
-    console.log("Trying to insert into unified_task_attachments table");
-    const { data: unifiedData, error: unifiedError } = await supabase
-      .from('unified_task_attachments')
-      .insert(attachmentData)
-      .select();
+    // Check if the unified_task_attachments table exists
+    const { data: tableExists } = await supabase.rpc('check_table_exists', {
+      table_name: 'unified_task_attachments'
+    });
+    
+    if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
+      console.log("Using unified_task_attachments table");
+      const { data: unifiedData, error: unifiedError } = await supabase
+        .from('unified_task_attachments')
+        .insert(attachmentData)
+        .select();
+        
+      if (unifiedError) {
+        console.error("Error saving to unified_task_attachments:", unifiedError.message);
+        throw unifiedError;
+      }
       
-    if (unifiedError) {
-      console.error("Error saving to unified_task_attachments:", unifiedError.message);
-      
-      // Try using task_attachments table as fallback
-      console.log("Trying fallback to task_attachments table");
+      console.log("Attachment reference saved to unified_task_attachments:", unifiedData);
+      return unifiedData;
+    } else {
+      console.log("Using task_attachments table (fallback)");
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('task_attachments')
         .insert(attachmentData)
@@ -103,11 +112,49 @@ export const saveAttachmentReference = async (
       console.log("Attachment reference saved to task_attachments:", fallbackData);
       return fallbackData;
     }
-    
-    console.log("Attachment reference saved to unified_task_attachments:", unifiedData);
-    return unifiedData;
   } catch (error) {
     console.error("Error in saveAttachmentReference:", error);
     throw error;
+  }
+};
+
+// إضافة دالة مساعدة للتحقق من وجود مرفقات
+export const getTaskAttachments = async (taskId: string) => {
+  try {
+    // Check if unified_task_attachments exists first
+    const { data: tableExists } = await supabase.rpc('check_table_exists', {
+      table_name: 'unified_task_attachments'
+    });
+    
+    if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
+      const { data, error } = await supabase
+        .from('unified_task_attachments')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching from unified_task_attachments:", error);
+        return [];
+      }
+      
+      return data || [];
+    } else {
+      const { data, error } = await supabase
+        .from('task_attachments')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching from task_attachments:", error);
+        return [];
+      }
+      
+      return data || [];
+    }
+  } catch (error) {
+    console.error("Error fetching task attachments:", error);
+    return [];
   }
 };
