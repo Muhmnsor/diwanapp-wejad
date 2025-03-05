@@ -58,12 +58,12 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         idea_id: ideaId,
         attachment_url: comment.attachment_url,
         attachment_name: comment.attachment_name,
-        user: {
-          id: comment.profiles?.id,
-          email: comment.profiles?.email,
-          name: comment.profiles?.full_name,
-          avatar_url: comment.profiles?.avatar_url
-        }
+        user: comment.profiles ? {
+          id: comment.profiles.id,
+          email: comment.profiles.email,
+          name: comment.profiles.full_name,
+          avatar_url: comment.profiles.avatar_url
+        } : null
       }));
       
       setComments(transformedComments);
@@ -164,12 +164,12 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         idea_id: ideaId,
         attachment_url: data.attachment_url,
         attachment_name: data.attachment_name,
-        user: {
-          id: data.profiles?.id,
-          email: data.profiles?.email,
-          name: data.profiles?.full_name,
-          avatar_url: data.profiles?.avatar_url
-        }
+        user: data.profiles ? {
+          id: data.profiles.id,
+          email: data.profiles.email,
+          name: data.profiles.full_name,
+          avatar_url: data.profiles.avatar_url
+        } : null
       };
       
       setComments(prevComments => [...prevComments, newComment]);
