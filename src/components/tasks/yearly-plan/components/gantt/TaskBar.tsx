@@ -1,4 +1,3 @@
-
 import { getDaysInMonth, startOfMonth, endOfMonth } from 'date-fns';
 import { getTaskStatusColor, getTimeBasedProgress } from '../../utils/dateUtils';
 
@@ -41,10 +40,19 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const width = ((rightDay - leftDay) / daysInMonth) * 100;
   
   // Calculate progress value (between 0-100)
-  // First use completion_percentage if available, otherwise calculate based on time
-  const progressValue = task.completion_percentage !== undefined && task.completion_percentage !== null
-    ? task.completion_percentage
-    : getTimeBasedProgress(startDate, endDate);
+  // First check if status is completed, then use completion_percentage if available, otherwise calculate based on time
+  let progressValue = 0;
+  
+  if (task.status === 'completed') {
+    // If task is marked as completed, show 100% regardless of other fields
+    progressValue = 100;
+  } else if (task.completion_percentage !== undefined && task.completion_percentage !== null) {
+    // If completion_percentage is available, use it
+    progressValue = task.completion_percentage;
+  } else {
+    // Otherwise fall back to time-based calculation
+    progressValue = getTimeBasedProgress(startDate, endDate);
+  }
   
   // Get base color based on status
   const statusColor = getTaskStatusColor(task.status);
@@ -64,7 +72,7 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
         'منخفضة'
-      })`}
+      }) - ${displayPercentage}% مكتمل`}
     >
       {/* Background bar (full project timeline) */}
       <div className={`absolute inset-0 ${statusColor.replace('bg-', 'bg-').concat('/20')} rounded-md border border-gray-300`} />
