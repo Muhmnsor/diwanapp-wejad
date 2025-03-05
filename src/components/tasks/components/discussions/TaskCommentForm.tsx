@@ -33,6 +33,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
       let attachmentUrl = null;
       let attachmentName = null;
       let attachmentType = null;
+      let attachmentError = false;
 
       if (selectedFile) {
         console.log("Starting to upload comment attachment:", selectedFile.name);
@@ -60,8 +61,13 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
             console.log("Attachment reference saved for comment");
           } catch (refError) {
             console.error("Failed to save attachment reference:", refError);
+            attachmentError = true;
             // استمر في تنفيذ الكود حتى مع وجود خطأ في حفظ مرجع الملف
           }
+        } else {
+          console.error("Upload result error:", uploadResult?.error);
+          attachmentError = true;
+          // استمر في إنشاء التعليق حتى مع وجود خطأ في رفع الملف
         }
       }
       
@@ -73,7 +79,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         attachment_url: attachmentUrl,
         attachment_name: attachmentName,
         attachment_type: attachmentType,
-        task_table: 'portfolio_tasks' // القيمة الافتراضية، سيتم تحديثها أدناه
+        task_table: 'tasks' // القيمة الافتراضية، سيتم تحديثها أدناه
       };
 
       // تحديد نوع جدول المهمة بناءً على وجود المهمة في الجداول المختلفة
@@ -142,7 +148,11 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
       // تحديث التعليقات
       onCommentAdded();
       
-      toast.success("تم إضافة التعليق بنجاح");
+      if (attachmentError) {
+        toast.warning("تم إضافة التعليق ولكن قد يكون هناك مشكلة في رفع المرفق");
+      } else {
+        toast.success("تم إضافة التعليق بنجاح");
+      }
     } catch (error) {
       console.error("Error adding comment:", error);
       toast.error("حدث خطأ أثناء إضافة التعليق");

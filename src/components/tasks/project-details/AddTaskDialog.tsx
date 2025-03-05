@@ -72,6 +72,7 @@ export function AddTaskDialog({
       console.log("Task created successfully:", taskData);
 
       // معالجة المرفقات إذا وجدت
+      let attachmentErrors = false;
       if (formData.attachment && formData.attachment.length > 0 && taskData) {
         for (const file of formData.attachment) {
           try {
@@ -95,17 +96,26 @@ export function AddTaskDialog({
                 console.log("Attachment reference saved successfully");
               } catch (refError) {
                 console.error("Error saving attachment reference:", refError);
+                attachmentErrors = true;
                 // استمر في تنفيذ الكود حتى مع وجود خطأ في حفظ مرجع الملف
               }
+            } else {
+              attachmentErrors = true;
             }
           } catch (uploadError) {
             console.error("Error handling attachment:", uploadError);
-            toast.error("حدث خطأ أثناء معالجة المرفق");
+            attachmentErrors = true;
+            // استمر في تنفيذ المهمة حتى مع وجود خطأ في رفع الملف
           }
         }
       }
 
-      toast.success("تم إضافة المهمة بنجاح");
+      if (attachmentErrors) {
+        toast.warning("تم إنشاء المهمة ولكن قد تكون بعض المرفقات لم تُرفع بشكل صحيح");
+      } else {
+        toast.success("تم إضافة المهمة بنجاح");
+      }
+      
       onTaskAdded();
       onOpenChange(false);
     } catch (error) {
