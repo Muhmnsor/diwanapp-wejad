@@ -10,7 +10,7 @@ interface YearNavigationProps {
 export const YearNavigation = ({ year, onYearChange }: YearNavigationProps) => {
   return (
     <div className="flex justify-between items-center">
-      <h2 className="text-2xl font-bold">الخطة السنوية {year}</h2>
+      <h2 className="text-2xl font-bold">الخطة السنوية للمشاريع والمهام {year}</h2>
       <div className="flex gap-2">
         <Button 
           variant="outline"

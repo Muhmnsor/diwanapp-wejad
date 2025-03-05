@@ -21,6 +21,8 @@ export const getTaskStatusColor = (status: string) => {
       return 'bg-blue-500';
     case 'pending':
       return 'bg-amber-500';
+    case 'delayed':
+      return 'bg-red-500';
     default:
       return 'bg-gray-300';
   }
