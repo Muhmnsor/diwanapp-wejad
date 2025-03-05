@@ -26,13 +26,14 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
   const [deliverables, setDeliverables] = useState<TaskDeliverable[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDeliverables, setLoadingDeliverables] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(Date.now());
 
   useEffect(() => {
     if (taskId) {
       fetchTaskAttachments();
       fetchTaskDeliverables();
     }
-  }, [taskId]);
+  }, [taskId, lastRefreshed]);
 
   const fetchTaskAttachments = async () => {
     if (!taskId) return;
@@ -76,7 +77,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     }
   };
 
-  // جلب المستلمات من جدول task_deliverables
+  // تحسين طريقة جلب المستلمات من جدول task_deliverables
   const fetchTaskDeliverables = async () => {
     if (!taskId) return;
     
@@ -84,12 +85,30 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
-      // هذا المسار المحدد لجلب المستلمات
+      // استخدام طريقة مباشرة وبسيطة لجلب المستلمات
       const { data: taskDeliverables, error } = await supabase
         .from("task_deliverables")
         .select("*")
-        .eq("task_id", taskId)
-        .eq("task_table", "tasks");
+        .eq("task_id", taskId);
+      
+      // محاولة جلب المستلمات من جدول موحد إذا لم يتم العثور عليها
+      if (!taskDeliverables || taskDeliverables.length === 0) {
+        console.log("No deliverables found with default query, trying unified query...");
+        const { data: unifiedDeliverables, error: unifiedError } = await supabase
+          .from("task_deliverables")
+          .select("*")
+          .eq("task_id", taskId)
+          .eq("task_table", "tasks");
+        
+        if (unifiedError) {
+          console.error("Error fetching unified task deliverables:", unifiedError);
+        } else if (unifiedDeliverables && unifiedDeliverables.length > 0) {
+          console.log("Found deliverables with unified query:", unifiedDeliverables);
+          setDeliverables(unifiedDeliverables);
+          setLoadingDeliverables(false);
+          return;
+        }
+      }
       
       if (error) {
         console.error("Error fetching task deliverables:", error);
@@ -125,8 +144,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
 
   // إضافة وظيفة لإعادة تحميل المرفقات
   const refreshAttachments = () => {
-    fetchTaskAttachments();
-    fetchTaskDeliverables();
+    setLastRefreshed(Date.now());
   };
 
   return {

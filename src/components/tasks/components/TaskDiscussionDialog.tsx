@@ -8,6 +8,8 @@ import { TaskDiscussionContent } from "./discussions/TaskDiscussionContent";
 import { TaskCommentForm } from "./discussions/TaskCommentForm";
 import { useTaskMetadataAttachments } from "../hooks/useTaskMetadataAttachments";
 import { AttachmentsByCategory } from "./metadata/AttachmentsByCategory";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
@@ -24,20 +26,28 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     assigneeAttachments,
     handleDownload,
     deliverables,
-    loadingDeliverables
+    loadingDeliverables,
+    refreshAttachments
   } = useTaskMetadataAttachments(task.id || undefined);
 
   // إضافة سجل للتحقق من المرفقات والمستلمات
   useEffect(() => {
-    console.log("Task ID:", task.id);
-    console.log("Creator Attachments:", creatorAttachments);
-    console.log("Assignee Attachments:", assigneeAttachments);
-    console.log("Deliverables:", deliverables);
+    if (task.id) {
+      console.log("Task ID:", task.id);
+      console.log("Creator Attachments:", creatorAttachments);
+      console.log("Assignee Attachments:", assigneeAttachments);
+      console.log("Deliverables:", deliverables);
+    }
   }, [task.id, creatorAttachments, assigneeAttachments, deliverables]);
 
   const handleCommentAdded = () => {
     // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleRefreshDeliverables = () => {
+    console.log("Refreshing deliverables for task:", task.id);
+    refreshAttachments();
   };
 
   return (
@@ -47,12 +57,23 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         
         <Separator className="my-4" />
         
-        {/* قسم المستلمات (يظهر دائمًا، مع رسائل مختلفة حسب الحالة) */}
+        {/* قسم المستلمات مع زر تحديث */}
         <div className="mb-4">
-          <h3 className="text-sm font-medium mb-2">مستلمات المهمة:</h3>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-medium">مستلمات المهمة:</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0" 
+              onClick={handleRefreshDeliverables}
+              title="تحديث المستلمات"
+            >
+              <RefreshCcw className="h-3.5 w-3.5" />
+            </Button>
+          </div>
           
           {loadingDeliverables ? (
-            <div className="text-sm text-gray-500">جاري تحميل المستلمات...</div>
+            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">جاري تحميل المستلمات...</div>
           ) : deliverables && deliverables.length > 0 ? (
             <div className="space-y-2">
               {deliverables.map((deliverable) => (
@@ -80,7 +101,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
               ))}
             </div>
           ) : (
-            <div className="text-sm text-gray-500">لا توجد مستلمات للمهمة</div>
+            <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">لا توجد مستلمات للمهمة</div>
           )}
         </div>
         
