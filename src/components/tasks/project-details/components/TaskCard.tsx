@@ -123,19 +123,21 @@ export const TaskCard = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="px-2"
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShowAttachments(true)}
             >
-              <Paperclip className="h-3.5 w-3.5 text-gray-500" />
+              <Paperclip className="h-3.5 w-3.5" />
+              المرفقات
             </Button>
             
             <Button 
               variant="ghost" 
               size="sm" 
-              className="px-2"
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShowDiscussion(true)}
             >
-              <MessageCircle className="h-3.5 w-3.5 text-gray-500" />
+              <MessageCircle className="h-3.5 w-3.5" />
+              مناقشة
             </Button>
 
             {canChangeStatus() && (
@@ -143,21 +145,23 @@ export const TaskCard = ({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-2"
+                  className="h-7 px-3"
                   onClick={() => handleStatusUpdate('completed')}
                   disabled={isUpdating}
                 >
-                  <Check className="h-3.5 w-3.5 text-green-500" />
+                  <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
+                  إكمال المهمة
                 </Button>
               ) : (
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-2"
+                  className="h-7 px-3"
                   onClick={() => handleStatusUpdate('in_progress')}
                   disabled={isUpdating}
                 >
-                  <Clock className="h-3.5 w-3.5 text-amber-500" />
+                  <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
+                  إعادة فتح المهمة
                 </Button>
               )
             )}
