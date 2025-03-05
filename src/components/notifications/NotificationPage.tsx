@@ -1,8 +1,7 @@
-
 import React, { useEffect } from 'react';
 import { TopHeader } from '@/components/layout/TopHeader';
 import { Footer } from '@/components/layout/Footer';
-import { useNotifications, NotificationType, NotificationSort } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { NotificationItem } from './NotificationItem';
 import { Button } from '@/components/ui/button';
 import { CheckCheck, Loader2, Search, Filter, SortDesc } from 'lucide-react';
@@ -173,4 +172,3 @@ function renderNotificationContent(loading: boolean, notifications: any[], unrea
     </div>
   );
 }
-
