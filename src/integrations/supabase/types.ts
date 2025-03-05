@@ -2851,6 +2851,42 @@ export type Database = {
         }
         Relationships: []
       }
+      unified_task_attachments: {
+        Row: {
+          attachment_category: string | null
+          created_at: string | null
+          created_by: string | null
+          file_name: string
+          file_type: string | null
+          file_url: string
+          id: string
+          task_id: string
+          task_table: string
+        }
+        Insert: {
+          attachment_category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          id?: string
+          task_id: string
+          task_table?: string
+        }
+        Update: {
+          attachment_category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          task_id?: string
+          task_table?: string
+        }
+        Relationships: []
+      }
       unified_task_comments: {
         Row: {
           attachment_name: string | null
