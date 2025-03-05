@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
@@ -15,6 +15,9 @@ export interface Notification {
   created_at: string;
 }
 
+export type NotificationType = 'all' | 'event' | 'project' | 'task' | 'user' | 'comment';
+export type NotificationSort = 'newest' | 'oldest' | 'unread';
+
 interface NotificationContextProps {
   notifications: Notification[];
   unreadCount: number;
@@ -22,6 +25,12 @@ interface NotificationContextProps {
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   fetchNotifications: () => Promise<void>;
+  filterType: NotificationType;
+  setFilterType: (type: NotificationType) => void;
+  sortBy: NotificationSort;
+  setSortBy: (sort: NotificationSort) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextProps | undefined>(undefined);
@@ -37,10 +46,11 @@ export const useNotifications = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [filterType, setFilterType] = useState<NotificationType>('all');
+  const [sortBy, setSortBy] = useState<NotificationSort>('newest');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { user, isAuthenticated } = useAuthStore();
   
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   const fetchNotifications = async () => {
     if (!isAuthenticated || !user) return;
     
@@ -113,6 +123,48 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  // Filter, sort and search notifications
+  const filteredNotifications = useMemo(() => {
+    return notifications
+      .filter(notification => {
+        // Filter by type
+        if (filterType !== 'all' && notification.notification_type !== filterType) {
+          return false;
+        }
+        
+        // Search in title and message
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          return (
+            notification.title.toLowerCase().includes(query) || 
+            notification.message.toLowerCase().includes(query)
+          );
+        }
+        
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by selected method
+        if (sortBy === 'newest') {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        } else if (sortBy === 'oldest') {
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        } else if (sortBy === 'unread') {
+          // Sort unread first, then by date
+          if (a.read !== b.read) {
+            return a.read ? 1 : -1;
+          }
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+        
+        return 0;
+      });
+  }, [notifications, filterType, sortBy, searchQuery]);
+  
+  const unreadCount = useMemo(() => {
+    return notifications.filter(n => !n.read).length;
+  }, [notifications]);
+
   // Subscribe to real-time notifications
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -150,12 +202,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [isAuthenticated, user]);
 
   const value = {
-    notifications,
+    notifications: filteredNotifications,
     unreadCount,
     loading,
     markAsRead,
     markAllAsRead,
-    fetchNotifications
+    fetchNotifications,
+    filterType,
+    setFilterType,
+    sortBy,
+    setSortBy,
+    searchQuery,
+    setSearchQuery
   };
 
   return (
