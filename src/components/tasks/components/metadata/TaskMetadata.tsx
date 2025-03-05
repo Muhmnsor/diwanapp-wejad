@@ -31,7 +31,7 @@ export const TaskMetadata = ({
   } = useTaskMetadataAttachments(taskId || undefined);
 
   return (
-    <div className="flex flex-wrap items-start gap-4">
+    <div className="flex flex-wrap items-center gap-4">
       <BasicMetadata 
         dueDate={dueDate}
         projectName={projectName}
@@ -39,7 +39,6 @@ export const TaskMetadata = ({
         parentTaskId={parentTaskId}
         showFileUploadButton={showFileUploadButton}
         onFileUpload={onFileUpload}
-        taskId={taskId}
       />
 
       <AttachmentsByCategory
@@ -47,6 +46,14 @@ export const TaskMetadata = ({
         attachments={creatorAttachments}
         bgColor="bg-blue-50"
         iconColor="text-blue-500"
+        onDownload={handleDownload}
+      />
+
+      <AttachmentsByCategory
+        title="مرفقات المكلف بالمهمة:"
+        attachments={assigneeAttachments}
+        bgColor="bg-green-50"
+        iconColor="text-green-500"
         onDownload={handleDownload}
       />
 
