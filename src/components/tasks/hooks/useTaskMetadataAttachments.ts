@@ -99,11 +99,15 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
+      // تحديد نوع الجدول
+      let taskTable = 'tasks';
+      
       // استعلام مباشر عن جدول المستلمات الجديد
       const { data, error } = await supabase
         .from("task_deliverables")
         .select("*")
-        .eq("task_id", taskId);
+        .eq("task_id", taskId)
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error("Error fetching task deliverables:", error);
@@ -141,6 +145,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
 
   // إضافة وظيفة لإعادة تحميل المرفقات
   const refreshAttachments = () => {
+    console.log("Refreshing attachments and deliverables");
     setLastRefreshed(Date.now());
   };
 
