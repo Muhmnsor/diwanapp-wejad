@@ -117,8 +117,8 @@ export const TechnicalDocumentation = () => {
               <div className="border rounded-md p-3 bg-muted">
                 <p className="mb-2">متطلبات البيئة:</p>
                 <code className="text-sm block bg-card p-2 rounded">
-                  Node.js >= 18.x<br />
-                  npm >= 9.x
+                  Node.js &gt;= 18.x<br />
+                  npm &gt;= 9.x
                 </code>
                 <p className="my-2">تثبيت التبعيات:</p>
                 <code className="text-sm block bg-card p-2 rounded">
