@@ -1,27 +1,29 @@
 
-import { useInAppNotifications } from '@/hooks/useInAppNotifications';
+import { supabase } from '@/integrations/supabase/client';
+import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
+import { toast } from 'sonner';
 
 interface IdeaNotificationParams {
   ideaId: string;
   ideaTitle: string;
   userId: string;
-  updatedByUserId?: string;
-  updatedByUserName?: string;
+  createdByUserName?: string;
+  actionType: 'comment' | 'status' | 'vote' | 'decision';
+  statusValue?: string;
 }
 
 export const useIdeaNotifications = () => {
   const { createNotification } = useInAppNotifications();
 
-  // إشعار إضافة تعليق على فكرة
   const sendIdeaCommentNotification = async (params: IdeaNotificationParams) => {
     try {
-      let message = `تمت إضافة تعليق جديد على الفكرة "${params.ideaTitle}"`;
-      if (params.updatedByUserName) {
-        message += ` بواسطة ${params.updatedByUserName}`;
+      let message = `تم إضافة تعليق جديد على فكرة "${params.ideaTitle}"`;
+      if (params.createdByUserName) {
+        message += ` بواسطة ${params.createdByUserName}`;
       }
-      
+
       return await createNotification({
-        title: `تعليق جديد على فكرة`,
+        title: `تعليق جديد على الفكرة`,
         message,
         notification_type: 'comment',
         related_entity_id: params.ideaId,
@@ -34,29 +36,27 @@ export const useIdeaNotifications = () => {
     }
   };
 
-  // إشعار تغيير حالة فكرة
-  const sendIdeaStatusUpdateNotification = async (params: IdeaNotificationParams, newStatus: string) => {
+  const sendIdeaStatusUpdateNotification = async (params: IdeaNotificationParams) => {
     try {
-      // ترجمة حالة الفكرة
       const statusTranslation: Record<string, string> = {
-        'under_review': 'قيد المراجعة',
-        'approved': 'معتمدة',
+        'pending': 'قيد الانتظار',
+        'in_review': 'قيد المراجعة',
+        'approved': 'تمت الموافقة',
         'rejected': 'مرفوضة',
-        'implemented': 'منفذة',
-        'archived': 'مؤرشفة'
+        'on_hold': 'معلقة'
       };
       
-      const statusText = statusTranslation[newStatus] || newStatus;
+      const statusText = params.statusValue ? (statusTranslation[params.statusValue] || params.statusValue) : '';
       
-      let message = `تم تحديث حالة الفكرة "${params.ideaTitle}" إلى ${statusText}`;
-      if (params.updatedByUserName) {
-        message += ` بواسطة ${params.updatedByUserName}`;
+      let message = `تم تحديث حالة فكرة "${params.ideaTitle}" إلى ${statusText}`;
+      if (params.createdByUserName) {
+        message += ` بواسطة ${params.createdByUserName}`;
       }
-      
+
       return await createNotification({
         title: `تحديث حالة الفكرة`,
         message,
-        notification_type: 'event', // Changed from 'idea' to 'event' to match allowed types
+        notification_type: 'user',
         related_entity_id: params.ideaId,
         related_entity_type: 'idea',
         user_id: params.userId
