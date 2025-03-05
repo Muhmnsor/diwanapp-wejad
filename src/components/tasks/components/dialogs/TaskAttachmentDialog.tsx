@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Task } from "../../types/task";
 import { useEffect, useState } from "react";
@@ -117,10 +118,7 @@ export const TaskAttachmentDialog = ({
           <div className="py-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">{task.title}</h3>
-              <Button size="sm" onClick={() => setIsUploadDialogOpen(true)} className="flex items-center gap-1">
-                <Upload className="h-4 w-4" />
-                <span>رفع ملف</span>
-              </Button>
+              {/* Upload button removed from here */}
             </div>
 
             {isLoading ? <div className="text-center py-4">جاري تحميل المرفقات...</div> : attachments.length === 0 ? <div className="text-center py-4 text-gray-500">لا توجد مرفقات لهذه المهمة</div> : <div className="space-y-4">
