@@ -76,7 +76,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     }
   };
 
-  // جلب المستلمات من جدول task_deliverables مباشرة
+  // جلب المستلمات من جدول task_deliverables
   const fetchTaskDeliverables = async () => {
     if (!taskId) return;
     
@@ -84,45 +84,20 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
-      // التأكد من وجود جدول المستلمات وإظهار تفاصيل أكثر للتصحيح
-      const { data: tableInfo, error: tableError } = await supabase
-        .from("task_deliverables")
-        .select("id", { count: 'exact', head: true });
-      
-      console.log("Task deliverables table exists:", !tableError, "Count:", tableInfo?.length);
-      
-      if (tableError) {
-        console.error("Error checking task_deliverables table:", tableError);
-      }
-      
-      // جلب المستلمات من جدول task_deliverables بشكل مباشر
       const { data: taskDeliverables, error } = await supabase
         .from("task_deliverables")
         .select("*")
-        .eq("task_id", taskId);
+        .eq("task_id", taskId)
+        .eq("task_table", "tasks");
       
       if (error) {
         console.error("Error fetching task deliverables:", error);
-        setDeliverables([]);
       } else {
-        console.log("Found deliverables for task", taskId, ":", taskDeliverables);
+        console.log("Found deliverables:", taskDeliverables);
         setDeliverables(taskDeliverables || []);
-      }
-      
-      // إضافة استعلام إضافي للتأكد من أن الاستعلام يعمل بشكل عام
-      const { data: allDeliverables, error: allError, count } = await supabase
-        .from("task_deliverables")
-        .select("*", { count: 'exact' });
-      
-      console.log("Total deliverables in the table:", count);
-      console.log("First few deliverables:", allDeliverables?.slice(0, 3));
-      
-      if (allError) {
-        console.error("Error getting all deliverables:", allError);
       }
     } catch (error) {
       console.error("Error in fetchTaskDeliverables:", error);
-      setDeliverables([]);
     } finally {
       setLoadingDeliverables(false);
     }
@@ -147,7 +122,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
   const commentAttachments = attachments.filter(att => 
     att.attachment_category === 'comment');
 
-  // إضافة وظيفة لإعادة تحميل المرفقات والمستلمات
+  // إضافة وظيفة لإعادة تحميل المرفقات
   const refreshAttachments = () => {
     fetchTaskAttachments();
     fetchTaskDeliverables();
