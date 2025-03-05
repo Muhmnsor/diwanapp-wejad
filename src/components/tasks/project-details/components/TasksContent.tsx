@@ -1,10 +1,10 @@
-
 import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
 import { TaskCard } from "./TaskCard";
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
+import { TaskAttachmentsCell } from "./TaskAttachmentsCell";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -49,7 +49,6 @@ export const TasksContent = ({
     );
   }
 
-  // إذا كان التبويب النشط هو "الكل"، فسنعرض المهام مقسمة حسب المراحل
   if (activeTab === "all" && projectStages.length > 0) {
     return (
       <div className="space-y-6" dir="rtl">
@@ -70,7 +69,6 @@ export const TasksContent = ({
     );
   }
 
-  // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى
   return (
     <div className="space-y-6" dir="rtl">
       <div className="bg-white rounded-md shadow-sm overflow-hidden border">
@@ -92,7 +90,7 @@ export const TasksContent = ({
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
-                <TaskItem
+                <TaskRow 
                   key={task.id}
                   task={task}
                   getStatusBadge={getStatusBadge}
@@ -107,5 +105,57 @@ export const TasksContent = ({
         </div>
       </div>
     </div>
+  );
+};
+
+const TaskRow = ({ 
+  task, 
+  getStatusBadge, 
+  getPriorityBadge, 
+  formatDate, 
+  onStatusChange, 
+  projectId 
+}: { 
+  task: Task;
+  getStatusBadge: (status: string) => JSX.Element;
+  getPriorityBadge: (priority: string | null) => JSX.Element | null;
+  formatDate: (date: string | null) => string;
+  onStatusChange: (taskId: string, newStatus: string) => void;
+  projectId: string;
+}) => {
+  return (
+    <tr className="border-b last:border-0">
+      <td className="p-0" colSpan={5}>
+        <div className="hidden">
+          <TaskItem
+            task={task}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={onStatusChange}
+            projectId={projectId}
+          />
+        </div>
+        <Table dir="rtl">
+          <TableBody>
+            <TableRow>
+              <TableCell>{task.title}</TableCell>
+              <TableCell>{getStatusBadge(task.status)}</TableCell>
+              <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+              <TableCell>{task.assigned_user_name || '-'}</TableCell>
+              <TableCell>{formatDate(task.due_date)}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </td>
+      <TableCell>
+        <TaskAttachmentsCell taskId={task.id} />
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2 rtl:space-x-reverse">
+          {/* The actions would be rendered here */}
+        </div>
+      </TableCell>
+    </tr>
   );
 };
