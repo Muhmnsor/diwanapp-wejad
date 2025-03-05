@@ -45,7 +45,7 @@ export const TaskActionButtons = ({
           onClick={onOpenFileUploader}
         >
           <Upload className="h-3.5 w-3.5" />
-          رفع ملف
+          رفع مستلمات
         </Button>
 
         <Button
