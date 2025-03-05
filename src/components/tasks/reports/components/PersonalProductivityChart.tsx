@@ -10,11 +10,10 @@ interface PersonalProductivityChartProps {
 
 export const PersonalProductivityChart = ({ data }: PersonalProductivityChartProps) => {
   return (
-    <div className="h-[300px] w-full" dir="rtl">
+    <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          layout="vertical"
           margin={{
             top: 20,
             right: 30,
@@ -23,8 +22,8 @@ export const PersonalProductivityChart = ({ data }: PersonalProductivityChartPro
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
-          <YAxis dataKey="name" type="category" />
+          <XAxis dataKey="name" />
+          <YAxis />
           <Tooltip
             formatter={(value) => [value, 'عدد المهام المنجزة']}
             labelFormatter={(name) => `الشهر: ${name}`}

@@ -11,7 +11,7 @@ interface TasksStatusDistributionProps {
 
 export const TasksStatusDistribution = ({ data }: TasksStatusDistributionProps) => {
   return (
-    <div className="h-[300px] w-full" dir="rtl">
+    <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -39,4 +39,3 @@ export const TasksStatusDistribution = ({ data }: TasksStatusDistributionProps) 
     </div>
   );
 };
-
