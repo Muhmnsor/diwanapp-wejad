@@ -25,28 +25,24 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
     try {
       console.log("Fetching comments for task:", task.id);
       
-      // استرجاع التعليقات من الجدول الموحد
-      const { data: unifiedComments, error: unifiedError } = await supabase
-        .from("unified_task_comments")
+      // استرجاع التعليقات من الجدول الرئيسي
+      const { data: taskComments, error: taskCommentsError } = await supabase
+        .from("task_comments")
         .select("*")
         .eq("task_id", task.id)
         .order("created_at", { ascending: true });
       
-      if (unifiedError) {
-        console.error("Error fetching from unified_task_comments:", unifiedError);
-        throw unifiedError;
+      if (taskCommentsError) {
+        console.error("Error fetching from task_comments:", taskCommentsError);
+        throw taskCommentsError;
       }
       
-      console.log("Found unified comments:", unifiedComments);
+      console.log("Found task comments:", taskComments);
       
       // للتوافق مع الكود القديم، سنقوم أيضًا بالبحث في الجداول القديمة
       const oldSources = [
         {
           table: "portfolio_task_comments",
-          field: "task_id"
-        },
-        {
-          table: "task_comments",
           field: "task_id"
         }
       ];
@@ -70,7 +66,7 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
       }
       
       // دمج التعليقات من كلا المصدرين
-      const allComments = [...(unifiedComments || []), ...(oldComments || [])];
+      const allComments = [...(taskComments || []), ...(oldComments || [])];
       console.log("Combined comments data:", allComments);
       
       // إذا كان هناك بيانات، سنقوم بتحميل معلومات المستخدمين

@@ -76,37 +76,19 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         created_by: userId,
         attachment_url: attachmentUrl,
         attachment_name: attachmentName,
-        attachment_type: attachmentType,
-        task_table: 'tasks' // القيمة الافتراضية
+        attachment_type: attachmentType
       };
       
-      console.log("Adding comment to unified_task_comments:", commentData);
+      console.log("Adding comment to task_comments:", commentData);
       
-      // Check if unified_task_comments exists first
-      const { data: tableExists } = await supabase.rpc('check_table_exists', {
-        table_name: 'unified_task_comments'
-      });
-      
-      if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
-        console.log("unified_task_comments table exists, inserting comment");
-        const { error: insertError } = await supabase
-          .from("unified_task_comments")
-          .insert(commentData);
+      // محاولة إضافة التعليق إلى جدول task_comments (تجاهل unified_task_comments)
+      const { error: insertError } = await supabase
+        .from("task_comments")
+        .insert(commentData);
           
-        if (insertError) {
-          console.error("Error details for insert:", insertError);
-          throw insertError;
-        }
-      } else {
-        console.log("unified_task_comments table doesn't exist, trying task_comments");
-        const { error: insertError } = await supabase
-          .from("task_comments")
-          .insert(commentData);
-          
-        if (insertError) {
-          console.error("Error details for insert:", insertError);
-          throw insertError;
-        }
+      if (insertError) {
+        console.error("Error details for insert:", insertError);
+        throw insertError;
       }
       
       // مسح حقل التعليق والملف بعد النجاح
