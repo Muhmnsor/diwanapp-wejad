@@ -1,9 +1,10 @@
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
+
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
@@ -20,6 +21,14 @@ interface TaskItemProps {
   projectId: string;
 }
 
+interface TaskAttachment {
+  id: string;
+  file_name: string;
+  file_url: string;
+  created_at: string;
+  created_by: string;
+}
+
 export const TaskItem = ({ 
   task, 
   getStatusBadge, 
@@ -31,8 +40,62 @@ export const TaskItem = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
+  const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
   const { user } = useAuthStore();
   
+  // جلب المرفقات الخاصة بالمكلف بالمهمة
+  useEffect(() => {
+    if (task.assigned_to) {
+      fetchAssigneeAttachment();
+    }
+  }, [task.id, task.assigned_to]);
+
+  const fetchAssigneeAttachment = async () => {
+    try {
+      // البحث أولاً في جدول portfolio_task_attachments
+      const { data: portfolioAttachments, error: portfolioError } = await supabase
+        .from("portfolio_task_attachments")
+        .select("*")
+        .eq("task_id", task.id)
+        .eq("created_by", task.assigned_to)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      // ثم البحث في جدول task_attachments
+      const { data: taskAttachments, error: taskError } = await supabase
+        .from("task_attachments")
+        .select("*")
+        .eq("task_id", task.id)
+        .eq("created_by", task.assigned_to)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      // اختيار المرفق من أحد المصدرين
+      if ((portfolioAttachments && portfolioAttachments.length > 0) || 
+          (taskAttachments && taskAttachments.length > 0)) {
+        
+        const attachment = portfolioAttachments?.length > 0 
+          ? portfolioAttachments[0] 
+          : taskAttachments![0];
+          
+        setAssigneeAttachment(attachment as TaskAttachment);
+      }
+    } catch (error) {
+      console.error("Error fetching assignee attachment:", error);
+    }
+  };
+
+  const handleDownload = (fileUrl: string, fileName: string) => {
+    // إنشاء عنصر رابط مؤقت
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const canChangeStatus = () => {
     return (
       user?.id === task.assigned_to || 
@@ -151,18 +214,35 @@ export const TaskItem = ({
           </div>
         </TableCell>
         <TableCell>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-0 h-7 w-7"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDiscussion(true);
-            }}
-            title="مناقشة المهمة"
-          >
-            <MessageCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-0 h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDiscussion(true);
+              }}
+              title="مناقشة المهمة"
+            >
+              <MessageCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </Button>
+            
+            {assigneeAttachment && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name);
+                }}
+                title="تنزيل مرفق المكلف"
+              >
+                <Download className="h-4 w-4 text-blue-500 hover:text-blue-700" />
+              </Button>
+            )}
+          </div>
         </TableCell>
       </TableRow>
       
