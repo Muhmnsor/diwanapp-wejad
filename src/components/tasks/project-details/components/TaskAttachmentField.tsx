@@ -47,7 +47,7 @@ export const TaskAttachmentField = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="attachment">المستلمات</Label>
+      <Label htmlFor="attachment">المرفقات</Label>
       <div className="flex flex-col gap-2">
         <div className="flex items-center">
           <Button 
@@ -57,7 +57,7 @@ export const TaskAttachmentField = ({
             className="relative"
           >
             <Paperclip className="h-4 w-4 ml-2" />
-            إضافة مستلمات
+            إضافة مرفق
           </Button>
           <input
             type="file"
