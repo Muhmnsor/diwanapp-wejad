@@ -91,14 +91,13 @@ export const TasksContent = ({
                 <TableHead>الأولوية</TableHead>
                 <TableHead>المكلف</TableHead>
                 <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead>الإجراءات</TableHead>
+                <TableHead className="text-center">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
                 <tr key={task.id}>
                   <TaskItem
-                    key={task.id}
                     task={task}
                     getStatusBadge={getStatusBadge}
                     getPriorityBadge={getPriorityBadge}
@@ -106,11 +105,11 @@ export const TasksContent = ({
                     onStatusChange={onStatusChange}
                     projectId={projectId || ''}
                   />
-                  <td className="text-left">
+                  <td className="text-center p-2">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="px-2"
+                      className="px-2 mx-1"
                       onClick={() => setShowAttachments(task.id)}
                     >
                       <Paperclip className="h-4 w-4 text-gray-500" />
