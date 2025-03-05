@@ -81,6 +81,14 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     toast.success('جاري تنزيل نموذج المهمة');
   };
 
+  // Check template files and log for debugging
+  console.log('Task templates:', {
+    hasTemplateFiles,
+    attachmentUrl: task.attachment_url,
+    formTemplate: task.form_template,
+    templates: task.templates
+  });
+
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />

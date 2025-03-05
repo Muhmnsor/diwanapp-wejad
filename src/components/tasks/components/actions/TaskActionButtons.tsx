@@ -9,10 +9,10 @@ interface TaskActionButtonsProps {
   onOpenFileUploader: () => void;
   onOpenAttachments: () => void;
   onStatusChange: (status: string) => void;
-  onDownloadTemplate?: () => void; // New prop for downloading template
+  onDownloadTemplate?: () => void; // Template download handler
   onDelete?: (taskId: string) => void;
   taskId: string;
-  hasTemplate?: boolean; // To check if the task has a template
+  hasTemplate?: boolean; // Flag to control template button visibility
 }
 
 export const TaskActionButtons = ({
@@ -60,6 +60,7 @@ export const TaskActionButtons = ({
           المستلمات
         </Button>
 
+        {/* Task templates button - ensuring it's visible */}
         {hasTemplate && onDownloadTemplate && (
           <Button
             variant="ghost"
@@ -74,6 +75,7 @@ export const TaskActionButtons = ({
       </div>
       
       <div className="flex gap-2">
+        {/* Status change buttons */}
         {currentStatus !== "completed" ? (
           <Button 
             variant="outline" 
