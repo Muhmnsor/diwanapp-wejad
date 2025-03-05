@@ -9,7 +9,7 @@ interface TaskActionButtonsProps {
   onOpenFileUploader: () => void;
   onOpenAttachments: () => void;
   onStatusChange: (status: string) => void;
-  onOpenTemplates: () => void; // New prop for templates dialog
+  onOpenTemplates: () => void;
   onDelete?: (taskId: string) => void;
   taskId: string;
 }
@@ -21,7 +21,7 @@ export const TaskActionButtons = ({
   onOpenFileUploader,
   onOpenAttachments,
   onStatusChange,
-  onOpenTemplates, // New prop for templates dialog
+  onOpenTemplates,
   onDelete,
   taskId,
 }: TaskActionButtonsProps) => {
@@ -58,7 +58,6 @@ export const TaskActionButtons = ({
           المستلمات
         </Button>
 
-        {/* Task templates button */}
         <Button
           variant="ghost"
           size="sm"
