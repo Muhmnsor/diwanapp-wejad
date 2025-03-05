@@ -31,6 +31,8 @@ interface NotificationContextProps {
   setSortBy: (sort: NotificationSort) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  showUnreadOnly: boolean;
+  setShowUnreadOnly: (show: boolean) => void;
 }
 
 const NotificationContext = createContext<NotificationContextProps | undefined>(undefined);
@@ -49,6 +51,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [filterType, setFilterType] = useState<NotificationType>('all');
   const [sortBy, setSortBy] = useState<NotificationSort>('newest');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showUnreadOnly, setShowUnreadOnly] = useState<boolean>(false);
   const { user, isAuthenticated } = useAuthStore();
   
   const fetchNotifications = async () => {
@@ -213,7 +216,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     sortBy,
     setSortBy,
     searchQuery,
-    setSearchQuery
+    setSearchQuery,
+    showUnreadOnly,
+    setShowUnreadOnly
   };
 
   return (
@@ -222,3 +227,4 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     </NotificationContext.Provider>
   );
 };
+

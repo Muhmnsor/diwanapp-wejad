@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Loader2, CheckCheck, Filter } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const NotificationList: React.FC = () => {
   const { 
@@ -15,8 +14,18 @@ export const NotificationList: React.FC = () => {
     loading, 
     markAllAsRead, 
     filterType, 
-    setFilterType 
+    setFilterType,
+    showUnreadOnly,
+    setShowUnreadOnly
   } = useNotifications();
+  
+  const handleReadStatusChange = (value: string) => {
+    setShowUnreadOnly(value === 'unread');
+  };
+  
+  const displayedNotifications = showUnreadOnly 
+    ? notifications.filter(n => !n.read) 
+    : notifications;
   
   if (loading) {
     return (
@@ -54,6 +63,23 @@ export const NotificationList: React.FC = () => {
             </SelectContent>
           </Select>
           
+          <Select 
+            defaultValue="all" 
+            onValueChange={handleReadStatusChange}
+            value={showUnreadOnly ? 'unread' : 'all'}
+          >
+            <SelectTrigger className="h-7 text-xs w-28">
+              <CheckCheck className="h-3 w-3 ml-1" />
+              <SelectValue placeholder="جميع الإشعارات" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">جميع الإشعارات</SelectItem>
+              <SelectItem value="unread">
+                غير المقروءة {unreadCount > 0 && `(${unreadCount})`}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
@@ -68,34 +94,13 @@ export const NotificationList: React.FC = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="w-full grid grid-cols-2 h-8 text-xs">
-          <TabsTrigger value="all">الكل</TabsTrigger>
-          <TabsTrigger value="unread">
-            غير المقروءة {unreadCount > 0 && `(${unreadCount})`}
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="mt-0">
-          <ScrollArea className="h-[300px]">
-            <div className="flex flex-col divide-y">
-              {notifications.map((notification) => (
-                <NotificationItem key={notification.id} notification={notification} />
-              ))}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-        
-        <TabsContent value="unread" className="mt-0">
-          <ScrollArea className="h-[300px]">
-            <div className="flex flex-col divide-y">
-              {notifications.filter(n => !n.read).map((notification) => (
-                <NotificationItem key={notification.id} notification={notification} />
-              ))}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+      <ScrollArea className="h-[300px]">
+        <div className="flex flex-col divide-y">
+          {displayedNotifications.map((notification) => (
+            <NotificationItem key={notification.id} notification={notification} />
+          ))}
+        </div>
+      </ScrollArea>
       
       <div className="p-2 border-t">
         <Button 
@@ -110,3 +115,4 @@ export const NotificationList: React.FC = () => {
     </div>
   );
 };
+

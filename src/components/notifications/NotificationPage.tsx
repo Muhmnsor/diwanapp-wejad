@@ -9,7 +9,6 @@ import { CheckCheck, Loader2, Search, Filter, SortDesc } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const NotificationPage: React.FC = () => {
   const { 
@@ -23,7 +22,9 @@ export const NotificationPage: React.FC = () => {
     sortBy,
     setSortBy,
     searchQuery,
-    setSearchQuery
+    setSearchQuery,
+    showUnreadOnly,
+    setShowUnreadOnly
   } = useNotifications();
   
   useEffect(() => {
@@ -38,6 +39,14 @@ export const NotificationPage: React.FC = () => {
   const handleSortChange = (value: string) => {
     setSortBy(value as NotificationSort);
   };
+
+  const handleReadStatusChange = (value: string) => {
+    setShowUnreadOnly(value === 'unread');
+  };
+  
+  const displayedNotifications = showUnreadOnly 
+    ? notifications.filter(n => !n.read) 
+    : notifications;
   
   return (
     <div className="min-h-screen flex flex-col" dir="rtl">
@@ -72,7 +81,7 @@ export const NotificationPage: React.FC = () => {
                   />
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <div className="w-40">
                     <Select value={filterType} onValueChange={handleFilterChange}>
                       <SelectTrigger>
@@ -103,39 +112,34 @@ export const NotificationPage: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  <div className="w-40">
+                    <Select defaultValue="all" onValueChange={handleReadStatusChange}>
+                      <SelectTrigger>
+                        <CheckCheck className="h-4 w-4 ml-2" />
+                        <SelectValue placeholder="حالة القراءة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">جميع الإشعارات</SelectItem>
+                        <SelectItem value="unread">غير المقروءة {unreadCount > 0 && `(${unreadCount})`}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Tabs defaultValue="all">
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">الكل</TabsTrigger>
-              <TabsTrigger value="unread">غير المقروءة {unreadCount > 0 && `(${unreadCount})`}</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="all">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle>جميع الإشعارات</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {renderNotificationContent(loading, notifications, false)}
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="unread">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle>الإشعارات غير المقروءة</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {renderNotificationContent(loading, notifications.filter(n => !n.read), true)}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>
+                {showUnreadOnly ? 'الإشعارات غير المقروءة' : 'جميع الإشعارات'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {renderNotificationContent(loading, displayedNotifications, showUnreadOnly)}
+            </CardContent>
+          </Card>
         </div>
       </div>
       <Footer />
@@ -169,3 +173,4 @@ function renderNotificationContent(loading: boolean, notifications: any[], unrea
     </div>
   );
 }
+
