@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { Paperclip } from 'lucide-react';
-import { getTaskAttachments } from '../../services/uploadService';
-import { useAuthStore } from '@/store/refactored-auth';
+import { useAuthStore } from '@/store/authStore';
 import { AttachmentItem } from './AttachmentItem';
 import { AttachmentExpandButton } from './AttachmentExpandButton';
 import { AttachmentListLoading } from './AttachmentListLoading';
 import { useAttachmentOperations, Attachment } from '../../hooks/useAttachmentOperations';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TaskAttachmentsListProps {
   taskId: string;
@@ -29,15 +29,34 @@ export const TaskAttachmentsList = ({
   const [isLoading, setIsLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const { user } = useAuthStore();
-  const { handleDeleteAttachment } = useAttachmentOperations(onDelete);
+  const { deleteAttachment, isDeleting, handleDownloadAttachment } = useAttachmentOperations(
+    () => {
+      fetchAttachments();
+      if (onDelete) {
+        onDelete();
+      }
+    }
+  );
   
   const fetchAttachments = async () => {
     setIsLoading(true);
     try {
-      const data = await getTaskAttachments(taskId);
+      console.log('Fetching attachments for task:', taskId);
+      
+      // Fetch attachments from unified_task_attachments table
+      const { data, error } = await supabase
+        .from('unified_task_attachments')
+        .select('*')
+        .eq('task_id', taskId);
+      
+      if (error) {
+        console.error('Error fetching attachments:', error);
+        throw error;
+      }
+      
       setAttachments(data as Attachment[]);
     } catch (error) {
-      console.error('Error fetching attachments:', error);
+      console.error('Error in fetchAttachments:', error);
     } finally {
       setIsLoading(false);
     }
@@ -54,8 +73,7 @@ export const TaskAttachmentsList = ({
   };
 
   const handleDelete = async (id: string) => {
-    await handleDeleteAttachment(id);
-    setAttachments(attachments.filter(att => att.id !== id));
+    await deleteAttachment(id);
   };
   
   if (isLoading) {
@@ -85,6 +103,8 @@ export const TaskAttachmentsList = ({
             showCategory={showCategory}
             canDelete={canDelete(attachment.created_by)}
             onDelete={handleDelete}
+            isDeleting={isDeleting[attachment.id]}
+            onDownload={handleDownloadAttachment}
           />
         ))}
         

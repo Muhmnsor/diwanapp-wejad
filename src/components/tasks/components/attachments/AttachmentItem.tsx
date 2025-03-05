@@ -1,115 +1,76 @@
 
-import { Badge } from "@/components/ui/badge";
+import { FileIcon, Download, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { File, Download, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ar } from "date-fns/locale";
-
-interface Attachment {
-  id: string;
-  task_id: string;
-  file_url: string;
-  file_name: string;
-  file_type: string | null;
-  attachment_category: string;
-  created_by: string | null;
-  created_at: string;
-}
+import { Attachment } from "../../hooks/useAttachmentOperations";
 
 interface AttachmentItemProps {
   attachment: Attachment;
   showCategory?: boolean;
-  canDelete: boolean;
+  canDelete?: boolean;
+  isDeleting?: boolean;
   onDelete: (id: string) => Promise<void>;
+  onDownload: (fileUrl: string, fileName: string) => void;
 }
 
 export const AttachmentItem = ({
   attachment,
   showCategory = true,
-  canDelete,
-  onDelete
+  canDelete = false,
+  isDeleting = false,
+  onDelete,
+  onDownload
 }: AttachmentItemProps) => {
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'creator':
-        return 'منشئ المهمة';
-      case 'assignee':
-        return 'المكلف';
-      case 'comment':
-        return 'تعليق';
+  const getFileTypeColor = () => {
+    const fileType = attachment.file_type?.split('/')[0] || '';
+    
+    switch (fileType) {
+      case 'image':
+        return 'bg-blue-50 text-blue-500';
+      case 'application':
+        return 'bg-amber-50 text-amber-500';
+      case 'text':
+        return 'bg-green-50 text-green-500';
       default:
-        return category;
+        return 'bg-gray-50 text-gray-500';
     }
   };
   
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'creator':
-        return 'bg-blue-100 text-blue-800';
-      case 'assignee':
-        return 'bg-green-100 text-green-800';
-      case 'comment':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const handleDownload = () => {
-    window.open(attachment.file_url, '_blank');
-  };
-
+  const bgColorClass = getFileTypeColor();
+  
   return (
-    <div className="flex items-center justify-between bg-gray-50 p-2 rounded-md text-sm border border-gray-100">
-      <div className="flex items-center min-w-0">
-        <File className="h-4 w-4 ml-2 text-gray-500 shrink-0" />
-        <span className="truncate max-w-[150px]">{attachment.file_name}</span>
-        
+    <div className={`flex items-center ${bgColorClass.split(' ')[0]} rounded p-2 text-sm`}>
+      <FileIcon className={`h-4 w-4 ${bgColorClass.split(' ')[1]} ml-2 flex-shrink-0`} />
+      <div className="flex-1 min-w-0">
+        <div className="truncate">{attachment.file_name}</div>
         {showCategory && attachment.attachment_category && (
-          <Badge 
-            variant="outline" 
-            className={`mr-2 text-xs ${getCategoryColor(attachment.attachment_category)}`}
-          >
-            {getCategoryLabel(attachment.attachment_category)}
-          </Badge>
+          <div className="text-xs text-gray-500">{attachment.attachment_category}</div>
         )}
       </div>
-      
-      <div className="flex items-center gap-1 shrink-0">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-xs text-gray-500 ml-2">
-                {formatDistanceToNow(new Date(attachment.created_at), { 
-                  addSuffix: true,
-                  locale: ar 
-                })}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>تم الرفع {new Date(attachment.created_at).toLocaleString('ar')}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <a 
-          href={attachment.file_url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => onDownload(attachment.file_url, attachment.file_name)}
+          title="تنزيل الملف"
         >
-          <Download className="h-4 w-4 text-gray-600" />
-        </a>
+          <Download className="h-3.5 w-3.5" />
+        </Button>
         
         {canDelete && (
-          <Button
+          <Button 
             variant="ghost" 
             size="sm"
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 text-destructive"
             onClick={() => onDelete(attachment.id)}
+            disabled={isDeleting}
+            title="حذف الملف"
           >
-            <Trash2 className="h-4 w-4 text-red-500" />
+            {isDeleting ? (
+              <span className="h-3.5 w-3.5 animate-spin">⏳</span>
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
           </Button>
         )}
       </div>

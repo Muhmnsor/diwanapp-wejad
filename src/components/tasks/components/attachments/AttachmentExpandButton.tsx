@@ -1,25 +1,36 @@
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AttachmentExpandButtonProps {
   showAll: boolean;
-  setShowAll: (show: boolean) => void;
+  setShowAll: (showAll: boolean) => void;
   totalCount: number;
 }
 
-export const AttachmentExpandButton = ({ 
-  showAll, 
-  setShowAll, 
-  totalCount 
+export const AttachmentExpandButton = ({
+  showAll,
+  setShowAll,
+  totalCount
 }: AttachmentExpandButtonProps) => {
   return (
-    <Button 
-      variant="link" 
-      size="sm" 
-      className="text-xs" 
+    <Button
+      variant="ghost"
+      size="sm"
+      className="w-full text-xs flex items-center justify-center gap-1"
       onClick={() => setShowAll(!showAll)}
     >
-      {showAll ? 'عرض أقل' : `عرض كل المرفقات (${totalCount})`}
+      {showAll ? (
+        <>
+          <span>عرض أقل</span>
+          <ChevronUp className="h-3.5 w-3.5" />
+        </>
+      ) : (
+        <>
+          <span>عرض الكل ({totalCount})</span>
+          <ChevronDown className="h-3.5 w-3.5" />
+        </>
+      )}
     </Button>
   );
 };
