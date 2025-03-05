@@ -25,7 +25,7 @@ export const PersonalTasksReports = () => {
   }
   
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">التقارير الشخصية</h3>
         <div className="flex space-x-2 rtl:space-x-reverse">
