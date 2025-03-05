@@ -56,7 +56,7 @@ export const useIdeaNotifications = () => {
       return await createNotification({
         title: `تحديث حالة الفكرة`,
         message,
-        notification_type: 'idea',
+        notification_type: 'event', // Changed from 'idea' to 'event' to match allowed types
         related_entity_id: params.ideaId,
         related_entity_type: 'idea',
         user_id: params.userId
