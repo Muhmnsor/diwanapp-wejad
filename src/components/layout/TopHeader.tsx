@@ -10,6 +10,7 @@ import { Calendar, FolderKanban, LayoutDashboard, FileText, User } from "lucide-
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
 export const TopHeader = () => {
   const location = useLocation();
   const {
@@ -22,7 +23,6 @@ export const TopHeader = () => {
   const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
   const isTasksPage = location.pathname.includes('/tasks') || location.pathname.includes('/portfolios') || location.pathname.includes('/portfolio-workspaces');
 
-  // Fetch user display name
   useEffect(() => {
     const fetchUserDisplayName = async () => {
       if (isAuthenticated && user) {
@@ -42,7 +42,6 @@ export const TopHeader = () => {
     fetchUserDisplayName();
   }, [isAuthenticated, user]);
 
-  // Set active tab based on URL hash or default to "overview"
   useEffect(() => {
     if (isTasksPage) {
       const hash = window.location.hash.replace('#', '');
@@ -58,21 +57,20 @@ export const TopHeader = () => {
     }
   }, [location.pathname, location.hash, isTasksPage]);
 
-  // Update URL hash when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     window.location.hash = value;
   };
+
   return <div className="w-full bg-white border-b">
       <div className="w-full px-2 sm:container sm:mx-auto sm:px-4">
         <div className="flex flex-col" dir="rtl">
-          {/* Logo and Main Navigation */}
           <div className="flex flex-col xs:flex-row md:flex-row md:justify-between md:items-center py-2 md:py-4 gap-2 xs:gap-4">
             <Logo />
             <div className="flex items-center justify-center gap-2 mt-1 xs:mt-0 md:mt-0 flex-wrap xs:flex-nowrap">
-              {isAuthenticated && user && <div className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md shadow-sm ms-2 py-[5px] mx-[5px] px-0">
+              {isAuthenticated && user && <div className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md shadow-sm ms-2 py-2 px-3">
                   <User className="h-4 w-4 text-primary" />
-                  <span className="mx-0 py-0 px-[105px] text-xs">{displayName || user.email || 'مستخدم'}</span>
+                  <span className="whitespace-nowrap text-xs">{displayName || user.email || 'مستخدم'}</span>
                 </div>}
               <HomeButton isEventOrProjectDetails={isEventOrProjectDetails} isAuthenticated={isAuthenticated} />
               <Navigation />
@@ -80,12 +78,10 @@ export const TopHeader = () => {
             </div>
           </div>
 
-          {/* Admin Actions Bar - Only show on events pages and NOT on tasks pages */}
           {isEventsPage && !isTasksPage && <div className="w-full">
               <AdminActions isAuthenticated={isAuthenticated} isEventsPage={isEventsPage} />
             </div>}
 
-          {/* Tasks Secondary Header with Navigation - Only show on tasks pages */}
           {isTasksPage && <div className="w-full bg-white border-t py-3">
               <div className="flex justify-center">
                 <div className="flex gap-6 items-center">
