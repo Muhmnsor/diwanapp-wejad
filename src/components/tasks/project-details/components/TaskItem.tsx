@@ -1,4 +1,3 @@
-
 import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -50,7 +49,6 @@ export const TaskItem = ({
     
     setIsUpdating(true);
     try {
-      // إذا كانت المهمة قيد التغيير إلى "مكتملة"، تحقق من المهام الفرعية أولاً
       if (newStatus === 'completed') {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
         
@@ -85,23 +83,23 @@ export const TaskItem = ({
       <Button 
         variant="outline" 
         size="sm" 
-        className="h-7 px-2 ml-2"
+        className="h-7 w-7 p-0 ml-1"
         onClick={() => handleStatusUpdate('completed')}
         disabled={isUpdating}
+        title="إكمال المهمة"
       >
-        <Check className="h-3.5 w-3.5 text-green-500 mr-1" />
-        إكمال
+        <Check className="h-3.5 w-3.5 text-green-500" />
       </Button>
     ) : (
       <Button 
         variant="outline" 
         size="sm" 
-        className="h-7 px-2 ml-2"
+        className="h-7 w-7 p-0 ml-1"
         onClick={() => handleStatusUpdate('in_progress')}
         disabled={isUpdating}
+        title="إعادة فتح المهمة"
       >
-        <Clock className="h-3.5 w-3.5 text-amber-500 mr-1" />
-        قيد التنفيذ
+        <Clock className="h-3.5 w-3.5 text-amber-500" />
       </Button>
     );
   };
@@ -120,6 +118,7 @@ export const TaskItem = ({
                 e.stopPropagation();
                 setShowSubtasks(!showSubtasks);
               }}
+              title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
             >
               {showSubtasks ? 
                 <ChevronUp className="h-4 w-4 text-gray-500" /> : 
@@ -155,14 +154,14 @@ export const TaskItem = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            className="p-0 h-7 w-7"
             onClick={(e) => {
               e.stopPropagation();
               setShowDiscussion(true);
             }}
+            title="مناقشة المهمة"
           >
-            <MessageCircle className="h-3.5 w-3.5" />
-            مناقشة
+            <MessageCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           </Button>
         </TableCell>
       </TableRow>
@@ -180,7 +179,6 @@ export const TaskItem = ({
         </TableRow>
       )}
 
-      {/* إضافة مربع حوار المناقشة */}
       <TaskDiscussionDialog 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
