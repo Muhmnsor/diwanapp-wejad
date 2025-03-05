@@ -66,25 +66,29 @@ export const saveAttachmentReference = async (
     const currentUser = await supabase.auth.getUser();
     const userId = currentUser.data.user?.id;
     
-    const attachmentData = {
-      task_id: taskId,
-      file_url: fileUrl,
-      file_name: fileName,
-      file_type: fileType,
-      attachment_category: category,
-      task_table: 'tasks', // Default value
-      created_by: userId
-    };
-    
-    console.log("Saving attachment reference:", attachmentData);
-
-    // Check if the unified_task_attachments table exists
+    // Check if the unified_task_attachments table exists first
     const { data: tableExists } = await supabase.rpc('check_table_exists', {
       table_name: 'unified_task_attachments'
     });
     
+    console.log("Table check result:", tableExists);
+    
     if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
       console.log("Using unified_task_attachments table");
+      
+      // Prepare attachment data for unified table
+      const attachmentData = {
+        task_id: taskId,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_type: fileType,
+        attachment_category: category,
+        task_table: 'tasks', // Default value
+        created_by: userId
+      };
+      
+      console.log("Saving attachment reference:", attachmentData);
+      
       const { data: unifiedData, error: unifiedError } = await supabase
         .from('unified_task_attachments')
         .insert(attachmentData)
@@ -99,6 +103,19 @@ export const saveAttachmentReference = async (
       return unifiedData;
     } else {
       console.log("Using task_attachments table (fallback)");
+      
+      // Prepare attachment data for legacy table
+      const attachmentData = {
+        task_id: taskId,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_type: fileType,
+        category, // This must match exactly with the column name in task_attachments
+        created_by: userId
+      };
+      
+      console.log("Saving to task_attachments:", attachmentData);
+      
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('task_attachments')
         .insert(attachmentData)

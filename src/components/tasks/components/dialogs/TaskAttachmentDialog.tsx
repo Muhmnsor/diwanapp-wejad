@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Task } from "../../types/task";
 import { TaskAttachmentsList } from "../attachments/TaskAttachmentsList";
 import { AssigneeAttachmentButton } from "../attachments/AssigneeAttachmentButton";
@@ -31,6 +31,9 @@ export const TaskAttachmentDialog = ({
       <DialogContent className="sm:max-w-[600px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>مرفقات المهمة: {task.title}</DialogTitle>
+          <DialogDescription>
+            يمكنك عرض وتحميل ملفات المرفقات للمهمة من هنا
+          </DialogDescription>
         </DialogHeader>
         
         <div className="mt-4">

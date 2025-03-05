@@ -33,10 +33,14 @@ export const AssigneeAttachmentButton = ({
     setIsUploading(true);
     
     try {
+      console.log("Starting file upload for assignee attachment");
+      
       // رفع الملف مع تحديد التصنيف كمرفق من المكلف
       const uploadResult = await uploadAttachment(file, 'assignee');
       
       if (uploadResult && !uploadResult.error) {
+        console.log("File uploaded successfully, now saving reference", uploadResult);
+        
         // حفظ معلومات المرفق في قاعدة البيانات
         await saveAttachmentReference(
           taskId,
@@ -53,6 +57,7 @@ export const AssigneeAttachmentButton = ({
           onAttachmentUploaded();
         }
       } else {
+        console.error("Upload failed:", uploadResult?.error);
         toast.error('فشل رفع المرفق');
       }
     } catch (error) {
