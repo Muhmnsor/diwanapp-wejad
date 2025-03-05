@@ -54,27 +54,27 @@ export const TasksStageGroup = ({
         </TableHeader>
         <TableBody>
           {filteredTasks.map(task => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId}
-              renderActions={(task) => (
-                <>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="px-2"
-                    onClick={() => setShowAttachments(task.id)}
-                  >
-                    <Paperclip className="h-4 w-4 text-gray-500" />
-                  </Button>
-                </>
-              )}
-            />
+            <tr key={task.id}>
+              <TaskItem
+                key={task.id}
+                task={task}
+                getStatusBadge={getStatusBadge}
+                getPriorityBadge={getPriorityBadge}
+                formatDate={formatDate}
+                onStatusChange={onStatusChange}
+                projectId={projectId}
+              />
+              <td className="text-left">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="px-2"
+                  onClick={() => setShowAttachments(task.id)}
+                >
+                  <Paperclip className="h-4 w-4 text-gray-500" />
+                </Button>
+              </td>
+            </tr>
           ))}
         </TableBody>
       </Table>
