@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useInAppNotifications } from '@/hooks/useInAppNotifications';
+import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
 
 interface EventNotificationParams {
   eventId: string;

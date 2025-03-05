@@ -1,5 +1,4 @@
-
-import { useInAppNotifications } from '@/hooks/useInAppNotifications';
+import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
 
 interface TaskNotificationParams {
   taskId: string;

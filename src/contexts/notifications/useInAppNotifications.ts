@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
+import { NotificationType } from './types';
 
 interface CreateNotificationParams {
   title: string;
   message: string;
-  notification_type: 'event' | 'project' | 'task' | 'user' | 'comment';
+  notification_type: NotificationType;
   related_entity_id?: string;
   related_entity_type?: string;
   user_id?: string;
