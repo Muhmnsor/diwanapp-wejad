@@ -6,6 +6,7 @@ import {
   Clock,
   CalendarClock,
   XCircle,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Task } from "../types/task";
@@ -14,6 +15,7 @@ import { TaskHeader } from "./header/TaskHeader";
 import { TaskMetadata } from "./metadata/TaskMetadata";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TaskCompletionDialog } from "./TaskCompletionDialog";
 
 interface TaskListItemProps {
   task: Task;
@@ -23,6 +25,7 @@ interface TaskListItemProps {
 
 export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemProps) => {
   const [showDiscussion, setShowDiscussion] = useState(false);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const currentStatus = task.status || "pending";
 
@@ -96,16 +99,30 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         
         <div className="flex gap-2">
           {currentStatus !== "completed" ? (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs flex items-center gap-1"
-              onClick={() => handleStatusChange("completed")}
-              disabled={isUpdating}
-            >
-              <Check className="h-3.5 w-3.5 text-green-500" />
-              تمت
-            </Button>
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-xs flex items-center gap-1"
+                onClick={() => setShowCompletionDialog(true)}
+                disabled={isUpdating}
+                title="إكمال المهمة مع إرفاق"
+              >
+                <FileCheck className="h-3.5 w-3.5 text-green-500" />
+                إكمال مع إرفاق
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-xs flex items-center gap-1"
+                onClick={() => handleStatusChange("completed")}
+                disabled={isUpdating}
+                title="إكمال المهمة"
+              >
+                <Check className="h-3.5 w-3.5 text-green-500" />
+                تمت
+              </Button>
+            </>
           ) : (
             <Button 
               variant="outline" 
@@ -113,6 +130,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
               className="text-xs flex items-center gap-1"
               onClick={() => handleStatusChange("pending")}
               disabled={isUpdating}
+              title="إعادة فتح المهمة"
             >
               <Clock className="h-3.5 w-3.5 text-amber-500" />
               قيد التنفيذ
@@ -137,6 +155,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
+      />
+
+      <TaskCompletionDialog 
+        open={showCompletionDialog}
+        onOpenChange={setShowCompletionDialog}
+        task={task}
+        onStatusChange={onStatusChange}
       />
     </div>
   );
