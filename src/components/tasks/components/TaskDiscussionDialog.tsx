@@ -61,7 +61,24 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         
         <Separator className="my-4" />
         
-        {/* تم إخفاء قسم المستلمات */}
+        {/* قسم المستلمات */}
+        {deliverables && deliverables.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold">مستلمات المهمة:</h3>
+              <Button variant="ghost" size="sm" onClick={handleRefreshDeliverables} className="h-6 w-6 p-0">
+                <RefreshCcw className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <AttachmentsByCategory
+              title="مستلمات المهمة:"
+              attachments={deliverables}
+              bgColor="bg-amber-50"
+              iconColor="text-amber-500"
+              onDownload={handleDownload}
+            />
+          </div>
+        )}
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
           {/* تمرير التعليق الجديد لتحديث القائمة */}
