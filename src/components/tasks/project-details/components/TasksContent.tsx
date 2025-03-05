@@ -86,12 +86,12 @@ export const TasksContent = ({
           <Table dir="rtl" className="w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/3 text-right font-medium">المهمة</TableHead>
-                <TableHead className="w-1/6 text-right font-medium">الحالة</TableHead>
-                <TableHead className="w-1/6 text-right font-medium">الأولوية</TableHead>
-                <TableHead className="w-1/6 text-right font-medium">المكلف</TableHead>
-                <TableHead className="w-1/6 text-right font-medium">تاريخ الاستحقاق</TableHead>
-                <TableHead className="w-24 text-center font-medium">المرفقات</TableHead>
+                <TableHead className="w-[40%] text-right font-medium">المهمة</TableHead>
+                <TableHead className="w-[12%] text-right font-medium">الحالة</TableHead>
+                <TableHead className="w-[12%] text-right font-medium">الأولوية</TableHead>
+                <TableHead className="w-[15%] text-right font-medium">المكلف</TableHead>
+                <TableHead className="w-[15%] text-right font-medium">تاريخ الاستحقاق</TableHead>
+                <TableHead className="w-[6%] text-center font-medium">المرفقات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
