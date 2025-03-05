@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Calendar, FolderKanban, LayoutDashboard, FileText, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TopHeader = () => {
   const location = useLocation();
   const { isAuthenticated, user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
+  const [displayName, setDisplayName] = useState<string | null>(null);
   
   const isEventsPage = location.pathname.includes('/events') || 
                       location.pathname === '/' || 
@@ -29,6 +31,29 @@ export const TopHeader = () => {
   const isTasksPage = location.pathname.includes('/tasks') ||
                      location.pathname.includes('/portfolios') ||
                      location.pathname.includes('/portfolio-workspaces');
+
+  // Fetch user display name
+  useEffect(() => {
+    const fetchUserDisplayName = async () => {
+      if (isAuthenticated && user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', user.id)
+            .single();
+          
+          if (!error && data) {
+            setDisplayName(data.display_name);
+          }
+        } catch (error) {
+          console.error("Error fetching user display name:", error);
+        }
+      }
+    };
+
+    fetchUserDisplayName();
+  }, [isAuthenticated, user]);
 
   // Set active tab based on URL hash or default to "overview"
   useEffect(() => {
@@ -63,7 +88,7 @@ export const TopHeader = () => {
               {isAuthenticated && user && (
                 <div className="flex items-center gap-2 text-sm text-gray-600 ms-2">
                   <User className="h-4 w-4" />
-                  <span>{user.role ? user.role : 'مستخدم'}</span>
+                  <span>{displayName || user.email || 'مستخدم'}</span>
                 </div>
               )}
               <HomeButton 
