@@ -41,7 +41,7 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
     }
 
     // Get workspace names for each project
-    for (let project of projects || []) {
+    for (let project of projects as TaskProject[]) {
       if (project.workspace_id) {
         const { data: workspace, error: workspaceError } = await supabase
           .from('workspaces')
@@ -68,7 +68,7 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
       }
     }
 
-    return projects || [];
+    return projects as TaskProject[] || [];
   } catch (error) {
     console.error('Error in fetchTaskProjects:', error);
     throw error;
