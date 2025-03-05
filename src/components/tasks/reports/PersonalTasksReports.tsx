@@ -50,7 +50,7 @@ export const PersonalTasksReports = () => {
         <TabsContent value="tasks" className="space-y-6 mt-6">
           <PersonalTasksStats stats={data.tasksStats} />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" dir="rtl">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">توزيع المهام حسب الحالة</CardTitle>
@@ -83,7 +83,7 @@ export const PersonalTasksReports = () => {
         <TabsContent value="performance" className="space-y-6 mt-6">
           <PersonalPerformanceStats stats={data.performanceStats} />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" dir="rtl">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">متوسط وقت التأخير (بالأيام)</CardTitle>
@@ -107,3 +107,4 @@ export const PersonalTasksReports = () => {
     </div>
   );
 };
+

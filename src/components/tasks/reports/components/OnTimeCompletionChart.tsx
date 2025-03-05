@@ -11,7 +11,7 @@ interface OnTimeCompletionChartProps {
 
 export const OnTimeCompletionChart = ({ data }: OnTimeCompletionChartProps) => {
   return (
-    <div className="h-[300px] w-full">
+    <div className="h-[300px] w-full" dir="rtl">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -39,3 +39,4 @@ export const OnTimeCompletionChart = ({ data }: OnTimeCompletionChartProps) => {
     </div>
   );
 };
+
