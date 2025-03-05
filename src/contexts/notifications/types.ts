@@ -17,7 +17,7 @@ export interface NotificationContextProps {
   notifications: Notification[];
   unreadCount: number;
   loading: boolean;
-  markAsRead: (id: string) => Promise<void>;
+  markAsRead: (id: string) => Promise<boolean>; // Changed return type to boolean
   markAllAsRead: () => Promise<void>;
   fetchNotifications: () => Promise<void>;
   filterType: NotificationType;

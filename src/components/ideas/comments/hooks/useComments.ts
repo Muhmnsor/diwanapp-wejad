@@ -59,6 +59,7 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         attachment_url: comment.attachment_url,
         attachment_name: comment.attachment_name,
         user: comment.profiles ? {
+          // Fix: profiles is a single object, not an array
           id: comment.profiles.id,
           email: comment.profiles.email,
           name: comment.profiles.full_name,
@@ -165,6 +166,7 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         attachment_url: data.attachment_url,
         attachment_name: data.attachment_name,
         user: data.profiles ? {
+          // Fix: profiles is a single object, not an array
           id: data.profiles.id,
           email: data.profiles.email,
           name: data.profiles.full_name,
