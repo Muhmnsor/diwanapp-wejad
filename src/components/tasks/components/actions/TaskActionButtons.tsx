@@ -53,7 +53,7 @@ export const TaskActionButtons = ({
           onClick={onOpenAttachments}
         >
           <Paperclip className="h-3.5 w-3.5" />
-          المرفقات
+          المستلمات
         </Button>
       </div>
       
