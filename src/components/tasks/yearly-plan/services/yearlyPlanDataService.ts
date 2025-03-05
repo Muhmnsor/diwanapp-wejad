@@ -12,7 +12,7 @@ interface TaskProject {
   workspace_id: string | null;
   priority: string;
   assigned_to: string | null;
-  created_at?: string | null; // Add created_at property
+  created_at?: string | null;
   // Add the properties that will be populated dynamically
   workspace_name?: string;
   assigned_user_name?: string;
@@ -21,7 +21,7 @@ interface TaskProject {
 // جلب مشاريع المهام مع التفاصيل
 export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
   try {
-    // جلب مشاريع المهام
+    // 1. جلب مشاريع المهام مع البيانات الأساسية
     const { data: projects, error } = await supabase
       .from('project_tasks')
       .select(`
@@ -41,41 +41,73 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
       throw error;
     }
 
-    // Process the data to include start_date (using created_at as a fallback)
+    // 2. Process the data to include start_date (using created_at as a fallback)
     const processedProjects = projects.map(project => ({
       ...project,
       start_date: project.created_at || new Date().toISOString().split('T')[0] // Use created_at as start_date or today
     })) as TaskProject[];
 
-    // Get workspace names for each project
-    for (let project of processedProjects) {
-      if (project.workspace_id) {
-        const { data: workspace, error: workspaceError } = await supabase
-          .from('workspaces')
-          .select('name')
-          .eq('id', project.workspace_id)
-          .single();
+    // Early return if no projects found
+    if (!processedProjects.length) {
+      return [];
+    }
 
-        if (!workspaceError && workspace) {
-          project.workspace_name = workspace.name;
-        }
-      }
+    // 3. Collect unique workspace IDs and user IDs for batch queries
+    const workspaceIds = [...new Set(processedProjects.filter(p => p.workspace_id).map(p => p.workspace_id))] as string[];
+    const userIds = [...new Set(processedProjects.filter(p => p.assigned_to).map(p => p.assigned_to))] as string[];
 
-      // Get assignee names if assigned
-      if (project.assigned_to) {
-        const { data: user, error: userError } = await supabase
-          .from('profiles')
-          .select('display_name, email')
-          .eq('id', project.assigned_to)
-          .single();
+    // 4. Batch fetch workspaces data
+    let workspacesData: Record<string, string> = {};
+    if (workspaceIds.length > 0) {
+      const { data: workspaces, error: workspacesError } = await supabase
+        .from('workspaces')
+        .select('id, name')
+        .in('id', workspaceIds);
 
-        if (!userError && user) {
-          project.assigned_user_name = user.display_name || user.email;
-        }
+      if (workspacesError) {
+        console.error('Error fetching workspaces:', workspacesError);
+      } else if (workspaces) {
+        workspacesData = workspaces.reduce((acc, workspace) => {
+          acc[workspace.id] = workspace.name;
+          return acc;
+        }, {} as Record<string, string>);
       }
     }
 
-    return processedProjects || [];
+    // 5. Batch fetch user data
+    let usersData: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: users, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, display_name, email')
+        .in('id', userIds);
+
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+      } else if (users) {
+        usersData = users.reduce((acc, user) => {
+          acc[user.id] = user.display_name || user.email;
+          return acc;
+        }, {} as Record<string, string>);
+      }
+    }
+
+    // 6. Enrich projects with workspace and user data
+    const enrichedProjects = processedProjects.map(project => {
+      const enriched = { ...project };
+      
+      if (project.workspace_id && workspacesData[project.workspace_id]) {
+        enriched.workspace_name = workspacesData[project.workspace_id];
+      }
+      
+      if (project.assigned_to && usersData[project.assigned_to]) {
+        enriched.assigned_user_name = usersData[project.assigned_to];
+      }
+      
+      return enriched;
+    });
+
+    return enrichedProjects;
   } catch (error) {
     console.error('Error in fetchTaskProjects:', error);
     throw error;
