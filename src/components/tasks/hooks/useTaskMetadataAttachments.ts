@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -98,9 +97,6 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     setLoadingDeliverables(true);
     try {
       console.log("Fetching deliverables for task:", taskId);
-      
-      // تحديد نوع الجدول
-      let taskTable = 'tasks';
       
       // استعلام مباشر عن جدول المستلمات الجديد
       const { data, error } = await supabase
