@@ -27,3 +27,24 @@ export const getTaskStatusColor = (status: string) => {
       return 'bg-gray-300';
   }
 };
+
+// Calculate percentage of task completion based on time elapsed
+export const getTimeBasedProgress = (startDate: Date, endDate: Date, today = new Date()) => {
+  if (!startDate || !endDate) return 0;
+  
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  const current = today.getTime();
+  
+  // If task hasn't started yet
+  if (current < start) return 0;
+  
+  // If task is already completed (past due date)
+  if (current > end) return 100;
+  
+  // Calculate progress percentage based on time elapsed
+  const totalDuration = end - start;
+  const elapsed = current - start;
+  
+  return Math.min(100, Math.round((elapsed / totalDuration) * 100));
+};

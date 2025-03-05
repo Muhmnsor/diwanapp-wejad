@@ -1,6 +1,7 @@
 
 import { getDaysInMonth, startOfMonth, endOfMonth } from 'date-fns';
 import { getTaskStatusColor } from '../../utils/dateUtils';
+import { Progress } from '@/components/ui/progress';
 
 interface TaskBarProps {
   task: any;
@@ -40,18 +41,38 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const left = (leftDay / daysInMonth) * 100;
   const width = ((rightDay - leftDay) / daysInMonth) * 100;
   
+  // Calculate progress value (between 0-100)
+  // Assuming task has completion_percentage field, default to 0 if not present
+  const progressValue = task.completion_percentage || 0;
+  
+  // Get base color based on status
+  const statusColor = getTaskStatusColor(task.status);
+  
+  // Define progress bar background color (lighter version of status color)
+  const progressBgColor = statusColor.replace('bg-', 'bg-').concat('/30');
+  
   return (
-    <div
+    <div 
       style={{
         left: `${left}%`,
         width: `${width}%`,
+        height: '18px',
       }}
-      className={`absolute h-6 rounded-md ${getTaskStatusColor(task.status)}`}
+      className="absolute rounded-md"
       title={`${task.title} (${
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
         'منخفضة'
       })`}
-    />
+    >
+      {/* Background bar (full project timeline) */}
+      <div className={`absolute inset-0 ${progressBgColor} rounded-md`} />
+      
+      {/* Progress bar (completed portion) */}
+      <div 
+        className={`absolute top-0 left-0 h-full ${statusColor} rounded-md transition-all duration-300`}
+        style={{ width: `${progressValue}%` }}
+      />
+    </div>
   );
 };

@@ -49,7 +49,7 @@ export const TaskRow = ({ task, months, today }: TaskRowProps) => {
                 })}
               </div>
               
-              <div className="relative h-8 mt-1">
+              <div className="relative h-6 mt-2">
                 {task.start_date && task.due_date && (
                   <TaskBar
                     task={task}
