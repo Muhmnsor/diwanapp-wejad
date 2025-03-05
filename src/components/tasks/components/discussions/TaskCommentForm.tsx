@@ -69,6 +69,27 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         }
       }
       
+      // التحقق من وجود الـ task قبل محاولة إضافة تعليق
+      const { data: taskExists, error: taskCheckError } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('id', task.id)
+        .single();
+      
+      if (taskCheckError) {
+        console.log("Task not found in tasks table, checking other tables...");
+        
+        const { data: portfolioTaskExists } = await supabase
+          .from('portfolio_tasks')
+          .select('id')
+          .eq('id', task.id)
+          .single();
+          
+        if (!portfolioTaskExists) {
+          throw new Error("Task not found in any task tables");
+        }
+      }
+      
       // إنشاء كائن التعليق
       const commentData = {
         task_id: task.id,
@@ -76,36 +97,33 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         created_by: userId,
         attachment_url: attachmentUrl,
         attachment_name: attachmentName,
-        attachment_type: attachmentType,
-        task_table: 'tasks' // القيمة الافتراضية
+        attachment_type: attachmentType
       };
       
-      console.log("Adding comment to unified_task_comments:", commentData);
+      console.log("Adding comment to task_comments:", commentData);
       
-      // Check if unified_task_comments exists first
-      const { data: tableExists } = await supabase.rpc('check_table_exists', {
-        table_name: 'unified_task_comments'
-      });
-      
-      if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
-        console.log("unified_task_comments table exists, inserting comment");
-        const { error: insertError } = await supabase
+      // محاولة الإضافة في جدول task_comments أولاً
+      const { error: insertError } = await supabase
+        .from("task_comments")
+        .insert(commentData);
+        
+      if (insertError) {
+        console.error("Error details for task_comments insert:", insertError);
+        console.log("Trying to add comment to unified_task_comments table");
+        
+        // إذا فشل، نحاول في الجدول الموحد
+        const unifiedCommentData = {
+          ...commentData,
+          task_table: 'tasks' // إضافة حقل task_table
+        };
+        
+        const { error: unifiedInsertError } = await supabase
           .from("unified_task_comments")
-          .insert(commentData);
+          .insert(unifiedCommentData);
           
-        if (insertError) {
-          console.error("Error details for insert:", insertError);
-          throw insertError;
-        }
-      } else {
-        console.log("unified_task_comments table doesn't exist, trying task_comments");
-        const { error: insertError } = await supabase
-          .from("task_comments")
-          .insert(commentData);
-          
-        if (insertError) {
-          console.error("Error details for insert:", insertError);
-          throw insertError;
+        if (unifiedInsertError) {
+          console.error("Error details for unified_task_comments insert:", unifiedInsertError);
+          throw unifiedInsertError;
         }
       }
       
