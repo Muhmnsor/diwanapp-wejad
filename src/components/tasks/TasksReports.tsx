@@ -7,7 +7,7 @@ import { ProjectTasksReports } from "./reports/ProjectTasksReports";
 
 export const TasksReports = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-right">
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-6">تقارير المهام والمشاريع</h2>
         
