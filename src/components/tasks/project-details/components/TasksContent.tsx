@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { TasksStageGroup } from "./TasksStageGroup";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
 import { useState } from "react";
 import { Paperclip } from "lucide-react";
@@ -82,21 +82,21 @@ export const TasksContent = ({
         <div className="p-4 bg-gray-50 border-b">
           <h3 className="font-medium">المهام</h3>
         </div>
-        <div className="border rounded-md overflow-hidden">
+        <div className="overflow-x-auto">
           <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead>المهمة</TableHead>
-                <TableHead>الحالة</TableHead>
-                <TableHead>الأولوية</TableHead>
-                <TableHead>المكلف</TableHead>
-                <TableHead>تاريخ الاستحقاق</TableHead>
-                <TableHead className="text-center">الإجراءات</TableHead>
+                <TableHead className="text-right">المهمة</TableHead>
+                <TableHead className="text-right">الحالة</TableHead>
+                <TableHead className="text-right">الأولوية</TableHead>
+                <TableHead className="text-right">المكلف</TableHead>
+                <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
+                <TableHead className="text-center w-24">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredTasks.map(task => (
-                <tr key={task.id}>
+                <TableRow key={task.id}>
                   <TaskItem
                     task={task}
                     getStatusBadge={getStatusBadge}
@@ -105,7 +105,7 @@ export const TasksContent = ({
                     onStatusChange={onStatusChange}
                     projectId={projectId || ''}
                   />
-                  <td className="text-center p-2">
+                  <TableCell className="text-center p-2 align-middle w-24">
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -114,8 +114,8 @@ export const TasksContent = ({
                     >
                       <Paperclip className="h-4 w-4 text-gray-500" />
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
             </TableBody>
           </Table>

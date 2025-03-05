@@ -1,5 +1,5 @@
 
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
 import { useState } from "react";
@@ -41,42 +41,44 @@ export const TasksStageGroup = ({
       <div className="bg-gray-50 p-3 border-b">
         <h3 className="font-medium">{stage.name}</h3>
       </div>
-      <Table dir="rtl">
-        <TableHeader>
-          <TableRow>
-            <TableHead>المهمة</TableHead>
-            <TableHead>الحالة</TableHead>
-            <TableHead>الأولوية</TableHead>
-            <TableHead>المكلف</TableHead>
-            <TableHead>تاريخ الاستحقاق</TableHead>
-            <TableHead className="text-center">الإجراءات</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredTasks.map(task => (
-            <tr key={task.id}>
-              <TaskItem
-                task={task}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                formatDate={formatDate}
-                onStatusChange={onStatusChange}
-                projectId={projectId}
-              />
-              <td className="text-center p-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="px-2 mx-1"
-                  onClick={() => setShowAttachments(task.id)}
-                >
-                  <Paperclip className="h-4 w-4 text-gray-500" />
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="overflow-x-auto">
+        <Table dir="rtl">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-right">المهمة</TableHead>
+              <TableHead className="text-right">الحالة</TableHead>
+              <TableHead className="text-right">الأولوية</TableHead>
+              <TableHead className="text-right">المكلف</TableHead>
+              <TableHead className="text-right">تاريخ الاستحقاق</TableHead>
+              <TableHead className="text-center w-24">الإجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTasks.map(task => (
+              <TableRow key={task.id}>
+                <TaskItem
+                  task={task}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId}
+                />
+                <TableCell className="text-center p-2 align-middle w-24">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="px-2 mx-1"
+                    onClick={() => setShowAttachments(task.id)}
+                  >
+                    <Paperclip className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {showAttachments && (
         <TaskAttachmentDialog
