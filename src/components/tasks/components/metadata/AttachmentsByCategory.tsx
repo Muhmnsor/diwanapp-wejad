@@ -48,7 +48,7 @@ export const AttachmentsByCategory = ({
             className="h-6 text-xs text-gray-500 hover:text-gray-700"
           >
             <FileCheck className="h-3.5 w-3.5 mr-1" />
-            رفع ملف
+            رفع مستلمات
           </Button>
         )}
       </div>
