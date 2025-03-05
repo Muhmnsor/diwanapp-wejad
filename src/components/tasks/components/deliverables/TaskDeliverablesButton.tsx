@@ -8,10 +8,14 @@ import { Task } from "../../types/task";  // Using the correct Task type
 interface TaskDeliverablesButtonProps {
   taskId?: string | null;
   task?: Task;
+  hideInTasksList?: boolean; // Add this prop to conditionally hide the button in task list contexts
 }
 
-export const TaskDeliverablesButton = ({ taskId, task }: TaskDeliverablesButtonProps) => {
+export const TaskDeliverablesButton = ({ taskId, task, hideInTasksList = false }: TaskDeliverablesButtonProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  // If hideInTasksList is true, return null (render nothing)
+  if (hideInTasksList) return null;
   
   if (!taskId && !task) return null;
   
