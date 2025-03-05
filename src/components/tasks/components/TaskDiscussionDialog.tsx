@@ -19,25 +19,23 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
   const [refreshKey, setRefreshKey] = useState(0);
 
   const {
-    loading,
-    creatorAttachments,
-    assigneeAttachments,
-    handleDownload,
     deliverables,
-    loadingDeliverables
+    loadingDeliverables,
+    handleDownload,
+    refreshAttachments
   } = useTaskMetadataAttachments(task.id || undefined);
 
-  // إضافة سجل للتحقق من المرفقات والمستلمات
+  // إضافة سجل للتحقق من المستلمات
   useEffect(() => {
     console.log("Task ID:", task.id);
-    console.log("Creator Attachments:", creatorAttachments);
-    console.log("Assignee Attachments:", assigneeAttachments);
     console.log("Deliverables:", deliverables);
-  }, [task.id, creatorAttachments, assigneeAttachments, deliverables]);
+  }, [task.id, deliverables]);
 
   const handleCommentAdded = () => {
     // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
     setRefreshKey(prev => prev + 1);
+    // تحديث المستلمات عند إضافة تعليق جديد
+    refreshAttachments();
   };
 
   // التحقق من وجود مستلمات
@@ -51,9 +49,11 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         <Separator className="my-4" />
         
         {/* قسم المستلمات (يظهر بين معلومات المهمة ومساحة النقاش) */}
-        {hasDeliverables ? (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium mb-2">مستلمات المهمة:</h3>
+        <div className="mb-4">
+          <h3 className="text-sm font-medium mb-2">مستلمات المهمة:</h3>
+          {loadingDeliverables ? (
+            <div className="text-sm text-gray-500">جاري تحميل المستلمات...</div>
+          ) : hasDeliverables ? (
             <div className="space-y-2">
               {deliverables.map((deliverable) => (
                 <div key={deliverable.id} className="flex items-center bg-purple-50 rounded p-1.5 text-sm">
@@ -79,12 +79,10 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
                 </div>
               ))}
             </div>
-          </div>
-        ) : loadingDeliverables ? (
-          <div className="mb-4 text-sm text-gray-500">جاري تحميل المستلمات...</div>
-        ) : (
-          <div className="mb-4 text-sm text-gray-500">لا توجد مستلمات للمهمة</div>
-        )}
+          ) : (
+            <div className="mb-4 text-sm text-gray-500">لا توجد مستلمات للمهمة</div>
+          )}
+        </div>
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
           {/* استخدام refreshKey كمفتاح لإعادة تحميل المحتوى عند إضافة تعليق جديد */}

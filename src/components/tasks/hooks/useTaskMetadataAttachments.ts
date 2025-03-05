@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -76,7 +75,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     }
   };
 
-  // جلب المستلمات من جدول task_deliverables
+  // جلب المستلمات من جدول task_deliverables وليس من جداول المرفقات
   const fetchTaskDeliverables = async () => {
     if (!taskId) return;
     
@@ -84,20 +83,22 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
+      // جلب المستلمات من جدول task_deliverables بشكل مباشر
       const { data: taskDeliverables, error } = await supabase
         .from("task_deliverables")
         .select("*")
-        .eq("task_id", taskId)
-        .eq("task_table", "tasks");
+        .eq("task_id", taskId);
       
       if (error) {
         console.error("Error fetching task deliverables:", error);
+        setDeliverables([]);
       } else {
         console.log("Found deliverables:", taskDeliverables);
         setDeliverables(taskDeliverables || []);
       }
     } catch (error) {
       console.error("Error in fetchTaskDeliverables:", error);
+      setDeliverables([]);
     } finally {
       setLoadingDeliverables(false);
     }
@@ -122,7 +123,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
   const commentAttachments = attachments.filter(att => 
     att.attachment_category === 'comment');
 
-  // إضافة وظيفة لإعادة تحميل المرفقات
+  // إضافة وظيفة لإعادة تحميل المرفقات والمستلمات
   const refreshAttachments = () => {
     fetchTaskAttachments();
     fetchTaskDeliverables();
