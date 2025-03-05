@@ -7,13 +7,13 @@ import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
-import { Calendar, FolderKanban, LayoutDashboard, FileText } from "lucide-react";
+import { Calendar, FolderKanban, LayoutDashboard, FileText, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 export const TopHeader = () => {
   const location = useLocation();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
   
   const isEventsPage = location.pathname.includes('/events') || 
@@ -60,6 +60,12 @@ export const TopHeader = () => {
           <div className="flex flex-col xs:flex-row md:flex-row md:justify-between md:items-center py-2 md:py-4 gap-2 xs:gap-4">
             <Logo />
             <div className="flex items-center justify-center gap-2 mt-1 xs:mt-0 md:mt-0 flex-wrap xs:flex-nowrap">
+              {isAuthenticated && user && (
+                <div className="flex items-center gap-2 text-sm text-gray-600 ms-2">
+                  <User className="h-4 w-4" />
+                  <span>{user.email}</span>
+                </div>
+              )}
               <HomeButton 
                 isEventOrProjectDetails={isEventOrProjectDetails}
                 isAuthenticated={isAuthenticated}
