@@ -18,6 +18,7 @@ interface AttachmentsByCategoryProps {
   onDelete?: (attachmentId: string) => Promise<boolean>;
   isDeleting?: Record<string, boolean>;
   canDelete?: boolean;
+  compactLayout?: boolean;
 }
 
 export const AttachmentsByCategory = ({
@@ -28,13 +29,14 @@ export const AttachmentsByCategory = ({
   onDownload,
   onDelete,
   isDeleting = {},
-  canDelete = false
+  canDelete = false,
+  compactLayout = false
 }: AttachmentsByCategoryProps) => {
   if (attachments.length === 0) return null;
   
   return (
-    <div className="w-full mt-2">
-      <div className="text-sm font-medium mb-1">{title}</div>
+    <div className={`w-full ${compactLayout ? 'mt-1' : 'mt-2'}`}>
+      <div className={`text-sm font-medium ${compactLayout ? '' : 'mb-1'}`}>{title}</div>
       <div className="space-y-1">
         {attachments.map((attachment) => (
           <div key={attachment.id} className={`flex items-center ${bgColor} rounded p-1.5 text-sm`}>

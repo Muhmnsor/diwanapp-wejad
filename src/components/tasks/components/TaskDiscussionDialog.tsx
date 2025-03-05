@@ -33,7 +33,7 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         <TaskDiscussionHeader task={task} />
         
         {assigneeAttachment && (
-          <div className="mt-3">
+          <div className="mt-2 mb-1">
             <AttachmentsByCategory
               title="مرفق المكلف بالمهمة:"
               attachments={[{
@@ -44,11 +44,12 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
               bgColor="bg-blue-100"
               iconColor="text-blue-600"
               onDownload={handleDownload}
+              compactLayout={true}
             />
           </div>
         )}
         
-        <Separator className="my-4" />
+        <Separator className="my-3" />
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
           {/* استخدام refreshKey كمفتاح لإعادة تحميل المحتوى عند إضافة تعليق جديد */}
