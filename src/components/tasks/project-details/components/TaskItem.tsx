@@ -1,5 +1,5 @@
 
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
+import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 
 interface TaskItemProps {
   task: Task;
@@ -30,6 +31,7 @@ export const TaskItem = ({
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
+  const [showDiscussion, setShowDiscussion] = useState(false);
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
@@ -106,14 +108,24 @@ export const TaskItem = ({
 
   return (
     <>
-      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50" onClick={() => setShowSubtasks(!showSubtasks)}>
+      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
         <TableCell className="font-medium">
           <div className="flex items-center">
             <span className="mr-1">{task.title}</span>
-            {showSubtasks ? 
-              <ChevronUp className="h-4 w-4 text-gray-500 mr-1" /> : 
-              <ChevronDown className="h-4 w-4 text-gray-500 mr-1" />
-            }
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-0 h-7 w-7 ml-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowSubtasks(!showSubtasks);
+              }}
+            >
+              {showSubtasks ? 
+                <ChevronUp className="h-4 w-4 text-gray-500" /> : 
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              }
+            </Button>
           </div>
         </TableCell>
         <TableCell>
@@ -139,11 +151,25 @@ export const TaskItem = ({
             {formatDate(task.due_date)}
           </div>
         </TableCell>
+        <TableCell>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDiscussion(true);
+            }}
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            مناقشة
+          </Button>
+        </TableCell>
       </TableRow>
       
       {showSubtasks && (
         <TableRow>
-          <TableCell colSpan={5} className="bg-gray-50 p-0">
+          <TableCell colSpan={6} className="bg-gray-50 p-0">
             <div className="p-3">
               <SubtasksList 
                 taskId={task.id} 
@@ -153,6 +179,13 @@ export const TaskItem = ({
           </TableCell>
         </TableRow>
       )}
+
+      {/* إضافة مربع حوار المناقشة */}
+      <TaskDiscussionDialog 
+        open={showDiscussion} 
+        onOpenChange={setShowDiscussion}
+        task={task}
+      />
     </>
   );
 };

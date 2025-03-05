@@ -86,6 +86,7 @@ export const TasksContent = ({
                 <TableHead>الأولوية</TableHead>
                 <TableHead>المكلف</TableHead>
                 <TableHead>تاريخ الاستحقاق</TableHead>
+                <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

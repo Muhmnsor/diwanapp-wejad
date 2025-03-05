@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
+import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 
 interface TaskCardProps {
   task: Task;
@@ -29,6 +30,7 @@ export const TaskCard = ({
 }: TaskCardProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
+  const [showDiscussion, setShowDiscussion] = useState(false);
   const { user } = useAuthStore();
   
   const canChangeStatus = () => {
@@ -115,13 +117,23 @@ export const TaskCard = ({
             </Badge>
           )}
 
-          {canChangeStatus() && (
-            <div className="mt-3 flex justify-end">
-              {task.status !== 'completed' ? (
+          <div className="mt-3 flex justify-end gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowDiscussion(true)}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              مناقشة
+            </Button>
+
+            {canChangeStatus() && (
+              task.status !== 'completed' ? (
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-3 mt-2"
+                  className="h-7 px-3"
                   onClick={() => handleStatusUpdate('completed')}
                   disabled={isUpdating}
                 >
@@ -132,16 +144,16 @@ export const TaskCard = ({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-3 mt-2"
+                  className="h-7 px-3"
                   onClick={() => handleStatusUpdate('in_progress')}
                   disabled={isUpdating}
                 >
                   <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
                   إعادة فتح المهمة
                 </Button>
-              )}
-            </div>
-          )}
+              )
+            )}
+          </div>
           
           {showSubtasks && (
             <div className="w-full mt-3">
@@ -153,6 +165,13 @@ export const TaskCard = ({
           )}
         </div>
       </CardContent>
+
+      {/* إضافة مربع حوار المناقشة */}
+      <TaskDiscussionDialog 
+        open={showDiscussion} 
+        onOpenChange={setShowDiscussion}
+        task={task}
+      />
     </Card>
   );
 };
