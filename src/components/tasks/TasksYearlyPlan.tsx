@@ -30,6 +30,9 @@ export const TasksYearlyPlan = () => {
     setYear(prevYear => prevYear + yearDelta);
   };
 
+  // عرض رسالة في حالة عدم وجود بيانات
+  const hasWorkspaces = workspaces && workspaces.length > 0;
+
   return (
     <div className="space-y-6" dir="rtl">
       <YearNavigation year={year} onYearChange={handleYearChange} />
@@ -43,32 +46,42 @@ export const TasksYearlyPlan = () => {
         <>
           <YearlyPlanStats workspaces={workspaces} />
           
-          <YearlyPlanFilter 
-            workspaces={workspaces} 
-            filters={filters} 
-            onFilterChange={setFilters} 
-          />
+          {hasWorkspaces && (
+            <YearlyPlanFilter 
+              workspaces={workspaces} 
+              filters={filters} 
+              onFilterChange={setFilters} 
+            />
+          )}
           
           <Card className="p-4 overflow-auto">
             <div className="min-w-[1200px]">
-              <MonthsHeader months={months} />
-              
-              <div className="mt-4 space-y-6">
-                {workspaces.map((workspace) => (
-                  <WorkspaceRow
-                    key={workspace.id}
-                    workspace={workspace}
-                    months={months}
-                    today={today}
-                    onToggleExpand={toggleWorkspaceExpanded}
-                    onToggleProject={toggleProjectExpanded}
-                  />
-                ))}
-              </div>
+              {hasWorkspaces ? (
+                <>
+                  <MonthsHeader months={months} />
+                  
+                  <div className="mt-4 space-y-6">
+                    {workspaces.map((workspace) => (
+                      <WorkspaceRow
+                        key={workspace.id}
+                        workspace={workspace}
+                        months={months}
+                        today={today}
+                        onToggleExpand={toggleWorkspaceExpanded}
+                        onToggleProject={toggleProjectExpanded}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="py-10 text-center text-gray-500">
+                  لا توجد مساحات عمل أو مشاريع لعرضها في هذه السنة
+                </div>
+              )}
             </div>
           </Card>
 
-          <StatusLegend />
+          {hasWorkspaces && <StatusLegend />}
         </>
       )}
     </div>

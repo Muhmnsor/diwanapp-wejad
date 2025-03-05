@@ -1,38 +1,46 @@
 
 import { WorkspaceWithProjects } from "../../types/yearlyPlanTypes";
+import { Project } from "@/types/workspace";
 
-export const calculateProjectStats = (workspaces: WorkspaceWithProjects[]) => {
+export interface ProjectStats {
+  totalProjects: number;
+  completedProjects: number;
+  inProgressProjects: number;
+  delayedProjects: number;
+  pendingProjects: number;
+  completionPercentage: number;
+  workspacesCount: number;
+}
+
+export const calculateProjectStats = (workspaces: WorkspaceWithProjects[]): ProjectStats => {
+  // التعامل مع الحالة التي تكون فيها workspaces فارغة
+  if (!workspaces || workspaces.length === 0) {
+    return {
+      totalProjects: 0,
+      completedProjects: 0,
+      inProgressProjects: 0,
+      delayedProjects: 0,
+      pendingProjects: 0,
+      completionPercentage: 0,
+      workspacesCount: 0
+    };
+  }
+
+  // جمع كل المشاريع من جميع مساحات العمل
+  const allProjects = workspaces.flatMap(workspace => workspace.projects || []);
+  
   // حساب إحصائيات المشاريع
-  const totalProjects = workspaces.reduce(
-    (total, workspace) => total + workspace.projects.length, 
-    0
-  );
+  const totalProjects = allProjects.length;
+  const completedProjects = allProjects.filter(p => p.status === 'completed').length;
+  const inProgressProjects = allProjects.filter(p => p.status === 'in_progress').length;
+  const delayedProjects = allProjects.filter(p => p.status === 'delayed').length;
+  const pendingProjects = allProjects.filter(p => p.status === 'pending').length;
   
-  const completedProjects = workspaces.reduce(
-    (total, workspace) => total + workspace.projects.filter(p => p.status === 'completed').length, 
-    0
-  );
-  
-  const inProgressProjects = workspaces.reduce(
-    (total, workspace) => total + workspace.projects.filter(p => p.status === 'in_progress').length, 
-    0
-  );
-  
-  const delayedProjects = workspaces.reduce(
-    (total, workspace) => total + workspace.projects.filter(p => p.status === 'delayed').length, 
-    0
-  );
-  
-  const pendingProjects = workspaces.reduce(
-    (total, workspace) => total + workspace.projects.filter(p => p.status === 'pending').length, 
-    0
-  );
-  
-  // حساب نسبة الإكمال الإجمالية
+  // حساب نسبة الإكمال
   const completionPercentage = totalProjects > 0 
     ? Math.round((completedProjects / totalProjects) * 100) 
     : 0;
-
+  
   return {
     totalProjects,
     completedProjects,

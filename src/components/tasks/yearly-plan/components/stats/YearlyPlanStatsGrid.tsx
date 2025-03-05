@@ -10,6 +10,7 @@ interface YearlyPlanStatsGridProps {
 }
 
 export const YearlyPlanStatsGrid = ({ workspaces }: YearlyPlanStatsGridProps) => {
+  // حساب الإحصائيات من البيانات
   const {
     totalProjects,
     completedProjects,
