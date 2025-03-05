@@ -1,9 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export const UserNav = () => {
   const navigate = useNavigate();
@@ -27,14 +27,17 @@ export const UserNav = () => {
   if (!isAuthenticated) return null;
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleLogout}
-      className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100 hover:text-red-600 hover:border-red-200"
-    >
-      <LogOut className="h-4 w-4 text-primary" />
-      <span className="hidden md:inline">تسجيل الخروج</span>
-    </Button>
+    <div className="flex items-center gap-4">
+      {isAuthenticated && <NotificationBell />}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleLogout}
+        className="flex items-center gap-2 text-sm border-gray-200 transition-colors duration-200 hover:bg-gray-100 hover:text-red-600 hover:border-red-200"
+      >
+        <LogOut className="h-4 w-4 text-primary" />
+        <span className="hidden md:inline">تسجيل الخروج</span>
+      </Button>
+    </div>
   );
 };

@@ -31,6 +31,8 @@ import CreateTaskProject from "./pages/CreateTaskProject";
 import WorkspaceTaskProjects from "./pages/WorkspaceTaskProjects";
 import TaskProjectDetails from "./pages/TaskProjectDetails";
 import Documentation from "./pages/Documentation";
+import Notifications from "./pages/Notifications";
+import React from "react";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -174,6 +176,16 @@ const AppRoutes = () => {
         } 
       />
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route 
+        path="/notifications" 
+        element={
+          <ProtectedRoute>
+            <React.Suspense fallback={<div>Loading...</div>}>
+              <Notifications />
+            </React.Suspense>
+          </ProtectedRoute>
+        } 
+      />
       <Route path="/documentation" element={<Documentation />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

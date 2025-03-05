@@ -1322,6 +1322,42 @@ export type Database = {
           },
         ]
       }
+      in_app_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          notification_type: string
+          read: boolean
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          notification_type: string
+          read?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          notification_type?: string
+          read?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           event_id: string | null
@@ -3051,6 +3087,42 @@ export type Database = {
           created_at?: string
           details?: string | null
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_notification_preferences: {
+        Row: {
+          created_at: string
+          do_not_disturb_end: string | null
+          do_not_disturb_start: string | null
+          enable_email: boolean
+          enable_in_app: boolean
+          enable_whatsapp: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          do_not_disturb_end?: string | null
+          do_not_disturb_start?: string | null
+          enable_email?: boolean
+          enable_in_app?: boolean
+          enable_whatsapp?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          do_not_disturb_end?: string | null
+          do_not_disturb_start?: string | null
+          enable_email?: boolean
+          enable_in_app?: boolean
+          enable_whatsapp?: boolean
+          id?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

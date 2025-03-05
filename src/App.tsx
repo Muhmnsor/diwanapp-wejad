@@ -1,27 +1,19 @@
 
-import { BrowserRouter } from "react-router-dom";
-import AppRoutes from "./AppRoutes";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "./App.css";
-import { Toaster } from "./components/ui/toaster";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './AppRoutes';
+import './App.css';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { Toaster } from '@/components/ui/toaster';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+    <BrowserRouter>
+      <NotificationProvider>
         <AppRoutes />
         <Toaster />
-      </BrowserRouter>
-    </QueryClientProvider>
+      </NotificationProvider>
+    </BrowserRouter>
   );
 }
 
