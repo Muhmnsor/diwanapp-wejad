@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
-import { uploadAttachment, saveAttachmentReference, saveTaskTemplate } from "../services/uploadService";
+import { uploadAttachment, saveTaskTemplate } from "../services/uploadService";
 import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,6 @@ export function AddTaskDialog({
   onTaskAdded: () => void;
   projectMembers: ProjectMember[];
 }) {
-  const [attachment, setAttachment] = useState<File[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (formData: {
@@ -32,19 +31,12 @@ export function AddTaskDialog({
     priority: string;
     stageId: string;
     assignedTo: string | null;
-    attachment?: File[] | null;
+    templates?: File[] | null;
   }) => {
     setIsSubmitting(true);
     
     try {
       console.log("Submitting task data:", formData);
-      
-      // Check if unified_task_attachments exists first
-      const { data: tableExists } = await supabase.rpc('check_table_exists', {
-        table_name: 'unified_task_attachments'
-      });
-      
-      console.log("Table check result:", tableExists);
       
       // إنشاء المهمة أولاً
       const { data: taskData, error: taskError } = await supabase
@@ -70,58 +62,44 @@ export function AddTaskDialog({
 
       console.log("Task created successfully:", taskData);
 
-      // معالجة المرفقات والنماذج إذا وجدت
-      let attachmentErrors = false;
-      if (formData.attachment && formData.attachment.length > 0 && taskData) {
-        for (const file of formData.attachment) {
+      // معالجة النماذج إذا وجدت
+      let templateErrors = false;
+      if (formData.templates && formData.templates.length > 0 && taskData) {
+        for (const file of formData.templates) {
           try {
-            const fileCategory = (file as any).category || 'creator';
-            console.log("Processing file with category:", fileCategory);
+            console.log("Processing template file:", file.name);
             
-            const uploadResult = await uploadAttachment(file, fileCategory);
+            const uploadResult = await uploadAttachment(file, 'template');
             
             if (uploadResult?.url) {
-              console.log("File uploaded successfully:", uploadResult.url);
+              console.log("Template uploaded successfully:", uploadResult.url);
               
               try {
-                // حفظ معلومات الملف استنادًا إلى نوعه (مرفق أو نموذج)
-                if (fileCategory === 'template') {
-                  // حفظ النموذج في جدول نماذج المهمة
-                  await saveTaskTemplate(
-                    taskData.id,
-                    uploadResult.url,
-                    file.name,
-                    file.type
-                  );
-                  console.log("Task template saved successfully");
-                } else {
-                  // حفظ المرفق في جدول مرفقات المهمة
-                  await saveAttachmentReference(
-                    taskData.id,
-                    uploadResult.url,
-                    file.name,
-                    file.type,
-                    fileCategory
-                  );
-                  console.log("Attachment reference saved successfully");
-                }
+                // حفظ النموذج في جدول نماذج المهمة
+                await saveTaskTemplate(
+                  taskData.id,
+                  uploadResult.url,
+                  file.name,
+                  file.type
+                );
+                console.log("Task template saved successfully");
               } catch (refError) {
-                console.error("Error saving file reference:", refError);
-                attachmentErrors = true;
+                console.error("Error saving template reference:", refError);
+                templateErrors = true;
               }
             } else {
               console.error("Upload result error:", uploadResult?.error);
-              attachmentErrors = true;
+              templateErrors = true;
             }
           } catch (uploadError) {
-            console.error("Error handling file:", uploadError);
-            attachmentErrors = true;
+            console.error("Error handling template file:", uploadError);
+            templateErrors = true;
           }
         }
       }
 
-      if (attachmentErrors) {
-        toast.warning("تم إنشاء المهمة ولكن قد تكون بعض الملفات لم تُرفع بشكل صحيح");
+      if (templateErrors) {
+        toast.warning("تم إنشاء المهمة ولكن قد تكون بعض النماذج لم تُرفع بشكل صحيح");
       } else {
         toast.success("تم إضافة المهمة بنجاح");
       }
@@ -150,8 +128,6 @@ export function AddTaskDialog({
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             projectStages={projectStages}
-            attachment={attachment}
-            setAttachment={setAttachment}
             projectMembers={projectMembers}
           />
         </div>

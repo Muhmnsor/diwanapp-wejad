@@ -242,7 +242,7 @@ export const deleteAttachment = async (attachmentId: string) => {
       return true;
     }
     
-    // مح��ولة العثور على المرفق في جدول مرفقات المهام من المحفظة
+    // مح���ولة العثور على المرفق في جدول مرفقات المهام من المحفظة
     const { data: portfolioAttachment } = await supabase
       .from('portfolio_task_attachments')
       .select('file_url')
@@ -281,6 +281,39 @@ export const saveTaskTemplate = async (
     // الحصول على معرف المستخدم الحالي
     const { data: { user } } = await supabase.auth.getUser();
     
+    // تحديد نوع جدول المهمة (tasks, project_tasks, portfolio_tasks)
+    let taskTable = 'tasks';
+    
+    const { data: taskExists } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('id', taskId)
+      .single();
+      
+    if (!taskExists) {
+      const { data: projectTaskExists } = await supabase
+        .from('project_tasks')
+        .select('id')
+        .eq('id', taskId)
+        .single();
+        
+      if (projectTaskExists) {
+        taskTable = 'project_tasks';
+      } else {
+        const { data: portfolioTaskExists } = await supabase
+          .from('portfolio_tasks')
+          .select('id')
+          .eq('id', taskId)
+          .single();
+          
+        if (portfolioTaskExists) {
+          taskTable = 'portfolio_tasks';
+        }
+      }
+    }
+    
+    console.log("Determined task table:", taskTable);
+    
     // حفظ النموذج في جدول نماذج المهمة
     const { data, error } = await supabase
       .from('task_templates')
@@ -290,7 +323,7 @@ export const saveTaskTemplate = async (
         file_name: fileName,
         file_type: fileType,
         created_by: user?.id,
-        task_table: 'tasks'
+        task_table: taskTable
       });
       
     if (error) {

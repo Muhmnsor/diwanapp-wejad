@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X } from "lucide-react";
+import { Paperclip, X, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface TaskAttachmentFieldProps {
@@ -14,7 +14,7 @@ interface TaskAttachmentFieldProps {
 export const TaskAttachmentField = ({ 
   attachment, 
   setAttachment, 
-  category = 'creator' 
+  category = 'template' 
 }: TaskAttachmentFieldProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -45,9 +45,8 @@ export const TaskAttachmentField = ({
     }
   };
 
-  const isTemplate = category === 'template';
-  const labelText = isTemplate ? "النماذج" : "المرفقات";
-  const buttonText = isTemplate ? "إضافة نموذج" : "إضافة مرفق";
+  const labelText = "نماذج المهمة";
+  const buttonText = "إضافة نموذج";
 
   return (
     <div className="space-y-2">
@@ -60,7 +59,7 @@ export const TaskAttachmentField = ({
             onClick={() => document.getElementById("attachment")?.click()} 
             className="relative"
           >
-            <Paperclip className="h-4 w-4 ml-2" />
+            <FileDown className="h-4 w-4 ml-2" />
             {buttonText}
           </Button>
           <input
