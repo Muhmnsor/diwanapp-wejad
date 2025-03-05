@@ -46,14 +46,12 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
         left: `${left}%`,
         width: `${width}%`,
       }}
-      className={`absolute h-6 rounded-md px-1 text-xs text-white flex items-center overflow-hidden ${getTaskStatusColor(task.status)}`}
+      className={`absolute h-6 rounded-md ${getTaskStatusColor(task.status)}`}
       title={`${task.title} (${
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
         'منخفضة'
       })`}
-    >
-      <span className="truncate">{task.title}</span>
-    </div>
+    />
   );
 };
