@@ -47,7 +47,7 @@ export const DeliverablesByTask = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-200">مقبول</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">مقبول</Badge>;
       case 'rejected':
         return <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-200">مرفوض</Badge>;
       default:

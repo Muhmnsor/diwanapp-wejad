@@ -34,7 +34,7 @@ export const TaskDeliverablesDialog = ({
     handleDownloadDeliverable
   } = useTaskDeliverables(fetchDeliverables, fetchDeliverables);
 
-  const isCreator = task.created_by === user?.id;
+  const isCreator = task.created_at ? user?.id === task.created_at : false;
   const isAssignee = task.assigned_to === user?.id;
   const isAdmin = user?.isAdmin || user?.role === 'admin';
   
