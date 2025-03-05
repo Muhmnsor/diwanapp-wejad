@@ -8,6 +8,8 @@ import { TaskDiscussionContent } from "./discussions/TaskDiscussionContent";
 import { TaskCommentForm } from "./discussions/TaskCommentForm";
 import { useFetchTaskAttachments } from "../project-details/components/task-item/useFetchTaskAttachments";
 import { AttachmentsByCategory } from "./metadata/AttachmentsByCategory";
+import { useTaskMetadataAttachments } from "../hooks/useTaskMetadataAttachments";
+import { Paperclip } from "lucide-react";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
@@ -21,11 +23,23 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     task.id, 
     task.assigned_to
   );
+  
+  // استخدام هوك لجلب جميع المستلمات المرتبطة بالمهمة
+  const { 
+    creatorAttachments,
+    assigneeAttachments,
+    commentAttachments,
+    loading,
+    handleDownload: downloadAttachment
+  } = useTaskMetadataAttachments(task.id);
 
   const handleCommentAdded = () => {
     // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
     setRefreshKey(prev => prev + 1);
   };
+  
+  // التحقق من وجود مستلمات
+  const hasAttachments = assigneeAttachments.length > 0 || creatorAttachments.length > 0 || commentAttachments.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,6 +60,51 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
               onDownload={handleDownload}
               compactLayout={true}
             />
+          </div>
+        )}
+        
+        {/* قسم جديد لعرض جميع المستلمات المرتبطة بالمهمة */}
+        {hasAttachments && (
+          <div className="mt-2 mb-1">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Paperclip className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">المستلمات المرتبطة بالمهمة</h3>
+            </div>
+            
+            <div className="space-y-2">
+              {creatorAttachments.length > 0 && (
+                <AttachmentsByCategory
+                  title="مستلمات منشئ المهمة:"
+                  attachments={creatorAttachments}
+                  bgColor="bg-green-50"
+                  iconColor="text-green-600"
+                  onDownload={downloadAttachment}
+                  compactLayout={true}
+                />
+              )}
+              
+              {assigneeAttachments.length > 0 && (
+                <AttachmentsByCategory
+                  title="مستلمات المكلف بالمهمة:"
+                  attachments={assigneeAttachments}
+                  bgColor="bg-blue-50"
+                  iconColor="text-blue-600"
+                  onDownload={downloadAttachment}
+                  compactLayout={true}
+                />
+              )}
+              
+              {commentAttachments.length > 0 && (
+                <AttachmentsByCategory
+                  title="مستلمات التعليقات:"
+                  attachments={commentAttachments}
+                  bgColor="bg-gray-50"
+                  iconColor="text-gray-500"
+                  onDownload={downloadAttachment}
+                  compactLayout={true}
+                />
+              )}
+            </div>
           </div>
         )}
         
