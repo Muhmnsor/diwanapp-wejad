@@ -1,7 +1,6 @@
 
 import { getDaysInMonth, startOfMonth, endOfMonth } from 'date-fns';
-import { getTaskStatusColor } from '../../utils/dateUtils';
-import { Progress } from '@/components/ui/progress';
+import { getTaskStatusColor, getTimeBasedProgress } from '../../utils/dateUtils';
 
 interface TaskBarProps {
   task: any;
@@ -42,21 +41,20 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const width = ((rightDay - leftDay) / daysInMonth) * 100;
   
   // Calculate progress value (between 0-100)
-  // Assuming task has completion_percentage field, default to 0 if not present
-  const progressValue = task.completion_percentage || 0;
+  // First use completion_percentage if available, otherwise calculate based on time
+  const progressValue = task.completion_percentage !== undefined && task.completion_percentage !== null
+    ? task.completion_percentage
+    : getTimeBasedProgress(startDate, endDate);
   
   // Get base color based on status
   const statusColor = getTaskStatusColor(task.status);
-  
-  // Define progress bar background color (lighter version of status color)
-  const progressBgColor = statusColor.replace('bg-', 'bg-').concat('/30');
   
   return (
     <div 
       style={{
         left: `${left}%`,
         width: `${width}%`,
-        height: '18px',
+        height: '24px',
       }}
       className="absolute rounded-md"
       title={`${task.title} (${
@@ -66,13 +64,20 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
       })`}
     >
       {/* Background bar (full project timeline) */}
-      <div className={`absolute inset-0 ${progressBgColor} rounded-md`} />
+      <div className={`absolute inset-0 ${statusColor.replace('bg-', 'bg-').concat('/20')} rounded-md border border-gray-300`} />
       
       {/* Progress bar (completed portion) */}
       <div 
         className={`absolute top-0 left-0 h-full ${statusColor} rounded-md transition-all duration-300`}
         style={{ width: `${progressValue}%` }}
       />
+      
+      {/* Small label showing percentage */}
+      <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-xs font-medium">
+        <span className={`${parseInt(progressValue) > 50 ? 'text-white' : 'text-gray-700'}`}>
+          {parseInt(progressValue)}%
+        </span>
+      </div>
     </div>
   );
 };
