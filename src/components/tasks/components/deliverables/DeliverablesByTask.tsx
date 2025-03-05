@@ -49,7 +49,7 @@ export const DeliverablesByTask = ({
       case 'approved':
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">مقبول</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-200">مرفوض</Badge>;
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">مرفوض</Badge>;
       default:
         return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">قيد المراجعة</Badge>;
     }
