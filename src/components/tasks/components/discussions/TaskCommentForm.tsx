@@ -50,7 +50,7 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
           console.log("Comment attachment uploaded successfully:", attachmentUrl);
           
           try {
-            // حفظ معلومات المرفق في قاعدة البيانات task_attachments
+            // حفظ معلومات المرفق في قاعدة البيانات
             await saveAttachmentReference(
               task.id,
               attachmentUrl,
@@ -62,12 +62,10 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
           } catch (refError) {
             console.error("Failed to save attachment reference:", refError);
             attachmentError = true;
-            // استمر في تنفيذ الكود حتى مع وجود خطأ في حفظ مرجع الملف
           }
         } else {
           console.error("Upload result error:", uploadResult?.error);
           attachmentError = true;
-          // استمر في إنشاء التعليق حتى مع وجود خطأ في رفع الملف
         }
       }
       
@@ -79,56 +77,9 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         attachment_url: attachmentUrl,
         attachment_name: attachmentName,
         attachment_type: attachmentType,
-        task_table: 'tasks' // القيمة الافتراضية، سيتم تحديثها أدناه
+        task_table: 'tasks' // القيمة الافتراضية
       };
-
-      // تحديد نوع جدول المهمة بناءً على وجود المهمة في الجداول المختلفة
       
-      // فحص ما إذا كانت المهمة في جدول portfolio_tasks
-      const { data: portfolioTask, error: portfolioError } = await supabase
-        .from("portfolio_tasks")
-        .select("id")
-        .eq("id", task.id)
-        .single();
-        
-      if (!portfolioError && portfolioTask) {
-        commentData.task_table = "portfolio_tasks";
-      } else {
-        // فحص ما إذا كانت المهمة في جدول project_tasks
-        const { data: projectTask, error: projectError } = await supabase
-          .from("project_tasks")
-          .select("id")
-          .eq("id", task.id)
-          .single();
-          
-        if (!projectError && projectTask) {
-          commentData.task_table = "project_tasks";
-        } else {
-          // فحص ما إذا كانت المهمة في جدول tasks
-          const { data: normalTask, error: normalTaskError } = await supabase
-            .from("tasks")
-            .select("id")
-            .eq("id", task.id)
-            .single();
-            
-          if (!normalTaskError && normalTask) {
-            commentData.task_table = "tasks";
-          } else {
-            // فحص ما إذا كانت المهمة في جدول subtasks
-            const { data: subTask, error: subTaskError } = await supabase
-              .from("subtasks")
-              .select("id")
-              .eq("id", task.id)
-              .single();
-              
-            if (!subTaskError && subTask) {
-              commentData.task_table = "subtasks";
-            }
-          }
-        }
-      }
-      
-      console.log("Task table identified:", commentData.task_table);
       console.log("Adding comment to unified_task_comments:", commentData);
       
       // إضافة التعليق إلى جدول التعليقات الموحد

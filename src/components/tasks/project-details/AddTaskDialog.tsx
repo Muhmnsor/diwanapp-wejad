@@ -2,8 +2,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { uploadAttachment, saveAttachmentReference } from "../services/uploadService";
 import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
@@ -24,12 +22,6 @@ export function AddTaskDialog({
   onTaskAdded: () => void;
   projectMembers: ProjectMember[];
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("normal");
-  const [dueDate, setDueDate] = useState<Date | null>(null);
-  const [stageId, setStageId] = useState(projectStages[0]?.id || "");
-  const [assignedTo, setAssignedTo] = useState(projectMembers[0]?.id || "");
   const [attachment, setAttachment] = useState<File[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,15 +89,14 @@ export function AddTaskDialog({
               } catch (refError) {
                 console.error("Error saving attachment reference:", refError);
                 attachmentErrors = true;
-                // استمر في تنفيذ الكود حتى مع وجود خطأ في حفظ مرجع الملف
               }
             } else {
+              console.error("Upload result error:", uploadResult?.error);
               attachmentErrors = true;
             }
           } catch (uploadError) {
             console.error("Error handling attachment:", uploadError);
             attachmentErrors = true;
-            // استمر في تنفيذ المهمة حتى مع وجود خطأ في رفع الملف
           }
         }
       }
