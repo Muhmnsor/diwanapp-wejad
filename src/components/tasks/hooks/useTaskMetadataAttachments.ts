@@ -84,6 +84,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
+      // هذا المسار المحدد لجلب المستلمات
       const { data: taskDeliverables, error } = await supabase
         .from("task_deliverables")
         .select("*")
