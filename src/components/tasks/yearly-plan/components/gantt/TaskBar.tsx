@@ -1,3 +1,4 @@
+
 import { getDaysInMonth, startOfMonth, endOfMonth } from 'date-fns';
 import { getTaskStatusColor, getTimeBasedProgress } from '../../utils/dateUtils';
 
@@ -39,15 +40,14 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const left = (leftDay / daysInMonth) * 100;
   const width = ((rightDay - leftDay) / daysInMonth) * 100;
   
-  // Calculate progress value (between 0-100)
-  // First check if status is completed, then use completion_percentage if available, otherwise calculate based on time
+  // Calculate real-time progress value (between 0-100)
   let progressValue = 0;
   
   if (task.status === 'completed') {
     // If task is marked as completed, show 100% regardless of other fields
     progressValue = 100;
   } else if (task.completion_percentage !== undefined && task.completion_percentage !== null) {
-    // If completion_percentage is available, use it
+    // If completion_percentage is available, use it (this is the real-time value from the database)
     progressValue = task.completion_percentage;
   } else {
     // Otherwise fall back to time-based calculation
