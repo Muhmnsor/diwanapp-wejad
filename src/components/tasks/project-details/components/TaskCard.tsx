@@ -122,20 +122,22 @@ export const TaskCard = ({
           <div className="mt-3 flex justify-end gap-2">
             <Button 
               variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              size="sm" 
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShowAttachments(true)}
             >
-              <Paperclip className="h-4 w-4" />
+              <Paperclip className="h-3.5 w-3.5" />
+              المرفقات
             </Button>
             
             <Button 
               variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              size="sm" 
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShowDiscussion(true)}
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-3.5 w-3.5" />
+              مناقشة
             </Button>
 
             {canChangeStatus() && (

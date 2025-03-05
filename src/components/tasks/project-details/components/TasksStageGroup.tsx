@@ -1,11 +1,7 @@
 
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { Task } from "../types/task";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, Paperclip } from "lucide-react";
-import { useState } from "react";
-import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
-import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
+import { TaskItem } from "./TaskItem";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -28,28 +24,6 @@ export const TasksStageGroup = ({
   onStatusChange,
   projectId
 }: TasksStageGroupProps) => {
-  const [taskDialogs, setTaskDialogs] = useState<{ [key: string]: { discussion: boolean; attachments: boolean } }>({});
-  
-  const toggleDiscussion = (taskId: string, state?: boolean) => {
-    setTaskDialogs(prev => ({
-      ...prev,
-      [taskId]: {
-        ...prev[taskId] || { discussion: false, attachments: false },
-        discussion: state !== undefined ? state : !(prev[taskId]?.discussion || false)
-      }
-    }));
-  };
-  
-  const toggleAttachments = (taskId: string, state?: boolean) => {
-    setTaskDialogs(prev => ({
-      ...prev,
-      [taskId]: {
-        ...prev[taskId] || { discussion: false, attachments: false },
-        attachments: state !== undefined ? state : !(prev[taskId]?.attachments || false)
-      }
-    }));
-  };
-  
   const filteredTasks = tasks.filter(task => 
     activeTab === "all" || task.status === activeTab
   );
@@ -73,57 +47,17 @@ export const TasksStageGroup = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredTasks.map(task => {
-            const dialogState = taskDialogs[task.id] || { discussion: false, attachments: false };
-            
-            return (
-              <TableRow key={task.id}>
-                <TableCell>{task.title}</TableCell>
-                <TableCell>{getStatusBadge(task.status)}</TableCell>
-                <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                <TableCell>{task.assigned_user_name || 'غير محدد'}</TableCell>
-                <TableCell>{formatDate(task.due_date)}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2 justify-end">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => toggleAttachments(task.id)}
-                    >
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => toggleDiscussion(task.id)}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
-                    
-                    {/* Additional actions as needed */}
-                  </div>
-                  
-                  {dialogState.discussion && (
-                    <TaskDiscussionDialog 
-                      open={dialogState.discussion} 
-                      onOpenChange={(open) => toggleDiscussion(task.id, open)}
-                      task={task}
-                    />
-                  )}
-                  
-                  {dialogState.attachments && (
-                    <TaskAttachmentDialog
-                      task={task}
-                      open={dialogState.attachments}
-                      onOpenChange={(open) => toggleAttachments(task.id, open)}
-                    />
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {filteredTasks.map(task => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              getStatusBadge={getStatusBadge}
+              getPriorityBadge={getPriorityBadge}
+              formatDate={formatDate}
+              onStatusChange={onStatusChange}
+              projectId={projectId}
+            />
+          ))}
         </TableBody>
       </Table>
     </div>
