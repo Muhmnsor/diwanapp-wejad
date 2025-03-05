@@ -123,21 +123,19 @@ export const TaskCard = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              className="px-2"
               onClick={() => setShowAttachments(true)}
             >
-              <Paperclip className="h-3.5 w-3.5" />
-              المرفقات
+              <Paperclip className="h-3.5 w-3.5 text-gray-500" />
             </Button>
             
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              className="px-2"
               onClick={() => setShowDiscussion(true)}
             >
-              <MessageCircle className="h-3.5 w-3.5" />
-              مناقشة
+              <MessageCircle className="h-3.5 w-3.5 text-gray-500" />
             </Button>
 
             {canChangeStatus() && (
@@ -145,23 +143,21 @@ export const TaskCard = ({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-3"
+                  className="h-7 px-2"
                   onClick={() => handleStatusUpdate('completed')}
                   disabled={isUpdating}
                 >
-                  <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
-                  إكمال المهمة
+                  <Check className="h-3.5 w-3.5 text-green-500" />
                 </Button>
               ) : (
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="h-7 px-3"
+                  className="h-7 px-2"
                   onClick={() => handleStatusUpdate('in_progress')}
                   disabled={isUpdating}
                 >
-                  <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
-                  إعادة فتح المهمة
+                  <Clock className="h-3.5 w-3.5 text-amber-500" />
                 </Button>
               )
             )}
