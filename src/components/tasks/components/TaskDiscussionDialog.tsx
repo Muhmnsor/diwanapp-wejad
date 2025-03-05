@@ -10,6 +10,7 @@ import { useTaskMetadataAttachments } from "../hooks/useTaskMetadataAttachments"
 import { AttachmentsByCategory } from "./metadata/AttachmentsByCategory";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
+import { TaskComment } from "../types/taskComment";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
@@ -18,7 +19,7 @@ interface TaskDiscussionDialogProps {
 }
 
 export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussionDialogProps) => {
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [newComment, setNewComment] = useState<TaskComment | undefined>(undefined);
 
   const {
     loading,
@@ -41,9 +42,11 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     }
   }, [task.id, creatorAttachments, assigneeAttachments, deliverables, open]);
 
-  const handleCommentAdded = () => {
-    // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
-    setRefreshKey(prev => prev + 1);
+  const handleCommentAdded = (newComment?: TaskComment) => {
+    // إذا تم تمرير تعليق جديد، نقوم بتحديث الحالة
+    if (newComment) {
+      setNewComment(newComment);
+    }
   };
 
   const handleRefreshDeliverables = () => {
@@ -61,8 +64,8 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         {/* تم إخفاء قسم المستلمات */}
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
-          {/* استخدام refreshKey كمفتاح لإعادة تحميل المحتوى عند إضافة تعليق جديد */}
-          <TaskDiscussionContent key={refreshKey} task={task} />
+          {/* تمرير التعليق الجديد لتحديث القائمة */}
+          <TaskDiscussionContent task={task} newComment={newComment} />
         </div>
         
         <div className="mt-auto">

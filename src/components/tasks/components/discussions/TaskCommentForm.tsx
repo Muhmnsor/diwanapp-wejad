@@ -5,10 +5,11 @@ import { uploadAttachment, saveAttachmentReference } from "../../services/upload
 import { Task } from "../../types/task";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TaskComment } from "../../types/taskComment";
 
 interface TaskCommentFormProps {
   task: Task;
-  onCommentAdded: () => void;
+  onCommentAdded: (newComment?: TaskComment) => void;
 }
 
 export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) => {
@@ -103,9 +104,14 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
       console.log("Adding comment to task_comments:", commentData);
       
       // محاولة الإضافة في جدول task_comments أولاً
-      const { error: insertError } = await supabase
+      let newCommentId = "";
+      let commentInserted = false;
+      
+      const { data: insertedComment, error: insertError } = await supabase
         .from("task_comments")
-        .insert(commentData);
+        .insert(commentData)
+        .select()
+        .single();
         
       if (insertError) {
         console.error("Error details for task_comments insert:", insertError);
@@ -117,22 +123,64 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
           task_table: 'tasks' // إضافة حقل task_table
         };
         
-        const { error: unifiedInsertError } = await supabase
+        const { data: unifiedInsertedComment, error: unifiedInsertError } = await supabase
           .from("unified_task_comments")
-          .insert(unifiedCommentData);
+          .insert(unifiedCommentData)
+          .select()
+          .single();
           
         if (unifiedInsertError) {
           console.error("Error details for unified_task_comments insert:", unifiedInsertError);
           throw unifiedInsertError;
+        } else if (unifiedInsertedComment) {
+          commentInserted = true;
+          newCommentId = unifiedInsertedComment.id;
+          
+          // إضافة بيانات المستخدم للتعليق المضاف
+          const { data: userData } = await supabase
+            .from("profiles")
+            .select("display_name, email")
+            .eq("id", userId)
+            .single();
+            
+          const newComment: TaskComment = {
+            ...unifiedInsertedComment,
+            user_name: userData?.display_name || userData?.email || "مستخدم",
+            user_email: userData?.email
+          };
+          
+          // تمرير التعليق الجديد لتحديث القائمة بدون إعادة التحميل الكامل
+          onCommentAdded(newComment);
         }
+      } else if (insertedComment) {
+        commentInserted = true;
+        newCommentId = insertedComment.id;
+        
+        // إضافة بيانات المستخدم للتعليق المضاف
+        const { data: userData } = await supabase
+          .from("profiles")
+          .select("display_name, email")
+          .eq("id", userId)
+          .single();
+          
+        const newComment: TaskComment = {
+          ...insertedComment,
+          user_name: userData?.display_name || userData?.email || "مستخدم",
+          user_email: userData?.email
+        };
+        
+        // تمرير التعليق الجديد لتحديث القائمة بدون إعادة التحميل الكامل
+        onCommentAdded(newComment);
       }
       
       // مسح حقل التعليق والملف بعد النجاح
       setCommentText("");
       setSelectedFile(null);
       
-      // تحديث التعليقات
-      onCommentAdded();
+      if (!commentInserted) {
+        // إذا لم ننجح في إضافة التعليق، نقوم بتحديث القائمة
+        onCommentAdded();
+      }
       
       if (attachmentError) {
         toast.warning("تم إضافة التعليق ولكن قد يكون هناك مشكلة في رفع المرفق");

@@ -9,9 +9,10 @@ import { toast } from "sonner";
 
 interface TaskDiscussionContentProps {
   task: Task;
+  newComment?: TaskComment; // إضافة خاصية اختيارية للتعليق الجديد
 }
 
-export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
+export const TaskDiscussionContent = ({ task, newComment }: TaskDiscussionContentProps) => {
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,6 +20,17 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
   useEffect(() => {
     fetchComments();
   }, [task.id]);
+
+  // إضافة التعليق الجديد للقائمة عند وصوله
+  useEffect(() => {
+    if (newComment) {
+      console.log("Adding new comment to list:", newComment);
+      // تحقق من عدم وجود التعليق بالفعل (تفادي التكرار)
+      if (!comments.some(comment => comment.id === newComment.id)) {
+        setComments(prevComments => [...prevComments, newComment]);
+      }
+    }
+  }, [newComment]);
 
   const fetchComments = async () => {
     setLoading(true);
@@ -133,7 +145,7 @@ export const TaskDiscussionContent = ({ task }: TaskDiscussionContentProps) => {
     }
   };
 
-  if (loading) {
+  if (loading && comments.length === 0) {
     return (
       <div className="flex justify-center items-center h-40">
         <p className="text-muted-foreground">جاري تحميل المناقشات...</p>
