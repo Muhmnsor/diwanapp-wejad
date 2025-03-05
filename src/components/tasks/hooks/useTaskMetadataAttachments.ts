@@ -82,12 +82,18 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
   const commentAttachments = attachments.filter(att => 
     att.attachment_category === 'comment');
 
+  // إضافة وظيفة لإعادة تحميل المرفقات
+  const refreshAttachments = () => {
+    fetchTaskAttachments();
+  };
+
   return {
     attachments,
     loading,
     creatorAttachments,
     assigneeAttachments,
     commentAttachments,
-    handleDownload
+    handleDownload,
+    refreshAttachments
   };
 }

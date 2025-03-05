@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Task } from "../types/task";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +25,13 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     handleDownload
   } = useTaskMetadataAttachments(task.id || undefined);
 
+  // إضافة سجل للتحقق من المرفقات
+  useEffect(() => {
+    console.log("Task ID:", task.id);
+    console.log("Creator Attachments:", creatorAttachments);
+    console.log("Assignee Attachments:", assigneeAttachments);
+  }, [task.id, creatorAttachments, assigneeAttachments]);
+
   const handleCommentAdded = () => {
     // ترقيم مفتاح التحديث لإعادة تحميل المحتوى
     setRefreshKey(prev => prev + 1);
@@ -41,27 +48,35 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         <Separator className="my-4" />
         
         {/* قسم المستلمات (يظهر بين معلومات المهمة ومساحة النقاش) */}
-        {hasAttachments && (
+        {hasAttachments ? (
           <div className="mb-4">
             <h3 className="text-sm font-medium mb-2">مرفقات المهمة:</h3>
             <div className="space-y-2">
-              <AttachmentsByCategory
-                title="مرفقات منشئ المهمة:"
-                attachments={creatorAttachments}
-                bgColor="bg-blue-50"
-                iconColor="text-blue-500"
-                onDownload={handleDownload}
-              />
+              {creatorAttachments.length > 0 && (
+                <AttachmentsByCategory
+                  title="مرفقات منشئ المهمة:"
+                  attachments={creatorAttachments}
+                  bgColor="bg-blue-50"
+                  iconColor="text-blue-500"
+                  onDownload={handleDownload}
+                />
+              )}
 
-              <AttachmentsByCategory
-                title="مرفقات المكلف بالمهمة:"
-                attachments={assigneeAttachments}
-                bgColor="bg-green-50"
-                iconColor="text-green-500"
-                onDownload={handleDownload}
-              />
+              {assigneeAttachments.length > 0 && (
+                <AttachmentsByCategory
+                  title="مرفقات المكلف بالمهمة:"
+                  attachments={assigneeAttachments}
+                  bgColor="bg-green-50"
+                  iconColor="text-green-500"
+                  onDownload={handleDownload}
+                />
+              )}
             </div>
           </div>
+        ) : loading ? (
+          <div className="mb-4 text-sm text-gray-500">جاري تحميل المرفقات...</div>
+        ) : (
+          <div className="mb-4 text-sm text-gray-500">لا توجد مرفقات للمهمة</div>
         )}
         
         <div className="overflow-y-auto flex-1 pr-1 -mr-1 mb-4">
