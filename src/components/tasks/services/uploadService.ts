@@ -5,7 +5,7 @@ import { toast } from "sonner";
 export const uploadAttachment = async (
   file: File, 
   category: 'creator' | 'assignee' | 'comment' = 'comment'
-): Promise<{ url: string; error: any } | null> => {
+): Promise<{ url: string; error: any; category?: string } | null> => {
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 11)}_${Date.now()}.${fileExt}`;
@@ -29,7 +29,7 @@ export const uploadAttachment = async (
     return { 
       url: publicUrl, 
       error: null,
-      category
+      category 
     };
   } catch (error) {
     console.error("Error handling file upload:", error);
