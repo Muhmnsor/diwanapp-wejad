@@ -1,7 +1,8 @@
 
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
+import { TaskAttachmentButton } from "./TaskAttachmentButton";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -38,25 +39,31 @@ export const TasksStageGroup = ({
       <Table dir="rtl">
         <TableHeader>
           <TableRow>
-            <TableHead>المهمة</TableHead>
-            <TableHead>الحالة</TableHead>
-            <TableHead>الأولوية</TableHead>
-            <TableHead>المكلف</TableHead>
-            <TableHead>تاريخ الاستحقاق</TableHead>
-            <TableHead>الإجراءات</TableHead>
+            <TableHead className="w-[40%]">المهمة</TableHead>
+            <TableHead className="w-[12%]">الحالة</TableHead>
+            <TableHead className="w-[12%]">الأولوية</TableHead>
+            <TableHead className="w-[15%]">المكلف</TableHead>
+            <TableHead className="w-[15%]">تاريخ الاستحقاق</TableHead>
+            <TableHead className="w-[6%]">المرفقات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredTasks.map(task => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId}
-            />
+            <TableRow key={task.id}>
+              <TableCell colSpan={5} className="p-0 border-b">
+                <TaskItem
+                  task={task}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId}
+                />
+              </TableCell>
+              <TableCell className="text-center">
+                <TaskAttachmentButton taskId={task.id} />
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
