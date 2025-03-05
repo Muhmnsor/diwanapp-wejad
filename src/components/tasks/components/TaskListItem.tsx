@@ -7,6 +7,7 @@ import {
   CalendarClock,
   XCircle,
   Paperclip,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Task } from "../types/task";
@@ -160,8 +161,8 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
             className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
             onClick={() => setShowAttachmentDialog(true)}
           >
-            <Paperclip className="h-3.5 w-3.5" />
-            إرفاق ملف
+            <Upload className="h-3.5 w-3.5" />
+            رفع ملف
           </Button>
         </div>
         

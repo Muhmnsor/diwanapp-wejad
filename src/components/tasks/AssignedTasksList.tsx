@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Task } from "./types/task";
 import { useAssignedTasks } from "./hooks/useAssignedTasks";
@@ -154,28 +153,6 @@ export const AssignedTasksList = () => {
               task={task} 
               onStatusChange={handleStatusChange}
             />
-            {/* Task action buttons */}
-            <div className="mt-1 flex justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-gray-500 ml-2"
-                onClick={() => openAttachmentsDialog(task)}
-              >
-                <Paperclip className="h-3 w-3 ml-1" />
-                المرفقات
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-gray-500"
-                onClick={() => openFileUploader(task)}
-              >
-                <Upload className="h-3 w-3 ml-1" />
-                رفع ملف
-              </Button>
-            </div>
           </div>
         ))}
       </div>
