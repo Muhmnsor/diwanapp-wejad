@@ -1,4 +1,3 @@
-
 import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -43,7 +42,6 @@ export const TaskItem = ({
   const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
   const { user } = useAuthStore();
   
-  // جلب المرفقات الخاصة بالمكلف بالمهمة
   useEffect(() => {
     if (task.assigned_to) {
       fetchAssigneeAttachment();
@@ -52,7 +50,6 @@ export const TaskItem = ({
 
   const fetchAssigneeAttachment = async () => {
     try {
-      // البحث أولاً في جدول portfolio_task_attachments
       const { data: portfolioAttachments, error: portfolioError } = await supabase
         .from("portfolio_task_attachments")
         .select("*")
@@ -61,7 +58,6 @@ export const TaskItem = ({
         .order('created_at', { ascending: false })
         .limit(1);
 
-      // ثم البحث في جدول task_attachments
       const { data: taskAttachments, error: taskError } = await supabase
         .from("task_attachments")
         .select("*")
@@ -70,7 +66,6 @@ export const TaskItem = ({
         .order('created_at', { ascending: false })
         .limit(1);
       
-      // اختيار المرفق من أحد المصدرين
       if ((portfolioAttachments && portfolioAttachments.length > 0) || 
           (taskAttachments && taskAttachments.length > 0)) {
         
@@ -86,7 +81,6 @@ export const TaskItem = ({
   };
 
   const handleDownload = (fileUrl: string, fileName: string) => {
-    // إنشاء عنصر رابط مؤقت
     const link = document.createElement('a');
     link.href = fileUrl;
     link.target = '_blank';

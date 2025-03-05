@@ -31,7 +31,7 @@ export const TaskMetadata = ({
   } = useTaskMetadataAttachments(taskId || undefined);
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-start gap-4">
       <BasicMetadata 
         dueDate={dueDate}
         projectName={projectName}
