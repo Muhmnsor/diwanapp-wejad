@@ -1,6 +1,6 @@
 
 import { getDaysInMonth, startOfMonth, endOfMonth } from 'date-fns';
-import { getTaskStatusColor, getTimeBasedProgress } from '../../utils/dateUtils';
+import { getTaskStatusColor } from '../../utils/dateUtils';
 
 interface TaskBarProps {
   task: any;
@@ -40,66 +40,20 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const left = (leftDay / daysInMonth) * 100;
   const width = ((rightDay - leftDay) / daysInMonth) * 100;
   
-  // Calculate real-time progress value (between 0-100)
-  let progressValue = 0;
-  
-  // Debug the task data - especially for the جدييييييددددددددد project
-  console.log(`Task ${task.title} (${task.status}) - Project: ${task.project_name || 'Unknown'}`);
-  console.log(`Completion percentage from DB: ${task.completion_percentage}`);
-  
-  if (task.status === 'completed') {
-    // If task is marked as completed, show 100% regardless of other fields
-    progressValue = 100;
-  } else if (task.completion_percentage !== undefined && task.completion_percentage !== null) {
-    // If completion_percentage is available, use it (this is the real-time value from the database)
-    progressValue = parseFloat(task.completion_percentage);
-    
-    // Ensure it's a valid number between 0-100
-    if (isNaN(progressValue)) {
-      progressValue = 0;
-    } else {
-      progressValue = Math.max(0, Math.min(100, progressValue));
-    }
-  } else {
-    // Otherwise fall back to time-based calculation
-    progressValue = getTimeBasedProgress(startDate, endDate);
-  }
-  
-  // Get base color based on status
-  const statusColor = getTaskStatusColor(task.status);
-  
-  // Format the percentage display value - ensure it's a whole number
-  const displayPercentage = Math.round(progressValue);
-  
   return (
-    <div 
+    <div
       style={{
         left: `${left}%`,
         width: `${width}%`,
-        height: '24px',
       }}
-      className="absolute rounded-md"
+      className={`absolute h-6 rounded-md px-1 text-xs text-white flex items-center overflow-hidden ${getTaskStatusColor(task.status)}`}
       title={`${task.title} (${
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
         'منخفضة'
-      }) - ${displayPercentage}% مكتمل`}
+      })`}
     >
-      {/* Background bar (full project timeline) */}
-      <div className={`absolute inset-0 ${statusColor.replace('bg-', 'bg-').concat('/20')} rounded-md border border-gray-300`} />
-      
-      {/* Progress bar (completed portion) */}
-      <div 
-        className={`absolute top-0 left-0 h-full ${statusColor} rounded-md transition-all duration-300`}
-        style={{ width: `${displayPercentage}%` }}
-      />
-      
-      {/* Small label showing percentage */}
-      <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-xs font-medium">
-        <span className={`${displayPercentage > 50 ? 'text-white' : 'text-gray-700'}`}>
-          {displayPercentage}%
-        </span>
-      </div>
+      <span className="truncate">{task.title}</span>
     </div>
   );
 };

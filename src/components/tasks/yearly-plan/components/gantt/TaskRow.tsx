@@ -23,7 +23,7 @@ export const TaskRow = ({ task, months, today }: TaskRowProps) => {
   };
 
   return (
-    <div className="flex mb-3">
+    <div className="flex">
       <div className="w-48 flex-shrink-0 text-sm py-1 px-3">
         {task.title}
       </div>
@@ -33,7 +33,7 @@ export const TaskRow = ({ task, months, today }: TaskRowProps) => {
           
           return (
             <div key={monthIndex} className="flex-1 relative">
-              <div className="flex h-6 border-r">
+              <div className="flex h-8 border-r">
                 {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
                   const currentDay = new Date(month.getFullYear(), month.getMonth(), dayIndex + 1);
                   const isCurrentDay = isSameDay(currentDay, today);
@@ -49,7 +49,7 @@ export const TaskRow = ({ task, months, today }: TaskRowProps) => {
                 })}
               </div>
               
-              <div className="relative h-12 mt-1">
+              <div className="relative h-8 mt-1">
                 {task.start_date && task.due_date && (
                   <TaskBar
                     task={task}
