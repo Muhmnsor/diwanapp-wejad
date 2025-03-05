@@ -2,6 +2,7 @@
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { TaskItem } from "./TaskItem";
+import { useTaskMetadataAttachments } from "../../hooks/useTaskMetadataAttachments";
 
 interface TasksStageGroupProps {
   stage: { id: string; name: string };
@@ -43,6 +44,7 @@ export const TasksStageGroup = ({
             <TableHead>الأولوية</TableHead>
             <TableHead>المكلف</TableHead>
             <TableHead>تاريخ الاستحقاق</TableHead>
+            <TableHead>المستلزمات</TableHead>
             <TableHead>الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
