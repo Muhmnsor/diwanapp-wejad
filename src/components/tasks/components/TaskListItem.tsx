@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   MessageCircle,
@@ -19,6 +18,8 @@ import { toast } from "sonner";
 import { uploadAttachment } from "../services/uploadService";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { TaskAttachmentDialog } from "./dialogs/TaskAttachmentDialog";
+import { useAttachmentOperations } from "../hooks/useAttachmentOperations";
 
 interface TaskListItemProps {
   task: Task;
@@ -32,7 +33,17 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [showAttachmentDialog, setShowAttachmentDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
+
+  const { uploadAttachment: uploadTaskAttachment, isUploading: isTaskUploading } = useAttachmentOperations(
+    undefined, // No delete callback needed
+    () => {
+      // Refresh or update UI after successful upload
+      toast.success('تم رفع الملف بنجاح');
+    }
+  );
 
   // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
@@ -130,6 +141,38 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
+  const openAttachmentsDialog = () => {
+    setIsAttachmentDialogOpen(true);
+  };
+  
+  const openFileUploader = () => {
+    setIsUploadDialogOpen(true);
+  };
+  
+  const handleUpload = async () => {
+    if (!selectedFile || !task) return;
+    
+    // Determine which table the task belongs to
+    let taskTable = 'tasks';
+    if (task.is_subtask) {
+      taskTable = 'subtasks';
+    } else if (task.workspace_id) {
+      taskTable = 'portfolio_tasks';
+    }
+    
+    const success = await uploadTaskAttachment(
+      selectedFile, 
+      task.id,
+      'assignee', // Category for files uploaded by assignee
+      taskTable
+    );
+    
+    if (success) {
+      setSelectedFile(null);
+      setIsUploadDialogOpen(false);
+    }
+  };
+
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />
@@ -159,10 +202,20 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
             variant="ghost"
             size="sm"
             className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-            onClick={() => setShowAttachmentDialog(true)}
+            onClick={() => openFileUploader()}
           >
             <Upload className="h-3.5 w-3.5" />
             رفع ملف
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            onClick={() => openAttachmentsDialog()}
+          >
+            <Paperclip className="h-3.5 w-3.5" />
+            المرفقات
           </Button>
         </div>
         
@@ -271,6 +324,61 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Attachments Dialog */}
+      {task && (
+        <TaskAttachmentDialog
+          task={task}
+          open={isAttachmentDialogOpen}
+          onOpenChange={setIsAttachmentDialogOpen}
+        />
+      )}
+      
+      {/* File Upload Dialog */}
+      {task && (
+        <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${isUploadDialogOpen ? '' : 'hidden'}`}>
+          <div className="bg-white p-4 rounded-md w-96 max-w-full" dir="rtl">
+            <h3 className="text-lg font-medium mb-4">رفع ملف للمهمة</h3>
+            <p className="text-sm text-gray-500 mb-4">يمكنك رفع ملف واحد في كل مرة</p>
+            
+            <div className="space-y-4">
+              <div>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="w-full border p-2 rounded"
+                />
+              </div>
+              
+              {selectedFile && (
+                <div className="text-sm bg-gray-50 p-2 rounded">
+                  {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-2 space-x-reverse">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsUploadDialogOpen(false);
+                    setSelectedFile(null);
+                  }}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleUpload}
+                  disabled={!selectedFile || isTaskUploading}
+                >
+                  {isTaskUploading ? 'جاري الرفع...' : 'رفع الملف'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
