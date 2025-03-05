@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
-import { uploadAttachment, saveAttachmentReference, saveTaskTemplate } from "../services/uploadService";
+import { uploadAttachment, saveAttachmentReference } from "../services/uploadService";
 import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,43 +70,31 @@ export function AddTaskDialog({
 
       console.log("Task created successfully:", taskData);
 
-      // معالجة المرفقات والنماذج إذا وجدت
+      // معالجة المرفقات إذا وجدت
       let attachmentErrors = false;
       if (formData.attachment && formData.attachment.length > 0 && taskData) {
         for (const file of formData.attachment) {
           try {
             const fileCategory = (file as any).category || 'creator';
-            console.log("Processing file with category:", fileCategory);
+            console.log("Processing attachment with category:", fileCategory);
             
             const uploadResult = await uploadAttachment(file, fileCategory);
             
             if (uploadResult?.url) {
-              console.log("File uploaded successfully:", uploadResult.url);
+              console.log("Attachment uploaded successfully:", uploadResult.url);
               
               try {
-                // حفظ معلومات الملف استنادًا إلى نوعه (مرفق أو نموذج)
-                if (fileCategory === 'template') {
-                  // حفظ النموذج في جدول نماذج المهمة
-                  await saveTaskTemplate(
-                    taskData.id,
-                    uploadResult.url,
-                    file.name,
-                    file.type
-                  );
-                  console.log("Task template saved successfully");
-                } else {
-                  // حفظ المرفق في جدول مرفقات المهمة
-                  await saveAttachmentReference(
-                    taskData.id,
-                    uploadResult.url,
-                    file.name,
-                    file.type,
-                    fileCategory
-                  );
-                  console.log("Attachment reference saved successfully");
-                }
+                // حفظ معلومات المرفق في قاعدة البيانات
+                await saveAttachmentReference(
+                  taskData.id,
+                  uploadResult.url,
+                  file.name,
+                  file.type,
+                  fileCategory
+                );
+                console.log("Attachment reference saved successfully");
               } catch (refError) {
-                console.error("Error saving file reference:", refError);
+                console.error("Error saving attachment reference:", refError);
                 attachmentErrors = true;
               }
             } else {
@@ -114,14 +102,14 @@ export function AddTaskDialog({
               attachmentErrors = true;
             }
           } catch (uploadError) {
-            console.error("Error handling file:", uploadError);
+            console.error("Error handling attachment:", uploadError);
             attachmentErrors = true;
           }
         }
       }
 
       if (attachmentErrors) {
-        toast.warning("تم إنشاء المهمة ولكن قد تكون بعض الملفات لم تُرفع بشكل صحيح");
+        toast.warning("تم إنشاء المهمة ولكن قد تكون بعض المرفقات لم تُرفع بشكل صحيح");
       } else {
         toast.success("تم إضافة المهمة بنجاح");
       }

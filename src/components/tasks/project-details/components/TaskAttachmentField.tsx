@@ -8,7 +8,7 @@ import { toast } from "sonner";
 interface TaskAttachmentFieldProps {
   attachment: File[] | null;
   setAttachment: (file: File[] | null) => void;
-  category?: 'creator' | 'assignee' | 'comment' | 'template';
+  category?: 'creator' | 'assignee' | 'comment';
 }
 
 export const TaskAttachmentField = ({ 
@@ -45,13 +45,9 @@ export const TaskAttachmentField = ({
     }
   };
 
-  const isTemplate = category === 'template';
-  const labelText = isTemplate ? "النماذج" : "المرفقات";
-  const buttonText = isTemplate ? "إضافة نموذج" : "إضافة مرفق";
-
   return (
     <div className="space-y-2">
-      <Label htmlFor="attachment">{labelText}</Label>
+      <Label htmlFor="attachment">المرفقات</Label>
       <div className="flex flex-col gap-2">
         <div className="flex items-center">
           <Button 
@@ -61,7 +57,7 @@ export const TaskAttachmentField = ({
             className="relative"
           >
             <Paperclip className="h-4 w-4 ml-2" />
-            {buttonText}
+            إضافة مرفق
           </Button>
           <input
             type="file"
