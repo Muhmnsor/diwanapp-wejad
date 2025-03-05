@@ -32,19 +32,6 @@ export const AttachmentsByCategory = ({
 }: AttachmentsByCategoryProps) => {
   if (attachments.length === 0) return null;
   
-  // Helper function to handle the delete operation with proper return type
-  const handleDelete = async (attachmentId: string) => {
-    if (!onDelete) return false;
-    
-    const result = await onDelete(attachmentId);
-    // If result is a boolean, return it directly
-    if (typeof result === 'boolean') return result;
-    // If result is an object with success property, return that
-    if (typeof result === 'object' && 'success' in result) return !!result.success;
-    // Default fallback
-    return false;
-  };
-  
   return (
     <div className="w-full mt-2">
       <div className="text-sm font-medium mb-1">{title}</div>
@@ -69,7 +56,7 @@ export const AttachmentsByCategory = ({
                   variant="ghost" 
                   size="sm"
                   className="h-6 w-6 p-0 text-destructive"
-                  onClick={() => handleDelete(attachment.id)}
+                  onClick={() => onDelete(attachment.id)}
                   disabled={isDeleting[attachment.id]}
                   title="حذف الملف"
                 >

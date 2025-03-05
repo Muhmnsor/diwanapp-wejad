@@ -1,153 +1,187 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
-import { toast } from "sonner";
-
-export type AttachmentCategory = 'creator' | 'comment' | 'assignee';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { useAuthStore } from '@/store/authStore';
 
 export interface Attachment {
   id: string;
-  file_name: string;
+  task_id: string;
   file_url: string;
-  file_path?: string;
-  file_type?: string | null;
-  file_size?: number;
-  attachment_category?: AttachmentCategory;
-  created_by?: string | null;
-  created_at?: string;
-  task_id?: string;
+  file_name: string;
+  file_type: string | null;
+  attachment_category: string;
+  created_by: string | null;
+  created_at: string;
 }
 
-export const useAttachmentOperations = (onSuccess?: () => void) => {
-  const [isUploading, setIsUploading] = useState(false);
+export const useAttachmentOperations = (onDeleteSuccess?: () => void, onUploadSuccess?: () => void) => {
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
+  const [isUploading, setIsUploading] = useState(false);
+  const { user } = useAuthStore();
 
-  const uploadAttachment = async (file: File, taskId: string, category: AttachmentCategory) => {
-    if (!file || !taskId) return { error: "Missing file or task ID" };
-
-    setIsUploading(true);
+  // Function to upload attachment
+  const uploadAttachment = async (
+    file: File, 
+    taskId: string, 
+    category: string = 'general',
+    taskTable: string = 'tasks'
+  ) => {
     try {
-      // Define a unique file path for the attachment
+      console.log('Starting file upload process for task:', taskId);
+      setIsUploading(true);
+      
+      // Generate unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `tasks/${taskId}/${fileName}`;
-
-      // Upload the file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('task_attachments')
+      const filePath = `${taskId}/${fileName}`;
+      
+      // Upload file to storage
+      console.log('Uploading file to storage:', filePath);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('task-attachments')
         .upload(filePath, file);
-
+        
       if (uploadError) {
-        throw uploadError;
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`خطأ في رفع الملف: ${uploadError.message}`);
       }
-
-      // Get the public URL for the uploaded file
+      
+      if (!uploadData) {
+        throw new Error('فشل في رفع الملف: لم يتم استلام بيانات التحميل');
+      }
+      
+      console.log('File uploaded successfully:', uploadData.path);
+      
+      // Get public URL for the file
       const { data: publicUrlData } = supabase.storage
-        .from('task_attachments')
+        .from('task-attachments')
         .getPublicUrl(filePath);
-
-      if (!publicUrlData.publicUrl) {
-        throw new Error("Failed to get public URL for uploaded file");
+        
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        throw new Error('فشل في الحصول على الرابط العام للملف');
       }
-
-      // Save the attachment metadata to the database
+      
+      const fileUrl = publicUrlData.publicUrl;
+      console.log('File public URL:', fileUrl);
+      
+      // Save file reference to database in unified_task_attachments table
+      console.log('Saving attachment reference to database, task_id:', taskId, 'file_url:', fileUrl);
       const { error: dbError } = await supabase
-        .from('task_attachments')
+        .from('unified_task_attachments')
         .insert({
           task_id: taskId,
+          task_table: taskTable,
+          file_url: fileUrl,
           file_name: file.name,
-          file_path: filePath,
-          file_url: publicUrlData.publicUrl,
-          file_size: file.size,
           file_type: file.type,
-          attachment_category: category
+          attachment_category: category,
+          created_by: user?.id || null
         });
-
+        
       if (dbError) {
-        throw dbError;
+        console.error('Database insert error:', dbError);
+        throw new Error(`خطأ في حفظ بيانات الملف: ${dbError.message}`);
       }
-
-      if (onSuccess) {
-        onSuccess();
+      
+      toast.success('تم رفع المرفق بنجاح');
+      
+      if (onUploadSuccess) {
+        onUploadSuccess();
       }
-
-      return { success: true, filePath };
+      
+      return true;
     } catch (error) {
-      console.error("Error uploading attachment:", error);
-      toast.error("حدث خطأ أثناء رفع المرفق");
-      return { error };
+      console.error('Error in uploadAttachment:', error);
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء رفع المرفق');
+      return false;
     } finally {
       setIsUploading(false);
     }
   };
 
   const deleteAttachment = async (attachmentId: string) => {
-    setIsDeleting(prev => ({ ...prev, [attachmentId]: true }));
     try {
-      // Get the attachment details to get the file path
+      setIsDeleting(prev => ({ ...prev, [attachmentId]: true }));
+      
+      console.log('Deleting attachment with ID:', attachmentId);
+      
+      // First, get the attachment to retrieve the file URL
       const { data: attachment, error: fetchError } = await supabase
-        .from('task_attachments')
-        .select('file_path')
+        .from('unified_task_attachments')
+        .select('file_url')
         .eq('id', attachmentId)
         .single();
-
+      
       if (fetchError) {
-        throw fetchError;
+        console.error('Error fetching attachment for deletion:', fetchError);
+        throw new Error('فشل في العثور على المرفق للحذف');
       }
-
-      // Delete the file from storage
-      if (attachment?.file_path) {
-        const { error: storageError } = await supabase.storage
-          .from('task_attachments')
-          .remove([attachment.file_path]);
-
-        if (storageError) {
-          console.error("Error removing file from storage:", storageError);
-          // Continue with DB deletion even if storage deletion fails
-        }
+      
+      if (!attachment) {
+        throw new Error('لم يتم العثور على المرفق');
       }
-
-      // Delete the record from the database
+      
+      // Extract file path from URL
+      const storageUrl = supabase.storage.from('task-attachments').getPublicUrl('test').data.publicUrl;
+      const baseUrl = storageUrl.split('/test')[0];
+      let filePath = attachment.file_url.replace(baseUrl + '/', '');
+      
+      console.log('Attempting to delete file from storage, path:', filePath);
+      
+      // Delete file from storage
+      const { error: storageError } = await supabase.storage
+        .from('task-attachments')
+        .remove([filePath]);
+      
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        // Continue with DB deletion even if storage deletion fails
+      }
+      
+      // Delete reference from database
       const { error: dbError } = await supabase
-        .from('task_attachments')
+        .from('unified_task_attachments')
         .delete()
         .eq('id', attachmentId);
-
+      
       if (dbError) {
-        throw dbError;
+        console.error('Error deleting attachment from database:', dbError);
+        throw new Error('فشل في حذف المرفق من قاعدة البيانات');
       }
-
-      if (onSuccess) {
-        onSuccess();
+      
+      toast.success('تم حذف المرفق بنجاح');
+      
+      if (onDeleteSuccess) {
+        onDeleteSuccess();
       }
-
-      return { success: true };
+      
+      return true;
     } catch (error) {
-      console.error("Error deleting attachment:", error);
-      toast.error("حدث خطأ أثناء حذف المرفق");
-      return { error };
+      console.error('Error deleting attachment:', error);
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء حذف المرفق');
+      return false;
     } finally {
       setIsDeleting(prev => ({ ...prev, [attachmentId]: false }));
     }
   };
 
   const handleDownloadAttachment = (fileUrl: string, fileName: string) => {
-    // Create a temporary anchor element
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.target = '_blank';
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // فتح الملف في نافذة جديدة
+      window.open(fileUrl, '_blank');
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      toast.error('حدث خطأ أثناء تنزيل المرفق');
+    }
   };
 
   return {
+    isDeleting,
+    isUploading,
     uploadAttachment,
     deleteAttachment,
-    isUploading,
-    isDeleting,
     handleDownloadAttachment
   };
 };
