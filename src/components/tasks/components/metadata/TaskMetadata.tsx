@@ -39,6 +39,7 @@ export const TaskMetadata = ({
         parentTaskId={parentTaskId}
         showFileUploadButton={showFileUploadButton}
         onFileUpload={onFileUpload}
+        taskId={taskId}
       />
 
       <AttachmentsByCategory
@@ -46,14 +47,6 @@ export const TaskMetadata = ({
         attachments={creatorAttachments}
         bgColor="bg-blue-50"
         iconColor="text-blue-500"
-        onDownload={handleDownload}
-      />
-
-      <AttachmentsByCategory
-        title="مرفقات المكلف بالمهمة:"
-        attachments={assigneeAttachments}
-        bgColor="bg-green-50"
-        iconColor="text-green-500"
         onDownload={handleDownload}
       />
 

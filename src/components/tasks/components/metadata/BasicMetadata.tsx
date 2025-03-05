@@ -1,6 +1,8 @@
 
 import { Calendar, Clock, GitMerge, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTaskMetadataAttachments } from "../../hooks/useTaskMetadataAttachments";
+import { AttachmentsByCategory } from "./AttachmentsByCategory";
 
 interface BasicMetadataProps {
   dueDate?: string | null;
@@ -9,6 +11,7 @@ interface BasicMetadataProps {
   parentTaskId?: string | null;
   showFileUploadButton?: boolean;
   onFileUpload?: () => void;
+  taskId?: string | null;
 }
 
 export const BasicMetadata = ({ 
@@ -17,9 +20,12 @@ export const BasicMetadata = ({
   isSubtask,
   parentTaskId,
   showFileUploadButton,
-  onFileUpload
+  onFileUpload,
+  taskId
 }: BasicMetadataProps) => {
-  if (!dueDate && !projectName && !isSubtask) return null;
+  const { assigneeAttachments, handleDownload } = useTaskMetadataAttachments(taskId || undefined);
+  
+  if (!dueDate && !projectName && !isSubtask && (!assigneeAttachments || assigneeAttachments.length === 0)) return null;
 
   const formatDate = (dateString: string) => {
     try {
@@ -72,6 +78,19 @@ export const BasicMetadata = ({
           </div>
         )}
       </div>
+      
+      {/* Display assignee attachments after the basic metadata */}
+      {assigneeAttachments && assigneeAttachments.length > 0 && (
+        <div className="mt-2">
+          <AttachmentsByCategory
+            title="مستلمات المكلف بالمهمة"
+            attachments={assigneeAttachments}
+            bgColor="bg-blue-50"
+            iconColor="text-blue-600"
+            onDownload={handleDownload}
+          />
+        </div>
+      )}
     </div>
   );
 };
