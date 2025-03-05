@@ -76,7 +76,7 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     }
   };
 
-  // التحقق من جدول task_deliverables مباشرة
+  // جلب المستلمات من جدول task_deliverables مباشرة
   const fetchTaskDeliverables = async () => {
     if (!taskId) return;
     
@@ -84,7 +84,18 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
     try {
       console.log("Fetching deliverables for task:", taskId);
       
-      // الاستعلام من جدول task_deliverables بدون فلترة إضافية للـ task_table
+      // التأكد من وجود جدول المستلمات وإظهار تفاصيل أكثر للتصحيح
+      const { data: tableInfo, error: tableError } = await supabase
+        .from("task_deliverables")
+        .select("id", { count: 'exact', head: true });
+      
+      console.log("Task deliverables table exists:", !tableError, "Count:", tableInfo?.length);
+      
+      if (tableError) {
+        console.error("Error checking task_deliverables table:", tableError);
+      }
+      
+      // جلب المستلمات من جدول task_deliverables بشكل مباشر
       const { data: taskDeliverables, error } = await supabase
         .from("task_deliverables")
         .select("*")
@@ -94,19 +105,20 @@ export function useTaskMetadataAttachments(taskId: string | undefined) {
         console.error("Error fetching task deliverables:", error);
         setDeliverables([]);
       } else {
-        console.log("Found deliverables:", taskDeliverables);
+        console.log("Found deliverables for task", taskId, ":", taskDeliverables);
         setDeliverables(taskDeliverables || []);
       }
       
-      // إضافة استعلام ثاني للتحقق من محتوى الجدول
-      const { count, error: countError } = await supabase
+      // إضافة استعلام إضافي للتأكد من أن الاستعلام يعمل بشكل عام
+      const { data: allDeliverables, error: allError, count } = await supabase
         .from("task_deliverables")
-        .select("*", { count: 'exact', head: true });
+        .select("*", { count: 'exact' });
       
       console.log("Total deliverables in the table:", count);
+      console.log("First few deliverables:", allDeliverables?.slice(0, 3));
       
-      if (countError) {
-        console.error("Error getting deliverables count:", countError);
+      if (allError) {
+        console.error("Error getting all deliverables:", allError);
       }
     } catch (error) {
       console.error("Error in fetchTaskDeliverables:", error);
