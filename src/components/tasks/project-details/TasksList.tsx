@@ -10,8 +10,7 @@ import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EditTaskDialog } from "./EditTaskDialog";
 
 interface TasksListProps {
   projectId?: string | undefined;
@@ -109,21 +108,16 @@ export const TasksList = ({ projectId }: TasksListProps) => {
         isGeneral={isGeneral}
       />
 
-      {/* حوار تعديل المهمة */}
+      {/* Dialog for editing tasks */}
       {editingTask && (
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>تعديل المهمة</DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-              {/* هنا يتم وضع نموذج تعديل المهمة - استخدم DialogContent الموجود بالفعل */}
-              <p className="text-center text-gray-500">
-                سيتم تنفيذ نموذج تعديل المهمة هنا في التحديثات القادمة
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <EditTaskDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          task={editingTask}
+          projectStages={projectStages}
+          projectMembers={projectMembers}
+          onTaskUpdated={fetchTasks}
+        />
       )}
     </>
   );

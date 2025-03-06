@@ -5,6 +5,7 @@ import { useTasksState } from "./useTasksState";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Task } from "../types/task";
 
 export const useTasksList = (projectId: string | undefined) => {
   // Hook for handling UI state
@@ -38,6 +39,34 @@ export const useTasksList = (projectId: string | undefined) => {
       return updaterFn;
     }
   );
+
+  // Update task function
+  const updateTask = async (taskId: string, updateData: Partial<Task>) => {
+    try {
+      console.log("Updating task:", taskId, updateData);
+      
+      const { error } = await supabase
+        .from('tasks')
+        .update(updateData)
+        .eq('id', taskId);
+        
+      if (error) throw error;
+      
+      // Update the tasks list with the updated task
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId ? { ...task, ...updateData } : task
+        )
+      );
+      
+      toast.success("تم تحديث المهمة بنجاح");
+      return true;
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("حدث خطأ أثناء تحديث المهمة");
+      throw error;
+    }
+  };
 
   // Delete task function
   const deleteTask = async (taskId: string) => {
@@ -167,6 +196,7 @@ export const useTasksList = (projectId: string | undefined) => {
     handleStatusChange,
     fetchTasks,
     isGeneral: !projectId,
-    deleteTask
+    deleteTask,
+    updateTask
   };
 };

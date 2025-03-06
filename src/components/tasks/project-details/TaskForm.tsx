@@ -26,6 +26,16 @@ export interface TaskFormProps {
   projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
   isGeneral?: boolean;
+  initialValues?: {
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: string;
+    stageId: string;
+    assignedTo: string | null;
+    category?: string;
+  };
+  isEditMode?: boolean;
 }
 
 export const TaskForm = ({ 
@@ -33,16 +43,18 @@ export const TaskForm = ({
   isSubmitting, 
   projectStages,
   projectMembers,
-  isGeneral
+  isGeneral,
+  initialValues,
+  isEditMode = false
 }: TaskFormProps) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [priority, setPriority] = useState("medium");
-  const [stageId, setStageId] = useState("");
-  const [assignedTo, setAssignedTo] = useState<string | null>(null);
+  const [title, setTitle] = useState(initialValues?.title || "");
+  const [description, setDescription] = useState(initialValues?.description || "");
+  const [dueDate, setDueDate] = useState(initialValues?.dueDate || "");
+  const [priority, setPriority] = useState(initialValues?.priority || "medium");
+  const [stageId, setStageId] = useState(initialValues?.stageId || "");
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialValues?.assignedTo || null);
   const [templates, setTemplates] = useState<File[] | null>(null);
-  const [category, setCategory] = useState<string>("إدارية");
+  const [category, setCategory] = useState<string>(initialValues?.category || "إدارية");
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -110,7 +122,11 @@ export const TaskForm = ({
         category="template"
       />
       
-      <TaskFormActions isSubmitting={isSubmitting} onCancel={() => console.log("Form cancelled")} />
+      <TaskFormActions 
+        isSubmitting={isSubmitting} 
+        onCancel={() => console.log("Form cancelled")} 
+        submitLabel={isEditMode ? "تحديث المهمة" : "إضافة المهمة"}
+      />
     </form>
   );
 };
