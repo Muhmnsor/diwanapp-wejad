@@ -153,31 +153,11 @@ export const useSubtasksList = (
     }
   };
 
-  const handleUpdateSubtask = async (subtaskId: string, updateData: Partial<Subtask>) => {
+  const handleUpdateSubtask = async (subtaskId: string, updateData: Partial<Subtask>): Promise<void> => {
     if (externalUpdateSubtask) {
       await externalUpdateSubtask(subtaskId, updateData);
     } else if (subtasksContext) {
-      try {
-        const { success, error, updatedSubtask } = await updateSubtask(subtaskId, updateData);
-        
-        if (success && updatedSubtask) {
-          const updatedList = subtasksContext.subtasks[taskId]?.map(subtask => 
-            subtask.id === subtaskId ? updatedSubtask : subtask
-          ) || [];
-          
-          subtasksContext.subtasks = {
-            ...subtasksContext.subtasks,
-            [taskId]: updatedList
-          };
-          
-          toast.success("تم تحديث المهمة الفرعية بنجاح");
-        } else if (error) {
-          toast.error(error);
-        }
-      } catch (error) {
-        console.error("Error updating subtask via context:", error);
-        toast.error("حدث خطأ أثناء تحديث المهمة الفرعية");
-      }
+      await subtasksContext.updateSubtask(subtaskId, taskId, updateData);
     } else {
       try {
         const { success, error, updatedSubtask } = await updateSubtask(subtaskId, updateData);
