@@ -50,7 +50,7 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
 
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer relative"
+      className="hover:shadow-md transition-shadow cursor-pointer relative group"
       onClick={handleClick}
     >
       <TaskProjectCardActions
