@@ -33,6 +33,8 @@ export const ExtendDiscussionDialog = ({
   const [operation, setOperation] = useState<string>("add");
   const [totalCurrentHours, setTotalCurrentHours] = useState<number>(0);
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
+  const [isDiscussionExpired, setIsDiscussionExpired] = useState(false);
+  const [createdAt, setCreatedAt] = useState<string>("");
   const queryClient = useQueryClient();
   
   // استرجاع معلومات الفكرة والوقت المتبقي عند فتح النافذة
@@ -56,6 +58,8 @@ export const ExtendDiscussionDialog = ({
           if (ideaData) {
             // حساب الوقت المتبقي
             const { discussion_period, created_at } = ideaData;
+            
+            setCreatedAt(created_at);
             
             if (discussion_period && created_at) {
               console.log("Discussion period from DB:", discussion_period);
@@ -95,6 +99,11 @@ export const ExtendDiscussionDialog = ({
               
               console.log("Calculated remaining time:", { days: remaining_days, hours: remaining_hours });
               console.log("Total current hours in period:", totalHours);
+              
+              // التحقق من انتهاء المناقشة
+              const isExpired = remaining_days === 0 && remaining_hours === 0;
+              setIsDiscussionExpired(isExpired);
+              console.log("Is discussion expired:", isExpired);
               
               setRemainingDays(remaining_days);
               setRemainingHours(remaining_hours);
@@ -184,9 +193,17 @@ export const ExtendDiscussionDialog = ({
       // تحديث قاعدة البيانات
       let updateData: any = { discussion_period: newDiscussionPeriod };
       
-      // إذا كانت المناقشة منتهية وقام المستخدم بتمديدها، قم بتغيير الحالة إلى قيد المناقشة
-      if (operation === "add" && newTotalHours > 0 && (remainingDays === 0 && remainingHours === 0)) {
-        console.log("Updating status to under_review because discussion was extended after expiration");
+      // في حالة المناقشة المنتهية وتم تمديدها، نقوم بإعادة ضبط تاريخ الإنشاء
+      if (operation === "add" && isDiscussionExpired && newTotalHours > 0) {
+        console.log("Discussion was expired and is being extended - resetting created_at timestamp");
+        // تحديث تاريخ الإنشاء ليكون الوقت الحالي
+        updateData.created_at = new Date().toISOString();
+        // تحديث الحالة إلى قيد المناقشة
+        updateData.status = "under_review";
+      } 
+      // إذا لم تكن المناقشة منتهية وقام المستخدم بتمديدها، نحافظ على تاريخ الإنشاء الأصلي
+      else if (operation === "add" && newTotalHours > 0 && (remainingDays === 0 && remainingHours === 0)) {
+        console.log("Updating status to under_review because discussion was extended");
         updateData.status = "under_review";
       }
 
@@ -272,11 +289,23 @@ export const ExtendDiscussionDialog = ({
                   </p>
                   
                   <p className="text-sm text-purple-700">
-                    الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
-                    {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
-                    {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
-                    {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+                    {isDiscussionExpired ? (
+                      <span className="text-red-500 font-semibold">المناقشة منتهية</span>
+                    ) : (
+                      <>
+                        الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
+                        {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
+                        {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
+                        {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+                      </>
+                    )}
                   </p>
+                  
+                  {isDiscussionExpired && operation === "add" && (
+                    <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                      ملاحظة: عند تمديد مناقشة منتهية، سيتم إعادة ضبط توقيت بدء المناقشة إلى الوقت الحالي.
+                    </p>
+                  )}
                 </div>
                 
                 {/* اختيار نوع العملية (تمديد/تنقيص) */}

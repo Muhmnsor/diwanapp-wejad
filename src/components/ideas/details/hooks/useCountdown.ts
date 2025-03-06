@@ -20,16 +20,32 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
   const [isExpired, setIsExpired] = useState(false);
   const lastDiscussionPeriod = useRef<string | undefined>(discussion_period);
   const lastCreatedAt = useRef<string>(created_at);
+  const timerRef = useRef<NodeJS.Timeout>();
 
   // Effect to detect changes in discussion period or created_at
   useEffect(() => {
-    if (discussion_period !== lastDiscussionPeriod.current || created_at !== lastCreatedAt.current) {
-      console.log("🔄 Discussion period or created_at changed, recalculating countdown...");
-      console.log("Previous discussion period:", lastDiscussionPeriod.current);
-      console.log("New discussion period:", discussion_period);
+    const periodsAreDifferent = discussion_period !== lastDiscussionPeriod.current;
+    const createdAtIsDifferent = created_at !== lastCreatedAt.current;
+    
+    if (periodsAreDifferent || createdAtIsDifferent) {
+      console.log("🔄 Changes detected in countdown parameters:");
+      if (periodsAreDifferent) {
+        console.log("Discussion period changed:", {
+          from: lastDiscussionPeriod.current,
+          to: discussion_period
+        });
+      }
+      
+      if (createdAtIsDifferent) {
+        console.log("Created at changed:", {
+          from: lastCreatedAt.current,
+          to: created_at
+        });
+      }
       
       // Recalculate immediately
       const timeLeft = calculateTimeRemaining(discussion_period, created_at);
+      console.log("New calculated time remaining:", timeLeft);
       setCountdown(timeLeft);
       
       // Update expiration status
@@ -47,6 +63,11 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
       // Update refs
       lastDiscussionPeriod.current = discussion_period;
       lastCreatedAt.current = created_at;
+      
+      // Clear existing timer and restart
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     }
   }, [discussion_period, created_at, isExpired]);
 
@@ -130,9 +151,13 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
     }
     
     // تنفيذ الحساب كل ثانية
-    const timer = setInterval(calculateTimeLeft, 1000);
+    timerRef.current = setInterval(calculateTimeLeft, 1000);
     
-    return () => clearInterval(timer);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, [discussion_period, created_at, isExpired, ideaId]);
 
   return {
