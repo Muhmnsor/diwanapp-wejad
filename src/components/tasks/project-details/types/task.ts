@@ -2,22 +2,28 @@
 export interface Task {
   id: string;
   title: string;
-  description?: string;
+  description: string | null;
   status: string;
-  priority?: string;
-  due_date?: string;
-  assigned_to?: string;
+  due_date: string | null;
+  assigned_to: string | null;
   assigned_user_name?: string;
+  priority: string | null;
   created_at: string;
-  project_id?: string;
-  stage_id?: string;
-}
-
-export interface TaskAttachment {
-  id: string;
-  task_id: string;
-  file_name: string;
-  file_url: string;
-  file_type: string;
-  created_at: string;
+  stage_id: string | null;
+  stage_name?: string;
+  // Properties for general tasks
+  category?: string | null;
+  is_general?: boolean;
+  // Properties for templates and attachments
+  attachment_url?: string | null;
+  form_template?: string | null;
+  templates?: Array<{ url: string }> | null;
+  // Project related properties
+  project_id?: string | null;
+  project_name?: string | null;
+  workspace_id?: string | null;
+  workspace_name?: string | null;
+  // Subtask properties
+  is_subtask?: boolean;
+  parent_task_id?: string | null;
 }
