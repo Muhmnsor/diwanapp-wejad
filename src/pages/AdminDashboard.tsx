@@ -19,6 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/authStore";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NotificationTester } from "@/components/notifications/NotificationTester";
+import { DraftProjectTester } from "@/components/admin/dashboard/DraftProjectTester";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -205,35 +208,51 @@ const AdminDashboard = () => {
           <p className="text-gray-600 mt-2">نتمنى لك يوماً مليئاً بالإنجازات في لوحة التحكم المركزية</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ direction: 'rtl' }}>
-          {[...apps].reverse().map((app, index) => {
-            const Icon = app.icon;
-            return (
-              <Card
-                key={app.path}
-                className="p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center text-center relative animate-fade-in"
-                style={{ 
-                  direction: 'rtl',
-                  animationDelay: `${index * 50}ms`
-                }}
-                onClick={() => navigate(app.path)}
-              >
-                <div className="flex flex-col items-center text-center space-y-4 w-full">
-                  <div className="w-full flex justify-center relative">
-                    <Icon className="w-12 h-12 text-primary" />
-                    {app.notifications > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-red-500" variant="destructive">
-                        {app.notifications}
-                      </Badge>
-                    )}
-                  </div>
-                  <h2 className="text-xl font-semibold">{app.title}</h2>
-                  <p className="text-gray-600">{app.description}</p>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        <Tabs defaultValue="dashboard" dir="rtl" className="mb-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="dashboard">لوحة التحكم</TabsTrigger>
+            <TabsTrigger value="tools">أدوات الاختبار</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ direction: 'rtl' }}>
+              {[...apps].reverse().map((app, index) => {
+                const Icon = app.icon;
+                return (
+                  <Card
+                    key={app.path}
+                    className="p-6 hover:shadow-lg transition-shadow cursor-pointer flex flex-col items-center text-center relative animate-fade-in"
+                    style={{ 
+                      direction: 'rtl',
+                      animationDelay: `${index * 50}ms`
+                    }}
+                    onClick={() => navigate(app.path)}
+                  >
+                    <div className="flex flex-col items-center text-center space-y-4 w-full">
+                      <div className="w-full flex justify-center relative">
+                        <Icon className="w-12 h-12 text-primary" />
+                        {app.notifications > 0 && (
+                          <Badge className="absolute -top-2 -right-2 bg-red-500" variant="destructive">
+                            {app.notifications}
+                          </Badge>
+                        )}
+                      </div>
+                      <h2 className="text-xl font-semibold">{app.title}</h2>
+                      <p className="text-gray-600">{app.description}</p>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="tools" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <NotificationTester />
+              <DraftProjectTester />
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <div className="mt-10">
           <div className="w-full">
