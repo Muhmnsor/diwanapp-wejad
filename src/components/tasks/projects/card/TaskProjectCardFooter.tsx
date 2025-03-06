@@ -1,6 +1,6 @@
 
 import { CardFooter } from "@/components/ui/card";
-import { CalendarIcon, UserIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -29,9 +29,8 @@ export const TaskProjectCardFooter = ({ dueDate, projectOwner }: TaskProjectCard
           {dueDate ? getFormattedDate(dueDate) : 'غير محدد'}
         </span>
       </div>
-      <div className="flex items-center gap-1 text-sm font-medium">
-        <UserIcon className="h-4 w-4 text-gray-500" />
-        <span>{projectOwner || 'غير محدد'}</span>
+      <div className="text-sm font-medium">
+        {projectOwner || 'غير محدد'}
       </div>
     </CardFooter>
   );
