@@ -86,7 +86,10 @@ export const cachedSupabase = {
   from: (tableName: string) => {
     const originalBuilder = supabase.from(tableName);
     
+    // Create a wrapper that preserves the original builder's methods
+    // but adds caching capabilities
     return {
+      // Preserve all original methods
       ...originalBuilder,
       
       // Override select with cached version
@@ -95,9 +98,9 @@ export const cachedSupabase = {
         
         // Return a modified builder with cache capabilities
         return {
-          ...selectBuilder,
+          ...selectBuilder, // This preserves all original builder methods like eq, order, etc.
           
-          // Cache the final execution
+          // Add caching method
           _cachedExecution: async <T>(
             cacheOptions?: CacheOptions
           ): Promise<{ data: T | null; error: any; fromCache?: boolean }> => {
@@ -106,80 +109,6 @@ export const cachedSupabase = {
               () => selectBuilder as any,
               cacheOptions
             );
-          },
-          
-          // Override execution methods with cached versions
-          async then<TResult1, TResult2>(
-            onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | null,
-            onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
-          ): Promise<TResult1 | TResult2> {
-            const { data, error } = await cachedSelect(
-              tableName,
-              () => selectBuilder as any
-            );
-            
-            const result = { data, error };
-            return onfulfilled ? onfulfilled(result) : (result as any);
-          },
-        };
-      },
-      
-      // Override insert with cache invalidation
-      insert: (values: any) => {
-        const insertBuilder = originalBuilder.insert(values);
-        
-        return {
-          ...insertBuilder,
-          async then<TResult1, TResult2>(
-            onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | null,
-            onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
-          ): Promise<TResult1 | TResult2> {
-            const result = await cachedWrite(
-              tableName,
-              () => insertBuilder as any
-            );
-            
-            return onfulfilled ? onfulfilled(result) : (result as any);
-          }
-        };
-      },
-      
-      // Override update with cache invalidation
-      update: (values: any) => {
-        const updateBuilder = originalBuilder.update(values);
-        
-        return {
-          ...updateBuilder,
-          async then<TResult1, TResult2>(
-            onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | null,
-            onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
-          ): Promise<TResult1 | TResult2> {
-            const result = await cachedWrite(
-              tableName,
-              () => updateBuilder as any
-            );
-            
-            return onfulfilled ? onfulfilled(result) : (result as any);
-          }
-        };
-      },
-      
-      // Override delete with cache invalidation
-      delete: () => {
-        const deleteBuilder = originalBuilder.delete();
-        
-        return {
-          ...deleteBuilder,
-          async then<TResult1, TResult2>(
-            onfulfilled?: ((value: any) => TResult1 | PromiseLike<TResult1>) | null,
-            onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
-          ): Promise<TResult1 | TResult2> {
-            const result = await cachedWrite(
-              tableName,
-              () => deleteBuilder as any
-            );
-            
-            return onfulfilled ? onfulfilled(result) : (result as any);
           }
         };
       }

@@ -1,6 +1,7 @@
 
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { cachedSupabase } from "@/integrations/supabase/cachedClient";
 import { CACHE_DURATIONS } from "@/utils/cacheService";
 import { useAuthStore } from "@/store/refactored-auth";
 import { QueryKey } from "@tanstack/react-query";
@@ -71,7 +72,7 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         console.error("Error fetching pre-calculated stats:", statsError);
       }
       
-      // Use Promise.all with regular queries to parallelize requests
+      // Use Promise.all with cached queries to parallelize requests
       const [
         tasksResponse,
         portfolioTasksResponse,
@@ -304,7 +305,7 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
       };
     },
     {
-      queryKey, // Add queryKey to the options
+      queryKey,
       enabled: !!targetUserId,
       cacheDuration: period === 'monthly' ? CACHE_DURATIONS.MEDIUM : CACHE_DURATIONS.LONG,
       cacheStorage: 'local', // Store in localStorage for persistence across sessions
