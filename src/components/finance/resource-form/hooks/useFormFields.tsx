@@ -1,10 +1,14 @@
 
-import { useState } from "react";
-import { BudgetItem } from "../types";
+import { useState, useEffect } from "react";
+import { BudgetItem, ResourceObligation } from "../types";
 
-export const useFormFields = (calculateValues: (total: number, obligations: number, useDefaults: boolean) => BudgetItem[], setBudgetItems: React.Dispatch<React.SetStateAction<BudgetItem[]>>, useDefaultPercentages: boolean) => {
+export const useFormFields = (
+  calculateValues: (total: number, obligations: number, useDefaults: boolean) => BudgetItem[], 
+  setBudgetItems: React.Dispatch<React.SetStateAction<BudgetItem[]>>, 
+  useDefaultPercentages: boolean,
+  totalObligationsAmount: number
+) => {
   const [totalAmount, setTotalAmount] = useState<number | "">("");
-  const [obligationsAmount, setObligationsAmount] = useState<number | "">(0);
   const [source, setSource] = useState("منصات التمويل الجماعي");
 
   // Handle total amount change
@@ -13,20 +17,16 @@ export const useFormFields = (calculateValues: (total: number, obligations: numb
     setTotalAmount(value);
     
     if (typeof value === "number" && !isNaN(value)) {
-      const obligations = typeof obligationsAmount === "number" ? obligationsAmount : 0;
-      setBudgetItems(calculateValues(value, obligations, useDefaultPercentages));
+      setBudgetItems(calculateValues(value, totalObligationsAmount, useDefaultPercentages));
     }
   };
 
-  // Handle obligations amount change
-  const handleObligationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
-    setObligationsAmount(value);
-    
+  // Effect to recalculate when totalObligationsAmount changes
+  useEffect(() => {
     if (typeof totalAmount === "number") {
-      setBudgetItems(calculateValues(totalAmount, value, useDefaultPercentages));
+      setBudgetItems(calculateValues(totalAmount, totalObligationsAmount, useDefaultPercentages));
     }
-  };
+  }, [totalObligationsAmount, totalAmount, useDefaultPercentages, setBudgetItems, calculateValues]);
 
   // Handle source change
   const handleSourceChange = (value: string) => {
@@ -35,10 +35,8 @@ export const useFormFields = (calculateValues: (total: number, obligations: numb
 
   return {
     totalAmount,
-    obligationsAmount,
     source,
     handleTotalAmountChange,
-    handleObligationsChange,
     handleSourceChange,
   };
 };

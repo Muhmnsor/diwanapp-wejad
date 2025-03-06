@@ -11,9 +11,7 @@ import {
 
 interface BasicInfoFieldsProps {
   totalAmount: number | "";
-  obligationsAmount: number | "";
   handleTotalAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleObligationsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   source: string;
   handleSourceChange: (value: string) => void;
   defaultType?: string;
@@ -22,9 +20,7 @@ interface BasicInfoFieldsProps {
 
 export const BasicInfoFields = ({
   totalAmount,
-  obligationsAmount,
   handleTotalAmountChange,
-  handleObligationsChange,
   source,
   handleSourceChange,
   defaultType = "unbound",
@@ -87,33 +83,6 @@ export const BasicInfoFields = ({
           value={totalAmount}
           onChange={handleTotalAmountChange}
           required
-          className="text-right"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="obligationsAmount">الالتزامات (ريال)</Label>
-        <Input
-          id="obligationsAmount"
-          type="number"
-          min="0"
-          step="0.01"
-          value={obligationsAmount}
-          onChange={handleObligationsChange}
-          className="text-right"
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label>صافي المبلغ (ريال)</Label>
-        <Input
-          value={
-            typeof totalAmount === "number" && typeof obligationsAmount === "number"
-              ? (totalAmount - obligationsAmount).toLocaleString()
-              : ""
-          }
-          readOnly
-          disabled
           className="text-right"
         />
       </div>

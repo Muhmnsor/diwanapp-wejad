@@ -2,28 +2,18 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BudgetItem } from "../types";
-
-interface Resource {
-  id: string;
-  date: string;
-  source: string;
-  type: string;
-  entity: string;
-  total_amount: number;
-  obligations_amount: number;
-  net_amount: number;
-}
+import { BudgetItem, ResourceObligation } from "../types";
 
 export const useEditResourceData = (resourceId: string) => {
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
+  const [obligations, setObligations] = useState<ResourceObligation[]>([]);
   const [distributions, setDistributions] = useState<any[]>([]);
   const [useDefaultPercentages, setUseDefaultPercentages] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   
   // Fetch budget items and distributions
   useEffect(() => {
-    const fetchBudgetItems = async () => {
+    const fetchResourceData = async () => {
       try {
         // Fetch budget items
         const { data: itemsData, error: itemsError } = await supabase
@@ -40,7 +30,16 @@ export const useEditResourceData = (resourceId: string) => {
 
         if (distributionsError) throw distributionsError;
         
+        // Fetch resource obligations
+        const { data: obligationsData, error: obligationsError } = await supabase
+          .from('resource_obligations')
+          .select('*')
+          .eq('resource_id', resourceId);
+
+        if (obligationsError) throw obligationsError;
+        
         setDistributions(distributionsData || []);
+        setObligations(obligationsData || []);
 
         // Prepare budget items with current values
         if (itemsData) {
@@ -68,17 +67,19 @@ export const useEditResourceData = (resourceId: string) => {
           }
         }
       } catch (error) {
-        console.error('Error fetching budget items and distributions:', error);
-        toast.error('حدث خطأ أثناء جلب بنود الميزانية');
+        console.error('Error fetching resource data:', error);
+        toast.error('حدث خطأ أثناء جلب بيانات المورد');
       }
     };
 
-    fetchBudgetItems();
+    fetchResourceData();
   }, [resourceId]);
 
   return {
     budgetItems,
     setBudgetItems,
+    obligations,
+    setObligations,
     distributions,
     useDefaultPercentages,
     setUseDefaultPercentages,
