@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { AlertCircle, InfoIcon, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TasksWithVisibilityProps {
   tasks: Task[];
@@ -31,7 +35,44 @@ export const TasksWithVisibility = ({
   isLoading = false
 }: TasksWithVisibilityProps) => {
   const { visibleTasks, isProjectManager, isDraftProject: isDraft, isLoadingVisibility } = useDraftTasksVisibility(tasks, projectId);
+  const [isLaunching, setIsLaunching] = useState(false);
   const showLoading = isLoading || isLoadingVisibility;
+
+  // Function to launch the project (change from draft to published)
+  const handleLaunchProject = async () => {
+    if (!projectId) return;
+    
+    try {
+      setIsLaunching(true);
+      
+      // Update project status to non-draft
+      const { error: projectError } = await supabase
+        .from('project_tasks')
+        .update({ is_draft: false })
+        .eq('id', projectId);
+        
+      if (projectError) throw projectError;
+      
+      // Update all tasks from draft to pending
+      const { error: tasksError } = await supabase
+        .from('tasks')
+        .update({ status: 'pending' })
+        .eq('project_id', projectId)
+        .eq('status', 'draft');
+        
+      if (tasksError) throw tasksError;
+      
+      toast.success("تم إطلاق المشروع بنجاح!");
+      
+      // Reload the page to reflect changes
+      window.location.reload();
+    } catch (error) {
+      console.error("Error launching project:", error);
+      toast.error("حدث خطأ أثناء إطلاق المشروع");
+    } finally {
+      setIsLaunching(false);
+    }
+  };
 
   if (showLoading) {
     return (
@@ -68,8 +109,23 @@ export const TasksWithVisibility = ({
   const draftAlert = isDraftProject && isProjectManager && (
     <Alert variant="info" className="mb-4">
       <InfoIcon className="h-4 w-4" />
-      <AlertDescription>
-        المشروع في وضع المسودة. لن تكون المهام مرئية للفريق حتى يتم إطلاق المشروع.
+      <AlertDescription className="flex justify-between items-center">
+        <span>المشروع في وضع المسودة. جميع المهام في حالة مسودة ولن تكون مرئية للفريق حتى يتم إطلاق المشروع.</span>
+        <Button 
+          size="sm" 
+          onClick={handleLaunchProject}
+          disabled={isLaunching}
+          className="bg-green-600 hover:bg-green-700 text-white mr-2"
+        >
+          {isLaunching ? (
+            <>
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+              جاري الإطلاق...
+            </>
+          ) : (
+            "إطلاق المشروع"
+          )}
+        </Button>
       </AlertDescription>
     </Alert>
   );
@@ -98,7 +154,7 @@ export const TasksWithVisibility = ({
                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
                     <TableCell>
                       {task.assigned_user_name ?? 'غير مكلف'}
-                      {isDraftProject && task.assigned_to && (
+                      {isDraftProject && task.status === "draft" && (
                         <Badge variant="outline" className="mr-2 bg-blue-50 text-blue-600 border-blue-200">
                           <AlertCircle className="mr-1 h-3 w-3" />
                           مسودة
@@ -142,7 +198,7 @@ export const TasksWithVisibility = ({
                 <div>
                   <span className="text-gray-500">المكلف: </span>
                   {task.assigned_user_name ?? 'غير مكلف'}
-                  {isDraftProject && task.assigned_to && (
+                  {isDraftProject && task.status === "draft" && (
                     <Badge variant="outline" className="mr-2 bg-blue-50 text-blue-600 border-blue-200">
                       <AlertCircle className="mr-1 h-3 w-3" />
                       مسودة

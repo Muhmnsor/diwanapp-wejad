@@ -36,6 +36,7 @@ export const CopyProjectDialog = ({
   const [newTitle, setNewTitle] = useState(`نسخة من ${projectTitle}`);
   const [includeTasks, setIncludeTasks] = useState(true);
   const [includeAttachments, setIncludeAttachments] = useState(true);
+  const [includeStages, setIncludeStages] = useState(true);
   const [copyProgress, setCopyProgress] = useState(0);
   const [copyStep, setCopyStep] = useState("");
   const [isComplete, setIsComplete] = useState(false);
@@ -92,8 +93,35 @@ export const CopyProjectDialog = ({
 
       if (createError) throw createError;
 
+      // Step 3: Copy project stages if enabled
+      if (includeStages) {
+        setCopyStep("جاري نسخ مراحل المشروع...");
+        setCopyProgress(40);
+        
+        const { data: originalStages, error: stagesError } = await supabase
+          .from("project_stages")
+          .select("*")
+          .eq("project_id", projectId);
+          
+        if (stagesError) throw stagesError;
+        
+        if (originalStages && originalStages.length > 0) {
+          const newStages = originalStages.map(stage => ({
+            name: stage.name,
+            project_id: newProject.id,
+            color: stage.color
+          }));
+          
+          const { error: insertStagesError } = await supabase
+            .from("project_stages")
+            .insert(newStages);
+            
+          if (insertStagesError) throw insertStagesError;
+        }
+      }
+
       if (includeTasks) {
-        // Step 3: Fetch all tasks from the original project
+        // Step 4: Fetch all tasks from the original project
         setCopyStep("جاري جلب المهام من المشروع الأصلي...");
         setCopyProgress(50);
         
@@ -105,7 +133,32 @@ export const CopyProjectDialog = ({
         if (tasksError) throw tasksError;
 
         if (originalTasks && originalTasks.length > 0) {
-          // Step 4: Create tasks in the new project
+          // Step 5: If using stages, get the mapping between old and new stages
+          let stageMapping = {};
+          
+          if (includeStages) {
+            const { data: originalStageIds } = await supabase
+              .from("project_stages")
+              .select("id, name")
+              .eq("project_id", projectId);
+              
+            const { data: newStageIds } = await supabase
+              .from("project_stages")
+              .select("id, name")
+              .eq("project_id", newProject.id);
+              
+            if (originalStageIds && newStageIds) {
+              // Create a mapping from old stage name to new stage id
+              originalStageIds.forEach(oldStage => {
+                const matchingNewStage = newStageIds.find(s => s.name === oldStage.name);
+                if (matchingNewStage) {
+                  stageMapping[oldStage.id] = matchingNewStage.id;
+                }
+              });
+            }
+          }
+          
+          // Step 6: Create tasks in the new project
           setCopyStep("إنشاء المهام في المشروع الجديد...");
           setCopyProgress(70);
           
@@ -117,7 +170,7 @@ export const CopyProjectDialog = ({
             assigned_to: task.assigned_to, // Keep the same assignees
             project_id: newProject.id,
             workspace_id: task.workspace_id,
-            stage_id: task.stage_id,
+            stage_id: includeStages && task.stage_id ? stageMapping[task.stage_id] || null : null,
             due_date: task.due_date,
             category: task.category,
           }));
@@ -128,7 +181,7 @@ export const CopyProjectDialog = ({
 
           if (insertTasksError) throw insertTasksError;
           
-          // Step 5: Copy attachments and templates if needed
+          // Step 7: Copy attachments and templates if needed
           if (includeAttachments && originalTasks.length > 0) {
             setCopyStep("نسخ المرفقات والقوالب...");
             setCopyProgress(85);
@@ -275,6 +328,16 @@ export const CopyProjectDialog = ({
                 onBlur={(e) => e.stopPropagation()}
                 autoFocus
               />
+            </div>
+
+            <div className="flex items-center space-x-2 space-x-reverse" onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                id="includeStages"
+                checked={includeStages}
+                onCheckedChange={() => setIncludeStages(!includeStages)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <Label htmlFor="includeStages" className="mr-2 cursor-pointer">نسخ مراحل المشروع</Label>
             </div>
 
             <div className="flex items-center space-x-2 space-x-reverse" onClick={(e) => e.stopPropagation()}>

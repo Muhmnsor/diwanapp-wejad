@@ -5,46 +5,30 @@ import { Task } from "../types/task";
 import { useTasksFetching } from "./useTasksFetching";
 import { useProjectStatusUpdater } from "./useProjectStatusUpdater";
 import { toast } from "sonner";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 export const useTasksList = (projectId?: string) => {
   const [activeTab, setActiveTab] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [projectStages, setProjectStages] = useState<any[]>([]);
-  const [isDraftProject, setIsDraftProject] = useState(false);
   const isGeneral = !projectId;
 
   const { tasks, isLoading, tasksByStage, setTasks, fetchTasks } = useTasksFetching(projectId);
   const { updateProjectStatus } = useProjectStatusUpdater();
+  const { isDraftProject } = useProjectPermissions(projectId);
 
   useEffect(() => {
     if (projectId) {
       fetchProjectStages();
-      checkProjectDraftStatus();
     }
   }, [projectId]);
-
-  const checkProjectDraftStatus = async () => {
-    if (!projectId) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('project_tasks')
-        .select('is_draft')
-        .eq('id', projectId)
-        .single();
-        
-      if (error) throw error;
-      
-      setIsDraftProject(!!data?.is_draft);
-    } catch (error) {
-      console.error("Error checking project draft status:", error);
-    }
-  };
 
   const fetchProjectStages = async () => {
     if (!projectId) return;
     
     try {
+      console.log("Fetching project stages for:", projectId);
+      
       const { data, error } = await supabase
         .from('project_stages')
         .select('*')
@@ -53,6 +37,7 @@ export const useTasksList = (projectId?: string) => {
       
       if (error) throw error;
       
+      console.log(`Found ${data?.length || 0} stages for project ${projectId}`);
       setProjectStages(data || []);
     } catch (error) {
       console.error("Error fetching project stages:", error);
