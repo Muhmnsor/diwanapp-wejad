@@ -12,6 +12,8 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
+  manager_name?: string | null;
+  project_manager?: string | null;
 }
 
 export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () => void) => {
@@ -69,7 +71,15 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
           }
         }
 
-        await fetchProjectOwner();
+        // Set project owner directly from project data if available
+        if (project.manager_name) {
+          setProjectOwner(project.manager_name);
+        } else if (project.project_manager) {
+          // If we have the project_manager ID but not the name, fetch the user's profile
+          await fetchProjectOwnerFromId(project.project_manager);
+        } else {
+          setProjectOwner("غير محدد");
+        }
       } catch (err) {
         console.error("Error in fetchTasksData:", err);
       } finally {
@@ -78,40 +88,25 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     };
 
     fetchTasksData();
-  }, [project.id, project.status]);
+  }, [project.id, project.status, project.manager_name, project.project_manager]);
 
-  const fetchProjectOwner = async () => {
+  const fetchProjectOwnerFromId = async (userId: string) => {
     try {
-      const { data: tasks, error } = await supabase
-        .from('tasks')
-        .select('assigned_to')
-        .eq('project_id', project.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (error) {
-        console.error("Error fetching tasks for project owner:", error);
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('display_name, email')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        setProjectOwner("غير محدد");
         return;
       }
-
-      if (tasks && tasks.length > 0 && tasks[0].assigned_to) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('display_name, email')
-          .eq('id', tasks[0].assigned_to)
-          .single();
-          
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          return;
-        }
-        
-        setProjectOwner(profile?.display_name || profile?.email || "مدير المشروع");
-      } else {
-        setProjectOwner("غير محدد");
-      }
+      
+      setProjectOwner(profile?.display_name || profile?.email || "مدير المشروع");
     } catch (err) {
-      console.error("Error in fetchProjectOwner:", err);
+      console.error("Error in fetchProjectOwnerFromId:", err);
       setProjectOwner("غير محدد");
     }
   };
