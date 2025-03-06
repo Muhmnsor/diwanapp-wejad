@@ -1,5 +1,5 @@
 
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Plus } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -11,6 +11,8 @@ import { useAuthStore } from "@/store/authStore";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
+import { useTaskPermissions } from "../hooks/useTaskPermissions";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface TaskItemProps {
   task: Task;
@@ -19,6 +21,8 @@ interface TaskItemProps {
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
+  onTaskDeleted?: () => void;
+  onTaskEdit?: (taskId: string) => void;
 }
 
 interface TaskAttachment {
@@ -35,13 +39,19 @@ export const TaskItem = ({
   getPriorityBadge, 
   formatDate,
   onStatusChange,
-  projectId
+  projectId,
+  onTaskDeleted,
+  onTaskEdit
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
   const { user } = useAuthStore();
+  const { canModify, isLoading: isCheckingPermissions } = useTaskPermissions({ 
+    projectId, 
+    taskCreatorId: task.created_by
+  });
   
   // جلب المرفقات الخاصة بالمكلف بالمهمة
   useEffect(() => {
@@ -137,6 +147,56 @@ export const TaskItem = ({
     }
   };
 
+  const handleDeleteTask = async () => {
+    try {
+      // أولاً، تحقق من وجود مهام فرعية
+      const { data: subtasks, error: subtasksError } = await supabase
+        .from('project_task_items')
+        .select('id')
+        .eq('parent_task_id', task.id);
+
+      if (subtasksError) throw subtasksError;
+
+      // حذف المهام الفرعية إذا وجدت
+      if (subtasks && subtasks.length > 0) {
+        const subtaskIds = subtasks.map(s => s.id);
+        
+        // حذف المهام الفرعية
+        const { error: deleteSubtasksError } = await supabase
+          .from('project_task_items')
+          .delete()
+          .in('id', subtaskIds);
+
+        if (deleteSubtasksError) throw deleteSubtasksError;
+      }
+
+      // حذف المهمة الرئيسية
+      const { error: deleteTaskError } = await supabase
+        .from('project_task_items')
+        .delete()
+        .eq('id', task.id);
+
+      if (deleteTaskError) throw deleteTaskError;
+
+      toast.success("تم حذف المهمة بنجاح");
+      
+      // استدعاء دالة التحديث بعد الحذف
+      if (onTaskDeleted) onTaskDeleted();
+      
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("حدث خطأ أثناء حذف المهمة");
+    }
+  };
+
+  const handleEditTask = () => {
+    if (onTaskEdit) {
+      onTaskEdit(task.id);
+    } else {
+      toast.info("سيتم تنفيذ تعديل المهمة قريبًا");
+    }
+  };
+
   const renderStatusChangeButton = () => {
     if (!canChangeStatus()) {
       return null;
@@ -215,20 +275,57 @@ export const TaskItem = ({
         </TableCell>
         <TableCell>
           <div className="flex items-center justify-end gap-1">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 px-2 mr-1 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Handle add subtask action - this would typically open a dialog or form
-                toast.info("سيتم إضافة مهمة فرعية قريباً");
-              }}
-              title="إضافة مهمة فرعية"
-            >
-              <Plus className="h-3.5 w-3.5 ml-1 text-primary" />
-              إضافة مهمة فرعية
-            </Button>
+            {/* أزرار التعديل والحذف - تظهر فقط للمشرفين ومدراء المشروع */}
+            {canModify && !isCheckingPermissions && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-0 h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditTask();
+                  }}
+                  title="تعديل المهمة"
+                >
+                  <PenLine className="h-4 w-4 text-blue-500 hover:text-blue-700" />
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="p-0 h-7 w-7"
+                      onClick={(e) => e.stopPropagation()}
+                      title="حذف المهمة"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent dir="rtl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>هل أنت متأكد من رغبتك في حذف هذه المهمة؟</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        سيتم حذف المهمة مع جميع المهام الفرعية المرتبطة بها. هذا الإجراء لا يمكن التراجع عنه.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={(e) => e.stopPropagation()}>إلغاء</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTask();
+                        }}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        حذف
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
             
             <Button 
               variant="ghost" 
