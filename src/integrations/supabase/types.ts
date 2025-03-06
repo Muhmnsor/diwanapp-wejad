@@ -2226,21 +2226,18 @@ export type Database = {
       }
       project_stages: {
         Row: {
-          color: string | null
           created_at: string
           id: string
           name: string
           project_id: string
         }
         Insert: {
-          color?: string | null
           created_at?: string
           id?: string
           name: string
           project_id: string
         }
         Update: {
-          color?: string | null
           created_at?: string
           id?: string
           name?: string

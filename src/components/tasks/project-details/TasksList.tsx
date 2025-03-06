@@ -9,7 +9,6 @@ import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormat
 import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface TasksListProps {
   projectId?: string | undefined;
@@ -34,12 +33,6 @@ export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps)
     fetchTasks,
     isGeneral
   } = useTasksList(projectId);
-  
-  // Get project permissions
-  const { isDraftProject: isDraft } = useProjectPermissions(projectId);
-
-  // Use either the prop or the hook result (prefer hook as it's real-time)
-  const isProjectDraft = isDraft || isDraftProject;
 
   // Fetch project members
   const { projectMembers } = useProjectMembers(projectId);
@@ -81,7 +74,7 @@ export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps)
             onStatusChange={handleStatusChange}
             projectId={projectId}
             isGeneral={isGeneral}
-            isDraftProject={isProjectDraft}
+            isDraftProject={isDraftProject}
           />
         </CardContent>
       </Card>
@@ -94,7 +87,7 @@ export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps)
         onTaskAdded={fetchTasks}
         projectMembers={projectMembers}
         isGeneral={isGeneral}
-        isDraftProject={isProjectDraft}
+        isDraftProject={isDraftProject}
       />
     </>
   );

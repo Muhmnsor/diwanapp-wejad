@@ -5,15 +5,12 @@ import { Task } from "../types/task";
 export const useProjectStatusUpdater = () => {
   const updateProjectStatus = async (projectId: string, tasks: Task[]) => {
     try {
-      // Filter out subtasks to avoid counting them twice
-      const mainTasks = tasks.filter(task => !task.parent_task_id);
-      
-      const total = mainTasks.length;
-      const completed = mainTasks.filter(task => task.status === 'completed').length;
+      const total = tasks.length;
+      const completed = tasks.filter(task => task.status === 'completed').length;
       
       // Check for overdue tasks
       const now = new Date();
-      const overdue = mainTasks.filter(task => {
+      const overdue = tasks.filter(task => {
         return task.status !== 'completed' && 
               task.due_date && 
               new Date(task.due_date) < now;
@@ -31,9 +28,7 @@ export const useProjectStatusUpdater = () => {
         newStatus = 'delayed';
       }
       
-      console.log(`Calculated new project status: ${newStatus} (${completed}/${total} completed)`);
-      
-      // Get current project status from project_tasks table
+      // Get current project status
       const { data: projectData, error: projectError } = await supabase
         .from('project_tasks')
         .select('status')
@@ -43,7 +38,7 @@ export const useProjectStatusUpdater = () => {
       if (!projectError && projectData && projectData.status !== newStatus) {
         console.log(`Updating project status from ${projectData.status} to ${newStatus}`);
         
-        // Update project status in project_tasks table
+        // Update project status
         const { error: updateError } = await supabase
           .from('project_tasks')
           .update({ status: newStatus })

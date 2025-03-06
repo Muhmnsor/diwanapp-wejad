@@ -18,7 +18,7 @@ const TaskProjectDetails = () => {
     if (!projectId) return;
     
     try {
-      console.log("Fetching project task with ID:", projectId);
+      console.log("Fetching task project with ID:", projectId);
       
       const { data, error } = await supabase
         .from('project_tasks')

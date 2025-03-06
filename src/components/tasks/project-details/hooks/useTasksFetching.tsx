@@ -15,7 +15,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
     try {
       console.log("Fetching tasks for project:", projectId);
       
-      // Get tasks from the correct table (tasks) with the correct projectId column
+      // Get tasks
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -41,31 +41,35 @@ export const useTasksFetching = (projectId: string | undefined) => {
       if (stageIds.length > 0) {
         const { data: stagesData, error: stagesError } = await supabase
           .from('project_stages')
-          .select('id, name, color')
+          .select('id, name')
           .in('id', stageIds);
         
         if (!stagesError && stagesData) {
           // Create a map of stage IDs to names
-          const stageMap = stagesData.reduce((map: Record<string, { name: string, color: string }>, stage) => {
-            map[stage.id] = { name: stage.name, color: stage.color };
+          const stageMap = stagesData.reduce((map: Record<string, string>, stage) => {
+            map[stage.id] = stage.name;
             return map;
           }, {});
           
           // Add stage names to tasks
           tasksWithStageNames = tasksWithStageNames.map(task => ({
             ...task,
-            stage_name: task.stage_id ? stageMap[task.stage_id]?.name : undefined,
-            stage_color: task.stage_id ? stageMap[task.stage_id]?.color : undefined
+            stage_name: task.stage_id ? stageMap[task.stage_id] : undefined
           }));
         }
       }
       
-      // Add user names for tasks with assignees - now for both main tasks and subtasks
+      // Add user names for tasks with assignees
       const tasksWithUserData = await Promise.all(tasksWithStageNames.map(async (task) => {
-        const taskWithExtra = { ...task };
-        
-        // Get assigned user name if task has an assignee
         if (task.assigned_to) {
+          // Check if it's a custom assignee
+          if (task.assigned_to.startsWith('custom:')) {
+            return {
+              ...task,
+              assigned_user_name: task.assigned_to.replace('custom:', '')
+            };
+          }
+          
           const { data: userData, error: userError } = await supabase
             .from('profiles')
             .select('display_name, email')
@@ -73,20 +77,14 @@ export const useTasksFetching = (projectId: string | undefined) => {
             .single();
           
           if (!userError && userData) {
-            taskWithExtra.assigned_user_name = userData.display_name || userData.email;
+            return {
+              ...task,
+              assigned_user_name: userData.display_name || userData.email
+            };
           }
         }
         
-        // Also check if this task has subtasks
-        const { data: subtasksCount, error: subtasksError } = await supabase
-          .from('tasks')
-          .select('id', { count: 'exact' })
-          .eq('parent_task_id', task.id);
-          
-        const hasSubtasks = !subtasksError && (subtasksCount?.length || 0) > 0;
-        taskWithExtra.has_subtasks = hasSubtasks;
-        
-        return taskWithExtra;
+        return task;
       }));
       
       // Process tasks by stage
