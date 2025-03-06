@@ -1,5 +1,5 @@
 
-import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown } from "lucide-react";
+import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TaskActionButtonsProps {
@@ -11,7 +11,9 @@ interface TaskActionButtonsProps {
   onStatusChange: (status: string) => void;
   onOpenTemplates: () => void;
   onDelete?: (taskId: string) => void;
+  onEdit?: (taskId: string) => void;
   taskId: string;
+  isGeneral?: boolean;
 }
 
 export const TaskActionButtons = ({
@@ -23,7 +25,9 @@ export const TaskActionButtons = ({
   onStatusChange,
   onOpenTemplates,
   onDelete,
+  onEdit,
   taskId,
+  isGeneral,
 }: TaskActionButtonsProps) => {
   return (
     <div className="flex justify-between items-center mt-3 pt-3 border-t">
@@ -70,6 +74,19 @@ export const TaskActionButtons = ({
       </div>
       
       <div className="flex gap-2">
+        {/* Edit button for general tasks */}
+        {isGeneral && onEdit && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs flex items-center gap-1"
+            onClick={() => onEdit(taskId)}
+          >
+            <Pencil className="h-3.5 w-3.5 text-amber-500" />
+            تعديل
+          </Button>
+        )}
+        
         {/* Status change buttons */}
         {currentStatus !== "completed" ? (
           <Button 

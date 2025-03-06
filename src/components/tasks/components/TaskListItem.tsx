@@ -13,19 +13,22 @@ import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
+import { EditTaskDialog } from "../project-details/EditTaskDialog";
 
 interface TaskListItemProps {
   task: Task;
   onStatusChange: (taskId: string, status: string) => void;
   onDelete?: (taskId: string) => void;
+  onTaskUpdated?: () => void;
 }
 
-export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemProps) => {
+export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: TaskListItemProps) => {
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
   const { sendTaskStatusUpdateNotification } = useTaskNotifications();
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
@@ -89,6 +92,18 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
+  // Handle edit task
+  const handleEditTask = (taskId: string) => {
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle task update completion
+  const handleTaskUpdated = () => {
+    if (onTaskUpdated) {
+      onTaskUpdated();
+    }
+  };
+
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />
@@ -112,7 +127,9 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
         onStatusChange={handleStatusChange}
         onDelete={onDelete}
+        onEdit={handleEditTask}
         taskId={task.id}
+        isGeneral={task.is_general}
       />
       
       {/* Task Discussion Dialog */}
@@ -146,6 +163,18 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           task={task}
           open={isTemplatesDialogOpen}
           onOpenChange={setIsTemplatesDialogOpen}
+        />
+      )}
+
+      {/* Edit Task Dialog for General Tasks */}
+      {task && task.is_general && (
+        <EditTaskDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          task={task}
+          projectStages={[]}
+          projectMembers={[]}
+          onTaskUpdated={handleTaskUpdated}
         />
       )}
     </div>

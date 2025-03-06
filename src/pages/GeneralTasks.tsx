@@ -97,6 +97,7 @@ const GeneralTasks = () => {
                     tasks={tasksByCategory[category] || []}
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
+                    onTaskUpdated={fetchGeneralTasks}
                   />
                 ))
               ) : (
@@ -107,6 +108,7 @@ const GeneralTasks = () => {
                     tasks={tasks as any}
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
+                    onTaskUpdated={fetchGeneralTasks}
                   />
                 ))
               )}

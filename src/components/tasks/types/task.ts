@@ -19,4 +19,6 @@ export interface Task {
   attachment_url?: string | null;
   form_template?: string | null;
   templates?: Array<{ url: string }> | null;
+  category?: string | null;
+  stage_id?: string;
 }
