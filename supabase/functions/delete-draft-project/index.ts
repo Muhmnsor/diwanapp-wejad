@@ -36,13 +36,16 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log("Calling database function to delete draft project");
+    console.log("Calling database function to delete draft project with parameters:", { 
+      p_project_id: projectId, 
+      p_user_id: userId 
+    });
     
-    // Call the database function to delete the draft project
+    // Call the database function to delete the draft project using the new parameter names
     const { data, error } = await supabase
       .rpc('delete_draft_project', { 
-        project_id: projectId,
-        current_user_id: userId
+        p_project_id: projectId,
+        p_user_id: userId
       })
 
     if (error) {

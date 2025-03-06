@@ -33,6 +33,8 @@ export const useDeleteTaskProject = ({
       
       if (isDraft) {
         // For draft projects, use the Edge Function
+        console.log("Using Edge Function for draft project deletion");
+        
         const response = await supabase.functions.invoke('delete-draft-project', {
           body: { 
             projectId, 
@@ -47,9 +49,9 @@ export const useDeleteTaskProject = ({
           throw new Error(response.error.message || "فشل في حذف المشروع");
         }
         
-        if (!response.data.success) {
+        if (!response.data?.success) {
           console.error("Edge function unsuccessful:", response.data);
-          throw new Error(response.data.error || "فشل في حذف المشروع");
+          throw new Error(response.data?.error || "فشل في حذف المشروع");
         }
       } else {
         // Get project details to verify ownership/permissions
