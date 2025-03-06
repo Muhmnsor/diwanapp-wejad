@@ -62,7 +62,7 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         // Safely extract profile data regardless of its structure
         if (comment.profiles) {
           if (Array.isArray(comment.profiles) && comment.profiles.length > 0) {
-            profileData = comment.profiles[0];
+            profileData = comment.profiles[0] as ProfileData;
           } else {
             profileData = comment.profiles as ProfileData;
           }
@@ -180,7 +180,7 @@ export const useComments = (ideaId: string, creatorId?: string) => {
       // Safely extract profile data
       if (data.profiles) {
         if (Array.isArray(data.profiles) && data.profiles.length > 0) {
-          profileData = data.profiles[0];
+          profileData = data.profiles[0] as ProfileData;
         } else {
           profileData = data.profiles as ProfileData;
         }
