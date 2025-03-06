@@ -1,21 +1,9 @@
 
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Eye, MoreHorizontal } from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 
 interface TasksTableLayoutProps {
@@ -36,28 +24,31 @@ export const TasksTableLayout = ({
   projectId
 }: TasksTableLayoutProps) => {
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>المهمة</TableHead>
+            <TableHead>عنوان المهمة</TableHead>
             <TableHead>الحالة</TableHead>
             <TableHead>الأولوية</TableHead>
             <TableHead>تاريخ الاستحقاق</TableHead>
-            <TableHead>المكلف</TableHead>
-            <TableHead className="text-left">إجراءات</TableHead>
+            <TableHead>الإجراءات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => (
+          {tasks.map(task => (
             <TableRow key={task.id}>
-              <TableCell className="font-medium">{task.title}</TableCell>
+              <TableCell className="font-medium max-w-xs">
+                <div className="truncate" title={task.title}>{task.title}</div>
+                {task.description && (
+                  <div className="text-xs text-gray-500 truncate mt-1" title={task.description}>
+                    {task.description}
+                  </div>
+                )}
+              </TableCell>
               <TableCell>{getStatusBadge(task.status)}</TableCell>
               <TableCell>{getPriorityBadge(task.priority)}</TableCell>
               <TableCell>{formatDate(task.due_date)}</TableCell>
-              <TableCell>
-                {task.assigned_user_name || "غير محدد"}
-              </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1">
                   <Link to={`/tasks/task/${task.id}?projectId=${projectId}`}>

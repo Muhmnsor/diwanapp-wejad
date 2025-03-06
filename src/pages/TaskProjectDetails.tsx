@@ -76,7 +76,7 @@ const TaskProjectDetails = () => {
                 <TaskProjectInfo project={project} onProjectUpdated={handleProjectUpdated} />
                 <TasksList 
                   projectId={projectId} 
-                  isDraftProject={project.is_draft}
+                  isDraftProject={!!project.is_draft}
                 />
               </div>
             )}

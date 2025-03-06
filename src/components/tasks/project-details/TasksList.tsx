@@ -12,12 +12,13 @@ import { useProjectMembers } from "./hooks/useProjectMembers";
 
 interface TasksListProps {
   projectId?: string | undefined;
+  isDraftProject?: boolean;
 }
 
 // Re-export Task interface for backward compatibility
 export type { Task };
 
-export const TasksList = ({ projectId }: TasksListProps) => {
+export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps) => {
   const {
     tasks,
     isLoading,
@@ -73,6 +74,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             onStatusChange={handleStatusChange}
             projectId={projectId}
             isGeneral={isGeneral}
+            isDraftProject={isDraftProject}
           />
         </CardContent>
       </Card>
@@ -85,6 +87,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
         onTaskAdded={fetchTasks}
         projectMembers={projectMembers}
         isGeneral={isGeneral}
+        isDraftProject={isDraftProject}
       />
     </>
   );

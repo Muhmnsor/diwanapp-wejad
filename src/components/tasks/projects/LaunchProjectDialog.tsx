@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
+import { useAuthStore } from "@/store/authStore";
 
 interface TaskSummary {
   total: number;
@@ -38,6 +40,8 @@ export const LaunchProjectDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [taskSummary, setTaskSummary] = useState<TaskSummary | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const { sendProjectLaunchNotification } = useTaskAssignmentNotifications();
+  const { user } = useAuthStore();
 
   // Load task summary when dialog opens
   useEffect(() => {
@@ -139,7 +143,7 @@ export const LaunchProjectDialog = ({
 
       if (tasksError) throw tasksError;
 
-      // 3. Send notifications to assigned users
+      // 3. Get all tasks with assignees for notification
       const { data: tasks, error: fetchError } = await supabase
         .from("tasks")
         .select("id, title, assigned_to")
@@ -148,9 +152,27 @@ export const LaunchProjectDialog = ({
 
       if (fetchError) throw fetchError;
 
-      // Send notifications for each assigned task
+      // 4. Prepare list of unique assignee IDs (excluding custom assignees)
+      const assigneeIds = new Set<string>();
+      
+      tasks?.forEach(task => {
+        if (task.assigned_to && !task.assigned_to.startsWith('custom:')) {
+          assigneeIds.add(task.assigned_to);
+        }
+      });
+
+      // 5. Send project launch notification to all unique assignees
+      if (assigneeIds.size > 0) {
+        await sendProjectLaunchNotification(
+          projectId,
+          projectTitle,
+          Array.from(assigneeIds)
+        );
+      }
+
+      // 6. Send individual task assignment notifications
       for (const task of tasks || []) {
-        if (task.assigned_to) {
+        if (task.assigned_to && !task.assigned_to.startsWith('custom:')) {
           await supabase.from("in_app_notifications").insert([
             {
               user_id: task.assigned_to,

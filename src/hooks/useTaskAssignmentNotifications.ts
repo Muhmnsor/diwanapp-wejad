@@ -1,61 +1,43 @@
 
-import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/store/authStore";
+import { useInAppNotifications } from "@/contexts/notifications/useInAppNotifications";
 
 interface TaskAssignmentParams {
   taskId: string;
   taskTitle: string;
-  projectId?: string;
-  projectTitle?: string;
   assignedUserId: string;
-  assignedByUserId?: string;
-  assignedByUserName?: string;
+  assignedByUserId?: string | null;
+  projectId?: string | null;
+  projectTitle?: string | null;
 }
 
 export const useTaskAssignmentNotifications = () => {
+  const { user } = useAuthStore();
   const { createNotification } = useInAppNotifications();
 
-  // إشعار إسناد مهمة جديدة
   const sendTaskAssignmentNotification = async (params: TaskAssignmentParams) => {
+    if (!params.assignedUserId || params.assignedUserId === user?.id) {
+      // Don't send notification if assigning to yourself
+      return null;
+    }
+
     try {
-      if (!params.assignedUserId) {
-        console.log('No assigned user ID provided for notification');
-        return null;
-      }
+      const title = params.projectTitle 
+        ? `مهمة جديدة في مشروع "${params.projectTitle}"`
+        : 'تم إسناد مهمة جديدة إليك';
+        
+      const message = params.projectTitle
+        ? `تم إسناد مهمة "${params.taskTitle}" إليك في مشروع "${params.projectTitle}"`
+        : `تم إسناد مهمة "${params.taskTitle}" إليك`;
 
-      // الحصول على اسم المستخدم الذي تم تكليفه بالمهمة للعرض في الإشعار
-      let assigneeName = "";
-      try {
-        const { data: assigneeProfile } = await supabase
-          .from('profiles')
-          .select('display_name, email')
-          .eq('id', params.assignedUserId)
-          .single();
-          
-        assigneeName = assigneeProfile?.display_name || '';
-        console.log('Assigned user profile:', assigneeProfile);
-      } catch (assigneeError) {
-        console.log('Could not fetch assignee profile:', assigneeError);
-      }
-
-      let message = `تم إسناد المهمة "${params.taskTitle}" إليك`;
-      if (params.projectTitle) {
-        message += ` في مشروع "${params.projectTitle}"`;
-      }
-      if (params.assignedByUserName) {
-        message += ` بواسطة ${params.assignedByUserName}`;
-      }
-      
-      console.log('Sending task assignment notification to user:', params.assignedUserId);
-      console.log('Notification message:', message);
-      
       return await createNotification({
-        title: `تم إسناد مهمة جديدة`,
+        user_id: params.assignedUserId,
+        title,
         message,
-        notification_type: 'task',
+        notification_type: 'task_assignment',
         related_entity_id: params.taskId,
-        related_entity_type: params.projectId ? 'project_task' : 'task',
-        user_id: params.assignedUserId
+        related_entity_type: 'task'
       });
     } catch (error) {
       console.error('Error sending task assignment notification:', error);
@@ -63,7 +45,43 @@ export const useTaskAssignmentNotifications = () => {
     }
   };
 
+  const sendProjectLaunchNotification = async (
+    projectId: string,
+    projectTitle: string,
+    assignedUserIds: string[]
+  ) => {
+    try {
+      // Create notifications for all assigned users
+      const notifications = [];
+      
+      for (const userId of assignedUserIds) {
+        if (userId === user?.id) continue; // Skip if it's the current user
+        
+        notifications.push(
+          createNotification({
+            user_id: userId,
+            title: `تم إطلاق مشروع "${projectTitle}"`,
+            message: `تم إطلاق مشروع "${projectTitle}" وتفعيل المهام المسندة إليك. يمكنك الآن البدء في العمل على المهام.`,
+            notification_type: 'project_launch',
+            related_entity_id: projectId,
+            related_entity_type: 'project'
+          })
+        );
+      }
+      
+      if (notifications.length > 0) {
+        await Promise.all(notifications);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending project launch notifications:', error);
+      return false;
+    }
+  };
+
   return {
-    sendTaskAssignmentNotification
+    sendTaskAssignmentNotification,
+    sendProjectLaunchNotification
   };
 };
