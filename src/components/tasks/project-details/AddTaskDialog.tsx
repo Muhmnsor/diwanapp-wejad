@@ -111,9 +111,9 @@ export function AddTaskDialog({
             await sendTaskAssignmentNotification({
               taskId: newTask.id,
               taskTitle: formData.title,
+              assigneeId: formData.assignedTo,
               projectId: isGeneral ? null : projectId,
               projectTitle: isGeneral ? 'المهام العامة' : projectTitle,
-              assignedUserId: formData.assignedTo,
               assignedByUserId: user.id,
               assignedByUserName: creatorName
             });

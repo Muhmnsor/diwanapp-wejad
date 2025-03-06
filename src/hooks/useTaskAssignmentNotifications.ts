@@ -7,12 +7,16 @@ export interface TaskAssignmentParams {
   taskId: string;
   taskTitle: string;
   assigneeId: string;
+  projectId?: string | null;
+  projectTitle?: string | null;
+  assignedByUserId?: string | null;
+  assignedByUserName?: string | null;
 }
 
 export const useTaskAssignmentNotifications = () => {
   const sendTaskAssignmentNotification = useCallback(async (params: TaskAssignmentParams) => {
     try {
-      const { taskId, taskTitle, assigneeId } = params;
+      const { taskId, taskTitle, assigneeId, projectId, projectTitle, assignedByUserId, assignedByUserName } = params;
       
       // Create in-app notification
       const { error } = await supabase
@@ -20,10 +24,15 @@ export const useTaskAssignmentNotifications = () => {
         .insert({
           user_id: assigneeId,
           title: 'تم تكليفك بمهمة جديدة',
-          message: `تم تكليفك بمهمة "${taskTitle}"`,
+          message: `تم تكليفك بمهمة "${taskTitle}"${projectTitle ? ` في المشروع "${projectTitle}"` : ''}`,
           notification_type: 'task_assignment',
           related_entity_id: taskId,
-          related_entity_type: 'task'
+          related_entity_type: 'task',
+          initiator_id: assignedByUserId || null,
+          meta: {
+            project_id: projectId || null,
+            assigned_by: assignedByUserName || null
+          }
         });
       
       if (error) throw error;
