@@ -16,6 +16,9 @@ export interface Task {
   project_id?: string | null;
   project_name?: string | null;
   workspace_name?: string | null;
+  stage_id?: string | null; // Added this missing property
+  stage_name?: string | null; // Added for consistency
+  stage_color?: string | null; // Added for consistency
   // Add missing properties for templates and attachments
   attachment_url?: string | null;
   form_template?: string | null;

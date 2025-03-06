@@ -1,4 +1,3 @@
-
 import { useDraftTasksVisibility } from "@/hooks/useDraftTasksVisibility";
 import { Task } from "../types/task";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -41,14 +40,12 @@ export const TasksWithVisibility = ({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const showLoading = isLoading || isLoadingVisibility;
 
-  // Function to launch the project (change from draft to published)
   const handleLaunchProject = async () => {
     if (!projectId) return;
     
     try {
       setIsLaunching(true);
       
-      // Update project status to non-draft
       const { error: projectError } = await supabase
         .from('project_tasks')
         .update({ is_draft: false })
@@ -56,7 +53,6 @@ export const TasksWithVisibility = ({
         
       if (projectError) throw projectError;
       
-      // Update all tasks from draft to pending
       const { error: tasksError } = await supabase
         .from('tasks')
         .update({ status: 'pending' })
@@ -67,7 +63,6 @@ export const TasksWithVisibility = ({
       
       toast.success("تم إطلاق المشروع بنجاح!");
       
-      // Reload the page to reflect changes
       window.location.reload();
     } catch (error) {
       console.error("Error launching project:", error);
@@ -101,7 +96,6 @@ export const TasksWithVisibility = ({
     );
   }
 
-  // Show alert when project is in draft mode and user is not the project manager
   if (isDraftProject && !isProjectManager && tasks.length > 0) {
     return (
       <Alert variant="info" className="mt-4">
@@ -113,7 +107,6 @@ export const TasksWithVisibility = ({
     );
   }
 
-  // If we're in a draft project, show an info alert to the project manager
   const draftAlert = isDraftProject && isProjectManager && (
     <Alert variant="info" className="mb-4">
       <AlertCircle className="h-4 w-4" />
@@ -224,7 +217,6 @@ export const TasksWithVisibility = ({
     );
   }
 
-  // List view (simplified for now)
   return (
     <>
       {draftAlert}
