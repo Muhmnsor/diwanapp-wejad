@@ -7,6 +7,7 @@ import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
+import { useAuthStore } from "@/store/authStore";
 
 export function AddTaskDialog({ 
   open, 
@@ -27,6 +28,7 @@ export function AddTaskDialog({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
+  const { user } = useAuthStore();
 
   const handleSubmit = async (formData: {
     title: string;
@@ -53,7 +55,8 @@ export function AddTaskDialog({
         priority: formData.priority,
         status: 'pending',
         category: formData.category || null,
-        is_general: isGeneral || false
+        is_general: isGeneral || false,
+        created_by: user?.id  // Add the creator ID
       };
       
       if (!isGeneral) {

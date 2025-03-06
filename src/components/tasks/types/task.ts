@@ -21,4 +21,5 @@ export interface Task {
   templates?: Array<{ url: string }> | null;
   category?: string | null;
   stage_id?: string;
+  created_by?: string | null;
 }

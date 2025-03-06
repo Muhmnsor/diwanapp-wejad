@@ -15,6 +15,7 @@ import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotific
 import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import type { Task as ProjectTask } from "../project-details/types/task";
+import { useTaskPermissions } from "../hooks/useTaskPermissions";
 
 interface TaskListItemProps {
   task: Task;
@@ -34,9 +35,20 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const { sendTaskStatusUpdateNotification } = useTaskNotifications();
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
+  
+  const { canEdit, canDelete, canChangeStatus } = useTaskPermissions({
+    taskId: task.id,
+    assignedTo: task.assigned_to,
+    createdBy: task.created_by
+  });
 
   // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
+    if (!canChangeStatus) {
+      toast.error('ليس لديك صلاحية لتغيير حالة هذه المهمة');
+      return;
+    }
+    
     setIsUpdating(true);
     try {
       // Check if the task is a subtask and use the correct table
@@ -95,7 +107,23 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
 
   // Handle edit task
   const handleEditTask = (taskId: string) => {
+    if (!canEdit) {
+      toast.error('ليس لديك صلاحية لتعديل هذه المهمة');
+      return;
+    }
     setIsEditDialogOpen(true);
+  };
+  
+  // Handle delete task
+  const handleDeleteTask = (taskId: string) => {
+    if (!canDelete) {
+      toast.error('ليس لديك صلاحية لحذف هذه المهمة');
+      return;
+    }
+    
+    if (onDelete) {
+      onDelete(taskId);
+    }
   };
 
   // Handle task update completion
@@ -141,10 +169,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
         onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
         onStatusChange={handleStatusChange}
-        onDelete={onDelete}
+        onDelete={handleDeleteTask}
         onEdit={handleEditTask}
         taskId={task.id}
         isGeneral={task.is_general}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        canChangeStatus={canChangeStatus}
       />
       
       {/* Task Discussion Dialog */}
