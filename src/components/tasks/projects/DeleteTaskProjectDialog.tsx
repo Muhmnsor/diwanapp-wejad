@@ -19,6 +19,7 @@ interface DeleteTaskProjectDialogProps {
   projectId: string;
   projectTitle: string;
   onSuccess?: () => void;
+  isDraft?: boolean;
 }
 
 export const DeleteTaskProjectDialog = ({
@@ -27,6 +28,7 @@ export const DeleteTaskProjectDialog = ({
   projectId,
   projectTitle,
   onSuccess,
+  isDraft = false,
 }: DeleteTaskProjectDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -34,6 +36,8 @@ export const DeleteTaskProjectDialog = ({
     setIsDeleting(true);
     
     try {
+      console.log("Deleting project:", projectId, "Is draft:", isDraft);
+      
       // First check if there are any tasks associated with this project
       const { data: tasks, error: tasksError } = await supabase
         .from("tasks")
@@ -41,6 +45,7 @@ export const DeleteTaskProjectDialog = ({
         .eq("project_id", projectId);
       
       if (tasksError) {
+        console.error("Error checking tasks:", tasksError);
         throw tasksError;
       }
       
@@ -66,6 +71,7 @@ export const DeleteTaskProjectDialog = ({
           .eq("project_id", projectId);
         
         if (deleteTasksError) {
+          console.error("Error deleting tasks:", deleteTasksError);
           throw deleteTasksError;
         }
       }
@@ -88,6 +94,7 @@ export const DeleteTaskProjectDialog = ({
         .eq("id", projectId);
       
       if (deleteProjectError) {
+        console.error("Error deleting project:", deleteProjectError);
         throw deleteProjectError;
       }
       
@@ -95,6 +102,7 @@ export const DeleteTaskProjectDialog = ({
         onSuccess();
       }
       
+      toast.success("تم حذف المشروع بنجاح");
       onClose();
     } catch (error) {
       console.error("Error deleting project:", error);

@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskProjectCardBadge } from "./card/TaskProjectCardBadge";
 import { TaskProjectCardProgress } from "./card/TaskProjectCardProgress";
@@ -104,6 +103,7 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
         projectId={project.id}
         projectTitle={project.title}
         onSuccess={handleProjectDeleted}
+        isDraft={isDraft}
       />
 
       <CopyTaskProjectDialog
