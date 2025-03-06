@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -113,7 +114,8 @@ export const CertificateTemplateDialog = ({
         ...formData,
         template_file,
         fields,
-        field_mappings: formData.field_mappings || {}
+        field_mappings: formData.field_mappings || {},
+        category: formData.category || 'عام'
       };
 
       console.log('Submitting data to database:', submitData);

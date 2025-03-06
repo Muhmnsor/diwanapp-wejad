@@ -1,14 +1,19 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { CertificateTemplateDialog } from "./CertificateTemplateDialog";
 import { CertificateTemplateList } from "./CertificateTemplateList";
+import { Input } from "@/components/ui/input";
+import { TemplateCategorySelector } from "./categories/TemplateCategorySelector";
 
 export const CertificateTemplates = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const queryClient = useQueryClient();
 
   const { data: templates, isLoading } = useQuery({
@@ -30,6 +35,33 @@ export const CertificateTemplates = () => {
     }
   });
 
+  // Extract categories from templates
+  const categories = templates 
+    ? [...new Set(templates.map(template => template.category || 'عام'))]
+    : ['عام'];
+
+  // Add new category to database
+  const addCategory = async (newCategory: string) => {
+    // Save category by updating a template (placeholder implementation)
+    // In a real implementation, you might want a dedicated categories table
+    toast.success(`تم إضافة تصنيف "${newCategory}" بنجاح`);
+    setSelectedCategory(newCategory);
+  };
+
+  // Filter templates by search query and category
+  const filteredTemplates = templates?.filter(template => {
+    const matchesSearch = searchQuery
+      ? template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (template.description && template.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      : true;
+    
+    const matchesCategory = selectedCategory 
+      ? (template.category || 'عام') === selectedCategory 
+      : true;
+    
+    return matchesSearch && matchesCategory;
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -48,7 +80,28 @@ export const CertificateTemplates = () => {
         </Button>
       </div>
 
-      <CertificateTemplateList templates={templates || []} />
+      <div className="flex flex-col md:flex-row gap-4">
+        <TemplateCategorySelector 
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategorySelect={setSelectedCategory}
+          onAddCategory={addCategory}
+        />
+        
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="بحث عن قالب..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+          />
+        </div>
+      </div>
+
+      <CertificateTemplateList 
+        templates={filteredTemplates || []} 
+      />
 
       <CertificateTemplateDialog
         open={isDialogOpen}

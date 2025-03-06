@@ -1,3 +1,4 @@
+
 import { useTemplateForm } from "./useTemplateForm";
 import { StepIndicator } from "./StepIndicator";
 import { StepNavigation } from "./StepNavigation";
@@ -5,6 +6,8 @@ import { BasicInfoStep } from "../steps/BasicInfoStep";
 import { FileUploadStep } from "../steps/FileUploadStep";
 import { PageSettingsStep } from "../steps/PageSettingsStep";
 import { CertificateTemplateFields } from "../CertificateTemplateFields";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CertificateTemplateFormProps {
   template?: any;
@@ -19,6 +22,23 @@ export const CertificateTemplateForm = ({
   onSubmit,
   onCancel
 }: CertificateTemplateFormProps) => {
+  // Fetch all template categories for dropdown
+  const { data: categoriesData } = useQuery({
+    queryKey: ['certificate-template-categories'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('certificate_templates')
+        .select('category')
+        .not('category', 'is', null);
+      
+      if (!data) return ["عام"];
+      
+      const categories = [...new Set(data.map(item => item.category || 'عام'))];
+      return categories.length ? categories : ["عام"];
+    },
+    initialData: ["عام"]
+  });
+
   const {
     currentStep,
     formData,
@@ -57,6 +77,8 @@ export const CertificateTemplateForm = ({
           <BasicInfoStep
             name={formData.name}
             description={formData.description}
+            category={formData.category || "عام"}
+            categories={categoriesData}
             onChange={handleInputChange}
           />
         );

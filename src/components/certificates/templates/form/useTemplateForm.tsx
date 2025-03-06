@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { PDFDocument } from 'pdf-lib';
@@ -13,7 +14,9 @@ export const useTemplateForm = (template: any, onSubmit: (formData: any, selecte
     language: template?.language || 'ar',
     orientation: template?.orientation || 'portrait',
     page_size: template?.page_size || 'A4',
-    font_family: template?.font_family || 'Arial'
+    font_family: template?.font_family || 'Arial',
+    category: template?.category || 'عام',
+    is_archived: template?.is_archived || false
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -100,6 +103,10 @@ export const useTemplateForm = (template: any, onSubmit: (formData: any, selecte
         if (!formData.description.trim()) {
           toast.error('الرجاء إدخال وصف القالب');
           return false;
+        }
+        if (!formData.category) {
+          toast.warning('سيتم استخدام التصنيف "عام" كقيمة افتراضية');
+          setFormData(prev => ({ ...prev, category: 'عام' }));
         }
         return true;
 
