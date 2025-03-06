@@ -5,7 +5,7 @@ import { Edit, Trash2, Copy, Rocket } from "lucide-react";
 interface TaskProjectCardActionsProps {
   onEdit: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
-  onCopy?: (e: React.MouseEvent) => void;
+  onCopy: (e: React.MouseEvent) => void;
   onLaunch?: (e: React.MouseEvent) => void;
   isDraft?: boolean;
 }
@@ -31,17 +31,15 @@ export const TaskProjectCardActions = ({
         </Button>
       )}
       
-      {onCopy && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
-          onClick={onCopy}
-          title="نسخ المشروع"
-        >
-          <Copy className="h-4 w-4 text-gray-500" />
-        </Button>
-      )}
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+        onClick={onCopy}
+        title="نسخ المشروع"
+      >
+        <Copy className="h-4 w-4 text-gray-500" />
+      </Button>
       
       <Button 
         variant="ghost" 
