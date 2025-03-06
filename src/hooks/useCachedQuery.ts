@@ -118,8 +118,14 @@ export function useCachedQuery<
           
           if (info && info.loadedChunks < info.totalChunks) {
             // Load the next chunk
-            const nextChunkIndex = Array.from(Array(info.totalChunks).keys())
-              .find(idx => !info.loadedChunks.includes(idx));
+            const chunksArray = Array.from(Array(info.totalChunks).keys());
+            const loadedChunksArray = Array.isArray(info.loadedChunks) 
+              ? info.loadedChunks 
+              : Array.from(Array(info.loadedChunks).keys());
+            
+            const nextChunkIndex = chunksArray.find(idx => 
+              !loadedChunksArray.includes(idx)
+            );
             
             if (nextChunkIndex !== undefined) {
               console.log(`Loading partition chunk ${nextChunkIndex + 1}/${info.totalChunks}`);

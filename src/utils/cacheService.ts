@@ -1,3 +1,4 @@
+
 import { compressData, decompressData, isCompressedData } from './cacheCompression';
 import { notifyCacheUpdate, notifyCacheRemove, notifyCacheClear } from './realtimeCacheSync';
 
@@ -59,6 +60,37 @@ interface EnhancedCacheEntry<T> extends CacheEntry<T> {
   refreshThreshold?: number;
   lastRefreshCheck?: number;
 }
+
+// Materialized view entry structure
+interface MaterializedViewEntry<T> {
+  data: T;
+  timestamp: number;
+  expiry: number;
+  queryKey: string[];
+  parameters: Record<string, any>;
+  refreshInterval: number;
+  lastRefresh: number;
+  refreshing: boolean;
+  dependencies: string[];
+}
+
+// Partitioned query structure
+interface PartitionedQueryEntry<T> {
+  queryKey: string;
+  totalItems: number;
+  loadedChunks: Set<number>;
+  chunkSize: number;
+  lastAccessed: number;
+  data: T[];
+}
+
+// Constant for materialized view refresh check interval
+const MATERIALIZED_REFRESH_CHECK_INTERVAL = 60000; // 1 minute
+
+// Maps for storing materialized views and partitioned queries
+const materializedViews = new Map<string, MaterializedViewEntry<any>>();
+let materializedViewsInterval: number | null = null;
+const partitionedQueries = new Map<string, PartitionedQueryEntry<any>>();
 
 // Cache statistics
 interface EnhancedCacheStats {
