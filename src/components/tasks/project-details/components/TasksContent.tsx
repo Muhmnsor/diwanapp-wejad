@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
 import { ProjectStagesTasks } from "./ProjectStagesTasks";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react"; 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TasksWithVisibility } from "./TasksWithVisibility";
-import { Button } from "@/components/ui/button";
-import { LayoutGrid, List } from "lucide-react";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -17,7 +18,7 @@ interface TasksContentProps {
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId?: string;
-  isGeneral: boolean;
+  isGeneral?: boolean;
   isDraftProject?: boolean;
 }
 
@@ -32,20 +33,20 @@ export const TasksContent = ({
   formatDate,
   onStatusChange,
   projectId,
-  isGeneral,
-  isDraftProject
+  isGeneral = false,
+  isDraftProject = false
 }: TasksContentProps) => {
-  const [viewMode, setViewMode] = useState<"table" | "list">("table");
-
   if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">جاري تحميل المهام...</p>
+      <div className="space-y-4 mt-4">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
       </div>
     );
   }
 
-  if (activeTab === "stages" && !isGeneral && projectStages.length > 0) {
+  if (activeTab === "stages" && projectStages.length > 0) {
     return (
       <ProjectStagesTasks
         projectStages={projectStages}
@@ -60,31 +61,10 @@ export const TasksContent = ({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end mb-2">
-        <div className="flex space-x-2 rtl:space-x-reverse">
-          <Button
-            variant={viewMode === "table" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("table")}
-            className="h-8 px-2"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("list")}
-            className="h-8 px-2"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+    <div className="mt-4">
       <TasksWithVisibility
         tasks={filteredTasks}
-        viewMode={viewMode}
+        viewMode="table"
         getStatusBadge={getStatusBadge}
         getPriorityBadge={getPriorityBadge}
         formatDate={formatDate}
