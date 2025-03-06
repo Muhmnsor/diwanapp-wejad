@@ -44,7 +44,7 @@ export function AddTaskDialog({
       console.log("Submitting task data:", formData);
       
       // إنشاء المهمة أولاً
-      const taskData = {
+      const taskData: any = {
         title: formData.title,
         description: formData.description,
         assigned_to: formData.assignedTo,

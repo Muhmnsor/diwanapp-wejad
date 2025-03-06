@@ -1,11 +1,6 @@
 
-import { 
-  CheckCircle2, 
-  Clock, 
-  FileText, 
-  Calendar,
-  AlertCircle
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 interface GeneralTasksStatsProps {
   stats: {
@@ -14,71 +9,52 @@ interface GeneralTasksStatsProps {
     pending: number;
     delayed: number;
     upcoming: number;
-  }
+  };
 }
 
 export const GeneralTasksStats = ({ stats }: GeneralTasksStatsProps) => {
+  const { total, completed, pending, delayed, upcoming } = stats;
+  
+  const completionPercentage = total > 0 ? Math.floor((completed / total) * 100) : 0;
+  
   return (
-    <div className="flex flex-nowrap gap-4 overflow-x-auto pb-2">
-      <div className="p-3 bg-blue-50 rounded-lg min-w-[200px]">
-        <div className="flex items-center gap-2">
-          <div className="bg-blue-100 p-2 rounded-full">
-            <FileText className="h-5 w-5 text-blue-600" />
+    <Card className="border shadow-sm">
+      <CardContent className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium">العدد الكلي</p>
+            <p className="text-2xl font-bold">{total}</p>
           </div>
-          <div>
-            <p className="text-sm text-gray-500">إجمالي المهام</p>
-            <p className="font-bold text-lg">{stats.total}</p>
+          
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-green-600">مكتملة</p>
+            <p className="text-2xl font-bold text-green-600">{completed}</p>
           </div>
-        </div>
-      </div>
-      
-      <div className="p-3 bg-green-50 rounded-lg min-w-[200px]">
-        <div className="flex items-center gap-2">
-          <div className="bg-green-100 p-2 rounded-full">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
+          
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-blue-600">قيد التنفيذ</p>
+            <p className="text-2xl font-bold text-blue-600">{pending}</p>
           </div>
-          <div>
-            <p className="text-sm text-gray-500">مهام مكتملة</p>
-            <p className="font-bold text-lg">{stats.completed}</p>
+          
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-red-600">متأخرة</p>
+            <p className="text-2xl font-bold text-red-600">{delayed}</p>
           </div>
-        </div>
-      </div>
-      
-      <div className="p-3 bg-yellow-50 rounded-lg min-w-[200px]">
-        <div className="flex items-center gap-2">
-          <div className="bg-yellow-100 p-2 rounded-full">
-            <Clock className="h-5 w-5 text-yellow-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">قيد التنفيذ</p>
-            <p className="font-bold text-lg">{stats.pending}</p>
+          
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-amber-600">قادمة</p>
+            <p className="text-2xl font-bold text-amber-600">{upcoming}</p>
           </div>
         </div>
-      </div>
-      
-      <div className="p-3 bg-red-50 rounded-lg min-w-[200px]">
-        <div className="flex items-center gap-2">
-          <div className="bg-red-100 p-2 rounded-full">
-            <AlertCircle className="h-5 w-5 text-red-600" />
+        
+        <div className="mt-6 space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm font-medium">نسبة الإنجاز</span>
+            <span className="text-sm font-medium">{completionPercentage}%</span>
           </div>
-          <div>
-            <p className="text-sm text-gray-500">مهام متأخرة</p>
-            <p className="font-bold text-lg">{stats.delayed}</p>
-          </div>
+          <Progress value={completionPercentage} className="h-2" />
         </div>
-      </div>
-      
-      <div className="p-3 bg-purple-50 rounded-lg min-w-[200px]">
-        <div className="flex items-center gap-2">
-          <div className="bg-purple-100 p-2 rounded-full">
-            <Calendar className="h-5 w-5 text-purple-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">مواعيد استحقاق قريبة</p>
-            <p className="font-bold text-lg">{stats.upcoming}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

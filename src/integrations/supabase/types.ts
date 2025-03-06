@@ -2738,6 +2738,30 @@ export type Database = {
           },
         ]
       }
+      task_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       task_comments: {
         Row: {
           asana_gid: string | null
@@ -2989,10 +3013,12 @@ export type Database = {
         Row: {
           asana_gid: string | null
           assigned_to: string | null
+          category: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
           id: string
+          is_general: boolean | null
           priority: string | null
           project_id: string | null
           stage_id: string | null
@@ -3004,10 +3030,12 @@ export type Database = {
         Insert: {
           asana_gid?: string | null
           assigned_to?: string | null
+          category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          is_general?: boolean | null
           priority?: string | null
           project_id?: string | null
           stage_id?: string | null
@@ -3019,10 +3047,12 @@ export type Database = {
         Update: {
           asana_gid?: string | null
           assigned_to?: string | null
+          category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
+          is_general?: boolean | null
           priority?: string | null
           project_id?: string | null
           stage_id?: string | null
