@@ -99,11 +99,12 @@ export const submitTask = async (taskData: TaskData) => {
           
         const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
         
-        // Import the hook for notifications
-        const notificationHandler = new (await import('@/hooks/useTaskAssignmentNotifications')).useTaskAssignmentNotifications();
+        // Import the hook and use it directly
+        const { useTaskAssignmentNotifications } = await import('@/hooks/useTaskAssignmentNotifications');
+        const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
         
         // Send the notification
-        await notificationHandler().sendTaskAssignmentNotification({
+        await sendTaskAssignmentNotification({
           taskId: newTask.id,
           taskTitle: taskData.title,
           assignedUserId: taskData.assignedTo,
