@@ -1,3 +1,4 @@
+
 import { useQuery, UseQueryOptions, UseQueryResult, QueryKey } from '@tanstack/react-query';
 import { 
   getCacheData, 
@@ -129,8 +130,10 @@ export function useCachedQuery<
           } else if (info && Array.isArray(info.loadedChunks)) {
             // Handle case where loadedChunks is an array
             const chunksArray = Array.from(Array(info.totalChunks).keys());
+            // Use type guard to ensure we only call includes on an array
+            const loadedChunks = info.loadedChunks as number[];
             const nextChunkIndex = chunksArray.find(idx => 
-              !info.loadedChunks.includes(idx)
+              !loadedChunks.includes(idx)
             );
             
             if (nextChunkIndex !== undefined) {

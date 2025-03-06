@@ -146,14 +146,16 @@ export const setCacheData = async <T>(
   const expiry = Date.now() + duration;
   let dataToStore: T | string = data;
   let isCompressed = false;
+  // Change to let since we need to reassign it
+  let shouldUseCompression = useCompression;
 
-  if (useCompression && JSON.stringify(data).length > compressionThreshold) {
+  if (shouldUseCompression && JSON.stringify(data).length > compressionThreshold) {
     try {
       dataToStore = await compressData(data);
       isCompressed = true;
     } catch (error) {
       console.warn(`Compression failed for key ${key}. Storing uncompressed.`, error);
-      useCompression = false; // Disable compression if it fails
+      shouldUseCompression = false; // Disable compression if it fails
     }
   }
 
@@ -162,7 +164,7 @@ export const setCacheData = async <T>(
     data: dataToStore,
     timestamp: Date.now(),
     expiry,
-    useCompression,
+    useCompression: shouldUseCompression,
     compressionThreshold,
     priority,
     tags,
@@ -179,9 +181,7 @@ export const setCacheData = async <T>(
   }
 
   if (batchUpdate) {
-    notifyCacheUpdate(key, storageType);
-  } else {
-    // Optionally, handle immediate cache update notification
+    notifyCacheUpdate(key, data, storageType);
   }
 };
 
@@ -300,7 +300,7 @@ export const removeCacheData = (key: string, storageType: CacheStorage = 'memory
   }
 
   if (notify) {
-    notifyCacheRemove(key, storageType);
+    notifyCacheRemove(key);
   }
 };
 
@@ -314,7 +314,7 @@ export const clearCache = (storageType: CacheStorage = 'memory'): void => {
     (storage as Storage).clear();
   }
 
-  notifyCacheClear(storageType);
+  notifyCacheClear('');
 };
 
 // Function to clear cache by prefix
@@ -503,7 +503,7 @@ export const invalidateCacheByTag = (tag: string): number => {
     if (entry.tags.includes(tag)) {
       memoryCache.delete(key);
       invalidatedCount++;
-      notifyCacheRemove(key, 'memory');
+      notifyCacheRemove(key);
     }
   });
 
@@ -518,7 +518,7 @@ export const invalidateCacheByTag = (tag: string): number => {
           if (entry.tags.includes(tag)) {
             localStorage.removeItem(key);
             invalidatedCount++;
-            notifyCacheRemove(key, 'local');
+            notifyCacheRemove(key);
             i--; // Adjust index after removal
           }
         } catch (e) {
@@ -539,7 +539,7 @@ export const invalidateCacheByTag = (tag: string): number => {
           if (entry.tags.includes(tag)) {
             sessionStorage.removeItem(key);
             invalidatedCount++;
-            notifyCacheRemove(key, 'session');
+            notifyCacheRemove(key);
             i--; // Adjust index after removal
           }
         } catch (e) {

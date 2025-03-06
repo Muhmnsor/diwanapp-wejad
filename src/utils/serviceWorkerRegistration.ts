@@ -1,87 +1,50 @@
 
 /**
- * Service Worker Registration Utility
- * Handles registration and updates for the service worker
+ * Service Worker Registration and Management Utilities
  */
 
-export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
-  if ('serviceWorker' in navigator) {
+// Clear Service Worker Cache
+export const clearServiceWorkerCache = async (): Promise<void> => {
+  if ('caches' in window) {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      });
-      
-      console.log('Service Worker registered successfully:', registration.scope);
-      
-      // Check if there's a new service worker waiting
-      if (registration.waiting) {
-        console.log('New Service Worker waiting');
-      }
-      
-      // Handle updates
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('New Service Worker installed and waiting');
-              // You could trigger a UI notification here to let user refresh the page
-            }
-          });
-        }
-      });
-      
-      return registration;
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+      console.log('Service Worker cache cleared successfully');
+      return Promise.resolve();
     } catch (error) {
-      console.error('Service Worker registration failed:', error);
-      return null;
+      console.error('Error clearing Service Worker cache:', error);
+      return Promise.reject(error);
     }
   } else {
-    console.log('Service Workers not supported in this browser');
-    return null;
+    console.warn('Cache API not available in this browser');
+    return Promise.resolve();
   }
 };
 
-/**
- * Trigger service worker update
- */
+// Update Service Worker
 export const updateServiceWorker = async (): Promise<void> => {
   if ('serviceWorker' in navigator) {
-    const registration = await navigator.serviceWorker.getRegistration();
-    if (registration) {
-      await registration.update();
-      console.log('Service Worker update triggered');
-    }
-  }
-};
-
-/**
- * Force the waiting service worker to become active
- */
-export const activateWaitingServiceWorker = (): void => {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
-  }
-};
-
-/**
- * Clear the cache managed by the service worker
- */
-export const clearServiceWorkerCache = async (): Promise<string> => {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    return new Promise((resolve) => {
-      const messageChannel = new MessageChannel();
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
       
-      messageChannel.port1.onmessage = (event) => {
-        resolve(event.data.result);
-      };
-      
-      navigator.serviceWorker.controller.postMessage(
-        { action: 'clearCache' },
-        [messageChannel.port2]
+      // Unregister all service workers
+      await Promise.all(
+        registrations.map(registration => registration.unregister())
       );
-    });
+      
+      // Register the service worker again
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker updated successfully:', registration);
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error updating Service Worker:', error);
+      return Promise.reject(error);
+    }
+  } else {
+    console.warn('Service Worker API not available in this browser');
+    return Promise.resolve();
   }
-  
-  return 'No active service worker found';
 };

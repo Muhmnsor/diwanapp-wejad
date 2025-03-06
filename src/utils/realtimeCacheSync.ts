@@ -284,13 +284,51 @@ const processSyncItem = (item: BatchItem): void => {
       
     case 'clear':
       if (item.key) {
-        // Clear cache items by prefix
+        // Clear cache items by prefix - import from internal function to avoid circular dependency
         clearCacheByPrefix(item.key); // Clear with prefix
         console.log(`Cache cleared by prefix: ${item.key}`);
       }
       break;
   }
 };
+
+// Define clearCacheByPrefix internally to avoid circular dependency
+const clearCacheByPrefix = (prefix: string): number => {
+  let clearedCount = 0;
+
+  // Clear memory cache by prefix
+  for (const key of memoryCache.keys()) {
+    if (key.startsWith(prefix)) {
+      memoryCache.delete(key);
+      clearedCount++;
+    }
+  }
+
+  // Clear localStorage by prefix
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(prefix)) {
+      localStorage.removeItem(key);
+      clearedCount++;
+      i--; // Adjust for removed item
+    }
+  }
+
+  // Clear sessionStorage by prefix
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key && key.startsWith(prefix)) {
+      sessionStorage.removeItem(key);
+      clearedCount++;
+      i--; // Adjust for removed item
+    }
+  }
+  
+  return clearedCount;
+};
+
+// In-memory cache for the realtimeSync module
+const memoryCache = new Map<string, any>();
 
 /**
  * Notify other clients when cache is updated
