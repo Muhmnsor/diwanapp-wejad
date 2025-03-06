@@ -12,6 +12,8 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
+  project_manager?: string | null;
+  project_manager_name?: string | null;
 }
 
 interface TaskProjectsListProps {
@@ -24,13 +26,24 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
   const { data: projects, isLoading } = useQuery({
     queryKey: ['task-projects', workspaceId],
     queryFn: async () => {
+      // Fetch projects with a join to get the project manager's name
       const { data, error } = await supabase
         .from('project_tasks')
-        .select('*')
+        .select(`
+          *,
+          manager:profiles(display_name, email)
+        `)
         .eq('workspace_id', workspaceId);
       
       if (error) throw error;
-      return data || [];
+      
+      // Transform the data to include the project manager name
+      const transformedData = data?.map(project => ({
+        ...project,
+        project_manager_name: project.manager?.display_name || project.manager?.email || 'غير محدد'
+      })) || [];
+      
+      return transformedData;
     }
   });
 
