@@ -26,24 +26,57 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
   const { data: projects, isLoading } = useQuery({
     queryKey: ['task-projects', workspaceId],
     queryFn: async () => {
-      // Fetch projects with a join to get the project manager's name
+      console.log(`Fetching projects for workspace ${workspaceId}`);
+      
+      // Fetch projects without trying to join directly which may be causing the issue
       const { data, error } = await supabase
         .from('project_tasks')
-        .select(`
-          *,
-          manager:profiles(display_name, email)
-        `)
+        .select('*')
         .eq('workspace_id', workspaceId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
       
-      // Transform the data to include the project manager name
-      const transformedData = data?.map(project => ({
-        ...project,
-        project_manager_name: project.manager?.display_name || project.manager?.email || 'غير محدد'
-      })) || [];
+      console.log(`Retrieved ${data?.length || 0} projects`, data);
       
-      return transformedData;
+      // If we have project managers, get their names in a separate query
+      const projectsWithManagers = [...(data || [])];
+      const managerIds = data
+        ?.map(project => project.project_manager)
+        .filter(Boolean) as string[];
+      
+      if (managerIds && managerIds.length > 0) {
+        // Get unique manager IDs
+        const uniqueManagerIds = [...new Set(managerIds)];
+        
+        const { data: managers, error: managersError } = await supabase
+          .from('profiles')
+          .select('id, display_name, email')
+          .in('id', uniqueManagerIds);
+        
+        if (!managersError && managers && managers.length > 0) {
+          // Create a mapping of manager IDs to names
+          const managerMap = managers.reduce((map: Record<string, string>, manager) => {
+            map[manager.id] = manager.display_name || manager.email || 'غير محدد';
+            return map;
+          }, {});
+          
+          // Add manager names to projects
+          for (let i = 0; i < projectsWithManagers.length; i++) {
+            const project = projectsWithManagers[i];
+            if (project.project_manager && managerMap[project.project_manager]) {
+              projectsWithManagers[i] = {
+                ...project,
+                project_manager_name: managerMap[project.project_manager]
+              };
+            }
+          }
+        }
+      }
+      
+      return projectsWithManagers;
     }
   });
 
