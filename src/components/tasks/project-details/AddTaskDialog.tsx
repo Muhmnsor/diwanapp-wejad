@@ -6,6 +6,7 @@ import { uploadAttachment, saveTaskTemplate } from "../services/uploadService";
 import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 export function AddTaskDialog({ 
   open, 
@@ -23,6 +24,7 @@ export function AddTaskDialog({
   projectMembers: ProjectMember[];
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
 
   const handleSubmit = async (formData: {
     title: string;
@@ -61,6 +63,54 @@ export function AddTaskDialog({
       }
 
       console.log("Task created successfully:", taskData);
+
+      // Get project details for the notification
+      let projectTitle = '';
+      if (projectId) {
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('name')
+          .eq('id', projectId)
+          .single();
+        
+        if (projectData) {
+          projectTitle = projectData.name;
+        }
+      }
+
+      // Send notification if task is assigned to someone
+      if (formData.assignedTo) {
+        try {
+          // Get current user info
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Get user's display name or email
+            const { data: creatorProfile } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('id', user.id)
+              .single();
+              
+            const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
+            
+            // Send the notification
+            await sendTaskAssignmentNotification({
+              taskId: taskData.id,
+              taskTitle: formData.title,
+              projectId: projectId,
+              projectTitle: projectTitle,
+              assignedUserId: formData.assignedTo,
+              assignedByUserId: user.id,
+              assignedByUserName: creatorName
+            });
+            
+            console.log('Task assignment notification sent to:', formData.assignedTo);
+          }
+        } catch (notifyError) {
+          console.error('Error sending task assignment notification:', notifyError);
+        }
+      }
 
       // معالجة النماذج إذا وجدت
       let templateErrors = false;

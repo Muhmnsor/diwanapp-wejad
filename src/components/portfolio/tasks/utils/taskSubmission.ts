@@ -1,5 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 interface TaskData {
   workspaceId: string;
@@ -7,6 +9,7 @@ interface TaskData {
   description: string;
   dueDate: string;
   priority: string;
+  assignedTo: string;
 }
 
 export const submitTask = async (taskData: TaskData) => {
@@ -50,11 +53,12 @@ export const submitTask = async (taskData: TaskData) => {
     description: taskData.description,
     due_date: taskData.dueDate,
     priority: taskData.priority,
-    asana_gid: asanaResponse.gid
+    asana_gid: asanaResponse.gid,
+    assigned_to: taskData.assignedTo
   });
 
   // Create task in our database
-  const { error: createError } = await supabase
+  const { data: newTask, error: createError } = await supabase
     .from('portfolio_tasks')
     .insert([
       {
@@ -64,9 +68,12 @@ export const submitTask = async (taskData: TaskData) => {
         due_date: taskData.dueDate,
         priority: taskData.priority,
         status: 'pending',
-        asana_gid: asanaResponse.gid
+        asana_gid: asanaResponse.gid,
+        assigned_to: taskData.assignedTo
       }
-    ]);
+    ])
+    .select()
+    .single();
 
   if (createError) {
     console.error('Error creating task:', createError);
@@ -75,5 +82,42 @@ export const submitTask = async (taskData: TaskData) => {
   }
 
   toast.success('تم إنشاء المهمة بنجاح');
+
+  // Send notification to assigned user
+  if (taskData.assignedTo) {
+    try {
+      // Get current user info
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Get user's display name or email
+        const { data: creatorProfile } = await supabase
+          .from('profiles')
+          .select('display_name, email')
+          .eq('id', user.id)
+          .single();
+          
+        const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
+        
+        // Import the hook for notifications
+        const notificationHandler = new (await import('@/hooks/useTaskAssignmentNotifications')).useTaskAssignmentNotifications();
+        
+        // Send the notification
+        await notificationHandler().sendTaskAssignmentNotification({
+          taskId: newTask.id,
+          taskTitle: taskData.title,
+          assignedUserId: taskData.assignedTo,
+          assignedByUserId: user.id,
+          assignedByUserName: creatorName
+        });
+        
+        console.log('Task assignment notification sent to:', taskData.assignedTo);
+      }
+    } catch (notifyError) {
+      console.error('Error sending task assignment notification:', notifyError);
+      // Don't throw error here to avoid failing the task creation process
+    }
+  }
+
   return asanaResponse;
 };
