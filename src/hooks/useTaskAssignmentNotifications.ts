@@ -1,5 +1,6 @@
 
 import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TaskAssignmentParams {
   taskId: string;
@@ -22,6 +23,21 @@ export const useTaskAssignmentNotifications = () => {
         return null;
       }
 
+      // الحصول على اسم المستخدم الذي تم تكليفه بالمهمة للعرض في الإشعار
+      let assigneeName = "";
+      try {
+        const { data: assigneeProfile } = await supabase
+          .from('profiles')
+          .select('display_name, email')
+          .eq('id', params.assignedUserId)
+          .single();
+          
+        assigneeName = assigneeProfile?.display_name || '';
+        console.log('Assigned user profile:', assigneeProfile);
+      } catch (assigneeError) {
+        console.log('Could not fetch assignee profile:', assigneeError);
+      }
+
       let message = `تم إسناد المهمة "${params.taskTitle}" إليك`;
       if (params.projectTitle) {
         message += ` في مشروع "${params.projectTitle}"`;
@@ -31,6 +47,7 @@ export const useTaskAssignmentNotifications = () => {
       }
       
       console.log('Sending task assignment notification to user:', params.assignedUserId);
+      console.log('Notification message:', message);
       
       return await createNotification({
         title: `تم إسناد مهمة جديدة`,
