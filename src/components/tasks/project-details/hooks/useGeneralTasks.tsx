@@ -1,9 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/authStore";
 
 export const useGeneralTasks = () => {
+  const { user } = useAuthStore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasksByCategory, setTasksByCategory] = useState<Record<string, Task[]>>({});
@@ -13,7 +16,8 @@ export const useGeneralTasks = () => {
     completed: 0,
     pending: 0,
     inProgress: 0,
-    delayed: 0
+    delayed: 0,
+    upcoming: 0
   });
 
   const fetchGeneralTasks = async () => {
@@ -83,6 +87,9 @@ export const useGeneralTasks = () => {
       let pending = 0;
       let inProgress = 0;
       let delayed = 0;
+      let upcoming = 0;
+      
+      const now = new Date();
       
       enrichedTasks.forEach(task => {
         switch (task.status) {
@@ -99,6 +106,11 @@ export const useGeneralTasks = () => {
             delayed++;
             break;
         }
+        
+        // Check for upcoming tasks (due date in the future)
+        if (task.due_date && new Date(task.due_date) > now && task.status !== 'completed') {
+          upcoming++;
+        }
       });
       
       setStats({
@@ -106,7 +118,8 @@ export const useGeneralTasks = () => {
         completed,
         pending,
         inProgress,
-        delayed
+        delayed,
+        upcoming
       });
     } catch (error) {
       console.error("Error fetching general tasks:", error);

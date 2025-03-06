@@ -3034,6 +3034,7 @@ export type Database = {
           assigned_to: string | null
           category: string | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -3051,6 +3052,7 @@ export type Database = {
           assigned_to?: string | null
           category?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -3068,6 +3070,7 @@ export type Database = {
           assigned_to?: string | null
           category?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -3492,6 +3495,12 @@ export type Database = {
           new_password?: string
         }
         Returns: Json
+      }
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
       }
       log_user_activity: {
         Args: {
