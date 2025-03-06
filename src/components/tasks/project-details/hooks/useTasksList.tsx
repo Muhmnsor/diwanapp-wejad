@@ -42,15 +42,18 @@ export const useTasksList = (projectId: string | undefined) => {
   // Delete task function
   const deleteTask = async (taskId: string) => {
     try {
-      // قبل حذف المهمة، نحذف المهام الفرعية والمرفقات والنماذج والتعليقات المرتبطة بها
+      console.log("Deleting task:", taskId);
       
-      // 1. حذف المهام الفرعية
+      // 1. حذف المهام الفرعية المرتبطة بالمهمة (استخدام جدول task_subtasks بدلاً من subtasks)
       const { error: subtasksError } = await supabase
-        .from('subtasks')
+        .from('task_subtasks')
         .delete()
         .eq('parent_task_id', taskId);
       
-      if (subtasksError) throw subtasksError;
+      if (subtasksError) {
+        console.error("Error deleting subtasks:", subtasksError);
+        // نستمر في الحذف حتى لو فشل حذف المهام الفرعية
+      }
       
       // 2. حذف المرفقات
       const { error: attachmentsError } = await supabase
@@ -58,14 +61,20 @@ export const useTasksList = (projectId: string | undefined) => {
         .delete()
         .eq('task_id', taskId);
         
-      if (attachmentsError) throw attachmentsError;
+      if (attachmentsError) {
+        console.error("Error deleting task attachments:", attachmentsError);
+        // نستمر في الحذف حتى لو فشل حذف المرفقات
+      }
       
       const { error: portfolioAttachmentsError } = await supabase
         .from('portfolio_task_attachments')
         .delete()
         .eq('task_id', taskId);
         
-      if (portfolioAttachmentsError) throw portfolioAttachmentsError;
+      if (portfolioAttachmentsError) {
+        console.error("Error deleting portfolio attachments:", portfolioAttachmentsError);
+        // نستمر في الحذف حتى لو فشل حذف مرفقات المحفظة
+      }
       
       // 3. حذف نماذج المهمة
       const { error: templatesError } = await supabase
@@ -73,7 +82,10 @@ export const useTasksList = (projectId: string | undefined) => {
         .delete()
         .eq('task_id', taskId);
         
-      if (templatesError) throw templatesError;
+      if (templatesError) {
+        console.error("Error deleting templates:", templatesError);
+        // نستمر في الحذف حتى لو فشل حذف النماذج
+      }
       
       // 4. حذف تعليقات المهمة
       const { error: commentsError } = await supabase
@@ -81,7 +93,10 @@ export const useTasksList = (projectId: string | undefined) => {
         .delete()
         .eq('task_id', taskId);
         
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        console.error("Error deleting comments:", commentsError);
+        // نستمر في الحذف حتى لو فشل حذف التعليقات
+      }
       
       // 5. حذف المهمة نفسها
       let { error } = await supabase
