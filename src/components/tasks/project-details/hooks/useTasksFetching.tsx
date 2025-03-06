@@ -15,9 +15,9 @@ export const useTasksFetching = (projectId: string | undefined) => {
     try {
       console.log("Fetching tasks for project:", projectId);
       
-      // Get tasks
+      // Get tasks from project_tasks table
       const { data, error } = await supabase
-        .from('tasks')
+        .from('project_tasks')
         .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
@@ -62,14 +62,6 @@ export const useTasksFetching = (projectId: string | undefined) => {
       // Add user names for tasks with assignees
       const tasksWithUserData = await Promise.all(tasksWithStageNames.map(async (task) => {
         if (task.assigned_to) {
-          // Check if it's a custom assignee
-          if (task.assigned_to.startsWith('custom:')) {
-            return {
-              ...task,
-              assigned_user_name: task.assigned_to.replace('custom:', '')
-            };
-          }
-          
           const { data: userData, error: userError } = await supabase
             .from('profiles')
             .select('display_name, email')

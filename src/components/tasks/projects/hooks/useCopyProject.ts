@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -198,7 +197,7 @@ export const useCopyProject = ({
     
     try {
       const { data: originalTasks, error: tasksError } = await supabase
-        .from("tasks")
+        .from("project_tasks")
         .select("*")
         .eq("project_id", originalProjectId);
 
@@ -208,13 +207,11 @@ export const useCopyProject = ({
         const BATCH_SIZE = 10;
         const totalBatches = Math.ceil(originalTasks.length / BATCH_SIZE);
         
-        // Create stage mapping for the new project
         let stageMapping: Record<string, string> = {};
         if (includeStages) {
           stageMapping = await createStageMapping(originalProjectId, newProjectId);
         }
 
-        // Process tasks in batches
         for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
           const start = batchIndex * BATCH_SIZE;
           const end = Math.min(start + BATCH_SIZE, originalTasks.length);
@@ -285,11 +282,13 @@ export const useCopyProject = ({
         workspace_id: task.workspace_id,
         stage_id: task.stage_id ? stageMapping[task.stage_id] || null : null,
         due_date: task.due_date,
-        category: task.category,
+        project_manager: task.project_manager,
+        start_date: task.start_date,
+        is_draft: true
       }));
 
       const { error } = await supabase
-        .from("tasks")
+        .from("project_tasks")
         .insert(newTasks);
 
       if (error) {
@@ -307,7 +306,7 @@ export const useCopyProject = ({
     
     try {
       const { data: newTasks, error: newTasksError } = await supabase
-        .from("tasks")
+        .from("project_tasks")
         .select("id, title")
         .eq("project_id", newProjectId);
         
@@ -348,7 +347,7 @@ export const useCopyProject = ({
         .from("unified_task_attachments")
         .select("*")
         .eq("task_id", originalTaskId)
-        .eq("task_table", "tasks");
+        .eq("task_table", "project_tasks");
         
       if (attachments?.length > 0) {
         attachmentCount += attachments.length;
@@ -359,7 +358,7 @@ export const useCopyProject = ({
           file_name: att.file_name,
           file_type: att.file_type,
           attachment_category: att.attachment_category,
-          task_table: "tasks"
+          task_table: "project_tasks"
         }));
         
         const { error: attachError } = await supabase
@@ -381,7 +380,7 @@ export const useCopyProject = ({
         .from("task_templates")
         .select("*")
         .eq("task_id", originalTaskId)
-        .eq("task_table", "tasks");
+        .eq("task_table", "project_tasks");
         
       if (templates?.length > 0) {
         const newTemplates = templates.map(tmpl => ({
@@ -389,7 +388,7 @@ export const useCopyProject = ({
           file_url: tmpl.file_url,
           file_name: tmpl.file_name,
           file_type: tmpl.file_type,
-          task_table: "tasks"
+          task_table: "project_tasks"
         }));
         
         const { error: templateError } = await supabase
