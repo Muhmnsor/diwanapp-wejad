@@ -62,8 +62,16 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         // Safely extract profile data regardless of its structure
         if (comment.profiles) {
           if (Array.isArray(comment.profiles) && comment.profiles.length > 0) {
-            profileData = comment.profiles[0] as ProfileData;
+            // Extract first element from array and treat as ProfileData
+            const firstProfile = comment.profiles[0];
+            profileData = {
+              id: firstProfile.id,
+              email: firstProfile.email,
+              full_name: firstProfile.full_name,
+              avatar_url: firstProfile.avatar_url
+            };
           } else {
+            // Treat as direct ProfileData object
             profileData = comment.profiles as ProfileData;
           }
         }
@@ -180,8 +188,16 @@ export const useComments = (ideaId: string, creatorId?: string) => {
       // Safely extract profile data
       if (data.profiles) {
         if (Array.isArray(data.profiles) && data.profiles.length > 0) {
-          profileData = data.profiles[0] as ProfileData;
+          // Extract first element from array and treat as ProfileData
+          const firstProfile = data.profiles[0];
+          profileData = {
+            id: firstProfile.id,
+            email: firstProfile.email,
+            full_name: firstProfile.full_name,
+            avatar_url: firstProfile.avatar_url
+          };
         } else {
+          // Treat as direct ProfileData object
           profileData = data.profiles as ProfileData;
         }
       }
