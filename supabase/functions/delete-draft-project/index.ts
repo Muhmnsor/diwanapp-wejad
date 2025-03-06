@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       p_user_id: userId 
     });
     
-    // Call the database function to delete the draft project using the new parameter names
+    // Call the database function with the correct parameter names
     const { data, error } = await supabase
       .rpc('delete_draft_project', { 
         p_project_id: projectId,
