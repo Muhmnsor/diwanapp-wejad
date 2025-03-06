@@ -25,8 +25,10 @@ export const useResourceForm = (onSubmit: () => void) => {
   const {
     totalAmount,
     source,
+    customSource,
     handleTotalAmountChange,
     handleSourceChange,
+    handleCustomSourceChange,
   } = useFormFields(calculateValues, setBudgetItems, useDefaultPercentages, totalObligationsAmount);
 
   const {
@@ -38,6 +40,7 @@ export const useResourceForm = (onSubmit: () => void) => {
     totalAmount,
     totalObligationsAmount,
     source,
+    customSource,
     budgetItems,
     useDefaultPercentages,
     obligations,
@@ -76,11 +79,13 @@ export const useResourceForm = (onSubmit: () => void) => {
     obligations,
     totalObligationsAmount,
     source,
+    customSource,
     isLoading,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
     handleSourceChange,
+    handleCustomSourceChange,
     handleUseDefaultsChange: adaptedHandleUseDefaultsChange,
     handleItemPercentageChange: adaptedHandleItemPercentageChange,
     handleAddObligation,

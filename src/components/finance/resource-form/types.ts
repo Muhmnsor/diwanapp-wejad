@@ -17,3 +17,9 @@ export interface ResourceObligation {
   description: string;
 }
 
+export interface ResourceFormState {
+  source: string;
+  customSource?: string;
+  type: string;
+  entity: string;
+}

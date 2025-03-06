@@ -10,6 +10,7 @@ export const useFormSubmit = (
   totalAmount: number | "",
   totalObligationsAmount: number,
   source: string,
+  customSource: string,
   budgetItems: BudgetItem[],
   useDefaultPercentages: boolean,
   obligations: ResourceObligation[],
@@ -44,6 +45,12 @@ export const useFormSubmit = (
       return;
     }
 
+    // Validate custom source if "أخرى" is selected
+    if (source === "أخرى" && !customSource.trim()) {
+      toast.error("الرجاء إدخال اسم المصدر المخصص");
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -51,12 +58,15 @@ export const useFormSubmit = (
       const entity = (document.getElementById("entity") as HTMLInputElement).value;
       const netAmount = totalAmount - totalObligationsAmount;
       
+      // Determine which source to use
+      const finalSource = source === "أخرى" ? customSource : source;
+      
       // 1. Add financial resource
       const { data: resourceData, error: resourceError } = await supabase
         .from('financial_resources')
         .insert({
           date: new Date().toISOString().split("T")[0],
-          source,
+          source: finalSource,
           type,
           entity,
           total_amount: totalAmount,
@@ -119,7 +129,7 @@ export const useFormSubmit = (
               
               await sendNewResourceNotification({
                 resourceId,
-                resourceTitle: entity || source,
+                resourceTitle: entity || finalSource,
                 amount: totalAmount,
                 userId: financeUser.user_id,
                 updatedByUserName: userName

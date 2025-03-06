@@ -25,8 +25,30 @@ export const useEditFormState = (
 ) => {
   const [totalAmount, setTotalAmount] = useState<number>(resource.total_amount);
   const [source, setSource] = useState(resource.source);
+  const [customSource, setCustomSource] = useState("");
   const [type, setType] = useState(resource.type);
   const [entity, setEntity] = useState(resource.entity);
+
+  // Determine if initial source is a custom one
+  useEffect(() => {
+    const standardSources = [
+      "منصات التمويل الجماعي",
+      "الدعم الحكومي",
+      "اشتراكات البرامج والفعاليات",
+      "المؤسسات المانحة",
+      "المسئولية الاجتماعية | الرعايات",
+      "متجر الجمعية الكتروني",
+      "التبرع عبر الرسائل",
+      "الصدقة الالكترونية",
+      "تبرعات عينية",
+      "أخرى"
+    ];
+
+    if (!standardSources.includes(resource.source)) {
+      setSource("أخرى");
+      setCustomSource(resource.source);
+    }
+  }, [resource.source]);
 
   // Calculate total obligations amount
   const totalObligationsAmount = obligations.reduce(
@@ -83,6 +105,11 @@ export const useEditFormState = (
   // Update source
   const handleSourceChange = (value: string) => {
     setSource(value);
+  };
+
+  // Update custom source
+  const handleCustomSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomSource(e.target.value);
   };
 
   // Update percentage type (default or custom)
@@ -157,12 +184,14 @@ export const useEditFormState = (
     totalAmount,
     totalObligationsAmount,
     source,
+    customSource,
     type,
     entity,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
     handleSourceChange,
+    handleCustomSourceChange,
     handleUseDefaultsChange,
     handleItemPercentageChange,
     handleAddObligation,

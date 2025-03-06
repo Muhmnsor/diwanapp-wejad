@@ -10,6 +10,7 @@ export const useFormFields = (
 ) => {
   const [totalAmount, setTotalAmount] = useState<number | "">("");
   const [source, setSource] = useState("منصات التمويل الجماعي");
+  const [customSource, setCustomSource] = useState("");
 
   // Handle total amount change
   const handleTotalAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,10 +34,17 @@ export const useFormFields = (
     setSource(value);
   };
 
+  // Handle custom source change
+  const handleCustomSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomSource(e.target.value);
+  };
+
   return {
     totalAmount,
     source,
+    customSource,
     handleTotalAmountChange,
     handleSourceChange,
+    handleCustomSourceChange,
   };
 };

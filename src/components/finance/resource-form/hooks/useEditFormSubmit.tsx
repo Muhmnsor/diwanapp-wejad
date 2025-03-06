@@ -8,6 +8,7 @@ interface SubmitProps {
   resourceId: string;
   totalAmount: number;
   source: string;
+  customSource?: string;
   type: string;
   entity: string;
   budgetItems: BudgetItem[];
@@ -23,6 +24,7 @@ export const useEditFormSubmit = () => {
     resourceId,
     totalAmount,
     source,
+    customSource,
     type,
     entity,
     budgetItems,
@@ -46,6 +48,12 @@ export const useEditFormSubmit = () => {
       return;
     }
 
+    // Validate custom source if "أخرى" is selected
+    if (source === "أخرى" && (!customSource || customSource.trim() === "")) {
+      toast.error("الرجاء إدخال اسم المصدر المخصص");
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -54,11 +62,14 @@ export const useEditFormSubmit = () => {
       const totalObligationsAmount = obligations.reduce((total, obligation) => total + obligation.amount, 0);
       const netAmount = totalAmount - totalObligationsAmount;
       
+      // Determine final source value
+      const finalSource = source === "أخرى" ? customSource : source;
+      
       // 1. Update financial resource
       const { error: resourceError } = await supabase
         .from('financial_resources')
         .update({
-          source,
+          source: finalSource,
           type: resourceType,
           entity: entityValue,
           total_amount: totalAmount,

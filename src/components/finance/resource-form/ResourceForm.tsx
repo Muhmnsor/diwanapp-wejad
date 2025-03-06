@@ -14,11 +14,13 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
     obligations,
     totalObligationsAmount,
     source,
+    customSource,
     isLoading,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
     handleSourceChange,
+    handleCustomSourceChange,
     handleUseDefaultsChange,
     handleItemPercentageChange,
     handleAddObligation,
@@ -34,6 +36,8 @@ export const ResourceForm = ({ onCancel, onSubmit }: ResourceFormProps) => {
         handleTotalAmountChange={handleTotalAmountChange}
         source={source}
         handleSourceChange={handleSourceChange}
+        customSource={customSource}
+        handleCustomSourceChange={handleCustomSourceChange}
       />
 
       <ObligationsSection

@@ -30,6 +30,7 @@ export const EditResourceForm = ({ resource, onCancel, onSubmit }: EditResourceF
     useDefaultPercentages,
     totalAmount,
     source,
+    customSource,
     type,
     entity,
     isLoading,
@@ -37,6 +38,7 @@ export const EditResourceForm = ({ resource, onCancel, onSubmit }: EditResourceF
     isValidPercentages,
     handleTotalAmountChange,
     handleSourceChange,
+    handleCustomSourceChange,
     handleUseDefaultsChange,
     handleItemPercentageChange,
     handleAddObligation,
@@ -52,6 +54,8 @@ export const EditResourceForm = ({ resource, onCancel, onSubmit }: EditResourceF
         handleTotalAmountChange={handleTotalAmountChange}
         source={source}
         handleSourceChange={handleSourceChange}
+        customSource={customSource}
+        handleCustomSourceChange={handleCustomSourceChange}
         defaultType={type}
         defaultEntity={entity}
       />
