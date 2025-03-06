@@ -2249,10 +2249,13 @@ export type Database = {
         Row: {
           asana_gid: string | null
           assigned_to: string | null
+          copied_from: string | null
           created_at: string
           description: string | null
           due_date: string | null
           id: string
+          is_draft: boolean | null
+          launch_date: string | null
           priority: string | null
           project_id: string | null
           project_manager: string | null
@@ -2266,10 +2269,13 @@ export type Database = {
         Insert: {
           asana_gid?: string | null
           assigned_to?: string | null
+          copied_from?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
+          is_draft?: boolean | null
+          launch_date?: string | null
           priority?: string | null
           project_id?: string | null
           project_manager?: string | null
@@ -2283,10 +2289,13 @@ export type Database = {
         Update: {
           asana_gid?: string | null
           assigned_to?: string | null
+          copied_from?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
+          is_draft?: boolean | null
+          launch_date?: string | null
           priority?: string | null
           project_id?: string | null
           project_manager?: string | null
@@ -2298,6 +2307,13 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "project_tasks_copied_from_fkey"
+            columns: ["copied_from"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_tasks_project_id_fkey"
             columns: ["project_id"]
