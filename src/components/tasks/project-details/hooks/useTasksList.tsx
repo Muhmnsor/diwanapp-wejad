@@ -50,13 +50,18 @@ export const useTasksList = (projectId?: string) => {
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
-      // Update the task status in the appropriate table
+      console.log(`Updating task ${taskId} to status: ${newStatus}`);
+      
+      // Update the task status in the 'tasks' table (not project_tasks)
       const { error } = await supabase
-        .from('project_tasks')
+        .from('tasks')
         .update({ status: newStatus })
         .eq('id', taskId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating task:", error);
+        throw error;
+      }
       
       // Update the local state
       const updatedTasks = tasks.map(task => {

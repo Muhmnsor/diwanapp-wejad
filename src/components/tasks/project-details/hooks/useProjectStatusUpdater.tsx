@@ -28,7 +28,9 @@ export const useProjectStatusUpdater = () => {
         newStatus = 'delayed';
       }
       
-      // Get current project status
+      console.log(`Calculated new project status: ${newStatus} (${completed}/${total} completed)`);
+      
+      // Get current project status from project_tasks table
       const { data: projectData, error: projectError } = await supabase
         .from('project_tasks')
         .select('status')
@@ -38,7 +40,7 @@ export const useProjectStatusUpdater = () => {
       if (!projectError && projectData && projectData.status !== newStatus) {
         console.log(`Updating project status from ${projectData.status} to ${newStatus}`);
         
-        // Update project status
+        // Update project status in project_tasks table
         const { error: updateError } = await supabase
           .from('project_tasks')
           .update({ status: newStatus })

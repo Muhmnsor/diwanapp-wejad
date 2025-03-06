@@ -1,8 +1,9 @@
+
 import { useDraftTasksVisibility } from "@/hooks/useDraftTasksVisibility";
 import { Task } from "@/components/tasks/types/task";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileDown, Loader2, MessageCircle, PlusCircle } from "lucide-react";
+import { AlertCircle, Check, Clock, Loader2, MessageCircle, PlusCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TaskDiscussionDialog } from "@/components/tasks/components/TaskDiscussionDialog";
+import { TaskActionButtons } from "@/components/tasks/components/actions/TaskActionButtons";
 
 interface TasksWithVisibilityProps {
   tasks: Task[];
@@ -75,6 +77,10 @@ export const TasksWithVisibility = ({
   const handleShowDiscussion = (task: Task) => {
     setSelectedTask(task);
     setShowDiscussion(true);
+  };
+
+  const handleStatusChange = (taskId: string, newStatus: string) => {
+    onStatusChange(taskId, newStatus);
   };
 
   if (showLoading) {
@@ -165,7 +171,32 @@ export const TasksWithVisibility = ({
                     </TableCell>
                     <TableCell>{formatDate(task.due_date)}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        {/* Task Status Change Buttons */}
+                        {task.status !== "completed" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusChange(task.id, "completed")}
+                            className="h-8 w-8 p-0"
+                            title="اكتمال المهمة"
+                          >
+                            <Check className="h-4 w-4 text-green-600" />
+                            <span className="sr-only">اكتمال</span>
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusChange(task.id, "pending")}
+                            className="h-8 w-8 p-0"
+                            title="إعادة فتح المهمة"
+                          >
+                            <Clock className="h-4 w-4 text-amber-600" />
+                            <span className="sr-only">قيد التنفيذ</span>
+                          </Button>
+                        )}
+                        
                         <Button
                           variant="ghost"
                           size="sm"
@@ -182,14 +213,6 @@ export const TasksWithVisibility = ({
                         >
                           <PlusCircle className="h-4 w-4" />
                           <span className="sr-only">إضافة مهمة فرعية</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                        >
-                          <FileDown className="h-4 w-4" />
-                          <span className="sr-only">نماذج</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -248,24 +271,19 @@ export const TasksWithVisibility = ({
                   {formatDate(task.due_date)}
                 </div>
               </div>
-              <div className="mt-3 border-t pt-3 flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs flex items-center gap-1"
-                  onClick={() => handleShowDiscussion(task)}
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  مناقشة
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs flex items-center gap-1"
-                >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  مهمة فرعية
-                </Button>
+              
+              {/* Task Action Buttons */}
+              <div className="mt-3 border-t pt-3">
+                <TaskActionButtons
+                  currentStatus={task.status}
+                  isUpdating={false}
+                  onShowDiscussion={() => handleShowDiscussion(task)}
+                  onOpenFileUploader={() => {}}
+                  onOpenAttachments={() => {}}
+                  onStatusChange={(newStatus) => handleStatusChange(task.id, newStatus)}
+                  onOpenTemplates={() => {}}
+                  taskId={task.id}
+                />
               </div>
             </div>
           ))
