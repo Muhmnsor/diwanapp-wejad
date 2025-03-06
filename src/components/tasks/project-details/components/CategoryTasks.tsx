@@ -8,6 +8,7 @@ import {
   TableBody 
 } from "@/components/ui/table";
 import { TaskItem } from "./TaskItem";
+import { formatDate as formatDateUtility } from "@/utils/formatters";
 
 interface CategoryTasksProps {
   category: string;
@@ -57,16 +58,13 @@ export const CategoryTasks = ({
     }
   };
 
+  // Updated to use Gregorian format (Miladi)
   const formatDate = (date: string | null) => {
     if (!date) return "غير محدد";
     
     try {
-      const dateObj = new Date(date);
-      return dateObj.toLocaleDateString('ar-SA', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+      // Use our utility formatter that displays in Gregorian format (dd/MM/yyyy)
+      return formatDateUtility(date, "غير محدد");
     } catch (e) {
       return "تاريخ غير صالح";
     }
