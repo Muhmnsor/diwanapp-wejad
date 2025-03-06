@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Subtask } from '../types/subtask';
-import { fetchSubtasks, addSubtask, updateSubtaskStatus, deleteSubtask } from '../services/subtasksService';
+import { fetchSubtasks, addSubtask, updateSubtaskStatus, deleteSubtask, updateSubtask } from '../services/subtasksService';
 
 interface SubtasksContextType {
   subtasks: Record<string, Subtask[]>;
@@ -12,6 +11,7 @@ interface SubtasksContextType {
   addNewSubtask: (taskId: string, title: string, dueDate?: string, assignedTo?: string) => Promise<void>;
   updateStatus: (subtaskId: string, taskId: string, newStatus: string) => Promise<void>;
   removeSubtask: (subtaskId: string, taskId: string) => Promise<void>;
+  updateSubtask: (subtaskId: string, taskId: string, updateData: Partial<Subtask>) => Promise<void>;
 }
 
 const SubtasksContext = createContext<SubtasksContextType | null>(null);
@@ -61,7 +61,6 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
       
       if (success && newSubtask) {
         console.log(`Successfully added subtask:`, newSubtask);
-        // Update the local state with the new subtask
         setSubtasks(prev => {
           const taskSubtasks = [...(prev[taskId] || []), newSubtask];
           return { ...prev, [taskId]: taskSubtasks };
@@ -132,6 +131,36 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
     }
   };
 
+  const updateSubtaskHandler = async (subtaskId: string, taskId: string, updateData: Partial<Subtask>) => {
+    try {
+      console.log(`Updating subtask ${subtaskId} with data:`, updateData);
+      const { success, error, updatedSubtask } = await updateSubtask(subtaskId, updateData);
+      
+      if (success && updatedSubtask) {
+        setSubtasks(prev => {
+          const taskSubtasks = prev[taskId] || [];
+          const updatedSubtasks = taskSubtasks.map(subtask => 
+            subtask.id === subtaskId ? updatedSubtask : subtask
+          );
+          
+          return { ...prev, [taskId]: updatedSubtasks };
+        });
+        
+        toast.success('تم تحديث المهمة الفرعية بنجاح');
+        return true;
+      } else if (error) {
+        console.error(`Error updating subtask ${subtaskId}:`, error);
+        toast.error(error);
+        return false;
+      }
+    } catch (err) {
+      console.error('Error updating subtask:', err);
+      toast.error('فشل في تحديث المهمة الفرعية');
+      return false;
+    }
+    return false;
+  };
+
   const value: SubtasksContextType = {
     subtasks,
     isLoading,
@@ -139,7 +168,8 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
     loadSubtasks,
     addNewSubtask,
     updateStatus,
-    removeSubtask
+    removeSubtask,
+    updateSubtask: updateSubtaskHandler
   };
 
   return (

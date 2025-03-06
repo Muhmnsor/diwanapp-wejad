@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Subtask } from "../types/subtask";
 import { toast } from "sonner";
@@ -152,6 +151,51 @@ export const deleteSubtask = async (
   } catch (error) {
     console.error("Error deleting subtask:", error);
     return { success: false, error: "حدث خطأ أثناء حذف المهمة الفرعية" };
+  }
+};
+
+export const updateSubtask = async (
+  subtaskId: string,
+  updateData: Partial<Subtask>
+): Promise<{ success: boolean, error: string | null, updatedSubtask?: Subtask }> => {
+  try {
+    // Validate input
+    if (!subtaskId || Object.keys(updateData).length === 0) {
+      return { success: false, error: "بيانات التحديث غير كافية" };
+    }
+    
+    // Update subtask in the database
+    const { data, error } = await supabase
+      .from('subtasks')
+      .update(updateData)
+      .eq('id', subtaskId)
+      .select('*')
+      .single();
+    
+    if (error) throw error;
+    
+    // If there's an assignee, get their name
+    let updatedSubtask = data as Subtask;
+    
+    if (updatedSubtask.assigned_to) {
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('display_name, email')
+        .eq('id', updatedSubtask.assigned_to)
+        .single();
+      
+      if (!userError && userData) {
+        updatedSubtask = {
+          ...updatedSubtask,
+          assigned_user_name: userData.display_name || userData.email
+        };
+      }
+    }
+    
+    return { success: true, error: null, updatedSubtask };
+  } catch (error) {
+    console.error("Error updating subtask:", error);
+    return { success: false, error: "حدث خطأ أثناء تحديث المهمة الفرعية" };
   }
 };
 

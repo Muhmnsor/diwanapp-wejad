@@ -1,5 +1,5 @@
 
-import { Check, Clock, Trash } from "lucide-react";
+import { Check, Clock, Trash, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Subtask } from "../../types/subtask";
@@ -11,9 +11,10 @@ interface SubtaskItemProps {
   subtask: Subtask;
   onUpdateStatus: (subtaskId: string, newStatus: string) => Promise<void>;
   onDelete: (subtaskId: string) => Promise<void>;
+  onEdit: (subtask: Subtask) => void;
 }
 
-export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete }: SubtaskItemProps) => {
+export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete, onEdit }: SubtaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { canEdit } = usePermissionCheck({ assignedTo: subtask.assigned_to });
@@ -85,6 +86,16 @@ export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete }: SubtaskItemPr
                 <Clock className="h-3.5 w-3.5 text-amber-500" />
               </Button>
             )}
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0 text-amber-500"
+              onClick={() => onEdit(subtask)}
+              title="تعديل المهمة الفرعية"
+            >
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
             
             <Button 
               variant="ghost" 

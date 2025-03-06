@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { AddSubtaskForm } from "./AddSubtaskForm";
 import { SubtasksHeader } from "./SubtasksHeader";
 import { SubtasksErrorState } from "./SubtasksErrorState";
@@ -8,6 +8,7 @@ import { SubtasksListItems } from "./SubtasksListItems";
 import { Subtask } from "../../types/subtask";
 import { useProjectMembers } from "../../hooks/useProjectMembers";
 import { useSubtasksList } from "../../hooks/useSubtasksList";
+import { EditSubtaskDialog } from "./EditSubtaskDialog";
 
 interface SubtasksListProps {
   taskId: string;
@@ -16,6 +17,7 @@ interface SubtasksListProps {
   onAddSubtask?: (taskId: string, title: string, dueDate?: string, assignedTo?: string) => Promise<void>;
   onUpdateSubtaskStatus?: (subtaskId: string, newStatus: string) => Promise<void>;
   onDeleteSubtask?: (subtaskId: string) => Promise<void>;
+  onUpdateSubtask?: (subtaskId: string, updateData: Partial<Subtask>) => Promise<void>;
 }
 
 export const SubtasksList: React.FC<SubtasksListProps> = ({ 
@@ -24,25 +26,37 @@ export const SubtasksList: React.FC<SubtasksListProps> = ({
   subtasks: externalSubtasks,
   onAddSubtask: externalAddSubtask,
   onUpdateSubtaskStatus: externalUpdateStatus,
-  onDeleteSubtask: externalDeleteSubtask
+  onDeleteSubtask: externalDeleteSubtask,
+  onUpdateSubtask: externalUpdateSubtask
 }) => {
   const { projectMembers } = useProjectMembers(projectId);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
   const { 
     subtasks,
     isLoading,
     error,
     isAddingSubtask,
     setIsAddingSubtask,
+    editingSubtask,
+    setEditingSubtask,
     handleAddSubtask,
     handleUpdateStatus,
-    handleDeleteSubtask
+    handleDeleteSubtask,
+    handleUpdateSubtask
   } = useSubtasksList(
     taskId, 
     externalSubtasks, 
     externalAddSubtask, 
     externalUpdateStatus, 
-    externalDeleteSubtask
+    externalDeleteSubtask,
+    externalUpdateSubtask
   );
+  
+  const handleEditSubtask = (subtask: Subtask) => {
+    setEditingSubtask(subtask);
+    setIsEditDialogOpen(true);
+  };
   
   // If there was an error, show the error state
   if (error) {
@@ -70,9 +84,20 @@ export const SubtasksList: React.FC<SubtasksListProps> = ({
           subtasks={subtasks}
           onUpdateStatus={handleUpdateStatus}
           onDelete={handleDeleteSubtask}
+          onEdit={handleEditSubtask}
         />
       ) : (
         !isAddingSubtask && <SubtasksEmptyState />
+      )}
+      
+      {editingSubtask && (
+        <EditSubtaskDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          subtask={editingSubtask}
+          onUpdate={handleUpdateSubtask}
+          projectMembers={projectMembers}
+        />
       )}
     </div>
   );

@@ -6,7 +6,8 @@ import {
   fetchSubtasks, 
   addSubtask, 
   updateSubtaskStatus, 
-  deleteSubtask 
+  deleteSubtask,
+  updateSubtask
 } from "../services/subtasksService";
 
 export const useSubtasksList = (
@@ -14,14 +15,15 @@ export const useSubtasksList = (
   externalSubtasks?: Subtask[],
   externalAddSubtask?: (taskId: string, title: string, dueDate?: string, assignedTo?: string) => Promise<void>,
   externalUpdateStatus?: (subtaskId: string, newStatus: string) => Promise<void>,
-  externalDeleteSubtask?: (subtaskId: string) => Promise<void>
+  externalDeleteSubtask?: (subtaskId: string) => Promise<void>,
+  externalUpdateSubtask?: (subtaskId: string, updateData: Partial<Subtask>) => Promise<void>
 ) => {
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [editingSubtask, setEditingSubtask] = useState<Subtask | null>(null);
   
-  // Try to use the context if available
   const subtasksContext = useSubtasks();
   
   useEffect(() => {
@@ -32,7 +34,6 @@ export const useSubtasksList = (
     }
   }, [taskId, externalSubtasks]);
   
-  // When context subtasks change, update local state if we're using context
   useEffect(() => {
     if (subtasksContext && !externalSubtasks) {
       const contextSubtasks = subtasksContext.subtasks[taskId] || [];
@@ -45,14 +46,12 @@ export const useSubtasksList = (
   const fetchSubtasksData = async () => {
     if (!taskId) return;
     
-    // If we have context and no external subtasks, use that
     if (subtasksContext && !externalSubtasks) {
       console.log(`Using context to load subtasks for task ${taskId}`);
       await subtasksContext.loadSubtasks(taskId);
       return;
     }
     
-    // Otherwise, fetch directly
     console.log(`Directly fetching subtasks for task ${taskId}`);
     setIsLoading(true);
     setError(null);
@@ -94,7 +93,6 @@ export const useSubtasksList = (
         
         if (success && newSubtask) {
           toast.success("تمت إضافة المهمة الفرعية");
-          // Update local state directly with the new subtask
           setSubtasks(prev => [...prev, newSubtask]);
           setIsAddingSubtask(false);
         } else if (error) {
@@ -155,15 +153,59 @@ export const useSubtasksList = (
     }
   };
 
-  // Get subtasks from context if available and no external subtasks
+  const handleUpdateSubtask = async (subtaskId: string, updateData: Partial<Subtask>) => {
+    if (externalUpdateSubtask) {
+      await externalUpdateSubtask(subtaskId, updateData);
+    } else if (subtasksContext) {
+      try {
+        const { success, error, updatedSubtask } = await updateSubtask(subtaskId, updateData);
+        
+        if (success && updatedSubtask) {
+          const updatedList = subtasksContext.subtasks[taskId]?.map(subtask => 
+            subtask.id === subtaskId ? updatedSubtask : subtask
+          ) || [];
+          
+          subtasksContext.subtasks = {
+            ...subtasksContext.subtasks,
+            [taskId]: updatedList
+          };
+          
+          toast.success("تم تحديث المهمة الفرعية بنجاح");
+        } else if (error) {
+          toast.error(error);
+        }
+      } catch (error) {
+        console.error("Error updating subtask via context:", error);
+        toast.error("حدث خطأ أثناء تحديث المهمة الفرعية");
+      }
+    } else {
+      try {
+        const { success, error, updatedSubtask } = await updateSubtask(subtaskId, updateData);
+        
+        if (success && updatedSubtask) {
+          setSubtasks(prevSubtasks => 
+            prevSubtasks.map(subtask => 
+              subtask.id === subtaskId ? updatedSubtask : subtask
+            )
+          );
+          
+          toast.success("تم تحديث المهمة الفرعية بنجاح");
+        } else if (error) {
+          toast.error(error);
+        }
+      } catch (error) {
+        console.error("Error updating subtask:", error);
+        toast.error("حدث خطأ أثناء تحديث المهمة الفرعية");
+      }
+    }
+  };
+
   const displaySubtasks = externalSubtasks || 
     (subtasksContext && subtasksContext.subtasks[taskId]) || 
     subtasks;
 
-  // Use context loading state if available
   const displayLoading = subtasksContext ? subtasksContext.isLoading : isLoading;
   
-  // Use context error state if available
   const displayError = subtasksContext ? subtasksContext.error : error;
 
   return {
@@ -172,8 +214,11 @@ export const useSubtasksList = (
     error: displayError,
     isAddingSubtask,
     setIsAddingSubtask,
+    editingSubtask,
+    setEditingSubtask,
     handleAddSubtask,
     handleUpdateStatus,
-    handleDeleteSubtask
+    handleDeleteSubtask,
+    handleUpdateSubtask
   };
 };
