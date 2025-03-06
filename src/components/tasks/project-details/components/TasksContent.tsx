@@ -18,6 +18,8 @@ interface TasksContentProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId?: string | undefined;
   isGeneral?: boolean;
+  onEditTask?: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export const TasksContent = ({
@@ -31,7 +33,9 @@ export const TasksContent = ({
   formatDate,
   onStatusChange,
   projectId,
-  isGeneral
+  isGeneral,
+  onEditTask,
+  onDeleteTask
 }: TasksContentProps) => {
   if (isLoading) {
     return (
@@ -66,6 +70,8 @@ export const TasksContent = ({
             formatDate={formatDate}
             onStatusChange={onStatusChange}
             projectId={projectId || ''}
+            onEdit={onEditTask}
+            onDelete={onDeleteTask}
           />
         ))}
       </div>
@@ -101,6 +107,8 @@ export const TasksContent = ({
                   formatDate={formatDate}
                   onStatusChange={onStatusChange}
                   projectId={projectId || ''}
+                  onEdit={onEditTask}
+                  onDelete={onDeleteTask}
                 />
               ))}
             </TableBody>

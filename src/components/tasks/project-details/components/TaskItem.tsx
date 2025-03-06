@@ -1,5 +1,4 @@
-
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -11,6 +10,16 @@ import { useAuthStore } from "@/store/authStore";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TaskItemProps {
   task: Task;
@@ -19,6 +28,8 @@ interface TaskItemProps {
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
+  onEdit?: (task: Task) => void;
+  onDelete?: (taskId: string) => void;
 }
 
 interface TaskAttachment {
@@ -35,12 +46,16 @@ export const TaskItem = ({
   getPriorityBadge, 
   formatDate,
   onStatusChange,
-  projectId
+  projectId,
+  onEdit,
+  onDelete
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuthStore();
   
   // جلب المرفقات الخاصة بالمكلف بالمهمة
@@ -102,6 +117,29 @@ export const TaskItem = ({
       user?.isAdmin || 
       user?.role === 'admin'
     );
+  };
+
+  const canEditDelete = () => {
+    return (
+      user?.id === task.assigned_to || 
+      user?.isAdmin || 
+      user?.role === 'admin'
+    );
+  };
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      onDelete(task.id);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("حدث خطأ أثناء حذف المهمة");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -242,6 +280,38 @@ export const TaskItem = ({
                 <Download className="h-4 w-4 text-blue-500 hover:text-blue-700" />
               </Button>
             )}
+            
+            {/* إضافة زر التعديل */}
+            {onEdit && canEditDelete() && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(task);
+                }}
+                title="تعديل المهمة"
+              >
+                <Edit className="h-4 w-4 text-amber-500 hover:text-amber-700" />
+              </Button>
+            )}
+            
+            {/* إضافة زر الحذف */}
+            {onDelete && canEditDelete() && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteDialogOpen(true);
+                }}
+                title="حذف المهمة"
+              >
+                <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
+              </Button>
+            )}
           </div>
         </TableCell>
       </TableRow>
@@ -264,6 +334,29 @@ export const TaskItem = ({
         onOpenChange={setShowDiscussion}
         task={task}
       />
+      
+      {/* مربع حوار تأكيد الحذف */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من حذف هذه المهمة؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف المهمة وجميع المهام الفرعية والمرفقات المرتبطة بها بشكل نهائي.
+              لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {isDeleting ? "جاري الحذف..." : "تأكيد الحذف"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

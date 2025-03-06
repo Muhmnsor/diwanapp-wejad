@@ -9,6 +9,10 @@ import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormat
 import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
+import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TasksListProps {
   projectId?: string | undefined;
@@ -30,8 +34,12 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     tasksByStage,
     handleStatusChange,
     fetchTasks,
-    isGeneral
+    isGeneral,
+    deleteTask
   } = useTasksList(projectId);
+
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Fetch project members
   const { projectMembers } = useProjectMembers(projectId);
@@ -40,6 +48,21 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     if (activeTab === "all") return true;
     return task.status === activeTab;
   });
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+      toast.success("تم حذف المهمة بنجاح");
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast.error("حدث خطأ أثناء حذف المهمة");
+    }
+  };
 
   return (
     <>
@@ -73,6 +96,8 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             onStatusChange={handleStatusChange}
             projectId={projectId}
             isGeneral={isGeneral}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
           />
         </CardContent>
       </Card>
@@ -86,6 +111,23 @@ export const TasksList = ({ projectId }: TasksListProps) => {
         projectMembers={projectMembers}
         isGeneral={isGeneral}
       />
+
+      {/* حوار تعديل المهمة */}
+      {editingTask && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>تعديل المهمة</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              {/* هنا يتم وضع نموذج تعديل المهمة - استخدم DialogContent الموجود بالفعل */}
+              <p className="text-center text-gray-500">
+                سيتم تنفيذ نموذج تعديل المهمة هنا في التحديثات القادمة
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };
