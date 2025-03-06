@@ -16,12 +16,16 @@ export function useCachedQuery<
     cacheDuration?: number;
     cacheStorage?: CacheStorage;
     cachePrefix?: string;
+    useCompression?: boolean;
+    compressionThreshold?: number;
   }
 ): UseQueryResult<TData, TError> {
   const {
     cacheDuration = CACHE_DURATIONS.MEDIUM,
     cacheStorage = 'memory',
     cachePrefix = '',
+    useCompression = true,
+    compressionThreshold = 1024,
     ...queryOptions
   } = options || {};
 
@@ -43,8 +47,11 @@ export function useCachedQuery<
       // If not cached or expired, fetch fresh data
       const data = await queryFn();
       
-      // Cache the fresh data
-      setCacheData(cacheKey, data, cacheDuration, cacheStorage);
+      // Cache the fresh data with compression options
+      setCacheData(cacheKey, data, cacheDuration, cacheStorage, {
+        useCompression,
+        compressionThreshold
+      });
       
       return data;
     },

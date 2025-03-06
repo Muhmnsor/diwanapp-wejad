@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { getCacheStats } from '@/utils/cacheService';
+import { getCacheStats, resetCacheStats } from '@/utils/cacheService';
 
 interface CacheStats {
   memoryCacheCount: number;
@@ -10,6 +10,8 @@ interface CacheStats {
   cacheHits: number;
   cacheMisses: number;
   cacheHitRatio: number;
+  compressionSavings: number;
+  totalSize: number;
 }
 
 /**
@@ -23,19 +25,24 @@ export const useCacheMonitor = (refreshInterval = 60000) => {
     totalCacheEntries: 0,
     cacheHits: 0,
     cacheMisses: 0,
-    cacheHitRatio: 0
+    cacheHitRatio: 0,
+    compressionSavings: 0,
+    totalSize: 0
   });
 
   useEffect(() => {
-    // Initialize hits and misses counters from localStorage
-    const hits = parseInt(localStorage.getItem('cache:hits') || '0', 10);
-    const misses = parseInt(localStorage.getItem('cache:misses') || '0', 10);
+    // Initialize from localStorage (if available)
+    const storedStats = JSON.parse(localStorage.getItem('cache:stats') || '{}');
+    const hits = storedStats.hits || 0;
+    const misses = storedStats.misses || 0;
     
     setStats(prev => ({
       ...prev,
       cacheHits: hits,
       cacheMisses: misses,
-      cacheHitRatio: hits + misses === 0 ? 0 : Math.round((hits / (hits + misses)) * 100)
+      cacheHitRatio: hits + misses === 0 ? 0 : Math.round((hits / (hits + misses)) * 100),
+      compressionSavings: storedStats.compressionSavings || 0,
+      totalSize: storedStats.totalSize || 0
     }));
 
     // Monitor original console.log to track cache hits/misses
@@ -46,20 +53,16 @@ export const useCacheMonitor = (refreshInterval = 60000) => {
       
       if (typeof message === 'string') {
         if (message.includes('Cache hit')) {
-          const newHits = stats.cacheHits + 1;
-          localStorage.setItem('cache:hits', newHits.toString());
           setStats(prev => ({
             ...prev,
-            cacheHits: newHits,
-            cacheHitRatio: Math.round((newHits / (newHits + prev.cacheMisses)) * 100)
+            cacheHits: prev.cacheHits + 1,
+            cacheHitRatio: Math.round((prev.cacheHits + 1) / (prev.cacheHits + 1 + prev.cacheMisses) * 100)
           }));
         } else if (message.includes('Cache miss')) {
-          const newMisses = stats.cacheMisses + 1;
-          localStorage.setItem('cache:misses', newMisses.toString());
           setStats(prev => ({
             ...prev,
-            cacheMisses: newMisses,
-            cacheHitRatio: Math.round((prev.cacheHits / (prev.cacheHits + newMisses)) * 100)
+            cacheMisses: prev.cacheMisses + 1,
+            cacheHitRatio: Math.round((prev.cacheHits) / (prev.cacheHits + prev.cacheMisses + 1) * 100)
           }));
         }
       }
