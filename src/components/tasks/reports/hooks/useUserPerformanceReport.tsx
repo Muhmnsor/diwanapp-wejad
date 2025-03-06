@@ -211,7 +211,7 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
       }
       
       // Group tasks by project
-      const projectGroups = {};
+      const projectGroups: Record<string, { count: number; completedCount: number }> = {};
       for (const task of allTasks) {
         let projectName = 'بدون مشروع';
         
@@ -247,7 +247,7 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         .sort((a, b) => b.count - a.count);
       
       // Group tasks by priority
-      const priorityGroups = {};
+      const priorityGroups: Record<string, number> = {};
       for (const task of allTasks) {
         const priority = task.priority || 'medium';
         
