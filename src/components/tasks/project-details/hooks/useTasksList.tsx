@@ -4,6 +4,7 @@ import { useTaskStatusManagement } from "./useTaskStatusManagement";
 import { useTasksState } from "./useTasksState";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export const useTasksList = (projectId: string | undefined) => {
   // Hook for handling UI state
@@ -93,9 +94,11 @@ export const useTasksList = (projectId: string | undefined) => {
       // تحديث واجهة المستخدم بعد الحذف
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
       
+      toast.success("تم حذف المهمة بنجاح");
       return true;
     } catch (error) {
       console.error("Error deleting task:", error);
+      toast.error("حدث خطأ أثناء حذف المهمة");
       throw error;
     }
   };

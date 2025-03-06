@@ -11,7 +11,6 @@ import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TasksListProps {
@@ -57,10 +56,8 @@ export const TasksList = ({ projectId }: TasksListProps) => {
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
-      toast.success("تم حذف المهمة بنجاح");
     } catch (error) {
       console.error("Error deleting task:", error);
-      toast.error("حدث خطأ أثناء حذف المهمة");
     }
   };
 
