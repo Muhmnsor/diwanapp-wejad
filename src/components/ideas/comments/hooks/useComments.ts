@@ -56,32 +56,36 @@ export const useComments = (ideaId: string, creatorId?: string) => {
       }
       
       // Transform the comments data to include user info
-      const transformedComments = data.map((comment: any) => ({
-        id: comment.id,
-        content: comment.content,
-        created_at: comment.created_at,
-        updated_at: comment.updated_at,
-        user_id: comment.user_id,
-        parent_id: comment.parent_id,
-        idea_id: ideaId,
-        attachment_url: comment.attachment_url,
-        attachment_name: comment.attachment_name,
-        user: comment.profiles ? {
-          // Extract profile data safely - handle both array and object cases
-          id: Array.isArray(comment.profiles) && comment.profiles.length > 0 
-              ? comment.profiles[0]?.id 
-              : comment.profiles?.id,
-          email: Array.isArray(comment.profiles) && comment.profiles.length > 0 
-                ? comment.profiles[0]?.email 
-                : comment.profiles?.email,
-          name: Array.isArray(comment.profiles) && comment.profiles.length > 0 
-               ? comment.profiles[0]?.full_name 
-               : comment.profiles?.full_name,
-          avatar_url: Array.isArray(comment.profiles) && comment.profiles.length > 0 
-                     ? comment.profiles[0]?.avatar_url 
-                     : comment.profiles?.avatar_url
-        } : null
-      }));
+      const transformedComments = data.map((comment: any) => {
+        let profileData: ProfileData | null = null;
+        
+        // Safely extract profile data regardless of its structure
+        if (comment.profiles) {
+          if (Array.isArray(comment.profiles) && comment.profiles.length > 0) {
+            profileData = comment.profiles[0];
+          } else {
+            profileData = comment.profiles as ProfileData;
+          }
+        }
+        
+        return {
+          id: comment.id,
+          content: comment.content,
+          created_at: comment.created_at,
+          updated_at: comment.updated_at,
+          user_id: comment.user_id,
+          parent_id: comment.parent_id,
+          idea_id: ideaId,
+          attachment_url: comment.attachment_url,
+          attachment_name: comment.attachment_name,
+          user: profileData ? {
+            id: profileData.id,
+            email: profileData.email,
+            name: profileData.full_name,
+            avatar_url: profileData.avatar_url
+          } : null
+        };
+      });
       
       setComments(transformedComments);
     } catch (error) {
@@ -170,6 +174,18 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         });
       }
       
+      // Process the new comment data
+      let profileData: ProfileData | null = null;
+      
+      // Safely extract profile data
+      if (data.profiles) {
+        if (Array.isArray(data.profiles) && data.profiles.length > 0) {
+          profileData = data.profiles[0];
+        } else {
+          profileData = data.profiles as ProfileData;
+        }
+      }
+      
       // Add the new comment to the state
       const newComment = {
         id: data.id,
@@ -181,20 +197,11 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         idea_id: ideaId,
         attachment_url: data.attachment_url,
         attachment_name: data.attachment_name,
-        user: data.profiles ? {
-          // Extract profile data safely
-          id: Array.isArray(data.profiles) && data.profiles.length > 0 
-              ? data.profiles[0]?.id 
-              : data.profiles?.id,
-          email: Array.isArray(data.profiles) && data.profiles.length > 0 
-                ? data.profiles[0]?.email 
-                : data.profiles?.email,
-          name: Array.isArray(data.profiles) && data.profiles.length > 0 
-               ? data.profiles[0]?.full_name 
-               : data.profiles?.full_name,
-          avatar_url: Array.isArray(data.profiles) && data.profiles.length > 0 
-                     ? data.profiles[0]?.avatar_url 
-                     : data.profiles?.avatar_url
+        user: profileData ? {
+          id: profileData.id,
+          email: profileData.email,
+          name: profileData.full_name,
+          avatar_url: profileData.avatar_url
         } : null
       };
       
