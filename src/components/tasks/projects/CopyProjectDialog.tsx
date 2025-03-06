@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
 
 interface CopyProjectDialogProps {
   open: boolean;
@@ -34,6 +35,9 @@ export const CopyProjectDialog = ({
   const [newTitle, setNewTitle] = useState(`نسخة من ${projectTitle}`);
   const [includeTasks, setIncludeTasks] = useState(true);
   const [includeAttachments, setIncludeAttachments] = useState(true);
+  const [copyProgress, setCopyProgress] = useState(0);
+  const [copyStep, setCopyStep] = useState("");
+  const [isComplete, setIsComplete] = useState(false);
 
   const handleCopy = async () => {
     if (!newTitle.trim()) {
@@ -42,8 +46,14 @@ export const CopyProjectDialog = ({
     }
 
     setIsLoading(true);
+    setCopyProgress(0);
+    setCopyStep("جاري إعداد النسخة...");
+    
     try {
-      // 1. Fetch the original project
+      // Step 1: Fetch the original project
+      setCopyStep("جاري جلب بيانات المشروع الأصلي...");
+      setCopyProgress(10);
+      
       const { data: originalProject, error: projectError } = await supabase
         .from("project_tasks")
         .select("*")
@@ -52,7 +62,10 @@ export const CopyProjectDialog = ({
 
       if (projectError) throw projectError;
 
-      // 2. Create the new project
+      // Step 2: Create the new project
+      setCopyStep("إنشاء المشروع الجديد...");
+      setCopyProgress(30);
+      
       const { data: newProject, error: createError } = await supabase
         .from("project_tasks")
         .insert([
@@ -75,7 +88,10 @@ export const CopyProjectDialog = ({
       if (createError) throw createError;
 
       if (includeTasks) {
-        // 3. Fetch all tasks from the original project
+        // Step 3: Fetch all tasks from the original project
+        setCopyStep("جاري جلب المهام من المشروع الأصلي...");
+        setCopyProgress(50);
+        
         const { data: originalTasks, error: tasksError } = await supabase
           .from("tasks")
           .select("*")
@@ -84,7 +100,10 @@ export const CopyProjectDialog = ({
         if (tasksError) throw tasksError;
 
         if (originalTasks && originalTasks.length > 0) {
-          // 4. Create tasks in the new project
+          // Step 4: Create tasks in the new project
+          setCopyStep("إنشاء المهام في المشروع الجديد...");
+          setCopyProgress(70);
+          
           const newTasks = originalTasks.map((task) => ({
             title: task.title,
             description: task.description,
@@ -104,8 +123,11 @@ export const CopyProjectDialog = ({
 
           if (insertTasksError) throw insertTasksError;
           
-          // 5. Copy attachments and templates if needed
-          if (includeAttachments) {
+          // Step 5: Copy attachments and templates if needed
+          if (includeAttachments && originalTasks.length > 0) {
+            setCopyStep("نسخ المرفقات والقوالب...");
+            setCopyProgress(85);
+            
             for (const task of originalTasks) {
               // Find the corresponding new task
               const { data: newTask } = await supabase
@@ -164,19 +186,39 @@ export const CopyProjectDialog = ({
         }
       }
 
+      setCopyProgress(100);
+      setCopyStep("تم نسخ المشروع بنجاح!");
+      setIsComplete(true);
+      
       toast.success("تم نسخ المشروع بنجاح");
-      onSuccess();
-      onOpenChange(false);
+      
+      // Short delay to show 100% progress
+      setTimeout(() => {
+        onSuccess();
+        onOpenChange(false);
+        // Reset state for next time
+        setIsComplete(false);
+        setCopyProgress(0);
+        setCopyStep("");
+      }, 1500);
+      
     } catch (error) {
       console.error("Error copying project:", error);
       toast.error("حدث خطأ أثناء نسخ المشروع");
+      setCopyStep("حدث خطأ أثناء نسخ المشروع");
+      setCopyProgress(0);
     } finally {
-      setIsLoading(false);
+      if (!isComplete) {
+        setIsLoading(false);
+      }
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (isLoading) return; // Prevent closing during copy process
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>نسخ المشروع كمسودة</DialogTitle>
@@ -185,45 +227,62 @@ export const CopyProjectDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="projectTitle">عنوان المشروع الجديد</Label>
-            <Input
-              id="projectTitle"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              autoFocus
-            />
+        {isLoading && (
+          <div className="py-4 space-y-4">
+            <div className="text-center text-sm font-medium text-blue-600">{copyStep}</div>
+            <Progress value={copyProgress} className="h-2" />
           </div>
+        )}
 
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <input
-              type="checkbox"
-              id="includeTasks"
-              checked={includeTasks}
-              onChange={(e) => setIncludeTasks(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <Label htmlFor="includeTasks" className="ml-2">نسخ جميع المهام</Label>
-          </div>
+        {!isLoading && (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="projectTitle">عنوان المشروع الجديد</Label>
+              <Input
+                id="projectTitle"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                autoFocus
+              />
+            </div>
 
-          {includeTasks && (
-            <div className="flex items-center space-x-2 space-x-reverse mr-6">
+            <div className="flex items-center space-x-2 space-x-reverse">
               <input
                 type="checkbox"
-                id="includeAttachments"
-                checked={includeAttachments}
-                onChange={(e) => setIncludeAttachments(e.target.checked)}
+                id="includeTasks"
+                checked={includeTasks}
+                onChange={(e) => setIncludeTasks(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <Label htmlFor="includeAttachments" className="ml-2">نسخ المرفقات والقوالب</Label>
+              <Label htmlFor="includeTasks" className="ml-2">نسخ جميع المهام</Label>
             </div>
-          )}
-        </div>
+
+            {includeTasks && (
+              <div className="flex items-center space-x-2 space-x-reverse mr-6">
+                <input
+                  type="checkbox"
+                  id="includeAttachments"
+                  checked={includeAttachments}
+                  onChange={(e) => setIncludeAttachments(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <Label htmlFor="includeAttachments" className="ml-2">نسخ المرفقات والقوالب</Label>
+              </div>
+            )}
+          </div>
+        )}
 
         <DialogFooter className="flex-row-reverse gap-2">
-          <Button onClick={handleCopy} disabled={isLoading}>
-            {isLoading ? (
+          <Button 
+            onClick={handleCopy} 
+            disabled={isLoading}
+            className={isComplete ? "bg-green-600 hover:bg-green-700" : ""}
+          >
+            {isComplete ? (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" /> تم النسخ بنجاح
+              </>
+            ) : isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> جاري النسخ...
               </>
@@ -231,7 +290,11 @@ export const CopyProjectDialog = ({
               "نسخ المشروع"
             )}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             إلغاء
           </Button>
         </DialogFooter>

@@ -3,9 +3,9 @@ import { useDraftTasksVisibility } from "@/hooks/useDraftTasksVisibility";
 import { Task } from "../types/task";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, InfoIcon, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TasksWithVisibilityProps {
   tasks: Task[];
@@ -16,6 +16,7 @@ interface TasksWithVisibilityProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId?: string;
   isDraftProject?: boolean;
+  isLoading?: boolean;
 }
 
 export const TasksWithVisibility = ({
@@ -26,9 +27,22 @@ export const TasksWithVisibility = ({
   formatDate,
   onStatusChange,
   projectId,
-  isDraftProject = false
+  isDraftProject = false,
+  isLoading = false
 }: TasksWithVisibilityProps) => {
-  const { visibleTasks, isProjectManager, isDraftProject: isDraft } = useDraftTasksVisibility(tasks, projectId);
+  const { visibleTasks, isProjectManager, isDraftProject: isDraft, isLoadingVisibility } = useDraftTasksVisibility(tasks, projectId);
+  const showLoading = isLoading || isLoadingVisibility;
+
+  if (showLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+      </div>
+    );
+  }
 
   if (tasks.length === 0) {
     return (

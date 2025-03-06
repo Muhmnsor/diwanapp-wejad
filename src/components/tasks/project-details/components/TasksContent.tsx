@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react"; 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TasksWithVisibility } from "./TasksWithVisibility";
+import { Progress } from "@/components/ui/progress";
 
 interface TasksContentProps {
   isLoading: boolean;
@@ -39,9 +40,15 @@ export const TasksContent = ({
   if (isLoading) {
     return (
       <div className="space-y-4 mt-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+        <div className="p-4 border rounded-md">
+          <div className="mb-4">
+            <Skeleton className="h-4 w-40 mb-2" />
+            <Progress value={25} className="h-2" />
+          </div>
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full mt-2" />
+          <Skeleton className="h-12 w-full mt-2" />
+        </div>
       </div>
     );
   }
@@ -71,6 +78,7 @@ export const TasksContent = ({
         onStatusChange={onStatusChange}
         projectId={projectId}
         isDraftProject={isDraftProject}
+        isLoading={isLoading}
       />
     </div>
   );

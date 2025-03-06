@@ -8,13 +8,18 @@ export const useDraftTasksVisibility = (tasks: Task[], projectId?: string) => {
   const [visibleTasks, setVisibleTasks] = useState<Task[]>([]);
   const [isProjectManager, setIsProjectManager] = useState(false);
   const [isDraftProject, setIsDraftProject] = useState(false);
+  const [isLoadingVisibility, setIsLoadingVisibility] = useState(true);
   const { user } = useAuthStore();
 
   // Check if the current user is the project manager
   useEffect(() => {
-    if (!projectId || !user?.id) return;
+    if (!projectId || !user?.id) {
+      setIsLoadingVisibility(false);
+      return;
+    }
 
     const checkProjectManager = async () => {
+      setIsLoadingVisibility(true);
       try {
         const { data, error } = await supabase
           .from('project_tasks')
@@ -29,6 +34,8 @@ export const useDraftTasksVisibility = (tasks: Task[], projectId?: string) => {
       } catch (err) {
         console.error("Error checking project manager:", err);
         setIsProjectManager(false);
+      } finally {
+        setIsLoadingVisibility(false);
       }
     };
 
@@ -37,6 +44,8 @@ export const useDraftTasksVisibility = (tasks: Task[], projectId?: string) => {
 
   // Filter tasks based on draft status and user role
   useEffect(() => {
+    if (isLoadingVisibility) return;
+    
     if (!tasks.length) {
       setVisibleTasks([]);
       return;
@@ -56,11 +65,12 @@ export const useDraftTasksVisibility = (tasks: Task[], projectId?: string) => {
 
     // For regular users, hide tasks in draft projects
     setVisibleTasks([]);
-  }, [tasks, isDraftProject, isProjectManager]);
+  }, [tasks, isDraftProject, isProjectManager, isLoadingVisibility]);
 
   return {
     visibleTasks,
     isProjectManager,
-    isDraftProject
+    isDraftProject,
+    isLoadingVisibility
   };
 };

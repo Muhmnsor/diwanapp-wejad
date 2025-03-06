@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -9,11 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationQueue } from "@/hooks/useNotificationQueue";
+import { Progress } from "@/components/ui/progress";
 
 interface TaskSummary {
   total: number;
@@ -40,6 +42,8 @@ export const LaunchProjectDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [taskSummary, setTaskSummary] = useState<TaskSummary | null>(null);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [launchProgress, setLaunchProgress] = useState(0);
+  const [launchStep, setLaunchStep] = useState("");
   const { sendProjectLaunchNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
   const { queueMultipleNotifications } = useNotificationQueue();
@@ -53,6 +57,7 @@ export const LaunchProjectDialog = ({
   const fetchTaskSummary = async () => {
     setIsLoadingSummary(true);
     try {
+      setLaunchStep("جاري جلب تفاصيل المهام...");
       const { data: tasks, error: tasksError } = await supabase
         .from("tasks")
         .select("id, title, assigned_to, due_date")
@@ -80,6 +85,7 @@ export const LaunchProjectDialog = ({
       const assignees: { id: string; name: string; count: number }[] = [];
       
       if (assigneeIds.length > 0) {
+        setLaunchStep("جاري جلب معلومات المكلفين...");
         for (const assigneeId of assigneeIds) {
           if (assigneeId.startsWith('custom:')) {
             assignees.push({
@@ -113,21 +119,33 @@ export const LaunchProjectDialog = ({
       });
     } catch (error) {
       console.error("Error fetching task summary:", error);
+      toast.error("حدث خطأ أثناء جلب ملخص المهام");
     } finally {
       setIsLoadingSummary(false);
+      setLaunchStep("");
     }
   };
 
   const handleLaunch = async () => {
     setIsLoading(true);
+    setLaunchProgress(0);
+    
     try {
+      // Step 1: Update project status
+      setLaunchStep("تحديث حالة المشروع...");
+      setLaunchProgress(10);
+      
       const { error: projectError } = await supabase
         .from("project_tasks")
         .update({ is_draft: false, status: "in_progress" })
         .eq("id", projectId);
 
       if (projectError) throw projectError;
-
+      
+      // Step 2: Update task statuses
+      setLaunchStep("تحديث حالة المهام...");
+      setLaunchProgress(30);
+      
       const { error: tasksError } = await supabase
         .from("tasks")
         .update({ status: "pending" })
@@ -135,7 +153,11 @@ export const LaunchProjectDialog = ({
         .eq("status", "draft");
 
       if (tasksError) throw tasksError;
-
+      
+      // Step 3: Prepare notifications
+      setLaunchStep("إعداد الإشعارات...");
+      setLaunchProgress(50);
+      
       const { data: tasks, error: fetchError } = await supabase
         .from("tasks")
         .select("id, title, assigned_to")
@@ -152,6 +174,10 @@ export const LaunchProjectDialog = ({
         }
       });
 
+      // Step 4: Send project launch notification
+      setLaunchStep("إرسال إشعارات إطلاق المشروع...");
+      setLaunchProgress(70);
+      
       if (assigneeIds.size > 0) {
         await sendProjectLaunchNotification(
           projectId,
@@ -160,6 +186,10 @@ export const LaunchProjectDialog = ({
         );
       }
 
+      // Step 5: Send task assignment notifications
+      setLaunchStep("إرسال إشعارات المهام...");
+      setLaunchProgress(85);
+      
       if (tasks && tasks.length > 0) {
         const notifications = tasks
           .filter(task => task.assigned_to && !task.assigned_to.startsWith('custom:'))
@@ -178,19 +208,35 @@ export const LaunchProjectDialog = ({
         }
       }
 
+      setLaunchProgress(100);
+      setLaunchStep("تم إطلاق المشروع بنجاح!");
+      
+      // Step 6: All done!
       toast.success("تم إطلاق المشروع بنجاح");
-      onSuccess();
-      onOpenChange(false);
+      
+      // Short delay to show 100% progress
+      setTimeout(() => {
+        onSuccess();
+        onOpenChange(false);
+      }, 1000);
+      
     } catch (error) {
       console.error("Error launching project:", error);
       toast.error("حدث خطأ أثناء إطلاق المشروع");
+      setLaunchStep("حدث خطأ أثناء إطلاق المشروع");
     } finally {
+      if (launchProgress < 100) {
+        setLaunchProgress(0);
+      }
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (isLoading) return; // Prevent closing during launch process
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
           <DialogTitle>إطلاق المشروع</DialogTitle>
@@ -199,11 +245,21 @@ export const LaunchProjectDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoadingSummary ? (
-          <div className="py-4 flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        {isLoading && (
+          <div className="py-6 space-y-4">
+            <div className="text-center text-sm font-medium text-blue-600">{launchStep}</div>
+            <Progress value={launchProgress} className="h-2" />
           </div>
-        ) : taskSummary ? (
+        )}
+
+        {isLoadingSummary ? (
+          <div className="py-4 space-y-4">
+            <div className="text-center text-sm text-gray-500">{launchStep}</div>
+            <div className="flex justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            </div>
+          </div>
+        ) : taskSummary && !isLoading ? (
           <div className="space-y-4 my-4">
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <h3 className="text-sm font-medium text-blue-800 mb-2">ملخص المهام</h3>
@@ -228,7 +284,7 @@ export const LaunchProjectDialog = ({
                 <div className="bg-gray-50 px-4 py-2 border-b text-sm font-medium">
                   المكلفون بالمهام
                 </div>
-                <div className="divide-y">
+                <div className="divide-y max-h-60 overflow-y-auto">
                   {taskSummary.assignees.map((assignee) => (
                     <div key={assignee.id} className="px-4 py-2 flex justify-between items-center">
                       <div className="text-sm">{assignee.name}</div>
@@ -256,8 +312,16 @@ export const LaunchProjectDialog = ({
         </div>
 
         <DialogFooter className="flex-row-reverse gap-2">
-          <Button onClick={handleLaunch} disabled={isLoading}>
-            {isLoading ? (
+          <Button 
+            onClick={handleLaunch} 
+            disabled={isLoading || isLoadingSummary}
+            className={launchProgress === 100 ? "bg-green-600 hover:bg-green-700" : ""}
+          >
+            {launchProgress === 100 ? (
+              <>
+                <CheckCircle className="mr-2 h-4 w-4" /> تم الإطلاق بنجاح
+              </>
+            ) : isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> جاري الإطلاق...
               </>
@@ -265,7 +329,11 @@ export const LaunchProjectDialog = ({
               "إطلاق المشروع"
             )}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             إلغاء
           </Button>
         </DialogFooter>
