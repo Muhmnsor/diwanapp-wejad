@@ -16,7 +16,6 @@ interface TasksContentProps {
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
-  onDeleteTask?: (taskId: string) => void;
   projectId?: string | undefined;
   isGeneral?: boolean;
 }
@@ -31,7 +30,6 @@ export const TasksContent = ({
   getPriorityBadge,
   formatDate,
   onStatusChange,
-  onDeleteTask,
   projectId,
   isGeneral
 }: TasksContentProps) => {
@@ -67,7 +65,6 @@ export const TasksContent = ({
             getPriorityBadge={getPriorityBadge}
             formatDate={formatDate}
             onStatusChange={onStatusChange}
-            onDeleteTask={onDeleteTask}
             projectId={projectId || ''}
           />
         ))}
@@ -103,7 +100,6 @@ export const TasksContent = ({
                   getPriorityBadge={getPriorityBadge}
                   formatDate={formatDate}
                   onStatusChange={onStatusChange}
-                  onDeleteTask={onDeleteTask}
                   projectId={projectId || ''}
                 />
               ))}

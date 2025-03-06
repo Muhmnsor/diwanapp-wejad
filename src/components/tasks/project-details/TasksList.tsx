@@ -29,7 +29,6 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     handleStagesChange,
     tasksByStage,
     handleStatusChange,
-    handleDeleteTask,
     fetchTasks,
     isGeneral
   } = useTasksList(projectId);
@@ -72,7 +71,6 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             getPriorityBadge={getPriorityBadge}
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
-            onDeleteTask={handleDeleteTask}
             projectId={projectId}
             isGeneral={isGeneral}
           />

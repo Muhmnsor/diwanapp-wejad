@@ -10,7 +10,6 @@ import { TaskAttachmentDialog } from "./dialogs/TaskAttachmentDialog";
 import { FileUploadDialog } from "./dialogs/FileUploadDialog";
 import { TaskActionButtons } from "./actions/TaskActionButtons";
 import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
-import { DeleteTaskDialog } from "./dialogs/DeleteTaskDialog";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
@@ -27,7 +26,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
   const { sendTaskStatusUpdateNotification } = useTaskNotifications();
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
@@ -91,11 +89,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     }
   };
 
-  // Handle task deletion
-  const handleDelete = (taskId: string) => {
-    setIsDeleteDialogOpen(true);
-  };
-
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />
@@ -117,7 +110,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
         onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
         onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
         onStatusChange={handleStatusChange}
-        onDelete={onDelete ? handleDelete : undefined}
+        onDelete={onDelete}
         taskId={task.id}
       />
       
@@ -152,18 +145,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           task={task}
           open={isTemplatesDialogOpen}
           onOpenChange={setIsTemplatesDialogOpen}
-        />
-      )}
-      
-      {/* Delete Task Dialog */}
-      {task && (
-        <DeleteTaskDialog
-          isOpen={isDeleteDialogOpen}
-          onClose={() => setIsDeleteDialogOpen(false)}
-          taskId={task.id}
-          taskTitle={task.title}
-          onSuccess={() => onDelete?.(task.id)}
-          isGeneral={!task.project_id}
         />
       )}
     </div>
