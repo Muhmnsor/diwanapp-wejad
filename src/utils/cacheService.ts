@@ -1,10 +1,9 @@
-
 import { compressData, decompressData, isCompressedData } from './cacheCompression';
 import { notifyCacheUpdate, notifyCacheRemove, notifyCacheClear } from './realtimeCacheSync';
 
 /**
- * Smart Caching Service
- * Provides multi-level caching capabilities to reduce server requests
+ * Smart Caching Service - Enhanced
+ * Provides multi-level caching capabilities with advanced features
  */
 
 // Cache durations in milliseconds
@@ -19,10 +18,21 @@ export const CACHE_DURATIONS = {
 // Cache storage types
 export type CacheStorage = 'memory' | 'local' | 'session';
 
-// Cache compression options
-export type CacheCompressionOptions = {
+// Cache item refresh strategy
+export type RefreshStrategy = 'lazy' | 'background' | 'eager';
+
+// Enhanced cache options
+export type EnhancedCacheOptions = {
   useCompression?: boolean;
-  compressionThreshold?: number; // Size in bytes above which to compress
+  compressionThreshold?: number;
+  priority?: CachePriority;
+  notifySync?: boolean;
+  batchUpdate?: boolean;
+  refreshStrategy?: RefreshStrategy;
+  refreshThreshold?: number;
+  onRefresh?: (key: string, oldData: any) => Promise<any>;
+  concurrencyKey?: string;
+  tags?: string[];
 };
 
 // Cache item priority
@@ -39,33 +49,77 @@ interface CacheEntry<T> {
   accessCount?: number;
 }
 
+// Enhanced cache entry structure
+interface EnhancedCacheEntry<T> extends CacheEntry<T> {
+  refreshing?: boolean;
+  refreshAttempts?: number;
+  tags?: string[];
+  concurrencyKey?: string;
+  refreshStrategy?: RefreshStrategy;
+  refreshThreshold?: number;
+  lastRefreshCheck?: number;
+}
+
 // Cache statistics
-interface CacheStats {
+interface EnhancedCacheStats {
   hits: number;
   misses: number;
   totalSize: number;
   compressionSavings: number;
-  throttled: number; // Track how many times we've throttled updates
-  batchedUpdates: number; // Track how many updates we've batched
+  throttled: number;
+  batchedUpdates: number;
+  backgroundRefreshes: number;
+  refreshFailures: number;
+  priorityEvictions: Record<CachePriority, number>;
+  tagBasedInvalidations: number;
 }
 
 // In-memory cache store
-const memoryCache: Record<string, CacheEntry<any>> = {};
+const memoryCache: Record<string, EnhancedCacheEntry<any>> = {};
 
 // Cache statistics
-const cacheStats: CacheStats = {
+const cacheStats: EnhancedCacheStats = {
   hits: 0,
   misses: 0,
   totalSize: 0,
   compressionSavings: 0,
   throttled: 0,
-  batchedUpdates: 0
+  batchedUpdates: 0,
+  backgroundRefreshes: 0,
+  refreshFailures: 0,
+  priorityEvictions: {
+    low: 0,
+    normal: 0,
+    high: 0,
+    critical: 0
+  },
+  tagBasedInvalidations: 0
 };
 
 // Tracking for batched updates
 const pendingUpdates: Map<string, { data: any, options: any }> = new Map();
 let updateTimeout: number | null = null;
 const UPDATE_THROTTLE = 200; // ms to throttle batched updates
+
+// Background refresh queue
+interface RefreshQueueItem {
+  key: string;
+  storage: CacheStorage;
+  priority: CachePriority;
+  onRefresh?: (key: string, oldData: any) => Promise<any>;
+  timestamp: number;
+}
+
+const refreshQueue: RefreshQueueItem[] = [];
+let refreshInterval: number | null = null;
+const REFRESH_INTERVAL = 10000; // 10 seconds between refresh batches
+const MAX_CONCURRENT_REFRESHES = 3;
+
+// Concurrency tracking
+const activeConcurrencyGroups: Set<string> = new Set();
+
+// Tags system for grouped invalidation
+const tagToKeysMap: Record<string, Set<string>> = {};
 
 // Initialize stats from localStorage
 try {
@@ -78,23 +132,21 @@ try {
 }
 
 /**
- * Set data in the specified cache storage
+ * Set data in the specified cache storage with enhanced options
  */
 export const setCacheData = <T>(
   key: string,
   data: T,
   duration: number = CACHE_DURATIONS.MEDIUM,
   storage: CacheStorage = 'memory',
-  options: CacheCompressionOptions & { 
-    priority?: CachePriority,
-    notifySync?: boolean,
-    batchUpdate?: boolean
-  } = { 
+  options: EnhancedCacheOptions = { 
     useCompression: true, 
     compressionThreshold: 1024,
     priority: 'normal',
     notifySync: true,
-    batchUpdate: false
+    batchUpdate: false,
+    refreshStrategy: 'lazy',
+    refreshThreshold: 75
   }
 ): void => {
   // Handle batched updates
@@ -136,15 +188,30 @@ export const setCacheData = <T>(
     }
   }
   
-  const cacheEntry: CacheEntry<T> = {
+  const cacheEntry: EnhancedCacheEntry<T> = {
     data: storedData,
     timestamp,
     expiry: timestamp + duration,
     compressed,
     priority: options.priority || 'normal',
     lastAccessed: timestamp,
-    accessCount: 1
+    accessCount: 1,
+    refreshStrategy: options.refreshStrategy,
+    refreshThreshold: options.refreshThreshold,
+    tags: options.tags,
+    concurrencyKey: options.concurrencyKey,
+    lastRefreshCheck: timestamp
   };
+
+  // Register tags if provided
+  if (options.tags && options.tags.length > 0) {
+    options.tags.forEach(tag => {
+      if (!tagToKeysMap[tag]) {
+        tagToKeysMap[tag] = new Set();
+      }
+      tagToKeysMap[tag].add(key);
+    });
+  }
 
   // Cache in memory regardless of storage type for faster access
   memoryCache[key] = cacheEntry;
@@ -210,31 +277,89 @@ const processBatchedUpdates = (): void => {
 
 /**
  * Get data from cache if valid, otherwise return null
+ * Enhanced with automatic refresh capabilities
  */
 export const getCacheData = <T>(
   key: string,
-  storage: CacheStorage = 'memory'
+  storage: CacheStorage = 'memory',
+  options: {
+    forceRefresh?: boolean;
+    onRefresh?: (key: string, oldData: any) => Promise<any>;
+  } = {}
 ): T | null => {
   const now = Date.now();
   
   // First try memory cache (fastest)
-  if (memoryCache[key] && memoryCache[key].expiry > now) {
-    cacheStats.hits++;
-    localStorage.setItem('cache:stats', JSON.stringify(cacheStats));
-    console.log(`Cache hit for ${key}`);
+  if (memoryCache[key]) {
+    const entry = memoryCache[key] as EnhancedCacheEntry<T>;
     
-    const entry = memoryCache[key];
-    
-    // Update access statistics
-    entry.lastAccessed = now;
-    entry.accessCount = (entry.accessCount || 0) + 1;
-    
-    // Handle decompression if needed
-    if (entry.compressed) {
-      return decompressData<T>(entry.data);
+    // Still valid? Serve from cache
+    if (entry.expiry > now) {
+      cacheStats.hits++;
+      localStorage.setItem('cache:stats', JSON.stringify(cacheStats));
+      console.log(`Cache hit for ${key}`);
+      
+      // Update access statistics
+      entry.lastAccessed = now;
+      entry.accessCount = (entry.accessCount || 0) + 1;
+      
+      // Check if we should refresh in the background based on threshold
+      const remainingTtl = entry.expiry - now;
+      const totalTtl = entry.expiry - entry.timestamp;
+      const percentageRemaining = (remainingTtl / totalTtl) * 100;
+      
+      if (
+        !entry.refreshing && // Not already refreshing
+        entry.refreshStrategy && // Has a refresh strategy
+        entry.refreshStrategy !== 'lazy' && // Not lazy refresh
+        entry.refreshThreshold && // Has a threshold
+        percentageRemaining < entry.refreshThreshold && // Below threshold
+        (entry.lastRefreshCheck === undefined || // Never checked or checked long ago
+          now - (entry.lastRefreshCheck || 0) > 60000) // Don't check more than once per minute
+      ) {
+        entry.lastRefreshCheck = now;
+        
+        if (entry.refreshStrategy === 'background') {
+          // Add to background refresh queue
+          addToRefreshQueue(key, storage, entry.priority || 'normal', options.onRefresh);
+        } else if (entry.refreshStrategy === 'eager') {
+          // Immediately refresh if concurrency allows
+          if (entry.concurrencyKey && activeConcurrencyGroups.has(entry.concurrencyKey)) {
+            console.log(`Skipping eager refresh for ${key} due to concurrency constraints`);
+          } else {
+            // Track concurrency
+            if (entry.concurrencyKey) {
+              activeConcurrencyGroups.add(entry.concurrencyKey);
+            }
+            
+            // Immediate async refresh
+            refreshCacheEntry(key, storage, options.onRefresh)
+              .finally(() => {
+                if (entry.concurrencyKey) {
+                  activeConcurrencyGroups.delete(entry.concurrencyKey);
+                }
+              });
+          }
+        }
+      }
+      
+      // Handle decompression if needed
+      if (entry.compressed) {
+        return decompressData<T>(entry.data);
+      }
+      
+      return entry.data as T;
     }
     
-    return entry.data as T;
+    // Cache exists but is expired, check if we're in force refresh mode
+    if (options.forceRefresh && options.onRefresh) {
+      // If there's a refresh function, use it to update cache
+      try {
+        refreshCacheEntry(key, storage, options.onRefresh);
+      } catch (error) {
+        console.error(`Error refreshing cache for ${key}:`, error);
+      }
+    }
   }
   
   // If not in memory or expired, try browser storage if specified
@@ -244,7 +369,7 @@ export const getCacheData = <T>(
       const cacheJson = storageObj.getItem(key);
       
       if (cacheJson) {
-        const cacheEntry = JSON.parse(cacheJson) as CacheEntry<any>;
+        const cacheEntry = JSON.parse(cacheJson) as EnhancedCacheEntry<any>;
         
         if (cacheEntry.expiry > now) {
           // Restore to memory cache for faster subsequent access
@@ -272,6 +397,18 @@ export const getCacheData = <T>(
         if (memoryCache[key]) {
           delete memoryCache[key];
         }
+        
+        // Remove from tag mappings
+        if (cacheEntry.tags) {
+          cacheEntry.tags.forEach(tag => {
+            if (tagToKeysMap[tag]) {
+              tagToKeysMap[tag].delete(key);
+              if (tagToKeysMap[tag].size === 0) {
+                delete tagToKeysMap[tag];
+              }
+            }
+          });
+        }
       }
     } catch (error) {
       console.warn('Failed to retrieve from browser storage:', error);
@@ -285,9 +422,154 @@ export const getCacheData = <T>(
 };
 
 /**
+ * Add a cache entry to the background refresh queue
+ */
+const addToRefreshQueue = (
+  key: string,
+  storage: CacheStorage,
+  priority: CachePriority,
+  onRefresh?: (key: string, oldData: any) => Promise<any>
+): void => {
+  // Skip if already in the queue
+  if (refreshQueue.some(item => item.key === key)) {
+    return;
+  }
+  
+  refreshQueue.push({
+    key,
+    storage,
+    priority,
+    onRefresh,
+    timestamp: Date.now()
+  });
+  
+  // Start refresh process if not already running
+  if (refreshInterval === null) {
+    refreshInterval = window.setInterval(processRefreshQueue, REFRESH_INTERVAL);
+  }
+  
+  console.log(`Added ${key} to background refresh queue`);
+};
+
+/**
+ * Process the background refresh queue
+ */
+const processRefreshQueue = async (): Promise<void> => {
+  if (refreshQueue.length === 0) {
+    // No items to refresh, stop the interval
+    if (refreshInterval !== null) {
+      window.clearInterval(refreshInterval);
+      refreshInterval = null;
+    }
+    return;
+  }
+  
+  // Sort by priority (high to low) and then by timestamp (oldest first)
+  refreshQueue.sort((a, b) => {
+    const priorityOrder = { 'critical': 3, 'high': 2, 'normal': 1, 'low': 0 };
+    const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+    
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.timestamp - b.timestamp;
+  });
+  
+  // Process a batch of items
+  const batch = refreshQueue.splice(0, MAX_CONCURRENT_REFRESHES);
+  
+  console.log(`Processing ${batch.length} items from refresh queue`);
+  
+  const refreshPromises = batch.map(async item => {
+    try {
+      await refreshCacheEntry(item.key, item.storage, item.onRefresh);
+    } catch (error) {
+      console.error(`Failed to refresh ${item.key}:`, error);
+      cacheStats.refreshFailures++;
+    }
+  });
+  
+  await Promise.all(refreshPromises);
+};
+
+/**
+ * Refresh a single cache entry
+ */
+const refreshCacheEntry = async (
+  key: string,
+  storage: CacheStorage,
+  onRefresh?: (key: string, oldData: any) => Promise<any>
+): Promise<void> => {
+  if (!onRefresh) {
+    console.warn(`Cannot refresh ${key} without a refresh function`);
+    return;
+  }
+  
+  // Get current entry
+  const entry = memoryCache[key] as EnhancedCacheEntry<any>;
+  if (!entry) {
+    console.warn(`Cannot refresh ${key} - entry not found in cache`);
+    return;
+  }
+  
+  // Mark as refreshing to prevent duplicate refreshes
+  entry.refreshing = true;
+  entry.refreshAttempts = (entry.refreshAttempts || 0) + 1;
+  
+  const originalData = entry.compressed ? decompressData(entry.data) : entry.data;
+  
+  try {
+    console.log(`Refreshing cache entry: ${key}`);
+    const freshData = await onRefresh(key, originalData);
+    
+    if (freshData !== undefined) {
+      // Calculate new duration based on original
+      const originalDuration = entry.expiry - entry.timestamp;
+      
+      // Store the fresh data
+      setCacheData(
+        key,
+        freshData,
+        originalDuration,
+        storage,
+        {
+          useCompression: entry.compressed,
+          priority: entry.priority,
+          refreshStrategy: entry.refreshStrategy,
+          refreshThreshold: entry.refreshThreshold,
+          tags: entry.tags,
+          concurrencyKey: entry.concurrencyKey
+        }
+      );
+      
+      cacheStats.backgroundRefreshes++;
+      localStorage.setItem('cache:stats', JSON.stringify(cacheStats));
+    }
+  } catch (error) {
+    console.error(`Error refreshing cache for ${key}:`, error);
+    cacheStats.refreshFailures++;
+    
+    // Clear refreshing flag
+    entry.refreshing = false;
+  }
+};
+
+/**
  * Remove data from all cache storages
  */
-export const removeCacheData = (key: string): void => {
+export const removeCacheData = (key: string, notify: boolean = true): void => {
+  const entry = memoryCache[key] as EnhancedCacheEntry<any>;
+  
+  // Remove from tags mapping
+  if (entry && entry.tags) {
+    entry.tags.forEach(tag => {
+      if (tagToKeysMap[tag]) {
+        tagToKeysMap[tag].delete(key);
+        if (tagToKeysMap[tag].size === 0) {
+          delete tagToKeysMap[tag];
+        }
+      }
+    });
+  }
+  
   delete memoryCache[key];
   
   try {
@@ -298,41 +580,28 @@ export const removeCacheData = (key: string): void => {
   }
   
   // Notify other tabs/windows
-  notifyCacheRemove(key);
+  if (notify) {
+    notifyCacheRemove(key);
+  }
 };
 
 /**
- * Clear all cache entries that match a prefix
+ * Invalidate cache entries by tag
  */
-export const clearCacheByPrefix = (prefix: string): void => {
-  // Clear from memory cache
-  Object.keys(memoryCache).forEach(key => {
-    if (key.startsWith(prefix)) {
-      delete memoryCache[key];
-    }
-  });
-  
-  // Clear from browser storage
-  try {
-    // LocalStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith(prefix)) {
-        localStorage.removeItem(key);
-      }
-    });
-    
-    // SessionStorage
-    Object.keys(sessionStorage).forEach(key => {
-      if (key.startsWith(prefix)) {
-        sessionStorage.removeItem(key);
-      }
-    });
-  } catch (error) {
-    console.warn('Failed to clear cache by prefix from browser storage:', error);
+export const invalidateCacheByTag = (tag: string): number => {
+  if (!tagToKeysMap[tag]) {
+    return 0;
   }
   
-  // Notify other tabs/windows
-  notifyCacheClear(prefix);
+  const keys = Array.from(tagToKeysMap[tag]);
+  console.log(`Invalidating ${keys.length} cache entries with tag: ${tag}`);
+  
+  keys.forEach(key => {
+    removeCacheData(key);
+  });
+  
+  cacheStats.tagBasedInvalidations += keys.length;
+  return keys.length;
 };
 
 /**
@@ -356,6 +625,22 @@ export const cleanupExpiredItems = (storage: 'local' | 'session'): number => {
               storageObj.removeItem(key);
               itemsRemoved++;
               i--; // Adjust index since we removed an item
+              
+              // Also remove from memory cache and tag mappings if present
+              if (memoryCache[key]) {
+                const entry = memoryCache[key] as EnhancedCacheEntry<any>;
+                if (entry.tags) {
+                  entry.tags.forEach(tag => {
+                    if (tagToKeysMap[tag]) {
+                      tagToKeysMap[tag].delete(key);
+                      if (tagToKeysMap[tag].size === 0) {
+                        delete tagToKeysMap[tag];
+                      }
+                    }
+                  });
+                }
+                delete memoryCache[key];
+              }
             }
           } catch (e) {
             // Not a valid cache entry, skip
@@ -378,7 +663,13 @@ export const freeUpCacheSpace = (storage: 'local' | 'session', percentToRemove: 
   
   try {
     const storageObj = storage === 'local' ? localStorage : sessionStorage;
-    const items: Array<{ key: string, priority: CachePriority, lastAccessed: number, accessCount: number }> = [];
+    const items: Array<{ 
+      key: string, 
+      priority: CachePriority, 
+      lastAccessed: number, 
+      accessCount: number,
+      size: number
+    }> = [];
     
     // Collect items with their priority and access info
     for (let i = 0; i < storageObj.length; i++) {
@@ -387,12 +678,13 @@ export const freeUpCacheSpace = (storage: 'local' | 'session', percentToRemove: 
         const item = storageObj.getItem(key);
         if (item && item.startsWith('{')) {
           try {
-            const parsed = JSON.parse(item) as CacheEntry<any>;
+            const parsed = JSON.parse(item) as EnhancedCacheEntry<any>;
             items.push({
               key,
               priority: parsed.priority || 'normal',
               lastAccessed: parsed.lastAccessed || 0,
-              accessCount: parsed.accessCount || 0
+              accessCount: parsed.accessCount || 0,
+              size: item.length
             });
           } catch (e) {
             // Skip invalid items
@@ -402,6 +694,7 @@ export const freeUpCacheSpace = (storage: 'local' | 'session', percentToRemove: 
     }
     
     // Sort items by priority (low first) and then by last accessed time (oldest first)
+    // and access count (least accessed first)
     items.sort((a, b) => {
       const priorityOrder = { 'low': 0, 'normal': 1, 'high': 2, 'critical': 3 };
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
@@ -419,14 +712,38 @@ export const freeUpCacheSpace = (storage: 'local' | 'session', percentToRemove: 
     
     // Calculate how many items to remove
     const toRemove = Math.ceil(items.length * (percentToRemove / 100));
+    const priorityCounts: Record<CachePriority, number> = { low: 0, normal: 0, high: 0, critical: 0 };
     
     // Remove the calculated number of lowest priority items
     items.slice(0, toRemove).forEach(item => {
       storageObj.removeItem(item.key);
+      
+      // Also remove from memory cache and tag mappings if present
+      if (memoryCache[item.key]) {
+        const entry = memoryCache[item.key] as EnhancedCacheEntry<any>;
+        if (entry.tags) {
+          entry.tags.forEach(tag => {
+            if (tagToKeysMap[tag]) {
+              tagToKeysMap[tag].delete(item.key);
+              if (tagToKeysMap[tag].size === 0) {
+                delete tagToKeysMap[tag];
+              }
+            }
+          });
+        }
+        delete memoryCache[item.key];
+      }
+      
       itemsRemoved++;
+      priorityCounts[item.priority]++;
     });
     
-    console.log(`Freed up space by removing ${itemsRemoved} low priority cache items`);
+    // Update statistics
+    Object.entries(priorityCounts).forEach(([priority, count]) => {
+      cacheStats.priorityEvictions[priority as CachePriority] += count;
+    });
+    
+    console.log(`Freed up space by removing ${itemsRemoved} cache items (${priorityCounts.low} low, ${priorityCounts.normal} normal, ${priorityCounts.high} high, ${priorityCounts.critical} critical priority)`);
   } catch (error) {
     console.warn('Error freeing up cache space:', error);
   }
@@ -461,7 +778,13 @@ export const getCacheStats = () => {
     compressionSavings: cacheStats.compressionSavings,
     totalSize: cacheStats.totalSize,
     throttledUpdates: cacheStats.throttled,
-    batchedUpdates: cacheStats.batchedUpdates
+    batchedUpdates: cacheStats.batchedUpdates,
+    backgroundRefreshes: cacheStats.backgroundRefreshes,
+    refreshFailures: cacheStats.refreshFailures,
+    priorityEvictions: cacheStats.priorityEvictions,
+    tagBasedInvalidations: cacheStats.tagBasedInvalidations,
+    activeTags: Object.keys(tagToKeysMap).length,
+    refreshQueueSize: refreshQueue.length
   };
 };
 
@@ -475,6 +798,15 @@ export const resetCacheStats = (): void => {
   cacheStats.totalSize = 0;
   cacheStats.throttled = 0;
   cacheStats.batchedUpdates = 0;
+  cacheStats.backgroundRefreshes = 0;
+  cacheStats.refreshFailures = 0;
+  cacheStats.priorityEvictions = {
+    low: 0,
+    normal: 0,
+    high: 0,
+    critical: 0
+  };
+  cacheStats.tagBasedInvalidations = 0;
   
   try {
     localStorage.setItem('cache:stats', JSON.stringify(cacheStats));
@@ -498,6 +830,11 @@ const registerCacheListeners = (): void => {
     // TODO: Implement offline mode optimizations
   });
 };
+
+// Start the background refresh process
+if (refreshQueue.length > 0 && refreshInterval === null) {
+  refreshInterval = window.setInterval(processRefreshQueue, REFRESH_INTERVAL);
+}
 
 // Initialize event listeners
 registerCacheListeners();
