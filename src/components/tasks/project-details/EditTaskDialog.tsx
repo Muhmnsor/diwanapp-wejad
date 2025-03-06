@@ -14,8 +14,6 @@ interface EditTaskDialogProps {
   projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
   onTaskUpdated: () => void;
-  onAssigneeChange?: (assigneeId: string) => Promise<void>;
-  isGeneral?: boolean;
 }
 
 export const EditTaskDialog = ({
@@ -24,9 +22,7 @@ export const EditTaskDialog = ({
   task,
   projectStages,
   projectMembers,
-  onTaskUpdated,
-  onAssigneeChange,
-  isGeneral = false
+  onTaskUpdated
 }: EditTaskDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,11 +42,6 @@ export const EditTaskDialog = ({
     try {
       console.log("Updating task with data:", formData);
       
-      // Notify about assignee change if needed and the callback exists
-      if (onAssigneeChange && formData.assignedTo !== task.assigned_to) {
-        await onAssigneeChange(formData.assignedTo || "");
-      }
-      
       // Prepare update data
       const updateData = {
         title: formData.title,
@@ -59,7 +50,7 @@ export const EditTaskDialog = ({
         priority: formData.priority,
         stage_id: formData.stageId,
         assigned_to: formData.assignedTo,
-        category: isGeneral ? formData.category : undefined
+        category: task.is_general ? formData.category : undefined
       };
       
       // Update task in database
@@ -133,7 +124,7 @@ export const EditTaskDialog = ({
             isSubmitting={isSubmitting}
             projectStages={projectStages}
             projectMembers={projectMembers}
-            isGeneral={isGeneral}
+            isGeneral={!!task.is_general}
             initialValues={{
               title: task.title,
               description: task.description || "",

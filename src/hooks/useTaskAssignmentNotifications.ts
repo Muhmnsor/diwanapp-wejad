@@ -1,57 +1,69 @@
 
-import { useCallback } from 'react';
+import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
-export interface TaskAssignmentParams {
+interface TaskAssignmentParams {
   taskId: string;
   taskTitle: string;
-  assigneeId: string;
-  projectId?: string | null;
-  projectTitle?: string | null;
-  assignedByUserId?: string | null;
-  assignedByUserName?: string | null;
+  projectId?: string;
+  projectTitle?: string;
+  assignedUserId: string;
+  assignedByUserId?: string;
+  assignedByUserName?: string;
 }
 
 export const useTaskAssignmentNotifications = () => {
-  const sendTaskAssignmentNotification = useCallback(async (params: TaskAssignmentParams) => {
+  const { createNotification } = useInAppNotifications();
+
+  // إشعار إسناد مهمة جديدة
+  const sendTaskAssignmentNotification = async (params: TaskAssignmentParams) => {
     try {
-      const { taskId, taskTitle, assigneeId, projectId, projectTitle, assignedByUserId, assignedByUserName } = params;
+      if (!params.assignedUserId) {
+        console.log('No assigned user ID provided for notification');
+        return null;
+      }
+
+      // الحصول على اسم المستخدم الذي تم تكليفه بالمهمة للعرض في الإشعار
+      let assigneeName = "";
+      try {
+        const { data: assigneeProfile } = await supabase
+          .from('profiles')
+          .select('display_name, email')
+          .eq('id', params.assignedUserId)
+          .single();
+          
+        assigneeName = assigneeProfile?.display_name || '';
+        console.log('Assigned user profile:', assigneeProfile);
+      } catch (assigneeError) {
+        console.log('Could not fetch assignee profile:', assigneeError);
+      }
+
+      let message = `تم إسناد المهمة "${params.taskTitle}" إليك`;
+      if (params.projectTitle) {
+        message += ` في مشروع "${params.projectTitle}"`;
+      }
+      if (params.assignedByUserName) {
+        message += ` بواسطة ${params.assignedByUserName}`;
+      }
       
-      // Create in-app notification
-      const { error } = await supabase
-        .from('in_app_notifications')
-        .insert({
-          user_id: assigneeId,
-          title: 'تم تكليفك بمهمة جديدة',
-          message: `تم تكليفك بمهمة "${taskTitle}"${projectTitle ? ` في المشروع "${projectTitle}"` : ''}`,
-          notification_type: 'task_assignment',
-          related_entity_id: taskId,
-          related_entity_type: 'task',
-          initiator_id: assignedByUserId || null,
-          meta: {
-            project_id: projectId || null,
-            assigned_by: assignedByUserName || null
-          }
-        });
+      console.log('Sending task assignment notification to user:', params.assignedUserId);
+      console.log('Notification message:', message);
       
-      if (error) throw error;
-      
-      return { success: true };
+      return await createNotification({
+        title: `تم إسناد مهمة جديدة`,
+        message,
+        notification_type: 'task',
+        related_entity_id: params.taskId,
+        related_entity_type: params.projectId ? 'project_task' : 'task',
+        user_id: params.assignedUserId
+      });
     } catch (error) {
       console.error('Error sending task assignment notification:', error);
-      toast.error('حدث خطأ أثناء إرسال الإشعار');
-      return { success: false, error };
+      return null;
     }
-  }, []);
-
-  // For compatibility with the existing TaskListItem component
-  const notifyTaskAssignment = useCallback(async (taskId: string, taskTitle: string, assigneeId: string) => {
-    return sendTaskAssignmentNotification({ taskId, taskTitle, assigneeId });
-  }, [sendTaskAssignmentNotification]);
+  };
 
   return {
-    sendTaskAssignmentNotification,
-    notifyTaskAssignment
+    sendTaskAssignmentNotification
   };
 };

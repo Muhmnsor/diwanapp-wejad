@@ -3,10 +3,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/authStore";
 
 export const useGeneralTasks = () => {
-  const { user } = useAuthStore();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tasksByCategory, setTasksByCategory] = useState<Record<string, Task[]>>({});
@@ -15,7 +13,6 @@ export const useGeneralTasks = () => {
     total: 0,
     completed: 0,
     pending: 0,
-    inProgress: 0,
     delayed: 0,
     upcoming: 0
   });
@@ -23,23 +20,33 @@ export const useGeneralTasks = () => {
   const fetchGeneralTasks = async () => {
     setIsLoading(true);
     try {
-      const { data: authUser } = await supabase.auth.getUser();
-      const currentUser = authUser?.user;
+      console.log("Fetching general tasks");
       
+      // Get tasks
       const { data, error } = await supabase
         .from('tasks')
-        .select('*, profiles:created_by(display_name, email)')
+        .select('*')
         .eq('is_general', true)
         .order('created_at', { ascending: false });
-
+      
       if (error) {
+        console.error("Error fetching general tasks:", error);
         throw error;
       }
-
-      const enrichedTasks = await Promise.all((data || []).map(async (task) => {
-        // Process assigned user name
-        let assignedUserName = null;
+      
+      console.log("Fetched general tasks:", data);
+      
+      // Add user names for tasks with assignees
+      const tasksWithUserData = await Promise.all((data || []).map(async (task) => {
         if (task.assigned_to) {
+          // Check if it's a custom assignee
+          if (task.assigned_to.startsWith('custom:')) {
+            return {
+              ...task,
+              assigned_user_name: task.assigned_to.replace('custom:', '')
+            };
+          }
+          
           const { data: userData, error: userError } = await supabase
             .from('profiles')
             .select('display_name, email')
@@ -47,83 +54,65 @@ export const useGeneralTasks = () => {
             .single();
           
           if (!userError && userData) {
-            assignedUserName = userData.display_name || userData.email;
+            return {
+              ...task,
+              assigned_user_name: userData.display_name || userData.email
+            };
           }
         }
         
-        // Get creator name from joined profiles
-        const creatorProfile = task.profiles;
-        const creatorName = creatorProfile?.display_name || creatorProfile?.email || 'مستخدم';
-        
-        return {
-          ...task,
-          assigned_user_name: assignedUserName,
-          creator_name: creatorName
-        };
+        return task;
       }));
       
-      setTasks(enrichedTasks);
-      
       // Group tasks by category
-      const categorizedTasks = {};
-      const categories = new Set();
+      const tasksByCategoryMap: Record<string, Task[]> = {};
+      const uniqueCategories = new Set<string>();
       
-      enrichedTasks.forEach(task => {
-        const category = task.category || 'عام';
-        categories.add(category);
+      tasksWithUserData.forEach(task => {
+        const category = task.category || 'أخرى';
+        uniqueCategories.add(category);
         
-        if (!categorizedTasks[category]) {
-          categorizedTasks[category] = [];
+        if (!tasksByCategoryMap[category]) {
+          tasksByCategoryMap[category] = [];
         }
-        categorizedTasks[category].push(task);
+        tasksByCategoryMap[category].push(task);
       });
       
-      setTasksByCategory(categorizedTasks);
-      setCategories(Array.from(categories) as string[]);
-      
-      // Calculate statistics
-      let total = enrichedTasks.length;
-      let completed = 0;
-      let pending = 0;
-      let inProgress = 0;
-      let delayed = 0;
-      let upcoming = 0;
-      
+      // Calculate stats
       const now = new Date();
+      const oneWeekFromNow = new Date();
+      oneWeekFromNow.setDate(now.getDate() + 7);
       
-      enrichedTasks.forEach(task => {
-        switch (task.status) {
-          case 'completed':
-            completed++;
-            break;
-          case 'pending':
-            pending++;
-            break;
-          case 'in_progress':
-            inProgress++;
-            break;
-          case 'delayed':
-            delayed++;
-            break;
-        }
-        
-        // Check for upcoming tasks (due date in the future)
-        if (task.due_date && new Date(task.due_date) > now && task.status !== 'completed') {
-          upcoming++;
-        }
-      });
+      const total = tasksWithUserData.length;
+      const completed = tasksWithUserData.filter(task => task.status === 'completed').length;
+      const pending = tasksWithUserData.filter(task => 
+        task.status === 'pending' || task.status === 'in_progress'
+      ).length;
+      const delayed = tasksWithUserData.filter(task => {
+        if (!task.due_date) return false;
+        const dueDate = new Date(task.due_date);
+        return dueDate < now && task.status !== 'completed';
+      }).length;
+      const upcoming = tasksWithUserData.filter(task => {
+        if (!task.due_date) return false;
+        const dueDate = new Date(task.due_date);
+        return dueDate > now && dueDate <= oneWeekFromNow && task.status !== 'completed';
+      }).length;
       
+      setTasks(tasksWithUserData);
+      setTasksByCategory(tasksByCategoryMap);
+      setCategories(Array.from(uniqueCategories));
       setStats({
         total,
         completed,
         pending,
-        inProgress,
         delayed,
         upcoming
       });
+      
     } catch (error) {
       console.error("Error fetching general tasks:", error);
-      toast.error("حدث خطأ أثناء تحميل المهام العامة");
+      toast.error("حدث خطأ أثناء استرجاع المهام العامة");
     } finally {
       setIsLoading(false);
     }

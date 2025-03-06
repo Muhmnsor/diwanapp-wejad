@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 interface TaskData {
   workspaceId: string;
@@ -106,7 +107,7 @@ export const submitTask = async (taskData: TaskData) => {
         await sendTaskAssignmentNotification({
           taskId: newTask.id,
           taskTitle: taskData.title,
-          assigneeId: taskData.assignedTo,
+          assignedUserId: taskData.assignedTo,
           assignedByUserId: user.id,
           assignedByUserName: creatorName
         });

@@ -12,13 +12,9 @@ import { Button } from "@/components/ui/button";
 export const AssignedTasksList = () => {
   const { tasks, loading, error, refetch } = useAssignedTasks();
   const [showCompleted, setShowCompleted] = useState(false);
-  const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   
   const handleStatusChange = async (taskId: string, status: string) => {
     try {
-      // Set the updating state
-      setUpdatingTaskId(taskId);
-      
       // التحقق من الجدول المناسب للمهمة
       const task = tasks.find(t => t.id === taskId);
       
@@ -52,14 +48,7 @@ export const AssignedTasksList = () => {
     } catch (error) {
       console.error("Error updating task status:", error);
       toast.error('حدث خطأ أثناء تحديث حالة المهمة');
-    } finally {
-      setUpdatingTaskId(null);
     }
-  };
-  
-  // Wrapper function that conforms to the TaskListItem's expected signature
-  const handleTaskStatusChange = (taskId: string) => (status: string) => {
-    return handleStatusChange(taskId, status);
   };
   
   if (loading) {
@@ -110,8 +99,7 @@ export const AssignedTasksList = () => {
             <TaskListItem 
               key={task.id} 
               task={task} 
-              onStatusChange={handleTaskStatusChange(task.id)}
-              isUpdating={updatingTaskId === task.id}
+              onStatusChange={handleStatusChange}
             />
           </div>
         ))}

@@ -1,101 +1,107 @@
 
-import { useState, Fragment } from "react";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import { Paperclip, Upload, MessageCircle, FileDown } from "lucide-react";
-import { TaskActionButtons } from "./actions/TaskActionButtons";
-import { TaskHeader } from "./TaskHeader";
-import { DiscussionDialog } from "../dialogs/DiscussionDialog";
-import { AttachmentsDialog } from "../dialogs/AttachmentsDialog";
-import { FileUploadDialog } from "../dialogs/FileUploadDialog";
-import { TemplatesDialog } from "../dialogs/TemplatesDialog";
+import { useState } from "react";
 import { Task } from "../types/task";
-import { Badge } from "@/components/ui/badge";
+import { TaskHeader } from "./header/TaskHeader";
+import { TaskMetadata } from "./metadata/TaskMetadata";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
+import { TaskAttachmentDialog } from "./dialogs/TaskAttachmentDialog";
+import { FileUploadDialog } from "./dialogs/FileUploadDialog";
+import { TaskActionButtons } from "./actions/TaskActionButtons";
+import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
+import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import type { Task as ProjectTask } from "../project-details/types/task";
-import { useTaskPermissions } from "../hooks/useTaskPermissions";
 
 interface TaskListItemProps {
   task: Task;
-  onStatusChange: (status: string) => void;
-  isUpdating: boolean;
-  onDelete?: () => void;
-  currentUserId?: string;
+  onStatusChange: (taskId: string, status: string) => void;
+  onDelete?: (taskId: string) => void;
   onTaskUpdated?: () => void;
-  isGeneral?: boolean;
 }
 
-export const TaskListItem = ({
-  task,
-  onStatusChange,
-  isUpdating,
-  onDelete,
-  currentUserId,
-  onTaskUpdated,
-  isGeneral = false
-}: TaskListItemProps) => {
-  const [isDiscussionOpen, setIsDiscussionOpen] = useState(false);
-  const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false);
-  const [isFileUploadOpen, setIsFileUploadOpen] = useState(false);
-  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: TaskListItemProps) => {
+  const [showDiscussion, setShowDiscussion] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { user } = useAuthStore();
-  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
-  
-  // Use the task permissions hook
-  const { canEdit, canDelete, canChangeStatus } = useTaskPermissions({
-    taskId: task.id,
-    assignedTo: task.assigned_to,
-    createdBy: task.created_by
-  });
-
   const currentStatus = task.status || "pending";
-  
-  const formattedDate = task.due_date
-    ? format(new Date(task.due_date), "d MMMM yyyy", { locale: ar })
-    : "غير محدد";
+  const { sendTaskStatusUpdateNotification } = useTaskNotifications();
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
+  const { user } = useAuthStore();
 
-  const showDiscussion = () => {
-    setIsDiscussionOpen(true);
-  };
-
-  const openFileUploader = () => {
-    setIsFileUploadOpen(true);
-  };
-
-  const openAttachments = () => {
-    setIsAttachmentsOpen(true);
-  };
-
-  const openTemplates = () => {
-    setIsTemplatesOpen(true);
-  };
-
-  const handleTaskUpdated = () => {
-    setIsEditDialogOpen(false);
-    if (onTaskUpdated) {
-      onTaskUpdated();
+  // Custom function to handle status change
+  const handleStatusChange = async (status: string) => {
+    setIsUpdating(true);
+    try {
+      // Check if the task is a subtask and use the correct table
+      if (task.is_subtask) {
+        const { error } = await supabase
+          .from('subtasks')
+          .update({ status })
+          .eq('id', task.id);
+          
+        if (error) throw error;
+        
+        // We need to call the onStatusChange to update the UI
+        onStatusChange(task.id, status);
+        toast.success('تم تحديث حالة المهمة الفرعية');
+        
+        // Send notification if there's an assigned user
+        if (task.assigned_to && task.assigned_to !== user?.id) {
+          const userData = await supabase.auth.getUser(user?.id || '');
+          const userName = userData.data?.user?.email || 'مستخدم';
+          
+          await sendTaskStatusUpdateNotification({
+            taskId: task.id,
+            taskTitle: task.title,
+            assignedUserId: task.assigned_to,
+            updatedByUserId: user?.id,
+            updatedByUserName: userName
+          }, status);
+        }
+      } else {
+        // Regular tasks use the parent component's handler
+        onStatusChange(task.id, status);
+        
+        // Send notification if there's an assigned user
+        if (task.assigned_to && task.assigned_to !== user?.id) {
+          const userData = await supabase.auth.getUser(user?.id || '');
+          const userName = userData.data?.user?.email || 'مستخدم';
+          
+          await sendTaskStatusUpdateNotification({
+            taskId: task.id,
+            taskTitle: task.title,
+            projectId: task.project_id,
+            projectTitle: task.project_name,
+            assignedUserId: task.assigned_to,
+            updatedByUserId: user?.id,
+            updatedByUserName: userName
+          }, status);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error('حدث خطأ أثناء تحديث حالة المهمة');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  const handleTaskEdited = () => {
+  // Handle edit task
+  const handleEditTask = (taskId: string) => {
     setIsEditDialogOpen(true);
   };
 
-  const handleAssigneeChange = async (assigneeId: string) => {
-    // Notify the assignee if there's a change and not current user
-    if (assigneeId && task.assigned_to !== assigneeId && assigneeId !== user?.id) {
-      try {
-        await sendTaskAssignmentNotification({
-          taskId: task.id,
-          taskTitle: task.title,
-          assigneeId
-        });
-      } catch (error) {
-        console.error("Failed to notify task assignment:", error);
-      }
+  // Handle task update completion
+  const handleTaskUpdated = () => {
+    if (onTaskUpdated) {
+      onTaskUpdated();
     }
   };
 
@@ -118,106 +124,65 @@ export const TaskListItem = ({
       <TaskHeader task={task} status={currentStatus} />
       
       <div className="mt-3">
-        <p className="text-sm text-gray-600 line-clamp-2">
-          {task.description || "لا يوجد وصف للمهمة"}
-        </p>
+        <TaskMetadata
+          dueDate={task.due_date}
+          projectName={task.project_name}
+          isSubtask={!!task.parent_task_id}
+          parentTaskId={task.parent_task_id}
+          isGeneral={task.is_general}
+        />
       </div>
       
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-gray-500">
-        <div className="flex flex-wrap items-center gap-4">
-          <div>
-            <span className="ml-1 font-medium">التاريخ:</span>
-            {formattedDate}
-          </div>
-          
-          {task.assigned_to && (
-            <div>
-              <span className="ml-1 font-medium">المكلف:</span>
-              {task.assigned_user_name || "مستخدم"}
-            </div>
-          )}
-          
-          {task.created_by && (
-            <div>
-              <span className="ml-1 font-medium">المنشئ:</span>
-              {task.creator_name || "مستخدم"}
-            </div>
-          )}
-        </div>
-        
-        <div className="flex gap-2">
-          {task.priority && (
-            <Badge
-              variant="outline"
-              className={`${
-                task.priority === 'high'
-                  ? 'border-red-500 text-red-500'
-                  : task.priority === 'medium'
-                  ? 'border-amber-500 text-amber-500'
-                  : 'border-green-500 text-green-500'
-              }`}
-            >
-              {task.priority === 'high'
-                ? 'عالية'
-                : task.priority === 'medium'
-                ? 'متوسطة'
-                : 'منخفضة'}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      <TaskActionButtons
+      <TaskActionButtons 
         currentStatus={currentStatus}
         isUpdating={isUpdating}
-        onShowDiscussion={showDiscussion}
-        onOpenFileUploader={openFileUploader}
-        onOpenAttachments={openAttachments}
-        onStatusChange={onStatusChange}
-        onOpenTemplates={openTemplates}
+        onShowDiscussion={() => setShowDiscussion(true)}
+        onOpenFileUploader={() => setIsUploadDialogOpen(true)}
+        onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
+        onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
+        onStatusChange={handleStatusChange}
         onDelete={onDelete}
-        onEdit={handleTaskEdited}
+        onEdit={handleEditTask}
         taskId={task.id}
-        isGeneral={isGeneral}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        canChangeStatus={canChangeStatus}
+        isGeneral={task.is_general}
       />
-
-      {isDiscussionOpen && (
-        <DiscussionDialog
-          open={isDiscussionOpen}
-          onOpenChange={setIsDiscussionOpen}
-          taskId={task.id}
-          isGeneral={isGeneral}
+      
+      {/* Task Discussion Dialog */}
+      <TaskDiscussionDialog 
+        open={showDiscussion} 
+        onOpenChange={setShowDiscussion}
+        task={task}
+      />
+      
+      {/* Attachments Dialog */}
+      {task && (
+        <TaskAttachmentDialog
+          task={task}
+          open={isAttachmentDialogOpen}
+          onOpenChange={setIsAttachmentDialogOpen}
         />
       )}
-
-      {isFileUploadOpen && (
+      
+      {/* File Upload Dialog */}
+      {task && (
         <FileUploadDialog
-          open={isFileUploadOpen}
-          onOpenChange={setIsFileUploadOpen}
-          taskId={task.id}
+          isOpen={isUploadDialogOpen}
+          onClose={() => setIsUploadDialogOpen(false)}
+          task={task}
         />
       )}
 
-      {isAttachmentsOpen && (
-        <AttachmentsDialog
-          open={isAttachmentsOpen}
-          onOpenChange={setIsAttachmentsOpen}
-          taskId={task.id}
+      {/* Templates Dialog */}
+      {task && (
+        <TaskTemplatesDialog
+          task={task}
+          open={isTemplatesDialogOpen}
+          onOpenChange={setIsTemplatesDialogOpen}
         />
       )}
 
-      {isTemplatesOpen && (
-        <TemplatesDialog
-          open={isTemplatesOpen}
-          onOpenChange={setIsTemplatesOpen}
-          taskId={task.id}
-        />
-      )}
-
-      {isEditDialogOpen && (
+      {/* Edit Task Dialog for General Tasks */}
+      {task && task.is_general && (
         <EditTaskDialog
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}

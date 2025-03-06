@@ -20,8 +20,5 @@ export interface Task {
   form_template?: string | null;
   templates?: Array<{ url: string }> | null;
   category?: string | null;
-  stage_id?: string | null;
-  created_by?: string | null;
-  assigned_user_name?: string | null;
-  creator_name?: string | null;
+  stage_id?: string;
 }
