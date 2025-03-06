@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatDate } from "@/utils/formatters";
 
 export interface TaskProject {
   id: string;
@@ -101,11 +100,12 @@ export const useEditTaskProject = ({
   // Reset form when project changes
   useEffect(() => {
     if (isOpen && project) {
-      console.log("Project data:", project);
+      console.log("Project data for form:", project);
       console.log("Start date from API:", project.start_date);
       console.log("Due date from API:", project.due_date);
       console.log("Formatted start date:", formatDateForInput(project.start_date));
       console.log("Formatted due date:", formatDateForInput(project.due_date));
+      console.log("Project manager:", project.project_manager);
       
       form.reset({
         name: project.title,
