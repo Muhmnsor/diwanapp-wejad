@@ -11,7 +11,7 @@ import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 
 interface TasksListProps {
-  projectId: string | undefined;
+  projectId?: string | undefined;
 }
 
 // Re-export Task interface for backward compatibility
@@ -29,7 +29,8 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     handleStagesChange,
     tasksByStage,
     handleStatusChange,
-    fetchTasks
+    fetchTasks,
+    isGeneral
   } = useTasksList(projectId);
 
   // Fetch project members
@@ -42,14 +43,16 @@ export const TasksList = ({ projectId }: TasksListProps) => {
 
   return (
     <>
-      <ProjectStages 
-        projectId={projectId} 
-        onStagesChange={handleStagesChange} 
-      />
+      {!isGeneral && (
+        <ProjectStages 
+          projectId={projectId} 
+          onStagesChange={handleStagesChange} 
+        />
+      )}
       
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} />
+          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -69,6 +72,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
+            isGeneral={isGeneral}
           />
         </CardContent>
       </Card>
@@ -80,6 +84,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
         projectStages={projectStages}
         onTaskAdded={fetchTasks}
         projectMembers={projectMembers}
+        isGeneral={isGeneral}
       />
     </>
   );

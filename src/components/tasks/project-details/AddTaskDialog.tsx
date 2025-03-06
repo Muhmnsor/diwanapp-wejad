@@ -6,6 +6,7 @@ import { uploadAttachment, saveTaskTemplate } from "../services/uploadService";
 import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 export function AddTaskDialog({ 
   open, 
@@ -13,7 +14,8 @@ export function AddTaskDialog({
   projectId, 
   projectStages, 
   onTaskAdded, 
-  projectMembers 
+  projectMembers,
+  isGeneral
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,8 +23,10 @@ export function AddTaskDialog({
   projectStages: { id: string; name: string }[];
   onTaskAdded: () => void;
   projectMembers: ProjectMember[];
+  isGeneral?: boolean;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
 
   const handleSubmit = async (formData: {
     title: string;
@@ -32,6 +36,7 @@ export function AddTaskDialog({
     stageId: string;
     assignedTo: string | null;
     templates?: File[] | null;
+    category?: string;
   }) => {
     setIsSubmitting(true);
     
@@ -39,18 +44,25 @@ export function AddTaskDialog({
       console.log("Submitting task data:", formData);
       
       // إنشاء المهمة أولاً
-      const { data: taskData, error: taskError } = await supabase
+      const taskData = {
+        title: formData.title,
+        description: formData.description,
+        assigned_to: formData.assignedTo,
+        due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        stage_id: !isGeneral ? formData.stageId : null,
+        priority: formData.priority,
+        status: 'pending',
+        category: formData.category || null,
+        is_general: isGeneral || false
+      };
+      
+      if (!isGeneral) {
+        taskData['project_id'] = projectId;
+      }
+      
+      const { data: newTask, error: taskError } = await supabase
         .from('tasks')
-        .insert({
-          project_id: projectId,
-          title: formData.title,
-          description: formData.description,
-          assigned_to: formData.assignedTo,
-          due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-          stage_id: formData.stageId,
-          priority: formData.priority,
-          status: 'pending'
-        })
+        .insert(taskData)
         .select()
         .single();
 
@@ -60,11 +72,59 @@ export function AddTaskDialog({
         return;
       }
 
-      console.log("Task created successfully:", taskData);
+      console.log("Task created successfully:", newTask);
+
+      // Get project details for the notification (if applicable)
+      let projectTitle = '';
+      if (projectId && !isGeneral) {
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('name')
+          .eq('id', projectId)
+          .single();
+        
+        if (projectData) {
+          projectTitle = projectData.name;
+        }
+      }
+
+      // Send notification if task is assigned to someone
+      if (formData.assignedTo) {
+        try {
+          // Get current user info
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Get user's display name or email
+            const { data: creatorProfile } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('id', user.id)
+              .single();
+              
+            const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
+            
+            // Send the notification
+            await sendTaskAssignmentNotification({
+              taskId: newTask.id,
+              taskTitle: formData.title,
+              projectId: isGeneral ? null : projectId,
+              projectTitle: isGeneral ? 'المهام العامة' : projectTitle,
+              assignedUserId: formData.assignedTo,
+              assignedByUserId: user.id,
+              assignedByUserName: creatorName
+            });
+            
+            console.log('Task assignment notification sent to:', formData.assignedTo);
+          }
+        } catch (notifyError) {
+          console.error('Error sending task assignment notification:', notifyError);
+        }
+      }
 
       // معالجة النماذج إذا وجدت
       let templateErrors = false;
-      if (formData.templates && formData.templates.length > 0 && taskData) {
+      if (formData.templates && formData.templates.length > 0 && newTask) {
         for (const file of formData.templates) {
           try {
             console.log("Processing template file:", file.name);
@@ -77,7 +137,7 @@ export function AddTaskDialog({
               try {
                 // حفظ النموذج في جدول نماذج المهمة
                 await saveTaskTemplate(
-                  taskData.id,
+                  newTask.id,
                   uploadResult.url,
                   file.name,
                   file.type
@@ -118,9 +178,9 @@ export function AddTaskDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col rtl">
         <DialogHeader>
-          <DialogTitle>إضافة مهمة جديدة</DialogTitle>
+          <DialogTitle>إضافة {isGeneral ? "مهمة عامة" : "مهمة"} جديدة</DialogTitle>
           <DialogDescription>
-            أضف مهمة جديدة إلى المشروع. اضغط إرسال عند الانتهاء.
+            أضف {isGeneral ? "مهمة عامة" : "مهمة جديدة إلى المشروع"}. اضغط إرسال عند الانتهاء.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-auto">
@@ -129,6 +189,7 @@ export function AddTaskDialog({
             isSubmitting={isSubmitting}
             projectStages={projectStages}
             projectMembers={projectMembers}
+            isGeneral={isGeneral}
           />
         </div>
       </DialogContent>

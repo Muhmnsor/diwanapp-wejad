@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateTimeRemaining } from "../utils/countdownUtils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ExtendDiscussionDialogProps {
   isOpen: boolean;
@@ -32,6 +33,9 @@ export const ExtendDiscussionDialog = ({
   const [operation, setOperation] = useState<string>("add");
   const [totalCurrentHours, setTotalCurrentHours] = useState<number>(0);
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
+  const [isDiscussionExpired, setIsDiscussionExpired] = useState(false);
+  const [createdAt, setCreatedAt] = useState<string>("");
+  const queryClient = useQueryClient();
   
   // استرجاع معلومات الفكرة والوقت المتبقي عند فتح النافذة
   useEffect(() => {
@@ -41,7 +45,7 @@ export const ExtendDiscussionDialog = ({
         try {
           const { data: ideaData, error: fetchError } = await supabase
             .from("ideas")
-            .select("discussion_period, created_at")
+            .select("discussion_period, created_at, status")
             .eq("id", ideaId)
             .single();
 
@@ -54,6 +58,8 @@ export const ExtendDiscussionDialog = ({
           if (ideaData) {
             // حساب الوقت المتبقي
             const { discussion_period, created_at } = ideaData;
+            
+            setCreatedAt(created_at);
             
             if (discussion_period && created_at) {
               console.log("Discussion period from DB:", discussion_period);
@@ -93,6 +99,11 @@ export const ExtendDiscussionDialog = ({
               
               console.log("Calculated remaining time:", { days: remaining_days, hours: remaining_hours });
               console.log("Total current hours in period:", totalHours);
+              
+              // التحقق من انتهاء المناقشة
+              const isExpired = remaining_days === 0 && remaining_hours === 0;
+              setIsDiscussionExpired(isExpired);
+              console.log("Is discussion expired:", isExpired);
               
               setRemainingDays(remaining_days);
               setRemainingHours(remaining_hours);
@@ -180,16 +191,37 @@ export const ExtendDiscussionDialog = ({
       console.log("New discussion period:", newDiscussionPeriod);
 
       // تحديث قاعدة البيانات
+      let updateData: any = { discussion_period: newDiscussionPeriod };
+      
+      // في حالة المناقشة المنتهية وتم تمديدها، نقوم بإعادة ضبط تاريخ الإنشاء
+      if (operation === "add" && isDiscussionExpired && newTotalHours > 0) {
+        console.log("Discussion was expired and is being extended - resetting created_at timestamp");
+        // تحديث تاريخ الإنشاء ليكون الوقت الحالي
+        updateData.created_at = new Date().toISOString();
+        // تحديث الحالة إلى قيد المناقشة
+        updateData.status = "under_review";
+      } 
+      // إذا لم تكن المناقشة منتهية وقام المستخدم بتمديدها، نحافظ على تاريخ الإنشاء الأصلي
+      else if (operation === "add" && newTotalHours > 0 && (remainingDays === 0 && remainingHours === 0)) {
+        console.log("Updating status to under_review because discussion was extended");
+        updateData.status = "under_review";
+      }
+
+      // تحديث قاعدة البيانات
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: newDiscussionPeriod })
+        .update(updateData)
         .eq("id", ideaId);
 
       if (updateError) {
         throw updateError;
       }
 
-      console.log("Discussion period updated successfully");
+      console.log("Discussion period updated successfully with data:", updateData);
+      
+      // تحديث البيانات في الواجهة
+      await queryClient.invalidateQueries({ queryKey: ['idea', ideaId] });
+      
       toast.success(operation === "add" ? "تم تمديد فترة المناقشة بنجاح" : "تم تنقيص فترة المناقشة بنجاح");
       onSuccess();
       onClose();
@@ -204,10 +236,13 @@ export const ExtendDiscussionDialog = ({
   const handleEndDiscussion = async () => {
     setIsSubmitting(true);
     try {
-      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها
+      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: "0 hours" })
+        .update({ 
+          discussion_period: "0 hours",
+          status: "pending_decision" 
+        })
         .eq("id", ideaId);
 
       if (updateError) {
@@ -215,6 +250,10 @@ export const ExtendDiscussionDialog = ({
       }
 
       console.log("Discussion ended successfully");
+      
+      // تحديث البيانات في الواجهة
+      await queryClient.invalidateQueries({ queryKey: ['idea', ideaId] });
+      
       toast.success("تم إنهاء المناقشة بنجاح");
       onSuccess();
       onClose();
@@ -250,11 +289,23 @@ export const ExtendDiscussionDialog = ({
                   </p>
                   
                   <p className="text-sm text-purple-700">
-                    الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
-                    {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
-                    {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
-                    {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+                    {isDiscussionExpired ? (
+                      <span className="text-red-500 font-semibold">المناقشة منتهية</span>
+                    ) : (
+                      <>
+                        الوقت المتبقي حالياً: {remainingDays > 0 ? `${remainingDays} يوم` : ""} 
+                        {remainingDays > 0 && remainingHours > 0 ? " و " : ""}
+                        {remainingHours > 0 ? `${remainingHours} ساعة` : ""}
+                        {remainingDays === 0 && remainingHours === 0 && "المناقشة منتهية"}
+                      </>
+                    )}
                   </p>
+                  
+                  {isDiscussionExpired && operation === "add" && (
+                    <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                      ملاحظة: عند تمديد مناقشة منتهية، سيتم إعادة ضبط توقيت بدء المناقشة إلى الوقت الحالي.
+                    </p>
+                  )}
                 </div>
                 
                 {/* اختيار نوع العملية (تمديد/تنقيص) */}
@@ -360,3 +411,4 @@ export const ExtendDiscussionDialog = ({
     </>
   );
 };
+

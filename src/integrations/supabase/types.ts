@@ -2255,7 +2255,9 @@ export type Database = {
           id: string
           priority: string | null
           project_id: string | null
+          project_manager: string | null
           stage_id: string | null
+          start_date: string | null
           status: string | null
           title: string
           updated_at: string
@@ -2270,7 +2272,9 @@ export type Database = {
           id?: string
           priority?: string | null
           project_id?: string | null
+          project_manager?: string | null
           stage_id?: string | null
+          start_date?: string | null
           status?: string | null
           title: string
           updated_at?: string
@@ -2285,7 +2289,9 @@ export type Database = {
           id?: string
           priority?: string | null
           project_id?: string | null
+          project_manager?: string | null
           stage_id?: string | null
+          start_date?: string | null
           status?: string | null
           title?: string
           updated_at?: string
@@ -2494,6 +2500,38 @@ export type Database = {
           },
           {
             foreignKeyName: "resource_distributions_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "financial_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_obligations: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          resource_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          resource_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_obligations_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
             referencedRelation: "financial_resources"

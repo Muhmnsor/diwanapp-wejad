@@ -6,14 +6,6 @@ import { Comment } from '../types';
 import { toast } from 'sonner';
 import { useIdeaNotifications } from '@/hooks/useIdeaNotifications';
 
-// Define a type for the profiles object to help TypeScript understand the structure
-type ProfileData = {
-  id: string;
-  email: string;
-  full_name: string;
-  avatar_url: string | null;
-};
-
 export const useComments = (ideaId: string, creatorId?: string) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,22 +24,7 @@ export const useComments = (ideaId: string, creatorId?: string) => {
       // Fetch comments for the idea
       const { data, error } = await supabase
         .from('idea_comments')
-        .select(`
-          id, 
-          content, 
-          created_at, 
-          updated_at, 
-          user_id, 
-          parent_id, 
-          attachment_url, 
-          attachment_name,
-          profiles:user_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('idea_id', ideaId)
         .order('created_at', { ascending: true });
 
@@ -55,37 +32,20 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         throw error;
       }
       
-      // Transform the comments data to include user info
-      const transformedComments = data.map((comment: any) => {
-        let profileData: ProfileData | null = null;
-        
-        // Safely extract profile data regardless of its structure
-        if (comment.profiles) {
-          if (Array.isArray(comment.profiles) && comment.profiles.length > 0) {
-            profileData = comment.profiles[0] as ProfileData;
-          } else {
-            profileData = comment.profiles as ProfileData;
-          }
-        }
-        
-        return {
-          id: comment.id,
-          content: comment.content,
-          created_at: comment.created_at,
-          updated_at: comment.updated_at,
-          user_id: comment.user_id,
-          parent_id: comment.parent_id,
-          idea_id: ideaId,
-          attachment_url: comment.attachment_url,
-          attachment_name: comment.attachment_name,
-          user: profileData ? {
-            id: profileData.id,
-            email: profileData.email,
-            name: profileData.full_name,
-            avatar_url: profileData.avatar_url
-          } : null
-        };
-      });
+      // Transform the comments to match our Comment type
+      const transformedComments: Comment[] = data.map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        created_at: comment.created_at,
+        user_id: comment.user_id,
+        parent_id: comment.parent_id,
+        idea_id: ideaId,
+        user_name: comment.user_name,
+        user_email: comment.user_email,
+        attachment_url: comment.attachment_url,
+        attachment_type: comment.attachment_type,
+        attachment_name: comment.attachment_name
+      }));
       
       setComments(transformedComments);
     } catch (error) {
@@ -107,6 +67,7 @@ export const useComments = (ideaId: string, creatorId?: string) => {
       
       let attachment_url = null;
       let attachment_name = null;
+      let attachment_type = null;
       
       // Upload file if provided
       if (file) {
@@ -114,7 +75,7 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
-          .from('comment-attachments')
+          .from('attachments')
           .upload(fileName, file);
           
         if (uploadError) {
@@ -123,11 +84,12 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         
         // Get public URL for the uploaded file
         const { data: urlData } = supabase.storage
-          .from('comment-attachments')
+          .from('attachments')
           .getPublicUrl(fileName);
           
         attachment_url = urlData.publicUrl;
         attachment_name = file.name;
+        attachment_type = file.type;
       }
       
       // Insert comment
@@ -139,24 +101,10 @@ export const useComments = (ideaId: string, creatorId?: string) => {
           idea_id: ideaId,
           parent_id: parentId,
           attachment_url,
-          attachment_name
-        })
-        .select(`
-          id, 
-          content, 
-          created_at, 
-          updated_at, 
-          user_id, 
-          parent_id, 
-          attachment_url, 
           attachment_name,
-          profiles:user_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+          attachment_type
+        })
+        .select('*')
         .single();
       
       if (error) {
@@ -174,35 +122,19 @@ export const useComments = (ideaId: string, creatorId?: string) => {
         });
       }
       
-      // Process the new comment data
-      let profileData: ProfileData | null = null;
-      
-      // Safely extract profile data
-      if (data.profiles) {
-        if (Array.isArray(data.profiles) && data.profiles.length > 0) {
-          profileData = data.profiles[0] as ProfileData;
-        } else {
-          profileData = data.profiles as ProfileData;
-        }
-      }
-      
       // Add the new comment to the state
-      const newComment = {
+      const newComment: Comment = {
         id: data.id,
         content: data.content,
         created_at: data.created_at,
-        updated_at: data.updated_at,
         user_id: data.user_id,
         parent_id: data.parent_id,
         idea_id: ideaId,
+        user_name: data.user_name,
+        user_email: data.user_email || user.email,
         attachment_url: data.attachment_url,
-        attachment_name: data.attachment_name,
-        user: profileData ? {
-          id: profileData.id,
-          email: profileData.email,
-          name: profileData.full_name,
-          avatar_url: profileData.avatar_url
-        } : null
+        attachment_type: data.attachment_type,
+        attachment_name: data.attachment_name
       };
       
       setComments(prevComments => [...prevComments, newComment]);

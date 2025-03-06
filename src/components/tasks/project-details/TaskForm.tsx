@@ -8,6 +8,7 @@ import { TaskStageField } from "./components/TaskStageField";
 import { TaskAssigneeField } from "./components/TaskAssigneeField";
 import { TaskFormActions } from "./components/TaskFormActions";
 import { TaskAttachmentField } from "./components/TaskAttachmentField";
+import { TaskCategoryField } from "./components/TaskCategoryField";
 import { ProjectMember } from "./hooks/useProjectMembers";
 
 export interface TaskFormProps {
@@ -19,10 +20,12 @@ export interface TaskFormProps {
     stageId: string;
     assignedTo: string | null;
     templates?: File[] | null;
+    category?: string;
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
+  isGeneral?: boolean;
 }
 
 export const TaskForm = ({ 
@@ -30,6 +33,7 @@ export const TaskForm = ({
   isSubmitting, 
   projectStages,
   projectMembers,
+  isGeneral
 }: TaskFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -38,6 +42,7 @@ export const TaskForm = ({
   const [stageId, setStageId] = useState("");
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [templates, setTemplates] = useState<File[] | null>(null);
+  const [category, setCategory] = useState<string>("إدارية");
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -59,7 +64,8 @@ export const TaskForm = ({
       priority, 
       stageId,
       assignedTo,
-      templates: templates
+      templates,
+      category: isGeneral ? category : undefined
     });
     
     await onSubmit({ 
@@ -69,7 +75,8 @@ export const TaskForm = ({
       priority, 
       stageId,
       assignedTo,
-      templates: templates
+      templates,
+      category: isGeneral ? category : undefined
     });
   };
 
@@ -84,7 +91,11 @@ export const TaskForm = ({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TaskStageField stageId={stageId} setStageId={setStageId} projectStages={projectStages} />
+        {isGeneral ? (
+          <TaskCategoryField category={category} setCategory={setCategory} />
+        ) : (
+          <TaskStageField stageId={stageId} setStageId={setStageId} projectStages={projectStages} />
+        )}
         <TaskAssigneeField 
           assignedTo={assignedTo} 
           setAssignedTo={setAssignedTo} 

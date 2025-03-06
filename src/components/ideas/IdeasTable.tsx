@@ -111,7 +111,9 @@ export const IdeasTable = ({
                       {idea.title}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-center">{idea.creator_email}</TableCell>
+                  <TableCell className="text-center">
+                    {idea.creator_display_name || idea.creator_email || 'غير معروف'}
+                  </TableCell>
                   <TableCell className="text-center">
                     {new Date(idea.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',

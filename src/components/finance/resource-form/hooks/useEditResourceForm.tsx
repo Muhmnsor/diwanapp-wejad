@@ -18,6 +18,8 @@ export const useEditResourceForm = (resource: Resource, onSubmit: () => void) =>
   const {
     budgetItems,
     setBudgetItems,
+    obligations,
+    setObligations,
     useDefaultPercentages,
     setUseDefaultPercentages,
     isLoading,
@@ -26,18 +28,30 @@ export const useEditResourceForm = (resource: Resource, onSubmit: () => void) =>
 
   const {
     totalAmount,
-    obligationsAmount,
+    totalObligationsAmount,
     source,
+    customSource,
     type,
     entity,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
-    handleObligationsChange,
     handleSourceChange,
+    handleCustomSourceChange,
     handleUseDefaultsChange,
-    handleItemPercentageChange
-  } = useEditFormState(resource, budgetItems, setBudgetItems, useDefaultPercentages, setUseDefaultPercentages);
+    handleItemPercentageChange,
+    handleAddObligation,
+    handleRemoveObligation,
+    handleObligationChange
+  } = useEditFormState(
+    resource, 
+    budgetItems, 
+    setBudgetItems,
+    obligations,
+    setObligations,
+    useDefaultPercentages, 
+    setUseDefaultPercentages
+  );
 
   const { handleSubmit: submitForm } = useEditFormSubmit();
 
@@ -46,11 +60,12 @@ export const useEditResourceForm = (resource: Resource, onSubmit: () => void) =>
     submitForm({
       resourceId: resource.id,
       totalAmount,
-      obligationsAmount,
       source,
+      customSource,
       type,
       entity,
       budgetItems,
+      obligations,
       isValidPercentages,
       useDefaultPercentages,
       setIsLoading,
@@ -60,20 +75,25 @@ export const useEditResourceForm = (resource: Resource, onSubmit: () => void) =>
 
   return {
     budgetItems,
+    obligations,
+    totalObligationsAmount,
     useDefaultPercentages,
     totalAmount,
-    obligationsAmount,
     source,
+    customSource,
     type,
     entity,
     isLoading,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
-    handleObligationsChange,
     handleSourceChange,
+    handleCustomSourceChange,
     handleUseDefaultsChange,
     handleItemPercentageChange,
+    handleAddObligation,
+    handleRemoveObligation,
+    handleObligationChange,
     handleSubmit
   };
 };

@@ -47,6 +47,7 @@ export const useTasksList = (projectId: string | undefined) => {
     handleStagesChange,
     tasksByStage,
     handleStatusChange,
-    fetchTasks
+    fetchTasks,
+    isGeneral: !projectId
   };
 };

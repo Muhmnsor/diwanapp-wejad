@@ -1,42 +1,34 @@
 
-import { useTaskGroups } from './gantt/useTaskGroups';
 import { GanttHeader } from './gantt/GanttHeader';
-import { TaskGroup } from './gantt/TaskGroup';
+import { TaskRow } from './gantt/TaskRow';
 
 interface GanttChartProps {
-  tasks: any[]; // Using any for task projects data
+  tasks: any[]; 
   months: Date[];
-  groupBy: 'workspace' | 'status' | 'assignee';
   today: Date;
   zoomLevel: number;
 }
 
-export const GanttChart = ({ tasks, months, groupBy, today, zoomLevel }: GanttChartProps) => {
-  const { groupedTasks, groupNames } = useTaskGroups(tasks, groupBy);
-
-  // Determine the group label based on groupBy
-  const getGroupByLabel = () => {
-    switch(groupBy) {
-      case 'workspace': return 'مساحة العمل';
-      case 'status': return 'الحالة';
-      case 'assignee': return 'المسؤول';
-      default: return '';
-    }
-  };
+export const GanttChart = ({ tasks, months, today, zoomLevel }: GanttChartProps) => {
+  if (!tasks || tasks.length === 0) {
+    return (
+      <div className="py-10 text-center text-gray-500">
+        لا توجد مشاريع لعرضها في الخطة السنوية
+      </div>
+    );
+  }
 
   return (
     <div>
       {/* Header with months */}
-      <GanttHeader months={months} groupByLabel={getGroupByLabel()} />
+      <GanttHeader months={months} groupByLabel="المشاريع" />
       
-      {/* Groups and tasks */}
-      <div className="mt-4 space-y-6">
-        {Object.keys(groupedTasks).map(groupKey => (
-          <TaskGroup 
-            key={groupKey}
-            groupKey={groupKey}
-            groupName={groupNames[groupKey]}
-            tasks={groupedTasks[groupKey]}
+      {/* All tasks without grouping */}
+      <div className="mt-4 border rounded-md bg-white overflow-hidden">
+        {tasks.map(task => (
+          <TaskRow 
+            key={task.id} 
+            task={task} 
             months={months}
             today={today}
           />

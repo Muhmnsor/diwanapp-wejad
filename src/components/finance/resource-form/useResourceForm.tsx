@@ -2,8 +2,17 @@
 import { useBudgetItems } from "./hooks/useBudgetItems";
 import { useFormFields } from "./hooks/useFormFields";
 import { useFormSubmit } from "./hooks/useFormSubmit";
+import { useResourceObligations } from "./hooks/useResourceObligations";
 
 export const useResourceForm = (onSubmit: () => void) => {
+  const {
+    obligations,
+    totalObligationsAmount,
+    handleAddObligation,
+    handleRemoveObligation,
+    handleObligationChange
+  } = useResourceObligations();
+
   const {
     budgetItems,
     setBudgetItems,
@@ -15,24 +24,26 @@ export const useResourceForm = (onSubmit: () => void) => {
 
   const {
     totalAmount,
-    obligationsAmount,
     source,
+    customSource,
     handleTotalAmountChange,
-    handleObligationsChange,
     handleSourceChange,
-  } = useFormFields(calculateValues, setBudgetItems, useDefaultPercentages);
+    handleCustomSourceChange,
+  } = useFormFields(calculateValues, setBudgetItems, useDefaultPercentages, totalObligationsAmount);
 
   const {
     isLoading,
     totalPercentage,
     isValidPercentages,
-    handleSubmit
+    handleSubmit: submitForm
   } = useFormSubmit(
     totalAmount,
-    obligationsAmount,
+    totalObligationsAmount,
     source,
+    customSource,
     budgetItems,
     useDefaultPercentages,
+    obligations,
     onSubmit
   );
 
@@ -40,7 +51,7 @@ export const useResourceForm = (onSubmit: () => void) => {
   const adaptedHandleUseDefaultsChange = (value: string) => {
     handleUseDefaultsChange(value, 
       typeof totalAmount === "number" ? totalAmount : 0, 
-      typeof obligationsAmount === "number" ? obligationsAmount : 0);
+      totalObligationsAmount);
   };
 
   // Adapter for handleItemPercentageChange to maintain API compatibility
@@ -52,24 +63,34 @@ export const useResourceForm = (onSubmit: () => void) => {
       id, 
       e, 
       typeof totalAmount === "number" ? totalAmount : 0,
-      typeof obligationsAmount === "number" ? obligationsAmount : 0
+      totalObligationsAmount
     );
+  };
+
+  // Create a unified handleSubmit function
+  const handleSubmit = (e: React.FormEvent) => {
+    submitForm(e);
   };
 
   return {
     budgetItems,
     useDefaultPercentages,
     totalAmount,
-    obligationsAmount,
+    obligations,
+    totalObligationsAmount,
     source,
+    customSource,
     isLoading,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
-    handleObligationsChange,
     handleSourceChange,
+    handleCustomSourceChange,
     handleUseDefaultsChange: adaptedHandleUseDefaultsChange,
     handleItemPercentageChange: adaptedHandleItemPercentageChange,
+    handleAddObligation,
+    handleRemoveObligation,
+    handleObligationChange,
     handleSubmit,
   };
 };

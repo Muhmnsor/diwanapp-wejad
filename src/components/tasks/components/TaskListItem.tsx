@@ -11,6 +11,7 @@ import { FileUploadDialog } from "./dialogs/FileUploadDialog";
 import { TaskActionButtons } from "./actions/TaskActionButtons";
 import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
 
 interface TaskListItemProps {
@@ -27,6 +28,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
   const currentStatus = task.status || "pending";
   const { sendTaskStatusUpdateNotification } = useTaskNotifications();
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
 
   // Custom function to handle status change

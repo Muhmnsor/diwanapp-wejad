@@ -11,8 +11,19 @@ export interface Task {
   created_at: string;
   stage_id: string | null;
   stage_name?: string;
-  // Add missing properties for templates and attachments
+  // Properties for general tasks
+  category?: string | null;
+  is_general?: boolean;
+  // Properties for templates and attachments
   attachment_url?: string | null;
   form_template?: string | null;
   templates?: Array<{ url: string }> | null;
+  // Project related properties
+  project_id?: string | null;
+  project_name?: string | null;
+  workspace_id?: string | null;
+  workspace_name?: string | null;
+  // Subtask properties
+  is_subtask?: boolean;
+  parent_task_id?: string | null;
 }

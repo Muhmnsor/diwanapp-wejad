@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Task } from '@/types/workspace';
 import { Button } from '@/components/ui/button';
 
 interface TaskFiltersProps {
@@ -17,7 +16,7 @@ interface TaskFiltersProps {
     assignee: string[];
     workspace: string[];
   }>>;
-  projects: any[]; // Using any for project type
+  projects: any[]; 
   showAllProjects: boolean;
   setShowAllProjects: (show: boolean) => void;
 }
@@ -33,7 +32,6 @@ export const TaskFilters = ({
   const [workspaces, setWorkspaces] = useState<string[]>([]);
 
   useEffect(() => {
-    // Extract unique statuses and workspaces from projects
     if (projects && projects.length > 0) {
       const uniqueStatuses = [...new Set(projects.map(project => project.status))];
       const uniqueWorkspaces = [...new Set(projects.map(project => project.workspace_id))];
@@ -130,13 +128,13 @@ export const TaskFilters = ({
         </div>
 
         <div>
-          <h3 className="font-medium mb-3">عرض جميع المشاريع</h3>
+          <h3 className="font-medium mb-3">عرض المشاريع</h3>
           <Button 
             variant={showAllProjects ? "default" : "outline"} 
             onClick={handleShowAllToggle}
             className="w-full"
           >
-            {showAllProjects ? "إظهار جميع المشاريع" : "تطبيق التصفية"}
+            {showAllProjects ? "عرض جميع المشاريع" : "تطبيق التصفية"}
           </Button>
         </div>
       </div>

@@ -25,28 +25,41 @@ const AdminDashboard = () => {
   const { user } = useAuthStore();
   
   const { data: userName, isLoading: isLoadingUser } = useQuery({
-    queryKey: ['current-user-name'],
+    queryKey: ['current-user-name', user?.id],
     queryFn: async () => {
       try {
-        if (user?.id) {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('display_name, email')
-            .eq('id', user.id)
-            .single();
-          
-          if (profile?.display_name) {
-            return profile.display_name;
-          }
+        console.log("جاري جلب اسم المستخدم للمعرف:", user?.id);
+        
+        if (!user?.id) {
+          console.log("لا يوجد معرف مستخدم متاح");
+          return "المستخدم";
         }
         
-        return user?.email?.split('@')[0] || "المستخدم";
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('display_name, email')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error("خطأ في جلب الملف الشخصي:", error);
+          return user?.email?.split('@')[0] || "المستخدم";
+        }
+        
+        console.log("تم جلب بيانات الملف الشخصي:", profile);
+        
+        if (profile?.display_name) {
+          return profile.display_name;
+        } else {
+          return user?.email?.split('@')[0] || "المستخدم";
+        }
       } catch (error) {
-        console.error("Error fetching user name:", error);
-        return "المستخدم";
+        console.error("خطأ غير متوقع أثناء جلب اسم المستخدم:", error);
+        return user?.email?.split('@')[0] || "المستخدم";
       }
     },
-    initialData: "المستخدم"
+    staleTime: 30000,
+    enabled: !!user
   });
 
   const { data: notificationCounts } = useQuery({

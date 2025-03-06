@@ -10,3 +10,16 @@ export interface BudgetItem {
   percentage: number;
   value: number;
 }
+
+export interface ResourceObligation {
+  id?: string;
+  amount: number;
+  description: string;
+}
+
+export interface ResourceFormState {
+  source: string;
+  customSource?: string;
+  type: string;
+  entity: string;
+}

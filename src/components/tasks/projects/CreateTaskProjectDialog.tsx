@@ -39,7 +39,6 @@ export const CreateTaskProjectDialog = ({
     manager_id: "",
   });
 
-  // جلب قائمة المستخدمين
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -95,7 +94,6 @@ export const CreateTaskProjectDialog = ({
       console.log("Creating task project with workspace_id:", workspaceId);
       console.log("Form data:", formData);
       
-      // نقوم بإنشاء المشروع في جدول project_tasks مباشرة
       const { data: taskData, error: taskError } = await supabase
         .from('project_tasks')
         .insert([
@@ -103,9 +101,10 @@ export const CreateTaskProjectDialog = ({
             title: formData.name,
             description: formData.description,
             workspace_id: workspaceId,
+            start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
             due_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
             status: 'pending',
-            assigned_to: formData.manager_id || null,
+            project_manager: formData.manager_id === "no_manager" ? null : formData.manager_id || null,
           }
         ]);
       
@@ -117,10 +116,8 @@ export const CreateTaskProjectDialog = ({
       console.log("Task project created successfully:", taskData);
       toast.success("تم إنشاء مشروع المهام بنجاح");
       
-      // إعادة تحميل قائمة المشاريع
       queryClient.invalidateQueries({ queryKey: ['task-projects', workspaceId] });
       
-      // إغلاق النافذة المنبثقة وإعادة تعيين النموذج
       onOpenChange(false);
       setFormData({
         name: "",

@@ -8,6 +8,7 @@ export interface Idea {
   created_at: string;
   created_by: string;
   creator_email?: string;
+  creator_display_name?: string;
   discussion_period: string | null;
   proposed_execution_date: string;
 }

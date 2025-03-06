@@ -1,9 +1,8 @@
 
-import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { BudgetItem } from "./types";
-import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 import { BudgetDistributionItem } from "./BudgetDistributionItem";
+import { BudgetItem } from "./types";
 
 interface BudgetDistributionProps {
   budgetItems: BudgetItem[];
@@ -16,7 +15,7 @@ interface BudgetDistributionProps {
   totalPercentage: number;
   isValidPercentages: boolean;
   totalAmount: number | "";
-  obligationsAmount: number | "";
+  totalObligationsAmount: number;
 }
 
 export const BudgetDistribution = ({
@@ -27,35 +26,32 @@ export const BudgetDistribution = ({
   totalPercentage,
   isValidPercentages,
   totalAmount,
-  obligationsAmount,
+  totalObligationsAmount
 }: BudgetDistributionProps) => {
+  const netAmount = typeof totalAmount === "number" ? totalAmount - totalObligationsAmount : 0;
+  
   return (
-    <>
-      <Separator />
-
-      <div className="text-right">
-        <Label>توزيع المبلغ على البنود</Label>
-        <div className="mt-2">
-          <RadioGroup defaultValue="default" onValueChange={handleUseDefaultsChange} dir="rtl">
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <RadioGroupItem value="default" id="default" />
-              <Label htmlFor="default">استخدام النسب الافتراضية</Label>
-            </div>
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <RadioGroupItem value="manual" id="manual" />
-              <Label htmlFor="manual">إدخال النسب يدويًا</Label>
-            </div>
-          </RadioGroup>
-        </div>
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-medium mb-2 text-right">توزيع الميزانية</h3>
+        <RadioGroup
+          defaultValue="default"
+          value={useDefaultPercentages ? "default" : "custom"}
+          onValueChange={handleUseDefaultsChange}
+          className="flex space-x-4 space-x-reverse justify-end mb-4"
+        >
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <RadioGroupItem value="custom" id="custom" />
+            <Label htmlFor="custom">تخصيص يدوي</Label>
+          </div>
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <RadioGroupItem value="default" id="default" />
+            <Label htmlFor="default">النسب الافتراضية</Label>
+          </div>
+        </RadioGroup>
       </div>
 
-      <div className="border rounded-lg p-4 text-right overflow-x-auto">
-        <div className="grid grid-cols-3 gap-4 mb-4 font-bold min-w-[500px]">
-          <div>البند</div>
-          <div>النسبة المئوية</div>
-          <div>القيمة (ريال)</div>
-        </div>
-
+      <div className="space-y-2">
         {budgetItems.map((item) => (
           <BudgetDistributionItem
             key={item.id}
@@ -66,32 +62,24 @@ export const BudgetDistribution = ({
             disabled={useDefaultPercentages}
           />
         ))}
-
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t font-bold min-w-[500px]">
-          <div>الإجمالي</div>
-          <div
-            className={
-              !useDefaultPercentages && !isValidPercentages
-                ? "text-red-500"
-                : ""
-            }
-          >
-            {totalPercentage.toFixed(1)}%
-          </div>
-          <div>
-            {typeof totalAmount === "number" && typeof obligationsAmount === "number"
-              ? (totalAmount - obligationsAmount).toLocaleString()
-              : "0"}
-            {" ريال"}
-          </div>
-        </div>
-
-        {!useDefaultPercentages && !isValidPercentages && (
-          <p className="text-red-500 mt-2 text-sm">
-            مجموع النسب المئوية يجب أن يكون 100% (القيمة الحالية: {totalPercentage.toFixed(1)}%)
-          </p>
-        )}
       </div>
-    </>
+
+      <div className="pt-4 border-t flex justify-between items-center">
+        <div className={`text-sm ${isValidPercentages ? "text-green-600" : "text-red-600"}`}>
+          {isValidPercentages
+            ? "النسب المئوية صحيحة"
+            : "مجموع النسب المئوية يجب أن يساوي 100%"}
+        </div>
+        <div className="text-right font-medium">
+          المجموع: {totalPercentage.toFixed(1)}%
+        </div>
+      </div>
+
+      <div className="p-3 bg-secondary/20 border border-secondary/30 rounded-md">
+        <p className="text-secondary-foreground font-medium text-right">
+          المبلغ الصافي للتوزيع: {netAmount.toLocaleString()} ريال
+        </p>
+      </div>
+    </div>
   );
 };
