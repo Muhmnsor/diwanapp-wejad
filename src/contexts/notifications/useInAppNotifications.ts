@@ -55,7 +55,7 @@ export const useInAppNotifications = () => {
   };
 
   const markAsRead = async (notificationId: string) => {
-    if (!user) return;
+    if (!user) return false;
     
     try {
       const { error } = await supabase

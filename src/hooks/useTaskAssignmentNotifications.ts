@@ -37,7 +37,7 @@ export const useTaskAssignmentNotifications = () => {
         user_id: params.assignedUserId,
         title,
         message,
-        notification_type: 'task' as NotificationType,
+        notification_type: 'task_assignment' as NotificationType,
         related_entity_id: params.taskId,
         related_entity_type: 'task'
       });
@@ -64,7 +64,7 @@ export const useTaskAssignmentNotifications = () => {
             user_id: userId,
             title: `تم إطلاق مشروع "${projectTitle}"`,
             message: `تم إطلاق مشروع "${projectTitle}" وتفعيل المهام المسندة إليك. يمكنك الآن البدء في العمل على المهام.`,
-            notification_type: 'project' as NotificationType,
+            notification_type: 'project_launch' as NotificationType,
             related_entity_id: projectId,
             related_entity_type: 'project'
           })

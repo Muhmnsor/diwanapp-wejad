@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -14,6 +13,7 @@ import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
+import { useNotificationQueue } from "@/hooks/useNotificationQueue";
 
 interface TaskSummary {
   total: number;
@@ -42,8 +42,8 @@ export const LaunchProjectDialog = ({
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const { sendProjectLaunchNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
+  const { queueMultipleNotifications } = useNotificationQueue();
 
-  // Load task summary when dialog opens
   useEffect(() => {
     if (open && projectId) {
       fetchTaskSummary();
@@ -53,7 +53,6 @@ export const LaunchProjectDialog = ({
   const fetchTaskSummary = async () => {
     setIsLoadingSummary(true);
     try {
-      // Fetch tasks for this project
       const { data: tasks, error: tasksError } = await supabase
         .from("tasks")
         .select("id, title, assigned_to, due_date")
@@ -65,7 +64,6 @@ export const LaunchProjectDialog = ({
       const withAssignees = tasks?.filter(t => t.assigned_to)?.length || 0;
       const withDueDates = tasks?.filter(t => t.due_date)?.length || 0;
 
-      // Count tasks per assignee
       const assigneeCounts: Record<string, number> = {};
       const assigneeIds: string[] = [];
 
@@ -79,12 +77,10 @@ export const LaunchProjectDialog = ({
         }
       });
 
-      // Get assignee names
       const assignees: { id: string; name: string; count: number }[] = [];
       
       if (assigneeIds.length > 0) {
         for (const assigneeId of assigneeIds) {
-          // Check if it's a custom assignee
           if (assigneeId.startsWith('custom:')) {
             assignees.push({
               id: assigneeId,
@@ -92,7 +88,6 @@ export const LaunchProjectDialog = ({
               count: assigneeCounts[assigneeId]
             });
           } else {
-            // Fetch user profile
             const { data: profile, error: profileError } = await supabase
               .from('profiles')
               .select('display_name, email')
@@ -126,7 +121,6 @@ export const LaunchProjectDialog = ({
   const handleLaunch = async () => {
     setIsLoading(true);
     try {
-      // 1. Update project status from draft to active
       const { error: projectError } = await supabase
         .from("project_tasks")
         .update({ is_draft: false, status: "in_progress" })
@@ -134,7 +128,6 @@ export const LaunchProjectDialog = ({
 
       if (projectError) throw projectError;
 
-      // 2. Update all tasks from draft to pending
       const { error: tasksError } = await supabase
         .from("tasks")
         .update({ status: "pending" })
@@ -143,7 +136,6 @@ export const LaunchProjectDialog = ({
 
       if (tasksError) throw tasksError;
 
-      // 3. Get all tasks with assignees for notification
       const { data: tasks, error: fetchError } = await supabase
         .from("tasks")
         .select("id, title, assigned_to")
@@ -152,7 +144,6 @@ export const LaunchProjectDialog = ({
 
       if (fetchError) throw fetchError;
 
-      // 4. Prepare list of unique assignee IDs (excluding custom assignees)
       const assigneeIds = new Set<string>();
       
       tasks?.forEach(task => {
@@ -161,7 +152,6 @@ export const LaunchProjectDialog = ({
         }
       });
 
-      // 5. Send project launch notification to all unique assignees
       if (assigneeIds.size > 0) {
         await sendProjectLaunchNotification(
           projectId,
@@ -170,19 +160,21 @@ export const LaunchProjectDialog = ({
         );
       }
 
-      // 6. Send individual task assignment notifications
-      for (const task of tasks || []) {
-        if (task.assigned_to && !task.assigned_to.startsWith('custom:')) {
-          await supabase.from("in_app_notifications").insert([
-            {
-              user_id: task.assigned_to,
-              title: "تم إسناد مهمة جديدة إليك",
-              message: `تم إسناد مهمة "${task.title}" إليك في مشروع "${projectTitle}"`,
-              notification_type: "task_assignment",
-              related_entity_id: task.id,
-              related_entity_type: "task",
-            },
-          ]);
+      if (tasks && tasks.length > 0) {
+        const notifications = tasks
+          .filter(task => task.assigned_to && !task.assigned_to.startsWith('custom:'))
+          .map(task => ({
+            user_id: task.assigned_to,
+            title: "تم إسناد مهمة جديدة إليك",
+            message: `تم إسناد مهمة "${task.title}" إليك في مشروع "${projectTitle}"`,
+            notification_type: "task_assignment" as any,
+            related_entity_id: task.id,
+            related_entity_type: "task",
+            priority: 1
+          }));
+          
+        if (notifications.length > 0) {
+          await queueMultipleNotifications(notifications);
         }
       }
 
