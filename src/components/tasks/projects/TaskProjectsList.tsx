@@ -14,6 +14,7 @@ interface TaskProject {
   project_id: string | null;
   project_manager?: string | null;
   project_manager_name?: string | null;
+  is_draft?: boolean;
 }
 
 interface TaskProjectsListProps {

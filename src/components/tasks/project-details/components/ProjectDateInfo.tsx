@@ -1,7 +1,8 @@
 
 import { 
   CalendarIcon,
-  Clock as ClockIcon
+  Clock as ClockIcon,
+  Rocket
 } from "lucide-react";
 import { formatDate, getTimeFromNow, getRemainingDays } from "@/utils/formatters";
 import { differenceInDays } from "date-fns";
@@ -9,9 +10,11 @@ import { differenceInDays } from "date-fns";
 interface ProjectDateInfoProps {
   createdAt?: string;
   dueDate: string | null;
+  launchDate?: string | null;
+  isDraft?: boolean;
 }
 
-export const ProjectDateInfo = ({ createdAt, dueDate }: ProjectDateInfoProps) => {
+export const ProjectDateInfo = ({ createdAt, dueDate, launchDate, isDraft }: ProjectDateInfoProps) => {
   const remainingDays = getRemainingDays(dueDate);
   
   // Calculate total project days
@@ -47,6 +50,16 @@ export const ProjectDateInfo = ({ createdAt, dueDate }: ProjectDateInfoProps) =>
           {formatDate(dueDate)}
         </span>
       </div>
+      
+      {launchDate && !isDraft && (
+        <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-md">
+          <Rocket className="h-4 w-4 text-green-700" />
+          <span className="text-sm font-medium text-green-900">
+            <span className="text-xs text-green-700 ml-1">تاريخ الإطلاق:</span>
+            {formatDate(launchDate)}
+          </span>
+        </div>
+      )}
       
       {totalDays !== null && (
         <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-md">

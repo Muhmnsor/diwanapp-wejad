@@ -1,11 +1,25 @@
 
 import { Badge } from "@/components/ui/badge";
+import { FileText } from "lucide-react";
 
 interface ProjectStatusBadgeProps {
   status: string;
+  isDraft?: boolean;
 }
 
-export const ProjectStatusBadge = ({ status }: ProjectStatusBadgeProps) => {
+export const ProjectStatusBadge = ({ status, isDraft }: ProjectStatusBadgeProps) => {
+  // If project is in draft mode, show draft badge
+  if (isDraft) {
+    return (
+      <Badge
+        variant="outline"
+        className="px-3 py-1 h-9 border bg-gray-100 text-gray-700 border-gray-300 rounded-md font-medium text-sm flex items-center gap-1 whitespace-nowrap"
+      >
+        <FileText className="h-4 w-4" /> مسودة
+      </Badge>
+    );
+  }
+
   let badgeClass = "";
   let statusText = "";
 

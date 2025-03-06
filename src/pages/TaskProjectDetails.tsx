@@ -14,41 +14,46 @@ const TaskProjectDetails = () => {
   const [project, setProject] = useState<any>(null);
   const [error, setError] = useState<boolean>(false);
   
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (!projectId) return;
-      
-      try {
-        console.log("Fetching task project with ID:", projectId);
-        
-        const { data, error } = await supabase
-          .from('project_tasks')
-          .select('*')
-          .eq('id', projectId)
-          .single();
-        
-        if (error) {
-          console.error("Error fetching project:", error);
-          setError(true);
-          return;
-        }
-        
-        if (data) {
-          console.log("Project data:", data);
-          setProject(data);
-        } else {
-          setError(true);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        setError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchProjectDetails = async () => {
+    if (!projectId) return;
     
+    setIsLoading(true);
+    try {
+      console.log("Fetching task project with ID:", projectId);
+      
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching project:", error);
+        setError(true);
+        return;
+      }
+      
+      if (data) {
+        console.log("Project data:", data);
+        setProject(data);
+      } else {
+        setError(true);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchProjectDetails();
   }, [projectId]);
+  
+  const handleProjectUpdated = () => {
+    fetchProjectDetails();
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -69,7 +74,7 @@ const TaskProjectDetails = () => {
               </div>
             ) : (
               <div className="space-y-8">
-                <TaskProjectInfo project={project} />
+                <TaskProjectInfo project={project} onProjectUpdated={handleProjectUpdated} />
                 <TasksList projectId={projectId} />
               </div>
             )}
