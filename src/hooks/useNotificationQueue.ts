@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import { NotificationType } from "@/contexts/notifications/types";
 
 interface QueuedNotification {
+  id?: string; // Make id optional since it will be generated on insert
   user_id: string;
   title: string;
   message: string;
@@ -12,6 +13,8 @@ interface QueuedNotification {
   related_entity_id?: string;
   related_entity_type?: string;
   priority?: number;
+  status?: string;
+  created_by?: string;
 }
 
 export const useNotificationQueue = () => {
@@ -94,8 +97,11 @@ export const useNotificationQueue = () => {
         // Update notification queue status
         await supabase
           .from('notification_queue')
-          .update({ status: 'processed' })
-          .in('id', notifications.map(n => n.id));
+          .update({ 
+            status: 'processed',
+            processed_at: new Date().toISOString()
+          })
+          .in('id', notifications.map(n => n.id as string));
       }
     } catch (error) {
       console.error('Error processing notification batch:', error);
