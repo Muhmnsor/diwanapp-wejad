@@ -52,6 +52,7 @@ export const CopyTaskProjectDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event propagation
     setIsSubmitting(true);
     setError(null);
     
@@ -90,9 +91,18 @@ export const CopyTaskProjectDialog = ({
     }
   };
 
+  // Added to stop click propagation
+  const handleDialogContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+      <DialogContent 
+        className="sm:max-w-[500px]" 
+        dir="rtl"
+        onClick={handleDialogContentClick}
+      >
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>نسخ المشروع</DialogTitle>
@@ -117,6 +127,7 @@ export const CopyTaskProjectDialog = ({
                 onChange={(e) => setNewTitle(e.target.value)}
                 required
                 disabled={isSubmitting}
+                onClick={(e) => e.stopPropagation()} // Stop propagation on input click
               />
             </div>
             
@@ -126,8 +137,13 @@ export const CopyTaskProjectDialog = ({
                 checked={keepAssignees} 
                 onCheckedChange={(checked) => setKeepAssignees(checked as boolean)} 
                 disabled={isSubmitting}
+                onClick={(e) => e.stopPropagation()} // Stop propagation on checkbox click
               />
-              <Label htmlFor="keepAssignees" className="text-sm cursor-pointer">
+              <Label 
+                htmlFor="keepAssignees" 
+                className="text-sm cursor-pointer"
+                onClick={(e) => e.stopPropagation()} // Stop propagation on label click
+              >
                 الاحتفاظ بالأشخاص المكلفين بالمهام
               </Label>
             </div>
@@ -138,18 +154,35 @@ export const CopyTaskProjectDialog = ({
                 checked={copyTemplates} 
                 onCheckedChange={(checked) => setCopyTemplates(checked as boolean)} 
                 disabled={isSubmitting}
+                onClick={(e) => e.stopPropagation()} // Stop propagation on checkbox click
               />
-              <Label htmlFor="copyTemplates" className="text-sm cursor-pointer">
+              <Label 
+                htmlFor="copyTemplates" 
+                className="text-sm cursor-pointer"
+                onClick={(e) => e.stopPropagation()} // Stop propagation on label click
+              >
                 نسخ النماذج المرفقة بالمهام
               </Label>
             </div>
           </div>
           
           <DialogFooter className="flex flex-row-reverse gap-2">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={(e) => {
+                e.stopPropagation(); // Stop propagation
+                handleClose();
+              }} 
+              disabled={isSubmitting}
+            >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isSubmitting || !newTitle.trim()}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !newTitle.trim()}
+              onClick={(e) => e.stopPropagation()} // Stop propagation on submit button click
+            >
               {isSubmitting ? "جاري النسخ..." : "نسخ المشروع"}
             </Button>
           </DialogFooter>

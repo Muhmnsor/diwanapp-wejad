@@ -5,7 +5,10 @@ export const useProjectCardActions = () => {
   const navigate = useNavigate();
 
   const handleClick = (e: React.MouseEvent, projectId: string) => {
-    if ((e.target as HTMLElement).closest('.project-actions')) {
+    // Check if click is inside a dialog or form element 
+    if ((e.target as HTMLElement).closest('.project-actions') || 
+        (e.target as HTMLElement).closest('[role="dialog"]') ||
+        (e.target as HTMLElement).closest('form')) {
       e.stopPropagation();
       return;
     }
