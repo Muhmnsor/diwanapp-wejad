@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useCacheMonitor } from '@/hooks/useCacheMonitor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { clearCacheByPrefix, resetCacheStats } from '@/utils/cacheService';
 import { clearServiceWorkerCache, updateServiceWorker } from '@/utils/serviceWorkerRegistration';
 import { toast } from 'sonner';
-import { BarChart, PieChart, RefreshCw, Trash2, Memory, Archive, BarChart2, Clock } from 'lucide-react';
+import { BarChart, PieChart, RefreshCw, Trash2, Database, Archive, BarChart2, Clock } from 'lucide-react';
 import { LineChart, Line, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 export const CacheMonitor = () => {
@@ -138,7 +137,7 @@ export const CacheMonitor = () => {
               <div className="bg-card border rounded-lg p-4">
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">ذاكرة التخزين المؤقت</h3>
                 <div className="flex items-center">
-                  <Memory className="h-4 w-4 mr-2 text-blue-500" />
+                  <Database className="h-4 w-4 mr-2 text-blue-500" />
                   <span className="text-lg font-medium">{stats.memoryCacheCount} عنصر</span>
                 </div>
               </div>
