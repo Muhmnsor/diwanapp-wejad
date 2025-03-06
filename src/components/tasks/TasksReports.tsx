@@ -5,6 +5,7 @@ import { PersonalTasksReports } from "./reports/PersonalTasksReports";
 import { TeamTasksReports } from "./reports/TeamTasksReports";
 import { ProjectTasksReports } from "./reports/ProjectTasksReports";
 import { GeneralTasksReports } from "./reports/GeneralTasksReports";
+import { UserPerformanceReport } from "./reports/UserPerformanceReport";
 
 export const TasksReports = () => {
   return (
@@ -15,6 +16,7 @@ export const TasksReports = () => {
         <Tabs defaultValue="personal" dir="rtl">
           <TabsList className="mb-6 w-full">
             <TabsTrigger value="personal">التقارير الشخصية</TabsTrigger>
+            <TabsTrigger value="performance">تقارير الأداء</TabsTrigger>
             <TabsTrigger value="team">تقارير الفريق</TabsTrigger>
             <TabsTrigger value="projects">تقارير المشاريع</TabsTrigger>
             <TabsTrigger value="general">تقارير المهام العامة</TabsTrigger>
@@ -22,6 +24,10 @@ export const TasksReports = () => {
           
           <TabsContent value="personal" className="space-y-6">
             <PersonalTasksReports />
+          </TabsContent>
+          
+          <TabsContent value="performance" className="space-y-6">
+            <UserPerformanceReport />
           </TabsContent>
           
           <TabsContent value="team" className="space-y-6">

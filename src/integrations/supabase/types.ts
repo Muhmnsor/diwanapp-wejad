@@ -2907,7 +2907,9 @@ export type Database = {
         Row: {
           action: string
           changed_by: string | null
+          completion_time_hours: number | null
           created_at: string
+          delay_hours: number | null
           field_name: string | null
           id: string
           new_value: string | null
@@ -2917,7 +2919,9 @@ export type Database = {
         Insert: {
           action: string
           changed_by?: string | null
+          completion_time_hours?: number | null
           created_at?: string
+          delay_hours?: number | null
           field_name?: string | null
           id?: string
           new_value?: string | null
@@ -2927,7 +2931,9 @@ export type Database = {
         Update: {
           action?: string
           changed_by?: string | null
+          completion_time_hours?: number | null
           created_at?: string
+          delay_hours?: number | null
           field_name?: string | null
           id?: string
           new_value?: string | null
@@ -3160,6 +3166,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achieved_at: string | null
+          achievement_description: string | null
+          achievement_title: string
+          achievement_type: string
+          created_at: string | null
+          id: string
+          metrics: Json | null
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string | null
+          achievement_description?: string | null
+          achievement_title: string
+          achievement_type: string
+          created_at?: string | null
+          id?: string
+          metrics?: Json | null
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string | null
+          achievement_description?: string | null
+          achievement_title?: string
+          achievement_type?: string
+          created_at?: string | null
+          id?: string
+          metrics?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           activity_type: string
@@ -3216,6 +3255,45 @@ export type Database = {
           enable_whatsapp?: boolean
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_performance_stats: {
+        Row: {
+          average_completion_time: number | null
+          completed_tasks_count: number | null
+          completion_rate: number | null
+          id: string
+          last_updated: string | null
+          on_time_completion_rate: number | null
+          stats_data: Json | null
+          stats_period: string | null
+          total_tasks_count: number | null
+          user_id: string
+        }
+        Insert: {
+          average_completion_time?: number | null
+          completed_tasks_count?: number | null
+          completion_rate?: number | null
+          id?: string
+          last_updated?: string | null
+          on_time_completion_rate?: number | null
+          stats_data?: Json | null
+          stats_period?: string | null
+          total_tasks_count?: number | null
+          user_id: string
+        }
+        Update: {
+          average_completion_time?: number | null
+          completed_tasks_count?: number | null
+          completion_rate?: number | null
+          id?: string
+          last_updated?: string | null
+          on_time_completion_rate?: number | null
+          stats_data?: Json | null
+          stats_period?: string | null
+          total_tasks_count?: number | null
           user_id?: string
         }
         Relationships: []

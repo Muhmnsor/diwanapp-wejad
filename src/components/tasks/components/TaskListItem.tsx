@@ -15,6 +15,7 @@ import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotific
 import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import type { Task as ProjectTask } from "../project-details/types/task";
+import { handleTaskCompletion } from "./actions/handleTaskCompletion";
 
 interface TaskListItemProps {
   task: Task;
@@ -39,6 +40,17 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
     try {
+      // New code: handle task completion for stats and achievements
+      if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
+        const taskTable = task.is_subtask ? 'subtasks' : 'tasks';
+        await handleTaskCompletion({
+          taskId: task.id,
+          taskTable,
+          userId: user.id,
+          dueDate: task.due_date
+        });
+      }
+      
       // Check if the task is a subtask and use the correct table
       if (task.is_subtask) {
         const { error } = await supabase
