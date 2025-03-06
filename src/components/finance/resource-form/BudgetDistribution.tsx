@@ -55,9 +55,11 @@ export const BudgetDistribution = ({
         {budgetItems.map((item) => (
           <BudgetDistributionItem
             key={item.id}
-            item={item}
-            isReadOnly={useDefaultPercentages}
+            name={item.name}
+            percentage={item.percentage}
+            value={item.value}
             onPercentageChange={(e) => handleItemPercentageChange(item.id, e)}
+            disabled={useDefaultPercentages}
           />
         ))}
       </div>

@@ -74,27 +74,36 @@ export const useBudgetItems = () => {
 
     if (useDefaults) {
       // Reset to default percentages
-      const { data } = supabase
-        .from("budget_items")
-        .select("*")
-        .order("name");
+      const fetchDefaultPercentages = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("budget_items")
+            .select("*")
+            .order("name");
 
-      data.then((result) => {
-        if (result && result.data) {
-          const items = result.data.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            percentage: item.default_percentage,
-            value: parseFloat(
-              (
-                ((totalAmount - obligationsAmount) * item.default_percentage) /
-                100
-              ).toFixed(2)
-            ),
-          }));
-          setBudgetItems(items);
+          if (error) throw error;
+          
+          if (data) {
+            const items = data.map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              percentage: item.default_percentage,
+              value: parseFloat(
+                (
+                  ((totalAmount - obligationsAmount) * item.default_percentage) /
+                  100
+                ).toFixed(2)
+              ),
+            }));
+            setBudgetItems(items);
+          }
+        } catch (error) {
+          console.error("Error fetching default percentages:", error);
+          toast.error("حدث خطأ أثناء استعادة النسب الافتراضية");
         }
-      });
+      };
+      
+      fetchDefaultPercentages();
     }
   };
 
