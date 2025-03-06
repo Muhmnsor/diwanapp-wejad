@@ -23,16 +23,29 @@ Deno.serve(async (req) => {
     }
 
     // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase configuration");
+    // Validate environment variables before proceeding
+    if (!supabaseUrl) {
+      console.error("SUPABASE_URL environment variable is not set");
       return new Response(
-        JSON.stringify({ success: false, error: 'Server configuration error' }),
+        JSON.stringify({ success: false, error: 'Server configuration error: Missing SUPABASE_URL' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
       )
     }
+    
+    if (!supabaseServiceKey) {
+      console.error("SUPABASE_SERVICE_ROLE_KEY environment variable is not set");
+      return new Response(
+        JSON.stringify({ success: false, error: 'Server configuration error: Missing SUPABASE_SERVICE_ROLE_KEY' }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
+      )
+    }
+    
+    console.log("Creating Supabase client with URL:", supabaseUrl);
+    // Not logging the actual key for security reasons, but checking if it looks reasonable
+    console.log("Service key appears to be set:", !!supabaseServiceKey, "Length:", supabaseServiceKey.length);
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -51,7 +64,11 @@ Deno.serve(async (req) => {
     if (error) {
       console.error('Error deleting draft project:', error);
       return new Response(
-        JSON.stringify({ success: false, error: error.message || 'Failed to delete project' }),
+        JSON.stringify({ 
+          success: false, 
+          error: error.message || 'Failed to delete project',
+          details: error
+        }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
       )
     }
@@ -60,7 +77,11 @@ Deno.serve(async (req) => {
     
     if (data !== true) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Failed to delete project' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Failed to delete project',
+          result: data 
+        }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
       )
     }
@@ -73,7 +94,11 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Unexpected error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: 'An unexpected error occurred' }),
+      JSON.stringify({ 
+        success: false, 
+        error: 'An unexpected error occurred',
+        details: error instanceof Error ? error.message : String(error)
+      }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
     )
   }
