@@ -130,15 +130,21 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
       console.error('Error updating subtask status:', err);
       toast.error('فشل في تحديث حالة المهمة الفرعية');
       
-      // Rollback UI changes on exception
-      setSubtasks(prev => {
-        const taskSubtasks = prev[taskId] || [];
-        const rollbackSubtasks = taskSubtasks.map(subtask => 
-          subtask.id === subtaskId ? { ...subtask, status: originalSubtask.status } : subtask
-        );
-        
-        return { ...prev, [taskId]: rollbackSubtasks };
-      });
+      // Find the original subtask again to ensure it's in scope for the rollback
+      const originalSubtasks = subtasks[taskId] || [];
+      const originalSubtask = originalSubtasks.find(s => s.id === subtaskId);
+      
+      if (originalSubtask) {
+        // Rollback UI changes on exception
+        setSubtasks(prev => {
+          const taskSubtasks = prev[taskId] || [];
+          const rollbackSubtasks = taskSubtasks.map(subtask => 
+            subtask.id === subtaskId ? { ...subtask, status: originalSubtask.status } : subtask
+          );
+          
+          return { ...prev, [taskId]: rollbackSubtasks };
+        });
+      }
     }
   };
 
@@ -175,6 +181,7 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
         // Rollback UI changes on error
         setSubtasks(prev => {
           const taskSubtasks = prev[taskId] || [];
+          // Add the removed subtask back to the list
           const rollbackSubtasks = [...taskSubtasks, subtaskToRemove];
           
           return { ...prev, [taskId]: rollbackSubtasks };
@@ -184,13 +191,19 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
       console.error('Error removing subtask:', err);
       toast.error('فشل في حذف المهمة الفرعية');
       
-      // Rollback UI changes on exception
-      setSubtasks(prev => {
-        const taskSubtasks = prev[taskId] || [];
-        const rollbackSubtasks = [...taskSubtasks, subtaskToRemove];
-        
-        return { ...prev, [taskId]: rollbackSubtasks };
-      });
+      // Get the subtask to remove again to ensure it's in scope
+      const originalSubtasks = subtasks[taskId] || [];
+      const subtaskToRemove = originalSubtasks.find(s => s.id === subtaskId);
+      
+      if (subtaskToRemove) {
+        // Rollback UI changes on exception
+        setSubtasks(prev => {
+          const taskSubtasks = prev[taskId] || [];
+          const rollbackSubtasks = [...taskSubtasks, subtaskToRemove];
+          
+          return { ...prev, [taskId]: rollbackSubtasks };
+        });
+      }
     }
   };
 
@@ -241,15 +254,21 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
       console.error('Error updating subtask:', err);
       toast.error('فشل في تحديث المهمة الفرعية');
       
-      // Rollback UI changes on exception
-      setSubtasks(prev => {
-        const taskSubtasks = prev[taskId] || [];
-        const rollbackSubtasks = taskSubtasks.map(subtask => 
-          subtask.id === subtaskId ? originalSubtask : subtask
-        );
-        
-        return { ...prev, [taskId]: rollbackSubtasks };
-      });
+      // Get the original subtask again to ensure it's in scope
+      const originalSubtasks = subtasks[taskId] || [];
+      const originalSubtask = originalSubtasks.find(s => s.id === subtaskId);
+      
+      if (originalSubtask) {
+        // Rollback UI changes on exception
+        setSubtasks(prev => {
+          const taskSubtasks = prev[taskId] || [];
+          const rollbackSubtasks = taskSubtasks.map(subtask => 
+            subtask.id === subtaskId ? originalSubtask : subtask
+          );
+          
+          return { ...prev, [taskId]: rollbackSubtasks };
+        });
+      }
     }
   };
 
