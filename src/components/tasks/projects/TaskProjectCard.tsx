@@ -16,8 +16,6 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
-  project_manager: string | null;
-  manager_name: string | null;  // Changed from optional to required to match useTaskProjectCard
 }
 
 interface TaskProjectCardProps {

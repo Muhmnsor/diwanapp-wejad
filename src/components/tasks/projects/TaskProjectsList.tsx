@@ -12,8 +12,6 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
-  project_manager: string | null;
-  manager_name: string | null;  // Changed from optional to required to match TaskProjectCard
 }
 
 interface TaskProjectsListProps {
@@ -26,27 +24,18 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
   const { data: projects, isLoading } = useQuery({
     queryKey: ['task-projects', workspaceId],
     queryFn: async () => {
-      const { data: projectsData, error } = await supabase
+      const { data, error } = await supabase
         .from('project_tasks')
-        .select(`
-          *,
-          manager:project_manager(
-            display_name
-          )
-        `)
+        .select('*')
         .eq('workspace_id', workspaceId);
       
       if (error) throw error;
-
-      // Transform the data to match the expected format with manager_name as non-optional
-      return (projectsData || []).map(project => ({
-        ...project,
-        manager_name: project.manager?.display_name || null
-      }));
+      return data || [];
     }
   });
 
   const handleProjectUpdated = () => {
+    // Refetch the projects list
     queryClient.invalidateQueries({ queryKey: ['task-projects', workspaceId] });
   };
 
