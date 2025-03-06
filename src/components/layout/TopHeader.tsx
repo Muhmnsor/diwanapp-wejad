@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/Navigation";
 import { UserNav } from "@/components/navigation/UserNav";
 import { useLocation } from "react-router-dom";
@@ -6,7 +7,7 @@ import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
-import { Calendar, FolderKanban, LayoutDashboard, FileText, User } from "lucide-react";
+import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +22,7 @@ export const TopHeader = () => {
   const [displayName, setDisplayName] = useState<string | null>(null);
   const isEventsPage = location.pathname.includes('/events') || location.pathname === '/' || location.pathname === '/dashboard' || location.pathname.includes('/create-project') || location.pathname.includes('/projects') || location.pathname === '/settings';
   const isEventOrProjectDetails = location.pathname.includes('/events/') || location.pathname.includes('/projects/');
-  const isTasksPage = location.pathname.includes('/tasks') || location.pathname.includes('/portfolios') || location.pathname.includes('/portfolio-workspaces');
+  const isTasksPage = location.pathname.includes('/tasks') || location.pathname.includes('/portfolios') || location.pathname.includes('/portfolio-workspaces') || location.pathname.includes('/general-tasks');
 
   useEffect(() => {
     const fetchUserDisplayName = async () => {
@@ -93,6 +94,11 @@ export const TopHeader = () => {
                   <Link to="/tasks#workspaces" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "workspaces" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("workspaces")}>
                     <FolderKanban className="h-4 w-4" />
                     <span>مساحات العمل</span>
+                  </Link>
+
+                  <Link to="/general-tasks" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${location.pathname === "/general-tasks" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`}>
+                    <ClipboardList className="h-4 w-4" />
+                    <span>المهام العامة</span>
                   </Link>
 
                   <Link to="/tasks#yearly-plan" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "yearly-plan" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("yearly-plan")}>
