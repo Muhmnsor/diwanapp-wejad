@@ -15,9 +15,9 @@ export const useTasksFetching = (projectId: string | undefined) => {
     try {
       console.log("Fetching tasks for project:", projectId);
       
-      // Get tasks from project_tasks table with the correct projectId column
+      // Get tasks from the correct table (tasks) with the correct projectId column
       const { data, error } = await supabase
-        .from('project_tasks')
+        .from('tasks')
         .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
