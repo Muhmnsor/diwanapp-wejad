@@ -1,5 +1,5 @@
 
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -172,7 +172,6 @@ export const TaskItem = ({
       <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
         <TableCell className="font-medium">
           <div className="flex items-center">
-            <span className="mr-1">{task.title}</span>
             <Button 
               variant="ghost" 
               size="sm" 
@@ -188,6 +187,7 @@ export const TaskItem = ({
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               }
             </Button>
+            <span className="mr-1">{task.title}</span>
           </div>
         </TableCell>
         <TableCell>
@@ -214,7 +214,22 @@ export const TaskItem = ({
           </div>
         </TableCell>
         <TableCell>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-end gap-1">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 px-2 mr-1 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle add subtask action - this would typically open a dialog or form
+                toast.info("سيتم إضافة مهمة فرعية قريباً");
+              }}
+              title="إضافة مهمة فرعية"
+            >
+              <Plus className="h-3.5 w-3.5 ml-1 text-primary" />
+              إضافة مهمة فرعية
+            </Button>
+            
             <Button 
               variant="ghost" 
               size="sm" 
