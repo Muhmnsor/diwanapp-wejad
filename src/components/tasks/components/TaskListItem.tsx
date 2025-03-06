@@ -99,6 +99,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           projectName={task.project_name}
           isSubtask={!!task.parent_task_id}
           parentTaskId={task.parent_task_id}
+          isGeneral={task.is_general}
         />
       </div>
       

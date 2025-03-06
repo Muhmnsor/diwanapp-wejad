@@ -1,5 +1,5 @@
 
-import { Calendar, Clock, GitMerge, Upload } from "lucide-react";
+import { Calendar, Clock, GitMerge, Upload, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BasicMetadataProps {
@@ -9,6 +9,7 @@ interface BasicMetadataProps {
   parentTaskId?: string | null;
   showFileUploadButton?: boolean;
   onFileUpload?: () => void;
+  isGeneral?: boolean;
 }
 
 export const BasicMetadata = ({ 
@@ -17,9 +18,10 @@ export const BasicMetadata = ({
   isSubtask,
   parentTaskId,
   showFileUploadButton,
-  onFileUpload
+  onFileUpload,
+  isGeneral
 }: BasicMetadataProps) => {
-  if (!dueDate && !projectName && !isSubtask) return null;
+  if (!dueDate && !projectName && !isSubtask && !isGeneral) return null;
 
   const formatDate = (dateString: string) => {
     try {
@@ -48,6 +50,13 @@ export const BasicMetadata = ({
           <div className="flex items-center text-xs">
             <Calendar className="h-3.5 w-3.5 ml-1 text-gray-500" />
             <span className="text-gray-700">{projectName}</span>
+          </div>
+        )}
+
+        {isGeneral && (
+          <div className="flex items-center text-xs">
+            <Globe className="h-3.5 w-3.5 ml-1 text-blue-500" />
+            <span className="text-gray-700">مهمة عامة</span>
           </div>
         )}
         

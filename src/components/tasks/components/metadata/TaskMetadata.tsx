@@ -11,6 +11,7 @@ interface TaskMetadataProps {
   taskId?: string | null;
   showFileUploadButton?: boolean;
   onFileUpload?: () => void;
+  isGeneral?: boolean;
 }
 
 export const TaskMetadata = ({ 
@@ -20,7 +21,8 @@ export const TaskMetadata = ({
   parentTaskId, 
   taskId,
   showFileUploadButton,
-  onFileUpload
+  onFileUpload,
+  isGeneral
 }: TaskMetadataProps) => {
   const {
     loading,
@@ -39,6 +41,7 @@ export const TaskMetadata = ({
         parentTaskId={parentTaskId}
         showFileUploadButton={showFileUploadButton}
         onFileUpload={onFileUpload}
+        isGeneral={isGeneral}
       />
 
       <AttachmentsByCategory

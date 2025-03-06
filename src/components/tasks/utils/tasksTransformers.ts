@@ -1,10 +1,8 @@
-
 import { Task } from "../types/task";
 
-// تحويل مهام المحفظة إلى تنسيق موحد
+// Transform portfolio tasks to unified format
 export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
   return portfolioTasks.map(task => {
-    // الوصول الآمن للخصائص المتداخلة
     let projectName = null;
     if (task.portfolio_only_projects && 
         Array.isArray(task.portfolio_only_projects) && 
@@ -13,7 +11,6 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
       projectName = task.portfolio_only_projects[0].name;
     }
     
-    // أيضًا الحصول على اسم مساحة العمل إذا كان متاحًا
     let workspaceName = '';
     if (task.portfolio_workspaces && 
         Array.isArray(task.portfolio_workspaces) && 
@@ -36,7 +33,7 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
   });
 };
 
-// تحويل المهام العادية إلى تنسيق موحد
+// Transform regular tasks to unified format
 export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<string, string>): Task[] => {
   return regularTasks.map(task => {
     const projectName = task.project_id && projectsMap[task.project_id] 
@@ -52,13 +49,14 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
       priority: task.priority,
       project_name: projectName,
       project_id: task.project_id,
-      workspace_name: 'مساحة عمل افتراضية', // اسم مساحة العمل الافتراضية
-      is_subtask: false
+      workspace_name: task.is_general ? 'مهمة عامة' : 'مساحة عمل افتراضية',
+      is_subtask: false,
+      is_general: task.is_general || false
     };
   });
 };
 
-// تحويل المهام الفرعية إلى تنسيق موحد
+// Transform subtasks to unified format
 export const transformSubtasks = (
   subtasks: any[], 
   parentTasksMap: Record<string, any>,
@@ -67,35 +65,28 @@ export const transformSubtasks = (
   return subtasks.map(subtask => {
     const parentTask = parentTasksMap[subtask.task_id] || {};
     
-    // تحسين استرجاع معرف المشروع من المهمة الرئيسية
     const parentProjectId = parentTask.project_id;
     
-    // محاولة الحصول على اسم المشروع بطرق متعددة
     let projectName = null;
     
-    // 1. محاولة استخدام اسم المشروع من المهمة الرئيسية مباشرة إذا كان متوفرًا
     if (parentTask.project_name) {
       projectName = parentTask.project_name;
       console.log(`Subtask ${subtask.id} using parent task's project_name: ${projectName}`);
     }
-    // 2. محاولة استخدام معرف المشروع من المهمة الرئيسية واستخراج الاسم من القاموس
     else if (parentProjectId && projectsMap[parentProjectId]) {
       projectName = projectsMap[parentProjectId];
       console.log(`Subtask ${subtask.id} using parent project_id: ${parentProjectId}, project_name: ${projectName}`);
     }
-    // 3. التحقق من الخاصية project_id في المهمة الرئيسية إذا كانت كائنًا
     else if (typeof parentTask.project_id === 'object' && parentTask.project_id && projectsMap[parentTask.project_id.id]) {
       projectName = projectsMap[parentTask.project_id.id];
       console.log(`Subtask ${subtask.id} using parent project_id object: ${JSON.stringify(parentTask.project_id)}, project_name: ${projectName}`);
     }
-    // 4. محاولة إضافية: البحث عن المهمة الرئيسية في جميع المهام
     else if (subtask.task_id) {
-      // البحث في المهام المعتادة
       for (const projId in projectsMap) {
         if (projectsMap[projId]) {
           console.log(`Trying to match subtask ${subtask.id} with project ID ${projId}`);
           projectName = projectsMap[projId];
-          break;  // استخدام أول مشروع متاح كحل مؤقت
+          break;
         }
       }
     }
@@ -105,10 +96,10 @@ export const transformSubtasks = (
     return {
       id: subtask.id,
       title: subtask.title,
-      description: null, // تعيين قيمة افتراضية للوصف كـ null
+      description: null,
       status: subtask.status as Task['status'],
       due_date: subtask.due_date,
-      priority: 'medium', // تعيين قيمة افتراضية للأولوية
+      priority: 'medium',
       project_name: projectName,
       project_id: parentProjectId,
       workspace_name: parentTask.workspace_name || 'مساحة عمل افتراضية',
@@ -117,4 +108,3 @@ export const transformSubtasks = (
     };
   });
 };
-
