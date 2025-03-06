@@ -42,7 +42,7 @@ export const TaskListItem = ({
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { user } = useAuthStore();
-  const { notifyTaskAssignment } = useTaskAssignmentNotifications();
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   
   // Use the task permissions hook
   const { canEdit, canDelete, canChangeStatus } = useTaskPermissions({
@@ -88,7 +88,11 @@ export const TaskListItem = ({
     // Notify the assignee if there's a change and not current user
     if (assigneeId && task.assigned_to !== assigneeId && assigneeId !== user?.id) {
       try {
-        await notifyTaskAssignment(task.id, task.title, assigneeId);
+        await sendTaskAssignmentNotification({
+          taskId: task.id,
+          taskTitle: task.title,
+          assigneeId
+        });
       } catch (error) {
         console.error("Failed to notify task assignment:", error);
       }
@@ -126,17 +130,17 @@ export const TaskListItem = ({
             {formattedDate}
           </div>
           
-          {task.assigned_user_name && (
+          {task.assigned_to && (
             <div>
               <span className="ml-1 font-medium">المكلف:</span>
-              {task.assigned_user_name}
+              {task.assigned_user_name || "مستخدم"}
             </div>
           )}
           
-          {task.created_by && task.creator_name && (
+          {task.created_by && (
             <div>
               <span className="ml-1 font-medium">المنشئ:</span>
-              {task.creator_name}
+              {task.creator_name || "مستخدم"}
             </div>
           )}
         </div>
@@ -221,8 +225,6 @@ export const TaskListItem = ({
           projectStages={[]}
           projectMembers={[]}
           onTaskUpdated={handleTaskUpdated}
-          onAssigneeChange={handleAssigneeChange}
-          isGeneral={isGeneral}
         />
       )}
     </div>
