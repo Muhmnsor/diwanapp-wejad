@@ -6,7 +6,7 @@ export interface Task {
   status: string;
   due_date: string | null;
   assigned_to: string | null;
-  assigned_user_name?: string;
+  assigned_user_name?: string | null; // Updated to be null-able
   priority: string | null;
   created_at: string;
   stage_id: string | null;

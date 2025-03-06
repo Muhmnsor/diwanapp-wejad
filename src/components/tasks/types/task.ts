@@ -7,6 +7,7 @@ export interface Task {
   priority?: string;
   due_date?: string | null;
   assigned_to?: string | null;
+  assigned_user_name?: string | null; // Added this property
   created_at?: string;
   updated_at?: string;
   is_subtask?: boolean;
