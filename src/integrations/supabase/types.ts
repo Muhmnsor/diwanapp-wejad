@@ -3464,8 +3464,8 @@ export type Database = {
       }
       delete_draft_project: {
         Args: {
-          project_id: string
-          current_user_id: string
+          p_project_id: string
+          p_user_id: string
         }
         Returns: boolean
       }
