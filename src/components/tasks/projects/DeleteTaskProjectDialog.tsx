@@ -12,6 +12,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
+import { useAuthStore } from "@/store/refactored-auth";
 
 interface DeleteTaskProjectDialogProps {
   isOpen: boolean;
@@ -31,13 +32,35 @@ export const DeleteTaskProjectDialog = ({
   isDraft = false,
 }: DeleteTaskProjectDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuthStore();
 
   const handleDelete = async () => {
     setIsDeleting(true);
     
     try {
-      console.log("Deleting project:", projectId, "Is draft:", isDraft);
+      console.log("Deleting project:", projectId, "Is draft:", isDraft, "Current user:", user?.id);
       
+      // Get project details to verify ownership/permissions
+      const { data: projectData, error: projectFetchError } = await supabase
+        .from("project_tasks")
+        .select("project_manager")
+        .eq("id", projectId)
+        .single();
+      
+      if (projectFetchError) {
+        console.error("Error fetching project data:", projectFetchError);
+        throw new Error("لا يمكن التحقق من صلاحيات الحذف");
+      }
+      
+      // Verify user has permission to delete (is creator or admin)
+      const isProjectCreator = projectData?.project_manager === user?.id;
+      const isAdmin = user?.isAdmin || false;
+      
+      if (!isProjectCreator && !isAdmin && !isDraft) {
+        console.error("User does not have permission to delete this project");
+        throw new Error("ليس لديك صلاحية حذف هذا المشروع");
+      }
+
       // First check if there are any tasks associated with this project
       const { data: tasks, error: tasksError } = await supabase
         .from("tasks")
@@ -87,11 +110,45 @@ export const DeleteTaskProjectDialog = ({
         // Continue with project deletion even if stage deletion failed
       }
       
-      // Finally delete the project
-      const { error: deleteProjectError } = await supabase
-        .from("project_tasks")
-        .delete()
-        .eq("id", projectId);
+      // Finally delete the project with more specific approach
+      let deleteProjectError;
+      
+      if (isDraft) {
+        // For draft projects, use a more direct approach that bypasses some RLS
+        const { error } = await supabase.rpc('delete_draft_project', { 
+          project_id: projectId,
+          current_user_id: user?.id
+        });
+        deleteProjectError = error;
+        
+        if (error) {
+          console.error("Error using RPC to delete draft project:", error);
+          
+          // Fallback: Try direct deletion
+          const { error: directError } = await supabase
+            .from("project_tasks")
+            .delete()
+            .eq("id", projectId)
+            .eq("is_draft", true);
+            
+          deleteProjectError = directError;
+          
+          if (directError) {
+            console.error("Error with fallback direct deletion:", directError);
+          } else {
+            // The fallback worked
+            deleteProjectError = null;
+          }
+        }
+      } else {
+        // For regular projects
+        const { error } = await supabase
+          .from("project_tasks")
+          .delete()
+          .eq("id", projectId);
+        
+        deleteProjectError = error;
+      }
       
       if (deleteProjectError) {
         console.error("Error deleting project:", deleteProjectError);
@@ -106,7 +163,7 @@ export const DeleteTaskProjectDialog = ({
       onClose();
     } catch (error) {
       console.error("Error deleting project:", error);
-      toast.error("حدث خطأ أثناء حذف المشروع");
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء حذف المشروع");
     } finally {
       setIsDeleting(false);
     }
@@ -122,6 +179,8 @@ export const DeleteTaskProjectDialog = ({
           <DialogTitle>تأكيد حذف المشروع</DialogTitle>
           <DialogDescription className="text-center">
             هل أنت متأكد من رغبتك في حذف مشروع "{projectTitle}"؟ 
+            {isDraft ? " (مسودة)" : ""}
+            <br />
             لا يمكن التراجع عن هذا الإجراء.
           </DialogDescription>
         </DialogHeader>
