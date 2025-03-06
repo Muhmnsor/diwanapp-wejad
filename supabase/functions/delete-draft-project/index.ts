@@ -29,90 +29,22 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Verify the project is a draft and check ownership
-    const { data: project, error: projectError } = await supabase
-      .from('project_tasks')
-      .select('id, is_draft, project_manager')
-      .eq('id', projectId)
-      .single()
+    // Call the database function to delete the draft project
+    const { data, error } = await supabase
+      .rpc('delete_draft_project', { 
+        project_id: projectId,
+        current_user_id: userId
+      })
 
-    if (projectError || !project) {
-      console.error('Error fetching project:', projectError)
+    if (error) {
+      console.error('Error deleting draft project:', error)
       return new Response(
-        JSON.stringify({ error: 'Project not found' }),
-        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 404 }
+        JSON.stringify({ error: error.message || 'Failed to delete project' }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
       )
     }
 
-    // Check if it's a draft
-    if (!project.is_draft) {
-      return new Response(
-        JSON.stringify({ error: 'This is not a draft project' }),
-        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 400 }
-      )
-    }
-
-    // Check if user is an admin (has bypass permissions)
-    const { data: userRoles } = await supabase
-      .from('user_roles')
-      .select('roles:role_id(name)')
-      .eq('user_id', userId)
-
-    const isAdmin = userRoles?.some(role => 
-      role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
-    )
-
-    // Check permission (creator or admin)
-    const isCreator = project.project_manager === userId
-    
-    if (!isCreator && !isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'You do not have permission to delete this project' }),
-        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 403 }
-      )
-    }
-
-    // Delete related records first using service role
-    // Delete project stages
-    const { error: stagesError } = await supabase
-      .from('project_stages')
-      .delete()
-      .eq('project_id', projectId)
-    
-    if (stagesError) {
-      console.error('Error deleting project stages:', stagesError)
-    }
-
-    // Get task IDs for this project
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('id')
-      .eq('project_id', projectId)
-
-    if (tasks && tasks.length > 0) {
-      const taskIds = tasks.map(task => task.id)
-      
-      // Delete subtasks
-      await supabase
-        .from('subtasks')
-        .delete()
-        .in('task_id', taskIds)
-      
-      // Delete tasks
-      await supabase
-        .from('tasks')
-        .delete()
-        .eq('project_id', projectId)
-    }
-
-    // Finally delete the project
-    const { error: deleteError } = await supabase
-      .from('project_tasks')
-      .delete()
-      .eq('id', projectId)
-
-    if (deleteError) {
-      console.error('Error deleting project:', deleteError)
+    if (!data) {
       return new Response(
         JSON.stringify({ error: 'Failed to delete project' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }

@@ -3462,6 +3462,13 @@ export type Database = {
           table_exists: boolean
         }[]
       }
+      delete_draft_project: {
+        Args: {
+          project_id: string
+          current_user_id: string
+        }
+        Returns: boolean
+      }
       delete_user_roles: {
         Args: {
           p_user_id: string
