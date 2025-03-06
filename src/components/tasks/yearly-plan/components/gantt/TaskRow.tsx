@@ -9,7 +9,7 @@ interface TaskRowProps {
 
 export const TaskRow = ({ task, months, today }: TaskRowProps) => {
   return (
-    <div className="flex my-1 hover:bg-gray-50">
+    <div className="flex hover:bg-gray-50 border-b border-gray-100">
       <div className="w-48 flex-shrink-0 py-1 px-3 font-medium">
         <div className="flex flex-col">
           <span className="truncate text-sm" title={task.title}>

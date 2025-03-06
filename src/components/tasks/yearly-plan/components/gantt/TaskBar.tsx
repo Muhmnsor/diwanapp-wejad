@@ -1,6 +1,5 @@
 
 import { getTaskStatusColor } from '../../utils/dateUtils';
-import { Progress } from '@/components/ui/progress';
 
 interface TaskBarProps {
   task: any;
@@ -61,7 +60,7 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
         left: `${left}%`,
         width: `${width}%`,
       }}
-      className={`absolute h-6 rounded-md ${getStatusColor()} border border-white/20`}
+      className={`absolute h-4 rounded-md ${getStatusColor()} border border-white/20`}
       title={`${task.title} (${
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
