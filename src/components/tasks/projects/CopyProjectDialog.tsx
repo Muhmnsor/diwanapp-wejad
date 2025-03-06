@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface CopyProjectDialogProps {
   open: boolean;
@@ -214,6 +215,12 @@ export const CopyProjectDialog = ({
     }
   };
 
+  const handleCheckboxChange = (e: React.MouseEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<boolean>>) => {
+    // Stop event propagation to prevent dialog from closing
+    e.stopPropagation();
+    setter(prev => !prev);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       if (isLoading) return; // Prevent closing during copy process
@@ -246,27 +253,25 @@ export const CopyProjectDialog = ({
               />
             </div>
 
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2 space-x-reverse" onClick={(e) => e.stopPropagation()}>
+              <Checkbox
                 id="includeTasks"
                 checked={includeTasks}
-                onChange={(e) => setIncludeTasks(e.target.checked)}
+                onCheckedChange={() => setIncludeTasks(!includeTasks)}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <Label htmlFor="includeTasks" className="ml-2">نسخ جميع المهام</Label>
+              <Label htmlFor="includeTasks" className="mr-2 cursor-pointer">نسخ جميع المهام</Label>
             </div>
 
             {includeTasks && (
-              <div className="flex items-center space-x-2 space-x-reverse mr-6">
-                <input
-                  type="checkbox"
+              <div className="flex items-center space-x-2 space-x-reverse mr-6" onClick={(e) => e.stopPropagation()}>
+                <Checkbox
                   id="includeAttachments"
                   checked={includeAttachments}
-                  onChange={(e) => setIncludeAttachments(e.target.checked)}
+                  onCheckedChange={() => setIncludeAttachments(!includeAttachments)}
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <Label htmlFor="includeAttachments" className="ml-2">نسخ المرفقات والقوالب</Label>
+                <Label htmlFor="includeAttachments" className="mr-2 cursor-pointer">نسخ المرفقات والقوالب</Label>
               </div>
             )}
           </div>
