@@ -11,7 +11,11 @@ interface GanttChartProps {
 
 export const GanttChart = ({ tasks, months, today, zoomLevel }: GanttChartProps) => {
   if (!tasks || tasks.length === 0) {
-    return null;
+    return (
+      <div className="py-10 text-center text-gray-500">
+        لا توجد مشاريع لعرضها في الخطة السنوية
+      </div>
+    );
   }
 
   return (
@@ -20,7 +24,7 @@ export const GanttChart = ({ tasks, months, today, zoomLevel }: GanttChartProps)
       <GanttHeader months={months} groupByLabel="المشاريع" />
       
       {/* All tasks without grouping */}
-      <div className="mt-4 border rounded-md bg-white">
+      <div className="mt-4 border rounded-md bg-white overflow-hidden">
         {tasks.map(task => (
           <TaskRow 
             key={task.id} 

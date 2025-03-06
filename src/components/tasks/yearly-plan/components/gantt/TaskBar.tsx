@@ -39,15 +39,21 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const left = (leftDay / daysInMonth) * 100;
   const width = ((rightDay - leftDay) / daysInMonth) * 100;
   
-  // Calculate progress percentage based on status
-  let progressPercentage = 0;
-  if (task.status === 'completed') {
-    progressPercentage = 100;
-  } else if (task.status === 'in_progress') {
-    progressPercentage = 50;
-  } else if (task.status === 'delayed') {
-    progressPercentage = 30;
-  }
+  // Color based on status
+  const getStatusColor = () => {
+    switch(task.status) {
+      case 'completed':
+        return 'bg-green-500';
+      case 'in_progress':
+        return 'bg-blue-500';
+      case 'pending':
+        return 'bg-amber-500';
+      case 'delayed':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-400';
+    }
+  };
   
   return (
     <div
@@ -55,20 +61,12 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
         left: `${left}%`,
         width: `${width}%`,
       }}
-      className="absolute h-6 rounded-md overflow-hidden bg-blue-100"
+      className={`absolute h-6 rounded-md ${getStatusColor()} border border-white/20`}
       title={`${task.title} (${
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
         'منخفضة'
       })`}
-    >
-      <Progress 
-        value={progressPercentage} 
-        className="h-full bg-blue-100" 
-      />
-      <span className="absolute inset-0 flex items-center justify-center text-xs truncate px-2 text-slate-800">
-        {task.title}
-      </span>
-    </div>
+    />
   );
 };
