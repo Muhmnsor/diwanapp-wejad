@@ -15,7 +15,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
     try {
       console.log("Fetching tasks for project:", projectId);
       
-      // Get tasks from project_tasks table
+      // Get tasks from project_tasks table with the correct projectId column
       const { data, error } = await supabase
         .from('project_tasks')
         .select('*')
@@ -41,20 +41,21 @@ export const useTasksFetching = (projectId: string | undefined) => {
       if (stageIds.length > 0) {
         const { data: stagesData, error: stagesError } = await supabase
           .from('project_stages')
-          .select('id, name')
+          .select('id, name, color')
           .in('id', stageIds);
         
         if (!stagesError && stagesData) {
           // Create a map of stage IDs to names
-          const stageMap = stagesData.reduce((map: Record<string, string>, stage) => {
-            map[stage.id] = stage.name;
+          const stageMap = stagesData.reduce((map: Record<string, { name: string, color: string }>, stage) => {
+            map[stage.id] = { name: stage.name, color: stage.color };
             return map;
           }, {});
           
           // Add stage names to tasks
           tasksWithStageNames = tasksWithStageNames.map(task => ({
             ...task,
-            stage_name: task.stage_id ? stageMap[task.stage_id] : undefined
+            stage_name: task.stage_id ? stageMap[task.stage_id]?.name : undefined,
+            stage_color: task.stage_id ? stageMap[task.stage_id]?.color : undefined
           }));
         }
       }

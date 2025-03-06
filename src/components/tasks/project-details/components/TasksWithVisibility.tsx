@@ -3,13 +3,14 @@ import { useDraftTasksVisibility } from "@/hooks/useDraftTasksVisibility";
 import { Task } from "../types/task";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, InfoIcon, Loader2 } from "lucide-react";
+import { AlertCircle, FileDown, Loader2, MessageCircle, PlusCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TaskDiscussionDialog } from "@/components/tasks/components/TaskDiscussionDialog";
 
 interface TasksWithVisibilityProps {
   tasks: Task[];
@@ -36,6 +37,8 @@ export const TasksWithVisibility = ({
 }: TasksWithVisibilityProps) => {
   const { visibleTasks, isProjectManager, isDraftProject: isDraft, isLoadingVisibility } = useDraftTasksVisibility(tasks, projectId);
   const [isLaunching, setIsLaunching] = useState(false);
+  const [showDiscussion, setShowDiscussion] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const showLoading = isLoading || isLoadingVisibility;
 
   // Function to launch the project (change from draft to published)
@@ -74,6 +77,11 @@ export const TasksWithVisibility = ({
     }
   };
 
+  const handleShowDiscussion = (task: Task) => {
+    setSelectedTask(task);
+    setShowDiscussion(true);
+  };
+
   if (showLoading) {
     return (
       <div className="space-y-4">
@@ -97,7 +105,7 @@ export const TasksWithVisibility = ({
   if (isDraftProject && !isProjectManager && tasks.length > 0) {
     return (
       <Alert variant="info" className="mt-4">
-        <InfoIcon className="h-4 w-4" />
+        <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           هذا المشروع في وضع المسودة. ستظهر المهام بعد إطلاق المشروع.
         </AlertDescription>
@@ -108,7 +116,7 @@ export const TasksWithVisibility = ({
   // If we're in a draft project, show an info alert to the project manager
   const draftAlert = isDraftProject && isProjectManager && (
     <Alert variant="info" className="mb-4">
-      <InfoIcon className="h-4 w-4" />
+      <AlertCircle className="h-4 w-4" />
       <AlertDescription className="flex justify-between items-center">
         <span>المشروع في وضع المسودة. جميع المهام في حالة مسودة ولن تكون مرئية للفريق حتى يتم إطلاق المشروع.</span>
         <Button 
@@ -143,6 +151,7 @@ export const TasksWithVisibility = ({
                 <TableHead>الأولوية</TableHead>
                 <TableHead>المكلف</TableHead>
                 <TableHead>تاريخ الاستحقاق</TableHead>
+                <TableHead>الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -162,11 +171,40 @@ export const TasksWithVisibility = ({
                       )}
                     </TableCell>
                     <TableCell>{formatDate(task.due_date)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleShowDiscussion(task)}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          <span className="sr-only">مناقشة</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                          <span className="sr-only">إضافة مهمة فرعية</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <FileDown className="h-4 w-4" />
+                          <span className="sr-only">نماذج</span>
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                  <TableCell colSpan={6} className="text-center py-4 text-gray-500">
                     لا توجد مهام مطابقة للمعايير المحددة
                   </TableCell>
                 </TableRow>
@@ -174,6 +212,14 @@ export const TasksWithVisibility = ({
             </TableBody>
           </Table>
         </div>
+        
+        {selectedTask && (
+          <TaskDiscussionDialog 
+            open={showDiscussion} 
+            onOpenChange={setShowDiscussion}
+            task={selectedTask}
+          />
+        )}
       </>
     );
   }
@@ -210,6 +256,25 @@ export const TasksWithVisibility = ({
                   {formatDate(task.due_date)}
                 </div>
               </div>
+              <div className="mt-3 border-t pt-3 flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs flex items-center gap-1"
+                  onClick={() => handleShowDiscussion(task)}
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  مناقشة
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs flex items-center gap-1"
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  مهمة فرعية
+                </Button>
+              </div>
             </div>
           ))
         ) : (
@@ -218,6 +283,14 @@ export const TasksWithVisibility = ({
           </div>
         )}
       </div>
+      
+      {selectedTask && (
+        <TaskDiscussionDialog 
+          open={showDiscussion} 
+          onOpenChange={setShowDiscussion}
+          task={selectedTask}
+        />
+      )}
     </>
   );
 };

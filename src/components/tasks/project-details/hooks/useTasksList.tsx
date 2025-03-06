@@ -50,9 +50,9 @@ export const useTasksList = (projectId?: string) => {
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
-      // Update the task status
+      // Update the task status in the appropriate table
       const { error } = await supabase
-        .from('tasks')
+        .from('project_tasks')
         .update({ status: newStatus })
         .eq('id', taskId);
       
