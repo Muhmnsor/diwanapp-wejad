@@ -1,16 +1,19 @@
 
-import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
 import { Task } from "../types/task";
-import { TaskItem } from "./TaskItem";
+import { TaskCard } from "./TaskCard";
 
 interface TasksStageGroupProps {
-  stage: { id: string; name: string };
+  stage: {
+    id: string;
+    name: string;
+  };
   tasks: Task[];
   activeTab: string;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
+  onDeleteTask?: (taskId: string) => void;
   projectId: string;
 }
 
@@ -22,44 +25,37 @@ export const TasksStageGroup = ({
   getPriorityBadge,
   formatDate,
   onStatusChange,
+  onDeleteTask,
   projectId
 }: TasksStageGroupProps) => {
-  const filteredTasks = tasks.filter(task => 
-    activeTab === "all" || task.status === activeTab
-  );
-  
-  if (filteredTasks.length === 0) return null;
-  
+  // Filter tasks based on active tab
+  const filteredTasks = activeTab === "all" 
+    ? tasks 
+    : tasks.filter(task => task.status === activeTab);
+
+  if (filteredTasks.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="border rounded-md overflow-hidden" dir="rtl">
-      <div className="bg-gray-50 p-3 border-b">
-        <h3 className="font-medium">{stage.name}</h3>
+    <div className="space-y-3">
+      <div className="bg-gray-50 p-3 rounded-lg border">
+        <h3 className="font-medium text-gray-800">{stage.name}</h3>
       </div>
-      <Table dir="rtl">
-        <TableHeader>
-          <TableRow>
-            <TableHead>المهمة</TableHead>
-            <TableHead>الحالة</TableHead>
-            <TableHead>الأولوية</TableHead>
-            <TableHead>المكلف</TableHead>
-            <TableHead>تاريخ الاستحقاق</TableHead>
-            <TableHead>الإجراءات</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredTasks.map(task => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId}
-            />
-          ))}
-        </TableBody>
-      </Table>
+      <div className="grid gap-3">
+        {filteredTasks.map(task => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={onStatusChange}
+            onDeleteTask={onDeleteTask}
+            projectId={projectId}
+          />
+        ))}
+      </div>
     </div>
   );
 };
