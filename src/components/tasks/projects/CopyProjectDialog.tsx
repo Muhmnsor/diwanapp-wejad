@@ -40,7 +40,11 @@ export const CopyProjectDialog = ({
   const [copyStep, setCopyStep] = useState("");
   const [isComplete, setIsComplete] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = async (e: React.MouseEvent) => {
+    // Prevent event propagation to stop dialog from closing or navigating
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!newTitle.trim()) {
       toast.error("يرجى إدخال عنوان للمشروع الجديد");
       return;
@@ -187,20 +191,33 @@ export const CopyProjectDialog = ({
         }
       }
 
+      // Set to complete status
       setCopyProgress(100);
       setCopyStep("تم نسخ المشروع بنجاح!");
       setIsComplete(true);
       
       toast.success("تم نسخ المشروع بنجاح");
+
+      // Store the new project ID to be used for navigation
+      const newProjectId = newProject.id;
       
-      // Short delay to show 100% progress
+      // Short delay to show 100% progress before closing dialog and navigating
       setTimeout(() => {
-        onSuccess();
+        // First close the dialog without navigation
         onOpenChange(false);
-        // Reset state for next time
-        setIsComplete(false);
-        setCopyProgress(0);
-        setCopyStep("");
+        
+        // Then call onSuccess (which might include navigation)
+        // Use a slight delay to ensure dialog is closed first
+        setTimeout(() => {
+          // Reset state for next time
+          setIsComplete(false);
+          setCopyProgress(0);
+          setCopyStep("");
+          setIsLoading(false);
+          
+          // Call success callback with new project ID
+          onSuccess();
+        }, 100);
       }, 1500);
       
     } catch (error) {
@@ -208,25 +225,30 @@ export const CopyProjectDialog = ({
       toast.error("حدث خطأ أثناء نسخ المشروع");
       setCopyStep("حدث خطأ أثناء نسخ المشروع");
       setCopyProgress(0);
-    } finally {
-      if (!isComplete) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
-  const handleCheckboxChange = (e: React.MouseEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<boolean>>) => {
-    // Stop event propagation to prevent dialog from closing
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Stop propagation to prevent dialog from closing
     e.stopPropagation();
-    setter(prev => !prev);
+    setNewTitle(e.target.value);
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (isLoading) return; // Prevent closing during copy process
-      onOpenChange(newOpen);
-    }}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        // Prevent dialog from closing during copy process
+        if (isLoading) return;
+        onOpenChange(newOpen);
+      }}
+    >
+      <DialogContent 
+        className="sm:max-w-[425px]" 
+        dir="rtl"
+        onClick={(e) => e.stopPropagation()}  // Prevent clicks from bubbling up
+      >
         <DialogHeader>
           <DialogTitle>نسخ المشروع كمسودة</DialogTitle>
           <DialogDescription>
@@ -248,7 +270,9 @@ export const CopyProjectDialog = ({
               <Input
                 id="projectTitle"
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={handleTitleChange}
+                onFocus={(e) => e.stopPropagation()}
+                onBlur={(e) => e.stopPropagation()}
                 autoFocus
               />
             </div>
@@ -297,7 +321,10 @@ export const CopyProjectDialog = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onOpenChange(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenChange(false);
+            }}
             disabled={isLoading}
           >
             إلغاء
