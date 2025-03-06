@@ -605,6 +605,65 @@ export const invalidateCacheByTag = (tag: string): number => {
 };
 
 /**
+ * Clear cache items by prefix
+ */
+export const clearCacheByPrefix = (prefix: string): number => {
+  let itemsRemoved = 0;
+  
+  // Clear from memory cache
+  Object.keys(memoryCache).forEach(key => {
+    if (key.startsWith(prefix)) {
+      delete memoryCache[key];
+      itemsRemoved++;
+      
+      // Remove from tag mappings if present
+      const entry = memoryCache[key] as EnhancedCacheEntry<any>;
+      if (entry && entry.tags) {
+        entry.tags.forEach(tag => {
+          if (tagToKeysMap[tag]) {
+            tagToKeysMap[tag].delete(key);
+            if (tagToKeysMap[tag].size === 0) {
+              delete tagToKeysMap[tag];
+            }
+          }
+        });
+      }
+    }
+  });
+  
+  // Clear from localStorage and sessionStorage
+  try {
+    // Clear from localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix)) {
+        localStorage.removeItem(key);
+        itemsRemoved++;
+        i--; // Adjust index since we removed an item
+      }
+    }
+    
+    // Clear from sessionStorage
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith(prefix)) {
+        sessionStorage.removeItem(key);
+        itemsRemoved++;
+        i--; // Adjust index since we removed an item
+      }
+    }
+  } catch (error) {
+    console.warn('Error clearing cache by prefix:', error);
+  }
+  
+  // Notify other tabs/windows
+  notifyCacheClear(prefix);
+  
+  console.log(`Cleared ${itemsRemoved} cache items with prefix: ${prefix}`);
+  return itemsRemoved;
+};
+
+/**
  * Clean up expired items in storage to free up space
  */
 export const cleanupExpiredItems = (storage: 'local' | 'session'): number => {

@@ -1,117 +1,76 @@
 
 import { supabase } from './client';
-import { getCacheData, setCacheData, CACHE_DURATIONS, removeCacheData, clearCacheByPrefix } from '@/utils/cacheService';
+import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
+import { getCacheData, setCacheData, removeCacheData, clearCacheByPrefix, CACHE_DURATIONS } from '@/utils/cacheService';
 
 /**
- * Smart Cached Supabase Client
- * Provides caching layer on top of Supabase for common read operations
+ * Cached Supabase client wrapper functions
  */
 
-interface CacheOptions {
-  enabled?: boolean;
-  duration?: number;
-  invalidateOnWrite?: boolean;
+interface CachedQueryOptions {
+  cacheDuration?: number;
+  skipCache?: boolean;
+  cachePrefix?: string;
+  tags?: string[];
 }
 
-// Default cache options
-const defaultCacheOptions: CacheOptions = {
-  enabled: true,
-  duration: CACHE_DURATIONS.MEDIUM,
-  invalidateOnWrite: true
-};
+/**
+ * Execute a Supabase query with caching
+ */
+export async function cachedQuery<T>(
+  queryKey: string,
+  queryFn: () => PostgrestFilterBuilder<any, any, any, any, any>,
+  options: CachedQueryOptions = {}
+): Promise<{ data: T[] | null; error: any }> {
+  const {
+    cacheDuration = CACHE_DURATIONS.MEDIUM,
+    skipCache = false,
+    cachePrefix = 'supabase',
+    tags = []
+  } = options;
+
+  // Build cache key
+  const cacheKey = `${cachePrefix}:${queryKey}`;
+
+  // Check cache first if not skipping
+  if (!skipCache) {
+    const cachedData = getCacheData<T[]>(cacheKey);
+    if (cachedData) {
+      return { data: cachedData, error: null };
+    }
+  }
+
+  try {
+    // Execute the query
+    const { data, error } = await queryFn();
+
+    // Cache the result if no error
+    if (!error && data) {
+      setCacheData(cacheKey, data, cacheDuration, 'local', {
+        tags,
+        refreshStrategy: 'background',
+        refreshThreshold: 80
+      });
+    }
+
+    return { data: data as T[] | null, error };
+  } catch (error) {
+    console.error(`Error in cached query ${queryKey}:`, error);
+    return { data: null, error };
+  }
+}
 
 /**
- * Create cached version of Supabase select query
- * @param tableName - The table to query
- * @param query - The query function to execute
- * @param cacheOptions - Cache configuration options
+ * Clear cached queries by tag
  */
-export const cachedSelect = async <T>(
-  tableName: string,
-  query: () => Promise<{ data: T | null; error: any }>,
-  cacheOptions: CacheOptions = {}
-): Promise<{ data: T | null; error: any; fromCache?: boolean }> => {
-  const options = { ...defaultCacheOptions, ...cacheOptions };
-  
-  // Skip cache if disabled
-  if (!options.enabled) {
-    return query();
-  }
-  
-  // Generate cache key from the query function
-  const queryString = query.toString();
-  const cacheKey = `supabase:${tableName}:${queryString.replace(/\s+/g, '')}`;
-  
-  // Try to get from cache first
-  const cachedData = getCacheData<T>(cacheKey);
-  if (cachedData) {
-    return { data: cachedData, error: null, fromCache: true };
-  }
-  
-  // Fetch from Supabase
-  const { data, error } = await query();
-  
-  // Cache the result if valid
-  if (!error && data) {
-    setCacheData(cacheKey, data, options.duration);
-  }
-  
-  return { data, error, fromCache: false };
-};
+export function clearCachedQueries(tag: string): void {
+  // Implementation depends on your caching strategy
+  removeCacheData(`tag:${tag}`);
+}
 
 /**
- * Execute write operation and invalidate related cache entries
- * @param tableName - The table being modified
- * @param operation - The write operation to perform
+ * Clear all cached queries with a specific prefix
  */
-export const cachedWrite = async <T>(
-  tableName: string,
-  operation: () => Promise<{ data: T | null; error: any }>
-): Promise<{ data: T | null; error: any }> => {
-  // Execute the write operation
-  const result = await operation();
-  
-  // Invalidate cache for this table if no error
-  if (!result.error) {
-    clearCacheByPrefix(`supabase:${tableName}`);
-  }
-  
-  return result;
-};
-
-/**
- * Cached Supabase client with the same API but with caching layer
- */
-export const cachedSupabase = {
-  from: (tableName: string) => {
-    const originalBuilder = supabase.from(tableName);
-    
-    // Create a wrapper that preserves the original builder's methods
-    // but adds caching capabilities
-    return {
-      // Preserve all original methods
-      ...originalBuilder,
-      
-      // Override select with cached version
-      select: (columns?: string) => {
-        const selectBuilder = columns ? originalBuilder.select(columns) : originalBuilder.select();
-        
-        // Return a modified builder with cache capabilities
-        return {
-          ...selectBuilder, // This preserves all original builder methods like eq, order, etc.
-          
-          // Add caching method
-          _cachedExecution: async <T>(
-            cacheOptions?: CacheOptions
-          ): Promise<{ data: T | null; error: any; fromCache?: boolean }> => {
-            return cachedSelect<T>(
-              tableName,
-              () => selectBuilder as any,
-              cacheOptions
-            );
-          }
-        };
-      }
-    };
-  }
-};
+export function clearCachedQueriesByPrefix(prefix: string): void {
+  clearCacheByPrefix(`supabase:${prefix}`);
+}

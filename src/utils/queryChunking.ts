@@ -1,272 +1,205 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { throttle } from "./throttleUtils";
+import { supabase } from '@/integrations/supabase/client';
+import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 /**
- * Utility for chunking large database queries
- * Helps with pagination and performance optimization
+ * Efficient chunked data loading utilities
  */
 
-type ChunkOptions = {
+interface ChunkOptions<T> {
   chunkSize?: number;
-  delayBetweenChunks?: number;
-  maxConcurrent?: number;
-  onChunkProcessed?: (results: any[], chunkIndex: number) => void;
-  onProgress?: (processed: number, total: number) => void;
-  useCache?: boolean;
-  cacheKeyPrefix?: string;
-  cacheDuration?: number;
-};
-
-/**
- * Chunked fetch for large dataset queries
- * @param table Supabase table name 
- * @param query Base query function
- * @param options Chunking options
- */
-export const fetchInChunks = async <T>(
-  table: string,
-  query: (from: number, to: number) => Promise<{ data: T[] | null; error: any }>,
-  options: ChunkOptions = {}
-): Promise<T[]> => {
-  const {
-    chunkSize = 100,
-    delayBetweenChunks = 200,
-    maxConcurrent = 3,
-    onChunkProcessed,
-    onProgress,
-    useCache = true,
-    cacheKeyPrefix = 'chunk',
-    cacheDuration = 60 * 5 * 1000 // 5 minutes
-  } = options;
-
-  // First determine the total count
-  const { count, error } = await supabase
-    .from(table)
-    .select('*', { count: 'exact', head: true });
-
-  if (error) {
-    console.error(`Error determining count for ${table}:`, error);
-    return [];
-  }
-
-  if (!count) return [];
-
-  console.log(`Total items to fetch: ${count}`);
-  
-  // Calculate number of chunks
-  const totalChunks = Math.ceil(count / chunkSize);
-  let processedChunks = 0;
-  const results: T[] = [];
-  
-  // Process chunks in batches to limit concurrency
-  for (let batch = 0; batch < totalChunks; batch += maxConcurrent) {
-    const batchPromises: Promise<T[]>[] = [];
-    
-    // Create a batch of promises
-    for (
-      let chunkIndex = batch;
-      chunkIndex < Math.min(batch + maxConcurrent, totalChunks);
-      chunkIndex++
-    ) {
-      const from = chunkIndex * chunkSize;
-      const to = Math.min(from + chunkSize - 1, count - 1);
-      
-      batchPromises.push(
-        fetchChunk<T>(table, query, from, to, chunkIndex, useCache, cacheKeyPrefix, cacheDuration)
-      );
-    }
-    
-    // Wait for the batch to complete
-    const batchResults = await Promise.all(batchPromises);
-    
-    // Process batch results
-    batchResults.forEach((chunkData, index) => {
-      const chunkIndex = batch + index;
-      results.push(...chunkData);
-      processedChunks++;
-      
-      if (onChunkProcessed) {
-        onChunkProcessed(chunkData, chunkIndex);
-      }
-      
-      if (onProgress) {
-        onProgress(processedChunks, totalChunks);
-      }
-    });
-    
-    // Add delay between batches to prevent overwhelming the database
-    if (batch + maxConcurrent < totalChunks) {
-      await new Promise(resolve => setTimeout(resolve, delayBetweenChunks));
-    }
-  }
-  
-  return results;
-};
-
-/**
- * Fetch a single chunk of data with caching
- */
-async function fetchChunk<T>(
-  table: string,
-  query: (from: number, to: number) => Promise<{ data: T[] | null; error: any }>,
-  from: number,
-  to: number,
-  chunkIndex: number,
-  useCache: boolean,
-  cacheKeyPrefix: string,
-  cacheDuration: number
-): Promise<T[]> {
-  // Check cache first if enabled
-  if (useCache) {
-    const cacheKey = `${cacheKeyPrefix}:${table}:${from}-${to}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    
-    if (cachedData) {
-      try {
-        const parsed = JSON.parse(cachedData);
-        const { data, timestamp } = parsed;
-        
-        // Check if cache is still valid
-        if (timestamp && Date.now() - timestamp < cacheDuration) {
-          console.log(`Using cached data for chunk ${chunkIndex} (${from}-${to})`);
-          return data;
-        }
-      } catch (e) {
-        // Invalid cache, proceed with fetch
-        console.warn('Invalid cache data', e);
-      }
-    }
-  }
-  
-  // Fetch data
-  console.log(`Fetching chunk ${chunkIndex} (${from}-${to})`);
-  const { data, error } = await query(from, to);
-  
-  if (error) {
-    console.error(`Error fetching chunk ${chunkIndex}:`, error);
-    return [];
-  }
-  
-  // Store in cache if enabled
-  if (useCache && data) {
-    const cacheKey = `${cacheKeyPrefix}:${table}:${from}-${to}`;
-    try {
-      localStorage.setItem(
-        cacheKey,
-        JSON.stringify({
-          data,
-          timestamp: Date.now()
-        })
-      );
-    } catch (e) {
-      console.warn('Failed to cache chunk data', e);
-    }
-  }
-  
-  return data || [];
+  totalLimit?: number;
+  page?: number;
+  sortField?: keyof T;
+  sortOrder?: 'asc' | 'desc';
+  filter?: Record<string, any>;
+  searchTerm?: string;
+  searchFields?: (keyof T)[];
 }
 
 /**
- * Create a paginated query function for use with fetchInChunks
+ * Load data in chunks with pagination, sorting, and filtering support
+ * @returns Promise with data array and total count
  */
-export const createPaginatedQuery = <T>(
-  table: string,
-  options: {
-    select?: string;
-    order?: { column: string; ascending?: boolean };
-    filter?: Record<string, any>;
-  } = {}
-) => {
-  return (from: number, to: number): Promise<{ data: T[] | null; error: any }> => {
-    const { select = '*', order, filter } = options;
-    
+export async function loadDataInChunks<T extends Record<string, any>>(
+  tableName: string,
+  options: ChunkOptions<T> = {}
+): Promise<{ data: T[]; error: any; count: number }> {
+  const {
+    chunkSize = 50,
+    totalLimit = 1000,
+    page = 1,
+    sortField,
+    sortOrder = 'asc',
+    filter = {},
+    searchTerm = '',
+    searchFields = []
+  } = options;
+
+  // Calculate pagination
+  const from = (page - 1) * chunkSize;
+  const to = from + chunkSize - 1;
+
+  try {
+    // Start building the query
     let query = supabase
-      .from(table)
-      .select(select)
-      .range(from, to);
-    
-    // Apply ordering if specified
-    if (order) {
-      query = query.order(order.column, { ascending: order.ascending ?? true });
-    }
-    
-    // Apply filters if specified
-    if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          query = query.in(key, value);
-        } else if (value !== undefined && value !== null) {
-          query = query.eq(key, value);
-        }
+      .from(tableName)
+      .select('*', { count: 'exact' });
+
+    // Apply filters
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query = query.eq(key, value);
+      }
+    });
+
+    // Apply search if provided
+    if (searchTerm && searchFields.length > 0) {
+      const searchQueries = searchFields.map(field => {
+        return `${String(field)}.ilike.%${searchTerm}%`;
       });
+      
+      query = query.or(searchQueries.join(','));
     }
-    
-    return query;
-  };
-};
+
+    // Apply sorting
+    if (sortField) {
+      query = query.order(String(sortField), { ascending: sortOrder === 'asc' });
+    }
+
+    // Apply pagination
+    query = query.range(from, to);
+
+    // Execute the query and convert it to a proper Promise
+    const { data, error, count } = await query;
+
+    return {
+      data: (data || []) as T[],
+      error,
+      count: count || 0
+    };
+  } catch (error) {
+    console.error('Error loading data in chunks:', error);
+    return { data: [], error, count: 0 };
+  }
+}
 
 /**
- * Create a throttled database updater to batch updates
+ * Progressive loading function that loads data in incremental chunks
+ * and processes each chunk as it arrives
  */
-export const createBatchUpdater = <T>(
-  table: string,
-  options: {
-    batchSize?: number;
-    waitTime?: number;
-    onSuccess?: (updatedIds: string[]) => void;
+export async function progressiveLoad<T extends Record<string, any>>(
+  tableName: string,
+  onChunkLoaded: (chunk: T[], progress: number) => void,
+  options: ChunkOptions<T> & {
+    onComplete?: (allData: T[]) => void;
     onError?: (error: any) => void;
+    delayBetweenChunks?: number;
   } = {}
-) => {
+): Promise<T[]> {
   const {
-    batchSize = 20,
-    waitTime = 500,
-    onSuccess,
+    chunkSize = 50,
+    totalLimit = 1000,
+    sortField,
+    sortOrder = 'asc',
+    filter = {},
+    delayBetweenChunks = 300,
+    onComplete,
     onError
   } = options;
-  
-  const pendingUpdates: Record<string, Partial<T>> = {};
-  
-  const processUpdates = async () => {
-    const entries = Object.entries(pendingUpdates);
-    if (entries.length === 0) return;
+
+  const allData: T[] = [];
+  let currentPage = 1;
+  let hasMoreData = true;
+  let loadedCount = 0;
+  let totalCount = 0;
+
+  try {
+    // Load first chunk and get total count
+    const firstChunkResult = await loadDataInChunks<T>(tableName, {
+      ...options,
+      page: currentPage,
+      chunkSize
+    });
+
+    if (firstChunkResult.error) {
+      throw firstChunkResult.error;
+    }
+
+    totalCount = Math.min(firstChunkResult.count, totalLimit);
     
-    console.log(`Processing batch of ${entries.length} updates`);
-    
-    // Process in sub-batches if needed
-    for (let i = 0; i < entries.length; i += batchSize) {
-      const batch = entries.slice(i, i + batchSize);
-      const updatePromises = batch.map(([id, data]) => 
-        supabase
-          .from(table)
-          .update(data)
-          .eq('id', id)
-      );
+    if (firstChunkResult.data.length > 0) {
+      allData.push(...firstChunkResult.data);
+      loadedCount += firstChunkResult.data.length;
       
-      try {
-        await Promise.all(updatePromises);
+      const progress = Math.min(100, (loadedCount / totalCount) * 100);
+      onChunkLoaded(firstChunkResult.data, progress);
+    } else {
+      hasMoreData = false;
+    }
+
+    // Continue loading chunks if needed
+    while (hasMoreData && loadedCount < totalLimit && loadedCount < totalCount) {
+      currentPage++;
+      
+      // Optional delay between chunk loads to prevent UI blocking
+      if (delayBetweenChunks > 0) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenChunks));
+      }
+
+      const chunkResult = await loadDataInChunks<T>(tableName, {
+        ...options,
+        page: currentPage,
+        chunkSize
+      });
+
+      if (chunkResult.error) {
+        throw chunkResult.error;
+      }
+
+      if (chunkResult.data.length > 0) {
+        allData.push(...chunkResult.data);
+        loadedCount += chunkResult.data.length;
         
-        // Clear processed items
-        batch.forEach(([id]) => {
-          delete pendingUpdates[id];
-        });
-        
-        if (onSuccess) {
-          onSuccess(batch.map(([id]) => id));
-        }
-      } catch (error) {
-        console.error('Error processing batch updates:', error);
-        if (onError) {
-          onError(error);
-        }
+        const progress = Math.min(100, (loadedCount / totalCount) * 100);
+        onChunkLoaded(chunkResult.data, progress);
+      } else {
+        hasMoreData = false;
+      }
+
+      // Stop if we've reached the limit
+      if (loadedCount >= totalLimit) {
+        break;
       }
     }
-  };
-  
-  const throttledProcess = throttle(processUpdates, waitTime);
-  
-  return (id: string, data: Partial<T>) => {
-    pendingUpdates[id] = { ...pendingUpdates[id], ...data };
-    throttledProcess();
-  };
-};
+
+    // Call completion callback
+    if (onComplete) {
+      onComplete(allData);
+    }
+
+    return allData;
+  } catch (error) {
+    console.error('Error in progressive loading:', error);
+    if (onError) {
+      onError(error);
+    }
+    return allData;
+  }
+}
+
+/**
+ * Execute a Supabase query with proper type handling and Promise conversion
+ */
+export async function executeQuery<T>(
+  query: PostgrestFilterBuilder<any, any, any, any, any>
+): Promise<{ data: T[]; error: any; }> {
+  try {
+    // Execute the query to get a proper Promise
+    const { data, error } = await query;
+    return { data: (data || []) as T[], error };
+  } catch (error) {
+    console.error('Error executing query:', error);
+    return { data: [], error };
+  }
+}
