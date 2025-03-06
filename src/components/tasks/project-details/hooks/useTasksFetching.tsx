@@ -60,8 +60,11 @@ export const useTasksFetching = (projectId: string | undefined) => {
         }
       }
       
-      // Add user names for tasks with assignees
+      // Add user names for tasks with assignees - now for both main tasks and subtasks
       const tasksWithUserData = await Promise.all(tasksWithStageNames.map(async (task) => {
+        const taskWithExtra = { ...task };
+        
+        // Get assigned user name if task has an assignee
         if (task.assigned_to) {
           const { data: userData, error: userError } = await supabase
             .from('profiles')
@@ -70,10 +73,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
             .single();
           
           if (!userError && userData) {
-            return {
-              ...task,
-              assigned_user_name: userData.display_name || userData.email
-            };
+            taskWithExtra.assigned_user_name = userData.display_name || userData.email;
           }
         }
         
@@ -84,11 +84,9 @@ export const useTasksFetching = (projectId: string | undefined) => {
           .eq('parent_task_id', task.id);
           
         const hasSubtasks = !subtasksError && (subtasksCount?.length || 0) > 0;
+        taskWithExtra.has_subtasks = hasSubtasks;
         
-        return {
-          ...task,
-          has_subtasks: hasSubtasks
-        };
+        return taskWithExtra;
       }));
       
       // Process tasks by stage

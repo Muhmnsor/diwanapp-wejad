@@ -29,4 +29,6 @@ export interface Task {
   attachment_url?: string | null;
   form_template?: string | null;
   templates?: Array<{ url: string }> | null;
+  // Flag for tasks that have subtasks
+  has_subtasks?: boolean;
 }

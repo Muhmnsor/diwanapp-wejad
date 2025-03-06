@@ -1,12 +1,20 @@
 
-import { useState } from "react";
-import { PlusCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { PlusCircle, ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Task } from "../../types/task";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { TaskAssigneeField } from "../TaskAssigneeField";
+import { useProjectMembers } from "../../hooks/useProjectMembers";
+import { cn } from "@/lib/utils";
 
 interface SubtaskDropdownProps {
   task: Task;
@@ -20,6 +28,11 @@ export const SubtaskDropdown = ({ task, onSubtaskAdded }: SubtaskDropdownProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSubtasks, setIsLoadingSubtasks] = useState(false);
   const { user } = useAuthStore();
+  const { projectMembers } = useProjectMembers(task.project_id);
+  
+  // New state variables for the enhanced form
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [assignedTo, setAssignedTo] = useState<string | null>(null);
 
   // Fetch subtasks when the dropdown is opened
   const fetchSubtasks = async () => {
@@ -63,6 +76,9 @@ export const SubtaskDropdown = ({ task, onSubtaskAdded }: SubtaskDropdownProps) 
     
     setIsLoading(true);
     try {
+      // Format the due date to ISO string if it exists
+      const formattedDueDate = dueDate ? dueDate.toISOString() : null;
+      
       // Get project information from the parent task
       const newSubtask = {
         title: newSubtaskTitle,
@@ -75,7 +91,8 @@ export const SubtaskDropdown = ({ task, onSubtaskAdded }: SubtaskDropdownProps) 
         stage_id: task.stage_id,
         is_subtask: true,
         created_at: new Date().toISOString(),
-        assigned_to: null,
+        assigned_to: assignedTo,
+        due_date: formattedDueDate
       };
       
       const { data, error } = await supabase
@@ -85,7 +102,12 @@ export const SubtaskDropdown = ({ task, onSubtaskAdded }: SubtaskDropdownProps) 
         
       if (error) throw error;
       
+      // Reset form
       setNewSubtaskTitle("");
+      setDueDate(undefined);
+      setAssignedTo(null);
+      
+      // Update the list
       setSubtasks([...(data || []), ...subtasks]);
       toast.success("تمت إضافة المهمة الفرعية بنجاح");
       
@@ -139,28 +161,65 @@ export const SubtaskDropdown = ({ task, onSubtaskAdded }: SubtaskDropdownProps) 
       </div>
       
       <CollapsibleContent className="space-y-2">
-        {/* Form to add new subtask */}
-        <form onSubmit={handleAddSubtask} className="flex items-center gap-2 mt-3">
-          <input
-            type="text"
-            value={newSubtaskTitle}
-            onChange={(e) => setNewSubtaskTitle(e.target.value)}
-            placeholder="أضف مهمة فرعية جديدة"
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+        {/* Enhanced form to add new subtask */}
+        <form onSubmit={handleAddSubtask} className="space-y-3 mt-3">
+          <div className="space-y-2">
+            <Label htmlFor="subtask-title">عنوان المهمة الفرعية</Label>
+            <Input
+              id="subtask-title"
+              type="text"
+              value={newSubtaskTitle}
+              onChange={(e) => setNewSubtaskTitle(e.target.value)}
+              placeholder="أضف مهمة فرعية جديدة"
+              className="flex h-9 w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="subtask-due-date">تاريخ الاستحقاق</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="subtask-due-date"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-right font-normal",
+                    !dueDate && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="ml-2 h-4 w-4" />
+                  {dueDate ? format(dueDate, "yyyy/MM/dd") : <span>اختر تاريخ</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={setDueDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          <TaskAssigneeField
+            assignedTo={assignedTo}
+            setAssignedTo={setAssignedTo}
+            projectMembers={projectMembers}
           />
+          
           <Button 
             type="submit" 
-            size="sm" 
+            className="w-full"
             disabled={isLoading}
-            className="h-9"
           >
-            <PlusCircle className="h-4 w-4 ml-1" />
-            إضافة
+            {isLoading ? "جاري الإضافة..." : "إضافة المهمة الفرعية"}
           </Button>
         </form>
         
         {/* List of subtasks */}
         <div className="space-y-2 mt-3">
+          <Label>المهام الفرعية الحالية</Label>
           {isLoadingSubtasks ? (
             <div className="text-center py-2 text-sm text-muted-foreground">
               جاري تحميل المهام الفرعية...
@@ -168,7 +227,20 @@ export const SubtaskDropdown = ({ task, onSubtaskAdded }: SubtaskDropdownProps) 
           ) : subtasks.length > 0 ? (
             subtasks.map((subtask) => (
               <div key={subtask.id} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
-                <span className="text-sm">{subtask.title}</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{subtask.title}</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                    {subtask.due_date && (
+                      <span className="flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {format(new Date(subtask.due_date), "yyyy/MM/dd")}
+                      </span>
+                    )}
+                    {subtask.assigned_user_name && (
+                      <span className="mr-2">المكلف: {subtask.assigned_user_name}</span>
+                    )}
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   {subtask.status !== "completed" ? (
                     <Button

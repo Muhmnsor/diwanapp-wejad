@@ -188,12 +188,18 @@ export const TasksWithVisibility = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 ml-2"
+                            className="h-8 w-8 p-0 mr-2"
                             onClick={() => toggleExpandRow(task.id)}
+                            title="إضافة مهمة فرعية"
                           >
                             <PlusCircle className="h-4 w-4" />
                             <span className="sr-only">إضافة مهمة فرعية</span>
                           </Button>
+                          {task.has_subtasks && (
+                            <Badge variant="outline" className="mr-1">
+                              المهام الفرعية
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(task.status)}</TableCell>
@@ -296,12 +302,18 @@ export const TasksWithVisibility = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 ml-2"
+                      className="h-8 w-8 p-0 mr-2"
                       onClick={() => toggleExpandRow(task.id)}
+                      title="إضافة مهمة فرعية"
                     >
                       <PlusCircle className="h-4 w-4" />
                       <span className="sr-only">إضافة مهمة فرعية</span>
                     </Button>
+                    {task.has_subtasks && (
+                      <Badge variant="outline" className="mr-1">
+                        المهام الفرعية
+                      </Badge>
+                    )}
                   </div>
                   {getStatusBadge(task.status)}
                 </div>
