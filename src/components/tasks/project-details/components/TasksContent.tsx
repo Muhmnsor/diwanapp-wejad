@@ -1,27 +1,23 @@
 
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Task } from "../types/task";
-import { TasksSkeleton } from "./TasksSkeleton";
-import { TaskStageTabs } from "./TaskStageTabs";
-import { TasksListLayout } from "./TasksListLayout";
-import { TasksTableLayout } from "./TasksTableLayout";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { LayoutGrid, LayoutList } from "lucide-react";
+import { TasksStageGroup } from "./TasksStageGroup";
+import { TaskCard } from "./TaskCard";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@/components/ui/table";
+import { TaskItem } from "./TaskItem";
 
 interface TasksContentProps {
   isLoading: boolean;
   activeTab: string;
   filteredTasks: Task[];
-  projectStages: any[];
+  projectStages: { id: string; name: string }[];
   tasksByStage: Record<string, Task[]>;
   getStatusBadge: (status: string) => JSX.Element;
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
-  projectId?: string;
+  projectId?: string | undefined;
   isGeneral?: boolean;
-  isDraftProject?: boolean;
 }
 
 export const TasksContent = ({
@@ -35,109 +31,82 @@ export const TasksContent = ({
   formatDate,
   onStatusChange,
   projectId,
-  isGeneral = false,
-  isDraftProject = false,
+  isGeneral
 }: TasksContentProps) => {
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-
-  const handleViewChange = (mode: "list" | "grid") => {
-    setViewMode(mode);
-  };
-
   if (isLoading) {
-    return <TasksSkeleton />;
-  }
-
-  if (filteredTasks.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border">
-        <h3 className="text-lg font-medium text-gray-500">لا توجد مهام</h3>
-        <p className="text-sm text-gray-400 mt-2">
-          {isDraftProject 
-            ? "المشروع في وضع المسودة. أضف المهام وعندما تنتهي اضغط على زر 'إطلاق المشروع' ليتم إرسال المهام للمكلفين" 
-            : "قم بإضافة مهمة جديدة للبدء"}
-        </p>
+      <div className="space-y-3" dir="rtl">
+        {[...Array(3)].map((_, index) => (
+          <Skeleton key={index} className="h-24 w-full" />
+        ))}
       </div>
     );
   }
 
+  if (filteredTasks.length === 0) {
+    return (
+      <div className="text-center py-8 bg-gray-50 rounded-md border" dir="rtl">
+        <p className="text-gray-500">لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}</p>
+      </div>
+    );
+  }
+
+  // إذا كان التبويب النشط هو "الكل" وليست مهام عامة، فسنعرض المهام مقسمة حسب المراحل
+  if (activeTab === "all" && projectStages.length > 0 && !isGeneral) {
+    return (
+      <div className="space-y-6" dir="rtl">
+        {projectStages.map(stage => (
+          <TasksStageGroup
+            key={stage.id}
+            stage={stage}
+            tasks={tasksByStage[stage.id] || []}
+            activeTab={activeTab}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={onStatusChange}
+            projectId={projectId || ''}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى أو المهام العامة
   return (
-    <div className="mt-4">
-      <div className="mb-4 flex justify-end">
-        <div className="flex gap-2 border rounded-md p-1">
-          <Button
-            variant={viewMode === "list" ? "default" : "ghost"}
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => handleViewChange("list")}
-          >
-            <LayoutList className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "grid" ? "default" : "ghost"}
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={() => handleViewChange("grid")}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
+    <div className="space-y-6" dir="rtl">
+      <div className="bg-white rounded-md shadow-sm overflow-hidden border">
+        <div className="p-4 bg-gray-50 border-b">
+          <h3 className="font-medium">{isGeneral ? "المهام العامة" : "المهام"}</h3>
+        </div>
+        <div className="border rounded-md overflow-hidden">
+          <Table dir="rtl">
+            <TableHeader>
+              <TableRow>
+                <TableHead>المهمة</TableHead>
+                <TableHead>الحالة</TableHead>
+                <TableHead>الأولوية</TableHead>
+                <TableHead>المكلف</TableHead>
+                <TableHead>تاريخ الاستحقاق</TableHead>
+                <TableHead>الإجراءات</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.map(task => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  getStatusBadge={getStatusBadge}
+                  getPriorityBadge={getPriorityBadge}
+                  formatDate={formatDate}
+                  onStatusChange={onStatusChange}
+                  projectId={projectId || ''}
+                />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
-
-      <Tabs defaultValue="all-tasks" className="mt-4">
-        <TaskStageTabs
-          projectStages={projectStages}
-          tasksCount={filteredTasks.length}
-          tasksByStage={tasksByStage}
-          isGeneral={isGeneral}
-        />
-
-        <TabsContent value="all-tasks" className="mt-4">
-          {viewMode === "list" ? (
-            <TasksTableLayout
-              tasks={filteredTasks}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId || ""}
-            />
-          ) : (
-            <TasksListLayout
-              tasks={filteredTasks}
-              getStatusBadge={getStatusBadge}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-              onStatusChange={onStatusChange}
-              projectId={projectId || ""}
-            />
-          )}
-        </TabsContent>
-
-        {projectStages.map((stage) => (
-          <TabsContent key={stage.id} value={`stage-${stage.id}`} className="mt-4">
-            {viewMode === "list" ? (
-              <TasksTableLayout
-                tasks={tasksByStage[stage.id] || []}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                formatDate={formatDate}
-                onStatusChange={onStatusChange}
-                projectId={projectId || ""}
-              />
-            ) : (
-              <TasksListLayout
-                tasks={tasksByStage[stage.id] || []}
-                getStatusBadge={getStatusBadge}
-                getPriorityBadge={getPriorityBadge}
-                formatDate={formatDate}
-                onStatusChange={onStatusChange}
-                projectId={projectId || ""}
-              />
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
     </div>
   );
 };
