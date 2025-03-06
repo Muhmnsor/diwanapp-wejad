@@ -25,8 +25,9 @@ export const useAssignedTasks = () => {
       
       const projects: Record<string, string> = {};
       const parentTasks: Record<string, any> = {};
+      const validProjectIds: Set<string> = new Set();
       
-      // 1. استرجاع المشاريع الخاصة بالمستخدم وتخزينها في قاموس
+      // 1. استرجاع المشاريع النشطة فقط وتخزينها في قاموس
       const { data: projectsData } = await supabase
         .from('project_tasks')
         .select('id, title');
@@ -37,11 +38,14 @@ export const useAssignedTasks = () => {
         projectsData.forEach(project => {
           if (project.id && project.title) {
             projects[project.id] = project.title;
+            // تخزين معرفات المشاريع الصالحة
+            validProjectIds.add(project.id);
           }
         });
       }
       
       console.log("Projects map:", projects);
+      console.log("Valid project IDs:", Array.from(validProjectIds));
       
       // 2. استرجاع مهام المحفظة المسندة إلى المستخدم
       const { data: portfolioTasks, error: portfolioError } = await supabase
@@ -67,7 +71,7 @@ export const useAssignedTasks = () => {
         });
       }
       
-      // 3. استرجاع المهام العادية المسندة إلى المستخدم
+      // 3. استرجاع المهام العادية المسندة إلى المستخدم وفقط من المشاريع الموجودة
       const { data: regularTasks, error: regularError } = await supabase
         .from('tasks')
         .select('*')
@@ -78,8 +82,19 @@ export const useAssignedTasks = () => {
       } else {
         console.log("Regular tasks fetched:", regularTasks);
         
+        // تصفية المهام التي تنتمي لمشاريع محذوفة
+        const filteredRegularTasks = regularTasks?.filter(task => {
+          // إذا كانت المهمة عامة أو لا تنتمي لأي مشروع، احتفظ بها
+          if (task.is_general || !task.project_id) return true;
+          
+          // تحقق مما إذا كان معرف المشروع موجودًا في قائمة المشاريع الصالحة
+          return validProjectIds.has(task.project_id);
+        });
+        
+        console.log("Filtered regular tasks:", filteredRegularTasks?.length);
+        
         // تخزين المهام الأساسية للرجوع إليها لاحقًا مع إضافة اسم المشروع
-        regularTasks?.forEach(task => {
+        filteredRegularTasks?.forEach(task => {
           const projectName = task.project_id && projects[task.project_id] ? projects[task.project_id] : null;
           parentTasks[task.id] = {
             ...task,
@@ -87,6 +102,9 @@ export const useAssignedTasks = () => {
           };
           console.log(`Stored parent task ${task.id} with project_name: ${projectName}`);
         });
+        
+        // استخدام المهام المفلترة
+        regularTasks = filteredRegularTasks;
       }
       
       // 3.5 أيضًا جلب كل المهام للمساعدة في ربط المهام الفرعية بآبائها
@@ -96,7 +114,13 @@ export const useAssignedTasks = () => {
         .select('id, title, project_id');
         
       if (allTasks) {
-        allTasks.forEach(task => {
+        // تصفية المهام التي تنتمي لمشاريع محذوفة
+        const filteredAllTasks = allTasks.filter(task => {
+          if (!task.project_id) return true;
+          return validProjectIds.has(task.project_id);
+        });
+        
+        filteredAllTasks.forEach(task => {
           if (!parentTasks[task.id]) {
             const projectName = task.project_id && projects[task.project_id] ? projects[task.project_id] : null;
             parentTasks[task.id] = {
@@ -121,9 +145,20 @@ export const useAssignedTasks = () => {
       } else {
         console.log("Subtasks fetched:", subtasks);
         
+        // تصفية المهام الفرعية بناءً على ما إذا كانت المهمة الأساسية تنتمي لمشروع صالح
+        const filteredSubtasks = subtasks?.filter(subtask => {
+          const parentTask = parentTasks[subtask.task_id];
+          if (!parentTask) return false; // لا نعرف المهمة الأساسية
+          if (!parentTask.project_id) return true; // المهمة الأساسية ليست مرتبطة بمشروع
+          
+          return validProjectIds.has(parentTask.project_id);
+        });
+        
+        console.log("Filtered subtasks:", filteredSubtasks?.length);
+        
         // طباعة معلومات المهام الرئيسية للتأكد من توفر البيانات للمهام الفرعية
-        if (subtasks && subtasks.length > 0) {
-          subtasks.forEach(subtask => {
+        if (filteredSubtasks && filteredSubtasks.length > 0) {
+          filteredSubtasks.forEach(subtask => {
             const parentTaskInfo = parentTasks[subtask.task_id];
             console.log(`Subtask ${subtask.id} parent task info:`, 
               parentTaskInfo ? {
@@ -137,7 +172,7 @@ export const useAssignedTasks = () => {
         
         const transformedPortfolioTasks = transformPortfolioTasks(portfolioTasks || []);
         const transformedRegularTasks = transformRegularTasks(regularTasks || [], projects);
-        const transformedSubtasks = transformSubtasks(subtasks || [], parentTasks, projects);
+        const transformedSubtasks = transformSubtasks(filteredSubtasks || [], parentTasks, projects);
         
         // 5. دمج المهام وترتيبها حسب تاريخ الاستحقاق
         const allTasks = [
@@ -183,4 +218,3 @@ export const useAssignedTasks = () => {
   
   return { tasks, loading, error, refetch };
 };
-
