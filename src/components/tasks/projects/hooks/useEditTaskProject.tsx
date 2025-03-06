@@ -140,6 +140,7 @@ export const useEditTaskProject = ({
         .eq("id", project.id);
       
       if (error) {
+        console.error("Error updating project:", error);
         throw error;
       }
       
