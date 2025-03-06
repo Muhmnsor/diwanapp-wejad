@@ -44,7 +44,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         throw new Error("User ID is required");
       }
       
-      // Get current date and date range based on selected period
       const now = new Date();
       let startDate = new Date();
       
@@ -56,10 +55,8 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         startDate.setFullYear(now.getFullYear() - 1);
       }
       
-      // Format dates for database query
       const startDateString = startDate.toISOString();
       
-      // Check if we have pre-calculated stats
       const { data: preCalculatedStats, error: statsError } = await supabase
         .from('user_performance_stats')
         .select('*')
@@ -70,35 +67,30 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         console.error("Error fetching pre-calculated stats:", statsError);
       }
       
-      // Use Promise.all with regular queries to parallelize requests
       const [
         tasksResponse,
         portfolioTasksResponse,
         projectTasksResponse,
         subtasksResponse
       ] = await Promise.all([
-        // Regular tasks
         supabase
           .from('tasks')
           .select('*, project_tasks(title)')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString),
         
-        // Portfolio tasks
         supabase
           .from('portfolio_tasks')
           .select('*, portfolio_projects(portfolio_id), portfolios(name)')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString),
         
-        // Project tasks
         supabase
           .from('project_tasks')
           .select('*')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString),
           
-        // Subtasks
         supabase
           .from('subtasks')
           .select('*, tasks(title)')
@@ -131,7 +123,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         throw subtasksError;
       }
       
-      // Fetch user achievements
       const { data: achievements, error: achievementsError } = await supabase
         .from('user_achievements')
         .select('*')
@@ -142,7 +133,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         console.error("Error fetching achievements:", achievementsError);
       }
       
-      // Combine all tasks
       const allTasks = [
         ...(tasks || []).map(t => ({ ...t, type: 'task' })),
         ...(portfolioTasks || []).map(t => ({ ...t, type: 'portfolio' })),
@@ -150,23 +140,19 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         ...(subtasks || []).map(t => ({ ...t, type: 'subtask' }))
       ];
       
-      // Calculate summary data
       const totalTasks = allTasks.length;
       const completedTasks = allTasks.filter(task => task.status === 'completed').length;
       const pendingTasks = allTasks.filter(task => task.status === 'pending').length;
       
-      // Calculate overdue tasks
       const overdueCount = allTasks.filter(task => {
         if (!task.due_date || task.status === 'completed') return false;
         return new Date(task.due_date) < now;
       }).length;
       
-      // Calculate completion rate
       const completionRate = totalTasks > 0 
         ? Math.round((completedTasks / totalTasks) * 100) 
         : 0;
       
-      // Calculate average completion time and on-time completion rate
       const completedTasksWithDueDate = allTasks.filter(task => 
         task.status === 'completed' && task.due_date && task.updated_at
       );
@@ -179,7 +165,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         ? Math.round((onTimeCompletions / completedTasksWithDueDate.length) * 100)
         : 0;
       
-      // Calculate average completion time (in hours)
       const totalCompletionTimeHours = completedTasksWithDueDate.reduce((total, task) => {
         const createdDate = new Date(task.created_at);
         const completedDate = new Date(task.updated_at);
@@ -191,7 +176,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         ? Math.round(totalCompletionTimeHours / completedTasksWithDueDate.length)
         : 0;
       
-      // Group tasks by month
       const tasksByMonth = [];
       const months = [];
       for (let i = 0; i < 6; i++) {
@@ -217,7 +201,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         });
       }
       
-      // Group tasks by project
       const projectGroups: Record<string, { count: number; completedCount: number }> = {};
       for (const task of allTasks) {
         let projectName = 'بدون مشروع';
@@ -253,7 +236,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         }))
         .sort((a, b) => b.count - a.count);
       
-      // Group tasks by priority
       const priorityGroups: Record<string, number> = {};
       for (const task of allTasks) {
         const priority = task.priority || 'medium';
@@ -272,13 +254,11 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         }))
         .sort((a, b) => b.count - a.count);
       
-      // Get recently completed tasks
       const recentlyCompletedTasks = allTasks
         .filter(task => task.status === 'completed')
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
         .slice(0, 5);
       
-      // Get upcoming tasks (not completed, with nearest due dates)
       const upcomingTasks = allTasks
         .filter(task => task.status !== 'completed' && task.due_date)
         .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())

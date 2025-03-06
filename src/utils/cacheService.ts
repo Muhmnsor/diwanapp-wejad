@@ -345,7 +345,8 @@ export const getCacheData = <T>(
       
       // Handle decompression if needed
       if (entry.compressed) {
-        return decompressData<T>(entry.data);
+        // Fixed type issue: Ensure we're passing a string to decompressData
+        return decompressData<T>(entry.data as unknown as string);
       }
       
       return entry.data as T;
