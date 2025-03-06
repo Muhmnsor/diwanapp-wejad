@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,17 +8,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -38,68 +30,21 @@ export const CopyProjectDialog = ({
   projectTitle,
   onSuccess,
 }: CopyProjectDialogProps) => {
-  const [title, setTitle] = useState(`نسخة من ${projectTitle}`);
-  const [copyTasks, setCopyTasks] = useState(true);
-  const [copySubtasks, setCopySubtasks] = useState(true);
-  const [copyAttachments, setCopyAttachments] = useState(false);
-  const [targetWorkspaceId, setTargetWorkspaceId] = useState<string>("");
-  const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(true);
-
-  // Fetch workspaces for dropdown
-  useEffect(() => {
-    const fetchWorkspaces = async () => {
-      setIsFetching(true);
-      try {
-        const { data, error } = await supabase
-          .from("workspaces")
-          .select("id, name")
-          .eq("status", "active")
-          .order("name");
-
-        if (error) throw error;
-        setWorkspaces(data || []);
-        
-        // Get the current project's workspace ID
-        const { data: projectData, error: projectError } = await supabase
-          .from("project_tasks")
-          .select("workspace_id")
-          .eq("id", projectId)
-          .single();
-          
-        if (!projectError && projectData) {
-          setTargetWorkspaceId(projectData.workspace_id);
-        }
-      } catch (error) {
-        console.error("Error fetching workspaces:", error);
-        toast.error("حدث خطأ أثناء تحميل مساحات العمل");
-      } finally {
-        setIsFetching(false);
-      }
-    };
-
-    if (open) {
-      fetchWorkspaces();
-      setTitle(`نسخة من ${projectTitle}`);
-    }
-  }, [open, projectId, projectTitle]);
+  const [newTitle, setNewTitle] = useState(`نسخة من ${projectTitle}`);
+  const [includeTasks, setIncludeTasks] = useState(true);
+  const [includeAttachments, setIncludeAttachments] = useState(true);
 
   const handleCopy = async () => {
-    if (!title.trim()) {
-      toast.error("يرجى إدخال عنوان للمشروع");
-      return;
-    }
-
-    if (!targetWorkspaceId) {
-      toast.error("يرجى اختيار مساحة العمل");
+    if (!newTitle.trim()) {
+      toast.error("يرجى إدخال عنوان للمشروع الجديد");
       return;
     }
 
     setIsLoading(true);
     try {
-      // 1. Get the project details
-      const { data: projectData, error: projectError } = await supabase
+      // 1. Fetch the original project
+      const { data: originalProject, error: projectError } = await supabase
         .from("project_tasks")
         .select("*")
         .eq("id", projectId)
@@ -107,20 +52,21 @@ export const CopyProjectDialog = ({
 
       if (projectError) throw projectError;
 
-      // 2. Create a new project as a draft
+      // 2. Create the new project
       const { data: newProject, error: createError } = await supabase
         .from("project_tasks")
         .insert([
           {
-            title: title,
-            description: projectData.description,
+            title: newTitle,
+            description: originalProject.description,
             status: "pending",
-            workspace_id: targetWorkspaceId,
-            due_date: projectData.due_date,
-            start_date: projectData.start_date,
-            priority: projectData.priority,
-            is_draft: true,
+            workspace_id: originalProject.workspace_id,
+            project_id: originalProject.project_id,
+            due_date: originalProject.due_date,
             copied_from: projectId,
+            is_draft: true, // Always create as draft
+            project_manager: originalProject.project_manager,
+            start_date: originalProject.start_date
           },
         ])
         .select()
@@ -128,100 +74,93 @@ export const CopyProjectDialog = ({
 
       if (createError) throw createError;
 
-      if (copyTasks) {
-        // 3. Copy tasks
-        const { data: tasks, error: tasksError } = await supabase
+      if (includeTasks) {
+        // 3. Fetch all tasks from the original project
+        const { data: originalTasks, error: tasksError } = await supabase
           .from("tasks")
           .select("*")
           .eq("project_id", projectId);
 
         if (tasksError) throw tasksError;
 
-        // Create a mapping of old task IDs to new task IDs
-        const taskIdMap: Record<string, string> = {};
+        if (originalTasks && originalTasks.length > 0) {
+          // 4. Create tasks in the new project
+          const newTasks = originalTasks.map((task) => ({
+            title: task.title,
+            description: task.description,
+            status: "draft", // Start as draft
+            priority: task.priority,
+            assigned_to: task.assigned_to, // Keep the same assignees
+            project_id: newProject.id,
+            workspace_id: task.workspace_id,
+            stage_id: task.stage_id,
+            due_date: task.due_date,
+            category: task.category,
+          }));
 
-        for (const task of tasks || []) {
-          const { data: newTask, error: newTaskError } = await supabase
+          const { error: insertTasksError } = await supabase
             .from("tasks")
-            .insert([
-              {
-                title: task.title,
-                description: task.description,
-                status: "draft", // Start in draft status
-                priority: task.priority,
-                due_date: task.due_date,
-                project_id: newProject.id,
-                workspace_id: targetWorkspaceId,
-                stage_id: task.stage_id,
-                category: task.category,
-              },
-            ])
-            .select()
-            .single();
+            .insert(newTasks);
 
-          if (newTaskError) throw newTaskError;
-          taskIdMap[task.id] = newTask.id;
-
-          if (copySubtasks) {
-            // 4. Copy subtasks for this task
-            const { data: subtasks, error: subtasksError } = await supabase
-              .from("subtasks")
-              .select("*")
-              .eq("task_id", task.id);
-
-            if (subtasksError) throw subtasksError;
-
-            for (const subtask of subtasks || []) {
-              await supabase.from("subtasks").insert([
-                {
-                  task_id: newTask.id,
-                  title: subtask.title,
-                  status: "pending",
-                  due_date: subtask.due_date,
-                },
-              ]);
+          if (insertTasksError) throw insertTasksError;
+          
+          // 5. Copy attachments and templates if needed
+          if (includeAttachments) {
+            for (const task of originalTasks) {
+              // Find the corresponding new task
+              const { data: newTask } = await supabase
+                .from("tasks")
+                .select("id")
+                .eq("project_id", newProject.id)
+                .eq("title", task.title)
+                .single();
+                
+              if (newTask) {
+                // Copy attachments
+                const { data: attachments } = await supabase
+                  .from("unified_task_attachments")
+                  .select("*")
+                  .eq("task_id", task.id)
+                  .eq("task_table", "tasks");
+                  
+                if (attachments && attachments.length > 0) {
+                  const newAttachments = attachments.map(att => ({
+                    task_id: newTask.id,
+                    file_url: att.file_url,
+                    file_name: att.file_name,
+                    file_type: att.file_type,
+                    attachment_category: att.attachment_category,
+                    task_table: "tasks"
+                  }));
+                  
+                  await supabase
+                    .from("unified_task_attachments")
+                    .insert(newAttachments);
+                }
+                
+                // Copy templates
+                const { data: templates } = await supabase
+                  .from("task_templates")
+                  .select("*")
+                  .eq("task_id", task.id)
+                  .eq("task_table", "tasks");
+                  
+                if (templates && templates.length > 0) {
+                  const newTemplates = templates.map(tmpl => ({
+                    task_id: newTask.id,
+                    file_url: tmpl.file_url,
+                    file_name: tmpl.file_name,
+                    file_type: tmpl.file_type,
+                    task_table: "tasks"
+                  }));
+                  
+                  await supabase
+                    .from("task_templates")
+                    .insert(newTemplates);
+                }
+              }
             }
           }
-
-          if (copyAttachments) {
-            // 5. Copy task attachments
-            const { data: attachments, error: attachmentsError } = await supabase
-              .from("task_attachments")
-              .select("*")
-              .eq("task_id", task.id);
-
-            if (attachmentsError) throw attachmentsError;
-
-            for (const attachment of attachments || []) {
-              await supabase.from("task_attachments").insert([
-                {
-                  task_id: newTask.id,
-                  file_name: attachment.file_name,
-                  file_url: attachment.file_url,
-                  file_type: attachment.file_type,
-                  content_type: attachment.content_type,
-                  attachment_category: attachment.attachment_category,
-                },
-              ]);
-            }
-          }
-        }
-
-        // 6. Copy project stages
-        const { data: stages, error: stagesError } = await supabase
-          .from("project_stages")
-          .select("*")
-          .eq("project_id", projectId);
-
-        if (stagesError) throw stagesError;
-
-        for (const stage of stages || []) {
-          await supabase.from("project_stages").insert([
-            {
-              project_id: newProject.id,
-              name: stage.name,
-            },
-          ]);
         }
       }
 
@@ -238,90 +177,48 @@ export const CopyProjectDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]" dir="rtl">
+      <DialogContent className="sm:max-w-[425px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle>نسخ المشروع</DialogTitle>
+          <DialogTitle>نسخ المشروع كمسودة</DialogTitle>
           <DialogDescription>
-            قم بإنشاء نسخة من المشروع مع إمكانية تعديل خصائصه
+            سيتم إنشاء نسخة جديدة من المشروع بوضع المسودة حتى تتمكن من تعديلها قبل إطلاقها.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">عنوان المشروع الجديد</Label>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="projectTitle">عنوان المشروع الجديد</Label>
             <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="أدخل عنوان المشروع"
+              id="projectTitle"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              autoFocus
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="workspace">مساحة العمل</Label>
-            <Select
-              value={targetWorkspaceId}
-              onValueChange={setTargetWorkspaceId}
-              disabled={isFetching}
-            >
-              <SelectTrigger id="workspace">
-                <SelectValue placeholder="اختر مساحة العمل" />
-              </SelectTrigger>
-              <SelectContent>
-                {workspaces.map((workspace) => (
-                  <SelectItem key={workspace.id} value={workspace.id}>
-                    {workspace.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <input
+              type="checkbox"
+              id="includeTasks"
+              checked={includeTasks}
+              onChange={(e) => setIncludeTasks(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <Label htmlFor="includeTasks" className="ml-2">نسخ جميع المهام</Label>
           </div>
 
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Checkbox
-                id="copy-tasks"
-                checked={copyTasks}
-                onCheckedChange={(checked) => {
-                  const isChecked = checked === true;
-                  setCopyTasks(isChecked);
-                  if (!isChecked) {
-                    setCopySubtasks(false);
-                    setCopyAttachments(false);
-                  }
-                }}
+          {includeTasks && (
+            <div className="flex items-center space-x-2 space-x-reverse mr-6">
+              <input
+                type="checkbox"
+                id="includeAttachments"
+                checked={includeAttachments}
+                onChange={(e) => setIncludeAttachments(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <Label htmlFor="copy-tasks" className="mr-2">
-                نسخ المهام
-              </Label>
+              <Label htmlFor="includeAttachments" className="ml-2">نسخ المرفقات والقوالب</Label>
             </div>
-
-            {copyTasks && (
-              <>
-                <div className="flex items-center space-x-2 space-x-reverse mr-6">
-                  <Checkbox
-                    id="copy-subtasks"
-                    checked={copySubtasks}
-                    onCheckedChange={(checked) => setCopySubtasks(checked === true)}
-                  />
-                  <Label htmlFor="copy-subtasks" className="mr-2">
-                    نسخ المهام الفرعية
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2 space-x-reverse mr-6">
-                  <Checkbox
-                    id="copy-attachments"
-                    checked={copyAttachments}
-                    onCheckedChange={(checked) => setCopyAttachments(checked === true)}
-                  />
-                  <Label htmlFor="copy-attachments" className="mr-2">
-                    نسخ المرفقات
-                  </Label>
-                </div>
-              </>
-            )}
-          </div>
+          )}
         </div>
 
         <DialogFooter className="flex-row-reverse gap-2">
