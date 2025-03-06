@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,7 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
+  manager_name: string | null;
 }
 
 export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () => void) => {
@@ -56,6 +56,8 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
         setCompletionPercentage(percentage);
         
+        setProjectOwner(project.manager_name || 'غير محدد');
+        
         if (percentage === 100 && project.status !== 'completed' && total > 0) {
           console.log(`Project ${project.id} is 100% complete, updating status to completed`);
           
@@ -68,8 +70,6 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
             console.error("Error updating project status:", updateError);
           }
         }
-
-        await fetchProjectOwner();
       } catch (err) {
         console.error("Error in fetchTasksData:", err);
       } finally {
@@ -78,7 +78,7 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     };
 
     fetchTasksData();
-  }, [project.id, project.status]);
+  }, [project.id, project.status, project.manager_name]);
 
   const fetchProjectOwner = async () => {
     try {
