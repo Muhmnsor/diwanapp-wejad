@@ -2429,6 +2429,7 @@ export type Database = {
           project_id: string | null
           registration_number: string
           updated_at: string | null
+          user_id: string | null
           work_status: string | null
         }
         Insert: {
@@ -2447,6 +2448,7 @@ export type Database = {
           project_id?: string | null
           registration_number: string
           updated_at?: string | null
+          user_id?: string | null
           work_status?: string | null
         }
         Update: {
@@ -2465,6 +2467,7 @@ export type Database = {
           project_id?: string | null
           registration_number?: string
           updated_at?: string | null
+          user_id?: string | null
           work_status?: string | null
         }
         Relationships: [
