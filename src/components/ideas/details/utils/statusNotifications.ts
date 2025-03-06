@@ -1,17 +1,23 @@
 
 import { toast } from "sonner";
 
-/**
- * Displays a notification based on the idea status
- */
 export const showStatusNotification = (status: string) => {
-  if (status === "pending_decision") {
-    toast.info("الفكرة الآن بانتظار القرار", { duration: 3000 });
-  } else if (status === "approved") {
-    toast.success("تمت الموافقة على الفكرة", { duration: 3000 });
-  } else if (status === "rejected") {
-    toast.error("تم رفض الفكرة", { duration: 3000 });
-  } else if (status === "under_review" || status === "draft") {
-    toast.info("الفكرة الآن قيد المناقشة", { duration: 3000 });
+  switch (status) {
+    case 'draft':
+    case 'under_review':
+      toast.info("تم تحديث حالة الفكرة إلى: قيد المناقشة", { duration: 3000 });
+      break;
+    case 'pending_decision':
+      toast.info("تم تحديث حالة الفكرة إلى: بانتظار القرار", { duration: 3000 });
+      break;
+    case 'approved':
+      toast.success("تم تحديث حالة الفكرة إلى: تمت الموافقة", { duration: 3000 });
+      break;
+    case 'rejected':
+      toast.error("تم تحديث حالة الفكرة إلى: مرفوض", { duration: 3000 });
+      break;
+    case 'needs_modification':
+      toast.warning("تم تحديث حالة الفكرة إلى: يحتاج تعديل", { duration: 3000 });
+      break;
   }
 };

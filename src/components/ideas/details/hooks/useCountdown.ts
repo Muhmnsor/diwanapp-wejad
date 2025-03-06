@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { calculateTimeRemaining, CountdownTime } from "../utils/countdownUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +18,37 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
     seconds: 0
   });
   const [isExpired, setIsExpired] = useState(false);
+  const lastDiscussionPeriod = useRef<string | undefined>(discussion_period);
+  const lastCreatedAt = useRef<string>(created_at);
+
+  // Effect to detect changes in discussion period or created_at
+  useEffect(() => {
+    if (discussion_period !== lastDiscussionPeriod.current || created_at !== lastCreatedAt.current) {
+      console.log("🔄 Discussion period or created_at changed, recalculating countdown...");
+      console.log("Previous discussion period:", lastDiscussionPeriod.current);
+      console.log("New discussion period:", discussion_period);
+      
+      // Recalculate immediately
+      const timeLeft = calculateTimeRemaining(discussion_period, created_at);
+      setCountdown(timeLeft);
+      
+      // Update expiration status
+      const expired = 
+        timeLeft.days === 0 && 
+        timeLeft.hours === 0 && 
+        timeLeft.minutes === 0 && 
+        timeLeft.seconds === 0;
+      
+      if (expired !== isExpired) {
+        console.log(`Expiration status changed from ${isExpired} to ${expired}`);
+        setIsExpired(expired);
+      }
+      
+      // Update refs
+      lastDiscussionPeriod.current = discussion_period;
+      lastCreatedAt.current = created_at;
+    }
+  }, [discussion_period, created_at, isExpired]);
 
   useEffect(() => {
     // تحديث حالة الفكرة عندما تنتهي المناقشة
@@ -25,6 +56,7 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
       if (!ideaId || !isExpired) return;
 
       try {
+        console.log("Discussion expired, checking current idea status...");
         // أولاً، تحقق من الحالة الحالية للفكرة
         const { data: ideaData, error: fetchError } = await supabase
           .from('ideas')
@@ -70,6 +102,7 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
       
       // تحديث حالة انتهاء المناقشة محلياً
       if (expired !== isExpired) {
+        console.log(`⏲️ تغيير حالة انتهاء المناقشة من ${isExpired} إلى ${expired}`);
         setIsExpired(expired);
         
         // عرض إشعار عند انتهاء فترة المناقشة

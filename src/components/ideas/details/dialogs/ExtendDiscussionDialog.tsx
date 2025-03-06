@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateTimeRemaining } from "../utils/countdownUtils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ExtendDiscussionDialogProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export const ExtendDiscussionDialog = ({
   const [operation, setOperation] = useState<string>("add");
   const [totalCurrentHours, setTotalCurrentHours] = useState<number>(0);
   const [isEndDialogOpen, setIsEndDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
   
   // استرجاع معلومات الفكرة والوقت المتبقي عند فتح النافذة
   useEffect(() => {
@@ -41,7 +43,7 @@ export const ExtendDiscussionDialog = ({
         try {
           const { data: ideaData, error: fetchError } = await supabase
             .from("ideas")
-            .select("discussion_period, created_at")
+            .select("discussion_period, created_at, status")
             .eq("id", ideaId)
             .single();
 
@@ -180,16 +182,29 @@ export const ExtendDiscussionDialog = ({
       console.log("New discussion period:", newDiscussionPeriod);
 
       // تحديث قاعدة البيانات
+      let updateData: any = { discussion_period: newDiscussionPeriod };
+      
+      // إذا كانت المناقشة منتهية وقام المستخدم بتمديدها، قم بتغيير الحالة إلى قيد المناقشة
+      if (operation === "add" && newTotalHours > 0 && (remainingDays === 0 && remainingHours === 0)) {
+        console.log("Updating status to under_review because discussion was extended after expiration");
+        updateData.status = "under_review";
+      }
+
+      // تحديث قاعدة البيانات
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: newDiscussionPeriod })
+        .update(updateData)
         .eq("id", ideaId);
 
       if (updateError) {
         throw updateError;
       }
 
-      console.log("Discussion period updated successfully");
+      console.log("Discussion period updated successfully with data:", updateData);
+      
+      // تحديث البيانات في الواجهة
+      await queryClient.invalidateQueries({ queryKey: ['idea', ideaId] });
+      
       toast.success(operation === "add" ? "تم تمديد فترة المناقشة بنجاح" : "تم تنقيص فترة المناقشة بنجاح");
       onSuccess();
       onClose();
@@ -204,10 +219,13 @@ export const ExtendDiscussionDialog = ({
   const handleEndDiscussion = async () => {
     setIsSubmitting(true);
     try {
-      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها
+      // تحديث فترة المناقشة إلى صفر ساعات لإنهائها وتغيير الحالة
       const { error: updateError } = await supabase
         .from("ideas")
-        .update({ discussion_period: "0 hours" })
+        .update({ 
+          discussion_period: "0 hours",
+          status: "pending_decision" 
+        })
         .eq("id", ideaId);
 
       if (updateError) {
@@ -215,6 +233,10 @@ export const ExtendDiscussionDialog = ({
       }
 
       console.log("Discussion ended successfully");
+      
+      // تحديث البيانات في الواجهة
+      await queryClient.invalidateQueries({ queryKey: ['idea', ideaId] });
+      
       toast.success("تم إنهاء المناقشة بنجاح");
       onSuccess();
       onClose();
@@ -360,3 +382,4 @@ export const ExtendDiscussionDialog = ({
     </>
   );
 };
+
