@@ -1,74 +1,55 @@
 
-import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
-import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartBarIcon, FolderIcon, CalendarIcon, LayoutDashboardIcon, BarChartIcon } from "lucide-react";
 
-export const TasksHeader = () => {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+interface TasksHeaderProps {
+  showCacheMonitor?: boolean;
+}
 
-  // Detect the active tab from URL hash
-  useEffect(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash === 'workspaces') {
-      setActiveTab('workspaces');
-    } else if (hash === 'yearly-plan') {
-      setActiveTab('yearly-plan');
-    } else if (hash === 'reports') {
-      setActiveTab('reports');
-    } else {
-      setActiveTab('overview');
-    }
-
-    const handleHashChange = () => {
-      const newHash = window.location.hash.replace('#', '');
-      setActiveTab(newHash || 'overview');
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-
+export const TasksHeader: React.FC<TasksHeaderProps> = ({ showCacheMonitor = false }) => {
+  const navigate = useNavigate();
+  const currentHash = window.location.hash.replace('#', '') || 'overview';
+  
+  const handleTabChange = (value: string) => {
+    navigate(`#${value}`);
+  };
+  
   return (
-    <div className="flex flex-col gap-4 mb-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">نظام إدارة المهام</h1>
-        {/* Only show the create workspace button in the workspaces tab */}
-        {activeTab === 'workspaces' && (
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            إنشاء مساحة عمل
-          </Button>
-        )}
-        
-        {/* You could add a reports-specific button here if needed */}
-        {activeTab === 'reports' && (
-          <div></div> // مكان محجوز لأزرار تبويب التقارير في المستقبل
-        )}
-      </div>
+    <div className="flex flex-col space-y-4">
+      <h1 className="text-3xl font-bold">المهام</h1>
       
-      {/* Only show the search input in the workspaces tab */}
-      {activeTab === 'workspaces' && (
-        <div className="relative">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <Input
-            placeholder="البحث عن مهام، مشاريع، أو مساحات عمل..."
-            className="pr-10 w-full"
-          />
-        </div>
-      )}
-
-      <CreateWorkspaceDialog 
-        open={isCreateDialogOpen} 
-        onOpenChange={setIsCreateDialogOpen} 
-      />
+      <Tabs value={currentHash} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="w-full justify-start overflow-x-auto">
+          <TabsTrigger value="overview" className="flex items-center gap-1">
+            <LayoutDashboardIcon className="h-4 w-4" />
+            <span>نظرة عامة</span>
+          </TabsTrigger>
+          
+          <TabsTrigger value="workspaces" className="flex items-center gap-1">
+            <FolderIcon className="h-4 w-4" />
+            <span>مساحات العمل</span>
+          </TabsTrigger>
+          
+          <TabsTrigger value="yearly-plan" className="flex items-center gap-1">
+            <CalendarIcon className="h-4 w-4" />
+            <span>الخطة السنوية</span>
+          </TabsTrigger>
+          
+          <TabsTrigger value="reports" className="flex items-center gap-1">
+            <ChartBarIcon className="h-4 w-4" />
+            <span>التقارير</span>
+          </TabsTrigger>
+          
+          {showCacheMonitor && (
+            <TabsTrigger value="cache-monitor" className="flex items-center gap-1">
+              <BarChartIcon className="h-4 w-4" />
+              <span>أداء التخزين المؤقت</span>
+            </TabsTrigger>
+          )}
+        </TabsList>
+      </Tabs>
     </div>
   );
 };

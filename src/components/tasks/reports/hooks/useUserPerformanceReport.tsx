@@ -1,6 +1,8 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { cachedSupabase } from "@/integrations/supabase/cachedClient";
+import { CACHE_DURATIONS } from "@/utils/cacheService";
 import { useAuthStore } from "@/store/refactored-auth";
 
 export interface UserAchievement {
@@ -34,9 +36,9 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
   const { user } = useAuthStore();
   const targetUserId = userId || user?.id;
   
-  return useQuery({
-    queryKey: ['user-performance-report', targetUserId, period],
-    queryFn: async (): Promise<UserPerformanceData> => {
+  return useCachedQuery(
+    ['user-performance-report', targetUserId, period],
+    async (): Promise<UserPerformanceData> => {
       if (!targetUserId) {
         throw new Error("User ID is required");
       }
@@ -56,53 +58,62 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
       // Format dates for database query
       const startDateString = startDate.toISOString();
       
-      // Check if we have pre-calculated stats
-      const { data: preCalculatedStats, error: statsError } = await supabase
+      // Check if we have pre-calculated stats using cached client
+      const { data: preCalculatedStats, error: statsError } = await cachedSupabase
         .from('user_performance_stats')
         .select('*')
         .eq('user_id', targetUserId)
         .eq('stats_period', period)
-        .single();
+        ._cachedExecution({ duration: CACHE_DURATIONS.DAY });
         
       if (statsError && statsError.code !== 'PGRST116') {
         console.error("Error fetching pre-calculated stats:", statsError);
       }
       
-      // Fetch all tasks across different tables
+      // Use Promise.all with cached queries to parallelize requests
       const [
-        { data: tasks, error: tasksError },
-        { data: portfolioTasks, error: portfolioTasksError },
-        { data: projectTasks, error: projectTasksError },
-        { data: subtasks, error: subtasksError }
+        tasksResponse,
+        portfolioTasksResponse,
+        projectTasksResponse,
+        subtasksResponse
       ] = await Promise.all([
         // Regular tasks
-        supabase
+        cachedSupabase
           .from('tasks')
           .select('*, project_tasks(title)')
           .eq('assigned_to', targetUserId)
-          .gte('created_at', startDateString),
+          .gte('created_at', startDateString)
+          ._cachedExecution(),
         
         // Portfolio tasks
-        supabase
+        cachedSupabase
           .from('portfolio_tasks')
           .select('*, portfolio_projects(portfolio_id), portfolios(name)')
           .eq('assigned_to', targetUserId)
-          .gte('created_at', startDateString),
+          .gte('created_at', startDateString)
+          ._cachedExecution(),
         
         // Project tasks
-        supabase
+        cachedSupabase
           .from('project_tasks')
           .select('*')
           .eq('assigned_to', targetUserId)
-          .gte('created_at', startDateString),
+          .gte('created_at', startDateString)
+          ._cachedExecution(),
           
         // Subtasks
-        supabase
+        cachedSupabase
           .from('subtasks')
           .select('*, tasks(title)')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString)
+          ._cachedExecution()
       ]);
+      
+      const { data: tasks, error: tasksError } = tasksResponse;
+      const { data: portfolioTasks, error: portfolioTasksError } = portfolioTasksResponse;
+      const { data: projectTasks, error: projectTasksError } = projectTasksResponse;
+      const { data: subtasks, error: subtasksError } = subtasksResponse;
       
       if (tasksError) {
         console.error("Error fetching tasks:", tasksError);
@@ -124,12 +135,13 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         throw subtasksError;
       }
       
-      // Fetch user achievements
-      const { data: achievements, error: achievementsError } = await supabase
+      // Fetch user achievements with caching
+      const { data: achievements, error: achievementsError } = await cachedSupabase
         .from('user_achievements')
         .select('*')
         .eq('user_id', targetUserId)
-        .order('achieved_at', { ascending: false });
+        .order('achieved_at', { ascending: false })
+        ._cachedExecution({ duration: CACHE_DURATIONS.DAY });
         
       if (achievementsError) {
         console.error("Error fetching achievements:", achievementsError);
@@ -295,6 +307,12 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         upcomingTasks
       };
     },
-    enabled: !!targetUserId
-  });
+    {
+      enabled: !!targetUserId,
+      cacheDuration: period === 'monthly' ? CACHE_DURATIONS.MEDIUM : CACHE_DURATIONS.LONG,
+      cacheStorage: 'local', // Store in localStorage for persistence across sessions
+      staleTime: 30 * 60 * 1000, // 30 minutes stale time
+      cachePrefix: 'tasks'
+    }
+  );
 };
