@@ -75,27 +75,70 @@ export const useDeleteTaskProject = ({
           throw new Error("ليس لديك صلاحية حذف هذا المشروع");
         }
 
-        // Delete related records first
-        // Delete project stages
-        const { error: stagesError } = await supabase
-          .from("project_stages")
-          .delete()
-          .eq("project_id", projectId);
+        // Handle deletion of non-draft projects in a sequential way
+        console.log("Deleting non-draft project with sequential deletions");
         
-        if (stagesError) {
-          console.error("Error deleting project stages:", stagesError);
-        }
-
         // Get task IDs for this project
-        const { data: tasks } = await supabase
+        const { data: tasks, error: tasksError } = await supabase
           .from("tasks")
           .select("id")
           .eq("project_id", projectId);
         
-        if (tasks && tasks.length > 0) {
-          const taskIds = tasks.map(task => task.id);
+        if (tasksError) {
+          console.error("Error fetching tasks:", tasksError);
+          throw new Error("فشل في الحصول على المهام المرتبطة بالمشروع");
+        }
+        
+        const taskIds = tasks ? tasks.map(task => task.id) : [];
+        console.log(`Found ${taskIds.length} tasks to delete`);
+        
+        if (taskIds.length > 0) {
+          // 1. Delete task discussion attachments
+          const { error: discussionAttachmentsError } = await supabase
+            .from("task_discussion_attachments")
+            .delete()
+            .in("task_id", taskIds);
           
-          // Delete subtasks
+          if (discussionAttachmentsError) {
+            console.error("Error deleting discussion attachments:", discussionAttachmentsError);
+            // Continue despite error
+          }
+          
+          // 2. Delete task comments
+          const { error: commentsError } = await supabase
+            .from("task_comments")
+            .delete()
+            .in("task_id", taskIds);
+          
+          if (commentsError) {
+            console.error("Error deleting comments:", commentsError);
+            // Continue despite error
+          }
+          
+          // 3. Delete unified comments
+          const { error: unifiedCommentsError } = await supabase
+            .from("unified_task_comments")
+            .delete()
+            .eq("task_table", "tasks")
+            .in("task_id", taskIds);
+          
+          if (unifiedCommentsError) {
+            console.error("Error deleting unified comments:", unifiedCommentsError);
+            // Continue despite error
+          }
+          
+          // 4. Delete task attachments
+          const { error: attachmentsError } = await supabase
+            .from("task_attachments")
+            .delete()
+            .in("task_id", taskIds);
+          
+          if (attachmentsError) {
+            console.error("Error deleting attachments:", attachmentsError);
+            // Continue despite error
+          }
+          
+          // 5. Delete subtasks
           const { error: subtasksError } = await supabase
             .from("subtasks")
             .delete()
@@ -103,30 +146,44 @@ export const useDeleteTaskProject = ({
           
           if (subtasksError) {
             console.error("Error deleting subtasks:", subtasksError);
+            // Continue despite error
           }
           
-          // Delete tasks
-          const { error: tasksError } = await supabase
+          // 6. Delete tasks
+          const { error: deleteTasksError } = await supabase
             .from("tasks")
             .delete()
             .eq("project_id", projectId);
           
-          if (tasksError) {
-            console.error("Error deleting tasks:", tasksError);
-            throw tasksError;
+          if (deleteTasksError) {
+            console.error("Error deleting tasks:", deleteTasksError);
+            throw new Error("فشل في حذف المهام المرتبطة بالمشروع");
           }
         }
         
-        // Finally delete the project
-        const { error: deleteError } = await supabase
+        // 7. Delete project stages
+        const { error: stagesError } = await supabase
+          .from("project_stages")
+          .delete()
+          .eq("project_id", projectId);
+        
+        if (stagesError) {
+          console.error("Error deleting project stages:", stagesError);
+          // Continue despite error
+        }
+        
+        // 8. Finally delete the project
+        const { error: deleteProjectError } = await supabase
           .from("project_tasks")
           .delete()
           .eq("id", projectId);
         
-        if (deleteError) {
-          console.error("Error deleting project:", deleteError);
-          throw deleteError;
+        if (deleteProjectError) {
+          console.error("Error deleting project:", deleteProjectError);
+          throw new Error("فشل في حذف المشروع");
         }
+        
+        console.log("Project successfully deleted");
       }
       
       if (onSuccess) {
