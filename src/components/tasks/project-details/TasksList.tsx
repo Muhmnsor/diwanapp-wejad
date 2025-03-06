@@ -29,9 +29,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
     handleStagesChange,
     tasksByStage,
     handleStatusChange,
-    fetchTasks,
-    onTaskDeleted,
-    onTaskEdit
+    fetchTasks
   } = useTasksList(projectId);
 
   // Fetch project members
@@ -71,8 +69,6 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            onTaskDeleted={onTaskDeleted}
-            onTaskEdit={onTaskEdit}
           />
         </CardContent>
       </Card>
