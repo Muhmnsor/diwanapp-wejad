@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CertificateTemplateFields } from "./CertificateTemplateFields";
@@ -6,6 +7,8 @@ import { FileUploadStep } from "./steps/FileUploadStep";
 import { PageSettingsStep } from "./steps/PageSettingsStep";
 import { toast } from "sonner";
 import { PDFDocument } from 'pdf-lib';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CertificateTemplateFormProps {
   template?: any;
@@ -24,6 +27,7 @@ export const CertificateTemplateForm = ({
   const [formData, setFormData] = useState({
     name: template?.name || '',
     description: template?.description || '',
+    category: template?.category || 'عام',
     template_file: template?.template_file || '',
     fields: template?.fields || {},
     field_mappings: template?.field_mappings || {},
@@ -35,6 +39,23 @@ export const CertificateTemplateForm = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [pdfFields, setPdfFields] = useState<string[]>([]);
+
+  // Fetch all template categories for dropdown
+  const { data: categoriesData } = useQuery({
+    queryKey: ['certificate-template-categories'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('certificate_templates')
+        .select('category')
+        .not('category', 'is', null);
+      
+      if (!data) return ["عام"];
+      
+      const categories = [...new Set(data.map(item => item.category || 'عام'))];
+      return categories.length ? categories : ["عام"];
+    },
+    initialData: ["عام"]
+  });
 
   console.log('CertificateTemplateForm render:', { formData, selectedFile, pdfFields });
 
@@ -249,6 +270,8 @@ export const CertificateTemplateForm = ({
           <BasicInfoStep
             name={formData.name}
             description={formData.description}
+            category={formData.category}
+            categories={categoriesData || ["عام"]}
             onChange={handleInputChange}
           />
         );
