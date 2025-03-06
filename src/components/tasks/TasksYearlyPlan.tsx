@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Task, Workspace } from '@/types/workspace';
@@ -142,7 +141,10 @@ export const TasksYearlyPlan = () => {
         </Card>
       </div>
 
-      <StatusLegend />
+      <Card className="p-4">
+        <h3 className="text-center text-lg font-medium mb-4">حالة المشاريع</h3>
+        <StatusLegend />
+      </Card>
     </div>
   );
 };
