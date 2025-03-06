@@ -26,6 +26,7 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
   const [projectOwner, setProjectOwner] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchTasksData = async () => {
@@ -161,6 +162,11 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     setIsDeleteDialogOpen(true);
   };
 
+  const handleCopyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsCopyDialogOpen(true);
+  };
+
   const handleProjectUpdated = () => {
     toast.success("تم تحديث المشروع بنجاح");
     if (onProjectUpdated) {
@@ -175,6 +181,13 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     }
   };
 
+  const handleProjectCopied = () => {
+    toast.success("تم نسخ المشروع بنجاح");
+    if (onProjectUpdated) {
+      onProjectUpdated();
+    }
+  };
+
   return {
     completedTasksCount,
     totalTasksCount,
@@ -184,12 +197,16 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     projectOwner,
     isEditDialogOpen,
     isDeleteDialogOpen,
+    isCopyDialogOpen,
     handleClick,
     handleEditClick,
     handleDeleteClick,
+    handleCopyClick,
     handleProjectUpdated,
     handleProjectDeleted,
+    handleProjectCopied,
     setIsEditDialogOpen,
-    setIsDeleteDialogOpen
+    setIsDeleteDialogOpen,
+    setIsCopyDialogOpen
   };
 };

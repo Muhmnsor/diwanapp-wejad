@@ -1,15 +1,27 @@
 
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Copy, Edit, Trash2 } from "lucide-react";
 
 interface TaskProjectCardActionsProps {
   onEdit: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
+  onCopy?: (e: React.MouseEvent) => void;
 }
 
-export const TaskProjectCardActions = ({ onEdit, onDelete }: TaskProjectCardActionsProps) => {
+export const TaskProjectCardActions = ({ onEdit, onDelete, onCopy }: TaskProjectCardActionsProps) => {
   return (
     <div className="absolute top-2 left-2 flex gap-1 z-10 project-actions">
+      {onCopy && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+          onClick={onCopy}
+          title="نسخ المشروع"
+        >
+          <Copy className="h-4 w-4 text-gray-500" />
+        </Button>
+      )}
       <Button 
         variant="ghost" 
         size="icon" 

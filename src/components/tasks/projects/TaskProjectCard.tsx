@@ -7,6 +7,7 @@ import { TaskProjectCardActions } from "./card/TaskProjectCardActions";
 import { useTaskProjectCard } from "./hooks/useTaskProjectCard";
 import { EditTaskProjectDialog } from "./EditTaskProjectDialog";
 import { DeleteTaskProjectDialog } from "./DeleteTaskProjectDialog";
+import { CopyTaskProjectDialog } from "./CopyTaskProjectDialog";
 
 interface TaskProject {
   id: string;
@@ -34,13 +35,17 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
     projectOwner,
     isEditDialogOpen,
     isDeleteDialogOpen,
+    isCopyDialogOpen,
     handleClick,
     handleEditClick,
     handleDeleteClick,
+    handleCopyClick,
     handleProjectUpdated,
     handleProjectDeleted,
+    handleProjectCopied,
     setIsEditDialogOpen,
-    setIsDeleteDialogOpen
+    setIsDeleteDialogOpen,
+    setIsCopyDialogOpen
   } = useTaskProjectCard(project, onProjectUpdated);
 
   return (
@@ -51,6 +56,7 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
       <TaskProjectCardActions
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
+        onCopy={handleCopyClick}
       />
       
       <CardContent className="p-6">
@@ -89,6 +95,13 @@ export const TaskProjectCard = ({ project, onProjectUpdated }: TaskProjectCardPr
         projectId={project.id}
         projectTitle={project.title}
         onSuccess={handleProjectDeleted}
+      />
+
+      <CopyTaskProjectDialog
+        isOpen={isCopyDialogOpen}
+        onClose={() => setIsCopyDialogOpen(false)}
+        project={project}
+        onSuccess={handleProjectCopied}
       />
     </Card>
   );
