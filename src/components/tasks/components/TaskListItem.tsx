@@ -14,6 +14,7 @@ import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
+import type { Task as ProjectTask } from "../project-details/types/task";
 
 interface TaskListItemProps {
   task: Task;
@@ -104,6 +105,20 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
     }
   };
 
+  // Convert to the ProjectTask type for EditTaskDialog
+  const adaptTaskForEditDialog = (): ProjectTask => {
+    return {
+      ...task,
+      description: task.description || null, // Ensure description is never undefined
+      status: task.status || "pending",
+      priority: task.priority || null,
+      due_date: task.due_date || null,
+      assigned_to: task.assigned_to || null,
+      created_at: task.created_at || new Date().toISOString(),
+      stage_id: task.stage_id || null
+    };
+  };
+
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <TaskHeader task={task} status={currentStatus} />
@@ -171,7 +186,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         <EditTaskDialog
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          task={task}
+          task={adaptTaskForEditDialog()}
           projectStages={[]}
           projectMembers={[]}
           onTaskUpdated={handleTaskUpdated}
