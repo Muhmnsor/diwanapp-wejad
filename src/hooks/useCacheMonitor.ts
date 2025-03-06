@@ -12,6 +12,8 @@ interface CacheStats {
   cacheHitRatio: number;
   compressionSavings: number;
   totalSize: number;
+  throttledUpdates: number;
+  batchedUpdates: number;
 }
 
 /**
@@ -27,7 +29,9 @@ export const useCacheMonitor = (refreshInterval = 60000) => {
     cacheMisses: 0,
     cacheHitRatio: 0,
     compressionSavings: 0,
-    totalSize: 0
+    totalSize: 0,
+    throttledUpdates: 0,
+    batchedUpdates: 0
   });
 
   useEffect(() => {
@@ -42,7 +46,9 @@ export const useCacheMonitor = (refreshInterval = 60000) => {
       cacheMisses: misses,
       cacheHitRatio: hits + misses === 0 ? 0 : Math.round((hits / (hits + misses)) * 100),
       compressionSavings: storedStats.compressionSavings || 0,
-      totalSize: storedStats.totalSize || 0
+      totalSize: storedStats.totalSize || 0,
+      throttledUpdates: storedStats.throttled || 0,
+      batchedUpdates: storedStats.batchedUpdates || 0
     }));
 
     // Monitor original console.log to track cache hits/misses
@@ -64,6 +70,19 @@ export const useCacheMonitor = (refreshInterval = 60000) => {
             cacheMisses: prev.cacheMisses + 1,
             cacheHitRatio: Math.round((prev.cacheHits) / (prev.cacheHits + prev.cacheMisses + 1) * 100)
           }));
+        } else if (message.includes('batched updates')) {
+          setStats(prev => ({
+            ...prev,
+            batchedUpdates: prev.batchedUpdates + 1
+          }));
+        } else if (message.includes('throttled')) {
+          setStats(prev => ({
+            ...prev,
+            throttledUpdates: prev.throttledUpdates + 1
+          }));
+        } else if (message.includes('Cache synced from another tab')) {
+          // Update stats for synced items
+          setTimeout(() => updateStats(), 100);
         }
       }
       

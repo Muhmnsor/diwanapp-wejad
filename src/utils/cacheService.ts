@@ -1,5 +1,6 @@
 
 import { compressData, decompressData, isCompressedData } from './cacheCompression';
+import { notifyCacheUpdate, notifyCacheRemove, notifyCacheClear } from './realtimeCacheSync';
 
 /**
  * Smart Caching Service
@@ -24,12 +25,18 @@ export type CacheCompressionOptions = {
   compressionThreshold?: number; // Size in bytes above which to compress
 };
 
+// Cache item priority
+export type CachePriority = 'low' | 'normal' | 'high' | 'critical';
+
 // Cache entry structure
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
   expiry: number;
   compressed?: boolean;
+  priority?: CachePriority;
+  lastAccessed?: number;
+  accessCount?: number;
 }
 
 // Cache statistics
@@ -38,6 +45,8 @@ interface CacheStats {
   misses: number;
   totalSize: number;
   compressionSavings: number;
+  throttled: number; // Track how many times we've throttled updates
+  batchedUpdates: number; // Track how many updates we've batched
 }
 
 // In-memory cache store
@@ -48,8 +57,15 @@ const cacheStats: CacheStats = {
   hits: 0,
   misses: 0,
   totalSize: 0,
-  compressionSavings: 0
+  compressionSavings: 0,
+  throttled: 0,
+  batchedUpdates: 0
 };
+
+// Tracking for batched updates
+const pendingUpdates: Map<string, { data: any, options: any }> = new Map();
+let updateTimeout: number | null = null;
+const UPDATE_THROTTLE = 200; // ms to throttle batched updates
 
 // Initialize stats from localStorage
 try {
@@ -69,8 +85,31 @@ export const setCacheData = <T>(
   data: T,
   duration: number = CACHE_DURATIONS.MEDIUM,
   storage: CacheStorage = 'memory',
-  options: CacheCompressionOptions = { useCompression: true, compressionThreshold: 1024 }
+  options: CacheCompressionOptions & { 
+    priority?: CachePriority,
+    notifySync?: boolean,
+    batchUpdate?: boolean
+  } = { 
+    useCompression: true, 
+    compressionThreshold: 1024,
+    priority: 'normal',
+    notifySync: true,
+    batchUpdate: false
+  }
 ): void => {
+  // Handle batched updates
+  if (options.batchUpdate) {
+    pendingUpdates.set(key, { data, options });
+    
+    if (!updateTimeout) {
+      updateTimeout = window.setTimeout(() => {
+        processBatchedUpdates();
+      }, UPDATE_THROTTLE);
+    }
+    
+    return;
+  }
+  
   const timestamp = Date.now();
   let storedData = data;
   let compressed = false;
@@ -101,7 +140,10 @@ export const setCacheData = <T>(
     data: storedData,
     timestamp,
     expiry: timestamp + duration,
-    compressed
+    compressed,
+    priority: options.priority || 'normal',
+    lastAccessed: timestamp,
+    accessCount: 1
   };
 
   // Cache in memory regardless of storage type for faster access
@@ -125,10 +167,45 @@ export const setCacheData = <T>(
           storageObj.setItem(key, JSON.stringify(cacheEntry));
         } catch (innerError) {
           console.error('Still failed to cache after cleanup:', innerError);
+          
+          // If still failing, try to free up space by cleaning low priority items
+          freeUpCacheSpace(storage, 20);
+          
+          try {
+            const storageObj = storage === 'local' ? localStorage : sessionStorage;
+            storageObj.setItem(key, JSON.stringify(cacheEntry));
+          } catch (lastError) {
+            console.error('Failed to cache even after pruning low priority items:', lastError);
+          }
         }
       }
     }
   }
+  
+  // Notify other tabs/windows about the cache update
+  if (options.notifySync !== false) {
+    notifyCacheUpdate(key, data, storage);
+  }
+};
+
+/**
+ * Process all batched updates
+ */
+const processBatchedUpdates = (): void => {
+  if (pendingUpdates.size > 0) {
+    cacheStats.batchedUpdates += pendingUpdates.size;
+    
+    for (const [key, { data, options }] of pendingUpdates.entries()) {
+      // Set cache but don't allow further batching
+      setCacheData(key, data, options.duration || CACHE_DURATIONS.MEDIUM, 
+                  options.storage || 'memory', 
+                  { ...options, batchUpdate: false });
+    }
+    
+    pendingUpdates.clear();
+  }
+  
+  updateTimeout = null;
 };
 
 /**
@@ -147,6 +224,10 @@ export const getCacheData = <T>(
     console.log(`Cache hit for ${key}`);
     
     const entry = memoryCache[key];
+    
+    // Update access statistics
+    entry.lastAccessed = now;
+    entry.accessCount = (entry.accessCount || 0) + 1;
     
     // Handle decompression if needed
     if (entry.compressed) {
@@ -168,6 +249,11 @@ export const getCacheData = <T>(
         if (cacheEntry.expiry > now) {
           // Restore to memory cache for faster subsequent access
           memoryCache[key] = cacheEntry;
+          
+          // Update access statistics
+          cacheEntry.lastAccessed = now;
+          cacheEntry.accessCount = (cacheEntry.accessCount || 0) + 1;
+          storageObj.setItem(key, JSON.stringify(cacheEntry));
           
           cacheStats.hits++;
           localStorage.setItem('cache:stats', JSON.stringify(cacheStats));
@@ -210,6 +296,9 @@ export const removeCacheData = (key: string): void => {
   } catch (error) {
     console.warn('Failed to remove from browser storage:', error);
   }
+  
+  // Notify other tabs/windows
+  notifyCacheRemove(key);
 };
 
 /**
@@ -241,6 +330,9 @@ export const clearCacheByPrefix = (prefix: string): void => {
   } catch (error) {
     console.warn('Failed to clear cache by prefix from browser storage:', error);
   }
+  
+  // Notify other tabs/windows
+  notifyCacheClear(prefix);
 };
 
 /**
@@ -263,6 +355,7 @@ export const cleanupExpiredItems = (storage: 'local' | 'session'): number => {
             if (parsed.expiry && parsed.expiry < now) {
               storageObj.removeItem(key);
               itemsRemoved++;
+              i--; // Adjust index since we removed an item
             }
           } catch (e) {
             // Not a valid cache entry, skip
@@ -272,6 +365,70 @@ export const cleanupExpiredItems = (storage: 'local' | 'session'): number => {
     }
   } catch (error) {
     console.warn('Error cleaning up expired items:', error);
+  }
+  
+  return itemsRemoved;
+};
+
+/**
+ * Free up space by removing low priority cache items
+ */
+export const freeUpCacheSpace = (storage: 'local' | 'session', percentToRemove: number = 10): number => {
+  let itemsRemoved = 0;
+  
+  try {
+    const storageObj = storage === 'local' ? localStorage : sessionStorage;
+    const items: Array<{ key: string, priority: CachePriority, lastAccessed: number, accessCount: number }> = [];
+    
+    // Collect items with their priority and access info
+    for (let i = 0; i < storageObj.length; i++) {
+      const key = storageObj.key(i);
+      if (key) {
+        const item = storageObj.getItem(key);
+        if (item && item.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(item) as CacheEntry<any>;
+            items.push({
+              key,
+              priority: parsed.priority || 'normal',
+              lastAccessed: parsed.lastAccessed || 0,
+              accessCount: parsed.accessCount || 0
+            });
+          } catch (e) {
+            // Skip invalid items
+          }
+        }
+      }
+    }
+    
+    // Sort items by priority (low first) and then by last accessed time (oldest first)
+    items.sort((a, b) => {
+      const priorityOrder = { 'low': 0, 'normal': 1, 'high': 2, 'critical': 3 };
+      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+      
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      // If same priority, sort by access time and count
+      // More recently accessed and frequently accessed items have higher value
+      const accessScore = (item) => {
+        return item.lastAccessed + (item.accessCount * 60000); // Add 1 min per access count
+      };
+      
+      return accessScore(a) - accessScore(b);
+    });
+    
+    // Calculate how many items to remove
+    const toRemove = Math.ceil(items.length * (percentToRemove / 100));
+    
+    // Remove the calculated number of lowest priority items
+    items.slice(0, toRemove).forEach(item => {
+      storageObj.removeItem(item.key);
+      itemsRemoved++;
+    });
+    
+    console.log(`Freed up space by removing ${itemsRemoved} low priority cache items`);
+  } catch (error) {
+    console.warn('Error freeing up cache space:', error);
   }
   
   return itemsRemoved;
@@ -302,7 +459,9 @@ export const getCacheStats = () => {
     cacheHitRatio: cacheStats.hits + cacheStats.misses === 0 ? 0 : 
       Math.round((cacheStats.hits / (cacheStats.hits + cacheStats.misses)) * 100),
     compressionSavings: cacheStats.compressionSavings,
-    totalSize: cacheStats.totalSize
+    totalSize: cacheStats.totalSize,
+    throttledUpdates: cacheStats.throttled,
+    batchedUpdates: cacheStats.batchedUpdates
   };
 };
 
@@ -314,6 +473,8 @@ export const resetCacheStats = (): void => {
   cacheStats.misses = 0;
   cacheStats.compressionSavings = 0;
   cacheStats.totalSize = 0;
+  cacheStats.throttled = 0;
+  cacheStats.batchedUpdates = 0;
   
   try {
     localStorage.setItem('cache:stats', JSON.stringify(cacheStats));
@@ -321,3 +482,22 @@ export const resetCacheStats = (): void => {
     console.warn('Failed to reset cache stats in localStorage:', error);
   }
 };
+
+/**
+ * Register cache event listeners
+ */
+const registerCacheListeners = (): void => {
+  // Listen for online/offline events to optimize sync behavior
+  window.addEventListener('online', () => {
+    console.log('Back online - syncing cache');
+    // TODO: Implement network state recovery logic
+  });
+  
+  window.addEventListener('offline', () => {
+    console.log('Network offline - operating in offline mode');
+    // TODO: Implement offline mode optimizations
+  });
+};
+
+// Initialize event listeners
+registerCacheListeners();
