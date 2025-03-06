@@ -2,12 +2,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 import { useInAppNotifications } from "@/contexts/notifications/useInAppNotifications";
+import { NotificationType } from "@/contexts/notifications/types";
 
 interface TaskAssignmentParams {
   taskId: string;
   taskTitle: string;
   assignedUserId: string;
   assignedByUserId?: string | null;
+  assignedByUserName?: string | null;
   projectId?: string | null;
   projectTitle?: string | null;
 }
@@ -35,7 +37,7 @@ export const useTaskAssignmentNotifications = () => {
         user_id: params.assignedUserId,
         title,
         message,
-        notification_type: 'task_assignment',
+        notification_type: 'task' as NotificationType,
         related_entity_id: params.taskId,
         related_entity_type: 'task'
       });
@@ -62,7 +64,7 @@ export const useTaskAssignmentNotifications = () => {
             user_id: userId,
             title: `تم إطلاق مشروع "${projectTitle}"`,
             message: `تم إطلاق مشروع "${projectTitle}" وتفعيل المهام المسندة إليك. يمكنك الآن البدء في العمل على المهام.`,
-            notification_type: 'project_launch',
+            notification_type: 'project' as NotificationType,
             related_entity_id: projectId,
             related_entity_type: 'project'
           })
