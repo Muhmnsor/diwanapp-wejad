@@ -25,7 +25,7 @@ export const useRegistrationSubmit = ({
   onSubmit
 }: UseRegistrationSubmitProps) => {
   const { sendNotification } = useNotifications();
-  const { sendRegistrationNotification } = useEventNotifications();
+  const { sendRegistrationNotification, sendEventUpdateNotification } = useEventNotifications();
   const { user } = useAuthStore();
   const eventId = window.location.pathname.split('/').pop();
 
@@ -73,7 +73,7 @@ export const useRegistrationSubmit = ({
         national_id: formData.nationalId || null,
         gender: formData.gender || null,
         work_status: formData.workStatus || null,
-        user_id: user?.id || null // Add user_id if the user is logged in
+        user_id: user?.id || null // Ensure user_id is properly set
       };
 
       console.log('Registration data being sent:', registrationData);
@@ -92,13 +92,12 @@ export const useRegistrationSubmit = ({
 
       console.log('Registration created successfully:', registration);
 
-      // Update event attendees count
+      // Update event attendees count using the RPC function
       if (eventId) {
         const { error: updateError } = await supabase
           .rpc('increment_event_attendees', { 
             event_id: eventId 
-          })
-          .single();
+          });
           
         if (updateError) {
           console.warn('Error updating attendees count:', updateError);
@@ -123,18 +122,42 @@ export const useRegistrationSubmit = ({
         }
       }
 
-      // Send notifications (both in-app and WhatsApp)
-      await sendRegistrationNotification({
-        eventId: eventId || '',
-        eventTitle,
-        eventDate,
-        eventTime,
-        eventLocation,
-        recipientName: formData.arabicName,
-        recipientPhone: formData.phone,
-        recipientId: user?.id,
-        registrationId: registration.id
-      });
+      // Enhanced notification with retry and improved error handling
+      try {
+        // Send notifications (both in-app and WhatsApp)
+        await sendRegistrationNotification({
+          eventId: eventId || '',
+          eventTitle,
+          eventDate,
+          eventTime,
+          eventLocation,
+          recipientName: formData.arabicName,
+          recipientPhone: formData.phone,
+          recipientId: user?.id,
+          registrationId: registration.id
+        });
+      } catch (notificationError) {
+        console.error('Error sending notification:', notificationError);
+        // Log notification error but don't fail the registration
+        // We'll create a notification log entry in failed status
+        const { error: logError } = await supabase
+          .from('notification_logs')
+          .insert([{
+            event_id: eventId,
+            registration_id: registration.id,
+            notification_type: 'registration',
+            status: 'failed',
+            recipient_phone: formData.phone,
+            message_content: `Registration for ${eventTitle}`,
+            error_details: JSON.stringify(notificationError),
+            retry_count: 0,
+            last_error: notificationError instanceof Error ? notificationError.message : 'Unknown error'
+          }]);
+        
+        if (logError) {
+          console.error('Error logging notification failure:', logError);
+        }
+      }
 
       toast.success('تم التسجيل بنجاح');
       

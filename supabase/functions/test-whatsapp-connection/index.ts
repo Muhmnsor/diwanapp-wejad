@@ -1,87 +1,115 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders } from "../_shared/cors.ts"
 
-console.log("Test WhatsApp Connection function started")
+import { corsHeaders } from '../_shared/cors.ts'
 
-serve(async (req) => {
+interface WhatsAppSettings {
+  business_phone: string;
+  api_key: string;
+}
+
+Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const body = await req.json()
-    console.log("Received request body:", {
-      ...body,
-      api_key: body.api_key ? "***" : undefined
-    })
-
-    const { business_phone, api_key } = body
+    // Parse request body
+    const settings = await req.json() as WhatsAppSettings
 
     // Validate required fields
-    const missingFields = []
-    if (!business_phone) missingFields.push('business_phone')
-    if (!api_key) missingFields.push('api_key')
-
-    if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields)
+    if (!settings.business_phone) {
       return new Response(
-        JSON.stringify({ 
-          error: 'جميع الحقول مطلوبة',
-          missing_fields: missingFields 
+        JSON.stringify({
+          success: false,
+          error: 'رقم الواتساب مطلوب'
         }),
         { 
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
         }
       )
     }
 
-    // Test connection to Interakt API
-    console.log("Testing Interakt API connection")
-    const response = await fetch('https://api.interakt.ai/v1/public/track/users/', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${api_key}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "phoneNumber": business_phone,
-        "countryCode": "+966",
-        "traits": {
-          "name": "Test Connection"
+    if (!settings.api_key) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'مفتاح API مطلوب'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
         }
-      })
+      )
+    }
+
+    console.log('Testing WhatsApp connection for phone number:', settings.business_phone.substring(0, 4) + '****')
+
+    // Format the phone number if necessary
+    let phoneNumber = settings.business_phone
+    if (!phoneNumber.startsWith('+')) {
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '+966' + phoneNumber.substring(1)
+      } else if (!phoneNumber.startsWith('966')) {
+        phoneNumber = '+966' + phoneNumber
+      } else {
+        phoneNumber = '+' + phoneNumber
+      }
+    }
+    
+    // We'll use the Meta Graph API to check the account status
+    // First we need to find the WhatsApp Business Account ID
+    const accountResponse = await fetch('https://graph.facebook.com/v17.0/me/accounts', {
+      headers: {
+        'Authorization': `Bearer ${settings.api_key}`
+      }
     })
 
-    if (!response.ok) {
-      const error = await response.text()
-      console.error('Interakt API error:', error)
+    if (!accountResponse.ok) {
+      const errorData = await accountResponse.json()
+      console.error('Error fetching account:', errorData)
+      
       return new Response(
-        JSON.stringify({ error: 'فشل الاتصال بواجهة برمجة تطبيقات Interakt' }),
+        JSON.stringify({
+          success: false,
+          error: 'فشل الاتصال بواتساب: ' + (errorData.error?.message || 'API key غير صالح'),
+          details: errorData
+        }),
         { 
-          status: response.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 // Still return 200 to client but with success: false
         }
       )
     }
 
-    console.log("Interakt API connection successful")
+    const accountData = await accountResponse.json()
+    console.log('Account data fetched successfully')
+
     return new Response(
-      JSON.stringify({ success: true, message: 'تم الاتصال بنجاح' }),
+      JSON.stringify({
+        success: true,
+        message: 'تم الاتصال بنجاح',
+        data: {
+          account: accountData.data?.[0]?.name || 'حساب واتساب'
+        }
+      }),
       { 
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     )
-
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error testing WhatsApp connection:', error)
+    
     return new Response(
-      JSON.stringify({ error: 'حدث خطأ أثناء اختبار الاتصال' }),
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
+        details: error
+      }),
       { 
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     )
   }

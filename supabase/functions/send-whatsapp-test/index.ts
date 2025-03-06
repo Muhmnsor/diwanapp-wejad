@@ -1,131 +1,166 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { corsHeaders } from "../_shared/cors.ts"
 
-const VALID_MESSAGE_TYPES = [
-  'Template',
-  'Text',
-  'Image',
-  'Document', 
-  'Audio',
-  'Video',
-  'OrderDetails',
-  'InteractiveButton',
-  'InteractiveList',
-  'InteractiveProductList'
-] as const;
+import { corsHeaders } from '../_shared/cors.ts'
 
-type MessageType = typeof VALID_MESSAGE_TYPES[number];
-
-interface WhatsAppMessage {
-  countryCode: string;
-  phoneNumber: string;
-  type: MessageType;
-  text?: {
-    content: string;
-  };
+interface WhatsAppSettings {
+  business_phone: string;
+  api_key: string;
 }
 
-console.log("Send WhatsApp Test Message function started")
-
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const body = await req.json()
-    console.log("Received request body:", {
-      ...body,
-      api_key: body.api_key ? "***" : undefined
-    })
-
-    const { business_phone, api_key } = body
+    // Parse request body
+    const settings = await req.json() as WhatsAppSettings
 
     // Validate required fields
-    const missingFields = []
-    if (!business_phone) missingFields.push('business_phone')
-    if (!api_key) missingFields.push('api_key')
-
-    if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields)
+    if (!settings.business_phone) {
       return new Response(
-        JSON.stringify({ 
-          error: 'جميع الحقول مطلوبة',
-          missing_fields: missingFields 
+        JSON.stringify({
+          success: false,
+          error: 'رقم الواتساب مطلوب'
         }),
         { 
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
         }
       )
     }
 
-    // Prepare WhatsApp message
-    const message: WhatsAppMessage = {
-      countryCode: "+966",
-      phoneNumber: business_phone.replace("+966", ""),
-      type: "Text",
-      text: {
-        content: `رسالة تجريبية من نظام إدارة الفعاليات 👋\nتم إرسال هذه الرسالة من الرقم: ${business_phone}`
+    if (!settings.api_key) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'مفتاح API مطلوب'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      )
+    }
+
+    console.log('Sending test WhatsApp message to phone:', settings.business_phone.substring(0, 4) + '****')
+
+    // Format the phone number if necessary
+    let phoneNumber = settings.business_phone
+    if (!phoneNumber.startsWith('+')) {
+      if (phoneNumber.startsWith('0')) {
+        phoneNumber = '+966' + phoneNumber.substring(1)
+      } else if (!phoneNumber.startsWith('966')) {
+        phoneNumber = '+966' + phoneNumber
+      } else {
+        phoneNumber = '+' + phoneNumber
       }
     }
 
-    // Send test message using Interakt API
-    console.log("Sending test message via Interakt API with payload:", {
-      data: message,
-      api_key: "***"
+    // Create a test message
+    const testMessage = 'هذه رسالة اختبار من نظام إدارة الفعاليات. إذا تلقيت هذه الرسالة، فهذا يعني أن إعدادات WhatsApp تعمل بشكل صحيح.'
+
+    // Get the WhatsApp Business Account ID
+    const accountResponse = await fetch('https://graph.facebook.com/v17.0/me/phone_numbers', {
+      headers: {
+        'Authorization': `Bearer ${settings.api_key}`
+      }
     })
 
-    const response = await fetch('https://api.interakt.ai/v1/public/message/', {
+    if (!accountResponse.ok) {
+      const errorData = await accountResponse.json()
+      console.error('Error fetching phone numbers:', errorData)
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'فشل في الحصول على رقم الواتساب: ' + (errorData.error?.message || 'خطأ في API'),
+          details: errorData
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 // Still return 200 but with success: false
+        }
+      )
+    }
+
+    const phoneData = await accountResponse.json()
+    const wabaPhoneId = phoneData.data?.[0]?.id
+
+    if (!wabaPhoneId) {
+      console.error('No WhatsApp phone ID found in response:', phoneData)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'لم يتم العثور على رقم الواتساب في الحساب'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      )
+    }
+
+    // Send the test message
+    const messageResponse = await fetch(`https://graph.facebook.com/v17.0/${wabaPhoneId}/messages`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${api_key}`,
+        'Authorization': `Bearer ${settings.api_key}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ data: message })
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phoneNumber,
+        type: 'text',
+        text: { body: testMessage }
+      })
     })
 
-    const responseText = await response.text()
-    console.log('Interakt API response:', responseText)
-
-    if (!response.ok) {
-      console.error('Interakt API error:', responseText)
+    if (!messageResponse.ok) {
+      const errorData = await messageResponse.json()
+      console.error('Error sending test message:', errorData)
+      
       return new Response(
-        JSON.stringify({ 
-          error: 'فشل إرسال الرسالة التجريبية',
-          details: responseText 
+        JSON.stringify({
+          success: false,
+          error: 'فشل في إرسال رسالة الاختبار: ' + (errorData.error?.message || 'خطأ في إرسال الرسالة'),
+          details: errorData
         }),
         { 
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
         }
       )
     }
 
-    console.log("Test message sent successfully")
+    const messageData = await messageResponse.json()
+    console.log('Test message sent successfully:', messageData)
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'تم إرسال الرسالة التجريبية بنجاح',
-        response: responseText 
+      JSON.stringify({
+        success: true,
+        message: 'تم إرسال رسالة الاختبار بنجاح',
+        data: {
+          messageId: messageData.messages?.[0]?.id
+        }
       }),
       { 
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     )
-
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error sending test message:', error)
+    
     return new Response(
-      JSON.stringify({ 
-        error: 'حدث خطأ أثناء إرسال الرسالة التجريبية',
-        details: error.message 
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
+        details: error
       }),
       { 
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     )
   }

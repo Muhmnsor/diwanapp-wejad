@@ -1,69 +1,97 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+import { corsHeaders } from '../_shared/cors.ts'
+
+interface TemplateValidationRequest {
+  template: string;
+  variables: Record<string, string>;
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { template, variables } = await req.json()
-    console.log('Validating template:', { template, variables })
+    // Parse the request body
+    const { template, variables } = await req.json() as TemplateValidationRequest
 
-    // Find all placeholders in the template using regex
-    const placeholderRegex = /\[([^\]]+)\]/g
-    const requiredVariables = Array.from(template.matchAll(placeholderRegex))
-      .map(match => match[1])
+    // Validate that we have a template
+    if (!template) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'No template content provided'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      )
+    }
 
-    // Check for missing variables
-    const missingVariables = requiredVariables.filter(
-      variable => !variables.hasOwnProperty(variable)
-    )
-
-    // Process the template by replacing variables
-    let processedTemplate = template
-    Object.entries(variables).forEach(([key, value]) => {
-      const placeholder = `[${key}]`
-      processedTemplate = processedTemplate.replaceAll(placeholder, value as string)
+    console.log('Validating template:', { 
+      templateLength: template.length,
+      variablesCount: Object.keys(variables || {}).length
     })
 
+    // Find all variables in the template (pattern: {{variable_name}})
+    const variableRegex = /{{([^{}]+)}}/g
+    const matches = Array.from(template.matchAll(variableRegex))
+    const templateVariables = matches.map(match => match[1])
+
+    // Identify missing variables (variables in template but not in provided variables)
+    const missingVariables = templateVariables.filter(
+      variable => !variables || !Object.prototype.hasOwnProperty.call(variables, variable)
+    )
+
+    // Replace variables in template
+    let processedTemplate = template
+    if (variables) {
+      Object.entries(variables).forEach(([key, value]) => {
+        processedTemplate = processedTemplate.replace(
+          new RegExp(`{{${key}}}`, 'g'), 
+          value || '[placeholder]'
+        )
+      })
+    }
+
+    // Check if there are still any unreplaced variables
+    const unreplacedVariables = Array.from(processedTemplate.matchAll(variableRegex))
+    
+    // Build the response
     const response = {
-      isValid: missingVariables.length === 0,
+      isValid: missingVariables.length === 0 && unreplacedVariables.length === 0,
+      templateVariables,
       missingVariables,
+      unreplacedVariables: unreplacedVariables.map(match => match[1]),
       processedTemplate
     }
 
-    console.log('Validation result:', response)
+    console.log('Template validation result:', { 
+      isValid: response.isValid,
+      templateVariablesCount: templateVariables.length,
+      missingVariablesCount: missingVariables.length
+    })
 
     return new Response(
       JSON.stringify(response),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     )
   } catch (error) {
     console.error('Error validating template:', error)
     
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        isValid: false,
-        missingVariables: [],
-        processedTemplate: null
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
       }),
       { 
-        status: 400,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     )
   }

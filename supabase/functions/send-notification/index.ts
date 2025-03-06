@@ -1,8 +1,9 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
 
 interface NotificationPayload {
-  type: 'registration' | 'reminder' | 'feedback' | 'certificate' | 'activity';
+  type: 'registration' | 'reminder' | 'feedback' | 'certificate' | 'activity' | 'update' | 'announcement';
   eventId?: string;
   projectId?: string;
   registrationId?: string;
@@ -39,6 +40,31 @@ Deno.serve(async (req) => {
       recipientPhone: payload.recipientPhone ? '****' + payload.recipientPhone.slice(-4) : undefined 
     })
 
+    // Validate required fields
+    if (!payload.recipientPhone) {
+      throw { code: 'MISSING_PHONE', message: 'Recipient phone is required' }
+    }
+
+    if (!payload.templateId) {
+      throw { code: 'MISSING_TEMPLATE', message: 'Template ID is required' }
+    }
+
+    // Format the phone number if needed
+    if (!payload.recipientPhone.startsWith('+')) {
+      // If number starts with 0, replace with country code
+      if (payload.recipientPhone.startsWith('0')) {
+        payload.recipientPhone = '+966' + payload.recipientPhone.substring(1);
+      } 
+      // If number doesn't have country code, add it
+      else if (!payload.recipientPhone.startsWith('966')) {
+        payload.recipientPhone = '+966' + payload.recipientPhone;
+      }
+      // If it starts with 966 but no +, add it
+      else {
+        payload.recipientPhone = '+' + payload.recipientPhone;
+      }
+    }
+
     // Get WhatsApp settings
     const { data: whatsappSettings, error: settingsError } = await supabaseClient
       .from('whatsapp_settings')
@@ -73,7 +99,7 @@ Deno.serve(async (req) => {
     // Replace variables in template
     let messageContent = template.content
     Object.entries(payload.variables).forEach(([key, value]) => {
-      messageContent = messageContent.replace(`{{${key}}}`, value)
+      messageContent = messageContent.replace(new RegExp(`{{${key}}}`, 'g'), value || '')
     })
 
     // Create notification log entry with pending status
@@ -117,6 +143,7 @@ Deno.serve(async (req) => {
 
       if (!response.ok) {
         const errorData = await response.json()
+        console.error('WhatsApp API error response:', errorData)
         throw { code: 'WHATSAPP_API_ERROR', message: 'Failed to send WhatsApp message', details: errorData }
       }
 
@@ -171,7 +198,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify(errorResponse),
+      JSON.stringify({ success: false, error: errorResponse.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400
