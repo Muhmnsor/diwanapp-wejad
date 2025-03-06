@@ -10,7 +10,7 @@ interface TaskProjectCardActionsProps {
 
 export const TaskProjectCardActions = ({ onEdit, onDelete, onCopy }: TaskProjectCardActionsProps) => {
   return (
-    <div className="absolute top-2 left-2 flex gap-1 z-10 project-actions">
+    <div className="absolute top-2 left-2 flex gap-1 z-10 project-actions opacity-0 group-hover:opacity-100 transition-opacity">
       {onCopy && (
         <Button 
           variant="ghost" 
@@ -27,6 +27,7 @@ export const TaskProjectCardActions = ({ onEdit, onDelete, onCopy }: TaskProject
         size="icon" 
         className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
         onClick={onEdit}
+        title="تعديل المشروع"
       >
         <Edit className="h-4 w-4 text-gray-500" />
       </Button>
@@ -35,6 +36,7 @@ export const TaskProjectCardActions = ({ onEdit, onDelete, onCopy }: TaskProject
         size="icon" 
         className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
         onClick={onDelete}
+        title="حذف المشروع"
       >
         <Trash2 className="h-4 w-4 text-red-500" />
       </Button>

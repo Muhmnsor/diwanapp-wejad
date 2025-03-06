@@ -14,6 +14,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { copyTaskProject } from "./services/copyTaskProject";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface TaskProject {
   id: string;
@@ -21,6 +24,7 @@ interface TaskProject {
   description: string | null;
   workspace_id: string;
   project_manager?: string | null;
+  project_manager_name?: string | null;
   due_date?: string | null;
   status?: string;
   priority?: string;
@@ -44,10 +48,12 @@ export const CopyTaskProjectDialog = ({
   const [newTitle, setNewTitle] = useState(`نسخة من ${project.title}`);
   const [keepAssignees, setKeepAssignees] = useState(false);
   const [copyTemplates, setCopyTemplates] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     
     try {
       const newProject = await copyTaskProject(project, {
@@ -59,21 +65,33 @@ export const CopyTaskProjectDialog = ({
       if (onSuccess) {
         onSuccess();
       }
-      onClose();
       
-      // Navigate to the new project
+      toast.success("تم نسخ المشروع بنجاح");
+      
+      // Close dialog and navigate to the new project
+      onClose();
       if (newProject && newProject.id) {
         navigate(`/tasks/project/${newProject.id}`);
       }
     } catch (error) {
       console.error("Error copying project:", error);
+      setError("حدث خطأ أثناء نسخ المشروع. يرجى المحاولة مرة أخرى.");
+      toast.error("حدث خطأ أثناء نسخ المشروع");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleClose = () => {
+    // Only allow closing if not submitting
+    if (!isSubmitting) {
+      setError(null);
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -83,6 +101,13 @@ export const CopyTaskProjectDialog = ({
             </DialogDescription>
           </DialogHeader>
           
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="projectTitle">عنوان المشروع الجديد</Label>
@@ -91,6 +116,7 @@ export const CopyTaskProjectDialog = ({
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
             
@@ -99,6 +125,7 @@ export const CopyTaskProjectDialog = ({
                 id="keepAssignees" 
                 checked={keepAssignees} 
                 onCheckedChange={(checked) => setKeepAssignees(checked as boolean)} 
+                disabled={isSubmitting}
               />
               <Label htmlFor="keepAssignees" className="text-sm cursor-pointer">
                 الاحتفاظ بالأشخاص المكلفين بالمهام
@@ -110,6 +137,7 @@ export const CopyTaskProjectDialog = ({
                 id="copyTemplates" 
                 checked={copyTemplates} 
                 onCheckedChange={(checked) => setCopyTemplates(checked as boolean)} 
+                disabled={isSubmitting}
               />
               <Label htmlFor="copyTemplates" className="text-sm cursor-pointer">
                 نسخ النماذج المرفقة بالمهام
@@ -118,7 +146,7 @@ export const CopyTaskProjectDialog = ({
           </div>
           
           <DialogFooter className="flex flex-row-reverse gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               إلغاء
             </Button>
             <Button type="submit" disabled={isSubmitting || !newTitle.trim()}>

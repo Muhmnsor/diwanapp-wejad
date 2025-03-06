@@ -8,6 +8,7 @@ interface TaskProject {
   description: string | null;
   workspace_id: string;
   project_manager?: string | null;
+  project_manager_name?: string | null;
   due_date?: string | null;
   status?: string;
   priority?: string;
@@ -24,28 +25,38 @@ export const copyTaskProject = async (project: TaskProject, options: CopyOptions
   try {
     console.log("Copying project:", project.id, "with options:", options);
     
+    if (!project || !project.workspace_id) {
+      throw new Error("Invalid project data - missing required fields");
+    }
+    
     // 1. Create a new project in draft mode
+    const newProjectData = {
+      title: options.newTitle,
+      description: project.description,
+      workspace_id: project.workspace_id,
+      project_manager: project.project_manager,
+      status: 'pending',
+      priority: project.priority || 'medium',
+      is_draft: true,
+      copied_from: project.id,
+      due_date: project.due_date
+    };
+    
+    console.log("Creating new project with data:", newProjectData);
+    
     const { data: newProject, error: projectError } = await supabase
       .from('project_tasks')
-      .insert([
-        {
-          title: options.newTitle,
-          description: project.description,
-          workspace_id: project.workspace_id,
-          project_manager: project.project_manager,
-          status: 'pending',
-          priority: project.priority || 'medium',
-          is_draft: true,
-          copied_from: project.id
-        }
-      ])
+      .insert([newProjectData])
       .select()
       .single();
     
     if (projectError) {
       console.error("Error creating new project:", projectError);
-      toast.error("حدث خطأ أثناء نسخ المشروع");
-      throw projectError;
+      throw new Error(`Failed to create project: ${projectError.message}`);
+    }
+    
+    if (!newProject) {
+      throw new Error("New project not created - no data returned");
     }
     
     console.log("Created new project:", newProject);
@@ -58,8 +69,7 @@ export const copyTaskProject = async (project: TaskProject, options: CopyOptions
     
     if (tasksError) {
       console.error("Error fetching original tasks:", tasksError);
-      toast.error("حدث خطأ أثناء جلب المهام الأصلية");
-      throw tasksError;
+      throw new Error(`Failed to fetch original tasks: ${tasksError.message}`);
     }
     
     console.log("Fetched original tasks:", originalTasks?.length || 0);
@@ -87,14 +97,13 @@ export const copyTaskProject = async (project: TaskProject, options: CopyOptions
       
       if (createTasksError) {
         console.error("Error creating new tasks:", createTasksError);
-        toast.error("حدث خطأ أثناء إنشاء المهام الجديدة");
-        throw createTasksError;
+        throw new Error(`Failed to create tasks: ${createTasksError.message}`);
       }
       
       console.log("Created new tasks:", createdTasks?.length || 0);
       
       // 4. Copy templates if requested
-      if (options.copyTemplates && createdTasks) {
+      if (options.copyTemplates && createdTasks && createdTasks.length > 0) {
         for (let i = 0; i < originalTasks.length; i++) {
           const originalTaskId = originalTasks[i].id;
           const newTaskId = createdTasks[i].id;
@@ -107,6 +116,7 @@ export const copyTaskProject = async (project: TaskProject, options: CopyOptions
           
           if (templatesError) {
             console.error(`Error fetching templates for task ${originalTaskId}:`, templatesError);
+            // Continue with other tasks even if templates for one task fail
             continue;
           }
           
@@ -135,7 +145,6 @@ export const copyTaskProject = async (project: TaskProject, options: CopyOptions
     return newProject;
   } catch (error) {
     console.error("Error in copyTaskProject:", error);
-    toast.error("حدث خطأ أثناء نسخ المشروع");
     throw error;
   }
 };
