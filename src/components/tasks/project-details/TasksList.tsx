@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
 import { AddTaskDialog } from "./AddTaskDialog";
@@ -10,8 +9,8 @@ import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface TasksListProps {
   projectId?: string | undefined;
@@ -39,6 +38,8 @@ export const TasksList = ({ projectId }: TasksListProps) => {
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   // Fetch project members
   const { projectMembers } = useProjectMembers(projectId);
@@ -54,10 +55,19 @@ export const TasksList = ({ projectId }: TasksListProps) => {
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    try {
-      await deleteTask(taskId);
-    } catch (error) {
-      console.error("Error deleting task:", error);
+    setTaskToDelete(taskId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (taskToDelete) {
+      try {
+        await deleteTask(taskToDelete);
+        setIsDeleteDialogOpen(false);
+        setTaskToDelete(null);
+      } catch (error) {
+        console.error("Error deleting task:", error);
+      }
     }
   };
 
@@ -125,6 +135,28 @@ export const TasksList = ({ projectId }: TasksListProps) => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* حوار تأكيد الحذف */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-right">تأكيد حذف المهمة</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 text-right">
+            <p className="mb-4">
+              هل أنت متأكد أنك تريد حذف هذه المهمة؟ سيتم حذف جميع البيانات المرتبطة بها بما في ذلك المهام الفرعية والمرفقات والتعليقات.
+            </p>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                إلغاء
+              </Button>
+              <Button variant="destructive" onClick={confirmDeleteTask}>
+                تأكيد الحذف
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
