@@ -1,76 +1,42 @@
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/authStore";
+import { useProjectPermissions } from "./useProjectPermissions";
 import type { Task } from "@/components/tasks/types/task";
 
 export const useDraftTasksVisibility = (tasks: Task[], projectId?: string) => {
   const [visibleTasks, setVisibleTasks] = useState<Task[]>([]);
-  const [isProjectManager, setIsProjectManager] = useState(false);
-  const [isDraftProject, setIsDraftProject] = useState(false);
-  const [isLoadingVisibility, setIsLoadingVisibility] = useState(true);
-  const { user } = useAuthStore();
-
-  // Check if the current user is the project manager
-  useEffect(() => {
-    if (!projectId || !user?.id) {
-      setIsLoadingVisibility(false);
-      return;
-    }
-
-    const checkProjectManager = async () => {
-      setIsLoadingVisibility(true);
-      try {
-        const { data, error } = await supabase
-          .from('project_tasks')
-          .select('project_manager, is_draft')
-          .eq('id', projectId)
-          .single();
-
-        if (error) throw error;
-
-        setIsProjectManager(data?.project_manager === user?.id);
-        setIsDraftProject(!!data?.is_draft);
-      } catch (err) {
-        console.error("Error checking project manager:", err);
-        setIsProjectManager(false);
-      } finally {
-        setIsLoadingVisibility(false);
-      }
-    };
-
-    checkProjectManager();
-  }, [projectId, user?.id]);
+  const { 
+    isProjectManager, 
+    isDraftProject, 
+    isLoading: isLoadingPermissions,
+    canViewDraftTasks 
+  } = useProjectPermissions(projectId);
 
   // Filter tasks based on draft status and user role
   useEffect(() => {
-    if (isLoadingVisibility) return;
+    if (isLoadingPermissions) return;
     
-    if (!tasks.length) {
+    if (!tasks || !tasks.length) {
       setVisibleTasks([]);
       return;
     }
 
-    // If project is not in draft mode, show all tasks
-    if (!isDraftProject) {
-      setVisibleTasks(tasks);
-      return;
-    }
+    console.log(`Task Visibility - Tasks: ${tasks.length}, Is Draft: ${isDraftProject}, Is Manager: ${isProjectManager}`);
 
-    // If user is project manager, show all tasks
-    if (isProjectManager) {
+    // If project is not in draft mode or user has permission, show all tasks
+    if (!isDraftProject || canViewDraftTasks()) {
       setVisibleTasks(tasks);
       return;
     }
 
     // For regular users, hide tasks in draft projects
     setVisibleTasks([]);
-  }, [tasks, isDraftProject, isProjectManager, isLoadingVisibility]);
+  }, [tasks, isDraftProject, isProjectManager, isLoadingPermissions, canViewDraftTasks]);
 
   return {
     visibleTasks,
     isProjectManager,
     isDraftProject,
-    isLoadingVisibility
+    isLoadingVisibility: isLoadingPermissions
   };
 };
