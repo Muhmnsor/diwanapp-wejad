@@ -1,5 +1,5 @@
 import { useDraftTasksVisibility } from "@/hooks/useDraftTasksVisibility";
-import { Task } from "../types/task";
+import { Task } from "@/components/tasks/types/task";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, FileDown, Loader2, MessageCircle, PlusCircle } from "lucide-react";
