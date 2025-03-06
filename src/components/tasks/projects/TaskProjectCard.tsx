@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { TaskProjectCardBadge } from "./card/TaskProjectCardBadge";
 import { TaskProjectCardProgress } from "./card/TaskProjectCardProgress";
@@ -16,7 +17,7 @@ interface TaskProject {
   workspace_id: string;
   project_id: string | null;
   project_manager: string | null;
-  manager_name?: string | null;
+  manager_name: string | null;  // Changed from optional to required to match useTaskProjectCard
 }
 
 interface TaskProjectCardProps {

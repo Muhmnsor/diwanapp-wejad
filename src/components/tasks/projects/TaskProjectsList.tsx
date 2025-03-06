@@ -13,7 +13,7 @@ interface TaskProject {
   workspace_id: string;
   project_id: string | null;
   project_manager: string | null;
-  manager_name?: string | null;
+  manager_name: string | null;  // Changed from optional to required to match TaskProjectCard
 }
 
 interface TaskProjectsListProps {
@@ -38,7 +38,7 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
       
       if (error) throw error;
 
-      // Transform the data to match the expected format
+      // Transform the data to match the expected format with manager_name as non-optional
       return (projectsData || []).map(project => ({
         ...project,
         manager_name: project.manager?.display_name || null
