@@ -27,7 +27,8 @@ const GeneralTasks = () => {
   } = useGeneralTasks();
 
   // Getting members for task assignment
-  const { projectMembers } = useProjectMembers();
+  // Pass empty string as project ID for general tasks
+  const { projectMembers } = useProjectMembers("");
 
   // Filter tasks based on active tab
   const getFilteredTasks = (tasksList) => {
