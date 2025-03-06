@@ -131,7 +131,7 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
     }
   };
 
-  const updateSubtaskHandler = async (subtaskId: string, taskId: string, updateData: Partial<Subtask>) => {
+  const updateSubtaskHandler = async (subtaskId: string, taskId: string, updateData: Partial<Subtask>): Promise<void> => {
     try {
       console.log(`Updating subtask ${subtaskId} with data:`, updateData);
       const { success, error, updatedSubtask } = await updateSubtask(subtaskId, updateData);
@@ -147,18 +147,14 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
         });
         
         toast.success('تم تحديث المهمة الفرعية بنجاح');
-        return true;
       } else if (error) {
         console.error(`Error updating subtask ${subtaskId}:`, error);
         toast.error(error);
-        return false;
       }
     } catch (err) {
       console.error('Error updating subtask:', err);
       toast.error('فشل في تحديث المهمة الفرعية');
-      return false;
     }
-    return false;
   };
 
   const value: SubtasksContextType = {
