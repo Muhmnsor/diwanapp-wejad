@@ -72,6 +72,15 @@ interface EnhancedCacheStats {
   refreshFailures: number;
   priorityEvictions: Record<CachePriority, number>;
   tagBasedInvalidations: number;
+  materialized: {
+    views: number;
+    hits: number;
+    refreshes: number;
+  };
+  partitioned: {
+    queries: number;
+    chunks: number;
+  };
 }
 
 // In-memory cache store
@@ -93,7 +102,16 @@ const cacheStats: EnhancedCacheStats = {
     high: 0,
     critical: 0
   },
-  tagBasedInvalidations: 0
+  tagBasedInvalidations: 0,
+  materialized: {
+    views: 0,
+    hits: 0,
+    refreshes: 0
+  },
+  partitioned: {
+    queries: 0,
+    chunks: 0
+  }
 };
 
 // Tracking for batched updates
@@ -812,6 +830,260 @@ export const freeUpCacheSpace = (storage: 'local' | 'session', percentToRemove: 
 };
 
 /**
+ * Create a materialized view for frequently accessed data
+ * Materialized views are pre-computed and regularly refreshed datasets
+ */
+export const createMaterializedView = <T>(
+  viewName: string,
+  queryFn: () => Promise<T>,
+  options: {
+    parameters?: Record<string, any>;
+    refreshInterval?: number;
+    queryKey?: string[];
+    dependencies?: string[];
+    initialData?: T;
+  } = {}
+): void => {
+  const {
+    parameters = {},
+    refreshInterval = 5 * 60 * 1000, // 5 minutes default
+    queryKey = [viewName],
+    dependencies = [],
+    initialData
+  } = options;
+  
+  // Create a unique key for this view
+  const viewKey = `materialized:${viewName}:${JSON.stringify(parameters)}`;
+  
+  // Start with initial data if provided
+  if (initialData) {
+    materializedViews.set(viewKey, {
+      data: initialData,
+      timestamp: Date.now(),
+      expiry: Date.now() + refreshInterval,
+      queryKey,
+      parameters,
+      refreshInterval,
+      lastRefresh: Date.now(),
+      refreshing: false,
+      dependencies
+    });
+  }
+  
+  // Start the refresh process
+  refreshMaterializedView(viewKey, queryFn);
+  
+  // Set up the refresh interval checker if not already running
+  if (materializedViewsInterval === null) {
+    materializedViewsInterval = window.setInterval(() => {
+      checkMaterializedViewsRefresh();
+    }, MATERIALIZED_REFRESH_CHECK_INTERVAL);
+  }
+  
+  cacheStats.materialized.views++;
+};
+
+/**
+ * Refresh a materialized view
+ */
+const refreshMaterializedView = async <T>(
+  viewKey: string,
+  queryFn: () => Promise<T>
+): Promise<void> => {
+  const view = materializedViews.get(viewKey);
+  
+  if (!view) return;
+  
+  // Skip if already refreshing
+  if (view.refreshing) return;
+  
+  try {
+    view.refreshing = true;
+    const freshData = await queryFn();
+    
+    materializedViews.set(viewKey, {
+      ...view,
+      data: freshData,
+      timestamp: Date.now(),
+      expiry: Date.now() + view.refreshInterval,
+      lastRefresh: Date.now(),
+      refreshing: false
+    });
+    
+    cacheStats.materialized.refreshes++;
+    console.log(`Materialized view refreshed: ${viewKey}`);
+  } catch (error) {
+    console.error(`Error refreshing materialized view ${viewKey}:`, error);
+    view.refreshing = false;
+  }
+};
+
+/**
+ * Check if any materialized views need refreshing
+ */
+const checkMaterializedViewsRefresh = () => {
+  const now = Date.now();
+  let refreshedCount = 0;
+  
+  materializedViews.forEach((view, viewKey) => {
+    // Skip if already refreshing
+    if (view.refreshing) return;
+    
+    // Check if it's time to refresh
+    if (now >= view.expiry) {
+      // We don't have the query function here, so we'll mark it as needing refresh
+      // The next time getMaterializedView is called, it will refresh
+      view.expiry = 0;
+      refreshedCount++;
+    }
+  });
+  
+  if (refreshedCount > 0) {
+    console.log(`Marked ${refreshedCount} materialized views for refresh`);
+  }
+};
+
+/**
+ * Get data from a materialized view
+ */
+export const getMaterializedView = async <T>(
+  viewName: string,
+  queryFn: () => Promise<T>,
+  parameters: Record<string, any> = {},
+  forceRefresh: boolean = false
+): Promise<T> => {
+  const viewKey = `materialized:${viewName}:${JSON.stringify(parameters)}`;
+  const view = materializedViews.get(viewKey);
+  
+  // If view exists and is valid, return it
+  if (view && !forceRefresh && view.expiry > Date.now()) {
+    cacheStats.materialized.hits++;
+    return view.data as T;
+  }
+  
+  // View doesn't exist or needs refresh
+  await refreshMaterializedView(viewKey, queryFn);
+  
+  // Return the refreshed view or throw if it fails
+  const refreshedView = materializedViews.get(viewKey);
+  if (!refreshedView) {
+    throw new Error(`Failed to get materialized view: ${viewName}`);
+  }
+  
+  return refreshedView.data as T;
+};
+
+/**
+ * Create a partitioned query for large datasets
+ * Allows loading data in chunks for better performance
+ */
+export const createPartitionedQuery = <T>(
+  queryKey: string,
+  totalItems: number,
+  chunkSize: number = 50
+): string => {
+  const partitionKey = `partition:${queryKey}`;
+  
+  partitionedQueries.set(partitionKey, {
+    queryKey,
+    totalItems,
+    loadedChunks: new Set(),
+    chunkSize,
+    lastAccessed: Date.now(),
+    data: new Array(totalItems)
+  });
+  
+  cacheStats.partitioned.queries++;
+  
+  return partitionKey;
+};
+
+/**
+ * Add data to a partitioned query
+ */
+export const updatePartitionedQuery = <T>(
+  partitionKey: string,
+  chunkIndex: number,
+  data: T[]
+): void => {
+  const partition = partitionedQueries.get(partitionKey);
+  if (!partition) return;
+  
+  const startIndex = chunkIndex * partition.chunkSize;
+  
+  // Update the data
+  for (let i = 0; i < data.length; i++) {
+    if (startIndex + i < partition.totalItems) {
+      partition.data[startIndex + i] = data[i];
+    }
+  }
+  
+  // Mark this chunk as loaded
+  partition.loadedChunks.add(chunkIndex);
+  partition.lastAccessed = Date.now();
+  
+  cacheStats.partitioned.chunks++;
+};
+
+/**
+ * Get data from a partitioned query
+ */
+export const getPartitionedQueryData = <T>(
+  partitionKey: string
+): T[] => {
+  const partition = partitionedQueries.get(partitionKey);
+  if (!partition) return [];
+  
+  partition.lastAccessed = Date.now();
+  return partition.data.filter(item => item !== undefined) as T[];
+};
+
+/**
+ * Get information about a partitioned query
+ */
+export const getPartitionedQueryInfo = (
+  partitionKey: string
+): {
+  totalItems: number;
+  loadedItems: number;
+  chunkSize: number;
+  totalChunks: number;
+  loadedChunks: number;
+} | null => {
+  const partition = partitionedQueries.get(partitionKey);
+  if (!partition) return null;
+  
+  const totalChunks = Math.ceil(partition.totalItems / partition.chunkSize);
+  
+  return {
+    totalItems: partition.totalItems,
+    loadedItems: partition.data.filter(item => item !== undefined).length,
+    chunkSize: partition.chunkSize,
+    totalChunks,
+    loadedChunks: partition.loadedChunks.size
+  };
+};
+
+/**
+ * Clean up unused partitioned queries
+ */
+export const cleanupPartitionedQueries = (
+  maxAge: number = 15 * 60 * 1000 // 15 minutes
+): number => {
+  const now = Date.now();
+  let removed = 0;
+  
+  partitionedQueries.forEach((partition, key) => {
+    if (now - partition.lastAccessed > maxAge) {
+      partitionedQueries.delete(key);
+      removed++;
+    }
+  });
+  
+  return removed;
+};
+
+/**
  * Get cache stats for monitoring
  */
 export const getCacheStats = () => {
@@ -843,8 +1115,15 @@ export const getCacheStats = () => {
     refreshFailures: cacheStats.refreshFailures,
     priorityEvictions: cacheStats.priorityEvictions,
     tagBasedInvalidations: cacheStats.tagBasedInvalidations,
-    activeTags: Object.keys(tagToKeysMap).length,
-    refreshQueueSize: refreshQueue.length
+    materializedViews: {
+      count: materializedViews.size,
+      hits: cacheStats.materialized.hits,
+      refreshes: cacheStats.materialized.refreshes
+    },
+    partitionedQueries: {
+      count: partitionedQueries.size,
+      chunks: cacheStats.partitioned.chunks
+    }
   };
 };
 
@@ -898,3 +1177,11 @@ if (refreshQueue.length > 0 && refreshInterval === null) {
 
 // Initialize event listeners
 registerCacheListeners();
+
+// Set up automatic cleanup of unused data
+setInterval(() => {
+  const removedPartitions = cleanupPartitionedQueries();
+  if (removedPartitions > 0) {
+    console.log(`Cleaned up ${removedPartitions} unused partitioned queries`);
+  }
+}, 30 * 60 * 1000); // Check every 30 minutes

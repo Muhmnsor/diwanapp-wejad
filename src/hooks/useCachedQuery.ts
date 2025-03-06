@@ -1,4 +1,3 @@
-
 import { useQuery, UseQueryOptions, UseQueryResult, QueryKey } from '@tanstack/react-query';
 import { 
   getCacheData, 
@@ -7,12 +6,19 @@ import {
   CacheStorage, 
   CachePriority,
   RefreshStrategy,
-  invalidateCacheByTag
+  invalidateCacheByTag,
+  createMaterializedView,
+  getMaterializedView,
+  createPartitionedQuery,
+  updatePartitionedQuery,
+  getPartitionedQueryData,
+  getPartitionedQueryInfo
 } from '@/utils/cacheService';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Enhanced useQuery hook with advanced smart caching capabilities
+ * Supports materialized views and partitioned queries
  */
 export function useCachedQuery<
   TQueryFnData = unknown,
@@ -37,6 +43,13 @@ export function useCachedQuery<
     // Progressive/incremental loading
     incrementalLoading?: boolean;
     loadingChunkSize?: number;
+    // Materialized view options
+    useMaterializedView?: boolean;
+    materializedViewRefreshInterval?: number;
+    // Partitioned query options
+    usePartitionedQuery?: boolean;
+    partitionedQueryChunkSize?: number;
+    partitionedQueryTotalItems?: number;
   }
 ): UseQueryResult<TData, TError> {
   const {
@@ -54,15 +67,100 @@ export function useCachedQuery<
     concurrencyKey,
     incrementalLoading = false,
     loadingChunkSize = 20,
+    // Materialized view options
+    useMaterializedView = false,
+    materializedViewRefreshInterval,
+    // Partitioned query options
+    usePartitionedQuery = false,
+    partitionedQueryChunkSize = 50,
+    partitionedQueryTotalItems,
     ...queryOptions
   } = options || {};
 
+  // State for partitioned queries
+  const [partitionKey, setPartitionKey] = useState<string | null>(null);
+  const [partitionLoading, setPartitionLoading] = useState(false);
+
   // Create a cache key from the query key
   const cacheKey = `${cachePrefix ? cachePrefix + ':' : ''}query:${JSON.stringify(queryKey)}`;
+  
+  // Set up materialized view if requested
+  useEffect(() => {
+    if (useMaterializedView) {
+      createMaterializedView(cacheKey, queryFn, {
+        parameters: {},
+        refreshInterval: materializedViewRefreshInterval || cacheDuration,
+        queryKey: queryKey as string[],
+        dependencies: []
+      });
+    }
+  }, [useMaterializedView, cacheKey, JSON.stringify(queryKey), materializedViewRefreshInterval]);
+
+  // Set up partitioned query if requested
+  useEffect(() => {
+    if (usePartitionedQuery && partitionedQueryTotalItems && !partitionKey) {
+      const key = createPartitionedQuery(
+        cacheKey,
+        partitionedQueryTotalItems,
+        partitionedQueryChunkSize
+      );
+      setPartitionKey(key);
+    }
+  }, [usePartitionedQuery, cacheKey, partitionedQueryTotalItems, partitionedQueryChunkSize]);
+
+  // Handle loading data for partitioned queries
+  useEffect(() => {
+    if (partitionKey && !partitionLoading) {
+      const loadPartition = async () => {
+        try {
+          setPartitionLoading(true);
+          const info = getPartitionedQueryInfo(partitionKey);
+          
+          if (info && info.loadedChunks < info.totalChunks) {
+            // Load the next chunk
+            const nextChunkIndex = Array.from(Array(info.totalChunks).keys())
+              .find(idx => !info.loadedChunks.includes(idx));
+            
+            if (nextChunkIndex !== undefined) {
+              console.log(`Loading partition chunk ${nextChunkIndex + 1}/${info.totalChunks}`);
+              
+              const data = await queryFn();
+              updatePartitionedQuery(partitionKey, nextChunkIndex, data as any);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading partition:', error);
+        } finally {
+          setPartitionLoading(false);
+        }
+      };
+      
+      loadPartition();
+    }
+  }, [partitionKey, partitionLoading, queryFn]);
 
   const result = useQuery<TQueryFnData, TError, TData, QueryKey>({
     queryKey,
     queryFn: async () => {
+      // Handle materialized views
+      if (useMaterializedView) {
+        try {
+          return await getMaterializedView(cacheKey, queryFn);
+        } catch (error) {
+          console.error('Error getting materialized view:', error);
+          // Fall back to regular query if materialized view fails
+        }
+      }
+      
+      // Handle partitioned queries
+      if (usePartitionedQuery && partitionKey) {
+        const data = getPartitionedQueryData(partitionKey);
+        if (data.length > 0) {
+          return data as any;
+        }
+        // If no partitioned data yet, continue with regular query
+      }
+      
       // Skip cache if specified
       if (skipCache) {
         console.log(`Skipping cache for ${cacheKey} as requested`);
@@ -91,6 +189,12 @@ export function useCachedQuery<
       
       if (cachedData) {
         console.log(`Cache hit for ${cacheKey}`);
+        
+        // If this is a partitioned query, update the partition
+        if (usePartitionedQuery && partitionKey) {
+          updatePartitionedQuery(partitionKey, 0, cachedData as any);
+        }
+        
         return cachedData;
       }
       
@@ -150,6 +254,11 @@ export function useCachedQuery<
         }
       } else {
         data = await queryFn();
+      }
+      
+      // Update partitioned query if needed
+      if (usePartitionedQuery && partitionKey) {
+        updatePartitionedQuery(partitionKey, 0, data as any);
       }
       
       // Cache the fresh data with all our advanced options
@@ -243,4 +352,30 @@ export const prefetchQueryData = async <T>(
  */
 export const invalidateQueriesByTag = (tag: string): number => {
   return invalidateCacheByTag(tag);
+};
+
+/**
+ * Function to create a materialized view
+ */
+export const createCachedMaterializedView = <T>(
+  name: string,
+  queryFn: () => Promise<T>,
+  options?: {
+    refreshInterval?: number;
+    queryKey?: string[];
+    dependencies?: string[];
+  }
+): void => {
+  createMaterializedView(name, queryFn, options);
+};
+
+/**
+ * Function to create a partitioned query
+ */
+export const createCachedPartitionedQuery = <T>(
+  queryKey: string,
+  totalItems: number,
+  chunkSize?: number
+): string => {
+  return createPartitionedQuery(queryKey, totalItems, chunkSize);
 };
