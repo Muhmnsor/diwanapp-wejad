@@ -77,7 +77,18 @@ export const useTasksFetching = (projectId: string | undefined) => {
           }
         }
         
-        return task;
+        // Also check if this task has subtasks
+        const { data: subtasksCount, error: subtasksError } = await supabase
+          .from('tasks')
+          .select('id', { count: 'exact' })
+          .eq('parent_task_id', task.id);
+          
+        const hasSubtasks = !subtasksError && (subtasksCount?.length || 0) > 0;
+        
+        return {
+          ...task,
+          has_subtasks: hasSubtasks
+        };
       }));
       
       // Process tasks by stage

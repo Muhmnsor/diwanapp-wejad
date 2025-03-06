@@ -5,12 +5,15 @@ import { Task } from "../types/task";
 export const useProjectStatusUpdater = () => {
   const updateProjectStatus = async (projectId: string, tasks: Task[]) => {
     try {
-      const total = tasks.length;
-      const completed = tasks.filter(task => task.status === 'completed').length;
+      // Filter out subtasks to avoid counting them twice
+      const mainTasks = tasks.filter(task => !task.parent_task_id);
+      
+      const total = mainTasks.length;
+      const completed = mainTasks.filter(task => task.status === 'completed').length;
       
       // Check for overdue tasks
       const now = new Date();
-      const overdue = tasks.filter(task => {
+      const overdue = mainTasks.filter(task => {
         return task.status !== 'completed' && 
               task.due_date && 
               new Date(task.due_date) < now;

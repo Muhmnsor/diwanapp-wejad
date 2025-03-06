@@ -52,7 +52,7 @@ export const useTasksList = (projectId?: string) => {
     try {
       console.log(`Updating task ${taskId} to status: ${newStatus}`);
       
-      // Update the task status in the 'tasks' table (not project_tasks)
+      // Update the task status in the 'tasks' table
       const { error } = await supabase
         .from('tasks')
         .update({ status: newStatus })
