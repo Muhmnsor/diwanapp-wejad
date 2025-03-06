@@ -26,7 +26,8 @@ const Ideas = () => {
         .select(`
           *,
           profiles (
-            email
+            email,
+            display_name
           )
         `);
 
@@ -43,7 +44,8 @@ const Ideas = () => {
       
       return data.map(idea => ({
         ...idea,
-        creator_email: idea.profiles?.email || 'غير معروف'
+        creator_email: idea.profiles?.email || 'غير معروف',
+        creator_display_name: idea.profiles?.display_name || idea.profiles?.email || 'غير معروف'
       }));
     }
   });
