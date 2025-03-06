@@ -26,17 +26,25 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
   const { data: projects, isLoading } = useQuery({
     queryKey: ['task-projects', workspaceId],
     queryFn: async () => {
+      console.log('Fetching task projects for workspace:', workspaceId);
+      
       const { data, error } = await supabase
         .from('project_tasks')
-        .select('*, profiles:project_manager(display_name)')
+        .select(`
+          *,
+          manager:project_manager(display_name)
+        `)
         .eq('workspace_id', workspaceId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
       
-      // Transform data to include manager_name from profiles join
+      // Transform data to include manager_name from the join
       return data?.map(project => ({
         ...project,
-        manager_name: project.profiles?.display_name || null
+        manager_name: project.manager?.display_name || null
       })) || [];
     }
   });
