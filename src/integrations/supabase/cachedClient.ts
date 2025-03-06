@@ -1,15 +1,19 @@
 
-import { supabase } from './client';
-import { useCachedQuery } from '@/hooks/useCachedQuery';
-import { clearCacheByPrefix } from '@/utils/cacheService';
+import { createClient } from '@supabase/supabase-js';
+import { clearCache } from '@/utils/cacheService';
 
-// Export cached supabase data fetching utilities
-export const clearSupabaseCache = (tableName: string) => {
-  return clearCacheByPrefix(`supabase:${tableName}`);
+// Your Supabase URL and public anon key
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Create a single supabase client for the entire app
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Enhanced Supabase client with caching integrated
+// TODO: Implement cached client if needed
+
+// Function to clear all Supabase related cache
+export const clearSupabaseCache = () => {
+  clearCache('memory');
+  clearCacheByPrefix('supabase:');
 };
-
-// Export the useCachedQuery hook for direct use
-export { useCachedQuery };
-
-// Export the raw supabase client for operations that shouldn't be cached
-export { supabase };

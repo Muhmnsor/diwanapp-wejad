@@ -88,6 +88,16 @@ interface EnhancedCacheStats {
 // In-memory cache
 const memoryCache = new Map<string, CacheEntry<any>>();
 
+// Cache statistics tracker
+const cacheStats = {
+  hits: 0,
+  misses: 0,
+  compressionSavings: 0,
+  totalSize: 0,
+  throttled: 0,
+  batchedUpdates: 0
+};
+
 // Function to determine the storage object based on CacheStorage type
 const getStorageObject = (storageType: CacheStorage): Storage | Map<string, CacheEntry<any>> => {
   if (storageType === 'local') {
@@ -280,7 +290,7 @@ export const getCacheData = <T>(
 };
 
 // Function to remove data from the cache
-export const removeCacheData = (key: string, storageType: CacheStorage = 'memory'): void => {
+export const removeCacheData = (key: string, storageType: CacheStorage = 'memory', notify: boolean = true): void => {
   const storage = getStorageObject(storageType);
 
   if (isInMemoryStorage(storageType)) {
@@ -289,7 +299,9 @@ export const removeCacheData = (key: string, storageType: CacheStorage = 'memory
     (storage as Storage).removeItem(key);
   }
 
-  notifyCacheRemove(key, storageType);
+  if (notify) {
+    notifyCacheRemove(key, storageType);
+  }
 };
 
 // Function to clear the entire cache
@@ -303,6 +315,183 @@ export const clearCache = (storageType: CacheStorage = 'memory'): void => {
   }
 
   notifyCacheClear(storageType);
+};
+
+// Function to clear cache by prefix
+export const clearCacheByPrefix = (prefix: string): number => {
+  let clearedCount = 0;
+
+  // Clear memory cache by prefix
+  for (const key of memoryCache.keys()) {
+    if (key.startsWith(prefix)) {
+      memoryCache.delete(key);
+      clearedCount++;
+    }
+  }
+
+  // Clear localStorage by prefix
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(prefix)) {
+      localStorage.removeItem(key);
+      clearedCount++;
+      i--; // Adjust for removed item
+    }
+  }
+
+  // Clear sessionStorage by prefix
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key && key.startsWith(prefix)) {
+      sessionStorage.removeItem(key);
+      clearedCount++;
+      i--; // Adjust for removed item
+    }
+  }
+
+  // Notify about the clear operation
+  notifyCacheClear(prefix);
+  
+  return clearedCount;
+};
+
+// Function to get cache statistics
+export const getCacheStats = (): {
+  memoryCacheCount: number;
+  localStorageCount: number;
+  sessionStorageCount: number;
+  totalCacheEntries: number;
+  cacheHits: number;
+  cacheMisses: number;
+  cacheHitRatio: number;
+  compressionSavings: number;
+  totalSize: number;
+  throttledUpdates: number;
+  batchedUpdates: number;
+} => {
+  const memoryCacheCount = memoryCache.size;
+  const localStorageCount = localStorage.length;
+  const sessionStorageCount = sessionStorage.length;
+  const totalCacheEntries = memoryCacheCount + localStorageCount + sessionStorageCount;
+  
+  // Calculate hit ratio
+  const cacheHitRatio = (cacheStats.hits + cacheStats.misses) === 0 
+    ? 0 
+    : Math.round((cacheStats.hits / (cacheStats.hits + cacheStats.misses)) * 100);
+
+  return {
+    memoryCacheCount,
+    localStorageCount,
+    sessionStorageCount,
+    totalCacheEntries,
+    cacheHits: cacheStats.hits,
+    cacheMisses: cacheStats.misses,
+    cacheHitRatio,
+    compressionSavings: cacheStats.compressionSavings,
+    totalSize: cacheStats.totalSize,
+    throttledUpdates: cacheStats.throttled,
+    batchedUpdates: cacheStats.batchedUpdates
+  };
+};
+
+// Function to reset cache statistics
+export const resetCacheStats = (): void => {
+  cacheStats.hits = 0;
+  cacheStats.misses = 0;
+  cacheStats.compressionSavings = 0;
+  cacheStats.totalSize = 0;
+  cacheStats.throttled = 0;
+  cacheStats.batchedUpdates = 0;
+  
+  // Store the reset stats in localStorage for persistence
+  localStorage.setItem('cache:stats', JSON.stringify(cacheStats));
+};
+
+// Function to free up cache space by removing low-priority or expired items
+export const freeUpCacheSpace = (storageType: CacheStorage = 'memory', percentToRemove: number = 10): number => {
+  let removedCount = 0;
+  
+  // Get the appropriate storage
+  const storage = getStorageObject(storageType);
+  
+  if (isInMemoryStorage(storageType)) {
+    const memoryStorage = storage as Map<string, CacheEntry<any>>;
+    
+    // Calculate number of items to remove
+    const totalItems = memoryStorage.size;
+    const itemsToRemove = Math.ceil(totalItems * (percentToRemove / 100));
+    
+    if (itemsToRemove <= 0) return 0;
+    
+    // Convert to array for sorting
+    const entries = Array.from(memoryStorage.entries());
+    
+    // Sort by priority (low first) and expiry (oldest first)
+    entries.sort((a, b) => {
+      // First by priority
+      const priorityOrder = { low: 0, normal: 1, high: 2, critical: 3 };
+      const priorityA = priorityOrder[a[1].priority || 'normal'];
+      const priorityB = priorityOrder[b[1].priority || 'normal'];
+      
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      
+      // Then by expiry
+      return a[1].expiry - b[1].expiry;
+    });
+    
+    // Remove the calculated number of items
+    for (let i = 0; i < itemsToRemove && i < entries.length; i++) {
+      const [key] = entries[i];
+      memoryStorage.delete(key);
+      removedCount++;
+    }
+  } else {
+    // For localStorage/sessionStorage
+    const webStorage = storage as Storage;
+    const totalItems = webStorage.length;
+    const itemsToRemove = Math.ceil(totalItems * (percentToRemove / 100));
+    
+    if (itemsToRemove <= 0) return 0;
+    
+    // Collect all cache entries to sort them
+    const entries: { key: string; entry: CacheEntry<any> }[] = [];
+    
+    for (let i = 0; i < webStorage.length; i++) {
+      const key = webStorage.key(i);
+      if (key) {
+        try {
+          const item = webStorage.getItem(key);
+          if (item) {
+            const entry = JSON.parse(item) as CacheEntry<any>;
+            entries.push({ key, entry });
+          }
+        } catch (e) {
+          // Skip non-JSON items
+        }
+      }
+    }
+    
+    // Sort by priority and expiry
+    entries.sort((a, b) => {
+      // First by priority
+      const priorityOrder = { low: 0, normal: 1, high: 2, critical: 3 };
+      const priorityA = priorityOrder[a.entry.priority || 'normal'];
+      const priorityB = priorityOrder[b.entry.priority || 'normal'];
+      
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      
+      // Then by expiry
+      return a.entry.expiry - b.entry.expiry;
+    });
+    
+    // Remove the calculated number of items
+    for (let i = 0; i < itemsToRemove && i < entries.length; i++) {
+      webStorage.removeItem(entries[i].key);
+      removedCount++;
+    }
+  }
+  
+  return removedCount;
 };
 
 // Function to invalidate cache entries by tag

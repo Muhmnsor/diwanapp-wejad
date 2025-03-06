@@ -116,15 +116,21 @@ export function useCachedQuery<
           setPartitionLoading(true);
           const info = getPartitionedQueryInfo(partitionKey);
           
-          if (info && info.loadedChunks < info.totalChunks) {
-            // Load the next chunk
+          if (info && typeof info.loadedChunks === 'number') {
+            // Handle case where loadedChunks is a number
+            if (info.loadedChunks < info.totalChunks) {
+              // Load the next chunk
+              const nextChunkIndex = info.loadedChunks;
+              console.log(`Loading partition chunk ${nextChunkIndex + 1}/${info.totalChunks}`);
+              
+              const data = await queryFn();
+              updatePartitionedQuery(partitionKey, nextChunkIndex, data as any);
+            }
+          } else if (info && Array.isArray(info.loadedChunks)) {
+            // Handle case where loadedChunks is an array
             const chunksArray = Array.from(Array(info.totalChunks).keys());
-            const loadedChunksArray = Array.isArray(info.loadedChunks) 
-              ? info.loadedChunks 
-              : Array.from(Array(info.loadedChunks).keys());
-            
             const nextChunkIndex = chunksArray.find(idx => 
-              !loadedChunksArray.includes(idx)
+              !info.loadedChunks.includes(idx)
             );
             
             if (nextChunkIndex !== undefined) {

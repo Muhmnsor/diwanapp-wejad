@@ -1,4 +1,3 @@
-
 /**
  * Enhanced Realtime Cache Synchronization
  * Provides WebSocket-based cache synchronization between tabs/windows and server
@@ -268,7 +267,7 @@ const processSyncItem = (item: BatchItem): void => {
           item.storage || 'memory',
           { 
             useCompression: false, // Don't compress again
-            notifySync: false // Don't notify (to avoid loops)
+            batchUpdate: false // Don't notify (to avoid loops)
           }
         );
         console.log(`Cache updated from sync: ${item.key}`);
@@ -278,7 +277,7 @@ const processSyncItem = (item: BatchItem): void => {
     case 'remove':
       if (item.key) {
         // Remove item from cache
-        removeCacheData(item.key, false); // Don't notify (to avoid loops)
+        removeCacheData(item.key, item.storage || 'memory', false); // Don't notify (to avoid loops)
         console.log(`Cache item removed by sync: ${item.key}`);
       }
       break;
@@ -286,7 +285,7 @@ const processSyncItem = (item: BatchItem): void => {
     case 'clear':
       if (item.key) {
         // Clear cache items by prefix
-        removeCacheData(item.key, false); // Don't notify (to avoid loops)
+        clearCacheByPrefix(item.key); // Clear with prefix
         console.log(`Cache cleared by prefix: ${item.key}`);
       }
       break;

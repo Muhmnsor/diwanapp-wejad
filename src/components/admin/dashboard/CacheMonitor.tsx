@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useCacheMonitor } from '@/hooks/useCacheMonitor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { clearCacheByPrefix, resetCacheStats, freeUpCacheSpace } from '@/utils/cacheService';
+import { clearCache, clearCacheByPrefix, resetCacheStats, freeUpCacheSpace } from '@/utils/cacheService';
 import { clearServiceWorkerCache, updateServiceWorker } from '@/utils/serviceWorkerRegistration';
 import { toast } from 'sonner';
 import { BarChart, PieChart, RefreshCw, Trash2, Database, Archive, BarChart2, Clock, Network, Zap, Gauge } from 'lucide-react';
@@ -16,7 +15,6 @@ export const CacheMonitor = () => {
   const [isClearing, setIsClearing] = useState(false);
   const [selectedTab, setSelectedTab] = useState('overview');
   
-  // Initialize realtime sync
   useRealtimeSync();
   
   const handleClearAllCache = async () => {
@@ -84,7 +82,6 @@ export const CacheMonitor = () => {
     }
   };
   
-  // Prepare data for charts
   const storageData = [
     { name: 'ذاكرة التخزين المؤقت', value: stats.memoryCacheCount, color: '#3b82f6' },
     { name: 'التخزين المحلي', value: stats.localStorageCount, color: '#10b981' },
@@ -96,7 +93,6 @@ export const CacheMonitor = () => {
     { name: 'إخفاقات', value: stats.cacheMisses, color: '#ef4444' }
   ];
   
-  // Mock historical data (in a real app, this would be stored and tracked over time)
   const historicalData = [
     { time: '09:00', hitRatio: 65, hits: 25, misses: 15 },
     { time: '10:00', hitRatio: 70, hits: 35, misses: 15 },
@@ -106,7 +102,6 @@ export const CacheMonitor = () => {
     { time: '14:00', hitRatio: stats.cacheHitRatio, hits: stats.cacheHits, misses: stats.cacheMisses }
   ];
   
-  // Advanced metrics data
   const advancedMetrics = [
     { name: 'تحديثات متجمعة', value: stats.batchedUpdates || 0, color: '#8b5cf6' },
     { name: 'تحديثات مؤجلة', value: stats.throttledUpdates || 0, color: '#ec4899' }
