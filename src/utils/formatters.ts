@@ -24,6 +24,28 @@ export const formatDate = (dateString: string | null | undefined, fallback: stri
 };
 
 /**
+ * Format a date relative to current time (e.g. "2 days ago", "in 3 months")
+ * If the date is null, returns the fallback text
+ * @param dateString The date string to format
+ * @param fallback The fallback text if date is invalid or null
+ * @returns Formatted relative date string
+ */
+export const formatRelative = (dateString: string | null, fallback: string = 'غير محدد'): string => {
+  if (!dateString) return fallback;
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return fallback;
+    }
+    return formatDistanceToNow(date, { addSuffix: true, locale: ar });
+  } catch (error) {
+    console.error('Error formatting relative date:', error);
+    return fallback;
+  }
+};
+
+/**
  * Get relative time from now for a date
  * @param dateString The date string to calculate relative time for
  * @returns Formatted relative time string or null if date is invalid
