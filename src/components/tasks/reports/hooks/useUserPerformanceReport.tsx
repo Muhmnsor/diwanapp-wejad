@@ -1,4 +1,3 @@
-
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { supabase } from "@/integrations/supabase/client";
 import { CACHE_DURATIONS } from "@/utils/cacheService";
@@ -38,7 +37,7 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
   
   const queryKey: QueryKey = ['user-performance-report', targetUserId, period];
   
-  return useCachedQuery<UserPerformanceData>(
+  return useCachedQuery<UserPerformanceData, unknown, UserPerformanceData>(
     queryKey,
     async (): Promise<UserPerformanceData> => {
       if (!targetUserId) {
@@ -304,11 +303,11 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
       };
     },
     {
-      queryKey, // Add queryKey to the options
+      queryKey,
       enabled: !!targetUserId,
       cacheDuration: period === 'monthly' ? CACHE_DURATIONS.MEDIUM : CACHE_DURATIONS.LONG,
-      cacheStorage: 'local', // Store in localStorage for persistence across sessions
-      staleTime: 30 * 60 * 1000, // 30 minutes stale time
+      cacheStorage: 'local',
+      staleTime: 30 * 60 * 1000,
       cachePrefix: 'tasks'
     }
   );

@@ -1,5 +1,5 @@
 
-import { useQuery, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions, UseQueryResult, QueryKey } from '@tanstack/react-query';
 import { getCacheData, setCacheData, CACHE_DURATIONS, CacheStorage } from '@/utils/cacheService';
 
 /**
@@ -10,9 +10,9 @@ export function useCachedQuery<
   TError = unknown,
   TData = TQueryFnData
 >(
-  queryKey: unknown[],
+  queryKey: QueryKey,
   queryFn: () => Promise<TQueryFnData>,
-  options?: UseQueryOptions<TQueryFnData, TError, TData> & {
+  options?: UseQueryOptions<TQueryFnData, TError, TData, QueryKey> & {
     cacheDuration?: number;
     cacheStorage?: CacheStorage;
     cachePrefix?: string;

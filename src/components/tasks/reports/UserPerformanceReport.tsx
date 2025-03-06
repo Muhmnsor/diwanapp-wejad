@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +9,7 @@ import { UserProjectContributions } from "./components/UserProjectContributions"
 import { UserUpcomingTasks } from "./components/UserUpcomingTasks";
 import { UserRecentCompletions } from "./components/UserRecentCompletions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUserPerformanceReport } from "./hooks/useUserPerformanceReport";
+import { useUserPerformanceReport, UserPerformanceData } from "./hooks/useUserPerformanceReport";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import html2canvas from "html2canvas";
@@ -67,6 +66,8 @@ export const UserPerformanceReport = () => {
     );
   }
   
+  const performanceData = data as UserPerformanceData | undefined;
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -96,7 +97,7 @@ export const UserPerformanceReport = () => {
       </div>
       
       <div id="user-performance-report" className="space-y-6">
-        {data && <UserPerformanceSummary summary={data.summary} />}
+        {performanceData && <UserPerformanceSummary summary={performanceData.summary} />}
         
         <Tabs defaultValue="overview">
           <TabsList className="mb-6">
@@ -113,7 +114,7 @@ export const UserPerformanceReport = () => {
                   <CardTitle className="text-base">توزيع المهام حسب الشهر</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {data && <UserTasksTimeline data={data.tasksByMonth} />}
+                  {performanceData && <UserTasksTimeline data={performanceData.tasksByMonth} />}
                 </CardContent>
               </Card>
               
@@ -122,7 +123,7 @@ export const UserPerformanceReport = () => {
                   <CardTitle className="text-base">توزيع المهام حسب الأولوية</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {data && <UserTasksDistribution data={data.tasksByPriority} />}
+                  {performanceData && <UserTasksDistribution data={performanceData.tasksByPriority} />}
                 </CardContent>
               </Card>
             </div>
@@ -132,7 +133,7 @@ export const UserPerformanceReport = () => {
                 <CardTitle className="text-base">المهام القادمة</CardTitle>
               </CardHeader>
               <CardContent>
-                {data && <UserUpcomingTasks tasks={data.upcomingTasks} />}
+                {performanceData && <UserUpcomingTasks tasks={performanceData.upcomingTasks} />}
               </CardContent>
             </Card>
           </TabsContent>
@@ -143,7 +144,7 @@ export const UserPerformanceReport = () => {
                 <CardTitle className="text-base">المساهمة في المشاريع</CardTitle>
               </CardHeader>
               <CardContent>
-                {data && <UserProjectContributions data={data.tasksByProject} />}
+                {performanceData && <UserProjectContributions data={performanceData.tasksByProject} />}
               </CardContent>
             </Card>
           </TabsContent>
@@ -154,7 +155,7 @@ export const UserPerformanceReport = () => {
                 <CardTitle className="text-base">الإنجازات والجوائز</CardTitle>
               </CardHeader>
               <CardContent>
-                {data && <UserAchievementsList achievements={data.achievements} />}
+                {performanceData && <UserAchievementsList achievements={performanceData.achievements} />}
               </CardContent>
             </Card>
           </TabsContent>
@@ -165,7 +166,7 @@ export const UserPerformanceReport = () => {
                 <CardTitle className="text-base">المهام المكتملة مؤخراً</CardTitle>
               </CardHeader>
               <CardContent>
-                {data && <UserRecentCompletions tasks={data.recentlyCompletedTasks} />}
+                {performanceData && <UserRecentCompletions tasks={performanceData.recentlyCompletedTasks} />}
               </CardContent>
             </Card>
           </TabsContent>
