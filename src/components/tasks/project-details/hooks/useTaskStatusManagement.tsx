@@ -17,23 +17,27 @@ export const useTaskStatusManagement = (
     if (!taskId) return;
     
     setIsUpdating(true);
+    
+    // Store original task and its status for rollback if needed
+    const originalTask = tasks.find(task => task.id === taskId);
+    const originalStatus = originalTask?.status;
+    
+    if (!originalTask) {
+      console.error("Task not found:", taskId);
+      setIsUpdating(false);
+      return;
+    }
+    
     try {
-      // Update task status in database
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus })
-        .eq('id', taskId);
-        
-      if (error) throw error;
-      
-      // Update local state
+      // Optimistically update the UI first
+      // 1. Update tasks list
       const updatedTasks = tasks.map(task => 
         task.id === taskId ? { ...task, status: newStatus } : task
       );
       
       setTasks(updatedTasks);
       
-      // Update tasks by stage
+      // 2. Update tasks by stage
       setTasksByStage(prev => {
         const newTasksByStage = { ...prev };
         
@@ -42,24 +46,64 @@ export const useTaskStatusManagement = (
           newTasksByStage[stageId] = newTasksByStage[stageId].filter(task => task.id !== taskId);
         });
         
-        // Find the updated task
-        const updatedTask = updatedTasks.find(task => task.id === taskId);
-        
         // Add the task to the appropriate stage group if it exists
-        if (updatedTask && updatedTask.stage_id) {
-          if (!newTasksByStage[updatedTask.stage_id]) {
-            newTasksByStage[updatedTask.stage_id] = [];
+        if (originalTask.stage_id) {
+          if (!newTasksByStage[originalTask.stage_id]) {
+            newTasksByStage[originalTask.stage_id] = [];
           }
-          newTasksByStage[updatedTask.stage_id].push(updatedTask);
+          
+          // Add the updated task to its stage
+          newTasksByStage[originalTask.stage_id].push({ 
+            ...originalTask, 
+            status: newStatus 
+          });
         }
         
         return newTasksByStage;
       });
       
+      // Now perform the actual database update
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+        
+      if (error) {
+        throw error;
+      }
+      
       toast.success("تم تحديث حالة المهمة بنجاح");
     } catch (error) {
       console.error("Error updating task status:", error);
       toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+      
+      // Rollback the UI changes on error
+      const rollbackTasks = tasks.map(task => 
+        task.id === taskId ? { ...task, status: originalStatus } : task
+      );
+      
+      setTasks(rollbackTasks);
+      
+      // Rollback the tasks by stage
+      setTasksByStage(prev => {
+        const rollbackTasksByStage = { ...prev };
+        
+        // Remove the task from all stage groups first
+        Object.keys(rollbackTasksByStage).forEach(stageId => {
+          rollbackTasksByStage[stageId] = rollbackTasksByStage[stageId].filter(task => task.id !== taskId);
+        });
+        
+        // Add the task back to the appropriate stage group with original status
+        if (originalTask.stage_id) {
+          if (!rollbackTasksByStage[originalTask.stage_id]) {
+            rollbackTasksByStage[originalTask.stage_id] = [];
+          }
+          
+          rollbackTasksByStage[originalTask.stage_id].push(originalTask);
+        }
+        
+        return rollbackTasksByStage;
+      });
     } finally {
       setIsUpdating(false);
     }

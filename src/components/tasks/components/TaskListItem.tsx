@@ -26,15 +26,24 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
-  const currentStatus = task.status || "pending";
+  const [currentTaskStatus, setCurrentTaskStatus] = useState(task.status || "pending");
   const { sendTaskStatusUpdateNotification } = useTaskNotifications();
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
 
   // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
+    if (isUpdating) return; // Prevent multiple rapid clicks
+    
     setIsUpdating(true);
+    
+    // Store original status for rollback if needed
+    const originalStatus = currentTaskStatus;
+    
     try {
+      // Update UI optimistically
+      setCurrentTaskStatus(status);
+      
       // Check if the task is a subtask and use the correct table
       if (task.is_subtask) {
         const { error } = await supabase
@@ -44,7 +53,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
           
         if (error) throw error;
         
-        // We need to call the onStatusChange to update the UI
+        // We need to call the onStatusChange to update the parent UI
         onStatusChange(task.id, status);
         toast.success('تم تحديث حالة المهمة الفرعية');
         
@@ -84,6 +93,9 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
     } catch (error) {
       console.error("Error updating task status:", error);
       toast.error('حدث خطأ أثناء تحديث حالة المهمة');
+      
+      // Rollback UI on error
+      setCurrentTaskStatus(originalStatus);
     } finally {
       setIsUpdating(false);
     }
@@ -91,7 +103,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
 
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
-      <TaskHeader task={task} status={currentStatus} />
+      <TaskHeader task={task} status={currentTaskStatus} />
       
       <div className="mt-3">
         <TaskMetadata
@@ -103,7 +115,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete }: TaskListItemPro
       </div>
       
       <TaskActionButtons 
-        currentStatus={currentStatus}
+        currentStatus={currentTaskStatus}
         isUpdating={isUpdating}
         onShowDiscussion={() => setShowDiscussion(true)}
         onOpenFileUploader={() => setIsUploadDialogOpen(true)}

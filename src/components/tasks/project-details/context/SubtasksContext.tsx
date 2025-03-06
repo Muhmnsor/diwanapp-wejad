@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Subtask } from '../types/subtask';
@@ -81,18 +82,32 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
   const updateStatus = async (subtaskId: string, taskId: string, newStatus: string) => {
     try {
       console.log(`Updating status of subtask ${subtaskId} to ${newStatus}`);
+      
+      // Find the original subtask for potential rollback
+      const originalSubtasks = subtasks[taskId] || [];
+      const originalSubtask = originalSubtasks.find(s => s.id === subtaskId);
+      
+      if (!originalSubtask) {
+        console.error(`Subtask ${subtaskId} not found for task ${taskId}`);
+        return;
+      }
+      
+      const originalStatus = originalSubtask.status;
+      
+      // Optimistically update the UI
+      setSubtasks(prev => {
+        const taskSubtasks = prev[taskId] || [];
+        const updatedSubtasks = taskSubtasks.map(subtask => 
+          subtask.id === subtaskId ? { ...subtask, status: newStatus } : subtask
+        );
+        
+        return { ...prev, [taskId]: updatedSubtasks };
+      });
+      
+      // Now perform the actual API call
       const { success, error } = await updateSubtaskStatus(subtaskId, newStatus);
       
       if (success) {
-        setSubtasks(prev => {
-          const taskSubtasks = prev[taskId] || [];
-          const updatedSubtasks = taskSubtasks.map(subtask => 
-            subtask.id === subtaskId ? { ...subtask, status: newStatus } : subtask
-          );
-          
-          return { ...prev, [taskId]: updatedSubtasks };
-        });
-        
         toast.success(newStatus === 'completed' 
           ? 'تم إكمال المهمة الفرعية'
           : 'تم تحديث حالة المهمة الفرعية'
@@ -100,60 +115,141 @@ export const SubtasksProvider: React.FC<SubtasksProviderProps> = ({ children }) 
       } else if (error) {
         console.error(`Error updating subtask ${subtaskId} status:`, error);
         toast.error(error);
+        
+        // Rollback UI changes on error
+        setSubtasks(prev => {
+          const taskSubtasks = prev[taskId] || [];
+          const rollbackSubtasks = taskSubtasks.map(subtask => 
+            subtask.id === subtaskId ? { ...subtask, status: originalStatus } : subtask
+          );
+          
+          return { ...prev, [taskId]: rollbackSubtasks };
+        });
       }
     } catch (err) {
       console.error('Error updating subtask status:', err);
       toast.error('فشل في تحديث حالة المهمة الفرعية');
+      
+      // Rollback UI changes on exception
+      setSubtasks(prev => {
+        const taskSubtasks = prev[taskId] || [];
+        const rollbackSubtasks = taskSubtasks.map(subtask => 
+          subtask.id === subtaskId ? { ...subtask, status: originalSubtask.status } : subtask
+        );
+        
+        return { ...prev, [taskId]: rollbackSubtasks };
+      });
     }
   };
 
   const removeSubtask = async (subtaskId: string, taskId: string) => {
     try {
       console.log(`Removing subtask ${subtaskId} from task ${taskId}`);
+      
+      // Store the original subtask for potential rollback
+      const originalSubtasks = subtasks[taskId] || [];
+      const subtaskToRemove = originalSubtasks.find(s => s.id === subtaskId);
+      
+      if (!subtaskToRemove) {
+        console.error(`Subtask ${subtaskId} not found for deletion`);
+        return;
+      }
+      
+      // Optimistically update the UI
+      setSubtasks(prev => {
+        const taskSubtasks = prev[taskId] || [];
+        const updatedSubtasks = taskSubtasks.filter(subtask => subtask.id !== subtaskId);
+        
+        return { ...prev, [taskId]: updatedSubtasks };
+      });
+      
+      // Now perform the actual API call
       const { success, error } = await deleteSubtask(subtaskId);
       
       if (success) {
-        setSubtasks(prev => {
-          const taskSubtasks = prev[taskId] || [];
-          const updatedSubtasks = taskSubtasks.filter(subtask => subtask.id !== subtaskId);
-          
-          return { ...prev, [taskId]: updatedSubtasks };
-        });
-        
         toast.success('تم حذف المهمة الفرعية بنجاح');
       } else if (error) {
         console.error(`Error removing subtask ${subtaskId}:`, error);
         toast.error(error);
+        
+        // Rollback UI changes on error
+        setSubtasks(prev => {
+          const taskSubtasks = prev[taskId] || [];
+          const rollbackSubtasks = [...taskSubtasks, subtaskToRemove];
+          
+          return { ...prev, [taskId]: rollbackSubtasks };
+        });
       }
     } catch (err) {
       console.error('Error removing subtask:', err);
       toast.error('فشل في حذف المهمة الفرعية');
+      
+      // Rollback UI changes on exception
+      setSubtasks(prev => {
+        const taskSubtasks = prev[taskId] || [];
+        const rollbackSubtasks = [...taskSubtasks, subtaskToRemove];
+        
+        return { ...prev, [taskId]: rollbackSubtasks };
+      });
     }
   };
 
   const updateSubtaskHandler = async (subtaskId: string, taskId: string, updateData: Partial<Subtask>) => {
     try {
       console.log(`Updating subtask ${subtaskId} with data:`, updateData);
+      
+      // Find the original subtask for potential rollback
+      const originalSubtasks = subtasks[taskId] || [];
+      const originalSubtask = originalSubtasks.find(s => s.id === subtaskId);
+      
+      if (!originalSubtask) {
+        console.error(`Subtask ${subtaskId} not found for update`);
+        return;
+      }
+      
+      // Optimistically update the UI
+      setSubtasks(prev => {
+        const taskSubtasks = prev[taskId] || [];
+        const updatedSubtasks = taskSubtasks.map(subtask => 
+          subtask.id === subtaskId ? { ...subtask, ...updateData } : subtask
+        );
+        
+        return { ...prev, [taskId]: updatedSubtasks };
+      });
+      
+      // Now perform the actual API call
       const { success, error, updatedSubtask } = await updateSubtask(subtaskId, updateData);
       
       if (success && updatedSubtask) {
-        setSubtasks(prev => {
-          const taskSubtasks = prev[taskId] || [];
-          const updatedSubtasks = taskSubtasks.map(subtask => 
-            subtask.id === subtaskId ? updatedSubtask : subtask
-          );
-          
-          return { ...prev, [taskId]: updatedSubtasks };
-        });
-        
+        // No need to update state again as we already did it optimistically
         toast.success('تم تحديث المهمة الفرعية بنجاح');
       } else if (error) {
         console.error(`Error updating subtask ${subtaskId}:`, error);
         toast.error(error);
+        
+        // Rollback UI changes on error
+        setSubtasks(prev => {
+          const taskSubtasks = prev[taskId] || [];
+          const rollbackSubtasks = taskSubtasks.map(subtask => 
+            subtask.id === subtaskId ? originalSubtask : subtask
+          );
+          
+          return { ...prev, [taskId]: rollbackSubtasks };
+        });
       }
     } catch (err) {
       console.error('Error updating subtask:', err);
       toast.error('فشل في تحديث المهمة الفرعية');
+      
+      // Rollback UI changes on exception
+      setSubtasks(prev => {
+        const taskSubtasks = prev[taskId] || [];
+        const rollbackSubtasks = taskSubtasks.map(subtask => 
+          subtask.id === subtaskId ? originalSubtask : subtask
+        );
+        
+        return { ...prev, [taskId]: rollbackSubtasks };
+      });
     }
   };
 
