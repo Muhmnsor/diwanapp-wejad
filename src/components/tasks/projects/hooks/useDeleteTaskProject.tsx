@@ -40,14 +40,15 @@ export const useDeleteTaskProject = ({
           }
         });
         
+        console.log("Edge function response:", response);
+        
         if (response.error) {
           console.error("Edge function error:", response.error);
           throw new Error(response.error.message || "فشل في حذف المشروع");
         }
         
-        console.log("Edge function response:", response.data);
-        
         if (!response.data.success) {
+          console.error("Edge function unsuccessful:", response.data);
           throw new Error(response.data.error || "فشل في حذف المشروع");
         }
       } else {
