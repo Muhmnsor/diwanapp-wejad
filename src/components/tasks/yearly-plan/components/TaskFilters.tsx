@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -127,13 +128,13 @@ export const TaskFilters = ({
         </div>
 
         <div>
-          <h3 className="font-medium mb-3">عرض جميع المشاريع</h3>
+          <h3 className="font-medium mb-3">عرض المشاريع</h3>
           <Button 
             variant={showAllProjects ? "default" : "outline"} 
             onClick={handleShowAllToggle}
             className="w-full"
           >
-            {showAllProjects ? "إظهار جميع المشاريع" : "تطبيق التصفية"}
+            {showAllProjects ? "عرض جميع المشاريع" : "تطبيق التصفية"}
           </Button>
         </div>
       </div>

@@ -1,5 +1,4 @@
 
-import { format, getDaysInMonth, isWithinInterval, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { TaskBar } from './TaskBar';
 
 interface TaskRowProps {
@@ -10,7 +9,7 @@ interface TaskRowProps {
 
 export const TaskRow = ({ task, months, today }: TaskRowProps) => {
   return (
-    <div className="flex my-1">
+    <div className="flex my-1 hover:bg-gray-50">
       <div className="w-48 flex-shrink-0 text-sm py-1 px-3 font-medium truncate" title={task.title}>
         {task.title}
       </div>
