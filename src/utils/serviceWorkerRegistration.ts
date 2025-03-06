@@ -48,3 +48,20 @@ export const updateServiceWorker = async (): Promise<void> => {
     return Promise.resolve();
   }
 };
+
+// Register Service Worker
+export const registerServiceWorker = async (): Promise<void> => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered successfully:', registration);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error registering Service Worker:', error);
+      return Promise.reject(error);
+    }
+  } else {
+    console.warn('Service Worker API not available in this browser');
+    return Promise.resolve();
+  }
+};
