@@ -2,8 +2,53 @@
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { TasksList } from "@/components/tasks/project-details/TasksList";
+import { useGeneralTasks } from "@/components/tasks/project-details/hooks/useGeneralTasks";
+import { GeneralTasksStats } from "@/components/tasks/project-details/components/GeneralTasksStats";
+import { CategoryTasks } from "@/components/tasks/project-details/components/CategoryTasks";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { AddTaskDialog } from "@/components/tasks/project-details/AddTaskDialog";
+import { TasksHeader } from "@/components/tasks/project-details/components/TasksHeader";
+import { useProjectMembers } from "@/components/tasks/project-details/hooks/useProjectMembers";
 
 const GeneralTasks = () => {
+  const [activeTab, setActiveTab] = useState("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
+  const {
+    tasks,
+    isLoading,
+    tasksByCategory,
+    categories,
+    stats,
+    fetchGeneralTasks,
+    handleStatusChange,
+    deleteTask
+  } = useGeneralTasks();
+
+  // Getting members for task assignment
+  const { projectMembers } = useProjectMembers();
+
+  // Filter tasks based on active tab
+  const getFilteredTasks = (tasksList) => {
+    if (activeTab === "all") return tasksList;
+    return tasksList.filter(task => task.status === activeTab);
+  };
+
+  // Filter categories based on active tab
+  const getFilteredTasksByCategory = () => {
+    const result = {};
+    
+    for (const category in tasksByCategory) {
+      const filtered = getFilteredTasks(tasksByCategory[category]);
+      if (filtered.length > 0) {
+        result[category] = filtered;
+      }
+    }
+    
+    return result;
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopHeader />
@@ -17,12 +62,74 @@ const GeneralTasks = () => {
               </p>
             </div>
             
-            <div className="space-y-8">
-              <TasksList />
+            <div className="mb-6">
+              <GeneralTasksStats stats={stats} />
+            </div>
+            
+            <div className="mb-6">
+              <TasksHeader 
+                onAddTask={() => setIsAddDialogOpen(true)} 
+                isGeneral={true} 
+              />
+            </div>
+            
+            <div className="mb-6">
+              <Tabs defaultValue={activeTab} className="w-full" onValueChange={setActiveTab} dir="rtl">
+                <TabsList className="grid grid-cols-5 mb-4">
+                  <TabsTrigger value="all">الكل</TabsTrigger>
+                  <TabsTrigger value="pending">قيد الانتظار</TabsTrigger>
+                  <TabsTrigger value="in_progress">قيد التنفيذ</TabsTrigger>
+                  <TabsTrigger value="completed">مكتملة</TabsTrigger>
+                  <TabsTrigger value="delayed">متأخرة</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            
+            <div className="space-y-6">
+              {isLoading ? (
+                <div className="text-center py-8">جاري تحميل المهام...</div>
+              ) : activeTab === "all" ? (
+                categories.map(category => (
+                  <CategoryTasks
+                    key={category}
+                    category={category}
+                    tasks={tasksByCategory[category] || []}
+                    onStatusChange={handleStatusChange}
+                    onDelete={deleteTask}
+                  />
+                ))
+              ) : (
+                Object.entries(getFilteredTasksByCategory()).map(([category, tasks]) => (
+                  <CategoryTasks
+                    key={category}
+                    category={category}
+                    tasks={tasks as any}
+                    onStatusChange={handleStatusChange}
+                    onDelete={deleteTask}
+                  />
+                ))
+              )}
+              
+              {!isLoading && Object.keys(getFilteredTasksByCategory()).length === 0 && (
+                <div className="text-center py-8 bg-gray-50 rounded-md border">
+                  <p className="text-gray-500">لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+      
+      <AddTaskDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        projectId=""
+        projectStages={[]} // Empty for general tasks
+        onTaskAdded={fetchGeneralTasks}
+        projectMembers={projectMembers}
+        isGeneral={true}
+      />
+      
       <Footer />
     </div>
   );
