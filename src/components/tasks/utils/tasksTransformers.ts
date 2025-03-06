@@ -26,12 +26,16 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
       id: task.id,
       title: task.title,
       description: task.description,
-      status: task.status,
+      status: task.status || 'pending',
       due_date: task.due_date,
-      priority: task.priority,
+      priority: task.priority || 'medium',
       project_name: projectName,
       workspace_name: workspaceName,
-      is_subtask: false
+      is_subtask: false,
+      // Add missing required properties
+      assigned_to: task.assigned_to || null,
+      created_at: task.created_at || new Date().toISOString(),
+      stage_id: task.stage_id || null
     };
   });
 };
@@ -49,11 +53,15 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
       description: task.description,
       status: task.status as Task['status'],
       due_date: task.due_date,
-      priority: task.priority,
+      priority: task.priority || 'medium',
       project_name: projectName,
       project_id: task.project_id,
       workspace_name: 'مساحة عمل افتراضية', // اسم مساحة العمل الافتراضية
-      is_subtask: false
+      is_subtask: false,
+      // Add missing required properties
+      assigned_to: task.assigned_to || null,
+      created_at: task.created_at || new Date().toISOString(),
+      stage_id: task.stage_id || null
     };
   });
 };
@@ -105,16 +113,19 @@ export const transformSubtasks = (
     return {
       id: subtask.id,
       title: subtask.title,
-      description: null, // تعيين قيمة افتراضية للوصف كـ null
+      description: subtask.description || null,
       status: subtask.status as Task['status'],
       due_date: subtask.due_date,
-      priority: 'medium', // تعيين قيمة افتراضية للأولوية
+      priority: subtask.priority || 'medium',
       project_name: projectName,
       project_id: parentProjectId,
       workspace_name: parentTask.workspace_name || 'مساحة عمل افتراضية',
       is_subtask: true,
-      parent_task_id: subtask.task_id
+      parent_task_id: subtask.task_id,
+      // Add missing required properties
+      assigned_to: subtask.assigned_to || null,
+      created_at: subtask.created_at || new Date().toISOString(),
+      stage_id: subtask.stage_id || parentTask.stage_id || null
     };
   });
 };
-
