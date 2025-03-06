@@ -171,8 +171,9 @@ export const useTasksList = (projectId: string | undefined) => {
         
       if (error) throw error;
       
-      // تحديث واجهة المستخدم بعد الحذف
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      // بدلاً من تحديث الحالة المحلية فقط، نقوم بإعادة تحميل البيانات
+      // لضمان تحديث كل من tasks و tasksByStage
+      await fetchTasks();
       
       toast.success("تم حذف المهمة بنجاح");
       return true;
