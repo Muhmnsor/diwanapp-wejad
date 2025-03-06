@@ -16,7 +16,8 @@ interface TasksContentProps {
   getPriorityBadge: (priority: string | null) => JSX.Element | null;
   formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
-  projectId: string | undefined;
+  projectId?: string | undefined;
+  isGeneral?: boolean;
 }
 
 export const TasksContent = ({
@@ -29,7 +30,8 @@ export const TasksContent = ({
   getPriorityBadge,
   formatDate,
   onStatusChange,
-  projectId
+  projectId,
+  isGeneral
 }: TasksContentProps) => {
   if (isLoading) {
     return (
@@ -49,8 +51,8 @@ export const TasksContent = ({
     );
   }
 
-  // إذا كان التبويب النشط هو "الكل"، فسنعرض المهام مقسمة حسب المراحل
-  if (activeTab === "all" && projectStages.length > 0) {
+  // إذا كان التبويب النشط هو "الكل" وليست مهام عامة، فسنعرض المهام مقسمة حسب المراحل
+  if (activeTab === "all" && projectStages.length > 0 && !isGeneral) {
     return (
       <div className="space-y-6" dir="rtl">
         {projectStages.map(stage => (
@@ -70,12 +72,12 @@ export const TasksContent = ({
     );
   }
 
-  // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى
+  // عرض المهام كقائمة بدون تقسيم للتبويبات الأخرى أو المهام العامة
   return (
     <div className="space-y-6" dir="rtl">
       <div className="bg-white rounded-md shadow-sm overflow-hidden border">
         <div className="p-4 bg-gray-50 border-b">
-          <h3 className="font-medium">المهام</h3>
+          <h3 className="font-medium">{isGeneral ? "المهام العامة" : "المهام"}</h3>
         </div>
         <div className="border rounded-md overflow-hidden">
           <Table dir="rtl">

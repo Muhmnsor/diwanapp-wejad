@@ -7,6 +7,9 @@ import { TasksWorkspaces } from "@/components/tasks/TasksWorkspaces";
 import { TasksYearlyPlan } from "@/components/tasks/TasksYearlyPlan";
 import { TasksReports } from "@/components/tasks/TasksReports";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ClipboardList } from "lucide-react";
 
 const Tasks = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -54,7 +57,15 @@ const Tasks = () => {
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <TasksHeader />
+        <div className="flex justify-between items-center mb-6">
+          <TasksHeader />
+          <Link to="/general-tasks">
+            <Button variant="outline" className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              المهام العامة
+            </Button>
+          </Link>
+        </div>
         
         {activeTab === 'overview' && <TasksOverview />}
         {activeTab === 'workspaces' && <TasksWorkspaces />}

@@ -33,6 +33,7 @@ import TaskProjectDetails from "./pages/TaskProjectDetails";
 import Documentation from "./pages/Documentation";
 import Notifications from "./pages/Notifications";
 import React from "react";
+import GeneralTasks from "./pages/GeneralTasks";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuthStore();
@@ -187,6 +188,7 @@ const AppRoutes = () => {
         } 
       />
       <Route path="/documentation" element={<Documentation />} />
+      <Route path="/general-tasks" element={<GeneralTasks />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
