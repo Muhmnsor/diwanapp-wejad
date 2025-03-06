@@ -9,17 +9,15 @@ import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormat
 import { useTasksList } from "./hooks/useTasksList";
 import { Task } from "./types/task";
 import { useProjectMembers } from "./hooks/useProjectMembers";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface TasksListProps {
-  projectId?: string | undefined;
-  isDraftProject?: boolean;
+  projectId: string | undefined;
 }
 
 // Re-export Task interface for backward compatibility
 export type { Task };
 
-export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps) => {
+export const TasksList = ({ projectId }: TasksListProps) => {
   const {
     tasks,
     isLoading,
@@ -31,15 +29,8 @@ export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps)
     handleStagesChange,
     tasksByStage,
     handleStatusChange,
-    fetchTasks,
-    isGeneral
+    fetchTasks
   } = useTasksList(projectId);
-  
-  // Get project permissions
-  const { isDraftProject: isDraft } = useProjectPermissions(projectId);
-
-  // Use either the prop or the hook result (prefer hook as it's real-time)
-  const isProjectDraft = isDraft || isDraftProject;
 
   // Fetch project members
   const { projectMembers } = useProjectMembers(projectId);
@@ -51,16 +42,14 @@ export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps)
 
   return (
     <>
-      {!isGeneral && (
-        <ProjectStages 
-          projectId={projectId} 
-          onStagesChange={handleStagesChange} 
-        />
-      )}
+      <ProjectStages 
+        projectId={projectId} 
+        onStagesChange={handleStagesChange} 
+      />
       
       <Card className="border shadow-sm">
         <CardHeader className="pb-0">
-          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
+          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} />
         </CardHeader>
         
         <CardContent className="pt-4">
@@ -80,8 +69,6 @@ export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps)
             formatDate={formatDate}
             onStatusChange={handleStatusChange}
             projectId={projectId}
-            isGeneral={isGeneral}
-            isDraftProject={isProjectDraft}
           />
         </CardContent>
       </Card>
@@ -93,8 +80,6 @@ export const TasksList = ({ projectId, isDraftProject = false }: TasksListProps)
         projectStages={projectStages}
         onTaskAdded={fetchTasks}
         projectMembers={projectMembers}
-        isGeneral={isGeneral}
-        isDraftProject={isProjectDraft}
       />
     </>
   );

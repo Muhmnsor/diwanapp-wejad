@@ -12,88 +12,43 @@ import {
 import { Edit, Trash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/utils/dateUtils";
-import { useToast } from "@/hooks/use-toast";
-import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
 
 export const ExpensesTable = () => {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [budgetItems, setBudgetItems] = useState<{id: string; name: string}[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<any>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
+    const fetchExpenses = async () => {
+      setLoading(true);
+      try {
+        const { data: expensesData, error: expensesError } = await supabase
+          .from("expenses")
+          .select("*, budget_item_id");
+
+        if (expensesError) throw expensesError;
+
+        const { data: budgetItemsData, error: budgetItemsError } = await supabase
+          .from("budget_items")
+          .select("id, name");
+
+        if (budgetItemsError) throw budgetItemsError;
+
+        setExpenses(expensesData || []);
+        setBudgetItems(budgetItemsData || []);
+      } catch (error) {
+        console.error("Error fetching expenses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchExpenses();
   }, []);
-
-  const fetchExpenses = async () => {
-    setLoading(true);
-    try {
-      const { data: expensesData, error: expensesError } = await supabase
-        .from("expenses")
-        .select("*, budget_item_id");
-
-      if (expensesError) throw expensesError;
-
-      const { data: budgetItemsData, error: budgetItemsError } = await supabase
-        .from("budget_items")
-        .select("id, name");
-
-      if (budgetItemsError) throw budgetItemsError;
-
-      setExpenses(expensesData || []);
-      setBudgetItems(budgetItemsData || []);
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-      toast({
-        title: "حدث خطأ أثناء تحميل المصروفات",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getBudgetItemName = (budgetItemId: string) => {
     const item = budgetItems.find((item) => item.id === budgetItemId);
     return item ? item.name : "غير محدد";
-  };
-
-  const handleDeleteClick = (expense: any) => {
-    setSelectedExpense(expense);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const deleteExpense = async () => {
-    if (!selectedExpense) return;
-
-    try {
-      const { error } = await supabase
-        .from("expenses")
-        .delete()
-        .eq("id", selectedExpense.id);
-
-      if (error) throw error;
-
-      // Remove the expense from the local state
-      setExpenses(expenses.filter(expense => expense.id !== selectedExpense.id));
-      
-      toast({
-        title: "تم حذف المصروف بنجاح",
-        variant: "default",
-      });
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      toast({
-        title: "حدث خطأ أثناء حذف المصروف",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setSelectedExpense(null);
-    }
   };
 
   if (loading) {
@@ -133,12 +88,7 @@ export const ExpensesTable = () => {
                     <Button variant="ghost" size="icon">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-destructive"
-                      onClick={() => handleDeleteClick(expense)}
-                    >
+                    <Button variant="ghost" size="icon" className="text-destructive">
                       <Trash className="h-4 w-4" />
                     </Button>
                   </div>
@@ -148,16 +98,6 @@ export const ExpensesTable = () => {
           )}
         </TableBody>
       </Table>
-
-      {selectedExpense && (
-        <DeleteExpenseDialog
-          isOpen={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          onConfirm={deleteExpense}
-          expenseId={selectedExpense.id}
-          description={selectedExpense.description}
-        />
-      )}
     </div>
   );
 };

@@ -1,16 +1,11 @@
 
-import { useState, useEffect } from "react";
-import { BudgetItem, ResourceObligation } from "../types";
+import { useState } from "react";
+import { BudgetItem } from "../types";
 
-export const useFormFields = (
-  calculateValues: (total: number, obligations: number, useDefaults: boolean) => BudgetItem[], 
-  setBudgetItems: React.Dispatch<React.SetStateAction<BudgetItem[]>>, 
-  useDefaultPercentages: boolean,
-  totalObligationsAmount: number
-) => {
+export const useFormFields = (calculateValues: (total: number, obligations: number, useDefaults: boolean) => BudgetItem[], setBudgetItems: React.Dispatch<React.SetStateAction<BudgetItem[]>>, useDefaultPercentages: boolean) => {
   const [totalAmount, setTotalAmount] = useState<number | "">("");
+  const [obligationsAmount, setObligationsAmount] = useState<number | "">(0);
   const [source, setSource] = useState("منصات التمويل الجماعي");
-  const [customSource, setCustomSource] = useState("");
 
   // Handle total amount change
   const handleTotalAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,33 +13,32 @@ export const useFormFields = (
     setTotalAmount(value);
     
     if (typeof value === "number" && !isNaN(value)) {
-      setBudgetItems(calculateValues(value, totalObligationsAmount, useDefaultPercentages));
+      const obligations = typeof obligationsAmount === "number" ? obligationsAmount : 0;
+      setBudgetItems(calculateValues(value, obligations, useDefaultPercentages));
     }
   };
 
-  // Effect to recalculate when totalObligationsAmount changes
-  useEffect(() => {
+  // Handle obligations amount change
+  const handleObligationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+    setObligationsAmount(value);
+    
     if (typeof totalAmount === "number") {
-      setBudgetItems(calculateValues(totalAmount, totalObligationsAmount, useDefaultPercentages));
+      setBudgetItems(calculateValues(totalAmount, value, useDefaultPercentages));
     }
-  }, [totalObligationsAmount, totalAmount, useDefaultPercentages, setBudgetItems, calculateValues]);
+  };
 
   // Handle source change
   const handleSourceChange = (value: string) => {
     setSource(value);
   };
 
-  // Handle custom source change
-  const handleCustomSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomSource(e.target.value);
-  };
-
   return {
     totalAmount,
+    obligationsAmount,
     source,
-    customSource,
     handleTotalAmountChange,
+    handleObligationsChange,
     handleSourceChange,
-    handleCustomSourceChange,
   };
 };

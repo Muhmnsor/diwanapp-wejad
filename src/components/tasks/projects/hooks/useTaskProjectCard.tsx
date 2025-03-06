@@ -12,7 +12,6 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
-  is_draft?: boolean;
 }
 
 export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () => void) => {
@@ -25,8 +24,6 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
   const [projectOwner, setProjectOwner] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
-  const [isLaunchDialogOpen, setIsLaunchDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchTasksData = async () => {
@@ -59,7 +56,7 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
         setCompletionPercentage(percentage);
         
-        if (percentage === 100 && project.status !== 'completed' && total > 0 && !project.is_draft) {
+        if (percentage === 100 && project.status !== 'completed' && total > 0) {
           console.log(`Project ${project.id} is 100% complete, updating status to completed`);
           
           const { error: updateError } = await supabase
@@ -81,7 +78,7 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     };
 
     fetchTasksData();
-  }, [project.id, project.status, project.is_draft]);
+  }, [project.id, project.status]);
 
   const fetchProjectOwner = async () => {
     try {
@@ -137,16 +134,6 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     setIsDeleteDialogOpen(true);
   };
 
-  const handleCopyClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsCopyDialogOpen(true);
-  };
-
-  const handleLaunchClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLaunchDialogOpen(true);
-  };
-
   const handleProjectUpdated = () => {
     toast.success("تم تحديث المشروع بنجاح");
     if (onProjectUpdated) {
@@ -161,20 +148,6 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     }
   };
 
-  const handleProjectCopied = () => {
-    toast.success("تم نسخ المشروع بنجاح");
-    if (onProjectUpdated) {
-      onProjectUpdated();
-    }
-  };
-
-  const handleProjectLaunched = () => {
-    toast.success("تم إطلاق المشروع بنجاح");
-    if (onProjectUpdated) {
-      onProjectUpdated();
-    }
-  };
-
   return {
     completedTasksCount,
     totalTasksCount,
@@ -184,20 +157,12 @@ export const useTaskProjectCard = (project: TaskProject, onProjectUpdated?: () =
     projectOwner,
     isEditDialogOpen,
     isDeleteDialogOpen,
-    isCopyDialogOpen,
-    isLaunchDialogOpen,
     handleClick,
     handleEditClick,
     handleDeleteClick,
-    handleCopyClick,
-    handleLaunchClick,
     handleProjectUpdated,
     handleProjectDeleted,
-    handleProjectCopied,
-    handleProjectLaunched,
     setIsEditDialogOpen,
-    setIsDeleteDialogOpen,
-    setIsCopyDialogOpen,
-    setIsLaunchDialogOpen
+    setIsDeleteDialogOpen
   };
 };

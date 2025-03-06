@@ -2226,21 +2226,18 @@ export type Database = {
       }
       project_stages: {
         Row: {
-          color: string | null
           created_at: string
           id: string
           name: string
           project_id: string
         }
         Insert: {
-          color?: string | null
           created_at?: string
           id?: string
           name: string
           project_id: string
         }
         Update: {
-          color?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -2252,18 +2249,13 @@ export type Database = {
         Row: {
           asana_gid: string | null
           assigned_to: string | null
-          copied_from: string | null
           created_at: string
           description: string | null
           due_date: string | null
           id: string
-          is_draft: boolean | null
-          launch_date: string | null
           priority: string | null
           project_id: string | null
-          project_manager: string | null
           stage_id: string | null
-          start_date: string | null
           status: string | null
           title: string
           updated_at: string
@@ -2272,18 +2264,13 @@ export type Database = {
         Insert: {
           asana_gid?: string | null
           assigned_to?: string | null
-          copied_from?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
-          is_draft?: boolean | null
-          launch_date?: string | null
           priority?: string | null
           project_id?: string | null
-          project_manager?: string | null
           stage_id?: string | null
-          start_date?: string | null
           status?: string | null
           title: string
           updated_at?: string
@@ -2292,31 +2279,19 @@ export type Database = {
         Update: {
           asana_gid?: string | null
           assigned_to?: string | null
-          copied_from?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           id?: string
-          is_draft?: boolean | null
-          launch_date?: string | null
           priority?: string | null
           project_id?: string | null
-          project_manager?: string | null
           stage_id?: string | null
-          start_date?: string | null
           status?: string | null
           title?: string
           updated_at?: string
           workspace_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "project_tasks_copied_from_fkey"
-            columns: ["copied_from"]
-            isOneToOne: false
-            referencedRelation: "project_tasks"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "project_tasks_project_id_fkey"
             columns: ["project_id"]
@@ -2526,38 +2501,6 @@ export type Database = {
           },
         ]
       }
-      resource_obligations: {
-        Row: {
-          amount: number
-          created_at: string
-          description: string | null
-          id: string
-          resource_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          resource_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          resource_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "resource_obligations_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "financial_resources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       role_permissions: {
         Row: {
           created_at: string
@@ -2756,30 +2699,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      task_categories: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       task_comments: {
         Row: {
@@ -3032,12 +2951,10 @@ export type Database = {
         Row: {
           asana_gid: string | null
           assigned_to: string | null
-          category: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
           id: string
-          is_general: boolean | null
           priority: string | null
           project_id: string | null
           stage_id: string | null
@@ -3049,12 +2966,10 @@ export type Database = {
         Insert: {
           asana_gid?: string | null
           assigned_to?: string | null
-          category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
-          is_general?: boolean | null
           priority?: string | null
           project_id?: string | null
           stage_id?: string | null
@@ -3066,12 +2981,10 @@ export type Database = {
         Update: {
           asana_gid?: string | null
           assigned_to?: string | null
-          category?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
-          is_general?: boolean | null
           priority?: string | null
           project_id?: string | null
           stage_id?: string | null

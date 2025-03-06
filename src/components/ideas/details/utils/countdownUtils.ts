@@ -84,19 +84,7 @@ export const calculateTimeRemaining = (
       return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     }
 
-    // التأكد من التاريخ وضبطه إذا كان غير صالح
-    let createdDate;
-    try {
-      createdDate = new Date(created_at);
-      if (isNaN(createdDate.getTime())) {
-        console.error("تاريخ الإنشاء غير صالح:", created_at);
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      }
-    } catch (e) {
-      console.error("خطأ عند معالجة تاريخ الإنشاء:", e);
-      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    }
-    
+    const createdDate = new Date(created_at);
     console.log("تاريخ الإنشاء:", createdDate.toLocaleString());
     
     const discussionEndDate = new Date(createdDate.getTime() + (totalHours * 60 * 60 * 1000));

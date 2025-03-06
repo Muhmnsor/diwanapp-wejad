@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PersonalTasksReports } from "./reports/PersonalTasksReports";
 import { TeamTasksReports } from "./reports/TeamTasksReports";
 import { ProjectTasksReports } from "./reports/ProjectTasksReports";
-import { GeneralTasksReports } from "./reports/GeneralTasksReports";
 
 export const TasksReports = () => {
   return (
@@ -17,7 +16,6 @@ export const TasksReports = () => {
             <TabsTrigger value="personal">التقارير الشخصية</TabsTrigger>
             <TabsTrigger value="team">تقارير الفريق</TabsTrigger>
             <TabsTrigger value="projects">تقارير المشاريع</TabsTrigger>
-            <TabsTrigger value="general">تقارير المهام العامة</TabsTrigger>
           </TabsList>
           
           <TabsContent value="personal" className="space-y-6">
@@ -30,10 +28,6 @@ export const TasksReports = () => {
           
           <TabsContent value="projects" className="space-y-6">
             <ProjectTasksReports />
-          </TabsContent>
-          
-          <TabsContent value="general" className="space-y-6">
-            <GeneralTasksReports />
           </TabsContent>
         </Tabs>
       </Card>

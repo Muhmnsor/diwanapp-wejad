@@ -92,8 +92,8 @@ export const TaskAssigneeField = ({ assignedTo, setAssignedTo, projectMembers }:
             </SelectItem>
             {projectMembers && projectMembers.length > 0 ? (
               projectMembers.map((member) => (
-                <SelectItem key={member.user_id} value={member.user_id}>
-                  {member.display_name || member.email || 'مستخدم بلا اسم'}
+                <SelectItem key={member.id} value={member.user_id}>
+                  {member.user_display_name || member.user_email || 'مستخدم بلا اسم'}
                 </SelectItem>
               ))
             ) : (

@@ -1,7 +1,6 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ResourceSourceFieldProps {
@@ -17,9 +16,6 @@ export const ResourceSourceField: React.FC<ResourceSourceFieldProps> = ({
 }) => {
   if (!show) return null;
 
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const [customSource, setCustomSource] = useState("");
-
   // Available resource sources matching those in the resource form
   const resourceSources = [
     "منصات التمويل الجماعي",
@@ -34,42 +30,12 @@ export const ResourceSourceField: React.FC<ResourceSourceFieldProps> = ({
     "أخرى"
   ];
 
-  // Check if resourceSource is not in standard list
-  useEffect(() => {
-    if (resourceSource && !resourceSources.includes(resourceSource)) {
-      setShowCustomInput(true);
-      setCustomSource(resourceSource);
-      handleSelectChange("resource_source", "أخرى");
-    } else {
-      setShowCustomInput(resourceSource === "أخرى");
-    }
-  }, [resourceSource]);
-
-  const handleSourceChange = (value: string) => {
-    handleSelectChange("resource_source", value);
-    setShowCustomInput(value === "أخرى");
-    
-    // If changing from "أخرى" to another option, clear the custom input
-    if (value !== "أخرى") {
-      setCustomSource("");
-    }
-  };
-
-  const handleCustomSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setCustomSource(value);
-    // Update the resource_source in parent component
-    if (value.trim()) {
-      handleSelectChange("resource_source", value);
-    }
-  };
-
   return (
     <div className="space-y-2">
       <Label htmlFor="resource_source">مصدر المورد</Label>
       <Select
-        value={showCustomInput ? "أخرى" : (resourceSource || "")}
-        onValueChange={handleSourceChange}
+        value={resourceSource || ""}
+        onValueChange={(value) => handleSelectChange("resource_source", value)}
       >
         <SelectTrigger>
           <SelectValue placeholder="اختر مصدر المورد" />
@@ -82,19 +48,6 @@ export const ResourceSourceField: React.FC<ResourceSourceFieldProps> = ({
           ))}
         </SelectContent>
       </Select>
-
-      {showCustomInput && (
-        <div className="mt-2">
-          <Label htmlFor="custom_source">المصدر المخصص</Label>
-          <Input
-            id="custom_source"
-            value={customSource}
-            onChange={handleCustomSourceChange}
-            placeholder="ادخل مصدر المورد"
-            className="text-right mt-1"
-          />
-        </div>
-      )}
     </div>
   );
 };

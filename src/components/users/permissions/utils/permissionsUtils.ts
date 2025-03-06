@@ -1,10 +1,15 @@
 
 import { Module, Permission } from "../types";
 
-// Organize permissions by module
+// Organize permissions into modules
 export const organizePermissionsByModule = (permissions: Permission[]): Module[] => {
-  const moduleMap: Record<string, Permission[]> = {};
+  if (permissions.length === 0) {
+    return [];
+  }
   
+  const moduleMap: { [key: string]: Permission[] } = {};
+  
+  // Group permissions by module
   permissions.forEach(permission => {
     if (!moduleMap[permission.module]) {
       moduleMap[permission.module] = [];
@@ -12,35 +17,31 @@ export const organizePermissionsByModule = (permissions: Permission[]): Module[]
     moduleMap[permission.module].push(permission);
   });
   
-  // Make sure tasks module includes general tasks permissions
-  if (moduleMap["tasks"] && !moduleMap["general_tasks"]) {
-    const generalTaskPermissions = permissions.filter(p => 
-      p.name.includes("general_task") || p.description.includes("مهام عامة")
-    );
-    
-    if (generalTaskPermissions.length > 0) {
-      moduleMap["tasks"] = [...moduleMap["tasks"], ...generalTaskPermissions];
-    }
-  }
-  
-  return Object.entries(moduleMap).map(([name, perms]) => ({
-    name,
-    permissions: perms.sort((a, b) => a.name.localeCompare(b.name)),
-    isOpen: false
+  // Convert map to array of modules
+  return Object.keys(moduleMap).map(moduleName => ({
+    name: moduleName,
+    permissions: moduleMap[moduleName],
+    isOpen: true // Open by default
   }));
 };
 
-export const checkAllModulePermissionsSelected = (
-  modulePermissions: string[],
+// Check if all permissions in a module are selected
+export const areAllModulePermissionsSelected = (
+  module: Module, 
   selectedPermissions: string[]
 ): boolean => {
-  return modulePermissions.every(permId => selectedPermissions.includes(permId));
+  return module.permissions.every(permission => 
+    selectedPermissions.includes(permission.id)
+  );
 };
 
-export const checkSomeModulePermissionsSelected = (
-  modulePermissions: string[],
+// Check if some permissions in a module are selected
+export const areSomeModulePermissionsSelected = (
+  module: Module, 
   selectedPermissions: string[]
 ): boolean => {
-  return modulePermissions.some(permId => selectedPermissions.includes(permId)) &&
-         !checkAllModulePermissionsSelected(modulePermissions, selectedPermissions);
+  const allSelected = areAllModulePermissionsSelected(module, selectedPermissions);
+  return module.permissions.some(permission => 
+    selectedPermissions.includes(permission.id)
+  ) && !allSelected;
 };

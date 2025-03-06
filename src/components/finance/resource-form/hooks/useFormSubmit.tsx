@@ -2,18 +2,16 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { BudgetItem, ResourceObligation } from "../types";
+import { BudgetItem } from "../types";
 import { useFinanceNotifications } from "@/hooks/useFinanceNotifications";
 import { useAuthStore } from "@/store/authStore";
 
 export const useFormSubmit = (
   totalAmount: number | "",
-  totalObligationsAmount: number,
+  obligationsAmount: number | "",
   source: string,
-  customSource: string,
   budgetItems: BudgetItem[],
   useDefaultPercentages: boolean,
-  obligations: ResourceObligation[],
   onSubmit: () => void
 ) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -45,32 +43,23 @@ export const useFormSubmit = (
       return;
     }
 
-    // Validate custom source if "أخرى" is selected
-    if (source === "أخرى" && !customSource.trim()) {
-      toast.error("الرجاء إدخال اسم المصدر المخصص");
-      return;
-    }
-
     setIsLoading(true);
     
     try {
       const type = (document.getElementById("type") as HTMLSelectElement)?.value;
       const entity = (document.getElementById("entity") as HTMLInputElement).value;
-      const netAmount = totalAmount - totalObligationsAmount;
-      
-      // Determine which source to use
-      const finalSource = source === "أخرى" ? customSource : source;
+      const netAmount = totalAmount - (typeof obligationsAmount === "number" ? obligationsAmount : 0);
       
       // 1. Add financial resource
       const { data: resourceData, error: resourceError } = await supabase
         .from('financial_resources')
         .insert({
           date: new Date().toISOString().split("T")[0],
-          source: finalSource,
+          source,
           type,
           entity,
           total_amount: totalAmount,
-          obligations_amount: totalObligationsAmount,
+          obligations_amount: typeof obligationsAmount === "number" ? obligationsAmount : 0,
           net_amount: netAmount
         })
         .select();
@@ -83,22 +72,7 @@ export const useFormSubmit = (
       
       const resourceId = resourceData[0].id;
       
-      // 2. Add resource obligations
-      if (obligations.length > 0) {
-        const obligationsToInsert = obligations.map(obligation => ({
-          resource_id: resourceId,
-          amount: obligation.amount,
-          description: obligation.description
-        }));
-
-        const { error: obligationsError } = await supabase
-          .from('resource_obligations')
-          .insert(obligationsToInsert);
-
-        if (obligationsError) throw obligationsError;
-      }
-      
-      // 3. Add budget item distributions
+      // 2. Add budget item distributions
       const distributions = budgetItems.map(item => ({
         resource_id: resourceId,
         budget_item_id: item.id,
@@ -112,7 +86,7 @@ export const useFormSubmit = (
       
       if (distributionError) throw distributionError;
       
-      // 4. Send notification to finance team and admin users
+      // 3. Send notification to finance team and admin users
       if (user) {
         // Get users with finance or admin roles
         const { data: financeUsers } = await supabase
@@ -129,7 +103,7 @@ export const useFormSubmit = (
               
               await sendNewResourceNotification({
                 resourceId,
-                resourceTitle: entity || finalSource,
+                resourceTitle: entity || source,
                 amount: totalAmount,
                 userId: financeUser.user_id,
                 updatedByUserName: userName

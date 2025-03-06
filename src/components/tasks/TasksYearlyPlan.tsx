@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Task, Workspace } from '@/types/workspace';
@@ -7,6 +8,7 @@ import { YearNavigation } from './yearly-plan/components/YearNavigation';
 import { StatusLegend } from './yearly-plan/components/StatusLegend';
 import { GanttChart } from './yearly-plan/components/GanttChart';
 import { TaskFilters } from './yearly-plan/components/TaskFilters';
+import { GroupBySelector } from './yearly-plan/components/GroupBySelector';
 import { ZoomControls } from './yearly-plan/components/ZoomControls';
 import { fetchTaskProjects } from './yearly-plan/services/yearlyPlanDataService';
 import { FilterIcon, Search } from 'lucide-react';
@@ -18,13 +20,14 @@ export const TasksYearlyPlan = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [zoomLevel, setZoomLevel] = useState(100); // 100% is default
   const [searchQuery, setSearchQuery] = useState('');
+  const [groupBy, setGroupBy] = useState<'workspace' | 'status' | 'assignee'>('workspace');
   const [filters, setFilters] = useState({
     status: [] as string[],
     assignee: [] as string[],
     workspace: [] as string[],
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [showAllProjects, setShowAllProjects] = useState(true); // Set to true by default
+  const [showAllProjects, setShowAllProjects] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const today = new Date();
 
@@ -63,8 +66,30 @@ export const TasksYearlyPlan = () => {
   const getFilteredAndGroupedData = () => {
     if (!taskProjects) return [];
 
-    // Always return all projects by default
-    return taskProjects;
+    // If showAllProjects is true, return all projects
+    if (showAllProjects) {
+      return taskProjects;
+    }
+
+    // Filter tasks based on search query and filters
+    let filteredProjects = taskProjects.filter(project => {
+      // Filter by search query
+      const matchesSearch = searchQuery === '' || 
+        project.title.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Filter by status if any status filters are active
+      const matchesStatus = filters.status.length === 0 || 
+        filters.status.includes(project.status);
+      
+      // Filter by workspace if any workspace filters are active
+      const matchesWorkspace = filters.workspace.length === 0 || 
+        filters.workspace.includes(project.workspace_id);
+      
+      // Return true if all conditions match
+      return matchesSearch && matchesStatus && matchesWorkspace;
+    });
+
+    return filteredProjects;
   };
 
   const months = getMonthsOfYear();
@@ -99,6 +124,7 @@ export const TasksYearlyPlan = () => {
           </div>
           
           <div className="flex gap-4 w-full md:w-auto">
+            <GroupBySelector value={groupBy} onChange={setGroupBy} />
             <ZoomControls value={zoomLevel} onChange={handleZoomChange} />
           </div>
         </div>
@@ -133,6 +159,7 @@ export const TasksYearlyPlan = () => {
               <GanttChart 
                 tasks={filteredData} 
                 months={months} 
+                groupBy={groupBy}
                 today={today}
                 zoomLevel={zoomLevel}
               />
@@ -141,10 +168,7 @@ export const TasksYearlyPlan = () => {
         </Card>
       </div>
 
-      <Card className="p-4">
-        <h3 className="text-center text-lg font-medium mb-4">حالة المشاريع</h3>
-        <StatusLegend />
-      </Card>
+      <StatusLegend />
     </div>
   );
 };

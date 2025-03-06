@@ -12,7 +12,6 @@ interface TaskProject {
   status: string;
   workspace_id: string;
   project_id: string | null;
-  is_draft?: boolean;
 }
 
 interface TaskProjectsListProps {
@@ -59,21 +58,9 @@ export const TaskProjectsList = ({ workspaceId }: TaskProjectsListProps) => {
     );
   }
 
-  // Sort projects - draft projects first, then by creation date
-  const sortedProjects = [...projects].sort((a, b) => {
-    // Draft projects first
-    if (a.is_draft && !b.is_draft) return -1;
-    if (!a.is_draft && b.is_draft) return 1;
-    
-    // Then by creation date (newest first)
-    const dateA = new Date(a.created_at || 0);
-    const dateB = new Date(b.created_at || 0);
-    return dateB.getTime() - dateA.getTime();
-  });
-
   return (
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {sortedProjects.map((project: TaskProject) => (
+      {projects.map((project: TaskProject) => (
         <TaskProjectCard 
           key={project.id} 
           project={project} 

@@ -1,4 +1,5 @@
 
+import { getDaysInMonth, startOfMonth, endOfMonth } from 'date-fns';
 import { getTaskStatusColor } from '../../utils/dateUtils';
 
 interface TaskBarProps {
@@ -12,8 +13,8 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const endDate = new Date(task.due_date);
   
   // Check if task overlaps with this month
-  const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-  const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
   
   if (
     (endDate < monthStart) || 
@@ -23,7 +24,8 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   }
   
   // Calculate position and width
-  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const daysInMonth = getDaysInMonth(month);
+  const monthStartDay = monthStart.getDate();
   
   // Task starts before this month
   const leftDay = startDate < monthStart 
@@ -38,34 +40,20 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
   const left = (leftDay / daysInMonth) * 100;
   const width = ((rightDay - leftDay) / daysInMonth) * 100;
   
-  // Color based on status
-  const getStatusColor = () => {
-    switch(task.status) {
-      case 'completed':
-        return 'bg-green-500';
-      case 'in_progress':
-        return 'bg-blue-500';
-      case 'pending':
-        return 'bg-amber-500';
-      case 'delayed':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-400';
-    }
-  };
-  
   return (
     <div
       style={{
         left: `${left}%`,
         width: `${width}%`,
       }}
-      className={`absolute h-4 rounded-md ${getStatusColor()} border border-white/20 top-1/2 -translate-y-1/2`}
+      className={`absolute h-6 rounded-md px-1 text-xs text-white flex items-center overflow-hidden ${getTaskStatusColor(task.status)}`}
       title={`${task.title} (${
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
         'منخفضة'
       })`}
-    />
+    >
+      <span className="truncate">{task.title}</span>
+    </div>
   );
 };

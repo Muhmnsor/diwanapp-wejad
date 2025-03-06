@@ -21,7 +21,7 @@ export const SubtaskAssigneeField = ({ assignedTo, setAssignedTo, projectMembers
           <SelectItem value="none">غير محدد</SelectItem>
           {projectMembers.map((member) => (
             <SelectItem key={member.user_id} value={member.user_id}>
-              {member.display_name || member.email || 'مستخدم بلا اسم'}
+              {member.user_display_name}
             </SelectItem>
           ))}
         </SelectContent>

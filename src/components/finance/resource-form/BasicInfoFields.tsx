@@ -8,36 +8,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState, useEffect } from "react";
 
 interface BasicInfoFieldsProps {
   totalAmount: number | "";
+  obligationsAmount: number | "";
   handleTotalAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleObligationsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   source: string;
   handleSourceChange: (value: string) => void;
-  customSource?: string;
-  handleCustomSourceChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   defaultType?: string;
   defaultEntity?: string;
 }
 
 export const BasicInfoFields = ({
   totalAmount,
+  obligationsAmount,
   handleTotalAmountChange,
+  handleObligationsChange,
   source,
   handleSourceChange,
-  customSource = "",
-  handleCustomSourceChange,
   defaultType = "unbound",
   defaultEntity = "",
 }: BasicInfoFieldsProps) => {
-  const [showCustomSource, setShowCustomSource] = useState(source === "أخرى");
-
-  // Update custom source field visibility when source changes
-  useEffect(() => {
-    setShowCustomSource(source === "أخرى");
-  }, [source]);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
       <div className="space-y-2">
@@ -60,19 +52,6 @@ export const BasicInfoFields = ({
           </SelectContent>
         </Select>
       </div>
-      
-      {showCustomSource && handleCustomSourceChange && (
-        <div className="space-y-2">
-          <Label htmlFor="customSource">المصدر المخصص</Label>
-          <Input
-            id="customSource"
-            value={customSource}
-            onChange={handleCustomSourceChange}
-            placeholder="ادخل مصدر المورد"
-            className="text-right"
-          />
-        </div>
-      )}
       
       <div className="space-y-2">
         <Label htmlFor="type">نوع المورد</Label>
@@ -108,6 +87,33 @@ export const BasicInfoFields = ({
           value={totalAmount}
           onChange={handleTotalAmountChange}
           required
+          className="text-right"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="obligationsAmount">الالتزامات (ريال)</Label>
+        <Input
+          id="obligationsAmount"
+          type="number"
+          min="0"
+          step="0.01"
+          value={obligationsAmount}
+          onChange={handleObligationsChange}
+          className="text-right"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label>صافي المبلغ (ريال)</Label>
+        <Input
+          value={
+            typeof totalAmount === "number" && typeof obligationsAmount === "number"
+              ? (totalAmount - obligationsAmount).toLocaleString()
+              : ""
+          }
+          readOnly
+          disabled
           className="text-right"
         />
       </div>

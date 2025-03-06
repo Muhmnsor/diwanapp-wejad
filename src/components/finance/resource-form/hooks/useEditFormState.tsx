@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { BudgetItem, ResourceObligation } from "../types";
+import { BudgetItem } from "../types";
 
 interface Resource {
   id: string;
@@ -18,81 +18,26 @@ export const useEditFormState = (
   resource: Resource,
   budgetItems: BudgetItem[],
   setBudgetItems: React.Dispatch<React.SetStateAction<BudgetItem[]>>,
-  obligations: ResourceObligation[],
-  setObligations: React.Dispatch<React.SetStateAction<ResourceObligation[]>>,
   useDefaultPercentages: boolean,
   setUseDefaultPercentages: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
   const [totalAmount, setTotalAmount] = useState<number>(resource.total_amount);
+  const [obligationsAmount, setObligationsAmount] = useState<number>(resource.obligations_amount);
   const [source, setSource] = useState(resource.source);
-  const [customSource, setCustomSource] = useState("");
   const [type, setType] = useState(resource.type);
   const [entity, setEntity] = useState(resource.entity);
-
-  // Determine if initial source is a custom one
-  useEffect(() => {
-    const standardSources = [
-      "منصات التمويل الجماعي",
-      "الدعم الحكومي",
-      "اشتراكات البرامج والفعاليات",
-      "المؤسسات المانحة",
-      "المسئولية الاجتماعية | الرعايات",
-      "متجر الجمعية الكتروني",
-      "التبرع عبر الرسائل",
-      "الصدقة الالكترونية",
-      "تبرعات عينية",
-      "أخرى"
-    ];
-
-    if (!standardSources.includes(resource.source)) {
-      setSource("أخرى");
-      setCustomSource(resource.source);
-    }
-  }, [resource.source]);
-
-  // Calculate total obligations amount
-  const totalObligationsAmount = obligations.reduce(
-    (total, obligation) => total + (obligation.amount || 0), 
-    0
-  );
-
-  // Add a new empty obligation
-  const handleAddObligation = () => {
-    setObligations([...obligations, { amount: 0, description: "" }]);
-  };
-
-  // Remove an obligation at the specified index
-  const handleRemoveObligation = (index: number) => {
-    const newObligations = [...obligations];
-    newObligations.splice(index, 1);
-    setObligations(newObligations);
-  };
-
-  // Update a field of an obligation at the specified index
-  const handleObligationChange = (
-    index: number,
-    field: keyof ResourceObligation,
-    value: any
-  ) => {
-    const newObligations = [...obligations];
-    newObligations[index] = {
-      ...newObligations[index],
-      [field]: value
-    };
-    setObligations(newObligations);
-  };
 
   // Calculate values based on percentages and total amount
   useEffect(() => {
     if (budgetItems.length > 0) {
-      const netAmount = totalAmount - totalObligationsAmount;
+      const netAmount = totalAmount - obligationsAmount;
       const updatedItems = budgetItems.map(item => ({
         ...item,
         value: parseFloat(((netAmount * item.percentage) / 100).toFixed(2))
       }));
       setBudgetItems(updatedItems);
     }
-  }, [totalAmount, totalObligationsAmount, setBudgetItems, budgetItems.length]);
+  }, [totalAmount, obligationsAmount, setBudgetItems, budgetItems.length]);
 
   // Update total amount
   const handleTotalAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,14 +47,17 @@ export const useEditFormState = (
     }
   };
 
+  // Update obligations
+  const handleObligationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value)) {
+      setObligationsAmount(value);
+    }
+  };
+
   // Update source
   const handleSourceChange = (value: string) => {
     setSource(value);
-  };
-
-  // Update custom source
-  const handleCustomSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomSource(e.target.value);
   };
 
   // Update percentage type (default or custom)
@@ -129,7 +77,7 @@ export const useEditFormState = (
           if (error) throw error;
           
           if (data) {
-            const netAmount = totalAmount - totalObligationsAmount;
+            const netAmount = totalAmount - obligationsAmount;
             const updatedItems = budgetItems.map(item => {
               const defaultItem = data.find(i => i.id === item.id);
               return {
@@ -162,7 +110,7 @@ export const useEditFormState = (
     );
     
     // Calculate values based on new percentages
-    const netAmount = totalAmount - totalObligationsAmount;
+    const netAmount = totalAmount - obligationsAmount;
     const updatedItems = newItems.map(item => ({
       ...item,
       value: parseFloat(((netAmount * item.percentage) / 100).toFixed(2))
@@ -182,20 +130,16 @@ export const useEditFormState = (
 
   return {
     totalAmount,
-    totalObligationsAmount,
+    obligationsAmount,
     source,
-    customSource,
     type,
     entity,
     totalPercentage,
     isValidPercentages,
     handleTotalAmountChange,
+    handleObligationsChange,
     handleSourceChange,
-    handleCustomSourceChange,
     handleUseDefaultsChange,
-    handleItemPercentageChange,
-    handleAddObligation,
-    handleRemoveObligation,
-    handleObligationChange
+    handleItemPercentageChange
   };
 };

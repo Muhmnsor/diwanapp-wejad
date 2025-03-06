@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { calculateTimeRemaining, CountdownTime } from "../utils/countdownUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,58 +18,6 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
     seconds: 0
   });
   const [isExpired, setIsExpired] = useState(false);
-  const lastDiscussionPeriod = useRef<string | undefined>(discussion_period);
-  const lastCreatedAt = useRef<string>(created_at);
-  const timerRef = useRef<NodeJS.Timeout>();
-
-  // Effect to detect changes in discussion period or created_at
-  useEffect(() => {
-    const periodsAreDifferent = discussion_period !== lastDiscussionPeriod.current;
-    const createdAtIsDifferent = created_at !== lastCreatedAt.current;
-    
-    if (periodsAreDifferent || createdAtIsDifferent) {
-      console.log("🔄 Changes detected in countdown parameters:");
-      if (periodsAreDifferent) {
-        console.log("Discussion period changed:", {
-          from: lastDiscussionPeriod.current,
-          to: discussion_period
-        });
-      }
-      
-      if (createdAtIsDifferent) {
-        console.log("Created at changed:", {
-          from: lastCreatedAt.current,
-          to: created_at
-        });
-      }
-      
-      // Recalculate immediately
-      const timeLeft = calculateTimeRemaining(discussion_period, created_at);
-      console.log("New calculated time remaining:", timeLeft);
-      setCountdown(timeLeft);
-      
-      // Update expiration status
-      const expired = 
-        timeLeft.days === 0 && 
-        timeLeft.hours === 0 && 
-        timeLeft.minutes === 0 && 
-        timeLeft.seconds === 0;
-      
-      if (expired !== isExpired) {
-        console.log(`Expiration status changed from ${isExpired} to ${expired}`);
-        setIsExpired(expired);
-      }
-      
-      // Update refs
-      lastDiscussionPeriod.current = discussion_period;
-      lastCreatedAt.current = created_at;
-      
-      // Clear existing timer and restart
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    }
-  }, [discussion_period, created_at, isExpired]);
 
   useEffect(() => {
     // تحديث حالة الفكرة عندما تنتهي المناقشة
@@ -77,7 +25,6 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
       if (!ideaId || !isExpired) return;
 
       try {
-        console.log("Discussion expired, checking current idea status...");
         // أولاً، تحقق من الحالة الحالية للفكرة
         const { data: ideaData, error: fetchError } = await supabase
           .from('ideas')
@@ -123,7 +70,6 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
       
       // تحديث حالة انتهاء المناقشة محلياً
       if (expired !== isExpired) {
-        console.log(`⏲️ تغيير حالة انتهاء المناقشة من ${isExpired} إلى ${expired}`);
         setIsExpired(expired);
         
         // عرض إشعار عند انتهاء فترة المناقشة
@@ -151,13 +97,9 @@ export const useCountdown = ({ discussion_period, created_at, ideaId }: UseCount
     }
     
     // تنفيذ الحساب كل ثانية
-    timerRef.current = setInterval(calculateTimeLeft, 1000);
+    const timer = setInterval(calculateTimeLeft, 1000);
     
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
+    return () => clearInterval(timer);
   }, [discussion_period, created_at, isExpired, ideaId]);
 
   return {

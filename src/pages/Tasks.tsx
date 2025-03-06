@@ -54,9 +54,7 @@ const Tasks = () => {
       <TopHeader />
       
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <TasksHeader />
-        </div>
+        <TasksHeader />
         
         {activeTab === 'overview' && <TasksOverview />}
         {activeTab === 'workspaces' && <TasksWorkspaces />}

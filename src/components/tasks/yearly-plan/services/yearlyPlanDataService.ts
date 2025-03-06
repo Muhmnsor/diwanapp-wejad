@@ -12,12 +12,10 @@ interface TaskProject {
   workspace_id: string | null;
   priority: string;
   assigned_to: string | null;
-  project_manager: string | null;
   created_at?: string | null;
   // Add the properties that will be populated dynamically
   workspace_name?: string;
   assigned_user_name?: string;
-  project_manager_name?: string;
 }
 
 // جلب مشاريع المهام مع التفاصيل
@@ -31,12 +29,10 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
         title,
         description,
         status,
-        start_date,
         due_date,
         workspace_id,
         priority,
         assigned_to,
-        project_manager,
         created_at
       `);
 
@@ -45,10 +41,10 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
       throw error;
     }
 
-    // 2. Process the data to include default start_date if not available
+    // 2. Process the data to include start_date (using created_at as a fallback)
     const processedProjects = projects.map(project => ({
       ...project,
-      start_date: project.start_date || project.created_at || new Date().toISOString().split('T')[0] // Use start_date if available, otherwise created_at or today
+      start_date: project.created_at || new Date().toISOString().split('T')[0] // Use created_at as start_date or today
     })) as TaskProject[];
 
     // Early return if no projects found
@@ -58,10 +54,7 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
 
     // 3. Collect unique workspace IDs and user IDs for batch queries
     const workspaceIds = [...new Set(processedProjects.filter(p => p.workspace_id).map(p => p.workspace_id))] as string[];
-    const userIds = [...new Set([
-      ...processedProjects.filter(p => p.assigned_to).map(p => p.assigned_to),
-      ...processedProjects.filter(p => p.project_manager).map(p => p.project_manager)
-    ].filter(Boolean))] as string[];
+    const userIds = [...new Set(processedProjects.filter(p => p.assigned_to).map(p => p.assigned_to))] as string[];
 
     // 4. Batch fetch workspaces data
     let workspacesData: Record<string, string> = {};
@@ -109,10 +102,6 @@ export const fetchTaskProjects = async (): Promise<TaskProject[]> => {
       
       if (project.assigned_to && usersData[project.assigned_to]) {
         enriched.assigned_user_name = usersData[project.assigned_to];
-      }
-      
-      if (project.project_manager && usersData[project.project_manager]) {
-        enriched.project_manager_name = usersData[project.project_manager];
       }
       
       return enriched;

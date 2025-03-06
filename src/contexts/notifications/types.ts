@@ -10,7 +10,7 @@ export interface Notification {
   created_at: string;
 }
 
-export type NotificationType = 'all' | 'event' | 'project' | 'task' | 'user' | 'comment' | 'task_assignment' | 'project_launch';
+export type NotificationType = 'all' | 'event' | 'project' | 'task' | 'user' | 'comment';
 export type NotificationSort = 'newest' | 'oldest' | 'unread';
 
 export interface NotificationContextProps {

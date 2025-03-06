@@ -3,79 +3,55 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ProjectMember {
+  id: string;
   user_id: string;
-  display_name?: string;
-  email?: string;
+  workspace_id: string;
+  user_display_name: string;
+  user_email: string;
 }
 
-export const useProjectMembers = (projectId?: string) => {
+export const useProjectMembers = (projectId: string | undefined) => {
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchAllUsers = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
-        // First get current user to always include them in the members list
-        const { data: { user } } = await supabase.auth.getUser();
+        console.log("Fetching all users from profiles");
         
-        if (user) {
-          // Get user profile info
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, display_name, email')
-            .eq('id', user.id)
-            .single();
-            
-          const members: ProjectMember[] = [{
-            user_id: user.id,
-            display_name: profileData?.display_name || profileData?.email || user.email,
-            email: profileData?.email || user.email
-          }];
-          
-          // Get admin users
-          const { data: admins } = await supabase
-            .from('user_roles')
-            .select('user_id, roles(name)')
-            .eq('roles.name', 'admin');
-            
-          if (admins && admins.length > 0) {
-            for (const admin of admins) {
-              // Skip if already in the list (current user)
-              if (members.some(m => m.user_id === admin.user_id)) continue;
-              
-              // Get admin profile info
-              const { data: adminProfile } = await supabase
-                .from('profiles')
-                .select('display_name, email')
-                .eq('id', admin.user_id)
-                .single();
-                
-              members.push({
-                user_id: admin.user_id,
-                display_name: adminProfile?.display_name || adminProfile?.email || 'Admin User',
-                email: adminProfile?.email
-              });
-            }
-          }
-          
-          // If projectId is provided, get project members
-          if (projectId) {
-            // TODO: Add project-specific members if implemented
-            // This is a placeholder for future implementation
-          }
-          
-          setProjectMembers(members);
+        const { data: usersData, error: usersError } = await supabase
+          .from('profiles')
+          .select('id, email, display_name');
+        
+        if (usersError) {
+          throw new Error(`Error fetching users: ${usersError.message}`);
         }
+        
+        const mappedUsers = usersData?.map(user => ({
+          id: user.id,
+          user_id: user.id,
+          workspace_id: '',
+          user_display_name: user.display_name || user.email || '',
+          user_email: user.email || ''
+        })) || [];
+        
+        console.log(`Fetched ${mappedUsers.length} users from profiles table`);
+        setProjectMembers(mappedUsers);
       } catch (error) {
-        console.error("Error fetching project members:", error);
+        console.error("Error fetching users:", error);
+        setError(error instanceof Error ? error : new Error(String(error)));
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchMembers();
+    // Skip the workspace-based approach and directly fetch all users
+    fetchAllUsers();
   }, [projectId]);
 
-  return { projectMembers, isLoading };
+  return { projectMembers, isLoading, error };
 };

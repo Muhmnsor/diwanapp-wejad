@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash, Info } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,12 +21,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EditResourceForm } from "./resource-form/EditResourceForm";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface Resource {
   id: string;
@@ -37,7 +31,6 @@ interface Resource {
   total_amount: number;
   obligations_amount: number;
   net_amount: number;
-  obligations_count?: number;
 }
 
 export const ResourcesTable = () => {
@@ -53,8 +46,6 @@ export const ResourcesTable = () => {
   const fetchResources = async () => {
     try {
       setIsLoading(true);
-      
-      // Fetch all resources
       const { data, error } = await supabase
         .from('financial_resources')
         .select('*')
@@ -62,22 +53,7 @@ export const ResourcesTable = () => {
 
       if (error) throw error;
       
-      // For each resource, fetch the number of obligations
-      const resourcesWithObligations = await Promise.all((data || []).map(async (resource) => {
-        const { count, error: countError } = await supabase
-          .from('resource_obligations')
-          .select('*', { count: 'exact', head: true })
-          .eq('resource_id', resource.id);
-        
-        if (countError) {
-          console.error("Error fetching obligations count:", countError);
-          return { ...resource, obligations_count: 0 };
-        }
-        
-        return { ...resource, obligations_count: count || 0 };
-      }));
-      
-      setResources(resourcesWithObligations);
+      setResources(data || []);
     } catch (error: any) {
       console.error("Error fetching resources:", error);
       toast.error("حدث خطأ أثناء جلب بيانات الموارد");
@@ -154,26 +130,7 @@ export const ResourcesTable = () => {
                 </TableCell>
                 <TableCell>{resource.entity}</TableCell>
                 <TableCell>{resource.total_amount.toLocaleString()} ريال</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    {resource.obligations_amount.toLocaleString()} ريال
-                    {resource.obligations_count && resource.obligations_count > 0 && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge variant="outline" className="ml-1">
-                              <Info className="h-3 w-3 mr-1" />
-                              {resource.obligations_count}
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>عدد الالتزامات: {resource.obligations_count}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </div>
-                </TableCell>
+                <TableCell>{resource.obligations_amount.toLocaleString()} ريال</TableCell>
                 <TableCell>{resource.net_amount.toLocaleString()} ريال</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
