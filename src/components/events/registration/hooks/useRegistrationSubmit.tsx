@@ -40,6 +40,24 @@ export const useRegistrationSubmit = ({
     setIsSubmitting(true);
 
     try {
+      // Check if max attendees limit has been reached
+      if (eventId) {
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('max_attendees, attendees')
+          .eq('id', eventId)
+          .single();
+          
+        if (eventError) {
+          console.error('Error fetching event details:', eventError);
+          throw new Error('حدث خطأ أثناء التحقق من توفر الأماكن');
+        }
+        
+        if (eventData && eventData.max_attendees > 0 && eventData.attendees >= eventData.max_attendees) {
+          throw new Error('عذراً، لقد اكتمل العدد في هذه الفعالية');
+        }
+      }
+
       // Format birth date properly if it exists
       const birthDate = formData.birthDate ? new Date(formData.birthDate).toISOString().split('T')[0] : null;
 
@@ -55,7 +73,7 @@ export const useRegistrationSubmit = ({
         national_id: formData.nationalId || null,
         gender: formData.gender || null,
         work_status: formData.workStatus || null,
-        user_id: user?.id // Add user_id if the user is logged in
+        user_id: user?.id || null // Add user_id if the user is logged in
       };
 
       console.log('Registration data being sent:', registrationData);
@@ -73,6 +91,20 @@ export const useRegistrationSubmit = ({
       }
 
       console.log('Registration created successfully:', registration);
+
+      // Update event attendees count
+      if (eventId) {
+        const { error: updateError } = await supabase
+          .rpc('increment_event_attendees', { 
+            event_id: eventId 
+          })
+          .single();
+          
+        if (updateError) {
+          console.warn('Error updating attendees count:', updateError);
+          // Non-critical error, don't throw
+        }
+      }
 
       // Handle payment if it's a paid event
       if (eventPrice && eventPrice !== "free" && typeof eventPrice === "number") {
@@ -116,7 +148,7 @@ export const useRegistrationSubmit = ({
       };
     } catch (error) {
       console.error('Error in registration:', error);
-      toast.error('حدث خطأ أثناء التسجيل');
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ أثناء التسجيل');
       throw error;
     } finally {
       setIsSubmitting(false);
