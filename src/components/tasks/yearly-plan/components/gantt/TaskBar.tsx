@@ -60,7 +60,7 @@ export const TaskBar = ({ task, month, monthIndex }: TaskBarProps) => {
         left: `${left}%`,
         width: `${width}%`,
       }}
-      className={`absolute h-4 rounded-md ${getStatusColor()} border border-white/20`}
+      className={`absolute h-4 rounded-md ${getStatusColor()} border border-white/20 top-1/2 -translate-y-1/2`}
       title={`${task.title} (${
         task.priority === 'high' ? 'مرتفعة' : 
         task.priority === 'medium' ? 'متوسطة' : 
