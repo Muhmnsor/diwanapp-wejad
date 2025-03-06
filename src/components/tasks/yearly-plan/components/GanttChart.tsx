@@ -4,7 +4,7 @@ import { GanttHeader } from './gantt/GanttHeader';
 import { TaskGroup } from './gantt/TaskGroup';
 
 interface GanttChartProps {
-  tasks: any[]; // Using any for task projects data
+  tasks: any[]; 
   months: Date[];
   groupBy: 'workspace' | 'status' | 'assignee';
   today: Date;

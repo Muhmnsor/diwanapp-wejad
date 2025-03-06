@@ -10,28 +10,23 @@ interface TaskGroupProps {
 }
 
 export const TaskGroup = ({ groupKey, groupName, tasks, months, today }: TaskGroupProps) => {
+  if (!tasks || tasks.length === 0) return null;
+  
   return (
-    <div className="space-y-2">
-      {/* Group header */}
-      <div className="flex">
-        <div className="w-48 flex-shrink-0 font-medium py-2 bg-gray-50 px-3 rounded-md">
-          {groupName}
-          <span className="text-xs text-gray-500 mr-2">
-            ({tasks.length})
-          </span>
-        </div>
-        <div className="flex-1"></div>
+    <div className="mb-6">
+      <div className="bg-gray-100 p-2 rounded-md mb-2 font-bold">
+        {groupName || 'غير محدد'} ({tasks.length})
       </div>
-      
-      {/* Tasks in this group */}
-      {tasks.map(task => (
-        <TaskRow 
-          key={task.id}
-          task={task}
-          months={months}
-          today={today}
-        />
-      ))}
+      <div className="border rounded-md bg-white">
+        {tasks.map((task) => (
+          <TaskRow 
+            key={task.id} 
+            task={task} 
+            months={months}
+            today={today}
+          />
+        ))}
+      </div>
     </div>
   );
 };
