@@ -90,25 +90,69 @@ export const useTaskDependencies = (taskId?: string) => {
     }
   };
   
+  // Check for circular dependencies
+  const checkCircularDependency = async (dependencyTaskId: string, dependencyType: DependencyType): Promise<boolean> => {
+    if (!taskId || dependencyType !== 'blocked_by') return false;
+    
+    // Direct circular check (A depends on B, B depends on A)
+    const { data: directCheck } = await supabase
+      .from('task_dependencies')
+      .select('id')
+      .eq('task_id', dependencyTaskId)
+      .eq('dependency_task_id', taskId)
+      .eq('dependency_type', 'blocked_by');
+      
+    if (directCheck && directCheck.length > 0) {
+      return true; // Direct circular dependency detected
+    }
+    
+    // Recursive check for indirect circular dependencies
+    async function checkDependencyChain(currentTaskId: string, visitedTasks: Set<string> = new Set()): Promise<boolean> {
+      if (visitedTasks.has(currentTaskId)) {
+        return true; // Circular dependency detected
+      }
+      
+      visitedTasks.add(currentTaskId);
+      
+      const { data: dependencies } = await supabase
+        .from('task_dependencies')
+        .select('dependency_task_id')
+        .eq('task_id', currentTaskId)
+        .eq('dependency_type', 'blocked_by');
+        
+      if (!dependencies || dependencies.length === 0) {
+        return false;
+      }
+      
+      for (const dep of dependencies) {
+        if (dep.dependency_task_id === taskId) {
+          return true; // This would create a circular dependency
+        }
+        
+        const result = await checkDependencyChain(dep.dependency_task_id, new Set(visitedTasks));
+        if (result) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
+    return await checkDependencyChain(dependencyTaskId);
+  };
+  
   // Add a new dependency
   const addDependency = async (dependencyTaskId: string, dependencyType: DependencyType) => {
     if (!taskId) return { success: false, error: "No task ID provided" };
     
     try {
-      // Prevent circular dependencies
-      if (dependencyType === 'blocked_by') {
-        const { data: checkData } = await supabase
-          .from('task_dependencies')
-          .select('id')
-          .eq('task_id', dependencyTaskId)
-          .eq('dependency_task_id', taskId);
-          
-        if (checkData && checkData.length > 0) {
-          return { 
-            success: false, 
-            error: "Cannot create circular dependency" 
-          };
-        }
+      // Check for circular dependencies
+      const hasCircular = await checkCircularDependency(dependencyTaskId, dependencyType);
+      if (hasCircular) {
+        return { 
+          success: false, 
+          error: "لا يمكن إنشاء اعتمادية دائرية. هذا سيؤدي إلى تعليق المهام بشكل دائم." 
+        };
       }
       
       const { data, error } = await supabase

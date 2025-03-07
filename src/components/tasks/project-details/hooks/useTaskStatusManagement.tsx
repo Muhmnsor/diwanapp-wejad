@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/types/workspace";
 import { toast } from "sonner";
 import { useTaskDependencies } from "./useTaskDependencies";
+import { useInAppNotifications } from "@/contexts/notifications/useInAppNotifications";
 
 export const useTaskStatusManagement = (
   projectId: string | undefined,
@@ -14,6 +15,7 @@ export const useTaskStatusManagement = (
 ) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { canChangeStatus } = useTaskDependencies();
+  const { createNotification } = useInAppNotifications();
 
   // Helper function to ensure status is a valid Task status
   const ensureValidStatus = (status: string): Task['status'] => {
@@ -43,10 +45,12 @@ export const useTaskStatusManagement = (
       }
       
       // Update task status in database
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('tasks')
         .update({ status: validStatus })
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .select()
+        .single();
         
       if (error) throw error;
       
@@ -79,6 +83,39 @@ export const useTaskStatusManagement = (
         
         return newTasksByStage;
       });
+      
+      // Send notifications to dependent tasks' owners
+      if (validStatus === 'completed') {
+        // Find tasks that depend on the completed task
+        const { data: dependentTasks } = await supabase
+          .from('task_dependencies')
+          .select(`
+            id,
+            task_id,
+            tasks:task_id(title, assigned_to)
+          `)
+          .eq('dependency_task_id', taskId)
+          .eq('dependency_type', 'blocked_by');
+          
+        if (dependentTasks && dependentTasks.length > 0) {
+          // Get the completed task title
+          const completedTask = data || tasks.find(t => t.id === taskId);
+          
+          // Send notifications to each dependent task owner
+          for (const depTask of dependentTasks) {
+            if (depTask.tasks?.assigned_to) {
+              await createNotification({
+                user_id: depTask.tasks.assigned_to,
+                title: "تم اكتمال مهمة معتمدة",
+                message: `المهمة "${completedTask.title}" التي تعتمد عليها مهمتك "${depTask.tasks.title}" قد اكتملت.`,
+                notification_type: "task_dependency",
+                related_entity_id: depTask.task_id,
+                related_entity_type: "task"
+              });
+            }
+          }
+        }
+      }
       
       toast.success("تم تحديث حالة المهمة بنجاح");
     } catch (error) {
