@@ -1,100 +1,52 @@
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Task } from "@/types/workspace";
 
-export const useProjectTasks = (projectId: string) => {
-  const [completedTasksCount, setCompletedTasksCount] = useState(0);
-  const [totalTasksCount, setTotalTasksCount] = useState(0);
-  const [overdueTasksCount, setOverdueTasksCount] = useState(0);
+export const useProjectTasks = (projectId?: string) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const fetchTasksData = async () => {
-    setIsLoading(true);
+  const fetchTasks = useCallback(async () => {
+    if (!projectId) {
+      setTasks([]);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
+      setIsLoading(true);
+      setError(null);
+      
       // Fetch tasks for this project
-      const { data: tasks, error } = await supabase
+      const { data, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
-        .eq('project_id', projectId);
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error("Error fetching tasks:", error);
-        return;
+      if (tasksError) {
+        throw tasksError;
       }
-
-      // Calculate metrics
-      const total = tasks ? tasks.length : 0;
-      const completed = tasks ? tasks.filter(task => task.status === 'completed').length : 0;
       
-      // Calculate overdue tasks (tasks with due_date in the past and not completed)
-      const now = new Date();
-      const overdue = tasks ? tasks.filter(task => {
-        return task.status !== 'completed' && 
-              task.due_date && 
-              new Date(task.due_date) < now;
-      }).length : 0;
-
-      setTotalTasksCount(total);
-      setCompletedTasksCount(completed);
-      setOverdueTasksCount(overdue);
-
-      // Check if project status needs updating
-      if (total > 0) {
-        let newStatus = 'pending';
-        
-        if (completed === total) {
-          newStatus = 'completed';
-        } else if (completed > 0) {
-          newStatus = 'in_progress';
-        } else if (overdue > 0) {
-          newStatus = 'delayed';
-        }
-        
-        // Get current project status
-        const { data: projectData, error: projectError } = await supabase
-          .from('project_tasks')
-          .select('status, is_draft')
-          .eq('id', projectId)
-          .single();
-          
-        if (!projectError && projectData) {
-          // Only update if not in draft mode
-          if (!projectData.is_draft && projectData.status !== newStatus) {
-            console.log(`Updating project status from ${projectData.status} to ${newStatus}`);
-            
-            // Update project status
-            const { error: updateError } = await supabase
-              .from('project_tasks')
-              .update({ status: newStatus })
-              .eq('id', projectId);
-              
-            if (updateError) {
-              console.error("Error updating project status:", updateError);
-            }
-          }
-        }
-      }
+      setTasks(data as Task[]);
     } catch (err) {
-      console.error("Error in fetchTasksData:", err);
+      console.error("Error fetching project tasks:", err);
+      setError("فشل في تحميل المهام، يرجى المحاولة لاحقًا");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchTasksData();
   }, [projectId]);
-
-  const completionPercentage = totalTasksCount > 0 
-    ? Math.round((completedTasksCount / totalTasksCount) * 100) 
-    : 0;
-
+  
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+  
   return {
-    completedTasksCount,
-    totalTasksCount,
-    overdueTasksCount,
-    completionPercentage,
+    tasks,
     isLoading,
-    refetchData: fetchTasksData
+    error,
+    refreshTasks: fetchTasks
   };
 };

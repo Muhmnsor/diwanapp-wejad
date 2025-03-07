@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Task } from "./types/task";
 import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProjectMember } from "./hooks/useProjectMembers";
+import { TaskDependency } from "./components/TaskDependenciesField";
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -25,6 +26,39 @@ export const EditTaskDialog = ({
   onTaskUpdated
 }: EditTaskDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [taskDependencies, setTaskDependencies] = useState<TaskDependency[]>([]);
+  
+  useEffect(() => {
+    // Fetch task dependencies when dialog opens and task is selected
+    const fetchDependencies = async () => {
+      if (!task || !open) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('task_dependencies')
+          .select('*')
+          .eq('task_id', task.id);
+          
+        if (error) {
+          console.error("Error fetching task dependencies:", error);
+          return;
+        }
+        
+        if (data) {
+          const formattedDeps: TaskDependency[] = data.map(dep => ({
+            taskId: dep.dependency_task_id,
+            dependencyType: dep.dependency_type
+          }));
+          
+          setTaskDependencies(formattedDeps);
+        }
+      } catch (error) {
+        console.error("Error in fetchDependencies:", error);
+      }
+    };
+    
+    fetchDependencies();
+  }, [task, open]);
 
   const handleUpdateTask = async (formData: {
     title: string;
@@ -35,6 +69,7 @@ export const EditTaskDialog = ({
     assignedTo: string | null;
     templates?: File[] | null;
     category?: string;
+    dependencies?: TaskDependency[];
   }) => {
     if (!task) return;
     
@@ -60,6 +95,34 @@ export const EditTaskDialog = ({
         .eq('id', task.id);
       
       if (error) throw error;
+      
+      // Handle dependencies update
+      if (formData.dependencies) {
+        // Delete existing dependencies
+        await supabase
+          .from('task_dependencies')
+          .delete()
+          .eq('task_id', task.id);
+          
+        // Add new dependencies if there are any
+        if (formData.dependencies.length > 0) {
+          const dependenciesData = formData.dependencies.map(dep => ({
+            task_id: task.id,
+            dependency_task_id: dep.taskId,
+            dependency_type: dep.dependencyType,
+            created_at: new Date().toISOString()
+          }));
+          
+          const { error: depsError } = await supabase
+            .from('task_dependencies')
+            .insert(dependenciesData);
+            
+          if (depsError) {
+            console.error("Error updating task dependencies:", depsError);
+            toast.warning("تم تحديث المهمة ولكن هناك مشكلة في تحديث الاعتماديات");
+          }
+        }
+      }
       
       // Upload templates if provided
       if (formData.templates && formData.templates.length > 0) {
@@ -125,6 +188,7 @@ export const EditTaskDialog = ({
             projectStages={projectStages}
             projectMembers={projectMembers}
             isGeneral={!!task.is_general}
+            projectId={task.project_id}
             initialValues={{
               title: task.title,
               description: task.description || "",
@@ -132,7 +196,8 @@ export const EditTaskDialog = ({
               priority: task.priority || "medium",
               stageId: task.stage_id || "",
               assignedTo: task.assigned_to || null,
-              category: task.category || "إدارية"
+              category: task.category || "إدارية",
+              dependencies: taskDependencies
             }}
             isEditMode={true}
           />

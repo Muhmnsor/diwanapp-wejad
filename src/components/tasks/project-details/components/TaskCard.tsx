@@ -11,6 +11,7 @@ import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
+import { TaskDependenciesBadge } from "./TaskDependenciesBadge";
 
 interface TaskCardProps {
   task: Task;
@@ -84,6 +85,7 @@ export const TaskCard = ({
           <div className="flex gap-2">
             {getStatusBadge(task.status)}
             {getPriorityBadge(task.priority)}
+            <TaskDependenciesBadge taskId={task.id} />
           </div>
           <div className="flex items-center cursor-pointer" onClick={() => setShowSubtasks(!showSubtasks)}>
             <h3 className="font-semibold text-lg">{task.title}</h3>

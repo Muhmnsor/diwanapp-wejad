@@ -7,6 +7,7 @@ import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
+import { TaskDependency } from "./components/TaskDependenciesField";
 
 export function AddTaskDialog({ 
   open, 
@@ -37,6 +38,7 @@ export function AddTaskDialog({
     assignedTo: string | null;
     templates?: File[] | null;
     category?: string;
+    dependencies?: TaskDependency[];
   }) => {
     setIsSubmitting(true);
     
@@ -73,6 +75,25 @@ export function AddTaskDialog({
       }
 
       console.log("Task created successfully:", newTask);
+
+      // Create task dependencies if provided
+      if (formData.dependencies && formData.dependencies.length > 0) {
+        const dependenciesData = formData.dependencies.map(dep => ({
+          task_id: newTask.id,
+          dependency_task_id: dep.taskId,
+          dependency_type: dep.dependencyType,
+          created_at: new Date().toISOString()
+        }));
+        
+        const { error: depsError } = await supabase
+          .from('task_dependencies')
+          .insert(dependenciesData);
+          
+        if (depsError) {
+          console.error("Error creating task dependencies:", depsError);
+          toast.warning("تم إنشاء المهمة ولكن هناك مشكلة في إنشاء الاعتماديات");
+        }
+      }
 
       // Get project details for the notification (if applicable)
       let projectTitle = '';
@@ -190,9 +211,10 @@ export function AddTaskDialog({
             projectStages={projectStages}
             projectMembers={projectMembers}
             isGeneral={isGeneral}
+            projectId={projectId}
           />
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}
