@@ -44,7 +44,7 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip as RechartsTooltip, 
+  RechartsTooltip, 
   Legend, 
   ResponsiveContainer, 
   PieChart as RechartsPieChart, 
@@ -396,7 +396,7 @@ export const CacheMonitor = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time" />
                     <YAxis />
-                    <Tooltip />
+                    <RechartsTooltip />
                     <Legend />
                     <Line 
                       type="monotone" 
@@ -418,7 +418,7 @@ export const CacheMonitor = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time" />
                     <YAxis />
-                    <Tooltip />
+                    <RechartsTooltip />
                     <Legend />
                     <Bar dataKey="hits" name="إصابات" fill="#10b981" />
                     <Bar dataKey="misses" name="إخفاقات" fill="#ef4444" />
@@ -485,7 +485,7 @@ export const CacheMonitor = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <RechartsTooltip />
                       <Legend />
                     </RechartsPieChart>
                   </ResponsiveContainer>
@@ -511,7 +511,7 @@ export const CacheMonitor = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <RechartsTooltip />
                       <Legend />
                     </RechartsPieChart>
                   </ResponsiveContainer>
@@ -843,3 +843,4 @@ export const CacheMonitor = () => {
     </Card>
   );
 };
+
