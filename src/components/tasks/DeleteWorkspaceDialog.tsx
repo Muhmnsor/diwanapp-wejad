@@ -12,10 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteWorkspaceDialogProps {
   open: boolean;
@@ -33,68 +33,66 @@ export const DeleteWorkspaceDialog = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { confirm } = useConfirm();
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     if (!user) {
-      console.error("[DeleteWorkspace] Operation failed: No authenticated user");
       toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
       return;
     }
 
     // Reset error state
     setError(null);
+
+    // Ask for final confirmation before deletion
+    const shouldDelete = await confirm({
+      title: "تأكيد حذف مساحة العمل",
+      description: `هل أنت متأكد من حذف مساحة العمل "${workspaceName}" نهائياً؟ لا يمكن التراجع عن هذه العملية وسيتم حذف جميع المشاريع والمهام المرتبطة بها.`,
+      confirmText: "نعم، احذف مساحة العمل",
+      cancelText: "إلغاء"
+    });
+
+    if (!shouldDelete) return;
+
     setIsDeleting(true);
-    
-    console.log("[DeleteWorkspace] Starting deletion process for workspace:", workspaceId);
-    console.log("[DeleteWorkspace] User ID:", user.id);
-    console.log("[DeleteWorkspace] Timestamp:", new Date().toISOString());
-    
     try {
-      // Call Supabase edge function to delete workspace with explicit parameter names
-      console.log("[DeleteWorkspace] Calling delete-workspace edge function with params:", { workspaceId, userId: user.id });
+      console.log("Deleting workspace:", workspaceId, "by user:", user.id);
       
-      const { data, error: functionError } = await supabase.functions.invoke('delete-workspace', {
+      // Call Supabase edge function to delete workspace
+      const { data, error } = await supabase.functions.invoke('delete-workspace', {
         body: { 
-          workspaceId: workspaceId, 
+          workspaceId, 
           userId: user.id 
         }
       });
 
-      if (functionError) {
-        console.error("[DeleteWorkspace] Edge function error:", functionError);
-        console.error("[DeleteWorkspace] Error details:", JSON.stringify(functionError));
-        setError(functionError.message || "فشلت عملية حذف مساحة العمل");
+      if (error) {
+        console.error("Edge function error:", error);
+        setError(error.message || "فشلت عملية حذف مساحة العمل");
         setIsDeleting(false);
         return;
       }
 
-      console.log("[DeleteWorkspace] Edge function response:", data);
-
       if (!data || !data.success) {
-        console.error("[DeleteWorkspace] Deletion failed, edge function response:", data);
+        console.error("Deletion failed:", data);
         setError(data?.error || "فشلت عملية حذف مساحة العمل");
         setIsDeleting(false);
         return;
       }
 
-      // Invalidate queries to refresh workspaces data
-      console.log("[DeleteWorkspace] Invalidating workspaces queries");
-      queryClient.invalidateQueries({queryKey: ['workspaces']});
-      
       toast.success("تم حذف مساحة العمل بنجاح");
-      console.log("[DeleteWorkspace] Workspace deleted successfully");
       onOpenChange(false);
       
       // Navigate away from workspace page if we're currently viewing it
       if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
-        console.log("[DeleteWorkspace] Navigating away from deleted workspace page");
         navigate("/tasks");
+      } else {
+        // Force a refresh of the workspaces list
+        window.location.href = "/tasks#workspaces";
       }
     } catch (error) {
-      console.error("[DeleteWorkspace] Unexpected error during deletion:", error);
-      console.error("[DeleteWorkspace] Error details:", JSON.stringify(error));
+      console.error("Error deleting workspace:", error);
       setError("حدث خطأ أثناء حذف مساحة العمل");
       setIsDeleting(false);
     }
@@ -114,11 +112,12 @@ export const DeleteWorkspaceDialog = ({
           <DialogTitle>حذف مساحة العمل</DialogTitle>
           <DialogDescription>
             هل أنت متأكد من رغبتك في حذف مساحة العمل "{workspaceName}"؟
-            <strong className="block mt-2 text-destructive">
-              لا يمكن التراجع عن هذه العملية وسيتم حذف جميع المشاريع والمهام المرتبطة بها.
-            </strong>
           </DialogDescription>
         </DialogHeader>
+        
+        <p className="text-destructive text-sm font-medium">
+          سيؤدي هذا الإجراء إلى حذف مساحة العمل وجميع المشاريع والمهام المرتبطة بها.
+        </p>
         
         {error && (
           <Alert variant="destructive">
