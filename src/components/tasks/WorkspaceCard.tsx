@@ -7,7 +7,6 @@ import {
   Users,
   UserPlus,
   AlertTriangle,
-  ClipboardList,
   PauseCircle,
   MoreVertical,
   Pencil,
@@ -57,7 +56,17 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
 
       try {
         const isCreator = workspace.created_by === user.id;
-        const isAdmin = user.isAdmin;
+        
+        // Check if user is admin
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('roles(name)')
+          .eq('user_id', user.id)
+          .single();
+          
+        const isAdmin = roleData?.roles?.name === 'admin';
+        
+        // Check if user is workspace admin
         const { data: memberData } = await supabase
           .from('workspace_members')
           .select('role')
@@ -91,13 +100,10 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         }
 
         const total = projects?.length || 0;
-        
         const completed = projects?.filter(p => p.status === 'completed').length || 0;
-        
         const pending = projects?.filter(p => 
           p.status === 'in_progress' || p.status === 'pending'
         ).length || 0;
-        
         const stopped = projects?.filter(p => p.status === 'stopped' || p.status === 'on_hold').length || 0;
         const stalled = total - completed - pending - stopped;
 

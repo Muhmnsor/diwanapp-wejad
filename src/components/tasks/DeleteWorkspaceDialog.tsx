@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useAuthStore } from "@/store/refactored-auth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface DeleteWorkspaceDialogProps {
   open: boolean;
@@ -29,6 +31,7 @@ export const DeleteWorkspaceDialog = ({
   workspaceName,
 }: DeleteWorkspaceDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { confirm } = useConfirm();
   const { user } = useAuthStore();
@@ -38,6 +41,9 @@ export const DeleteWorkspaceDialog = ({
       toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
       return;
     }
+
+    // Reset error state
+    setError(null);
 
     // Ask for final confirmation before deletion
     const shouldDelete = await confirm({
@@ -63,12 +69,16 @@ export const DeleteWorkspaceDialog = ({
 
       if (error) {
         console.error("Edge function error:", error);
-        throw error;
+        setError(error.message || "فشلت عملية حذف مساحة العمل");
+        setIsDeleting(false);
+        return;
       }
 
       if (!data || !data.success) {
         console.error("Deletion failed:", data);
-        throw new Error(data?.error || "فشلت عملية حذف مساحة العمل");
+        setError(data?.error || "فشلت عملية حذف مساحة العمل");
+        setIsDeleting(false);
+        return;
       }
 
       toast.success("تم حذف مساحة العمل بنجاح");
@@ -83,14 +93,20 @@ export const DeleteWorkspaceDialog = ({
       }
     } catch (error) {
       console.error("Error deleting workspace:", error);
-      toast.error("حدث خطأ أثناء حذف مساحة العمل");
-    } finally {
+      setError("حدث خطأ أثناء حذف مساحة العمل");
       setIsDeleting(false);
     }
   };
 
+  const handleCloseDialog = () => {
+    if (!isDeleting) {
+      setError(null);
+      onOpenChange(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleCloseDialog}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
           <DialogTitle>حذف مساحة العمل</DialogTitle>
@@ -98,9 +114,18 @@ export const DeleteWorkspaceDialog = ({
             هل أنت متأكد من رغبتك في حذف مساحة العمل "{workspaceName}"؟
           </DialogDescription>
         </DialogHeader>
+        
         <p className="text-destructive text-sm font-medium">
           سيؤدي هذا الإجراء إلى حذف مساحة العمل وجميع المشاريع والمهام المرتبطة بها.
         </p>
+        
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <DialogFooter className="flex-row-reverse sm:justify-start gap-2 mt-4">
           <Button 
             variant="destructive" 
@@ -111,7 +136,7 @@ export const DeleteWorkspaceDialog = ({
           </Button>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={handleCloseDialog}
             disabled={isDeleting}
           >
             إلغاء
