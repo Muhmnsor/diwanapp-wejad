@@ -32,10 +32,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing environment variables:", { 
-        hasUrl: !!supabaseUrl, 
-        hasKey: !!supabaseServiceKey 
-      });
+      console.error("Missing environment variables");
       return new Response(
         JSON.stringify({ success: false, error: 'خطأ في تكوين الخادم' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
@@ -44,64 +41,10 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // First check if user has permission
-    const checkPermissions = async () => {
-      // Check if user is admin
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select(`
-          roles (name)
-        `)
-        .eq('user_id', userId)
-        .single();
-      
-      if (roleError) {
-        console.log("Error checking roles:", roleError);
-      }
-      
-      const isAdmin = roleData?.roles?.name === 'admin';
-      
-      // Check if user is creator
-      const { data: workspace, error: workspaceError } = await supabase
-        .from('workspaces')
-        .select('created_by')
-        .eq('id', workspaceId)
-        .single();
-      
-      if (workspaceError) {
-        console.log("Error checking workspace creator:", workspaceError);
-        return false;
-      }
-      
-      const isCreator = workspace?.created_by === userId;
-      
-      // Check if user is workspace admin
-      const { data: member, error: memberError } = await supabase
-        .from('workspace_members')
-        .select('role')
-        .eq('workspace_id', workspaceId)
-        .eq('user_id', userId)
-        .single();
-      
-      if (memberError) {
-        console.log("Error checking workspace membership:", memberError);
-      }
-      
-      const isWorkspaceAdmin = member?.role === 'admin';
-      
-      return isAdmin || isCreator || isWorkspaceAdmin;
-    };
-    
-    const hasPermission = await checkPermissions();
-    
-    if (!hasPermission) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'ليس لديك صلاحية لحذف مساحة العمل' }),
-        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 403 }
-      );
-    }
-
-    console.log("Calling database function to delete workspace");
+    console.log("Calling database function to delete workspace with parameters:", {
+      p_workspace_id: workspaceId,
+      p_user_id: userId
+    });
     
     // Call the database function with proper parameters
     const { data, error } = await supabase

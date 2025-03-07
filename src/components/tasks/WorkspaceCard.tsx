@@ -101,15 +101,6 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         const stopped = projects?.filter(p => p.status === 'stopped' || p.status === 'on_hold').length || 0;
         const stalled = total - completed - pending - stopped;
 
-        console.log('Project counts calculation:', {
-          total,
-          completed,
-          pending,
-          stopped,
-          stalled,
-          projects
-        });
-
         setProjectCounts({
           completed,
           pending,

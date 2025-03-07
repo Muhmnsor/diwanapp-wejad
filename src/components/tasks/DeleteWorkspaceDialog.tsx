@@ -74,8 +74,13 @@ export const DeleteWorkspaceDialog = ({
       toast.success("تم حذف مساحة العمل بنجاح");
       onOpenChange(false);
       
-      // Force a refresh of the workspaces list
-      window.location.href = "/tasks#workspaces";
+      // Navigate away from workspace page if we're currently viewing it
+      if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
+        navigate("/tasks");
+      } else {
+        // Force a refresh of the workspaces list
+        window.location.href = "/tasks#workspaces";
+      }
     } catch (error) {
       console.error("Error deleting workspace:", error);
       toast.error("حدث خطأ أثناء حذف مساحة العمل");
