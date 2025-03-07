@@ -1,143 +1,109 @@
 
-import { format, formatDistanceToNow, differenceInDays } from "date-fns";
-import { ar } from "date-fns/locale";
-
-/**
- * Format a date string to Arabic localized format dd/MM/yyyy
- * @param dateString The date string to format
- * @param fallback The fallback text if date is invalid or null
- * @returns Formatted date string
- */
-export const formatDate = (dateString: string | null | undefined, fallback: string = 'غير محدد'): string => {
-  if (!dateString) return fallback;
+// Format a date string to a localized date display format
+export const formatDate = (dateStr: string | null, fallback: string = "—") => {
+  if (!dateStr) return fallback;
   
   try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return fallback;
-    }
-    return format(date, 'dd/MM/yyyy', { locale: ar });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return fallback;
-  }
-};
-
-/**
- * Format a date relative to current time (e.g. "2 days ago", "in 3 months")
- * If the date is null, returns the fallback text
- * @param dateString The date string to format
- * @param fallback The fallback text if date is invalid or null
- * @returns Formatted relative date string
- */
-export const formatRelative = (dateString: string | null, fallback: string = 'غير محدد'): string => {
-  if (!dateString) return fallback;
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return fallback;
-    }
-    return formatDistanceToNow(date, { addSuffix: true, locale: ar });
-  } catch (error) {
-    console.error('Error formatting relative date:', error);
-    return fallback;
-  }
-};
-
-/**
- * Get relative time from now for a date
- * @param dateString The date string to calculate relative time for
- * @returns Formatted relative time string or null if date is invalid
- */
-export const getTimeFromNow = (dateString: string | null): string | null => {
-  if (!dateString) return null;
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return null;
-    }
-    return formatDistanceToNow(date, { addSuffix: true, locale: ar });
-  } catch (error) {
-    console.error('Error calculating time from now:', error);
-    return null;
-  }
-};
-
-/**
- * Get remaining days until a date
- * @param dateString The date string to calculate remaining days until
- * @returns Number of remaining days or null if date is invalid
- */
-export const getRemainingDays = (dateString: string | null): number | null => {
-  if (!dateString) return null;
-  
-  try {
-    const dueDate = new Date(dateString);
-    if (isNaN(dueDate.getTime())) {
-      return null;
-    }
-    const today = new Date();
-    const days = differenceInDays(dueDate, today);
-    return days <= 0 ? 0 : days;
-  } catch (error) {
-    console.error('Error calculating remaining days:', error);
-    return null;
-  }
-};
-
-/**
- * Format time as 12-hour format with Arabic AM/PM indicators
- * @param time Time string in HH:MM format
- * @returns Formatted time string in 12-hour format
- */
-export const formatTime12Hour = (time: string): string => {
-  try {
-    if (!time || !time.includes(':')) return time;
-    
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'م' : 'ص';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-  } catch (error) {
-    console.error('Error formatting time:', error);
-    return time;
-  }
-};
-
-/**
- * Format date with Arabic day name
- * @param dateStr Date string in YYYY-MM-DD format
- * @returns Formatted date with Arabic day name
- */
-export const formatDateWithDay = (dateStr: string): string => {
-  try {
-    const days = [
-      'الأحد',
-      'الإثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت'
-    ];
-
-    // Parse the date string
     const date = new Date(dateStr);
+    
+    // Check if the date is valid
     if (isNaN(date.getTime())) {
-      return dateStr;
+      return fallback;
     }
     
-    // Get localized date components
-    const dayName = days[date.getDay()];
-    const formattedDate = format(date, 'dd/MM/yyyy', { locale: ar });
+    // Return in Gregorian format dd/MM/yyyy
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch (e) {
+    console.error("Error formatting date:", e);
+    return fallback;
+  }
+};
+
+// Format number with currency
+export const formatCurrency = (num: number) => {
+  const formatted = new Intl.NumberFormat('en-US', { 
+    style: 'currency', 
+    currency: 'SAR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(num);
+  
+  // Remove trailing zeros
+  return formatted.replace(/\.00$/, '');
+};
+
+// Get time from now (e.g., "2 days ago", "in 3 hours")
+export const getTimeFromNow = (dateStr: string | null): string => {
+  if (!dateStr) return "—";
+  
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "—";
     
-    // Format: "dayName، dd/MM/yyyy"
-    return `${dayName}، ${formattedDate}`;
-  } catch (error) {
-    console.error('Error formatting date with day:', error);
-    return dateStr;
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return `منذ ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? 'يوم' : 'أيام'}`;
+    } else if (diffDays === 0) {
+      return "اليوم";
+    } else {
+      return `بعد ${diffDays} ${diffDays === 1 ? 'يوم' : 'أيام'}`;
+    }
+  } catch (e) {
+    console.error("Error calculating time from now:", e);
+    return "—";
+  }
+};
+
+// Get remaining days until a date
+export const getRemainingDays = (dateStr: string | null): number | null => {
+  if (!dateStr) return null;
+  
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return null;
+    
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    return Math.round(diffMs / (1000 * 60 * 60 * 24));
+  } catch (e) {
+    console.error("Error calculating remaining days:", e);
+    return null;
+  }
+};
+
+// Format date relative to today (yesterday, today, tomorrow, or regular date)
+export const formatRelative = (dateStr: string | null): string => {
+  if (!dateStr) return "—";
+  
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "—";
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    const diffMs = targetDate.getTime() - today.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === -1) {
+      return "أمس";
+    } else if (diffDays === 0) {
+      return "اليوم";
+    } else if (diffDays === 1) {
+      return "غداً";
+    } else {
+      return formatDate(dateStr);
+    }
+  } catch (e) {
+    console.error("Error formatting relative date:", e);
+    return formatDate(dateStr);
   }
 };

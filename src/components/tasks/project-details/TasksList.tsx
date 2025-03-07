@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
 import { AddTaskDialog } from "./AddTaskDialog";
@@ -7,7 +6,7 @@ import { TasksFilter } from "./components/TasksFilter";
 import { TasksContent } from "./components/TasksContent";
 import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
 import { useTasksList } from "./hooks/useTasksList";
-import { Task } from "./types/task";
+import { Task } from "@/types/workspace";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 import { useState } from "react";
 import { EditTaskDialog } from "./EditTaskDialog";
@@ -15,9 +14,6 @@ import { EditTaskDialog } from "./EditTaskDialog";
 interface TasksListProps {
   projectId?: string | undefined;
 }
-
-// Re-export Task interface for backward compatibility
-export type { Task };
 
 export const TasksList = ({ projectId }: TasksListProps) => {
   const {
@@ -42,7 +38,10 @@ export const TasksList = ({ projectId }: TasksListProps) => {
   // Fetch project members
   const { projectMembers } = useProjectMembers(projectId);
 
-  const filteredTasks = tasks.filter(task => {
+  // Ensure tasks is always an array
+  const tasksArray = Array.isArray(tasks) ? tasks : [];
+  
+  const filteredTasks = tasksArray.filter(task => {
     if (activeTab === "all") return true;
     return task.status === activeTab;
   });
@@ -59,6 +58,14 @@ export const TasksList = ({ projectId }: TasksListProps) => {
       console.error("Error deleting task:", error);
     }
   };
+
+  // Convert tasksByStage to the expected type
+  const typedTasksByStage: Record<string, Task[]> = {};
+  
+  // Copy values from tasksByStage to typedTasksByStage with proper typing
+  Object.keys(tasksByStage).forEach(stageId => {
+    typedTasksByStage[stageId] = tasksByStage[stageId] as unknown as Task[];
+  });
 
   return (
     <>
@@ -85,7 +92,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
             activeTab={activeTab}
             filteredTasks={filteredTasks}
             projectStages={projectStages}
-            tasksByStage={tasksByStage}
+            tasksByStage={typedTasksByStage}
             getStatusBadge={getStatusBadge}
             getPriorityBadge={getPriorityBadge}
             formatDate={formatDate}

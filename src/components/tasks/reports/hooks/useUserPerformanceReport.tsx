@@ -1,7 +1,8 @@
-
-import { useQuery } from "@tanstack/react-query";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { supabase } from "@/integrations/supabase/client";
+import { CACHE_DURATIONS } from "@/utils/cacheService";
 import { useAuthStore } from "@/store/refactored-auth";
+import { QueryKey } from "@tanstack/react-query";
 
 export interface UserAchievement {
   id: string;
@@ -34,14 +35,15 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
   const { user } = useAuthStore();
   const targetUserId = userId || user?.id;
   
-  return useQuery({
-    queryKey: ['user-performance-report', targetUserId, period],
-    queryFn: async (): Promise<UserPerformanceData> => {
+  const queryKey: QueryKey = ['user-performance-report', targetUserId, period];
+  
+  return useCachedQuery<UserPerformanceData, unknown, UserPerformanceData>(
+    queryKey,
+    async (): Promise<UserPerformanceData> => {
       if (!targetUserId) {
         throw new Error("User ID is required");
       }
       
-      // Get current date and date range based on selected period
       const now = new Date();
       let startDate = new Date();
       
@@ -53,56 +55,53 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         startDate.setFullYear(now.getFullYear() - 1);
       }
       
-      // Format dates for database query
       const startDateString = startDate.toISOString();
       
-      // Check if we have pre-calculated stats
       const { data: preCalculatedStats, error: statsError } = await supabase
         .from('user_performance_stats')
         .select('*')
         .eq('user_id', targetUserId)
-        .eq('stats_period', period)
-        .single();
+        .eq('stats_period', period);
         
       if (statsError && statsError.code !== 'PGRST116') {
         console.error("Error fetching pre-calculated stats:", statsError);
       }
       
-      // Fetch all tasks across different tables
       const [
-        { data: tasks, error: tasksError },
-        { data: portfolioTasks, error: portfolioTasksError },
-        { data: projectTasks, error: projectTasksError },
-        { data: subtasks, error: subtasksError }
+        tasksResponse,
+        portfolioTasksResponse,
+        projectTasksResponse,
+        subtasksResponse
       ] = await Promise.all([
-        // Regular tasks
         supabase
           .from('tasks')
           .select('*, project_tasks(title)')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString),
         
-        // Portfolio tasks
         supabase
           .from('portfolio_tasks')
           .select('*, portfolio_projects(portfolio_id), portfolios(name)')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString),
         
-        // Project tasks
         supabase
           .from('project_tasks')
           .select('*')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString),
           
-        // Subtasks
         supabase
           .from('subtasks')
           .select('*, tasks(title)')
           .eq('assigned_to', targetUserId)
           .gte('created_at', startDateString)
       ]);
+      
+      const { data: tasks, error: tasksError } = tasksResponse;
+      const { data: portfolioTasks, error: portfolioTasksError } = portfolioTasksResponse;
+      const { data: projectTasks, error: projectTasksError } = projectTasksResponse;
+      const { data: subtasks, error: subtasksError } = subtasksResponse;
       
       if (tasksError) {
         console.error("Error fetching tasks:", tasksError);
@@ -124,7 +123,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         throw subtasksError;
       }
       
-      // Fetch user achievements
       const { data: achievements, error: achievementsError } = await supabase
         .from('user_achievements')
         .select('*')
@@ -135,7 +133,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         console.error("Error fetching achievements:", achievementsError);
       }
       
-      // Combine all tasks
       const allTasks = [
         ...(tasks || []).map(t => ({ ...t, type: 'task' })),
         ...(portfolioTasks || []).map(t => ({ ...t, type: 'portfolio' })),
@@ -143,23 +140,19 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         ...(subtasks || []).map(t => ({ ...t, type: 'subtask' }))
       ];
       
-      // Calculate summary data
       const totalTasks = allTasks.length;
       const completedTasks = allTasks.filter(task => task.status === 'completed').length;
       const pendingTasks = allTasks.filter(task => task.status === 'pending').length;
       
-      // Calculate overdue tasks
       const overdueCount = allTasks.filter(task => {
         if (!task.due_date || task.status === 'completed') return false;
         return new Date(task.due_date) < now;
       }).length;
       
-      // Calculate completion rate
       const completionRate = totalTasks > 0 
         ? Math.round((completedTasks / totalTasks) * 100) 
         : 0;
       
-      // Calculate average completion time and on-time completion rate
       const completedTasksWithDueDate = allTasks.filter(task => 
         task.status === 'completed' && task.due_date && task.updated_at
       );
@@ -172,7 +165,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         ? Math.round((onTimeCompletions / completedTasksWithDueDate.length) * 100)
         : 0;
       
-      // Calculate average completion time (in hours)
       const totalCompletionTimeHours = completedTasksWithDueDate.reduce((total, task) => {
         const createdDate = new Date(task.created_at);
         const completedDate = new Date(task.updated_at);
@@ -184,7 +176,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         ? Math.round(totalCompletionTimeHours / completedTasksWithDueDate.length)
         : 0;
       
-      // Group tasks by month
       const tasksByMonth = [];
       const months = [];
       for (let i = 0; i < 6; i++) {
@@ -210,7 +201,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         });
       }
       
-      // Group tasks by project
       const projectGroups: Record<string, { count: number; completedCount: number }> = {};
       for (const task of allTasks) {
         let projectName = 'بدون مشروع';
@@ -246,7 +236,6 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         }))
         .sort((a, b) => b.count - a.count);
       
-      // Group tasks by priority
       const priorityGroups: Record<string, number> = {};
       for (const task of allTasks) {
         const priority = task.priority || 'medium';
@@ -265,13 +254,11 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         }))
         .sort((a, b) => b.count - a.count);
       
-      // Get recently completed tasks
       const recentlyCompletedTasks = allTasks
         .filter(task => task.status === 'completed')
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
         .slice(0, 5);
       
-      // Get upcoming tasks (not completed, with nearest due dates)
       const upcomingTasks = allTasks
         .filter(task => task.status !== 'completed' && task.due_date)
         .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
@@ -295,6 +282,13 @@ export const useUserPerformanceReport = (userId?: string, period: 'monthly' | 'q
         upcomingTasks
       };
     },
-    enabled: !!targetUserId
-  });
+    {
+      queryKey,
+      enabled: !!targetUserId,
+      cacheDuration: period === 'monthly' ? CACHE_DURATIONS.MEDIUM : CACHE_DURATIONS.LONG,
+      cacheStorage: 'local',
+      staleTime: 30 * 60 * 1000,
+      cachePrefix: 'tasks'
+    }
+  );
 };

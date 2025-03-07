@@ -1,26 +1,14 @@
 
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { TableRow, TableCell } from "@/components/ui/table";
+import { useState } from "react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/authStore";
-import { SubtasksList } from "./subtasks/SubtasksList";
-import { checkPendingSubtasks } from "../services/subtasksService";
-import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/hooks/useConfirm";
+import { useNavigate } from "react-router-dom";
+import { TableRow, TableCell } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreVertical, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
 interface TaskItemProps {
   task: Task;
@@ -30,334 +18,113 @@ interface TaskItemProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
   onEdit?: (task: Task) => void;
-  onDelete?: (taskId: string) => void;
-}
-
-interface TaskAttachment {
-  id: string;
-  file_name: string;
-  file_url: string;
-  created_at: string;
-  created_by: string;
+  onDelete?: (taskId: string) => Promise<void>;
 }
 
 export const TaskItem = ({ 
   task, 
   getStatusBadge, 
   getPriorityBadge, 
-  formatDate,
+  formatDate, 
   onStatusChange,
   projectId,
   onEdit,
   onDelete
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showSubtasks, setShowSubtasks] = useState(false);
-  const [showDiscussion, setShowDiscussion] = useState(false);
-  const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { user } = useAuthStore();
+  const { confirm } = useConfirm();
+  const navigate = useNavigate();
   
-  // جلب المرفقات الخاصة بالمكلف بالمهمة
-  useEffect(() => {
-    if (task.assigned_to) {
-      fetchAssigneeAttachment();
-    }
-  }, [task.id, task.assigned_to]);
-
-  const fetchAssigneeAttachment = async () => {
-    try {
-      // البحث أولاً في جدول portfolio_task_attachments
-      const { data: portfolioAttachments, error: portfolioError } = await supabase
-        .from("portfolio_task_attachments")
-        .select("*")
-        .eq("task_id", task.id)
-        .eq("created_by", task.assigned_to)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      // ثم البحث في جدول task_attachments
-      const { data: taskAttachments, error: taskError } = await supabase
-        .from("task_attachments")
-        .select("*")
-        .eq("task_id", task.id)
-        .eq("created_by", task.assigned_to)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      // اختيار المرفق من أحد المصدرين
-      if ((portfolioAttachments && portfolioAttachments.length > 0) || 
-          (taskAttachments && taskAttachments.length > 0)) {
-        
-        const attachment = portfolioAttachments?.length > 0 
-          ? portfolioAttachments[0] 
-          : taskAttachments![0];
-          
-        setAssigneeAttachment(attachment as TaskAttachment);
-      }
-    } catch (error) {
-      console.error("Error fetching assignee attachment:", error);
-    }
-  };
-
-  const handleDownload = (fileUrl: string, fileName: string) => {
-    // إنشاء عنصر رابط مؤقت
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.target = '_blank';
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const canChangeStatus = () => {
-    return (
-      user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
-    );
-  };
-
-  const canEditDelete = () => {
-    return (
-      user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
-    );
-  };
-
-  const handleDelete = async () => {
-    if (!onDelete) return;
-    
-    setIsDeleting(true);
-    try {
-      onDelete(task.id);
-      setDeleteDialogOpen(false);
-    } catch (error) {
-      console.error("Error deleting task:", error);
-      toast.error("حدث خطأ أثناء حذف المهمة");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleStatusUpdate = async (newStatus: string) => {
-    if (!canChangeStatus()) {
-      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها");
-      return;
-    }
+  const handleStatusUpdate = async (status: string) => {
+    if (isUpdating) return;
     
     setIsUpdating(true);
     try {
-      if (newStatus === 'completed') {
-        const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
-        
-        if (error) {
-          toast.error(error);
-          setIsUpdating(false);
-          return;
-        }
-        
-        if (hasPendingSubtasks) {
-          toast.error("لا يمكن إكمال المهمة حتى يتم إكمال جميع المهام الفرعية");
-          setIsUpdating(false);
-          return;
-        }
-      }
-      
-      await onStatusChange(task.id, newStatus);
+      await onStatusChange(task.id, status);
+      toast.success("تم تحديث حالة المهمة");
     } catch (error) {
-      console.error("Error updating task status:", error);
-      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
+      console.error("Error updating status:", error);
+      toast.error("فشل تحديث حالة المهمة");
     } finally {
       setIsUpdating(false);
     }
   };
-
-  const renderStatusChangeButton = () => {
-    if (!canChangeStatus()) {
-      return null;
-    }
+  
+  const handleDelete = async () => {
+    if (!onDelete) return;
     
-    return task.status !== 'completed' ? (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate('completed')}
-        disabled={isUpdating}
-        title="إكمال المهمة"
-      >
-        <Check className="h-3.5 w-3.5 text-green-500" />
-      </Button>
-    ) : (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="h-7 w-7 p-0 ml-1"
-        onClick={() => handleStatusUpdate('in_progress')}
-        disabled={isUpdating}
-        title="إعادة فتح المهمة"
-      >
-        <Clock className="h-3.5 w-3.5 text-amber-500" />
-      </Button>
-    );
+    const confirmed = await confirm({
+      title: "حذف المهمة",
+      description: "هل أنت متأكد من رغبتك في حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
+      confirmText: "حذف",
+      cancelText: "إلغاء"
+    });
+    
+    if (confirmed) {
+      try {
+        await onDelete(task.id);
+      } catch (error) {
+        console.error("Error deleting task:", error);
+      }
+    }
   };
-
+  
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(task);
+    }
+  };
+  
   return (
-    <>
-      <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
-        <TableCell className="font-medium">
-          <div className="flex items-center">
-            <span className="mr-1">{task.title}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 h-7 w-7 ml-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowSubtasks(!showSubtasks);
-              }}
-              title={showSubtasks ? "إخفاء المهام الفرعية" : "عرض المهام الفرعية"}
-            >
-              {showSubtasks ? 
-                <ChevronUp className="h-4 w-4 text-gray-500" /> : 
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              }
-            </Button>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(task.status)}
-            {renderStatusChangeButton()}
-          </div>
-        </TableCell>
-        <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-        <TableCell>
-          {task.assigned_user_name ? (
-            <div className="flex items-center">
-              <Users className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-              {task.assigned_user_name}
-            </div>
-          ) : (
-            <span className="text-gray-400">غير محدد</span>
-          )}
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center">
-            <Calendar className="h-3.5 w-3.5 ml-1.5 text-gray-500" />
-            {formatDate(task.due_date)}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDiscussion(true);
-              }}
-              title="مناقشة المهمة"
-            >
-              <MessageCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-            </Button>
-            
-            {assigneeAttachment && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 h-7 w-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name);
-                }}
-                title="تنزيل مرفق المكلف"
-              >
-                <Download className="h-4 w-4 text-blue-500 hover:text-blue-700" />
+    <TableRow className="hover:bg-gray-50">
+      <TableCell className="font-medium">{task.title}</TableCell>
+      <TableCell>{getStatusBadge(task.status)}</TableCell>
+      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+      <TableCell>{task.assigned_user_name || 'غير محدد'}</TableCell>
+      <TableCell>{formatDate(task.due_date)}</TableCell>
+      <TableCell>
+        <div className="flex justify-end items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
               </Button>
-            )}
-            
-            {/* إضافة زر التعديل */}
-            {onEdit && canEditDelete() && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 h-7 w-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(task);
-                }}
-                title="تعديل المهمة"
-              >
-                <Edit className="h-4 w-4 text-amber-500 hover:text-amber-700" />
-              </Button>
-            )}
-            
-            {/* إضافة زر الحذف */}
-            {onDelete && canEditDelete() && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="p-0 h-7 w-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteDialogOpen(true);
-                }}
-                title="حذف المهمة"
-              >
-                <Trash2 className="h-4 w-4 text-red-500 hover:text-red-700" />
-              </Button>
-            )}
-          </div>
-        </TableCell>
-      </TableRow>
-      
-      {showSubtasks && (
-        <TableRow>
-          <TableCell colSpan={6} className="bg-gray-50 p-0">
-            <div className="p-3">
-              <SubtasksList 
-                taskId={task.id} 
-                projectId={projectId}
-              />
-            </div>
-          </TableCell>
-        </TableRow>
-      )}
-
-      <TaskDiscussionDialog 
-        open={showDiscussion} 
-        onOpenChange={setShowDiscussion}
-        task={task}
-      />
-      
-      {/* مربع حوار تأكيد الحذف */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد من حذف هذه المهمة؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              سيتم حذف المهمة وجميع المهام الفرعية والمرفقات المرتبطة بها بشكل نهائي.
-              لا يمكن التراجع عن هذا الإجراء.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              {isDeleting ? "جاري الحذف..." : "تأكيد الحذف"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {task.status !== 'completed' && (
+                <DropdownMenuItem onClick={() => handleStatusUpdate('completed')}>
+                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                  <span>إكمال المهمة</span>
+                </DropdownMenuItem>
+              )}
+              
+              {task.status === 'completed' && (
+                <DropdownMenuItem onClick={() => handleStatusUpdate('in_progress')}>
+                  <Clock className="mr-2 h-4 w-4 text-amber-500" />
+                  <span>إعادة فتح المهمة</span>
+                </DropdownMenuItem>
+              )}
+              
+              {task.status !== 'delayed' && task.status !== 'completed' && (
+                <DropdownMenuItem onClick={() => handleStatusUpdate('delayed')}>
+                  <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
+                  <span>تعليق المهمة</span>
+                </DropdownMenuItem>
+              )}
+              
+              <DropdownMenuItem onClick={handleEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                <span>تعديل</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>حذف</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </TableCell>
+    </TableRow>
   );
 };

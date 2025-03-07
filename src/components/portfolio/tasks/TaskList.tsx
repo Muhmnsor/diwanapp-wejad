@@ -1,15 +1,6 @@
-import { TaskCard } from './TaskCard';
 
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  due_date: string | null;
-  assigned_to: string | null;
-  status: string;
-  priority: string;
-  updated_at: string;
-}
+import { TaskCard } from './TaskCard';
+import { Task } from '@/types/workspace';
 
 interface TaskListProps {
   tasks: Task[];
@@ -31,15 +22,7 @@ export const TaskList = ({ tasks }: TaskListProps) => {
       {tasks.map((task) => (
         <TaskCard 
           key={task.id} 
-          task={{
-            ...task,
-            title: task.title || '',
-            description: task.description || null,
-            due_date: task.due_date || null,
-            status: task.status || 'pending',
-            priority: task.priority || 'medium',
-            updated_at: task.updated_at || new Date().toISOString(),
-          }} 
+          task={task}
         />
       ))}
     </div>

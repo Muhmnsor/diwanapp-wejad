@@ -3550,8 +3550,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      delete_project: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      delete_task: {
+        Args: {
+          p_task_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       delete_user_roles: {
         Args: {
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      delete_workspace: {
+        Args: {
+          p_workspace_id: string
           p_user_id: string
         }
         Returns: boolean

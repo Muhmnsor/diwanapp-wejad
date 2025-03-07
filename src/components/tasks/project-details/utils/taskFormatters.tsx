@@ -1,37 +1,48 @@
 
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, ClipboardList, AlertTriangle } from "lucide-react";
-import { formatDate } from "@/utils/formatters";
+import React from "react";
+import { formatDate as formatDateUtility } from "@/utils/formatters";
 
+// Format status as a visual badge
 export const getStatusBadge = (status: string) => {
   switch (status) {
     case 'completed':
-      return <Badge variant="default" className="flex items-center gap-1 bg-green-500"><CheckCircle2 className="h-3 w-3" /> مكتمل</Badge>;
+      return <div className="flex items-center gap-1 text-green-500 font-medium"><span className="w-2 h-2 rounded-full bg-green-500"></span> مكتمل</div>;
     case 'in_progress':
-      return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="h-3 w-3" /> قيد التنفيذ</Badge>;
+      return <div className="flex items-center gap-1 text-amber-500 font-medium"><span className="w-2 h-2 rounded-full bg-amber-500"></span> قيد التنفيذ</div>;
     case 'pending':
-      return <Badge variant="outline" className="flex items-center gap-1"><ClipboardList className="h-3 w-3" /> قيد الانتظار</Badge>;
+      return <div className="flex items-center gap-1 text-blue-500 font-medium"><span className="w-2 h-2 rounded-full bg-blue-500"></span> قيد الانتظار</div>;
     case 'delayed':
-      return <Badge variant="destructive" className="flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> متعثر</Badge>;
+      return <div className="flex items-center gap-1 text-red-500 font-medium"><span className="w-2 h-2 rounded-full bg-red-500"></span> متأخرة</div>;
+    case 'cancelled':
+      return <div className="flex items-center gap-1 text-gray-500 font-medium"><span className="w-2 h-2 rounded-full bg-gray-500"></span> ملغية</div>;
     default:
-      return <Badge variant="outline" className="flex items-center gap-1"><ClipboardList className="h-3 w-3" /> قيد الانتظار</Badge>;
+      return <div className="flex items-center gap-1 text-gray-500 font-medium"><span className="w-2 h-2 rounded-full bg-gray-500"></span> غير محدد</div>;
   }
 };
 
+// Format priority as a visual badge
 export const getPriorityBadge = (priority: string | null) => {
   if (!priority) return null;
   
   switch (priority) {
     case 'high':
-      return <Badge variant="outline" className="border-red-500 text-red-500">عالية</Badge>;
+      return <div className="text-red-500">عالية</div>;
     case 'medium':
-      return <Badge variant="outline" className="border-amber-500 text-amber-500">متوسطة</Badge>;
+      return <div className="text-amber-500">متوسطة</div>;
     case 'low':
-      return <Badge variant="outline" className="border-green-500 text-green-500">منخفضة</Badge>;
+      return <div className="text-green-500">منخفضة</div>;
     default:
       return null;
   }
 };
 
-// Use the new utility function for formatting dates
-export { formatDate };
+// Format dates in Gregorian format
+export const formatDate = (date: string | null) => {
+  if (!date) return "غير محدد";
+  
+  try {
+    return formatDateUtility(date, "غير محدد");
+  } catch (e) {
+    return "تاريخ غير صالح";
+  }
+};
