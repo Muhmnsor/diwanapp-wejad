@@ -24,26 +24,40 @@ export const WorkspaceCardHeader = ({
   onEdit,
   onDelete
 }: WorkspaceCardHeaderProps) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(e);
+    setIsMenuOpen(false);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(e);
+    setIsMenuOpen(false);
+  };
+
   return (
     <>
       <div className="mb-3 flex justify-between items-start">
         <h3 className="font-bold text-lg">{name}</h3>
         
         {canEdit && (
-          <DropdownMenu>
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 focus:ring-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onEdit}>
+              <DropdownMenuItem onClick={handleEditClick}>
                 <Pencil className="h-4 w-4 ml-2" />
                 <span>تعديل</span>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive"
-                onClick={onDelete}
+                onClick={handleDeleteClick}
               >
                 <Trash2 className="h-4 w-4 ml-2" />
                 <span>حذف</span>

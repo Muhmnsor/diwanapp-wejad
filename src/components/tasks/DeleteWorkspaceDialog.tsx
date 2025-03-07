@@ -15,7 +15,8 @@ import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteWorkspaceDialogProps {
   open: boolean;
@@ -32,9 +33,11 @@ export const DeleteWorkspaceDialog = ({
 }: DeleteWorkspaceDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const { confirm } = useConfirm();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     if (!user) {
@@ -57,7 +60,7 @@ export const DeleteWorkspaceDialog = ({
 
     setIsDeleting(true);
     try {
-      console.log("Deleting workspace:", workspaceId, "by user:", user.id);
+      console.log("Deleting workspace:", workspaceId, "by user:", user.id, "Attempt:", retryCount + 1);
       
       // Call Supabase edge function to delete workspace
       const { data, error } = await supabase.functions.invoke('delete-workspace', {
@@ -66,6 +69,8 @@ export const DeleteWorkspaceDialog = ({
           userId: user.id 
         }
       });
+
+      console.log("Delete function response:", data, error);
 
       if (error) {
         console.error("Edge function error:", error);
@@ -81,14 +86,18 @@ export const DeleteWorkspaceDialog = ({
         return;
       }
 
+      console.log("Workspace deleted successfully");
       toast.success("تم حذف مساحة العمل بنجاح");
       onOpenChange(false);
+      
+      // Invalidate queries to refresh workspace data
+      queryClient.invalidateQueries({queryKey: ['workspaces']});
       
       // Navigate away from workspace page if we're currently viewing it
       if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
         navigate("/tasks");
       } else {
-        // Force a refresh of the workspaces list
+        // Refresh the workspaces list
         window.location.href = "/tasks#workspaces";
       }
     } catch (error) {
@@ -98,9 +107,15 @@ export const DeleteWorkspaceDialog = ({
     }
   };
 
+  const handleRetryDelete = () => {
+    setRetryCount(prev => prev + 1);
+    handleDelete();
+  };
+
   const handleCloseDialog = () => {
     if (!isDeleting) {
       setError(null);
+      setRetryCount(0);
       onOpenChange(false);
     }
   };
@@ -129,10 +144,19 @@ export const DeleteWorkspaceDialog = ({
         <DialogFooter className="flex-row-reverse sm:justify-start gap-2 mt-4">
           <Button 
             variant="destructive" 
-            onClick={handleDelete} 
+            onClick={error ? handleRetryDelete : handleDelete} 
             disabled={isDeleting}
           >
-            {isDeleting ? "جاري الحذف..." : "حذف مساحة العمل"}
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                جاري الحذف...
+              </>
+            ) : error ? (
+              "إعادة المحاولة"
+            ) : (
+              "حذف مساحة العمل"
+            )}
           </Button>
           <Button
             variant="outline"

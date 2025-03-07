@@ -6,46 +6,70 @@ import { User } from "@/store/refactored-auth/types";
 
 export const useWorkspacePermissions = (workspace: Workspace, user: User | null) => {
   const [canEdit, setCanEdit] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkPermissions = async () => {
       if (!user) {
         setCanEdit(false);
+        setIsLoading(false);
         return;
       }
 
       try {
+        setIsLoading(true);
+        setError(null);
+        
+        console.log("Checking permissions for workspace:", workspace.id, "user:", user.id);
+        
+        // Check if user is the creator of the workspace
         const isCreator = workspace.created_by === user.id;
+        console.log("Is creator:", isCreator);
         
-        // Check if user is admin
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('roles:role_id(name)')
-          .eq('user_id', user.id)
-          .single();
+        // Check if user is admin using the is_admin database function
+        const { data: isAdminData, error: adminError } = await supabase
+          .rpc('is_admin', { user_id: user.id });
+          
+        if (adminError) {
+          console.error('Error checking admin status:', adminError);
+          throw adminError;
+        }
         
-        // Access the name property safely with optional chaining
-        const isAdmin = roleData?.roles?.name === 'admin';
+        const isAdmin = !!isAdminData;
+        console.log("Is admin:", isAdmin);
         
         // Check if user is workspace admin
-        const { data: memberData } = await supabase
+        const { data: memberData, error: memberError } = await supabase
           .from('workspace_members')
           .select('role')
           .eq('workspace_id', workspace.id)
           .eq('user_id', user.id)
           .single();
         
-        const isWorkspaceAdmin = memberData?.role === 'admin';
+        if (memberError && memberError.code !== 'PGRST116') { // PGRST116 is 'no rows returned'
+          console.error('Error checking workspace membership:', memberError);
+          throw memberError;
+        }
         
-        setCanEdit(isCreator || isAdmin || isWorkspaceAdmin);
-      } catch (error) {
-        console.error('Error checking permissions:', error);
+        const isWorkspaceAdmin = memberData?.role === 'admin';
+        console.log("Is workspace admin:", isWorkspaceAdmin);
+        
+        const hasEditPermission = isCreator || isAdmin || isWorkspaceAdmin;
+        console.log("Final permission result:", hasEditPermission);
+        
+        setCanEdit(hasEditPermission);
+      } catch (err) {
+        console.error('Error checking permissions:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
         setCanEdit(false);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     checkPermissions();
   }, [workspace.id, workspace.created_by, user]);
 
-  return { canEdit };
+  return { canEdit, isLoading, error };
 };
