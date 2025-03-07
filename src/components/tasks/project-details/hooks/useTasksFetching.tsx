@@ -6,6 +6,7 @@ import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 export const useTasksFetching = (projectId: string | undefined) => {
   const [tasksByStage, setTasksByStage] = useState<Record<string, Task[]>>({});
+  const [localTasks, setLocalTasks] = useState<Task[]>([]);
   
   // Use enhanced caching for tasks
   const { 
@@ -116,6 +117,11 @@ export const useTasksFetching = (projectId: string | undefined) => {
     }
   );
   
+  // Update local tasks whenever tasks change
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+  
   // Process tasks by stage whenever tasks change
   useEffect(() => {
     const processTasksByStage = () => {
@@ -143,11 +149,16 @@ export const useTasksFetching = (projectId: string | undefined) => {
     return refetch();
   }, [refetch]);
   
+  // setTasks function that updates the local state
+  const setTasks = (newTasks: Task[]) => {
+    setLocalTasks(newTasks);
+  };
+  
   return {
-    tasks,
+    tasks: localTasks, // Return the local tasks state
     isLoading,
     tasksByStage,
-    setTasks: (newTasks: Task[]) => {},  // This is no longer used but kept for API compatibility
+    setTasks, // Export the setTasks function
     fetchTasks
   };
 };

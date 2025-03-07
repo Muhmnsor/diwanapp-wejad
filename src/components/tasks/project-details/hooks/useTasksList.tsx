@@ -23,9 +23,21 @@ export const useTasksList = (projectId: string | undefined) => {
     tasks,
     isLoading,
     tasksByStage,
-    setTasks,
+    setTasks: originalSetTasks, // Rename to avoid direct usage
     fetchTasks
   } = useTasksFetching(projectId);
+
+  // Create a wrapper function for setTasks that handles the function-based updates correctly
+  const setTasks = (tasksOrUpdater: Task[] | ((prevTasks: Task[]) => Task[])) => {
+    if (typeof tasksOrUpdater === 'function') {
+      // If it's a function updater, we need to get the current tasks and apply the function
+      const updatedTasks = tasksOrUpdater(tasks);
+      originalSetTasks(updatedTasks);
+    } else {
+      // If it's a direct tasks array, just pass it through
+      originalSetTasks(tasksOrUpdater);
+    }
+  };
 
   // Hook for task status management
   const { handleStatusChange } = useTaskStatusManagement(
@@ -52,7 +64,7 @@ export const useTasksList = (projectId: string | undefined) => {
         
       if (error) throw error;
       
-      // Properly type the setter function to handle Task[] correctly
+      // Use the wrapper function to correctly update tasks
       setTasks((prevTasks: Task[]) => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, ...updateData } : task

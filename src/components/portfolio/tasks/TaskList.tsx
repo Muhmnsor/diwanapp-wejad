@@ -1,15 +1,6 @@
-import { TaskCard } from './TaskCard';
 
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  due_date: string | null;
-  assigned_to: string | null;
-  status: string;
-  priority: string;
-  updated_at: string;
-}
+import { TaskCard } from './TaskCard';
+import { Task } from '@/types/workspace'; // Use the workspace Task interface
 
 interface TaskListProps {
   tasks: Task[];
