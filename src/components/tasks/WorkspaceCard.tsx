@@ -25,7 +25,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
   
-  const { canEdit, isLoading: isPermissionsLoading } = useWorkspacePermissions(workspace, user);
+  const { canEdit } = useWorkspacePermissions(workspace, user);
   const projectCounts = useProjectCounts(workspace.id);
   const membersCount = useMembersCount(workspace.id, isMembersDialogOpen);
 
@@ -63,7 +63,6 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
             name={workspace.name}
             description={workspace.description}
             canEdit={canEdit}
-            isLoading={isPermissionsLoading}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
