@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -8,11 +7,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface WorkspaceCardHeaderProps {
   name: string;
   description: string | undefined;
   canEdit: boolean;
+  isLoading?: boolean;
   onEdit: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
 }
@@ -21,6 +22,7 @@ export const WorkspaceCardHeader = ({
   name,
   description,
   canEdit,
+  isLoading = false,
   onEdit,
   onDelete
 }: WorkspaceCardHeaderProps) => {
@@ -29,7 +31,9 @@ export const WorkspaceCardHeader = ({
       <div className="mb-3 flex justify-between items-start">
         <h3 className="font-bold text-lg">{name}</h3>
         
-        {canEdit && (
+        {isLoading ? (
+          <Skeleton className="h-8 w-8 rounded-full" />
+        ) : canEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
