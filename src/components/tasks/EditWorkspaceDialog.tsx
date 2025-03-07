@@ -89,13 +89,14 @@ export const EditWorkspaceDialog = ({
     }
 
     try {
-      // Call Supabase to update workspace
+      // Call Supabase to update workspace - only update name and description fields
       console.log("[EditWorkspace] Sending update request to Supabase");
       const { data: updateData, error: updateError } = await supabase
         .from('workspaces')
         .update({
           name: data.name,
           description: data.description,
+          // Don't try to update updated_at as it doesn't exist in the table
         })
         .eq('id', workspace.id)
         .select();
