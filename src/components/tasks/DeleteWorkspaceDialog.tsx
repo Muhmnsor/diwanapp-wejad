@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useConfirm } from "@/hooks/useConfirm";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -34,36 +33,23 @@ export const DeleteWorkspaceDialog = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { confirm } = useConfirm();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     if (!user) {
-      console.error("Delete workspace operation failed: No authenticated user");
+      console.error("[DeleteWorkspace] Operation failed: No authenticated user");
       toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
       return;
     }
 
     // Reset error state
     setError(null);
-
-    // Ask for final confirmation before deletion
-    const shouldDelete = await confirm({
-      title: "تأكيد حذف مساحة العمل",
-      description: `هل أنت متأكد من حذف مساحة العمل "${workspaceName}" نهائياً؟ لا يمكن التراجع عن هذه العملية وسيتم حذف جميع المشاريع والمهام المرتبطة بها.`,
-      confirmText: "نعم، احذف مساحة العمل",
-      cancelText: "إلغاء"
-    });
-
-    if (!shouldDelete) {
-      console.log("Workspace deletion cancelled by user");
-      return;
-    }
-
     setIsDeleting(true);
+    
     console.log("[DeleteWorkspace] Starting deletion process for workspace:", workspaceId);
     console.log("[DeleteWorkspace] User ID:", user.id);
+    console.log("[DeleteWorkspace] Timestamp:", new Date().toISOString());
     
     try {
       // Call Supabase edge function to delete workspace with explicit parameter names
@@ -128,12 +114,11 @@ export const DeleteWorkspaceDialog = ({
           <DialogTitle>حذف مساحة العمل</DialogTitle>
           <DialogDescription>
             هل أنت متأكد من رغبتك في حذف مساحة العمل "{workspaceName}"؟
+            <strong className="block mt-2 text-destructive">
+              لا يمكن التراجع عن هذه العملية وسيتم حذف جميع المشاريع والمهام المرتبطة بها.
+            </strong>
           </DialogDescription>
         </DialogHeader>
-        
-        <p className="text-destructive text-sm font-medium">
-          سيؤدي هذا الإجراء إلى حذف مساحة العمل وجميع المشاريع والمهام المرتبطة بها.
-        </p>
         
         {error && (
           <Alert variant="destructive">
