@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "@/components/tasks/types/task";
+import { Task } from "@/components/tasks/project-details/types/task";
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 export const useTasksFetching = (projectId: string | undefined) => {
@@ -13,7 +13,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
     isLoading, 
     refetch 
   } = useCachedQuery<Task[]>(
-    ['project-tasks', projectId],
+    ['project-tasks', projectId || ''],
     async () => {
       if (!projectId) return [];
       
@@ -99,6 +99,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
       }
     },
     {
+      queryKey: ['project-tasks', projectId || ''],
       enabled: !!projectId,
       // Enhanced caching options
       cacheDuration: 2 * 60 * 1000, // 2 minutes

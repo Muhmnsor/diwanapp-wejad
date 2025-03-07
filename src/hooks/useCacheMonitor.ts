@@ -14,11 +14,11 @@ type CacheStats = {
   totalSize: number;
   throttledUpdates: number;
   batchedUpdates: number;
-  refreshedEntries: number;
-  priorityDistribution: Record<string, number>;
-  avgResponseTime: number;
-  offlineUpdatesQueued: number;
-  syncStatus: string;
+  refreshedEntries?: number;
+  priorityDistribution?: Record<string, number>;
+  avgResponseTime?: number;
+  offlineUpdatesQueued?: number;
+  syncStatus?: string;
 };
 
 export const useCacheMonitor = (refreshInterval: number = 5000) => {

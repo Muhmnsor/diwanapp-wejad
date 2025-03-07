@@ -9,7 +9,10 @@ import { Task } from '../tasks/types/task';
 
 export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
-  const { data: tasks = [], isLoading, refetch } = useWorkspaceTasks(workspaceId);
+  const { data: tasksData = [], isLoading, refetch } = useWorkspaceTasks(workspaceId);
+  
+  // Ensure tasksData is always treated as Task[] even if the query returns a different type
+  const tasks = Array.isArray(tasksData) ? tasksData : [];
 
   console.log('📊 Portfolio Tasks - Workspace ID:', workspaceId);
   console.log('📊 Portfolio Tasks - Tasks Data:', tasks);

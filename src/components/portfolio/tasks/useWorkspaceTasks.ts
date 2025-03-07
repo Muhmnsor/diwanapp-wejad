@@ -29,6 +29,7 @@ export const useWorkspaceTasks = (workspaceId: string) => {
       }
     },
     {
+      queryKey: ['portfolio-tasks', workspaceId],
       // Enhanced caching options
       cacheDuration: 5 * 60 * 1000, // 5 minutes
       cacheStorage: 'memory',

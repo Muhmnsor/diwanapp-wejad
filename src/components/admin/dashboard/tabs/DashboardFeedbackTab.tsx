@@ -18,14 +18,16 @@ export const DashboardFeedbackTab = ({ projectId }: DashboardFeedbackTabProps) =
     return <LoadingState />;
   }
 
-  if (!activitiesFeedback || activitiesFeedback.length === 0) {
+  const hasNoFeedback = !activitiesFeedback || (Array.isArray(activitiesFeedback) && activitiesFeedback.length === 0);
+  
+  if (hasNoFeedback) {
     return <EmptyFeedbackState />;
   }
 
   return (
     <div className="space-y-6">
       <FeedbackHeader />
-      <FeedbackList activities={activitiesFeedback} />
+      <FeedbackList activities={activitiesFeedback as ActivityFeedback[]} />
     </div>
   );
 };

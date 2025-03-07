@@ -50,6 +50,7 @@ export const useFeedbackQuery = (projectId: string) => {
       })) || [];
     },
     {
+      queryKey: ['project-activities-feedback', projectId],
       // Enhanced caching options
       cacheDuration: 60 * 1000, // 1 minute
       cacheStorage: 'memory',
