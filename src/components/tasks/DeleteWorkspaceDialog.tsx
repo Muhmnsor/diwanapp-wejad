@@ -16,6 +16,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteWorkspaceDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ export const DeleteWorkspaceDialog = ({
   const navigate = useNavigate();
   const { confirm } = useConfirm();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     if (!user) {
@@ -60,19 +62,21 @@ export const DeleteWorkspaceDialog = ({
       console.log("Deleting workspace:", workspaceId, "by user:", user.id);
       
       // Call Supabase edge function to delete workspace
-      const { data, error } = await supabase.functions.invoke('delete-workspace', {
+      const { data, error: functionError } = await supabase.functions.invoke('delete-workspace', {
         body: { 
           workspaceId, 
           userId: user.id 
         }
       });
 
-      if (error) {
-        console.error("Edge function error:", error);
-        setError(error.message || "فشلت عملية حذف مساحة العمل");
+      if (functionError) {
+        console.error("Edge function error:", functionError);
+        setError(functionError.message || "فشلت عملية حذف مساحة العمل");
         setIsDeleting(false);
         return;
       }
+
+      console.log("Delete workspace response:", data);
 
       if (!data || !data.success) {
         console.error("Deletion failed:", data);
@@ -81,6 +85,9 @@ export const DeleteWorkspaceDialog = ({
         return;
       }
 
+      // Invalidate queries to refresh workspaces data
+      queryClient.invalidateQueries({queryKey: ['workspaces']});
+      
       toast.success("تم حذف مساحة العمل بنجاح");
       onOpenChange(false);
       
@@ -88,8 +95,8 @@ export const DeleteWorkspaceDialog = ({
       if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
         navigate("/tasks");
       } else {
-        // Force a refresh of the workspaces list
-        window.location.href = "/tasks#workspaces";
+        // Refresh the workspaces list
+        queryClient.invalidateQueries({queryKey: ['workspaces']});
       }
     } catch (error) {
       console.error("Error deleting workspace:", error);

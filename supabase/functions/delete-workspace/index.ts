@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     console.log("Attempting to delete workspace with parameters:", {
-      p_workspace_id: workspaceId,
-      p_user_id: userId
+      workspaceId,
+      userId
     });
     
     // First try to get the workspace to confirm it exists
@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
     }
     
     if (!hasPermission) {
+      console.error("Permission denied for user:", userId);
       return new Response(
         JSON.stringify({ success: false, error: 'ليس لديك صلاحية لحذف مساحة العمل' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 403 }
@@ -104,7 +105,7 @@ Deno.serve(async (req) => {
     
     console.log("Permission check passed, proceeding with deletion");
     
-    // Use a transaction to delete workspace and related data
+    // Begin a transaction to ensure data consistency
     // First delete the workspace members
     const { error: membersError } = await supabase
       .from('workspace_members')
@@ -113,51 +114,149 @@ Deno.serve(async (req) => {
       
     if (membersError) {
       console.error("Error deleting workspace members:", membersError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'حدث خطأ أثناء حذف أعضاء مساحة العمل',
+          details: membersError
+        }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
+      );
     }
     
     // Get projects in workspace
-    const { data: projects } = await supabase
+    const { data: projects, error: projectsError } = await supabase
       .from('project_tasks')
       .select('id')
       .eq('workspace_id', workspaceId);
       
+    if (projectsError) {
+      console.error("Error fetching projects:", projectsError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'حدث خطأ أثناء جلب المشاريع',
+          details: projectsError
+        }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
+      );
+    }
+      
     if (projects && projects.length > 0) {
+      console.log(`Found ${projects.length} projects to delete`);
+      
       for (const project of projects) {
         // For each project, delete tasks
-        const { data: tasks } = await supabase
+        const { data: tasks, error: tasksError } = await supabase
           .from('tasks')
           .select('id')
           .eq('project_id', project.id);
           
+        if (tasksError) {
+          console.error("Error fetching tasks for project:", project.id, tasksError);
+          continue; // Try to continue with other projects
+        }
+          
         if (tasks && tasks.length > 0) {
+          console.log(`Found ${tasks.length} tasks to delete for project ${project.id}`);
           const taskIds = tasks.map(t => t.id);
           
           // Delete related task records
-          await Promise.all([
-            supabase.from('task_discussion_attachments').delete().in('task_id', taskIds),
-            supabase.from('task_templates').delete().in('task_id', taskIds),
-            supabase.from('task_attachments').delete().in('task_id', taskIds),
-            supabase.from('task_comments').delete().in('task_id', taskIds),
-            supabase.from('unified_task_comments').delete().in('task_id', taskIds),
-            supabase.from('task_history').delete().in('task_id', taskIds),
-            supabase.from('task_deliverables').delete().in('task_id', taskIds),
-            supabase.from('subtasks').delete().in('task_id', taskIds)
-          ]);
-          
-          // Delete the tasks
-          await supabase.from('tasks').delete().in('id', taskIds);
+          try {
+            // Delete task attachments
+            const { error: attachmentsError } = await supabase
+              .from('task_attachments')
+              .delete()
+              .in('task_id', taskIds);
+              
+            if (attachmentsError) {
+              console.error("Error deleting task attachments:", attachmentsError);
+            }
+            
+            // Delete task comments
+            const { error: commentsError } = await supabase
+              .from('task_comments')
+              .delete()
+              .in('task_id', taskIds);
+              
+            if (commentsError) {
+              console.error("Error deleting task comments:", commentsError);
+            }
+            
+            // Delete unified task comments
+            const { error: unifiedCommentsError } = await supabase
+              .from('unified_task_comments')
+              .delete()
+              .in('task_id', taskIds);
+              
+            if (unifiedCommentsError) {
+              console.error("Error deleting unified task comments:", unifiedCommentsError);
+            }
+            
+            // Delete subtasks
+            const { error: subtasksError } = await supabase
+              .from('subtasks')
+              .delete()
+              .in('task_id', taskIds);
+              
+            if (subtasksError) {
+              console.error("Error deleting subtasks:", subtasksError);
+            }
+            
+            // Delete the tasks
+            const { error: tasksDeleteError } = await supabase
+              .from('tasks')
+              .delete()
+              .in('id', taskIds);
+              
+            if (tasksDeleteError) {
+              console.error("Error deleting tasks:", tasksDeleteError);
+            }
+          } catch (error) {
+            console.error("Error in task deletion process:", error);
+          }
         }
         
         // Delete project stages
-        await supabase.from('project_stages').delete().eq('project_id', project.id);
+        const { error: stagesError } = await supabase
+          .from('project_stages')
+          .delete()
+          .eq('project_id', project.id);
+          
+        if (stagesError) {
+          console.error("Error deleting project stages:", stagesError);
+        }
       }
       
       // Delete all projects
-      await supabase.from('project_tasks').delete().eq('workspace_id', workspaceId);
+      const { error: projectsDeleteError } = await supabase
+        .from('project_tasks')
+        .delete()
+        .eq('workspace_id', workspaceId);
+        
+      if (projectsDeleteError) {
+        console.error("Error deleting projects:", projectsDeleteError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'حدث خطأ أثناء حذف المشاريع',
+            details: projectsDeleteError
+          }),
+          { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
+        );
+      }
     }
     
     // Delete standalone tasks
-    await supabase.from('tasks').delete().eq('workspace_id', workspaceId);
+    const { error: tasksError } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('workspace_id', workspaceId);
+      
+    if (tasksError) {
+      console.error("Error deleting workspace tasks:", tasksError);
+      // Continue with deletion attempt
+    }
     
     // Finally delete the workspace
     const { error: deleteError } = await supabase
