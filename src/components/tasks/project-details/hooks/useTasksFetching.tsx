@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "../types/task";
+import { Task } from "@/components/tasks/types/task";
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 export const useTasksFetching = (projectId: string | undefined) => {
@@ -12,9 +12,9 @@ export const useTasksFetching = (projectId: string | undefined) => {
     data: tasks = [], 
     isLoading, 
     refetch 
-  } = useCachedQuery({
-    queryKey: ['project-tasks', projectId],
-    queryFn: async () => {
+  } = useCachedQuery<Task[]>(
+    ['project-tasks', projectId],
+    async () => {
       if (!projectId) return [];
       
       try {
@@ -92,40 +92,44 @@ export const useTasksFetching = (projectId: string | undefined) => {
           return task;
         }));
         
-        return tasksWithUserData;
+        return tasksWithUserData as Task[];
       } catch (error) {
         console.error("Error fetching tasks:", error);
         return [];
       }
     },
-    enabled: !!projectId,
-    // Enhanced caching options
-    cacheDuration: 2 * 60 * 1000, // 2 minutes
-    cacheStorage: 'memory',
-    cachePrefix: 'project',
-    useCompression: true,
-    compressionThreshold: 1024,
-    cachePriority: 'high',
-    batchUpdates: true,
-    tags: ['project-tasks', `project-${projectId}`],
-    refreshStrategy: 'lazy',
-    refreshThreshold: 50,
-    offlineFirst: true
-  });
+    {
+      enabled: !!projectId,
+      // Enhanced caching options
+      cacheDuration: 2 * 60 * 1000, // 2 minutes
+      cacheStorage: 'memory',
+      cachePrefix: 'project',
+      useCompression: true,
+      compressionThreshold: 1024,
+      cachePriority: 'high',
+      batchUpdates: true,
+      tags: ['project-tasks', `project-${projectId}`],
+      refreshStrategy: 'lazy',
+      refreshThreshold: 50,
+      offlineFirst: true
+    }
+  );
   
   // Process tasks by stage whenever tasks change
   useEffect(() => {
     const processTasksByStage = () => {
       const tasksByStageMap: Record<string, Task[]> = {};
       
-      tasks.forEach(task => {
-        if (task.stage_id) {
-          if (!tasksByStageMap[task.stage_id]) {
-            tasksByStageMap[task.stage_id] = [];
+      if (Array.isArray(tasks)) {
+        tasks.forEach(task => {
+          if (task.stage_id) {
+            if (!tasksByStageMap[task.stage_id]) {
+              tasksByStageMap[task.stage_id] = [];
+            }
+            tasksByStageMap[task.stage_id].push(task);
           }
-          tasksByStageMap[task.stage_id].push(task);
-        }
-      });
+        });
+      }
       
       setTasksByStage(tasksByStageMap);
     };

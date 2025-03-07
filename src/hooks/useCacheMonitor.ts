@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { getCacheStats, resetCacheStats } from '@/utils/cacheService';
 
@@ -13,11 +14,11 @@ type CacheStats = {
   totalSize: number;
   throttledUpdates: number;
   batchedUpdates: number;
-  refreshedEntries?: number;
-  priorityDistribution?: Record<string, number>;
-  avgResponseTime?: number;
-  offlineUpdatesQueued?: number;
-  syncStatus?: string;
+  refreshedEntries: number;
+  priorityDistribution: Record<string, number>;
+  avgResponseTime: number;
+  offlineUpdatesQueued: number;
+  syncStatus: string;
 };
 
 export const useCacheMonitor = (refreshInterval: number = 5000) => {
@@ -52,14 +53,15 @@ export const useCacheMonitor = (refreshInterval: number = 5000) => {
   }, [refreshInterval]);
 
   const fetchStats = () => {
-    const freshStats = getCacheStats();
+    const freshStats = getCacheStats() as Partial<CacheStats>;
     setStats(prevStats => ({
+      ...prevStats,
       ...freshStats,
       // Keep additional stats that might not be in cacheService yet
       refreshedEntries: freshStats.refreshedEntries || prevStats.refreshedEntries || 0,
       priorityDistribution: freshStats.priorityDistribution || prevStats.priorityDistribution,
       avgResponseTime: freshStats.avgResponseTime || prevStats.avgResponseTime || 0,
-      offlineUpdatesQueued: freshStats.offlineUpdatesQueued || window.navigator.onLine ? 0 : (prevStats.offlineUpdatesQueued || 0),
+      offlineUpdatesQueued: freshStats.offlineUpdatesQueued || (window.navigator.onLine ? 0 : (prevStats.offlineUpdatesQueued || 0)),
       syncStatus: window.navigator.onLine ? 'online' : 'offline'
     }));
   };

@@ -2,10 +2,22 @@
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface ActivityFeedback {
+  id: string;
+  title: string;
+  date: string;
+  feedback: Array<{
+    overall_rating: number;
+    content_rating: number;
+    organization_rating: number;
+    presenter_rating: number;
+  }>;
+}
+
 export const useFeedbackQuery = (projectId: string) => {
-  return useCachedQuery({
-    queryKey: ['project-activities-feedback', projectId],
-    queryFn: async () => {
+  return useCachedQuery<ActivityFeedback[]>(
+    ['project-activities-feedback', projectId],
+    async () => {
       console.log('Fetching activities feedback for project:', projectId);
       
       const { data: activities, error } = await supabase
@@ -37,21 +49,23 @@ export const useFeedbackQuery = (projectId: string) => {
         feedback: activity.activity_feedback || []
       })) || [];
     },
-    // Enhanced caching options
-    cacheDuration: 60 * 1000, // 1 minute
-    cacheStorage: 'memory',
-    useCompression: true,
-    cachePriority: 'normal',
-    tags: ['feedback', `project-${projectId}`],
-    refreshStrategy: 'lazy',
-    refreshThreshold: 50, // Refresh when 50% of the cache duration has passed
-    offlineFirst: true, // Use cached data when offline
-    
-    // Enable progressive loading to show data as it comes in
-    progressiveLoading: {
-      enabled: true,
-      chunkSize: 5,
-      initialChunkSize: 3
+    {
+      // Enhanced caching options
+      cacheDuration: 60 * 1000, // 1 minute
+      cacheStorage: 'memory',
+      useCompression: true,
+      cachePriority: 'normal',
+      tags: ['feedback', `project-${projectId}`],
+      refreshStrategy: 'lazy',
+      refreshThreshold: 50, // Refresh when 50% of the cache duration has passed
+      offlineFirst: true, // Use cached data when offline
+      
+      // Enable progressive loading to show data as it comes in
+      progressiveLoading: {
+        enabled: true,
+        chunkSize: 5,
+        initialChunkSize: 3
+      }
     }
-  });
+  );
 };

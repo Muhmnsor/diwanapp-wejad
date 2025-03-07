@@ -25,16 +25,16 @@ export const useRealtimeSync = (options = { batchInterval: 200, syncOnReconnect:
   // Handle network status changes
   const handleNetworkChange = useCallback(() => {
     const isOnline = navigator.onLine;
-    setSyncStatus(prev => ({
-      ...prev,
+    setSyncStatus(prevStatus => ({
+      ...prevStatus,
       isOnline
     }));
     
     // If we're back online and have syncOnReconnect enabled, force a sync
-    if (isOnline && !prev.isOnline && options.syncOnReconnect) {
+    if (isOnline && options.syncOnReconnect) {
       sendBatchUpdate(true);
-      setSyncStatus(prev => ({
-        ...prev,
+      setSyncStatus(prevStatus => ({
+        ...prevStatus,
         lastSyncTime: Date.now()
       }));
     }
@@ -42,8 +42,8 @@ export const useRealtimeSync = (options = { batchInterval: 200, syncOnReconnect:
 
   // Track batch updates count
   const updatePendingCount = useCallback((count: number) => {
-    setSyncStatus(prev => ({
-      ...prev,
+    setSyncStatus(prevStatus => ({
+      ...prevStatus,
       pendingUpdates: count
     }));
   }, []);
@@ -54,10 +54,10 @@ export const useRealtimeSync = (options = { batchInterval: 200, syncOnReconnect:
     
     // Ensure pending updates are sent before user leaves
     const handleBeforeUnload = () => {
-      setSyncStatus(prev => ({ ...prev, isSyncing: true }));
+      setSyncStatus(prevStatus => ({ ...prevStatus, isSyncing: true }));
       sendBatchUpdate(true);
-      setSyncStatus(prev => ({
-        ...prev,
+      setSyncStatus(prevStatus => ({
+        ...prevStatus,
         isSyncing: false,
         pendingUpdates: 0,
         lastSyncTime: Date.now()
@@ -93,10 +93,10 @@ export const useRealtimeSync = (options = { batchInterval: 200, syncOnReconnect:
   
   // Manually trigger a sync
   const forceSyncNow = useCallback(() => {
-    setSyncStatus(prev => ({ ...prev, isSyncing: true }));
+    setSyncStatus(prevStatus => ({ ...prevStatus, isSyncing: true }));
     sendBatchUpdate(true);
-    setSyncStatus(prev => ({
-      ...prev,
+    setSyncStatus(prevStatus => ({
+      ...prevStatus,
       isSyncing: false,
       pendingUpdates: 0,
       lastSyncTime: Date.now()
