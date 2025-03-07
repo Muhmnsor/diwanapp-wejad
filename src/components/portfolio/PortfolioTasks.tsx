@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { AddTaskDialog } from './tasks/AddTaskDialog';
 import { useWorkspaceTasks } from './tasks/useWorkspaceTasks';
 import { TaskList } from './tasks/TaskList';
-import { Task } from '../tasks/types/task';  // Use the updated Task interface from tasks/types
+import { Task } from '../tasks/types/task';  // Use the shared Task interface
 
 export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { data: tasksData = [], isLoading, refetch } = useWorkspaceTasks(workspaceId);
   
   // Ensure tasksData is always treated as Task[] even if the query returns a different type
-  const tasks = Array.isArray(tasksData) ? tasksData : [];
+  const tasks = Array.isArray(tasksData) ? tasksData as Task[] : [];
 
   console.log('📊 Portfolio Tasks - Workspace ID:', workspaceId);
   console.log('📊 Portfolio Tasks - Tasks Data:', tasks);

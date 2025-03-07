@@ -5,7 +5,7 @@ import { useTasksState } from "./useTasksState";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Task } from "../types/task";
+import { Task } from "../../types/task";
 
 export const useTasksList = (projectId: string | undefined) => {
   // Hook for handling UI state
@@ -52,7 +52,7 @@ export const useTasksList = (projectId: string | undefined) => {
         
       if (error) throw error;
       
-      // Use type assertion to help TypeScript understand this is a setter function
+      // Properly type the setter function to handle Task[] correctly
       setTasks((prevTasks: Task[]) => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, ...updateData } : task

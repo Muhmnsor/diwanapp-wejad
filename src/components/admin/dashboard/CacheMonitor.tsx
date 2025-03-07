@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import { useCacheMonitor } from '@/hooks/useCacheMonitor';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
@@ -713,4 +713,71 @@ export const CacheMonitor = () => {
         
         <TabsContent value="advanced">
           <CardContent>
-            <h3 className="text-base font-medium mb-3">خيارات متقدمة
+            <h3 className="text-base font-medium mb-3">خيارات متقدمة</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-card border rounded-lg p-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Service Worker</h4>
+                <p className="text-xs text-muted-foreground mb-4">
+                  إدارة Service Worker للتحكم في التخزين المؤقت على مستوى المتصفح
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUpdateServiceWorker}
+                    disabled={isClearing}
+                    className="w-full"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    تحديث Service Worker
+                  </Button>
+                  {!serviceWorkerActive && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRegisterServiceWorker}
+                      disabled={isClearing}
+                      className="w-full"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      تسجيل Service Worker
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="bg-card border rounded-lg p-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">إعادة تعيين النظام</h4>
+                <p className="text-xs text-muted-foreground mb-4">
+                  إعادة تعيين إحصائيات وبيانات نظام التخزين المؤقت
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetStats}
+                    disabled={isClearing}
+                    className="w-full"
+                  >
+                    <BarChart2 className="h-4 w-4 mr-2" />
+                    إعادة تعيين الإحصائيات
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleClearAllCache}
+                    disabled={isClearing}
+                    className="w-full"
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    مسح جميع البيانات المخزنة
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </TabsContent>
+      </Tabs>
+    </Card>
+  );
+};
