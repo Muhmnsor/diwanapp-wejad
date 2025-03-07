@@ -1,26 +1,30 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.2'
-
-// CORS headers for browser requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log("[delete-workspace] Handling OPTIONS request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Parse request body
-    const { workspaceId, userId } = await req.json();
+    const requestBody = await req.json();
+    const { workspaceId, userId } = requestBody;
     
-    console.log("Received delete request for workspace:", workspaceId, "from user:", userId);
+    console.log("[delete-workspace] Request received:", {
+      time: new Date().toISOString(),
+      workspaceId,
+      userId,
+      method: req.method,
+      url: req.url,
+      headers: Object.fromEntries(req.headers)
+    });
     
     if (!workspaceId || !userId) {
-      console.error("Missing required parameters:", { workspaceId, userId });
+      console.error("[delete-workspace] Missing required parameters:", { workspaceId, userId });
       return new Response(
         JSON.stringify({ success: false, error: 'معرّف مساحة العمل ومعرّف المستخدم مطلوبان' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 400 }
@@ -32,7 +36,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing environment variables");
+      console.error("[delete-workspace] Missing environment variables");
       return new Response(
         JSON.stringify({ success: false, error: 'خطأ في تكوين الخادم' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
@@ -41,12 +45,10 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log("Attempting to delete workspace with parameters:", {
-      workspaceId,
-      userId
-    });
+    console.log("[delete-workspace] Attempting to delete workspace:", workspaceId, "by user:", userId);
     
     // First try to get the workspace to confirm it exists
+    console.log("[delete-workspace] Checking if workspace exists");
     const { data: workspace, error: fetchError } = await supabase
       .from('workspaces')
       .select('id, name, created_by')
@@ -54,24 +56,39 @@ Deno.serve(async (req) => {
       .single();
       
     if (fetchError) {
-      console.error("Error fetching workspace:", fetchError);
+      console.error("[delete-workspace] Error fetching workspace:", fetchError);
       return new Response(
-        JSON.stringify({ success: false, error: 'لم يتم العثور على مساحة العمل' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'لم يتم العثور على مساحة العمل',
+          details: fetchError
+        }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 404 }
       );
     }
     
     // Check permissions directly here as a double-check
+    console.log("[delete-workspace] Checking user permissions");
+    console.log("[delete-workspace] Workspace creator:", workspace.created_by);
+    console.log("[delete-workspace] Requesting user:", userId);
+    
     let hasPermission = workspace.created_by === userId;
     
     if (!hasPermission) {
+      console.log("[delete-workspace] User is not workspace creator, checking admin role");
       // Check if user is admin
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('roles:role_id(name)')
         .eq('user_id', userId)
         .single();
         
+      if (roleError && roleError.code !== 'PGRST116') {
+        console.error("[delete-workspace] Error checking user roles:", roleError);
+      }
+      
+      console.log("[delete-workspace] User role data:", roleData);
+      
       const isAdmin = roleData?.roles && 
         (typeof roleData.roles === 'object' && !Array.isArray(roleData.roles) 
           ? (roleData.roles as { name: string }).name === 'admin' 
@@ -80,10 +97,12 @@ Deno.serve(async (req) => {
             ));
             
       if (isAdmin) {
+        console.log("[delete-workspace] User is system admin");
         hasPermission = true;
       } else {
+        console.log("[delete-workspace] User is not system admin, checking workspace membership");
         // Check if user is workspace admin
-        const { data: memberData } = await supabase
+        const { data: memberData, error: memberError } = await supabase
           .from('workspace_members')
           .select()
           .eq('workspace_id', workspaceId)
@@ -91,31 +110,37 @@ Deno.serve(async (req) => {
           .eq('role', 'admin')
           .single();
           
+        if (memberError && memberError.code !== 'PGRST116') {
+          console.error("[delete-workspace] Error checking workspace membership:", memberError);
+        }
+        
+        console.log("[delete-workspace] Workspace membership data:", memberData);
         hasPermission = !!memberData;
       }
     }
     
     if (!hasPermission) {
-      console.error("Permission denied for user:", userId);
+      console.error("[delete-workspace] Permission denied for user:", userId);
       return new Response(
         JSON.stringify({ success: false, error: 'ليس لديك صلاحية لحذف مساحة العمل' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 403 }
       );
     }
     
-    console.log("Permission check passed, proceeding with deletion");
+    console.log("[delete-workspace] Permission check passed, proceeding with deletion");
     
     // Execute deletion operations in the reverse order (children before parents)
     // to avoid foreign key constraint issues and deadlocks
     
     // 1. First find projects in this workspace
+    console.log("[delete-workspace] Finding projects in workspace");
     const { data: projects, error: projectsError } = await supabase
       .from('project_tasks')
       .select('id')
       .eq('workspace_id', workspaceId);
       
     if (projectsError) {
-      console.error("Error fetching projects:", projectsError);
+      console.error("[delete-workspace] Error fetching projects:", projectsError);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -128,63 +153,68 @@ Deno.serve(async (req) => {
     
     // 2. Delete task-related entities first
     if (projects && projects.length > 0) {
-      console.log(`Found ${projects.length} projects to delete`);
+      console.log(`[delete-workspace] Found ${projects.length} projects to delete`);
       const projectIds = projects.map(p => p.id);
       
       // Get all tasks for these projects
+      console.log("[delete-workspace] Finding tasks for projects:", projectIds);
       const { data: tasks, error: tasksError } = await supabase
         .from('tasks')
         .select('id')
         .in('project_id', projectIds.map(id => id.toString()));
         
       if (tasksError) {
-        console.error("Error fetching tasks:", tasksError);
+        console.error("[delete-workspace] Error fetching tasks:", tasksError);
         // Continue with process even if there's an error here
       }
       
       if (tasks && tasks.length > 0) {
-        console.log(`Found ${tasks.length} tasks to delete`);
+        console.log(`[delete-workspace] Found ${tasks.length} tasks to delete`);
         const taskIds = tasks.map(t => t.id);
         
         // 2.1 Delete task-related entities in order (children first)
         try {
           // Delete subtasks first
+          console.log("[delete-workspace] Deleting subtasks");
           const { error: subtasksError } = await supabase
             .from('subtasks')
             .delete()
             .in('task_id', taskIds);
             
           if (subtasksError) {
-            console.error("Error deleting subtasks:", subtasksError);
+            console.error("[delete-workspace] Error deleting subtasks:", subtasksError);
           } else {
-            console.log("Successfully deleted subtasks");
+            console.log("[delete-workspace] Successfully deleted subtasks");
           }
           
           // Delete task attachments
+          console.log("[delete-workspace] Deleting task attachments");
           const { error: attachmentsError } = await supabase
             .from('task_attachments')
             .delete()
             .in('task_id', taskIds);
             
           if (attachmentsError) {
-            console.error("Error deleting task attachments:", attachmentsError);
+            console.error("[delete-workspace] Error deleting task attachments:", attachmentsError);
           } else {
-            console.log("Successfully deleted task attachments");
+            console.log("[delete-workspace] Successfully deleted task attachments");
           }
           
           // Delete task comments
+          console.log("[delete-workspace] Deleting task comments");
           const { error: commentsError } = await supabase
             .from('task_comments')
             .delete()
             .in('task_id', taskIds);
             
           if (commentsError) {
-            console.error("Error deleting task comments:", commentsError);
+            console.error("[delete-workspace] Error deleting task comments:", commentsError);
           } else {
-            console.log("Successfully deleted task comments");
+            console.log("[delete-workspace] Successfully deleted task comments");
           }
           
           // Delete unified task comments
+          console.log("[delete-workspace] Deleting unified task comments");
           const { error: unifiedCommentsError } = await supabase
             .from('unified_task_comments')
             .delete()
@@ -192,12 +222,13 @@ Deno.serve(async (req) => {
             .eq('task_table', 'tasks');
             
           if (unifiedCommentsError) {
-            console.error("Error deleting unified task comments:", unifiedCommentsError);
+            console.error("[delete-workspace] Error deleting unified task comments:", unifiedCommentsError);
           } else {
-            console.log("Successfully deleted unified task comments");
+            console.log("[delete-workspace] Successfully deleted unified task comments");
           }
           
           // Delete task discussion attachments
+          console.log("[delete-workspace] Deleting task discussion attachments");
           const { error: discussionAttachmentsError } = await supabase
             .from('task_discussion_attachments')
             .delete()
@@ -205,36 +236,39 @@ Deno.serve(async (req) => {
             .eq('task_table', 'tasks');
             
           if (discussionAttachmentsError) {
-            console.error("Error deleting discussion attachments:", discussionAttachmentsError);
+            console.error("[delete-workspace] Error deleting discussion attachments:", discussionAttachmentsError);
           } else {
-            console.log("Successfully deleted discussion attachments");
+            console.log("[delete-workspace] Successfully deleted discussion attachments");
           }
           
           // Delete task templates
+          console.log("[delete-workspace] Deleting task templates");
           const { error: templatesError } = await supabase
             .from('task_templates')
             .delete()
             .in('task_id', taskIds);
             
           if (templatesError) {
-            console.error("Error deleting task templates:", templatesError);
+            console.error("[delete-workspace] Error deleting task templates:", templatesError);
           } else {
-            console.log("Successfully deleted task templates");
+            console.log("[delete-workspace] Successfully deleted task templates");
           }
           
           // Delete task history
+          console.log("[delete-workspace] Deleting task history");
           const { error: historyError } = await supabase
             .from('task_history')
             .delete()
             .in('task_id', taskIds);
             
           if (historyError) {
-            console.error("Error deleting task history:", historyError);
+            console.error("[delete-workspace] Error deleting task history:", historyError);
           } else {
-            console.log("Successfully deleted task history");
+            console.log("[delete-workspace] Successfully deleted task history");
           }
           
           // Delete task deliverables
+          console.log("[delete-workspace] Deleting task deliverables");
           const { error: deliverablesError } = await supabase
             .from('task_deliverables')
             .delete()
@@ -242,48 +276,51 @@ Deno.serve(async (req) => {
             .eq('task_table', 'tasks');
             
           if (deliverablesError) {
-            console.error("Error deleting task deliverables:", deliverablesError);
+            console.error("[delete-workspace] Error deleting task deliverables:", deliverablesError);
           } else {
-            console.log("Successfully deleted task deliverables");
+            console.log("[delete-workspace] Successfully deleted task deliverables");
           }
           
           // Finally delete the tasks
+          console.log("[delete-workspace] Deleting tasks");
           const { error: tasksDeleteError } = await supabase
             .from('tasks')
             .delete()
             .in('id', taskIds);
             
           if (tasksDeleteError) {
-            console.error("Error deleting tasks:", tasksDeleteError);
+            console.error("[delete-workspace] Error deleting tasks:", tasksDeleteError);
           } else {
-            console.log("Successfully deleted tasks");
+            console.log("[delete-workspace] Successfully deleted tasks");
           }
         } catch (error) {
-          console.error("Error in task deletion process:", error);
+          console.error("[delete-workspace] Error in task deletion process:", error);
           // Continue with the process even if there are errors
         }
       }
       
       // 3. Delete project stages
+      console.log("[delete-workspace] Deleting project stages");
       const { error: stagesError } = await supabase
         .from('project_stages')
         .delete()
         .in('project_id', projectIds);
         
       if (stagesError) {
-        console.error("Error deleting project stages:", stagesError);
+        console.error("[delete-workspace] Error deleting project stages:", stagesError);
       } else {
-        console.log("Successfully deleted project stages");
+        console.log("[delete-workspace] Successfully deleted project stages");
       }
       
       // 4. Delete projects
+      console.log("[delete-workspace] Deleting projects");
       const { error: projectsDeleteError } = await supabase
         .from('project_tasks')
         .delete()
         .in('id', projectIds);
         
       if (projectsDeleteError) {
-        console.error("Error deleting projects:", projectsDeleteError);
+        console.error("[delete-workspace] Error deleting projects:", projectsDeleteError);
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -293,31 +330,33 @@ Deno.serve(async (req) => {
           { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
         );
       } else {
-        console.log("Successfully deleted projects");
+        console.log("[delete-workspace] Successfully deleted projects");
       }
     }
     
     // 5. Delete standalone tasks
+    console.log("[delete-workspace] Deleting standalone tasks");
     const { error: tasksError } = await supabase
       .from('tasks')
       .delete()
       .eq('workspace_id', workspaceId);
       
     if (tasksError) {
-      console.error("Error deleting workspace tasks:", tasksError);
+      console.error("[delete-workspace] Error deleting workspace tasks:", tasksError);
       // Continue with deletion attempt
     } else {
-      console.log("Successfully deleted standalone tasks");
+      console.log("[delete-workspace] Successfully deleted standalone tasks");
     }
     
     // 6. Delete workspace members
+    console.log("[delete-workspace] Deleting workspace members");
     const { error: membersError } = await supabase
       .from('workspace_members')
       .delete()
       .eq('workspace_id', workspaceId);
       
     if (membersError) {
-      console.error("Error deleting workspace members:", membersError);
+      console.error("[delete-workspace] Error deleting workspace members:", membersError);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -327,17 +366,18 @@ Deno.serve(async (req) => {
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
       );
     } else {
-      console.log("Successfully deleted workspace members");
+      console.log("[delete-workspace] Successfully deleted workspace members");
     }
     
     // 7. Finally delete the workspace
+    console.log("[delete-workspace] Deleting workspace");
     const { error: deleteError } = await supabase
       .from('workspaces')
       .delete()
       .eq('id', workspaceId);
       
     if (deleteError) {
-      console.error("Error deleting workspace:", deleteError);
+      console.error("[delete-workspace] Error deleting workspace:", deleteError);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -348,19 +388,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Workspace deleted successfully");
+    console.log("[delete-workspace] Workspace deleted successfully");
     return new Response(
-      JSON.stringify({ success: true, message: 'تم حذف مساحة العمل بنجاح' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'تم حذف مساحة العمل بنجاح',
+        timestamp: new Date().toISOString(),
+        workspaceId: workspaceId
+      }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
 
   } catch (error) {
-    console.error('Unexpected error:', error);
+    console.error('[delete-workspace] Unexpected error:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
         error: 'حدث خطأ غير متوقع',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
       }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
     );

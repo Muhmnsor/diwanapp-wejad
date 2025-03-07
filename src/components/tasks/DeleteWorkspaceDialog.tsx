@@ -40,6 +40,7 @@ export const DeleteWorkspaceDialog = ({
 
   const handleDelete = async () => {
     if (!user) {
+      console.error("Delete workspace operation failed: No authenticated user");
       toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
       return;
     }
@@ -55,13 +56,19 @@ export const DeleteWorkspaceDialog = ({
       cancelText: "إلغاء"
     });
 
-    if (!shouldDelete) return;
+    if (!shouldDelete) {
+      console.log("Workspace deletion cancelled by user");
+      return;
+    }
 
     setIsDeleting(true);
+    console.log("[DeleteWorkspace] Starting deletion process for workspace:", workspaceId);
+    console.log("[DeleteWorkspace] User ID:", user.id);
+    
     try {
-      console.log("Deleting workspace:", workspaceId, "by user:", user.id);
-      
       // Call Supabase edge function to delete workspace with explicit parameter names
+      console.log("[DeleteWorkspace] Calling delete-workspace edge function with params:", { workspaceId, userId: user.id });
+      
       const { data, error: functionError } = await supabase.functions.invoke('delete-workspace', {
         body: { 
           workspaceId: workspaceId, 
@@ -70,33 +77,38 @@ export const DeleteWorkspaceDialog = ({
       });
 
       if (functionError) {
-        console.error("Edge function error:", functionError);
+        console.error("[DeleteWorkspace] Edge function error:", functionError);
+        console.error("[DeleteWorkspace] Error details:", JSON.stringify(functionError));
         setError(functionError.message || "فشلت عملية حذف مساحة العمل");
         setIsDeleting(false);
         return;
       }
 
-      console.log("Delete workspace response:", data);
+      console.log("[DeleteWorkspace] Edge function response:", data);
 
       if (!data || !data.success) {
-        console.error("Deletion failed:", data);
+        console.error("[DeleteWorkspace] Deletion failed, edge function response:", data);
         setError(data?.error || "فشلت عملية حذف مساحة العمل");
         setIsDeleting(false);
         return;
       }
 
       // Invalidate queries to refresh workspaces data
+      console.log("[DeleteWorkspace] Invalidating workspaces queries");
       queryClient.invalidateQueries({queryKey: ['workspaces']});
       
       toast.success("تم حذف مساحة العمل بنجاح");
+      console.log("[DeleteWorkspace] Workspace deleted successfully");
       onOpenChange(false);
       
       // Navigate away from workspace page if we're currently viewing it
       if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
+        console.log("[DeleteWorkspace] Navigating away from deleted workspace page");
         navigate("/tasks");
       }
     } catch (error) {
-      console.error("Error deleting workspace:", error);
+      console.error("[DeleteWorkspace] Unexpected error during deletion:", error);
+      console.error("[DeleteWorkspace] Error details:", JSON.stringify(error));
       setError("حدث خطأ أثناء حذف مساحة العمل");
       setIsDeleting(false);
     }

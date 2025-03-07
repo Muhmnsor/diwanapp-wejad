@@ -13,22 +13,26 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
       setIsLoading(true);
       
       if (!user || !workspace) {
+        console.log("[useWorkspacePermissions] No user or workspace, permissions denied");
         setCanEdit(false);
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log("[useWorkspacePermissions] Checking permissions for workspace:", workspace.id, "user:", user.id);
         // Check if user is creator of workspace
         const isCreator = workspace.created_by === user.id;
         
         if (isCreator) {
+          console.log("[useWorkspacePermissions] User is workspace creator, permissions granted");
           setCanEdit(true);
           setIsLoading(false);
           return;
         }
         
         // Check if user is system admin
+        console.log("[useWorkspacePermissions] Checking if user has admin role");
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('roles:role_id(name)')
@@ -36,13 +40,14 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
           .single();
         
         if (roleError && roleError.code !== 'PGRST116') {
-          console.error('Error checking user roles:', roleError);
+          console.error("[useWorkspacePermissions] Error checking user roles:", roleError);
         }
           
         // Handle different response formats for roles
         let isAdmin = false;
         
         if (roleData?.roles) {
+          console.log("[useWorkspacePermissions] Role data received:", roleData.roles);
           if (typeof roleData.roles === 'object' && !Array.isArray(roleData.roles)) {
             // Handle case when roles is a single object
             isAdmin = (roleData.roles as { name: string }).name === 'admin';
@@ -56,12 +61,14 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         }
         
         if (isAdmin) {
+          console.log("[useWorkspacePermissions] User is system admin, permissions granted");
           setCanEdit(true);
           setIsLoading(false);
           return;
         }
         
         // Check if user is workspace admin
+        console.log("[useWorkspacePermissions] Checking if user is workspace admin");
         const { data: memberData, error: memberError } = await supabase
           .from('workspace_members')
           .select('role')
@@ -71,13 +78,21 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
           .single();
         
         if (memberError && memberError.code !== 'PGRST116') {
-          console.error('Error checking workspace membership:', memberError);
+          console.error("[useWorkspacePermissions] Error checking workspace membership:", memberError);
         }
         
-        setCanEdit(!!memberData);
+        if (memberData) {
+          console.log("[useWorkspacePermissions] User is workspace admin, permissions granted");
+          setCanEdit(true);
+        } else {
+          console.log("[useWorkspacePermissions] User does not have required permissions");
+          setCanEdit(false);
+        }
+        
         setIsLoading(false);
       } catch (error) {
-        console.error('Error checking permissions:', error);
+        console.error("[useWorkspacePermissions] Error checking permissions:", error);
+        console.error("[useWorkspacePermissions] Error details:", JSON.stringify(error));
         setCanEdit(false);
         setIsLoading(false);
       }

@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { useAuthStore } from "@/store/refactored-auth";
 import { useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface EditWorkspaceDialogProps {
   open: boolean;
@@ -36,6 +38,7 @@ export const EditWorkspaceDialog = ({
   workspace,
 }: EditWorkspaceDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   
@@ -49,25 +52,32 @@ export const EditWorkspaceDialog = ({
   // Reset form when workspace data changes
   useEffect(() => {
     if (open) {
+      console.log("[EditWorkspace] Opened edit dialog for workspace:", workspace.id);
       reset({
         name: workspace.name,
         description: workspace.description || "",
       });
+      setError(null);
     }
   }, [open, reset, workspace]);
 
   const onSubmit = async (data: WorkspaceFormData) => {
     if (!user) {
+      console.error("[EditWorkspace] Operation failed: No authenticated user");
       toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
       return;
     }
 
     setIsSubmitting(true);
-    console.log("Updating workspace:", workspace.id, "with data:", data);
+    setError(null);
+    console.log("[EditWorkspace] Updating workspace:", workspace.id);
+    console.log("[EditWorkspace] User ID:", user.id);
+    console.log("[EditWorkspace] Form data:", data);
     
     try {
       // Call Supabase to update workspace
-      const { error } = await supabase
+      console.log("[EditWorkspace] Sending update request to Supabase");
+      const { error: updateError } = await supabase
         .from('workspaces')
         .update({
           name: data.name,
@@ -76,18 +86,25 @@ export const EditWorkspaceDialog = ({
         })
         .eq('id', workspace.id);
 
-      if (error) {
-        console.error("Error updating workspace:", error);
-        throw error;
+      if (updateError) {
+        console.error("[EditWorkspace] Error updating workspace:", updateError);
+        console.error("[EditWorkspace] Error details:", JSON.stringify(updateError));
+        setError(updateError.message || "حدث خطأ أثناء تحديث مساحة العمل");
+        setIsSubmitting(false);
+        return;
       }
 
       // Invalidate the workspaces query to refresh the list
+      console.log("[EditWorkspace] Update successful, invalidating queries");
       queryClient.invalidateQueries({queryKey: ['workspaces']});
       
       toast.success("تم تحديث مساحة العمل بنجاح");
+      console.log("[EditWorkspace] Workspace updated successfully");
       onOpenChange(false);
     } catch (error) {
-      console.error("Error updating workspace:", error);
+      console.error("[EditWorkspace] Unexpected error during update:", error);
+      console.error("[EditWorkspace] Error details:", JSON.stringify(error));
+      setError("حدث خطأ أثناء تحديث مساحة العمل");
       toast.error("حدث خطأ أثناء تحديث مساحة العمل");
     } finally {
       setIsSubmitting(false);
@@ -124,6 +141,13 @@ export const EditWorkspaceDialog = ({
               rows={4}
             />
           </div>
+          
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           
           <DialogFooter className="flex-row-reverse sm:justify-start gap-2 mt-4">
             <Button 
