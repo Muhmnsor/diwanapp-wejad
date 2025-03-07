@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "../types/task";
+import { Task } from "@/types/workspace";
 import { toast } from "sonner";
 
 export const useTaskStatusManagement = (

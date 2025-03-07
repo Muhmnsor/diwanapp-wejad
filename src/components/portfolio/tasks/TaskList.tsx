@@ -23,10 +23,11 @@ export const TaskList = ({ tasks }: TaskListProps) => {
         <TaskCard 
           key={task.id} 
           task={{
-            ...task,
+            id: task.id,
             title: task.title || '',
             description: task.description || null,
             due_date: task.due_date || null,
+            assigned_to: task.assigned_to || null,
             status: task.status || 'pending',
             priority: task.priority || 'medium',
             updated_at: task.updated_at || new Date().toISOString(),

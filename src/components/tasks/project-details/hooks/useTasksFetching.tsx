@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "@/components/tasks/project-details/types/task";
+import { Task } from "@/types/workspace";
 import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 export const useTasksFetching = (projectId: string | undefined) => {

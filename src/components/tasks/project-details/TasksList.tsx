@@ -7,7 +7,7 @@ import { TasksFilter } from "./components/TasksFilter";
 import { TasksContent } from "./components/TasksContent";
 import { getStatusBadge, getPriorityBadge, formatDate } from "./utils/taskFormatters";
 import { useTasksList } from "./hooks/useTasksList";
-import { Task } from "./types/task";
+import { Task } from "@/types/workspace";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 import { useState } from "react";
 import { EditTaskDialog } from "./EditTaskDialog";

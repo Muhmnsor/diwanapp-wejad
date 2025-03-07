@@ -5,7 +5,7 @@ import { useTasksState } from "./useTasksState";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Task } from "../../types/task";
+import { Task } from "@/types/workspace";
 
 export const useTasksList = (projectId: string | undefined) => {
   // Hook for handling UI state
