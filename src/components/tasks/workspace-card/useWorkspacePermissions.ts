@@ -4,10 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Workspace } from "@/types/workspace";
 import { User } from "@/store/refactored-auth/types";
 
-export const useWorkspacePermissions = (
-  workspace: Workspace | { id: string },
-  user: User | null
-) => {
+export const useWorkspacePermissions = (workspace: Workspace, user: User | null) => {
   const [canEdit, setCanEdit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,24 +22,7 @@ export const useWorkspacePermissions = (
       try {
         console.log("[useWorkspacePermissions] Checking permissions for workspace:", workspace.id, "user:", user.id);
         // Check if user is creator of workspace
-        let isCreator = false;
-        
-        if ('created_by' in workspace) {
-          isCreator = workspace.created_by === user.id;
-        } else {
-          // If we only have workspace ID, fetch the workspace data to check creator
-          const { data: workspaceData, error: workspaceError } = await supabase
-            .from('workspaces')
-            .select('created_by')
-            .eq('id', workspace.id)
-            .single();
-            
-          if (workspaceData) {
-            isCreator = workspaceData.created_by === user.id;
-          } else if (workspaceError) {
-            console.error("[useWorkspacePermissions] Error fetching workspace:", workspaceError);
-          }
-        }
+        const isCreator = workspace.created_by === user.id;
         
         if (isCreator) {
           console.log("[useWorkspacePermissions] User is workspace creator, permissions granted");

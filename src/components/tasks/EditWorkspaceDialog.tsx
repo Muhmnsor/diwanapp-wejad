@@ -70,66 +70,21 @@ export const EditWorkspaceDialog = ({
 
     setIsSubmitting(true);
     setError(null);
-    
-    // Add more detailed logging
-    console.log("[EditWorkspace] Starting workspace update process");
-    console.log("[EditWorkspace] Workspace ID:", workspace.id);
+    console.log("[EditWorkspace] Updating workspace:", workspace.id);
     console.log("[EditWorkspace] User ID:", user.id);
-    console.log("[EditWorkspace] Old data:", { name: workspace.name, description: workspace.description });
-    console.log("[EditWorkspace] New data:", data);
+    console.log("[EditWorkspace] Form data:", data);
     
-    // Check permissions first
     try {
-      console.log("[EditWorkspace] Checking user permissions");
-      const { data: permissionData, error: permissionError } = await supabase
-        .from('workspace_members')
-        .select('role')
-        .eq('workspace_id', workspace.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      // Also check if user is creator of workspace
-      const isCreator = workspace.created_by === user.id;
-      
-      // Check if user is system admin
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('roles:role_id(name)')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      const isAdmin = roleData?.roles && 
-        ((typeof roleData.roles === 'object' && !Array.isArray(roleData.roles)) 
-          ? (roleData.roles as { name: string }).name === 'admin'
-          : Array.isArray(roleData.roles) 
-            ? roleData.roles.some((role: any) => role && typeof role === 'object' && role.name === 'admin')
-            : false);
-      
-      const canEdit = isCreator || isAdmin || (permissionData?.role === 'admin');
-      
-      console.log("[EditWorkspace] Permission check results:", { 
-        isCreator, 
-        isAdmin, 
-        memberRole: permissionData?.role,
-        canEdit 
-      });
-      
-      if (!canEdit) {
-        throw new Error("ليس لديك صلاحية تعديل مساحة العمل");
-      }
-
       // Call Supabase to update workspace
       console.log("[EditWorkspace] Sending update request to Supabase");
-      const { data: updateData, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from('workspaces')
         .update({
           name: data.name,
           description: data.description,
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', workspace.id)
-        .select();
-
-      console.log("[EditWorkspace] Update response:", { data: updateData, error: updateError });
+        .eq('id', workspace.id);
 
       if (updateError) {
         console.error("[EditWorkspace] Error updating workspace:", updateError);
@@ -149,7 +104,7 @@ export const EditWorkspaceDialog = ({
     } catch (error) {
       console.error("[EditWorkspace] Unexpected error during update:", error);
       console.error("[EditWorkspace] Error details:", JSON.stringify(error));
-      setError(error instanceof Error ? error.message : "حدث خطأ أثناء تحديث مساحة العمل");
+      setError("حدث خطأ أثناء تحديث مساحة العمل");
       toast.error("حدث خطأ أثناء تحديث مساحة العمل");
     } finally {
       setIsSubmitting(false);
