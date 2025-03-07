@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -48,7 +47,6 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const [canEdit, setCanEdit] = useState(false);
   const { user } = useAuthStore();
 
-  // Check if user has permission to edit/delete
   useEffect(() => {
     const checkPermissions = async () => {
       if (!user) {
@@ -57,13 +55,8 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
       }
 
       try {
-        // Check if user is workspace creator or admin
         const isCreator = workspace.created_by === user.id;
-        
-        // Check if user is admin
         const isAdmin = user.isAdmin;
-        
-        // Check if user is workspace member with admin role
         const { data: memberData } = await supabase
           .from('workspace_members')
           .select('role')
@@ -83,11 +76,9 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     checkPermissions();
   }, [workspace.id, workspace.created_by, user]);
 
-  // Fetch project counts
   useEffect(() => {
     const fetchProjectCounts = async () => {
       try {
-        // Fetch all projects for this workspace
         const { data: projects, error } = await supabase
           .from('project_tasks')
           .select('status')
@@ -100,7 +91,6 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
 
         const total = projects?.length || 0;
         
-        // Consider a project completed if status is 'completed'
         const completed = projects?.filter(p => p.status === 'completed').length || 0;
         
         const pending = projects?.filter(p => 
@@ -134,7 +124,6 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     fetchProjectCounts();
   }, [workspace.id]);
 
-  // Fetch members count
   useEffect(() => {
     const fetchMembersCount = async () => {
       try {
@@ -155,14 +144,14 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     };
 
     fetchMembersCount();
-  }, [workspace.id, isMembersDialogOpen]); // Re-fetch when dialog closes
+  }, [workspace.id, isMembersDialogOpen]);
 
   const handleClick = () => {
     navigate(`/tasks/workspace/${workspace.id}`);
   };
 
   const handleManageMembers = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation to the details page
+    e.stopPropagation();
     setIsMembersDialogOpen(true);
   };
 
@@ -171,12 +160,12 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   };
 
   const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation
+    e.stopPropagation();
     setIsEditDialogOpen(true);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation
+    e.stopPropagation();
     setIsDeleteDialogOpen(true);
   };
 
@@ -197,7 +186,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" dir="rtl">
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={handleEdit}>
                     <Pencil className="h-4 w-4 ml-2" />
                     <span>تعديل</span>
