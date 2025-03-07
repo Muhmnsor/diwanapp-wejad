@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TaskTitleField } from "./components/TaskTitleField";
 import { TaskDescriptionField } from "./components/TaskDescriptionField";
@@ -11,19 +10,10 @@ import { TaskAttachmentField } from "./components/TaskAttachmentField";
 import { TaskCategoryField } from "./components/TaskCategoryField";
 import { TaskDependenciesField, TaskDependency } from "./components/TaskDependenciesField";
 import { ProjectMember } from "./hooks/useProjectMembers";
+import { DependencyType } from "./hooks/useTaskDependencies";
 
 export interface TaskFormProps {
-  onSubmit: (formData: {
-    title: string;
-    description: string;
-    dueDate: string;
-    priority: string;
-    stageId: string;
-    assignedTo: string | null;
-    templates?: File[] | null;
-    category?: string;
-    dependencies?: TaskDependency[];
-  }) => Promise<void>;
+  onSubmit: (formData: any) => void;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
@@ -36,15 +26,19 @@ export interface TaskFormProps {
     stageId: string;
     assignedTo: string | null;
     category?: string;
-    dependencies?: TaskDependency[];
+    dependencies?: {
+      id?: string;
+      taskId: string;
+      dependencyType: DependencyType;
+    }[];
   };
   isEditMode?: boolean;
   projectId?: string;
 }
 
-export const TaskForm = ({ 
-  onSubmit, 
-  isSubmitting, 
+export const TaskForm = ({
+  onSubmit,
+  isSubmitting,
   projectStages,
   projectMembers,
   isGeneral,
@@ -59,8 +53,10 @@ export const TaskForm = ({
   const [stageId, setStageId] = useState(initialValues?.stageId || "");
   const [assignedTo, setAssignedTo] = useState<string | null>(initialValues?.assignedTo || null);
   const [templates, setTemplates] = useState<File[] | null>(null);
-  const [category, setCategory] = useState<string>(initialValues?.category || "إدارية");
-  const [dependencies, setDependencies] = useState<TaskDependency[]>(initialValues?.dependencies || []);
+  const [category, setCategory] = useState<string>(initialValues?.category || "");
+  const [selectedDependencies, setSelectedDependencies] = useState<TaskDependency[]>(
+    initialValues?.dependencies || []
+  );
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -72,32 +68,22 @@ export const TaskForm = ({
     }
   }, [projectStages, stageId, projectMembers, assignedTo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("Submitting form with data:", { 
-      title, 
-      description, 
-      dueDate, 
-      priority, 
+    const formData = {
+      title,
+      description,
+      dueDate,
+      priority,
       stageId,
       assignedTo,
       templates,
       category: isGeneral ? category : undefined,
-      dependencies
-    });
+      dependencies: selectedDependencies
+    };
     
-    await onSubmit({ 
-      title, 
-      description, 
-      dueDate, 
-      priority, 
-      stageId,
-      assignedTo,
-      templates,
-      category: isGeneral ? category : undefined,
-      dependencies
-    });
+    onSubmit(formData);
   };
 
   return (
@@ -123,17 +109,15 @@ export const TaskForm = ({
         />
       </div>
       
-      {/* Add Task Dependencies Field */}
       {!isGeneral && projectId && (
         <TaskDependenciesField 
           projectId={projectId}
-          selectedDependencies={dependencies}
-          setSelectedDependencies={setDependencies}
-          currentTaskId={isEditMode ? initialValues?.stageId : undefined}
+          selectedDependencies={selectedDependencies}
+          setSelectedDependencies={setSelectedDependencies}
+          currentTaskId={initialValues?.stageId}
         />
       )}
       
-      {/* حقل النماذج فقط */}
       <TaskAttachmentField
         attachment={templates}
         setAttachment={setTemplates}

@@ -1,130 +1,117 @@
-
 import { useState } from "react";
-import { Task } from "../types/task";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { useConfirm } from "@/hooks/useConfirm";
-import { useNavigate } from "react-router-dom";
-import { TableRow, TableCell } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Task } from "@/types/workspace";
+import { EditTaskDialog } from "../EditTaskDialog";
+import { DeleteTaskDialog } from "../DeleteTaskDialog";
+import { TaskDependenciesBadge } from "./TaskDependenciesBadge";
 
 interface TaskItemProps {
   task: Task;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
-  formatDate: (date: string | null) => string;
-  onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
-  onEdit?: (task: Task) => void;
-  onDelete?: (taskId: string) => Promise<void>;
+  projectStages: { id: string; name: string }[];
+  projectMembers: { id: string; user_email: string }[];
+  onStatusChange: (taskId: string, newStatus: string) => void;
+  onDelete: (taskId: string) => void;
+  onTaskUpdated?: () => void;
 }
 
 export const TaskItem = ({ 
-  task, 
-  getStatusBadge, 
-  getPriorityBadge, 
-  formatDate, 
-  onStatusChange,
+  task,
   projectId,
-  onEdit,
-  onDelete
+  projectStages,
+  projectMembers,
+  onStatusChange,
+  onDelete,
+  onTaskUpdated
 }: TaskItemProps) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const { confirm } = useConfirm();
-  const navigate = useNavigate();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
-  const handleStatusUpdate = async (status: string) => {
-    if (isUpdating) return;
-    
-    setIsUpdating(true);
-    try {
-      await onStatusChange(task.id, status);
-      toast.success("تم تحديث حالة المهمة");
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("فشل تحديث حالة المهمة");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-  
-  const handleDelete = async () => {
-    if (!onDelete) return;
-    
-    const confirmed = await confirm({
-      title: "حذف المهمة",
-      description: "هل أنت متأكد من رغبتك في حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
-      confirmText: "حذف",
-      cancelText: "إلغاء"
-    });
-    
-    if (confirmed) {
-      try {
-        await onDelete(task.id);
-      } catch (error) {
-        console.error("Error deleting task:", error);
-      }
-    }
-  };
-  
-  const handleEdit = () => {
-    if (onEdit) {
-      onEdit(task);
-    }
+  const handleStatusChange = (newStatus: string) => {
+    onStatusChange(task.id, newStatus);
   };
   
   return (
-    <TableRow className="hover:bg-gray-50">
-      <TableCell className="font-medium">{task.title}</TableCell>
-      <TableCell>{getStatusBadge(task.status)}</TableCell>
-      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-      <TableCell>{task.assigned_user_name || 'غير محدد'}</TableCell>
-      <TableCell>{formatDate(task.due_date)}</TableCell>
-      <TableCell>
-        <div className="flex justify-end items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {task.status !== 'completed' && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate('completed')}>
-                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                  <span>إكمال المهمة</span>
-                </DropdownMenuItem>
-              )}
-              
-              {task.status === 'completed' && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate('in_progress')}>
-                  <Clock className="mr-2 h-4 w-4 text-amber-500" />
-                  <span>إعادة فتح المهمة</span>
-                </DropdownMenuItem>
-              )}
-              
-              {task.status !== 'delayed' && task.status !== 'completed' && (
-                <DropdownMenuItem onClick={() => handleStatusUpdate('delayed')}>
-                  <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
-                  <span>تعليق المهمة</span>
-                </DropdownMenuItem>
-              )}
-              
-              <DropdownMenuItem onClick={handleEdit}>
-                <Pencil className="mr-2 h-4 w-4" />
-                <span>تعديل</span>
-              </DropdownMenuItem>
-              
-              <DropdownMenuItem onClick={handleDelete} className="text-red-600">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>حذف</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <div
+      key={task.id}
+      className="bg-white rounded-md shadow-sm hover:shadow-md transition-shadow duration-200 p-4"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1 font-medium">
+          <span>{task.title}</span>
         </div>
-      </TableCell>
-    </TableRow>
+        
+        <div className="flex items-center gap-1">
+          <TaskDependenciesBadge taskId={task.id} />
+          
+          {task.status && (
+            <Badge variant="secondary">
+              {task.status}
+            </Badge>
+          )}
+        </div>
+      </div>
+      
+      <p className="text-sm text-gray-500 mb-4">{task.description}</p>
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {task.priority && (
+            <Badge variant="outline">
+              {task.priority}
+            </Badge>
+          )}
+          {task.due_date && (
+            <span className="text-xs text-gray-400">
+              Due: {new Date(task.due_date).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-2 rounded-md hover:bg-gray-100">
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              تعديل
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              حذف
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      
+      <EditTaskDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        task={task}
+        projectId={projectId}
+        projectStages={projectStages}
+        projectMembers={projectMembers}
+        onStatusChange={handleStatusChange}
+        onTaskUpdated={onTaskUpdated}
+      />
+      
+      <DeleteTaskDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        taskId={task.id}
+        taskTitle={task.title}
+        onDelete={onDelete}
+      />
+    </div>
   );
 };

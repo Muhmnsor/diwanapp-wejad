@@ -1,208 +1,334 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip } from "lucide-react";
-import { Task } from "../types/task";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useAuthStore } from "@/store/authStore";
-import { toast } from "sonner";
-import { SubtasksList } from "./subtasks/SubtasksList";
-import { checkPendingSubtasks } from "../services/subtasksService";
-import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
-import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { 
+  MoreHorizontal, 
+  Calendar, 
+  Clock, 
+  Edit, 
+  Trash, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle,
+  FileText,
+  MessageSquare,
+  Paperclip
+} from "lucide-react";
+import { formatDate, formatDateWithTime } from "@/lib/utils";
+import { Task } from "@/types/workspace";
+import { EditTaskDialog } from "../EditTaskDialog";
+import { DeleteTaskDialog } from "../DeleteTaskDialog";
+import { ViewTaskDialog } from "../ViewTaskDialog";
 import { TaskDependenciesBadge } from "./TaskDependenciesBadge";
-import { useTaskDependencies } from "../hooks/useTaskDependencies";
 
 interface TaskCardProps {
   task: Task;
-  getStatusBadge: (status: string) => JSX.Element;
-  getPriorityBadge: (priority: string | null) => JSX.Element | null;
-  formatDate: (date: string | null) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
-  projectId: string;
+  onDelete: (taskId: string) => void;
+  onTaskUpdated: () => void;
+  projectStages?: { id: string; name: string }[];
+  projectMembers?: { id: string; name: string }[];
+  isGeneral?: boolean;
 }
 
 export const TaskCard = ({ 
   task, 
-  getStatusBadge, 
-  getPriorityBadge, 
-  formatDate,
-  onStatusChange,
-  projectId
+  onStatusChange, 
+  onDelete,
+  onTaskUpdated,
+  projectStages,
+  projectMembers,
+  isGeneral = false
 }: TaskCardProps) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [showSubtasks, setShowSubtasks] = useState(false);
-  const [showDiscussion, setShowDiscussion] = useState(false);
-  const [showAttachments, setShowAttachments] = useState(false);
-  const { user } = useAuthStore();
-  const { canChangeStatus } = useTaskDependencies(task.id);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   
-  const canChangeTaskStatus = () => {
-    return (
-      user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
-    );
-  };
-
-  const handleStatusUpdate = async (newStatus: string) => {
-    if (!canChangeTaskStatus()) {
-      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها");
-      return;
-    }
-    
-    setIsUpdating(true);
-    try {
-      // إذا كانت المهمة قيد التغيير إلى "مكتملة"، تحقق من المهام الفرعية أولاً
-      if (newStatus === 'completed') {
-        // Check dependencies first
-        const { allowed, message } = await canChangeStatus(newStatus);
-        if (!allowed) {
-          toast.error(message || "لا يمكن إكمال المهمة بسبب اعتماديات غير مكتملة");
-          setIsUpdating(false);
-          return;
-        }
-      
-        // Then check subtasks
-        const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
-        
-        if (error) {
-          toast.error(error);
-          setIsUpdating(false);
-          return;
-        }
-        
-        if (hasPendingSubtasks) {
-          toast.error("لا يمكن إكمال المهمة حتى يتم إكمال جميع المهام الفرعية");
-          setIsUpdating(false);
-          return;
-        }
-      }
-      
-      await onStatusChange(task.id, newStatus);
-    } catch (error) {
-      console.error("Error updating task status:", error);
-      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
-    } finally {
-      setIsUpdating(false);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+      case 'delayed':
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
     }
   };
-
+  
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'مكتملة';
+      case 'in_progress':
+        return 'قيد التنفيذ';
+      case 'pending':
+        return 'قيد الانتظار';
+      case 'delayed':
+        return 'متأخرة';
+      default:
+        return status;
+    }
+  };
+  
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-orange-100 text-orange-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'عالية';
+      case 'medium':
+        return 'متوسطة';
+      case 'low':
+        return 'منخفضة';
+      default:
+        return priority;
+    }
+  };
+  
+  const handleStatusChange = (newStatus: string) => {
+    onStatusChange(task.id, newStatus);
+  };
+  
+  const handleDelete = () => {
+    setIsDeleteDialogOpen(false);
+    onDelete(task.id);
+  };
+  
   return (
-    <Card className="border hover:border-primary/50 transition-colors">
-      <CardContent className="p-4 text-right">
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex gap-2">
-            {getStatusBadge(task.status)}
-            {getPriorityBadge(task.priority)}
-            <TaskDependenciesBadge taskId={task.id} />
-          </div>
-          <div className="flex items-center cursor-pointer" onClick={() => setShowSubtasks(!showSubtasks)}>
-            <h3 className="font-semibold text-lg">{task.title}</h3>
-            {showSubtasks ? 
-              <ChevronUp className="h-4 w-4 text-gray-500 mr-1" /> : 
-              <ChevronDown className="h-4 w-4 text-gray-500 mr-1" />
-            }
-          </div>
-        </div>
-        
-        {task.description && (
-          <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{task.description}</p>
-        )}
-        
-        <div className="flex flex-col gap-2 items-end">
-          {task.assigned_user_name && (
-            <div className="flex items-center text-sm">
-              <span className="mr-1">{task.assigned_user_name}</span>
-              <Users className="h-3.5 w-3.5 mr-1 text-gray-500" />
-            </div>
-          )}
-          
-          {task.due_date && (
-            <div className="flex items-center text-sm">
-              <span className="mr-1">{formatDate(task.due_date)}</span>
-              <Calendar className="h-3.5 w-3.5 mr-1 text-gray-500" />
-            </div>
-          )}
-          
-          {task.stage_name && (
-            <Badge variant="outline" className="font-normal text-xs">
-              {task.stage_name}
-            </Badge>
-          )}
-
-          <div className="mt-3 flex justify-end gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowAttachments(true)}
+    <div
+      className={`border rounded-md overflow-hidden transition-all duration-200 ${
+        task.status === 'completed' ? 'opacity-80' : ''
+      }`}
+    >
+      <div className="flex flex-col h-full justify-between">
+        <div>
+          <div className="flex items-center justify-between mb-2 p-3 pb-0">
+            <div 
+              className="font-medium cursor-pointer hover:text-primary transition-colors"
+              onClick={() => setIsViewDialogOpen(true)}
             >
-              <Paperclip className="h-3.5 w-3.5" />
-              المرفقات
-            </Button>
+              {task.title}
+            </div>
             
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowDiscussion(true)}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              مناقشة
-            </Button>
-
-            {canChangeTaskStatus() && (
-              task.status !== 'completed' ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-7 px-3"
-                  onClick={() => handleStatusUpdate('completed')}
-                  disabled={isUpdating}
-                >
-                  <Check className="h-3.5 w-3.5 text-green-500 ml-1" />
-                  إكمال المهمة
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-7 px-3"
-                  onClick={() => handleStatusUpdate('in_progress')}
-                  disabled={isUpdating}
-                >
-                  <Clock className="h-3.5 w-3.5 text-amber-500 ml-1" />
-                  إعادة فتح المهمة
-                </Button>
-              )
+            <div className="flex items-center gap-1">
+              <TaskDependenciesBadge taskId={task.id} />
+              
+              <Badge className={getStatusColor(task.status || 'pending')}>
+                {getStatusLabel(task.status || 'pending')}
+              </Badge>
+            </div>
+          </div>
+          
+          {task.description && (
+            <div className="px-3 py-1 text-sm text-gray-600 line-clamp-2">
+              {task.description}
+            </div>
+          )}
+          
+          <div className="px-3 py-1 flex flex-wrap gap-2">
+            {task.due_date && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(task.due_date)}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>تاريخ الاستحقاق</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            
+            {task.priority && (
+              <Badge className={`${getPriorityColor(task.priority)} text-xs`}>
+                {getPriorityLabel(task.priority)}
+              </Badge>
+            )}
+            
+            {task.stage_name && (
+              <Badge variant="secondary" className="text-xs">
+                {task.stage_name}
+              </Badge>
+            )}
+            
+            {task.category && (
+              <Badge variant="outline" className="text-xs">
+                {task.category}
+              </Badge>
             )}
           </div>
-          
-          {showSubtasks && (
-            <div className="w-full mt-3">
-              <SubtasksList 
-                taskId={task.id}
-                projectId={projectId}
-              />
-            </div>
-          )}
         </div>
-      </CardContent>
-
-      {/* Task Discussion Dialog */}
-      <TaskDiscussionDialog 
-        open={showDiscussion} 
-        onOpenChange={setShowDiscussion}
+        
+        <div className="p-3 pt-2 flex items-center justify-between mt-auto border-t">
+          <div className="flex items-center gap-2">
+            {task.assigned_to && task.assigned_user_name ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback className="text-xs">
+                        {task.assigned_user_name.substring(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{task.assigned_user_name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                غير مسندة
+              </Badge>
+            )}
+            
+            <div className="flex items-center gap-1">
+              {task.templates && task.templates.length > 0 && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="text-gray-500">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{task.templates.length} نماذج</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
+              {task.attachment_url && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="text-gray-500">
+                        <Paperclip className="h-4 w-4" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>مرفقات</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsViewDialogOpen(true)}>
+                  عرض التفاصيل
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  <Edit className="h-4 w-4 ml-2" />
+                  تعديل
+                </DropdownMenuItem>
+                
+                {task.status !== 'completed' && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('completed')}>
+                    <CheckCircle2 className="h-4 w-4 ml-2" />
+                    تحديد كمكتملة
+                  </DropdownMenuItem>
+                )}
+                
+                {task.status !== 'in_progress' && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
+                    <Clock className="h-4 w-4 ml-2" />
+                    تحديد كقيد التنفيذ
+                  </DropdownMenuItem>
+                )}
+                
+                {task.status !== 'pending' && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('pending')}>
+                    <AlertCircle className="h-4 w-4 ml-2" />
+                    تحديد كقيد الانتظار
+                  </DropdownMenuItem>
+                )}
+                
+                {task.status !== 'delayed' && (
+                  <DropdownMenuItem onClick={() => handleStatusChange('delayed')}>
+                    <XCircle className="h-4 w-4 ml-2" />
+                    تحديد كمتأخرة
+                  </DropdownMenuItem>
+                )}
+                
+                <DropdownMenuItem 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-red-600"
+                >
+                  <Trash className="h-4 w-4 ml-2" />
+                  حذف
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+      
+      <EditTaskDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
         task={task}
+        onTaskUpdated={onTaskUpdated}
+        projectStages={projectStages}
+        projectMembers={projectMembers}
+        isGeneral={isGeneral}
       />
       
-      {/* Task Attachment Dialog */}
-      <TaskAttachmentDialog
-        task={task}
-        open={showAttachments}
-        onOpenChange={setShowAttachments}
+      <DeleteTaskDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        taskId={task.id}
+        taskTitle={task.title}
+        onDelete={handleDelete}
       />
-    </Card>
+      
+      <ViewTaskDialog
+        open={isViewDialogOpen}
+        onOpenChange={setIsViewDialogOpen}
+        taskId={task.id}
+        onTaskUpdated={onTaskUpdated}
+      />
+    </div>
   );
 };
