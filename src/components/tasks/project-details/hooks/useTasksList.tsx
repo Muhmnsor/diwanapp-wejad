@@ -3,7 +3,7 @@ import { useTasksFetching } from "./useTasksFetching";
 import { useTaskStatusManagement } from "./useTaskStatusManagement";
 import { useTasksState } from "./useTasksState";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Task } from "@/types/workspace";
 
@@ -52,6 +52,86 @@ export const useTasksList = (projectId: string | undefined) => {
     }
   );
 
+  // Setup Supabase real-time subscription for task changes
+  useEffect(() => {
+    if (!projectId) return;
+    
+    console.log("Setting up real-time task updates for project:", projectId);
+    
+    // Create a channel to listen for task changes on this project
+    const channel = supabase
+      .channel(`project-tasks-${projectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tasks',
+          filter: `project_id=eq.${projectId}`
+        },
+        (payload) => {
+          console.log("Task update received:", payload);
+          
+          // Update the local task state with the new task data
+          setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+              task.id === payload.new.id ? { ...task, ...payload.new } as Task : task
+            )
+          );
+          
+          // Show toast notification for the update
+          toast.info("تم تحديث المهمة");
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'tasks',
+          filter: `project_id=eq.${projectId}`
+        },
+        (payload) => {
+          console.log("Task deletion received:", payload);
+          
+          // Remove the deleted task from the local state
+          setTasks((prevTasks) =>
+            prevTasks.filter((task) => task.id !== payload.old.id)
+          );
+          
+          // Show toast notification for the deletion
+          toast.info("تم حذف المهمة");
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'tasks',
+          filter: `project_id=eq.${projectId}`
+        },
+        (payload) => {
+          console.log("New task received:", payload);
+          
+          // Fetch the full task data since the realtime payload might not include all fields
+          fetchTasks();
+          
+          // Show toast notification for the new task
+          toast.info("تم إضافة مهمة جديدة");
+        }
+      )
+      .subscribe((status) => {
+        console.log("Realtime subscription status:", status);
+      });
+    
+    // Cleanup function to remove the channel when the component unmounts
+    return () => {
+      console.log("Removing real-time task updates subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [projectId, setTasks, fetchTasks]);
+
   // Update task function
   const updateTask = async (taskId: string, updateData: Partial<Task>) => {
     try {
@@ -64,7 +144,8 @@ export const useTasksList = (projectId: string | undefined) => {
         
       if (error) throw error;
       
-      // Use the wrapper function to correctly update tasks
+      // Local state will be updated by the real-time subscription
+      // We still update it here for immediate UI feedback
       setTasks((prevTasks: Task[]) => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, ...updateData } : task
@@ -100,8 +181,11 @@ export const useTasksList = (projectId: string | undefined) => {
         throw new Error("Failed to delete task");
       }
       
-      // Reload tasks data to ensure UI is up to date
-      await fetchTasks();
+      // Local state will be updated by the real-time subscription
+      // We still update it here for immediate UI feedback
+      setTasks((prevTasks: Task[]) => 
+        prevTasks.filter(task => task.id !== taskId)
+      );
       
       toast.success("تم حذف المهمة بنجاح");
       return true;
