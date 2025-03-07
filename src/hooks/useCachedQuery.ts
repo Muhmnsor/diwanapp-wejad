@@ -1,4 +1,3 @@
-
 import { useQuery, UseQueryOptions, UseQueryResult, QueryKey } from '@tanstack/react-query';
 import { 
   getCacheData, 
@@ -15,11 +14,18 @@ import {
   getPartitionedQueryData,
   getPartitionedQueryInfo
 } from '@/utils/cacheService';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+
+export type ProgressiveLoadingOptions = {
+  enabled?: boolean;
+  chunkSize?: number;
+  onChunkLoaded?: (chunk: any[], progress: number) => void;
+  initialChunkSize?: number;
+};
 
 /**
  * Enhanced useQuery hook with advanced smart caching capabilities
- * Supports materialized views and partitioned queries
+ * Supports materialized views, partitioned queries, and progressive loading
  */
 export function useCachedQuery<
   TQueryFnData = unknown,
@@ -41,18 +47,20 @@ export function useCachedQuery<
     refreshStrategy?: RefreshStrategy;
     refreshThreshold?: number;
     concurrencyKey?: string;
-    // Progressive/incremental loading
-    incrementalLoading?: boolean;
-    loadingChunkSize?: number;
-    // Materialized view options
+    progressiveLoading?: ProgressiveLoadingOptions;
     useMaterializedView?: boolean;
     materializedViewRefreshInterval?: number;
-    // Partitioned query options
     usePartitionedQuery?: boolean;
     partitionedQueryChunkSize?: number;
     partitionedQueryTotalItems?: number;
+    offlineFirst?: boolean;
+    offlineFallback?: TQueryFnData;
   }
-): UseQueryResult<TData, TError> {
+): UseQueryResult<TData, TError> & { 
+  isFetchingNextChunk?: boolean;
+  progress?: number;
+  fetchNextChunk?: () => Promise<void>; 
+} {
   const {
     cacheDuration = CACHE_DURATIONS.MEDIUM,
     cacheStorage = 'memory',
@@ -66,26 +74,25 @@ export function useCachedQuery<
     refreshStrategy = 'lazy',
     refreshThreshold = 75,
     concurrencyKey,
-    incrementalLoading = false,
-    loadingChunkSize = 20,
-    // Materialized view options
+    progressiveLoading,
     useMaterializedView = false,
     materializedViewRefreshInterval,
-    // Partitioned query options
     usePartitionedQuery = false,
     partitionedQueryChunkSize = 50,
     partitionedQueryTotalItems,
+    offlineFirst = false,
+    offlineFallback,
     ...queryOptions
   } = options || {};
 
-  // State for partitioned queries
+  const [progress, setProgress] = useState(0);
+  const [isFetchingNextChunk, setIsFetchingNextChunk] = useState(false);
+  
   const [partitionKey, setPartitionKey] = useState<string | null>(null);
   const [partitionLoading, setPartitionLoading] = useState(false);
 
-  // Create a cache key from the query key
   const cacheKey = `${cachePrefix ? cachePrefix + ':' : ''}query:${JSON.stringify(queryKey)}`;
   
-  // Set up materialized view if requested
   useEffect(() => {
     if (useMaterializedView) {
       createMaterializedView(cacheKey, queryFn, {
@@ -97,7 +104,6 @@ export function useCachedQuery<
     }
   }, [useMaterializedView, cacheKey, JSON.stringify(queryKey), materializedViewRefreshInterval]);
 
-  // Set up partitioned query if requested
   useEffect(() => {
     if (usePartitionedQuery && partitionedQueryTotalItems && !partitionKey) {
       const key = createPartitionedQuery(
@@ -109,94 +115,107 @@ export function useCachedQuery<
     }
   }, [usePartitionedQuery, cacheKey, partitionedQueryTotalItems, partitionedQueryChunkSize]);
 
-  // Handle loading data for partitioned queries
-  useEffect(() => {
-    if (partitionKey && !partitionLoading) {
-      const loadPartition = async () => {
-        try {
-          setPartitionLoading(true);
-          const info = getPartitionedQueryInfo(partitionKey);
-          
-          if (info && typeof info.loadedChunks === 'number') {
-            // Handle case where loadedChunks is a number
-            if (info.loadedChunks < info.totalChunks) {
-              // Load the next chunk
-              const nextChunkIndex = info.loadedChunks;
-              console.log(`Loading partition chunk ${nextChunkIndex + 1}/${info.totalChunks}`);
-              
-              const data = await queryFn();
-              updatePartitionedQuery(partitionKey, nextChunkIndex, data as any);
-            }
-          } else if (info && Array.isArray(info.loadedChunks)) {
-            // Handle case where loadedChunks is an array
-            const chunksArray = Array.from(Array(info.totalChunks).keys());
-            // Use type guard to ensure we only call includes on an array
-            const loadedChunks = info.loadedChunks as number[];
-            const nextChunkIndex = chunksArray.find(idx => 
-              !loadedChunks.includes(idx)
-            );
-            
-            if (nextChunkIndex !== undefined) {
-              console.log(`Loading partition chunk ${nextChunkIndex + 1}/${info.totalChunks}`);
-              
-              const data = await queryFn();
-              updatePartitionedQuery(partitionKey, nextChunkIndex, data as any);
-            }
-          }
-        } catch (error) {
-          console.error('Error loading partition:', error);
-        } finally {
-          setPartitionLoading(false);
-        }
-      };
+  const fetchNextChunk = useCallback(async () => {
+    if (!partitionKey || partitionLoading) return;
+    
+    try {
+      setIsFetchingNextChunk(true);
+      setPartitionLoading(true);
+      const info = getPartitionedQueryInfo(partitionKey);
       
-      loadPartition();
+      if (!info) return;
+      
+      const totalChunks = info.totalChunks;
+      let loadedChunks: number[] = [];
+      
+      if (typeof info.loadedChunks === 'number') {
+        loadedChunks = Array.from({ length: info.loadedChunks }, (_, i) => i);
+      } else if (Array.isArray(info.loadedChunks)) {
+        loadedChunks = info.loadedChunks;
+      }
+      
+      const allChunks = Array.from({ length: totalChunks }, (_, i) => i);
+      const nextChunkIndex = allChunks.find(idx => !loadedChunks.includes(idx));
+      
+      if (nextChunkIndex !== undefined) {
+        console.log(`Loading partition chunk ${nextChunkIndex + 1}/${totalChunks}`);
+        
+        const data = await queryFn();
+        updatePartitionedQuery(partitionKey, nextChunkIndex, data as any);
+        
+        const newProgress = Math.min(100, Math.round(((loadedChunks.length + 1) / totalChunks) * 100));
+        setProgress(newProgress);
+        
+        if (progressiveLoading?.onChunkLoaded && Array.isArray(data)) {
+          progressiveLoading.onChunkLoaded(data, newProgress);
+        }
+      } else {
+        setProgress(100);
+      }
+    } catch (error) {
+      console.error('Error loading partition chunk:', error);
+    } finally {
+      setPartitionLoading(false);
+      setIsFetchingNextChunk(false);
     }
-  }, [partitionKey, partitionLoading, queryFn]);
+  }, [partitionKey, partitionLoading, queryFn, progressiveLoading]);
+
+  useEffect(() => {
+    if (partitionKey && !partitionLoading && usePartitionedQuery) {
+      fetchNextChunk();
+    }
+  }, [partitionKey, partitionLoading, usePartitionedQuery, fetchNextChunk]);
 
   const result = useQuery<TQueryFnData, TError, TData, QueryKey>({
     queryKey,
     queryFn: async () => {
-      // Handle materialized views
+      if (offlineFirst && !navigator.onLine) {
+        console.log(`Using offline-first approach for ${cacheKey}`);
+        
+        const cachedData = getCacheData<TQueryFnData>(cacheKey, cacheStorage);
+        
+        if (cachedData) {
+          return cachedData;
+        }
+        
+        if (offlineFallback !== undefined) {
+          return offlineFallback;
+        }
+      }
+      
       if (useMaterializedView) {
         try {
           return await getMaterializedView(cacheKey, queryFn);
         } catch (error) {
           console.error('Error getting materialized view:', error);
-          // Fall back to regular query if materialized view fails
         }
       }
       
-      // Handle partitioned queries
       if (usePartitionedQuery && partitionKey) {
         const data = getPartitionedQueryData(partitionKey);
         if (data.length > 0) {
           return data as any;
         }
-        // If no partitioned data yet, continue with regular query
       }
       
-      // Skip cache if specified
       if (skipCache) {
         console.log(`Skipping cache for ${cacheKey} as requested`);
         const data = await queryFn();
         return data;
       }
       
-      // Try to get data from cache first
       const cachedData = getCacheData<TQueryFnData>(
         cacheKey, 
         cacheStorage,
         { 
           onRefresh: async (key, oldData) => {
-            // This function is called when a background refresh is triggered
             console.log(`Background refreshing data for ${key}`);
             try {
               const freshData = await queryFn();
               return freshData;
             } catch (error) {
               console.error(`Error during background refresh for ${key}:`, error);
-              return undefined; // Return undefined to keep old data
+              return undefined;
             }
           }
         }
@@ -205,7 +224,6 @@ export function useCachedQuery<
       if (cachedData) {
         console.log(`Cache hit for ${cacheKey}`);
         
-        // If this is a partitioned query, update the partition
         if (usePartitionedQuery && partitionKey) {
           updatePartitionedQuery(partitionKey, 0, cachedData as any);
         }
@@ -214,26 +232,33 @@ export function useCachedQuery<
       }
       
       console.log(`Cache miss for ${cacheKey}. Fetching from server...`);
-      // If not cached or expired, fetch fresh data
+      
       let data: TQueryFnData;
       
-      if (incrementalLoading && Array.isArray(cachedData)) {
-        // Implement incremental loading for arrays
-        // First return the cached data (even if expired) to show something immediately
+      if (progressiveLoading?.enabled && Array.isArray(cachedData)) {
         if (cachedData.length > 0) {
-          const freshData = await queryFn();
+          const freshDataPromise = queryFn();
           
-          // If the fresh data is also an array, we can do progressive loading
-          if (Array.isArray(freshData)) {
-            data = freshData;
-            
-            // For progressive loading, we return the first chunk immediately
-            // and then update the cache with more chunks progressively
-            const chunkSize = loadingChunkSize;
-            if (freshData.length > chunkSize) {
-              // Schedule loading of additional chunks
-              setTimeout(() => {
-                const remainingItems = freshData.slice(chunkSize);
+          freshDataPromise.then(freshData => {
+            if (Array.isArray(freshData)) {
+              const initialChunkSize = progressiveLoading.initialChunkSize || progressiveLoading.chunkSize || 20;
+              const chunkSize = progressiveLoading.chunkSize || 20;
+              
+              setCacheData(cacheKey, freshData.slice(0, initialChunkSize), cacheDuration, cacheStorage, {
+                useCompression,
+                compressionThreshold,
+                priority: cachePriority,
+                batchUpdate: batchUpdates,
+                tags,
+                refreshStrategy,
+                refreshThreshold,
+                concurrencyKey
+              });
+              
+              setProgress(Math.round((initialChunkSize / freshData.length) * 100));
+              
+              if (freshData.length > initialChunkSize) {
+                const remainingItems = freshData.slice(initialChunkSize);
                 const chunks = Math.ceil(remainingItems.length / chunkSize);
                 
                 for (let i = 0; i < chunks; i++) {
@@ -241,9 +266,10 @@ export function useCachedQuery<
                   const end = Math.min(start + chunkSize, remainingItems.length);
                   const chunkItems = remainingItems.slice(start, end);
                   
-                  // Update cache with progressive chunks
                   setTimeout(() => {
-                    const updatedData = [...(getCacheData<any[]>(cacheKey, cacheStorage) || []), ...chunkItems];
+                    const currentData = getCacheData<any[]>(cacheKey, cacheStorage) || [];
+                    const updatedData = [...currentData, ...chunkItems];
+                    
                     setCacheData(cacheKey, updatedData, cacheDuration, cacheStorage, {
                       useCompression,
                       compressionThreshold,
@@ -254,29 +280,36 @@ export function useCachedQuery<
                       refreshThreshold,
                       concurrencyKey
                     });
-                  }, i * 100); // Delay each chunk by 100ms * chunk index
+                    
+                    const newProgress = Math.min(
+                      100, 
+                      Math.round(((initialChunkSize + (i + 1) * chunkSize) / freshData.length) * 100)
+                    );
+                    setProgress(newProgress);
+                    
+                    if (progressiveLoading.onChunkLoaded) {
+                      progressiveLoading.onChunkLoaded(chunkItems, newProgress);
+                    }
+                  }, i * 200);
                 }
-              }, 200); // Small delay before starting to load additional chunks
-              
-              // Return only the first chunk for immediate display
-              return freshData.slice(0, chunkSize) as TQueryFnData;
+              } else {
+                setProgress(100);
+              }
             }
-          } else {
-            data = freshData;
-          }
-        } else {
-          data = await queryFn();
+          }).catch(error => {
+            console.error('Error fetching data for progressive loading:', error);
+          });
+          
+          return cachedData;
         }
-      } else {
-        data = await queryFn();
       }
       
-      // Update partitioned query if needed
+      data = await queryFn();
+      
       if (usePartitionedQuery && partitionKey) {
         updatePartitionedQuery(partitionKey, 0, data as any);
       }
       
-      // Cache the fresh data with all our advanced options
       setCacheData(cacheKey, data, cacheDuration, cacheStorage, {
         useCompression,
         compressionThreshold,
@@ -290,23 +323,30 @@ export function useCachedQuery<
       
       return data;
     },
-    staleTime: cacheDuration, // Use the cacheDuration as staleTime for React Query's cache
+    staleTime: cacheDuration,
+    retry: (failureCount, error) => {
+      if (!navigator.onLine && offlineFirst) {
+        return false;
+      }
+      
+      return failureCount < 3;
+    },
     ...queryOptions
   });
 
-  // Effect to handle cache invalidation on unmount if needed
   useEffect(() => {
     return () => {
-      // Any cleanup needed when the component using this hook unmounts
     };
   }, [cacheKey]);
 
-  return result;
+  return { 
+    ...result, 
+    isFetchingNextChunk, 
+    progress, 
+    fetchNextChunk 
+  };
 }
 
-/**
- * Function to prefetch and cache data with advanced options
- */
 export const prefetchQueryData = async <T>(
   queryKey: QueryKey,
   queryFn: () => Promise<T>,
@@ -336,19 +376,15 @@ export const prefetchQueryData = async <T>(
     concurrencyKey
   } = options || {};
 
-  // Create a cache key from the query key
   const cacheKey = `${cachePrefix ? cachePrefix + ':' : ''}query:${JSON.stringify(queryKey)}`;
   
-  // Check if already in cache and not expired
   const cachedData = getCacheData<T>(cacheKey, cacheStorage);
   if (cachedData) {
     return cachedData;
   }
   
-  // Fetch the data
   const data = await queryFn();
   
-  // Cache the data with all advanced options
   setCacheData(cacheKey, data, cacheDuration, cacheStorage, {
     useCompression,
     compressionThreshold,
@@ -362,16 +398,10 @@ export const prefetchQueryData = async <T>(
   return data;
 };
 
-/**
- * Function to invalidate queries by tag
- */
 export const invalidateQueriesByTag = (tag: string): number => {
   return invalidateCacheByTag(tag);
 };
 
-/**
- * Function to create a materialized view
- */
 export const createCachedMaterializedView = <T>(
   name: string,
   queryFn: () => Promise<T>,
@@ -384,13 +414,49 @@ export const createCachedMaterializedView = <T>(
   createMaterializedView(name, queryFn, options);
 };
 
-/**
- * Function to create a partitioned query
- */
 export const createCachedPartitionedQuery = <T>(
   queryKey: string,
   totalItems: number,
   chunkSize?: number
 ): string => {
   return createPartitionedQuery(queryKey, totalItems, chunkSize);
+};
+
+export const preloadDataForPath = async <T>(
+  pathKey: string,
+  queryFns: Record<string, () => Promise<any>>,
+  options?: {
+    priority?: CachePriority;
+    storage?: CacheStorage;
+    duration?: number;
+  }
+): Promise<void> => {
+  const { 
+    priority = 'low',
+    storage = 'memory',
+    duration = CACHE_DURATIONS.MEDIUM
+  } = options || {};
+  
+  console.log(`Preloading data for path: ${pathKey}`);
+  
+  const promises = Object.entries(queryFns).map(async ([key, queryFn]) => {
+    try {
+      const data = await queryFn();
+      const cacheKey = `preload:${pathKey}:${key}`;
+      
+      setCacheData(cacheKey, data, duration, storage, {
+        priority,
+        refreshStrategy: 'lazy',
+        tags: ['preloaded', pathKey]
+      });
+      
+      return { key, success: true };
+    } catch (error) {
+      console.error(`Error preloading data for ${key}:`, error);
+      return { key, success: false, error };
+    }
+  });
+  
+  await Promise.allSettled(promises);
+  console.log(`Finished preloading data for path: ${pathKey}`);
 };

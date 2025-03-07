@@ -1,9 +1,9 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useFeedbackQuery = (projectId: string) => {
-  return useQuery({
+  return useCachedQuery({
     queryKey: ['project-activities-feedback', projectId],
     queryFn: async () => {
       console.log('Fetching activities feedback for project:', projectId);
@@ -36,6 +36,22 @@ export const useFeedbackQuery = (projectId: string) => {
         date: activity.date,
         feedback: activity.activity_feedback || []
       })) || [];
+    },
+    // Enhanced caching options
+    cacheDuration: 60 * 1000, // 1 minute
+    cacheStorage: 'memory',
+    useCompression: true,
+    cachePriority: 'normal',
+    tags: ['feedback', `project-${projectId}`],
+    refreshStrategy: 'lazy',
+    refreshThreshold: 50, // Refresh when 50% of the cache duration has passed
+    offlineFirst: true, // Use cached data when offline
+    
+    // Enable progressive loading to show data as it comes in
+    progressiveLoading: {
+      enabled: true,
+      chunkSize: 5,
+      initialChunkSize: 3
     }
   });
 };

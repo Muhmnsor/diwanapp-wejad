@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+
+import { useCachedQuery } from '@/hooks/useCachedQuery';
 import { getOrCreateWorkspace, syncTasksWithAsana, fetchWorkspaceTasks } from './api/workspaceApi';
 
 export const useWorkspaceTasks = (workspaceId: string) => {
-  return useQuery({
+  return useCachedQuery({
     queryKey: ['portfolio-tasks', workspaceId],
     queryFn: async () => {
       console.log('🔄 Starting task fetch process for workspace:', workspaceId);
@@ -26,6 +27,36 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         throw error;
       }
     },
+    
+    // Enhanced caching options
+    cacheDuration: 5 * 60 * 1000, // 5 minutes
+    cacheStorage: 'memory',
+    cachePrefix: 'workspace',
+    useCompression: true,
+    compressionThreshold: 512, // Compress if larger than 512 bytes
+    cachePriority: 'high',
+    batchUpdates: true,
+    tags: ['workspace', `workspace-${workspaceId}`, 'tasks'],
+    refreshStrategy: 'lazy',
+    refreshThreshold: 75,
+    
+    // Add offline support
+    offlineFirst: true,
+    
+    // Enable progressive loading
+    progressiveLoading: {
+      enabled: true,
+      chunkSize: 10,
+      initialChunkSize: 5,
+      onChunkLoaded: (chunk, progress) => {
+        console.log(`Loaded chunk of ${chunk.length} workspace tasks. Progress: ${progress}%`);
+      }
+    },
+    
+    // Add partitioned query for very large datasets
+    usePartitionedQuery: false, // Enable for very large datasets
+    
+    // Add retry logic
     retry: 2,
     retryDelay: 1000
   });
