@@ -187,7 +187,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" dir="rtl">
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={handleEdit}>
                     <Pencil className="h-4 w-4 ml-2" />
                     <span>تعديل</span>
