@@ -16,7 +16,7 @@ export interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'delayed';
   priority: 'low' | 'medium' | 'high';
   due_date: string | null;
   created_at: string;

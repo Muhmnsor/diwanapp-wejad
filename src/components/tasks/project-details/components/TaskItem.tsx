@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
-import { useRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreVertical, CheckCircle, Clock, AlertCircle } from "lucide-react";
@@ -33,7 +33,7 @@ export const TaskItem = ({
 }: TaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { confirm } = useConfirm();
-  const router = useRouter();
+  const navigate = useNavigate();
   
   const handleStatusUpdate = async (status: string) => {
     if (isUpdating) return;

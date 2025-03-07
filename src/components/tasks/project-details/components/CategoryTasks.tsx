@@ -14,7 +14,7 @@ interface CategoryTasksProps {
   category: string;
   tasks: Task[];
   onStatusChange: (taskId: string, status: string) => void;
-  onDelete?: (taskId: string) => void;
+  onDelete?: (taskId: string) => Promise<void>;
   onTaskUpdated?: () => void;
 }
 
