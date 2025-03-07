@@ -132,9 +132,9 @@ export const useTaskDependencies = (taskId?: string) => {
         };
       }
       
-      // Check for circular dependencies
+      // Perform enhanced circular dependency check for all types except 'relates_to'
       if (dependencyType !== 'relates_to') {
-        const circularCheck = await checkCircularDependencies(taskId, dependencyTaskId);
+        const circularCheck = await checkCircularDependencies(taskId, dependencyTaskId, dependencyType);
         if (circularCheck.isCircular) {
           return { success: false, message: circularCheck.message };
         }
@@ -220,13 +220,30 @@ export const useTaskDependencies = (taskId?: string) => {
       }
     }
     
+    // For finish-to-finish dependency
+    if (newStatus === 'completed') {
+      const finishToFinishDeps = dependencies.filter(dep => 
+        dep.dependencyType === 'finish-to-finish' && 
+        dep.status !== 'completed'
+      );
+      
+      if (finishToFinishDeps.length > 0) {
+        const blockingTasks = finishToFinishDeps.map(dep => dep.title || 'Unnamed task').join(', ');
+        return { 
+          allowed: false, 
+          message: `لا يمكن إكمال هذه المهمة حتى إكمال المهام المرتبطة التالية: ${blockingTasks}`
+        };
+      }
+    }
+    
     return { allowed: true };
   };
   
-  // Helper to check for circular dependencies
+  // Enhanced helper to check for circular dependencies using DFS
   const checkCircularDependencies = async (
     taskId: string, 
-    dependencyTaskId: string
+    dependencyTaskId: string,
+    dependencyType: DependencyType
   ): Promise<{isCircular: boolean, message?: string}> => {
     try {
       // First level check - is task trying to depend on itself?
@@ -237,27 +254,67 @@ export const useTaskDependencies = (taskId?: string) => {
         };
       }
       
-      // Check if dependency task depends on this task (would create a direct cycle)
-      const { data } = await supabase
-        .from('task_dependencies')
-        .select('*')
-        .eq('task_id', dependencyTaskId)
-        .eq('dependency_task_id', taskId);
+      // Set to track visited tasks
+      const visited = new Set<string>();
+      
+      // Depth-first search to detect cycles
+      const detectCycle = async (currentTaskId: string, path: string[] = []): Promise<boolean> => {
+        // If we've reached the original task, we have a cycle
+        if (currentTaskId === taskId) {
+          return true;
+        }
         
-      if (data && data.length > 0) {
-        return { 
-          isCircular: true, 
-          message: "سيؤدي هذا إلى اعتمادية دائرية بين المهمتين"
-        };
+        // If we've already visited this task in another path, skip it
+        if (visited.has(currentTaskId)) {
+          return false;
+        }
+        
+        // Mark as visited
+        visited.add(currentTaskId);
+        path.push(currentTaskId);
+        
+        // Find all dependencies of the current task
+        const { data: dependentOn } = await supabase
+          .from('task_dependencies')
+          .select('task_id, dependency_task_id, dependency_type')
+          .or(`task_id.eq.${currentTaskId}`);
+          
+        if (dependentOn) {
+          for (const dep of dependentOn) {
+            // If target of dependency is only a "relates_to" relationship, skip it
+            if (dep.dependency_type === 'relates_to') continue;
+            
+            // Check if this dependency continues the cycle
+            const nextTaskId = dep.dependency_task_id;
+            if (await detectCycle(nextTaskId, [...path])) {
+              return true;
+            }
+          }
+        }
+        
+        return false;
+      };
+      
+      // Skip deep check for relates_to as it doesn't create dependencies
+      if (dependencyType === 'relates_to') {
+        return { isCircular: false };
       }
       
-      // TODO: Implement deeper circular dependency checking for complex chains
-      // This would require a recursive or graph-based approach to detect cycles
+      // Start the DFS from the dependency task
+      const isCyclic = await detectCycle(dependencyTaskId);
+      
+      if (isCyclic) {
+        return { 
+          isCircular: true, 
+          message: "سيؤدي هذا إلى اعتمادية دائرية بين المهام"
+        };
+      }
       
       return { isCircular: false };
     } catch (err) {
       console.error("Error checking circular dependencies:", err);
-      return { isCircular: false }; // Default to allowing in case of error
+      // Default to allowing in case of error, but log it
+      return { isCircular: false }; 
     }
   };
   
