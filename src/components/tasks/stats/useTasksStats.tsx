@@ -27,7 +27,7 @@ export const useTasksStats = () => {
         };
       }
       
-      // Fetch tasks from portfolio_tasks table
+      // Fetch tasks from portfolio_tasks table that are assigned to the current user
       const { data: userTasks, error } = await supabase
         .from('portfolio_tasks')
         .select('status, due_date')
@@ -38,7 +38,7 @@ export const useTasksStats = () => {
         throw error;
       }
       
-      // Fetch tasks from the regular tasks table
+      // Fetch tasks from the regular tasks table that are assigned to the current user
       const { data: regularTasks, error: tasksError } = await supabase
         .from('tasks')
         .select('status, due_date')
@@ -49,7 +49,7 @@ export const useTasksStats = () => {
         throw tasksError;
       }
       
-      // Fetch subtasks assigned to the user
+      // Fetch subtasks assigned to the current user
       const { data: subtasks, error: subtasksError } = await supabase
         .from('subtasks')
         .select('status, due_date')
@@ -60,7 +60,7 @@ export const useTasksStats = () => {
         throw subtasksError;
       }
       
-      // Combine all tasks arrays
+      // Combine all tasks arrays - only those specifically assigned to the current user
       const allTasks = [
         ...(userTasks || []), 
         ...(regularTasks || []),
@@ -74,12 +74,18 @@ export const useTasksStats = () => {
       // Calculate stats from the fetched data
       const totalTasks = allTasks.length || 0;
       const completedTasks = allTasks.filter(task => task.status === 'completed').length || 0;
-      const pendingTasks = allTasks.filter(task => task.status === 'pending').length || 0;
+      
+      // Count both pending and in_progress as pending tasks
+      const pendingTasks = allTasks.filter(task => 
+        task.status === 'pending' || task.status === 'in_progress'
+      ).length || 0;
+      
       const delayedTasks = allTasks.filter(task => {
         if (!task.due_date) return false;
         const dueDate = new Date(task.due_date);
         return dueDate < now && task.status !== 'completed';
       }).length || 0;
+      
       const upcomingDeadlines = allTasks.filter(task => {
         if (!task.due_date) return false;
         const dueDate = new Date(task.due_date);
