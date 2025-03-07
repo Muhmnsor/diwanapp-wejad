@@ -34,8 +34,24 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         }
         
         // Access the name property safely with optional chaining
-        // Handle the case where role could be an object with a name property
-        const roleName = roleData?.role?.name;
+        // The role property might be returned in different formats depending on the query
+        let roleName = null;
+        
+        // Check if roleData exists and has a role property
+        if (roleData && roleData.role) {
+          // Handle different possible structures of the role data
+          if (typeof roleData.role === 'object') {
+            // If role is an object, try to get name from it
+            roleName = roleData.role.name;
+          } else if (Array.isArray(roleData.role) && roleData.role.length > 0) {
+            // If role is an array, get name from the first element
+            roleName = roleData.role[0]?.name;
+          } else {
+            // If role is a direct string value
+            roleName = roleData.role;
+          }
+        }
+        
         const isAdmin = roleName === 'admin' || roleName === 'app_admin';
         
         // Case 3: Check if user is workspace admin
