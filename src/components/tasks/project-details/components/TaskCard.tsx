@@ -12,6 +12,7 @@ import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
 import { TaskDependenciesBadge } from "./TaskDependenciesBadge";
+import { useTaskDependencies } from "../hooks/useTaskDependencies";
 
 interface TaskCardProps {
   task: Task;
@@ -35,8 +36,9 @@ export const TaskCard = ({
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
   const { user } = useAuthStore();
+  const { canChangeStatus } = useTaskDependencies(task.id);
   
-  const canChangeStatus = () => {
+  const canChangeTaskStatus = () => {
     return (
       user?.id === task.assigned_to || 
       user?.isAdmin || 
@@ -45,7 +47,7 @@ export const TaskCard = ({
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!canChangeStatus()) {
+    if (!canChangeTaskStatus()) {
       toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها");
       return;
     }
@@ -54,6 +56,15 @@ export const TaskCard = ({
     try {
       // إذا كانت المهمة قيد التغيير إلى "مكتملة"، تحقق من المهام الفرعية أولاً
       if (newStatus === 'completed') {
+        // Check dependencies first
+        const { allowed, message } = await canChangeStatus(newStatus);
+        if (!allowed) {
+          toast.error(message || "لا يمكن إكمال المهمة بسبب اعتماديات غير مكتملة");
+          setIsUpdating(false);
+          return;
+        }
+      
+        // Then check subtasks
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
         
         if (error) {
@@ -142,7 +153,7 @@ export const TaskCard = ({
               مناقشة
             </Button>
 
-            {canChangeStatus() && (
+            {canChangeTaskStatus() && (
               task.status !== 'completed' ? (
                 <Button 
                   variant="outline" 

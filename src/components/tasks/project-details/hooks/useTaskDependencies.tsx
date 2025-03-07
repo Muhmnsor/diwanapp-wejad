@@ -1,0 +1,206 @@
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export type DependencyType = 'blocks' | 'blocked_by' | 'relates_to';
+
+export interface TaskDependency {
+  id: string;
+  taskId: string;
+  dependencyTaskId: string;
+  dependencyType: DependencyType;
+  title?: string; // Task title for display purposes
+}
+
+export const useTaskDependencies = (taskId?: string) => {
+  const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  
+  // Fetch dependencies for a task
+  const fetchDependencies = async () => {
+    if (!taskId) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Get tasks that this task depends on (blocked by)
+      const { data: blockedByData, error: blockedByError } = await supabase
+        .from('task_dependencies')
+        .select(`
+          id,
+          task_id,
+          dependency_task_id,
+          dependency_type,
+          tasks:dependency_task_id (title, status)
+        `)
+        .eq('task_id', taskId);
+        
+      if (blockedByError) throw blockedByError;
+      
+      // Get tasks that depend on this task (blocks)
+      const { data: blocksData, error: blocksError } = await supabase
+        .from('task_dependencies')
+        .select(`
+          id,
+          task_id,
+          dependency_task_id,
+          dependency_type,
+          tasks:task_id (title, status)
+        `)
+        .eq('dependency_task_id', taskId);
+        
+      if (blocksError) throw blocksError;
+      
+      // Format the dependencies
+      const formattedDependencies: TaskDependency[] = [
+        ...blockedByData.map(dep => ({
+          id: dep.id,
+          taskId: dep.task_id,
+          dependencyTaskId: dep.dependency_task_id,
+          dependencyType: dep.dependency_type as DependencyType,
+          title: dep.tasks?.title
+        })),
+        ...blocksData.map(dep => ({
+          id: dep.id,
+          taskId: dep.dependency_task_id,
+          dependencyTaskId: dep.task_id,
+          dependencyType: 'blocks', // This task blocks another
+          title: dep.tasks?.title
+        }))
+      ];
+      
+      setDependencies(formattedDependencies);
+      
+      // Check if any blocking dependencies are incomplete
+      const isTaskBlocked = blockedByData.some(dep => 
+        dep.dependency_type === 'blocked_by' && 
+        dep.tasks?.status !== 'completed'
+      );
+      
+      setIsBlocked(isTaskBlocked);
+    } catch (err) {
+      console.error("Error fetching task dependencies:", err);
+      setError("Failed to load dependencies");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Add a new dependency
+  const addDependency = async (dependencyTaskId: string, dependencyType: DependencyType) => {
+    if (!taskId) return { success: false, error: "No task ID provided" };
+    
+    try {
+      // Prevent circular dependencies
+      if (dependencyType === 'blocked_by') {
+        const { data: checkData } = await supabase
+          .from('task_dependencies')
+          .select('id')
+          .eq('task_id', dependencyTaskId)
+          .eq('dependency_task_id', taskId);
+          
+        if (checkData && checkData.length > 0) {
+          return { 
+            success: false, 
+            error: "Cannot create circular dependency" 
+          };
+        }
+      }
+      
+      const { data, error } = await supabase
+        .from('task_dependencies')
+        .insert({
+          task_id: taskId,
+          dependency_task_id: dependencyTaskId,
+          dependency_type: dependencyType
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      await fetchDependencies();
+      return { success: true, data };
+    } catch (err) {
+      console.error("Error adding dependency:", err);
+      return { success: false, error: err };
+    }
+  };
+  
+  // Remove a dependency
+  const removeDependency = async (dependencyId: string) => {
+    try {
+      const { error } = await supabase
+        .from('task_dependencies')
+        .delete()
+        .eq('id', dependencyId);
+        
+      if (error) throw error;
+      
+      await fetchDependencies();
+      return { success: true };
+    } catch (err) {
+      console.error("Error removing dependency:", err);
+      return { success: false, error: err };
+    }
+  };
+  
+  // Check if status change is allowed based on dependencies
+  const canChangeStatus = async (newStatus: string): Promise<{allowed: boolean, message?: string}> => {
+    if (!taskId) return { allowed: true };
+    
+    // Only applies when changing to completed
+    if (newStatus !== 'completed') return { allowed: true };
+    
+    try {
+      // Check if task has any blocking dependencies
+      const { data: blockingDeps, error } = await supabase
+        .from('task_dependencies')
+        .select('dependency_task_id, tasks:dependency_task_id(status)')
+        .eq('task_id', taskId)
+        .eq('dependency_type', 'blocked_by');
+        
+      if (error) throw error;
+      
+      const blockedBy = blockingDeps.filter(dep => 
+        dep.tasks && dep.tasks.status !== 'completed'
+      );
+      
+      if (blockedBy.length > 0) {
+        return { 
+          allowed: false, 
+          message: `هذه المهمة معتمدة على ${blockedBy.length} مهام غير مكتملة` 
+        };
+      }
+      
+      return { allowed: true };
+    } catch (err) {
+      console.error("Error checking task dependencies:", err);
+      return { allowed: true }; // Allow in case of error, but log it
+    }
+  };
+  
+  // Load dependencies when task ID changes
+  useEffect(() => {
+    if (taskId) {
+      fetchDependencies();
+    } else {
+      setDependencies([]);
+      setIsBlocked(false);
+    }
+  }, [taskId]);
+  
+  return {
+    dependencies,
+    isLoading,
+    error,
+    isBlocked,
+    fetchDependencies,
+    addDependency,
+    removeDependency,
+    canChangeStatus
+  };
+};

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/types/workspace";
 import { toast } from "sonner";
+import { useTaskDependencies } from "./useTaskDependencies";
 
 export const useTaskStatusManagement = (
   projectId: string | undefined,
@@ -12,6 +13,7 @@ export const useTaskStatusManagement = (
   setTasksByStage: (callback: (prev: Record<string, Task[]>) => Record<string, Task[]>) => void
 ) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const { canChangeStatus } = useTaskDependencies();
 
   // Helper function to ensure status is a valid Task status
   const ensureValidStatus = (status: string): Task['status'] => {
@@ -29,6 +31,16 @@ export const useTaskStatusManagement = (
     try {
       // Ensure newStatus is a valid status
       const validStatus = ensureValidStatus(newStatus);
+      
+      // Check if the status change is allowed based on dependencies
+      if (validStatus === 'completed') {
+        const { allowed, message } = await canChangeStatus(validStatus);
+        if (!allowed) {
+          toast.error(message || "لا يمكن إكمال هذه المهمة بسبب اعتماديات غير مكتملة");
+          setIsUpdating(false);
+          return;
+        }
+      }
       
       // Update task status in database
       const { error } = await supabase
