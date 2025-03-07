@@ -57,13 +57,14 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
       try {
         const isCreator = workspace.created_by === user.id;
         
-        // Check if user is admin
+        // Check if user is admin - fix the type issue with the roles object
         const { data: roleData } = await supabase
           .from('user_roles')
-          .select('roles(name)')
+          .select('roles:role_id(name)')
           .eq('user_id', user.id)
           .single();
           
+        // Access the name property safely with optional chaining
         const isAdmin = roleData?.roles?.name === 'admin';
         
         // Check if user is workspace admin
