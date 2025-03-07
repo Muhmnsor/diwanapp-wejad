@@ -93,7 +93,7 @@ export const useDeleteTaskProject = ({
         console.log(`Found ${taskIds.length} tasks to delete`);
         
         if (taskIds.length > 0) {
-          // 1. Delete task discussion attachments
+          // 1. Delete task discussion attachments - specify fully qualified column names
           const { error: discussionAttachmentsError } = await supabase
             .from("task_discussion_attachments")
             .delete()
@@ -104,7 +104,7 @@ export const useDeleteTaskProject = ({
             // Continue despite error
           }
           
-          // 2. Delete task comments
+          // 2. Delete task comments - specify fully qualified column names
           const { error: commentsError } = await supabase
             .from("task_comments")
             .delete()
@@ -115,7 +115,7 @@ export const useDeleteTaskProject = ({
             // Continue despite error
           }
           
-          // 3. Delete unified comments
+          // 3. Delete unified comments - specify fully qualified column names
           const { error: unifiedCommentsError } = await supabase
             .from("unified_task_comments")
             .delete()
@@ -127,7 +127,7 @@ export const useDeleteTaskProject = ({
             // Continue despite error
           }
           
-          // 4. Delete task attachments
+          // 4. Delete task attachments - specify fully qualified column names
           const { error: attachmentsError } = await supabase
             .from("task_attachments")
             .delete()
@@ -138,7 +138,7 @@ export const useDeleteTaskProject = ({
             // Continue despite error
           }
           
-          // 5. Delete subtasks
+          // 5. Delete subtasks - specify fully qualified column names
           const { error: subtasksError } = await supabase
             .from("subtasks")
             .delete()
@@ -149,7 +149,7 @@ export const useDeleteTaskProject = ({
             // Continue despite error
           }
           
-          // 6. Delete tasks
+          // 6. Delete tasks - specify fully qualified column names
           const { error: deleteTasksError } = await supabase
             .from("tasks")
             .delete()
@@ -161,7 +161,7 @@ export const useDeleteTaskProject = ({
           }
         }
         
-        // 7. Delete project stages
+        // 7. Delete project stages - specify fully qualified column names
         const { error: stagesError } = await supabase
           .from("project_stages")
           .delete()
@@ -172,7 +172,7 @@ export const useDeleteTaskProject = ({
           // Continue despite error
         }
         
-        // 8. Finally delete the project
+        // 8. Finally delete the project - specify fully qualified column names
         const { error: deleteProjectError } = await supabase
           .from("project_tasks")
           .delete()
