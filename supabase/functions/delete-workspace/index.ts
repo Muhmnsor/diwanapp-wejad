@@ -1,101 +1,154 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.2'
-import { corsHeaders } from '../_shared/cors.ts'
+
+// CORS headers for browser requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get request data
-    const { workspaceId, userId } = await req.json()
+    // Parse request body
+    const { workspaceId, userId } = await req.json();
     
     console.log("Received delete request for workspace:", workspaceId, "from user:", userId);
     
     if (!workspaceId || !userId) {
       console.error("Missing required parameters:", { workspaceId, userId });
       return new Response(
-        JSON.stringify({ success: false, error: 'Workspace ID and User ID are required' }),
+        JSON.stringify({ success: false, error: 'معرّف مساحة العمل ومعرّف المستخدم مطلوبان' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 400 }
-      )
+      );
     }
 
     // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    // Validate environment variables before proceeding
-    if (!supabaseUrl) {
-      console.error("SUPABASE_URL environment variable is not set");
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing environment variables:", { 
+        hasUrl: !!supabaseUrl, 
+        hasKey: !!supabaseServiceKey 
+      });
       return new Response(
-        JSON.stringify({ success: false, error: 'Server configuration error: Missing SUPABASE_URL' }),
+        JSON.stringify({ success: false, error: 'خطأ في تكوين الخادم' }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
-      )
+      );
     }
     
-    if (!supabaseServiceKey) {
-      console.error("SUPABASE_SERVICE_ROLE_KEY environment variable is not set");
-      return new Response(
-        JSON.stringify({ success: false, error: 'Server configuration error: Missing SUPABASE_SERVICE_ROLE_KEY' }),
-        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
-      )
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log("Calling database function to delete workspace with parameters:", { 
-      p_workspace_id: workspaceId, 
-      p_user_id: userId 
-    });
+    // First check if user has permission
+    const checkPermissions = async () => {
+      // Check if user is admin
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select(`
+          roles (name)
+        `)
+        .eq('user_id', userId)
+        .single();
+      
+      if (roleError) {
+        console.log("Error checking roles:", roleError);
+      }
+      
+      const isAdmin = roleData?.roles?.name === 'admin';
+      
+      // Check if user is creator
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('workspaces')
+        .select('created_by')
+        .eq('id', workspaceId)
+        .single();
+      
+      if (workspaceError) {
+        console.log("Error checking workspace creator:", workspaceError);
+        return false;
+      }
+      
+      const isCreator = workspace?.created_by === userId;
+      
+      // Check if user is workspace admin
+      const { data: member, error: memberError } = await supabase
+        .from('workspace_members')
+        .select('role')
+        .eq('workspace_id', workspaceId)
+        .eq('user_id', userId)
+        .single();
+      
+      if (memberError) {
+        console.log("Error checking workspace membership:", memberError);
+      }
+      
+      const isWorkspaceAdmin = member?.role === 'admin';
+      
+      return isAdmin || isCreator || isWorkspaceAdmin;
+    };
     
-    // Call the database function with the correct parameter names
+    const hasPermission = await checkPermissions();
+    
+    if (!hasPermission) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'ليس لديك صلاحية لحذف مساحة العمل' }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 403 }
+      );
+    }
+
+    console.log("Calling database function to delete workspace");
+    
+    // Call the database function with proper parameters
     const { data, error } = await supabase
       .rpc('delete_workspace', { 
         p_workspace_id: workspaceId,
         p_user_id: userId
-      })
+      });
 
     if (error) {
-      console.error('Error deleting workspace:', error);
+      console.error('Error calling delete_workspace function:', error);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: error.message || 'Failed to delete workspace',
+          error: error.message || 'فشل في حذف مساحة العمل',
           details: error
         }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
-      )
+      );
     }
 
-    console.log("Delete workspace result:", data);
+    console.log("Deletion result:", data);
     
     if (data !== true) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Failed to delete workspace',
+          error: 'فشل في حذف مساحة العمل',
           result: data 
         }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
-      )
+      );
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Workspace deleted successfully' }),
+      JSON.stringify({ success: true, message: 'تم حذف مساحة العمل بنجاح' }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    )
+    );
 
   } catch (error) {
     console.error('Unexpected error:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'An unexpected error occurred',
+        error: 'حدث خطأ غير متوقع',
         details: error instanceof Error ? error.message : String(error)
       }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders }, status: 500 }
-    )
+    );
   }
-})
+});

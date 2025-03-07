@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -186,7 +187,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" dir="rtl">
                   <DropdownMenuItem onClick={handleEdit}>
                     <Pencil className="h-4 w-4 ml-2" />
                     <span>تعديل</span>

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useAuthStore } from "@/store/refactored-auth";
 
 interface DeleteWorkspaceDialogProps {
   open: boolean;
@@ -30,8 +31,14 @@ export const DeleteWorkspaceDialog = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { confirm } = useConfirm();
+  const { user } = useAuthStore();
 
   const handleDelete = async () => {
+    if (!user) {
+      toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
+      return;
+    }
+
     // Ask for final confirmation before deletion
     const shouldDelete = await confirm({
       title: "تأكيد حذف مساحة العمل",
@@ -44,23 +51,31 @@ export const DeleteWorkspaceDialog = ({
 
     setIsDeleting(true);
     try {
-      // Call Supabase function to delete workspace
-      const { data, error } = await supabase.rpc('delete_workspace', {
-        p_workspace_id: workspaceId,
-        p_user_id: (await supabase.auth.getUser()).data.user?.id
+      console.log("Deleting workspace:", workspaceId, "by user:", user.id);
+      
+      // Call Supabase edge function to delete workspace
+      const { data, error } = await supabase.functions.invoke('delete-workspace', {
+        body: { 
+          workspaceId, 
+          userId: user.id 
+        }
       });
 
       if (error) {
+        console.error("Edge function error:", error);
         throw error;
       }
 
-      if (data !== true) {
-        throw new Error("فشلت عملية حذف مساحة العمل");
+      if (!data || !data.success) {
+        console.error("Deletion failed:", data);
+        throw new Error(data?.error || "فشلت عملية حذف مساحة العمل");
       }
 
       toast.success("تم حذف مساحة العمل بنجاح");
       onOpenChange(false);
-      navigate("/tasks"); // Navigate back to workspaces list
+      
+      // Force a refresh of the workspaces list
+      window.location.href = "/tasks#workspaces";
     } catch (error) {
       console.error("Error deleting workspace:", error);
       toast.error("حدث خطأ أثناء حذف مساحة العمل");

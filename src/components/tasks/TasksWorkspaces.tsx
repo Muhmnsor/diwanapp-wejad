@@ -2,22 +2,69 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { WorkspaceCard } from "./WorkspaceCard";
-import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Workspace } from "@/types/workspace";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export const TasksWorkspaces = () => {
-  const { data: workspaces, isLoading } = useQuery({
+  const { data: workspaces, isLoading, refetch } = useQuery({
     queryKey: ['workspaces'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('workspaces')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching workspaces:", error);
+        throw error;
+      }
       return data || [];
     }
   });
+
+  // Set up realtime subscription to workspace changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:workspaces')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public',
+          table: 'workspaces'
+        }, 
+        () => {
+          console.log("Workspace change detected, refetching workspaces");
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
+  // Listen for hash changes to refetch when needed
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#workspaces') {
+        console.log("Workspaces hash detected, refetching");
+        refetch();
+      }
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Initial check in case we're already on the hash
+    if (window.location.hash === '#workspaces') {
+      refetch();
+    }
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [refetch]);
 
   if (isLoading) {
     return (
