@@ -1,291 +1,185 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface DependencyTask {
-  id: string;
-  title: string;
-  status: string;
-  dependency_type: string;
+export type DependencyType = 'blocks' | 'blocked_by' | 'relates_to' | 'finish-to-start' | 'start-to-start' | 'finish-to-finish';
+
+export interface TaskDependency {
+  id?: string;
+  taskId: string;
+  dependencyTaskId: string;
+  dependencyType: DependencyType;
+  title?: string; // Task title for display purposes
 }
 
-interface DependencyCounts {
-  blocking: number;
-  blockedBy: number;
-  related: number;
-  total: number;
-}
-
-export function useTaskDependencies(taskId: string | undefined) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isBlockedByDependencies, setIsBlockedByDependencies] = useState(false);
-  const [blockedByDependencies, setBlockedByDependencies] = useState<DependencyTask[]>([]);
-  const [blockingDependencies, setBlockingDependencies] = useState<DependencyTask[]>([]);
-  const [relatedDependencies, setRelatedDependencies] = useState<DependencyTask[]>([]);
-  const [dependencyCounts, setDependencyCounts] = useState<DependencyCounts>({
-    blocking: 0,
-    blockedBy: 0,
-    related: 0,
-    total: 0
-  });
-
-  const fetchDependencies = useCallback(async () => {
-    if (!taskId) {
-      setIsLoading(false);
-      return;
-    }
-
+export const useTaskDependencies = (taskId?: string) => {
+  const [dependencies, setDependencies] = useState<TaskDependency[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  
+  // Fetch dependencies for a task
+  const fetchDependencies = async () => {
+    if (!taskId) return;
+    
     setIsLoading(true);
+    setError(null);
     
     try {
-      // Fetch tasks this task depends on
+      // Get tasks that this task depends on (blocked by)
       const { data: blockedByData, error: blockedByError } = await supabase
         .from('task_dependencies')
         .select(`
           id,
-          dependency_type,
+          task_id,
           dependency_task_id,
-          tasks:dependency_task_id (
-            id,
-            title,
-            status
-          )
+          dependency_type,
+          tasks!dependency_task_id (title, status)
         `)
         .eq('task_id', taskId);
         
       if (blockedByError) throw blockedByError;
-
-      // Fetch tasks that depend on this task
-      const { data: blockingData, error: blockingError } = await supabase
+      
+      // Get tasks that depend on this task (blocks)
+      const { data: blocksData, error: blocksError } = await supabase
         .from('task_dependencies')
         .select(`
           id,
-          dependency_type,
           task_id,
-          tasks:task_id (
-            id,
-            title,
-            status
-          )
+          dependency_task_id,
+          dependency_type,
+          tasks!task_id (title, status)
         `)
         .eq('dependency_task_id', taskId);
         
-      if (blockingError) throw blockingError;
-
-      // Process dependencies data
-      const formattedBlockedBy = (blockedByData || []).map(dep => ({
-        id: dep.id,
-        dependency_task_id: dep.dependency_task_id,
-        title: dep.tasks?.title || 'Unknown Task',
-        status: dep.tasks?.status || 'unknown',
-        dependency_type: dep.dependency_type
-      }));
-
-      const formattedBlocking = (blockingData || []).map(dep => ({
-        id: dep.id,
-        task_id: dep.task_id,
-        title: dep.tasks?.title || 'Unknown Task',
-        status: dep.tasks?.status || 'unknown',
-        dependency_type: dep.dependency_type
-      }));
-
-      // Filter out different dependency types
-      const blockedBy = formattedBlockedBy.filter(dep => 
-        dep.dependency_type === 'finish-to-start' || 
-        dep.dependency_type === 'start-to-start' || 
-        dep.dependency_type === 'finish-to-finish' ||
-        dep.dependency_type === 'blocked_by'
-      );
+      if (blocksError) throw blocksError;
       
-      const blocking = formattedBlocking.filter(dep => 
-        dep.dependency_type === 'finish-to-start' || 
-        dep.dependency_type === 'start-to-start' || 
-        dep.dependency_type === 'finish-to-finish' ||
-        dep.dependency_type === 'blocks'
-      );
-      
-      const related = [
-        ...formattedBlockedBy.filter(dep => dep.dependency_type === 'relates_to'),
-        ...formattedBlocking.filter(dep => dep.dependency_type === 'relates_to')
+      // Format the dependencies
+      const formattedDependencies: TaskDependency[] = [
+        ...(blockedByData || []).map(dep => ({
+          id: dep.id,
+          taskId: dep.task_id,
+          dependencyTaskId: dep.dependency_task_id,
+          dependencyType: dep.dependency_type as DependencyType,
+          title: dep.tasks?.title
+        })),
+        ...(blocksData || []).map(dep => ({
+          id: dep.id,
+          taskId: dep.dependency_task_id,
+          dependencyTaskId: dep.task_id,
+          dependencyType: 'blocks' as DependencyType, // This task blocks another
+          title: dep.tasks?.title
+        }))
       ];
-
-      // Check if task is blocked
-      const isBlocked = blockedBy.some(dep => {
-        if (dep.status === 'completed') return false;
-        
-        if (dep.dependency_type === 'finish-to-start' || 
-            dep.dependency_type === 'finish-to-finish' || 
-            dep.dependency_type === 'blocked_by') {
-          return true;
-        }
-        
-        return false;
-      });
-
-      // Update state
-      setBlockedByDependencies(blockedBy);
-      setBlockingDependencies(blocking);
-      setRelatedDependencies(related);
-      setIsBlockedByDependencies(isBlocked);
-      setDependencyCounts({
-        blocking: blocking.length,
-        blockedBy: blockedBy.length,
-        related: related.length,
-        total: blocking.length + blockedBy.length + related.length
-      });
-    } catch (error) {
-      console.error('Error fetching task dependencies:', error);
+      
+      setDependencies(formattedDependencies);
+      
+      // Check if any blocking dependencies are incomplete
+      const isTaskBlocked = (blockedByData || []).some(dep => 
+        dep.dependency_type === 'blocked_by' || 
+        ((dep.dependency_type === 'finish-to-start' || dep.dependency_type === 'start-to-start') && 
+        dep.tasks && dep.tasks.status !== 'completed')
+      );
+      
+      setIsBlocked(isTaskBlocked);
+    } catch (err) {
+      console.error("Error fetching task dependencies:", err);
+      setError("Failed to load dependencies");
     } finally {
       setIsLoading(false);
     }
-  }, [taskId]);
-
-  const checkDependencyStatus = useCallback(async () => {
-    if (!taskId) {
-      return { canComplete: true, message: null };
-    }
-
-    try {
-      // Re-fetch latest dependencies to ensure up-to-date data
-      const { data: blockedByData, error: blockedByError } = await supabase
-        .from('task_dependencies')
-        .select(`
-          id,
-          dependency_type,
-          dependency_task_id,
-          tasks:dependency_task_id (
-            id,
-            title,
-            status
-          )
-        `)
-        .eq('task_id', taskId);
-        
-      if (blockedByError) throw blockedByError;
-
-      // Check for any blocking dependencies
-      const blockingDependencies = (blockedByData || []).filter(dep => {
-        // For finish-to-X dependencies, prerequisite must be completed
-        if ((dep.dependency_type === 'finish-to-start' || 
-             dep.dependency_type === 'finish-to-finish' || 
-             dep.dependency_type === 'blocked_by') && 
-            dep.tasks?.status !== 'completed') {
-          return true;
-        }
-        return false;
-      });
-
-      if (blockingDependencies.length > 0) {
-        const titles = blockingDependencies.map(dep => dep.tasks?.title || 'Unknown Task').join(', ');
-        return {
-          canComplete: false,
-          message: `لا يمكن إكمال هذه المهمة لأنها تعتمد على المهام التالية: ${titles}`
-        };
-      }
-
-      return { canComplete: true, message: null };
-    } catch (error) {
-      console.error('Error checking dependency status:', error);
-      return {
-        canComplete: false,
-        message: 'حدث خطأ أثناء التحقق من حالة التبعيات'
-      };
-    }
-  }, [taskId]);
-
-  // Detect circular dependencies using Depth-First Search
-  const detectCircularDependencies = useCallback(async (sourceTaskId: string) => {
-    const visited = new Set<string>();
-    const recStack = new Set<string>();
+  };
+  
+  // Check for circular dependencies
+  const checkCircularDependency = async (dependencyTaskId: string, dependencyType: DependencyType): Promise<boolean> => {
+    if (!taskId || (dependencyType !== 'blocked_by' && dependencyType !== 'finish-to-start')) return false;
     
-    async function dfs(currentTaskId: string): Promise<boolean> {
-      // Mark the current node as visited and part of recursion stack
-      visited.add(currentTaskId);
-      recStack.add(currentTaskId);
+    // Direct circular check (A depends on B, B depends on A)
+    const { data: directCheck } = await supabase
+      .from('task_dependencies')
+      .select('id')
+      .eq('task_id', dependencyTaskId)
+      .eq('dependency_task_id', taskId)
+      .eq('dependency_type', dependencyType);
       
-      // Get all dependencies of current task
-      const { data: dependencies, error } = await supabase
+    if (directCheck && directCheck.length > 0) {
+      return true; // Direct circular dependency detected
+    }
+    
+    // Recursive check for indirect circular dependencies
+    async function checkDependencyChain(currentTaskId: string, visitedTasks: Set<string> = new Set()): Promise<boolean> {
+      if (visitedTasks.has(currentTaskId)) {
+        return true; // Circular dependency detected
+      }
+      
+      visitedTasks.add(currentTaskId);
+      
+      const { data: dependencies } = await supabase
         .from('task_dependencies')
         .select('dependency_task_id')
-        .eq('task_id', currentTaskId);
+        .eq('task_id', currentTaskId)
+        .in('dependency_type', ['blocked_by', 'finish-to-start', 'start-to-start']);
         
-      if (error) {
-        console.error('Error during circular dependency check:', error);
+      if (!dependencies || dependencies.length === 0) {
         return false;
       }
       
-      // Recur for all neighbors
-      for (const dep of dependencies || []) {
-        const nextTaskId = dep.dependency_task_id;
+      for (const dep of dependencies) {
+        if (dep.dependency_task_id === taskId) {
+          return true; // This would create a circular dependency
+        }
         
-        // If not visited, recursively check
-        if (!visited.has(nextTaskId)) {
-          if (await dfs(nextTaskId)) {
-            return true;  // Found cycle
-          }
-        } else if (recStack.has(nextTaskId)) {
-          // If already in recursion stack, cycle found
+        const result = await checkDependencyChain(dep.dependency_task_id, new Set(visitedTasks));
+        if (result) {
           return true;
         }
       }
       
-      // Remove current vertex from recursion stack
-      recStack.delete(currentTaskId);
       return false;
     }
     
-    return dfs(sourceTaskId);
-  }, []);
-
+    return await checkDependencyChain(dependencyTaskId);
+  };
+  
   // Add a new dependency
-  const addDependency = useCallback(async (dependencyTaskId: string, dependencyType: string) => {
-    if (!taskId) return { success: false, error: 'Invalid task ID' };
+  const addDependency = async (dependencyTaskId: string, dependencyType: DependencyType) => {
+    if (!taskId) return { success: false, error: "No task ID provided" };
     
     try {
-      // Check for self-dependency
-      if (taskId === dependencyTaskId) {
-        return { success: false, error: 'لا يمكن إضافة تبعية للمهمة مع نفسها' };
+      // Check for circular dependencies for blockers
+      if (dependencyType === 'blocked_by' || dependencyType === 'finish-to-start' || dependencyType === 'start-to-start') {
+        const hasCircular = await checkCircularDependency(dependencyTaskId, dependencyType);
+        if (hasCircular) {
+          return { 
+            success: false, 
+            error: "لا يمكن إنشاء اعتمادية دائرية. هذا سيؤدي إلى تعليق المهام بشكل دائم." 
+          };
+        }
       }
       
-      // Check for existing dependency
-      const { data: existingDeps, error: checkError } = await supabase
-        .from('task_dependencies')
-        .select('*')
-        .eq('task_id', taskId)
-        .eq('dependency_task_id', dependencyTaskId);
-        
-      if (checkError) throw checkError;
-      
-      if (existingDeps && existingDeps.length > 0) {
-        return { success: false, error: 'التبعية موجودة بالفعل' };
-      }
-      
-      // Add the dependency
-      const { error: insertError } = await supabase
+      // Insert the dependency
+      const { data, error } = await supabase
         .from('task_dependencies')
         .insert({
           task_id: taskId,
           dependency_task_id: dependencyTaskId,
           dependency_type: dependencyType
-        });
+        })
+        .select();
         
-      if (insertError) throw insertError;
+      if (error) throw error;
       
-      // Refresh dependencies
       await fetchDependencies();
-      
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error('Error adding task dependency:', error);
-      return { 
-        success: false, 
-        error: error.message || 'حدث خطأ أثناء إضافة التبعية'
-      };
+      return { success: true, data };
+    } catch (err) {
+      console.error("Error adding dependency:", err);
+      return { success: false, error: err };
     }
-  }, [taskId, fetchDependencies]);
-
+  };
+  
   // Remove a dependency
-  const removeDependency = useCallback(async (dependencyId: string) => {
+  const removeDependency = async (dependencyId: string) => {
     try {
       const { error } = await supabase
         .from('task_dependencies')
@@ -294,35 +188,75 @@ export function useTaskDependencies(taskId: string | undefined) {
         
       if (error) throw error;
       
-      // Refresh dependencies
       await fetchDependencies();
-      
-      return { success: true, error: null };
-    } catch (error: any) {
-      console.error('Error removing task dependency:', error);
-      return { 
-        success: false, 
-        error: error.message || 'حدث خطأ أثناء حذف التبعية'
-      };
+      return { success: true };
+    } catch (err) {
+      console.error("Error removing dependency:", err);
+      return { success: false, error: err };
     }
-  }, [fetchDependencies]);
-
-  // Fetch dependencies on mount and when taskId changes
+  };
+  
+  // Check if status change is allowed based on dependencies
+  const canChangeStatus = async (newStatus: string): Promise<{allowed: boolean, message?: string}> => {
+    if (!taskId) return { allowed: true };
+    
+    // Only applies when changing to completed
+    if (newStatus !== 'completed') return { allowed: true };
+    
+    try {
+      // Check if task has any blocking dependencies
+      const { data: blockingDeps, error } = await supabase
+        .from('task_dependencies')
+        .select(`
+          dependency_task_id, 
+          dependency_type,
+          tasks:dependency_task_id(status, title)
+        `)
+        .eq('task_id', taskId)
+        .in('dependency_type', ['blocked_by', 'finish-to-start', 'start-to-start']);
+        
+      if (error) throw error;
+      
+      const blockedBy = (blockingDeps || []).filter(dep => 
+        dep.tasks && dep.tasks.status !== 'completed' && 
+        (dep.dependency_type === 'blocked_by' || dep.dependency_type === 'finish-to-start')
+      );
+      
+      if (blockedBy.length > 0) {
+        // Get the names of the blocking tasks for better user feedback
+        const blockingTaskNames = blockedBy.map(dep => dep.tasks?.title || 'مهمة غير معروفة').join(', ');
+        
+        return { 
+          allowed: false, 
+          message: `هذه المهمة معتمدة على ${blockedBy.length} مهام غير مكتملة: ${blockingTaskNames}` 
+        };
+      }
+      
+      return { allowed: true };
+    } catch (err) {
+      console.error("Error checking task dependencies:", err);
+      return { allowed: true }; // Allow in case of error, but log it
+    }
+  };
+  
+  // Load dependencies when task ID changes
   useEffect(() => {
-    fetchDependencies();
-  }, [taskId, fetchDependencies]);
-
+    if (taskId) {
+      fetchDependencies();
+    } else {
+      setDependencies([]);
+      setIsBlocked(false);
+    }
+  }, [taskId]);
+  
   return {
+    dependencies,
     isLoading,
-    isBlockedByDependencies,
-    blockedByDependencies,
-    blockingDependencies,
-    relatedDependencies,
-    dependencyCounts,
+    error,
+    isBlocked,
     fetchDependencies,
     addDependency,
     removeDependency,
-    checkDependencyStatus,
-    detectCircularDependencies
+    canChangeStatus
   };
-}
+};
