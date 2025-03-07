@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type DependencyType = 'blocks' | 'blocked_by' | 'relates_to';
+export type DependencyType = 'blocks' | 'blocked_by' | 'relates_to' | 'finish-to-start' | 'start-to-start' | 'finish-to-finish';
 
 export interface TaskDependency {
   id?: string;
@@ -35,7 +35,7 @@ export const useTaskDependencies = (taskId?: string) => {
           task_id,
           dependency_task_id,
           dependency_type,
-          tasks:dependency_task_id (title, status)
+          tasks!dependency_task_id (title, status)
         `)
         .eq('task_id', taskId);
         
@@ -49,7 +49,7 @@ export const useTaskDependencies = (taskId?: string) => {
           task_id,
           dependency_task_id,
           dependency_type,
-          tasks:task_id (title, status)
+          tasks!task_id (title, status)
         `)
         .eq('dependency_task_id', taskId);
         
@@ -77,8 +77,9 @@ export const useTaskDependencies = (taskId?: string) => {
       
       // Check if any blocking dependencies are incomplete
       const isTaskBlocked = (blockedByData || []).some(dep => 
-        dep.dependency_type === 'blocked_by' && 
-        dep.tasks?.status !== 'completed'
+        dep.dependency_type === 'blocked_by' || 
+        ((dep.dependency_type === 'finish-to-start' || dep.dependency_type === 'start-to-start') && 
+        dep.tasks && dep.tasks.status !== 'completed')
       );
       
       setIsBlocked(isTaskBlocked);
@@ -92,7 +93,7 @@ export const useTaskDependencies = (taskId?: string) => {
   
   // Check for circular dependencies
   const checkCircularDependency = async (dependencyTaskId: string, dependencyType: DependencyType): Promise<boolean> => {
-    if (!taskId || dependencyType !== 'blocked_by') return false;
+    if (!taskId || (dependencyType !== 'blocked_by' && dependencyType !== 'finish-to-start')) return false;
     
     // Direct circular check (A depends on B, B depends on A)
     const { data: directCheck } = await supabase
@@ -100,7 +101,7 @@ export const useTaskDependencies = (taskId?: string) => {
       .select('id')
       .eq('task_id', dependencyTaskId)
       .eq('dependency_task_id', taskId)
-      .eq('dependency_type', 'blocked_by');
+      .eq('dependency_type', dependencyType);
       
     if (directCheck && directCheck.length > 0) {
       return true; // Direct circular dependency detected
@@ -118,7 +119,7 @@ export const useTaskDependencies = (taskId?: string) => {
         .from('task_dependencies')
         .select('dependency_task_id')
         .eq('task_id', currentTaskId)
-        .eq('dependency_type', 'blocked_by');
+        .in('dependency_type', ['blocked_by', 'finish-to-start', 'start-to-start']);
         
       if (!dependencies || dependencies.length === 0) {
         return false;
@@ -146,8 +147,8 @@ export const useTaskDependencies = (taskId?: string) => {
     if (!taskId) return { success: false, error: "No task ID provided" };
     
     try {
-      // Check for circular dependencies (only for blocked_by type)
-      if (dependencyType === 'blocked_by') {
+      // Check for circular dependencies for blockers
+      if (dependencyType === 'blocked_by' || dependencyType === 'finish-to-start' || dependencyType === 'start-to-start') {
         const hasCircular = await checkCircularDependency(dependencyTaskId, dependencyType);
         if (hasCircular) {
           return { 
@@ -206,9 +207,13 @@ export const useTaskDependencies = (taskId?: string) => {
       // Check if task has any blocking dependencies
       const { data: blockingDeps, error } = await supabase
         .from('task_dependencies')
-        .select('dependency_task_id, tasks:dependency_task_id(status, title)')
+        .select(`
+          dependency_task_id, 
+          dependency_type,
+          tasks:dependency_task_id(status, title)
+        `)
         .eq('task_id', taskId)
-        .eq('dependency_type', 'blocked_by');
+        .in('dependency_type', ['blocked_by', 'finish-to-start']);
         
       if (error) throw error;
       

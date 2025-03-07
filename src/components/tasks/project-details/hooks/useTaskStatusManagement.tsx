@@ -6,6 +6,9 @@ import { toast } from "sonner";
 import { useTaskDependencies } from "./useTaskDependencies";
 import { useInAppNotifications } from "@/contexts/notifications/useInAppNotifications";
 
+// Define the NotificationType type
+export type NotificationType = 'task_assignment' | 'task_update' | 'task_mention' | 'task_comment' | 'task_dependency' | 'workspace_invitation' | 'project_invitation';
+
 export const useTaskStatusManagement = (
   projectId: string | undefined,
   tasks: Task[],
@@ -92,10 +95,11 @@ export const useTaskStatusManagement = (
           .select(`
             id,
             task_id,
+            dependency_type,
             tasks:task_id(title, assigned_to)
           `)
           .eq('dependency_task_id', taskId)
-          .eq('dependency_type', 'blocked_by');
+          .in('dependency_type', ['blocked_by', 'finish-to-start']);
           
         if (dependentTasks && dependentTasks.length > 0) {
           // Get the completed task title
@@ -103,12 +107,12 @@ export const useTaskStatusManagement = (
           
           // Send notifications to each dependent task owner
           for (const depTask of dependentTasks) {
-            if (depTask.tasks?.assigned_to) {
+            if (depTask.tasks && depTask.tasks.assigned_to) {
               await createNotification({
                 user_id: depTask.tasks.assigned_to,
                 title: "تم اكتمال مهمة معتمدة",
                 message: `المهمة "${completedTask.title}" التي تعتمد عليها مهمتك "${depTask.tasks.title}" قد اكتملت.`,
-                notification_type: "task_dependency",
+                notification_type: "task_dependency" as NotificationType,
                 related_entity_id: depTask.task_id,
                 related_entity_type: "task"
               });

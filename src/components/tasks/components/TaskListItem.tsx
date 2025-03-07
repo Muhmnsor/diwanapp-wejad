@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -16,6 +15,7 @@ import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import type { Task as ProjectTask } from "../project-details/types/task";
 import { handleTaskCompletion } from "./actions/handleTaskCompletion";
+import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 
 interface TaskListItemProps {
   task: Task;
@@ -36,7 +36,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
 
-  // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
     try {
@@ -120,23 +119,20 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
     }
   };
 
-  // Handle edit task
   const handleEditTask = (taskId: string) => {
     setIsEditDialogOpen(true);
   };
 
-  // Handle task update completion
   const handleTaskUpdated = () => {
     if (onTaskUpdated) {
       onTaskUpdated();
     }
   };
 
-  // Convert to the ProjectTask type for EditTaskDialog
   const adaptTaskForEditDialog = (): ProjectTask => {
     return {
       ...task,
-      description: task.description || null, // Ensure description is never undefined
+      description: task.description || null,
       status: task.status || "pending",
       priority: task.priority || null,
       due_date: task.due_date || null,
@@ -174,14 +170,12 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         isGeneral={task.is_general}
       />
       
-      {/* Task Discussion Dialog */}
       <TaskDiscussionDialog 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
       />
       
-      {/* Attachments Dialog */}
       {task && (
         <TaskAttachmentDialog
           task={task}
@@ -190,7 +184,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         />
       )}
       
-      {/* File Upload Dialog */}
       {task && (
         <FileUploadDialog
           isOpen={isUploadDialogOpen}
@@ -198,8 +191,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           task={task}
         />
       )}
-
-      {/* Templates Dialog */}
+      
       {task && (
         <TaskTemplatesDialog
           task={task}
@@ -207,8 +199,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           onOpenChange={setIsTemplatesDialogOpen}
         />
       )}
-
-      {/* Edit Task Dialog for General Tasks */}
+      
       {task && task.is_general && (
         <EditTaskDialog
           open={isEditDialogOpen}

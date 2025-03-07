@@ -20,7 +20,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Plus, X, ArrowDown, ArrowUp, Link, GitMerge, GitBranch } from "lucide-react";
+import { AlertCircle, Plus, X, ArrowDown, ArrowUp, Link, GitMerge, GitBranch, Clock, Flag } from "lucide-react";
 import { Task } from "@/types/workspace";
 import { useProjectTasks } from "../hooks/useProjectTasks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -99,6 +99,12 @@ export const TaskDependenciesField = ({
         return 'تعتمد على';
       case 'relates_to':
         return 'مرتبطة بـ';
+      case 'finish-to-start':
+        return 'لا تبدأ حتى تنتهي';
+      case 'start-to-start':
+        return 'تبدأ مع بداية';
+      case 'finish-to-finish':
+        return 'تنتهي مع نهاية';
       default:
         return dependencyType;
     }
@@ -112,6 +118,12 @@ export const TaskDependenciesField = ({
         return <ArrowUp className="h-3.5 w-3.5 ml-1" />;
       case 'relates_to':
         return <Link className="h-3.5 w-3.5 ml-1" />;
+      case 'finish-to-start':
+        return <Flag className="h-3.5 w-3.5 ml-1" />;
+      case 'start-to-start':
+        return <Clock className="h-3.5 w-3.5 ml-1" />;
+      case 'finish-to-finish':
+        return <GitMerge className="h-3.5 w-3.5 ml-1" />;
       default:
         return null;
     }
@@ -264,6 +276,21 @@ export const TaskDependenciesField = ({
                       
                       <div className="grid grid-cols-1 gap-2">
                         <div 
+                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'finish-to-start' ? 'border-primary bg-primary/5' : ''}`}
+                          onClick={() => setSelectedDependencyType('finish-to-start')}
+                        >
+                          <div className="flex items-center">
+                            <Flag className="h-4 w-4 ml-2 text-primary" />
+                            <div>
+                              <p className="font-medium">لا تبدأ حتى تنتهي</p>
+                              <p className="text-sm text-muted-foreground">
+                                هذه المهمة لا يمكن أن تبدأ إلا بعد انتهاء المهمة المختارة
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div 
                           className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'blocks' ? 'border-primary bg-primary/5' : ''}`}
                           onClick={() => setSelectedDependencyType('blocks')}
                         >
@@ -288,6 +315,36 @@ export const TaskDependenciesField = ({
                               <p className="font-medium">هذه المهمة تعتمد على</p>
                               <p className="text-sm text-muted-foreground">
                                 هذه المهمة تتطلب إكمال المهمة المختارة أولاً
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div 
+                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'start-to-start' ? 'border-primary bg-primary/5' : ''}`}
+                          onClick={() => setSelectedDependencyType('start-to-start')}
+                        >
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 ml-2 text-primary" />
+                            <div>
+                              <p className="font-medium">تبدأ مع بداية</p>
+                              <p className="text-sm text-muted-foreground">
+                                هذه المهمة يجب أن تبدأ مع بداية المهمة المختارة
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div 
+                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'finish-to-finish' ? 'border-primary bg-primary/5' : ''}`}
+                          onClick={() => setSelectedDependencyType('finish-to-finish')}
+                        >
+                          <div className="flex items-center">
+                            <GitMerge className="h-4 w-4 ml-2 text-primary" />
+                            <div>
+                              <p className="font-medium">تنتهي مع نهاية</p>
+                              <p className="text-sm text-muted-foreground">
+                                هذه المهمة لا يمكن أن تنتهي إلا مع نهاية المهمة المختارة
                               </p>
                             </div>
                           </div>
