@@ -80,111 +80,27 @@ export const useTasksList = (projectId: string | undefined) => {
     }
   };
 
-  // Delete task function
+  // Delete task function - simplified to use the database function
   const deleteTask = async (taskId: string) => {
     try {
       console.log("Deleting task:", taskId);
       
-      // 1. حذف المهام الفرعية المرتبطة بالمهمة - التحقق من وجود البيانات في كلا الجدولين
-      // Check both subtasks tables
-      const { error: subtasksError } = await supabase
-        .from('subtasks')
-        .delete()
-        .eq('task_id', taskId);
+      // Use the database function to delete the task and all related data
+      const { data, error } = await supabase.rpc('delete_task', {
+        p_task_id: taskId,
+        p_user_id: (await supabase.auth.getUser()).data.user?.id
+      });
       
-      if (subtasksError) {
-        console.error("Error deleting subtasks:", subtasksError);
-        // نستمر في الحذف حتى لو فشل حذف المهام الفرعية
+      if (error) {
+        console.error("Error calling delete_task function:", error);
+        throw error;
       }
       
-      // Also try task_subtasks table
-      const { error: taskSubtasksError } = await supabase
-        .from('task_subtasks')
-        .delete()
-        .eq('parent_task_id', taskId);
-      
-      if (taskSubtasksError) {
-        console.error("Error deleting task_subtasks:", taskSubtasksError);
-        // نستمر في الحذف حتى لو فشل حذف المهام الفرعية
+      if (!data) {
+        throw new Error("Failed to delete task");
       }
       
-      // 2. حذف المرفقات
-      const { error: attachmentsError } = await supabase
-        .from('task_attachments')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (attachmentsError) {
-        console.error("Error deleting task attachments:", attachmentsError);
-        // نستمر في الحذف حتى لو فشل حذف المرفقات
-      }
-      
-      const { error: portfolioAttachmentsError } = await supabase
-        .from('portfolio_task_attachments')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (portfolioAttachmentsError) {
-        console.error("Error deleting portfolio attachments:", portfolioAttachmentsError);
-        // نستمر في الحذف حتى لو فشل حذف مرفقات المحفظة
-      }
-      
-      // 3. حذف نماذج المهمة
-      const { error: templatesError } = await supabase
-        .from('task_templates')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (templatesError) {
-        console.error("Error deleting templates:", templatesError);
-        // نستمر في الحذف حتى لو فشل حذف النماذج
-      }
-      
-      // 4. حذف تعليقات المهمة
-      const { error: commentsError } = await supabase
-        .from('task_comments')
-        .delete()
-        .eq('task_id', taskId);
-        
-      if (commentsError) {
-        console.error("Error deleting comments:", commentsError);
-        // نستمر في الحذف حتى لو فشل حذف التعليقات
-      }
-      
-      // Also try unified_task_comments table
-      const { error: unifiedCommentsError } = await supabase
-        .from('unified_task_comments')
-        .delete()
-        .eq('task_id', taskId)
-        .eq('task_table', 'tasks');
-        
-      if (unifiedCommentsError) {
-        console.error("Error deleting unified comments:", unifiedCommentsError);
-        // نستمر في الحذف حتى لو فشل حذف التعليقات الموحدة
-      }
-      
-      // 5. حذف المرفقات من جدول task_discussion_attachments
-      const { error: discussionAttachmentsError } = await supabase
-        .from('task_discussion_attachments')
-        .delete()
-        .eq('task_id', taskId)
-        .eq('task_table', 'tasks');
-        
-      if (discussionAttachmentsError) {
-        console.error("Error deleting discussion attachments:", discussionAttachmentsError);
-        // نستمر في الحذف حتى لو فشل حذف مرفقات المناقشة
-      }
-      
-      // 6. حذف المهمة نفسها
-      let { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
-        
-      if (error) throw error;
-      
-      // بدلاً من تحديث الحالة المحلية فقط، نقوم بإعادة تحميل البيانات
-      // لضمان تحديث كل من tasks و tasksByStage
+      // Reload tasks data to ensure UI is up to date
       await fetchTasks();
       
       toast.success("تم حذف المهمة بنجاح");
