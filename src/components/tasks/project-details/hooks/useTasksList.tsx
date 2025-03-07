@@ -52,8 +52,8 @@ export const useTasksList = (projectId: string | undefined) => {
         
       if (error) throw error;
       
-      // Update the tasks list with the updated task
-      setTasks(prevTasks => 
+      // Fix the type issue by proper type annotation
+      setTasks((prevTasks: Task[]) => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, ...updateData } : task
         )

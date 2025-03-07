@@ -33,8 +33,10 @@ export const useRealtimeSync = (options: UseRealtimeSyncOptions = {}) => {
   // Handle online/offline status changes
   useEffect(() => {
     const handleOnline = () => {
-      setSyncStatus(prevStatus => ({
-        ...prevStatus,
+      const prevStatus = syncStatus; // Store current status before update
+      
+      setSyncStatus(currentStatus => ({
+        ...currentStatus,
         isOnline: true
       }));
       
@@ -44,8 +46,8 @@ export const useRealtimeSync = (options: UseRealtimeSyncOptions = {}) => {
     };
     
     const handleOffline = () => {
-      setSyncStatus(prevStatus => ({
-        ...prevStatus,
+      setSyncStatus(currentStatus => ({
+        ...currentStatus,
         isOnline: false
       }));
     };
@@ -57,7 +59,7 @@ export const useRealtimeSync = (options: UseRealtimeSyncOptions = {}) => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [syncOnReconnect]);
+  }, [syncOnReconnect, syncStatus]);
   
   // Force synchronization of pending updates
   const forceSyncNow = useCallback(() => {
@@ -65,15 +67,15 @@ export const useRealtimeSync = (options: UseRealtimeSyncOptions = {}) => {
       return;
     }
     
-    setSyncStatus(prevStatus => ({
-      ...prevStatus,
+    setSyncStatus(currentStatus => ({
+      ...currentStatus,
       syncInProgress: true
     }));
     
     // Simulate sync process
     setTimeout(() => {
-      setSyncStatus(prevStatus => ({
-        ...prevStatus,
+      setSyncStatus(currentStatus => ({
+        ...currentStatus,
         pendingUpdates: 0,
         lastSyncTime: Date.now(),
         syncInProgress: false

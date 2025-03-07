@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AddTaskDialog } from './tasks/AddTaskDialog';
 import { useWorkspaceTasks } from './tasks/useWorkspaceTasks';
 import { TaskList } from './tasks/TaskList';
-import { Task } from '../tasks/types/task';
+import { Task } from '../tasks/project-details/types/task';  // Import from the project-details path instead
 
 export const PortfolioTasks = ({ workspaceId }: { workspaceId: string }) => {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);

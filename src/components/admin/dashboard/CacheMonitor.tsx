@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useCacheMonitor } from '@/hooks/useCacheMonitor';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
@@ -44,7 +45,7 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip as RechartsTooltip, 
+  Tooltip, 
   Legend, 
   ResponsiveContainer, 
   PieChart as RechartsPieChart, 
