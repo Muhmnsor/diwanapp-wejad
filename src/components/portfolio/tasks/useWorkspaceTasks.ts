@@ -1,6 +1,6 @@
 
 import { useCachedQuery } from '@/hooks/useCachedQuery';
-import { Task } from '@/components/tasks/types/task';
+import { Task } from '@/types/workspace';
 import { getOrCreateWorkspace, syncTasksWithAsana, fetchWorkspaceTasks } from './api/workspaceApi';
 
 export const useWorkspaceTasks = (workspaceId: string) => {
@@ -22,7 +22,18 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         const tasks = await fetchWorkspaceTasks(workspace.id);
         console.log('✅ Final tasks:', tasks);
         
-        return tasks || [];
+        // Ensure all required fields are present for Task interface
+        const formattedTasks = tasks?.map(task => ({
+          ...task,
+          status: (task.status || 'pending') as Task['status'],
+          priority: (task.priority || 'medium') as Task['priority'],
+          workspace_id: task.workspace_id || workspace.id,
+          created_at: task.created_at || new Date().toISOString(),
+          updated_at: task.updated_at || new Date().toISOString(),
+          assigned_to: task.assigned_to || null
+        })) || [];
+        
+        return formattedTasks;
       } catch (error) {
         console.error('❌ Error in useWorkspaceTasks:', error);
         throw error;

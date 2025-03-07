@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "../types/task";
+import { Task } from "@/types/workspace";
 import { toast } from "sonner";
 
 export const useGeneralTasks = () => {
@@ -64,11 +64,18 @@ export const useGeneralTasks = () => {
         return task;
       }));
       
+      // Ensure all tasks have the correct status values matching the Task type
+      const validatedTasks = tasksWithUserData.map(task => ({
+        ...task,
+        status: ensureValidStatus(task.status),
+        priority: ensureValidPriority(task.priority)
+      })) as Task[];
+      
       // Group tasks by category
       const tasksByCategoryMap: Record<string, Task[]> = {};
       const uniqueCategories = new Set<string>();
       
-      tasksWithUserData.forEach(task => {
+      validatedTasks.forEach(task => {
         const category = task.category || 'أخرى';
         uniqueCategories.add(category);
         
@@ -83,23 +90,23 @@ export const useGeneralTasks = () => {
       const oneWeekFromNow = new Date();
       oneWeekFromNow.setDate(now.getDate() + 7);
       
-      const total = tasksWithUserData.length;
-      const completed = tasksWithUserData.filter(task => task.status === 'completed').length;
-      const pending = tasksWithUserData.filter(task => 
+      const total = validatedTasks.length;
+      const completed = validatedTasks.filter(task => task.status === 'completed').length;
+      const pending = validatedTasks.filter(task => 
         task.status === 'pending' || task.status === 'in_progress'
       ).length;
-      const delayed = tasksWithUserData.filter(task => {
+      const delayed = validatedTasks.filter(task => {
         if (!task.due_date) return false;
         const dueDate = new Date(task.due_date);
         return dueDate < now && task.status !== 'completed';
       }).length;
-      const upcoming = tasksWithUserData.filter(task => {
+      const upcoming = validatedTasks.filter(task => {
         if (!task.due_date) return false;
         const dueDate = new Date(task.due_date);
         return dueDate > now && dueDate <= oneWeekFromNow && task.status !== 'completed';
       }).length;
       
-      setTasks(tasksWithUserData);
+      setTasks(validatedTasks);
       setTasksByCategory(tasksByCategoryMap);
       setCategories(Array.from(uniqueCategories));
       setStats({
@@ -118,6 +125,24 @@ export const useGeneralTasks = () => {
     }
   };
 
+  // Helper function to ensure status is one of the valid values
+  const ensureValidStatus = (status: string | null | undefined): Task['status'] => {
+    const validStatuses: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled'];
+    if (!status || !validStatuses.includes(status as Task['status'])) {
+      return 'pending';
+    }
+    return status as Task['status'];
+  };
+  
+  // Helper function to ensure priority is one of the valid values
+  const ensureValidPriority = (priority: string | null | undefined): Task['priority'] => {
+    const validPriorities: Task['priority'][] = ['low', 'medium', 'high'];
+    if (!priority || !validPriorities.includes(priority as Task['priority'])) {
+      return 'medium';
+    }
+    return priority as Task['priority'];
+  };
+
   useEffect(() => {
     fetchGeneralTasks();
   }, []);
@@ -126,9 +151,12 @@ export const useGeneralTasks = () => {
     try {
       console.log(`Updating general task ${taskId} status to ${newStatus}`);
       
+      // Ensure newStatus is a valid status value
+      const validStatus = ensureValidStatus(newStatus);
+      
       const { error } = await supabase
         .from('tasks')
-        .update({ status: newStatus })
+        .update({ status: validStatus })
         .eq('id', taskId);
       
       if (error) {
@@ -139,7 +167,7 @@ export const useGeneralTasks = () => {
       // Update local state
       setTasks(prevTasks => 
         prevTasks.map(task => 
-          task.id === taskId ? { ...task, status: newStatus } : task
+          task.id === taskId ? { ...task, status: validStatus } : task
         )
       );
       
@@ -149,7 +177,7 @@ export const useGeneralTasks = () => {
         
         for (const category in updatedTasksByCategory) {
           updatedTasksByCategory[category] = updatedTasksByCategory[category].map(task => 
-            task.id === taskId ? { ...task, status: newStatus } : task
+            task.id === taskId ? { ...task, status: validStatus } : task
           );
         }
         

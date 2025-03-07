@@ -1,3 +1,4 @@
+
 import { Task } from "../types/task";
 
 // Transform portfolio tasks to unified format
@@ -22,13 +23,20 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
     return {
       id: task.id,
       title: task.title,
-      description: task.description,
-      status: task.status,
-      due_date: task.due_date,
-      priority: task.priority,
+      description: task.description || null,
+      status: (task.status || 'pending') as Task['status'],
+      due_date: task.due_date || null,
+      priority: (task.priority || 'medium') as Task['priority'],
       project_name: projectName,
       workspace_name: workspaceName,
-      is_subtask: false
+      is_subtask: false,
+      
+      // Add missing required fields from Task interface
+      workspace_id: task.workspace_id || '',
+      created_at: task.created_at || new Date().toISOString(),
+      updated_at: task.updated_at || new Date().toISOString(),
+      assigned_to: task.assigned_to || null,
+      project_id: task.project_id || null
     };
   });
 };
@@ -43,15 +51,21 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
     return {
       id: task.id,
       title: task.title,
-      description: task.description,
-      status: task.status as Task['status'],
-      due_date: task.due_date,
-      priority: task.priority,
+      description: task.description || null,
+      status: (task.status || 'pending') as Task['status'],
+      due_date: task.due_date || null,
+      priority: (task.priority || 'medium') as Task['priority'],
       project_name: projectName,
-      project_id: task.project_id,
+      project_id: task.project_id || null,
       workspace_name: task.is_general ? 'مهمة عامة' : 'مساحة عمل افتراضية',
       is_subtask: false,
-      is_general: task.is_general || false
+      is_general: task.is_general || false,
+      
+      // Add missing required fields from Task interface
+      workspace_id: task.workspace_id || '',
+      created_at: task.created_at || new Date().toISOString(),
+      updated_at: task.updated_at || new Date().toISOString(),
+      assigned_to: task.assigned_to || null
     };
   });
 };
@@ -97,14 +111,20 @@ export const transformSubtasks = (
       id: subtask.id,
       title: subtask.title,
       description: null,
-      status: subtask.status as Task['status'],
-      due_date: subtask.due_date,
-      priority: 'medium',
+      status: (subtask.status || 'pending') as Task['status'],
+      due_date: subtask.due_date || null,
+      priority: 'medium' as Task['priority'],
       project_name: projectName,
-      project_id: parentProjectId,
+      project_id: parentProjectId || null,
       workspace_name: parentTask.workspace_name || 'مساحة عمل افتراضية',
       is_subtask: true,
-      parent_task_id: subtask.task_id
+      parent_task_id: subtask.task_id,
+      
+      // Add missing required fields from Task interface
+      workspace_id: parentTask.workspace_id || '',
+      created_at: subtask.created_at || new Date().toISOString(),
+      updated_at: subtask.updated_at || new Date().toISOString(),
+      assigned_to: subtask.assigned_to || null
     };
   });
 };
