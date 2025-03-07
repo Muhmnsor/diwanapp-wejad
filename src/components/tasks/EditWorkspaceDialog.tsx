@@ -82,7 +82,8 @@ export const EditWorkspaceDialog = ({
         .update({
           name: data.name,
           description: data.description,
-          updated_at: new Date().toISOString(),
+          // المشكلة كانت في هذا السطر - نقوم بإزالة الحقل updated_at لأن الجدول لا يحتوي عليه
+          // أو يمكن أن يتم تحديثه تلقائيًا بواسطة trigger في قاعدة البيانات
         })
         .eq('id', workspace.id);
 
