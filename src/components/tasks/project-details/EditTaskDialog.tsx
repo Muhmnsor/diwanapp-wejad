@@ -1,240 +1,151 @@
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { TaskForm } from "./TaskForm";
-import { useToast } from "@/components/ui/use-toast";
-import { useWorkspace } from "@/providers/workspace-provider";
-import { useUser } from "@/providers/user-provider";
-
-// Import the necessary hooks for task dependencies
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DependencyType } from "./hooks/useTaskDependencies";
-import { useEffect, useState } from "react";
+import { Task } from "@/types/workspace";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TaskForm } from "./components/TaskForm";
+import { toast } from "sonner";
+import { useTaskDependencies } from "./hooks/useTaskDependencies";
 
-interface EditTaskDialogProps {
+export interface EditTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  task: any;
-  projectStages: any[];
-  projectMembers: any[];
-  onTaskUpdated?: () => void;
+  task: Task;
+  projectStages: {id: string; name: string}[];
+  projectMembers: {id: string; name: string}[];
+  onStatusChange: (newStatus: string) => void;
+  onTaskUpdated: () => void;
 }
 
-export const EditTaskDialog = ({ 
-  open, 
+export const EditTaskDialog = ({
+  open,
   onOpenChange,
   task,
   projectStages,
   projectMembers,
+  onStatusChange,
   onTaskUpdated
 }: EditTaskDialogProps) => {
-  const { toast } = useToast();
-  const { workspaceId } = useWorkspace();
-  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [taskDependencies, setTaskDependencies] = useState<{
-    id?: string;
-    taskId: string;
-    dependencyType: DependencyType;
-  }[]>([]);
-  
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const { isBlockedByDependencies, checkDependencyStatus } = useTaskDependencies(task?.id);
+
   useEffect(() => {
-    // Fetch task dependencies if task is provided
-    const fetchDependencies = async () => {
-      if (!task?.id) return;
-      
-      try {
-        // Get dependencies where this task depends on others
-        const { data: blockedByDeps, error: blockedByError } = await supabase
-          .from('task_dependencies')
-          .select('id, dependency_task_id, dependency_type')
-          .eq('task_id', task.id);
-          
-        if (blockedByError) throw blockedByError;
-        
-        // Get dependencies where others depend on this task
-        const { data: blocksDeps, error: blocksError } = await supabase
-          .from('task_dependencies')
-          .select('id, task_id, dependency_type')
-          .eq('dependency_task_id', task.id);
-          
-        if (blocksError) throw blocksError;
-        
-        // Format the dependencies
-        const formattedDeps = [
-          ...(blockedByDeps || []).map(dep => ({
-            id: dep.id,
-            taskId: dep.dependency_task_id,
-            dependencyType: dep.dependency_type as DependencyType
-          })),
-          ...(blocksDeps || []).map(dep => ({
-            id: dep.id,
-            taskId: dep.task_id,
-            dependencyType: 'blocks' as DependencyType
-          }))
-        ];
-        
-        setTaskDependencies(formattedDeps);
-      } catch (error) {
-        console.error("Error fetching task dependencies:", error);
-      }
-    };
-    
-    fetchDependencies();
-  }, [task?.id]);
-  
+    if (open) {
+      setError(null);
+      setSuccess(null);
+    }
+  }, [open]);
+
   const handleSubmit = async (formData: any) => {
-    if (!task) return;
-    
     setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
     
     try {
-      // Extract dependencies from form data
-      const { dependencies, ...taskData } = formData;
+      // Check if status is being changed to completed
+      if (formData.status === 'completed' && task.status !== 'completed') {
+        // Check dependencies
+        const dependencyStatus = await checkDependencyStatus();
+        if (!dependencyStatus.canComplete) {
+          setError(dependencyStatus.message || "لا يمكن إكمال المهمة بسبب تبعيات غير مكتملة");
+          toast.error("لا يمكن إكمال المهمة بسبب تبعيات غير مكتملة");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Check for incomplete subtasks
+        const { data: subtasks, error: subtasksError } = await supabase
+          .from('subtasks')
+          .select('id, status')
+          .eq('task_id', task.id);
+          
+        if (subtasksError) throw subtasksError;
+        
+        const incompleteSubtasks = subtasks?.filter(st => st.status !== 'completed') || [];
+        if (incompleteSubtasks.length > 0) {
+          setError("لا يمكن إكمال المهمة لأن لديها مهام فرعية غير مكتملة");
+          toast.error("يجب إكمال جميع المهام الفرعية أولاً");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // Prepare data for update
+      const updateData = {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        priority: formData.priority,
+        due_date: formData.due_date || null,
+        assigned_to: formData.assigned_to || null,
+        stage_id: formData.stage_id || null
+      };
       
       // Update the task
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('tasks')
-        .update({
-          title: taskData.title,
-          description: taskData.description,
-          status: taskData.status,
-          priority: taskData.priority,
-          due_date: taskData.due_date,
-          assigned_to: taskData.assigned_to,
-          stage_id: taskData.stage_id,
-          category: taskData.category,
-          attachment_url: taskData.attachment_url,
-          form_template: taskData.form_template,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', task.id);
         
-      if (error) throw error;
+      if (updateError) throw updateError;
       
-      // Handle dependencies - this requires more complex logic to add/remove correctly
-      
-      // 1. Get current dependencies
-      const { data: currentDeps, error: depsError } = await supabase
-        .from('task_dependencies')
-        .select('id, task_id, dependency_task_id, dependency_type')
-        .or(`task_id.eq.${task.id},dependency_task_id.eq.${task.id}`);
-        
-      if (depsError) throw depsError;
-      
-      // 2. Determine which dependencies to delete (those not in the new list)
-      const depsToDelete = (currentDeps || []).filter(currentDep => {
-        if (currentDep.task_id === task.id) {
-          // This is a dependency where task depends on another
-          return !dependencies.some((dep: any) => 
-            dep.taskId === currentDep.dependency_task_id && 
-            dep.dependencyType === currentDep.dependency_type
-          );
-        } else {
-          // This is a dependency where another task depends on this one
-          return !dependencies.some((dep: any) => 
-            dep.taskId === currentDep.task_id && 
-            dep.dependencyType === 'blocks'
-          );
-        }
-      });
-      
-      // 3. Determine which dependencies to add (those in the new list but not in the current list)
-      const depsToAdd = dependencies.filter((newDep: any) => {
-        if (newDep.dependencyType === 'blocks') {
-          // Task blocks another
-          return !currentDeps?.some(currentDep => 
-            currentDep.dependency_task_id === task.id && 
-            currentDep.task_id === newDep.taskId
-          );
-        } else {
-          // Task is blocked by another
-          return !currentDeps?.some(currentDep => 
-            currentDep.task_id === task.id && 
-            currentDep.dependency_task_id === newDep.taskId &&
-            currentDep.dependency_type === newDep.dependencyType
-          );
-        }
-      });
-      
-      // 4. Delete removed dependencies
-      if (depsToDelete.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('task_dependencies')
-          .delete()
-          .in('id', depsToDelete.map(dep => dep.id));
-          
-        if (deleteError) throw deleteError;
-      }
-      
-      // 5. Add new dependencies
-      if (depsToAdd.length > 0) {
-        const newDepRecords = depsToAdd.map((dep: any) => {
-          if (dep.dependencyType === 'blocks') {
-            // Task blocks another
-            return {
-              task_id: dep.taskId,
-              dependency_task_id: task.id,
-              dependency_type: 'blocked_by' // inverse relationship
-            };
-          } else {
-            // Task is blocked by another
-            return {
-              task_id: task.id,
-              dependency_task_id: dep.taskId,
-              dependency_type: dep.dependencyType
-            };
-          }
-        });
-        
-        const { error: addError } = await supabase
-          .from('task_dependencies')
-          .insert(newDepRecords);
-          
-        if (addError) throw addError;
-      }
-      
-      // Success handling
+      setSuccess("تم تحديث المهمة بنجاح");
       toast.success("تم تحديث المهمة بنجاح");
-      onTaskUpdated?.();
-      onOpenChange(false);
       
-    } catch (error) {
-      // Error handling
-      console.error("Error updating task:", error);
+      // If status changed, notify parent
+      if (formData.status !== task.status) {
+        onStatusChange(formData.status);
+      }
+      
+      // Notify parent component that task was updated
+      onTaskUpdated();
+      
+      // Close dialog after a short delay
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1500);
+    } catch (err) {
+      console.error('Error updating task:', err);
+      setError("حدث خطأ أثناء تحديث المهمة");
       toast.error("حدث خطأ أثناء تحديث المهمة");
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="rtl sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>تعديل المهمة</DialogTitle>
         </DialogHeader>
         
-        {task && (
-          <TaskForm
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            onCancel={() => onOpenChange(false)}
-            projectId={task.project_id as string}
-            projectStages={projectStages}
-            projectMembers={projectMembers}
-            isGeneral={task.is_general}
-            initialTask={{
-              ...task,
-              dependencies: taskDependencies
-            }}
-          />
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
+        
+        {success && (
+          <Alert variant="default" className="bg-green-50 text-green-800 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+        
+        <TaskForm
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          initialTask={task}
+          projectStages={projectStages}
+          projectMembers={projectMembers}
+        />
       </DialogContent>
     </Dialog>
   );

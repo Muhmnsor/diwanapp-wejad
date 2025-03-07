@@ -1,430 +1,267 @@
 
-import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { UseFormReturn } from "react-hook-form";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter 
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel
+} from "@/components/ui/select";
+import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Plus, X, ArrowDown, ArrowUp, Link, GitMerge, GitBranch, Clock, Flag } from "lucide-react";
-import { Task } from "@/types/workspace";
-import { useProjectTasks } from "../hooks/useProjectTasks";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DependencyType } from "../hooks/useTaskDependencies";
-
-export interface TaskDependency {
-  id?: string;
-  taskId: string;
-  dependencyType: DependencyType;
-}
 
 interface TaskDependenciesFieldProps {
-  projectId?: string;
-  selectedDependencies: TaskDependency[];
-  setSelectedDependencies: (dependencies: TaskDependency[]) => void;
-  currentTaskId?: string; // For edit mode to exclude current task
+  form: UseFormReturn<any>;
+  taskId?: string;
+  projectId: string;
 }
 
 export const TaskDependenciesField = ({
-  projectId,
-  selectedDependencies,
-  setSelectedDependencies,
-  currentTaskId
+  form,
+  taskId,
+  projectId
 }: TaskDependenciesFieldProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<string>("");
-  const [selectedDependencyType, setSelectedDependencyType] = useState<DependencyType>("blocks");
-  const [activeTab, setActiveTab] = useState<string>("select-task");
+  const [availableTasks, setAvailableTasks] = useState<any[]>([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<string>("");
+  const [dependencyType, setDependencyType] = useState<string>("finish-to-start");
+  const [isAddingDependency, setIsAddingDependency] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const { tasks, isLoading, error } = useProjectTasks(projectId);
-  
-  const availableTasks = tasks.filter(task => {
-    const alreadySelected = selectedDependencies.some(dep => dep.taskId === task.id);
-    const isCurrentTask = currentTaskId === task.id;
-    return !alreadySelected && !isCurrentTask;
-  });
+  const {
+    blockedByDependencies,
+    isLoading: isDepsLoading,
+    addDependency,
+    removeDependency,
+    detectCircularDependencies
+  } = useTaskDependencies(taskId);
 
-  const tasksByStatus = {
-    completed: availableTasks.filter(task => task.status === 'completed'),
-    inProgress: availableTasks.filter(task => task.status === 'in_progress'),
-    pending: availableTasks.filter(task => task.status === 'pending'),
-    other: availableTasks.filter(task => 
-      !['completed', 'in_progress', 'pending'].includes(task.status || '')
-    )
-  };
-  
-  const handleAddDependency = () => {
-    if (!selectedTaskId) return;
-    
-    setSelectedDependencies([
-      ...selectedDependencies,
-      {
-        taskId: selectedTaskId,
-        dependencyType: selectedDependencyType
-      }
-    ]);
-    
-    setSelectedTaskId("");
-    setSelectedDependencyType("blocks");
-    setIsDialogOpen(false);
-  };
-  
-  const handleRemoveDependency = (taskId: string) => {
-    setSelectedDependencies(
-      selectedDependencies.filter(dep => dep.taskId !== taskId)
-    );
-  };
-  
-  const getDependencyLabel = (dependencyType: DependencyType): string => {
-    switch (dependencyType) {
-      case 'blocks':
-        return 'تعتمد عليها';
-      case 'blocked_by':
-        return 'تعتمد على';
-      case 'relates_to':
-        return 'مرتبطة بـ';
-      case 'finish-to-start':
-        return 'لا تبدأ حتى تنتهي';
-      case 'start-to-start':
-        return 'تبدأ مع بداية';
-      case 'finish-to-finish':
-        return 'تنتهي مع نهاية';
-      default:
-        return dependencyType;
-    }
-  };
-  
-  const getDependencyIcon = (dependencyType: DependencyType) => {
-    switch (dependencyType) {
-      case 'blocks':
-        return <ArrowDown className="h-3.5 w-3.5 ml-1" />;
-      case 'blocked_by':
-        return <ArrowUp className="h-3.5 w-3.5 ml-1" />;
-      case 'relates_to':
-        return <Link className="h-3.5 w-3.5 ml-1" />;
-      case 'finish-to-start':
-        return <Flag className="h-3.5 w-3.5 ml-1" />;
-      case 'start-to-start':
-        return <Clock className="h-3.5 w-3.5 ml-1" />;
-      case 'finish-to-finish':
-        return <GitMerge className="h-3.5 w-3.5 ml-1" />;
-      default:
-        return null;
-    }
-  };
-  
-  const getTaskById = (taskId: string): Task | undefined => {
-    return tasks.find(task => task.id === taskId);
-  };
-  
-  return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <Label>اعتماديات المهمة</Label>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-1"
-              disabled={availableTasks.length === 0}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              إضافة اعتمادية
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
-            <DialogHeader>
-              <DialogTitle>إضافة اعتمادية للمهمة</DialogTitle>
-            </DialogHeader>
-            
-            {error ? (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>خطأ في تحميل المهام</AlertDescription>
-              </Alert>
-            ) : isLoading ? (
-              <div className="text-center p-4">جاري تحميل المهام...</div>
-            ) : availableTasks.length === 0 ? (
-              <div className="text-center p-4 text-muted-foreground">
-                لا يوجد مهام متاحة للاعتمادية
-              </div>
-            ) : (
-              <>
-                <Tabs defaultValue="select-task" value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="select-task">اختيار المهمة</TabsTrigger>
-                    <TabsTrigger value="dependency-type">نوع الاعتمادية</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="select-task" className="space-y-4 py-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="task">المهمة</Label>
-                      
-                      <Select
-                        value={selectedTaskId}
-                        onValueChange={(value) => {
-                          setSelectedTaskId(value);
-                          setActiveTab("dependency-type");
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر مهمة" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <ScrollArea className="h-[300px]">
-                            {tasksByStatus.completed.length > 0 && (
-                              <>
-                                <div className="px-2 py-1.5 text-xs font-semibold bg-green-50">
-                                  مهام مكتملة
-                                </div>
-                                {tasksByStatus.completed.map(task => (
-                                  <SelectItem key={task.id} value={task.id}>
-                                    {task.title}
-                                  </SelectItem>
-                                ))}
-                              </>
-                            )}
-                            
-                            {tasksByStatus.inProgress.length > 0 && (
-                              <>
-                                <div className="px-2 py-1.5 text-xs font-semibold bg-blue-50">
-                                  مهام قيد التنفيذ
-                                </div>
-                                {tasksByStatus.inProgress.map(task => (
-                                  <SelectItem key={task.id} value={task.id}>
-                                    {task.title}
-                                  </SelectItem>
-                                ))}
-                              </>
-                            )}
-                            
-                            {tasksByStatus.pending.length > 0 && (
-                              <>
-                                <div className="px-2 py-1.5 text-xs font-semibold bg-gray-50">
-                                  مهام معلقة
-                                </div>
-                                {tasksByStatus.pending.map(task => (
-                                  <SelectItem key={task.id} value={task.id}>
-                                    {task.title}
-                                  </SelectItem>
-                                ))}
-                              </>
-                            )}
-                            
-                            {tasksByStatus.other.length > 0 && (
-                              <>
-                                <div className="px-2 py-1.5 text-xs font-semibold bg-gray-50">
-                                  مهام أخرى
-                                </div>
-                                {tasksByStatus.other.map(task => (
-                                  <SelectItem key={task.id} value={task.id}>
-                                    {task.title}
-                                  </SelectItem>
-                                ))}
-                              </>
-                            )}
-                          </ScrollArea>
-                        </SelectContent>
-                      </Select>
-                      
-                      {selectedTaskId && (
-                        <div className="text-xs text-muted-foreground mt-2">
-                          تم اختيار المهمة. الآن حدد نوع الاعتمادية.
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex justify-end">
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActiveTab("dependency-type")}
-                        disabled={!selectedTaskId}
-                      >
-                        التالي: تحديد نوع الاعتمادية
-                      </Button>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="dependency-type" className="space-y-4 py-2">
-                    {selectedTaskId && (
-                      <div className="mb-4 p-2 border rounded-md bg-muted/40">
-                        <p className="text-sm font-medium">المهمة المختارة:</p>
-                        <p className="text-sm text-muted-foreground">{getTaskById(selectedTaskId)?.title}</p>
-                      </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="dependencyType">نوع الاعتمادية</Label>
-                      
-                      <div className="grid grid-cols-1 gap-2">
-                        <div 
-                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'finish-to-start' ? 'border-primary bg-primary/5' : ''}`}
-                          onClick={() => setSelectedDependencyType('finish-to-start')}
-                        >
-                          <div className="flex items-center">
-                            <Flag className="h-4 w-4 ml-2 text-primary" />
-                            <div>
-                              <p className="font-medium">لا تبدأ حتى تنتهي</p>
-                              <p className="text-sm text-muted-foreground">
-                                هذه المهمة لا يمكن أن تبدأ إلا بعد انتهاء المهمة المختارة
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div 
-                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'blocks' ? 'border-primary bg-primary/5' : ''}`}
-                          onClick={() => setSelectedDependencyType('blocks')}
-                        >
-                          <div className="flex items-center">
-                            <ArrowDown className="h-4 w-4 ml-2 text-primary" />
-                            <div>
-                              <p className="font-medium">هذه المهمة مطلوبة لـ</p>
-                              <p className="text-sm text-muted-foreground">
-                                المهمة المختارة تعتمد على إكمال هذه المهمة
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div 
-                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'blocked_by' ? 'border-primary bg-primary/5' : ''}`}
-                          onClick={() => setSelectedDependencyType('blocked_by')}
-                        >
-                          <div className="flex items-center">
-                            <ArrowUp className="h-4 w-4 ml-2 text-primary" />
-                            <div>
-                              <p className="font-medium">هذه المهمة تعتمد على</p>
-                              <p className="text-sm text-muted-foreground">
-                                هذه المهمة تتطلب إكمال المهمة المختارة أولاً
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div 
-                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'start-to-start' ? 'border-primary bg-primary/5' : ''}`}
-                          onClick={() => setSelectedDependencyType('start-to-start')}
-                        >
-                          <div className="flex items-center">
-                            <Clock className="h-4 w-4 ml-2 text-primary" />
-                            <div>
-                              <p className="font-medium">تبدأ مع بداية</p>
-                              <p className="text-sm text-muted-foreground">
-                                هذه المهمة يجب أن تبدأ مع بداية المهمة المختارة
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div 
-                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'finish-to-finish' ? 'border-primary bg-primary/5' : ''}`}
-                          onClick={() => setSelectedDependencyType('finish-to-finish')}
-                        >
-                          <div className="flex items-center">
-                            <GitMerge className="h-4 w-4 ml-2 text-primary" />
-                            <div>
-                              <p className="font-medium">تنتهي مع نهاية</p>
-                              <p className="text-sm text-muted-foreground">
-                                هذه المهمة لا يمكن أن تنتهي إلا مع نهاية المهمة المختارة
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div 
-                          className={`border rounded-md p-3 cursor-pointer ${selectedDependencyType === 'relates_to' ? 'border-primary bg-primary/5' : ''}`}
-                          onClick={() => setSelectedDependencyType('relates_to')}
-                        >
-                          <div className="flex items-center">
-                            <Link className="h-4 w-4 ml-2 text-primary" />
-                            <div>
-                              <p className="font-medium">مرتبطة بـ</p>
-                              <p className="text-sm text-muted-foreground">
-                                هذه المهمة مرتبطة بالمهمة المختارة ولكن بدون اعتماد
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between mt-4">
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActiveTab("select-task")}
-                      >
-                        رجوع: تغيير المهمة
-                      </Button>
-                      
-                      <Button 
-                        onClick={handleAddDependency} 
-                        disabled={!selectedTaskId}
-                      >
-                        إضافة الاعتمادية
-                      </Button>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+  // Fetch available tasks for this project
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!projectId) return;
       
-      <div className="border rounded-md p-3 min-h-[100px]">
-        {selectedDependencies.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-            لم يتم إضافة اعتماديات بعد
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {selectedDependencies.map(dependency => {
-              const task = getTaskById(dependency.taskId);
-              if (!task) return null;
-              
-              return (
-                <div 
-                  key={dependency.taskId}
-                  className="flex items-center justify-between bg-muted/50 p-2 rounded-md"
-                >
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">
-                      {getDependencyIcon(dependency.dependencyType)}
-                      {getDependencyLabel(dependency.dependencyType)}
-                    </Badge>
-                    <span className="text-sm">{task.title}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveDependency(dependency.taskId)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+      setIsLoadingTasks(true);
+      try {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('id, title, status')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        // Filter out the current task
+        const filteredTasks = data?.filter(t => t.id !== taskId) || [];
+        setAvailableTasks(filteredTasks);
+      } catch (err) {
+        console.error('Error fetching tasks for dependencies:', err);
+        toast.error("حدث خطأ أثناء جلب المهام المتاحة");
+      } finally {
+        setIsLoadingTasks(false);
+      }
+    };
+    
+    fetchTasks();
+  }, [projectId, taskId]);
+
+  const handleAddDependency = async () => {
+    if (!selectedTask || !dependencyType || !taskId) {
+      setError("الرجاء اختيار مهمة ونوع التبعية");
+      return;
+    }
+    
+    setIsAddingDependency(true);
+    setError(null);
+    
+    try {
+      // Check for circular dependencies
+      const wouldCreateCircular = await detectCircularDependencies(taskId);
+      if (wouldCreateCircular) {
+        setError("لا يمكن إضافة هذه التبعية لأنها ستؤدي إلى تبعية دائرية");
+        return;
+      }
+      
+      const result = await addDependency(selectedTask, dependencyType);
+      
+      if (!result.success) {
+        setError(result.error || "حدث خطأ أثناء إضافة التبعية");
+        return;
+      }
+      
+      toast.success("تمت إضافة التبعية بنجاح");
+      setSelectedTask("");
+    } catch (err) {
+      console.error("Error adding dependency:", err);
+      setError("حدث خطأ أثناء إضافة التبعية");
+    } finally {
+      setIsAddingDependency(false);
+    }
+  };
+
+  const handleRemoveDependency = async (dependencyId: string) => {
+    try {
+      const result = await removeDependency(dependencyId);
+      
+      if (!result.success) {
+        toast.error(result.error || "حدث خطأ أثناء حذف التبعية");
+        return;
+      }
+      
+      toast.success("تم حذف التبعية بنجاح");
+    } catch (err) {
+      console.error("Error removing dependency:", err);
+      toast.error("حدث خطأ أثناء حذف التبعية");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="dependencies"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>تبعيات المهمة</FormLabel>
+            <FormControl>
+              <div className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                
+                {/* Current Dependencies */}
+                <div className="space-y-2">
+                  <h4 className="text-sm text-muted-foreground">التبعيات الحالية:</h4>
+                  
+                  {isDepsLoading ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="ml-2 text-sm">جاري التحميل...</span>
+                    </div>
+                  ) : blockedByDependencies.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">لا توجد تبعيات حالية</div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {blockedByDependencies.map(dep => (
+                        <Badge key={dep.id} variant="outline" className="flex items-center gap-1">
+                          <span>{dep.title}</span>
+                          <span className="text-xs">
+                            ({dep.dependency_type === 'finish-to-start' ? 'اكتمال قبل البدء' :
+                              dep.dependency_type === 'start-to-start' ? 'بدء قبل البدء' :
+                              dep.dependency_type === 'finish-to-finish' ? 'اكتمال قبل الاكتمال' :
+                              dep.dependency_type === 'blocked_by' ? 'ممنوع بواسطة' :
+                              dep.dependency_type === 'blocks' ? 'يمنع' : 'مرتبط'})
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 w-4 p-0 ml-1"
+                            onClick={() => handleRemoveDependency(dep.id)}
+                          >
+                            &times;
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+                
+                {/* Add New Dependency */}
+                {taskId && (
+                  <div className="flex flex-col space-y-2">
+                    <h4 className="text-sm text-muted-foreground">إضافة تبعية جديدة:</h4>
+                    
+                    <div className="grid grid-cols-5 gap-2">
+                      <div className="col-span-2">
+                        <Select
+                          value={selectedTask}
+                          onValueChange={setSelectedTask}
+                          disabled={isLoadingTasks}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر مهمة" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {isLoadingTasks ? (
+                              <div className="flex items-center justify-center p-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="ml-2">جاري التحميل...</span>
+                              </div>
+                            ) : availableTasks.length === 0 ? (
+                              <div className="p-2 text-center text-muted-foreground">
+                                لا توجد مهام متاحة
+                              </div>
+                            ) : (
+                              <SelectGroup>
+                                <SelectLabel>المهام المتاحة</SelectLabel>
+                                {availableTasks.map(task => (
+                                  <SelectItem key={task.id} value={task.id}>
+                                    {task.title}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="col-span-2">
+                        <Select
+                          value={dependencyType}
+                          onValueChange={setDependencyType}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="نوع التبعية" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>نوع التبعية</SelectLabel>
+                              <SelectItem value="finish-to-start">يجب اكتمالها قبل البدء</SelectItem>
+                              <SelectItem value="start-to-start">يجب بدؤها قبل البدء</SelectItem>
+                              <SelectItem value="finish-to-finish">يجب اكتمالها قبل الاكتمال</SelectItem>
+                              <SelectItem value="relates_to">مرتبطة بـ</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="col-span-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="w-full"
+                          onClick={handleAddDependency}
+                          disabled={isAddingDependency || !selectedTask}
+                        >
+                          {isAddingDependency ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'إضافة'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
-      </div>
+      />
     </div>
   );
 };

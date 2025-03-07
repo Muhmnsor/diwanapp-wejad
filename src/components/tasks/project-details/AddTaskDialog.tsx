@@ -1,190 +1,139 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { TaskForm } from "./TaskForm";
+
 import { useState } from "react";
-import { uploadAttachment, saveTaskTemplate } from "../services/uploadService";
-import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, CheckCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
-import { TaskDependency } from "./components/TaskDependenciesField";
-import { DependencyType } from "./hooks/useTaskDependencies";
+import { TaskForm } from "./components/TaskForm";
+import { useWorkspace } from "@/providers/workspace-provider";
+import { useUser } from "@/providers/user-provider";
 
-export const AddTaskDialog = ({ 
-  open, 
-  onOpenChange, 
-  projectId, 
-  projectStages, 
-  onTaskAdded, 
-  projectMembers,
-  isGeneral
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+const taskSchema = z.object({
+  title: z.string().min(3, { message: "عنوان المهمة يجب أن يكون 3 أحرف على الأقل" }),
+  description: z.string().optional(),
+  status: z.string(),
+  priority: z.string(),
+  due_date: z.string().optional().nullable(),
+  assigned_to: z.string().optional().nullable(),
+  stage_id: z.string().optional().nullable(),
+  dependencies: z.array(z.string()).optional()
+});
+
+interface AddTaskDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
   projectId: string;
-  projectStages: { id: string; name: string }[];
+  projectStages: {id: string; name: string}[];
+  projectMembers: {id: string; name: string}[];
   onTaskAdded: () => void;
-  projectMembers: ProjectMember[];
-  isGeneral?: boolean;
-}) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
+}
 
-  const handleSubmit = async (formData: any) => {
+export const AddTaskDialog = ({
+  isOpen,
+  onClose,
+  projectId,
+  projectStages,
+  projectMembers,
+  onTaskAdded
+}: AddTaskDialogProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const { workspaceId } = useWorkspace();
+  const { user } = useUser();
+
+  const form = useForm<z.infer<typeof taskSchema>>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      status: "pending",
+      priority: "medium",
+      due_date: null,
+      assigned_to: null,
+      stage_id: projectStages.length > 0 ? projectStages[0].id : null,
+      dependencies: []
+    }
+  });
+
+  const handleSubmit = async (data: z.infer<typeof taskSchema>) => {
     setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
     
     try {
-      const { dependencies, ...taskData } = formData;
+      // Prepare data for insertion
+      const taskData = {
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        priority: data.priority,
+        due_date: data.due_date || null,
+        assigned_to: data.assigned_to || null,
+        stage_id: data.stage_id || null,
+        project_id: projectId,
+        workspace_id: workspaceId,
+        created_by: user?.id
+      };
       
-      const { data: newTask, error } = await supabase
+      // Insert the task
+      const { error: insertError } = await supabase
         .from('tasks')
-        .insert({
-          title: taskData.title,
-          description: taskData.description,
-          assigned_to: taskData.assignedTo,
-          due_date: taskData.dueDate ? new Date(taskData.dueDate).toISOString() : null,
-          stage_id: !isGeneral ? taskData.stageId : null,
-          priority: taskData.priority,
-          status: 'pending',
-          category: taskData.category || null,
-          is_general: isGeneral || false,
-          created_by: user?.id,
-          project_id: projectId || null,
-          workspace_id: isGeneral ? null : workspaceId,
-        })
-        .select()
-        .single();
+        .insert(taskData);
         
-      if (error) throw error;
+      if (insertError) throw insertError;
       
-      if (dependencies && dependencies.length > 0) {
-        const dependencyRecords = dependencies.map((dep: { taskId: string; dependencyType: DependencyType }) => ({
-          task_id: newTask.id,
-          dependency_task_id: dep.taskId,
-          dependency_type: dep.dependencyType
-        }));
-        
-        const { error: depError } = await supabase
-          .from('task_dependencies')
-          .insert(dependencyRecords);
-          
-        if (depError) {
-          console.error("Error adding dependencies:", depError);
-        }
-      }
-
-      let projectTitle = '';
-      if (projectId && !isGeneral) {
-        const { data: projectData } = await supabase
-          .from('projects')
-          .select('name')
-          .eq('id', projectId)
-          .single();
-        
-        if (projectData) {
-          projectTitle = projectData.name;
-        }
-      }
-
-      if (formData.assignedTo) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (user) {
-            const { data: creatorProfile } = await supabase
-              .from('profiles')
-              .select('display_name, email')
-              .eq('id', user.id)
-              .single();
-              
-            const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
-            
-            await sendTaskAssignmentNotification({
-              taskId: newTask.id,
-              taskTitle: formData.title,
-              projectId: isGeneral ? null : projectId,
-              projectTitle: isGeneral ? 'المهام العامة' : projectTitle,
-              assignedUserId: formData.assignedTo,
-              assignedByUserId: user.id,
-              assignedByUserName: creatorName
-            });
-            
-            console.log('Task assignment notification sent to:', formData.assignedTo);
-          }
-        } catch (notifyError) {
-          console.error('Error sending task assignment notification:', notifyError);
-        }
-      }
-
-      let templateErrors = false;
-      if (formData.templates && formData.templates.length > 0 && newTask) {
-        for (const file of formData.templates) {
-          try {
-            console.log("Processing template file:", file.name);
-            
-            const uploadResult = await uploadAttachment(file, 'template');
-            
-            if (uploadResult?.url) {
-              console.log("Template uploaded successfully:", uploadResult.url);
-              
-              try {
-                await saveTaskTemplate(
-                  newTask.id,
-                  uploadResult.url,
-                  file.name,
-                  file.type
-                );
-                console.log("Task template saved successfully");
-              } catch (refError) {
-                console.error("Error saving template reference:", refError);
-                templateErrors = true;
-              }
-            } else {
-              console.error("Upload result error:", uploadResult?.error);
-              templateErrors = true;
-            }
-          } catch (uploadError) {
-            console.error("Error handling template file:", uploadError);
-            templateErrors = true;
-          }
-        }
-      }
-
-      if (templateErrors) {
-        toast.warning("تم إنشاء المهمة ولكن قد تكون بعض النماذج لم تُرفع بشكل صحيح");
-      } else {
-        toast.success("تم إضافة المهمة بنجاح");
-      }
+      // Show success and reset form
+      setSuccess("تمت إضافة المهمة بنجاح");
+      form.reset();
       
+      // Notify parent component
       onTaskAdded();
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error submitting task:", error);
-      toast.error("حدث خطأ أثناء حفظ المهمة");
+      
+      // Close dialog after a delay
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error('Error adding task:', err);
+      setError("حدث خطأ أثناء إضافة المهمة");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col rtl">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="rtl sm:max-w-[700px]">
         <DialogHeader>
-          <DialogTitle>إضافة {isGeneral ? "مهمة عامة" : "مهمة"} جديدة</DialogTitle>
-          <DialogDescription>
-            أضف {isGeneral ? "مهمة عامة" : "مهمة جديدة إلى المشروع"}. اضغط إرسال عند الانتهاء.
-          </DialogDescription>
+          <DialogTitle>إضافة مهمة جديدة</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-auto">
-          <TaskForm
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            projectStages={projectStages}
-            projectMembers={projectMembers}
-            isGeneral={isGeneral}
-            projectId={projectId}
-          />
-        </div>
+        
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {success && (
+          <Alert variant="default" className="bg-green-50 text-green-800 border-green-200">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+        
+        <TaskForm
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          projectStages={projectStages}
+          projectMembers={projectMembers}
+          projectId={projectId}
+        />
       </DialogContent>
     </Dialog>
   );
-}
+};

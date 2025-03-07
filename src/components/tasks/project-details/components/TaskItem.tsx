@@ -1,118 +1,138 @@
 
-import { useState } from "react";
+import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EditTaskDialog } from "@/components/tasks/project-details/EditTaskDialog";
 import { Task } from "@/types/workspace";
-import { EditTaskDialog } from "../EditTaskDialog";
-import { DeleteTaskDialog } from "../DeleteTaskDialog";
-import { TaskDependenciesBadge } from "./TaskDependenciesBadge";
+import { ViewTaskDialog } from "@/components/tasks/project-details/ViewTaskDialog";
+import { DeleteTaskDialog } from "@/components/tasks/project-details/DeleteTaskDialog";
+import { TaskDependenciesBadge } from './TaskDependenciesBadge';
 
-interface TaskItemProps {
+export interface TaskItemProps {
   task: Task;
-  projectId: string;
-  projectStages: { id: string; name: string }[];
-  projectMembers: { id: string; user_email: string }[];
+  getStatusBadge?: (status: string) => JSX.Element;
+  getPriorityBadge?: (priority: string) => JSX.Element;
+  formatDate: (date: string | null | undefined) => string;
   onStatusChange: (taskId: string, newStatus: string) => void;
-  onDelete: (taskId: string) => void;
-  onTaskUpdated?: () => void;
+  projectId: string;
+  onEdit: (task: Task) => void;
+  onDelete: (taskId: string) => Promise<void>;
 }
 
-export const TaskItem = ({ 
+export const TaskItem: React.FC<TaskItemProps> = ({
   task,
-  projectId,
-  projectStages,
-  projectMembers,
+  getStatusBadge,
+  getPriorityBadge,
+  formatDate,
   onStatusChange,
-  onDelete,
-  onTaskUpdated
-}: TaskItemProps) => {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  projectId,
+  onEdit,
+  onDelete
+}) => {
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // Default status badge if not provided
+  const defaultStatusBadge = (status: string) => {
+    return (
+      <Badge variant={
+        status === 'completed' ? 'success' : 
+        status === 'in_progress' ? 'info' : 
+        status === 'pending' ? 'warning' : 'outline'
+      }>
+        {status}
+      </Badge>
+    );
+  };
+  
+  // Default priority badge if not provided
+  const defaultPriorityBadge = (priority: string) => {
+    return (
+      <Badge variant={
+        priority === 'high' ? 'destructive' : 
+        priority === 'medium' ? 'warning' : 
+        priority === 'low' ? 'outline' : 'secondary'
+      }>
+        {priority}
+      </Badge>
+    );
+  };
   
   const handleStatusChange = (newStatus: string) => {
     onStatusChange(task.id, newStatus);
   };
   
+  const handleTaskUpdated = () => {
+    // Refresh the task
+    onEdit(task);
+  };
+  
+  const renderStatusBadge = getStatusBadge || defaultStatusBadge;
+  const renderPriorityBadge = getPriorityBadge || defaultPriorityBadge;
+
   return (
-    <div
-      key={task.id}
-      className="bg-white rounded-md shadow-sm hover:shadow-md transition-shadow duration-200 p-4"
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1 font-medium">
-          <span>{task.title}</span>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          <TaskDependenciesBadge taskId={task.id} />
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <h3 className="font-medium text-md line-clamp-2" onClick={() => setShowViewDialog(true)}>
+              {task.title}
+            </h3>
+            
+            <div className="flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
+              {task.due_date && (
+                <span>تاريخ الاستحقاق: {formatDate(task.due_date)}</span>
+              )}
+            </div>
+            
+            <div className="flex flex-wrap gap-2 mt-2">
+              {renderStatusBadge(task.status)}
+              {renderPriorityBadge(task.priority)}
+              
+              {/* Task Dependencies Badge */}
+              <TaskDependenciesBadge taskId={task.id} />
+            </div>
+          </div>
           
-          {task.status && (
-            <Badge variant="secondary">
-              {task.status}
-            </Badge>
-          )}
-        </div>
-      </div>
-      
-      <p className="text-sm text-gray-500 mb-4">{task.description}</p>
-      
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {task.priority && (
-            <Badge variant="outline">
-              {task.priority}
-            </Badge>
-          )}
-          {task.due_date && (
-            <span className="text-xs text-gray-400">
-              Due: {new Date(task.due_date).toLocaleDateString()}
-            </span>
-          )}
-        </div>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-2 rounded-md hover:bg-gray-100">
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setShowEditDialog(true)}>
               <MoreHorizontal className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              تعديل
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              حذف
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+            </Button>
+          </div>
+        </div>
+      </CardContent>
       
+      {/* Edit Task Dialog */}
       <EditTaskDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
         task={task}
         projectId={projectId}
-        projectStages={projectStages}
-        projectMembers={projectMembers}
+        projectStages={[]}
+        projectMembers={[]}
         onStatusChange={handleStatusChange}
-        onTaskUpdated={onTaskUpdated}
+        onTaskUpdated={handleTaskUpdated}
       />
       
+      {/* View Task Dialog */}
+      <ViewTaskDialog
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        task={task}
+        onTaskUpdated={handleTaskUpdated}
+      />
+      
+      {/* Delete Task Dialog */}
       <DeleteTaskDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
         taskId={task.id}
         taskTitle={task.title}
         onDelete={onDelete}
       />
-    </div>
+    </Card>
   );
 };
