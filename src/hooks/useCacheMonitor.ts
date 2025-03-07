@@ -14,6 +14,11 @@ type CacheStats = {
   totalSize: number;
   throttledUpdates: number;
   batchedUpdates: number;
+  refreshedEntries?: number;
+  priorityDistribution?: Record<string, number>;
+  avgResponseTime?: number;
+  offlineUpdatesQueued?: number;
+  syncStatus?: string;
 };
 
 export const useCacheMonitor = (refreshInterval: number = 5000) => {
@@ -28,7 +33,12 @@ export const useCacheMonitor = (refreshInterval: number = 5000) => {
     compressionSavings: 0,
     totalSize: 0,
     throttledUpdates: 0,
-    batchedUpdates: 0
+    batchedUpdates: 0,
+    refreshedEntries: 0,
+    priorityDistribution: { low: 0, normal: 0, high: 0, critical: 0 },
+    avgResponseTime: 0,
+    offlineUpdatesQueued: 0,
+    syncStatus: 'online'
   });
 
   useEffect(() => {
@@ -43,8 +53,17 @@ export const useCacheMonitor = (refreshInterval: number = 5000) => {
   }, [refreshInterval]);
 
   const fetchStats = () => {
-    const freshStats = getCacheStats();
-    setStats(freshStats);
+    const freshStats = getCacheStats() as Partial<CacheStats>;
+    setStats(prevStats => ({
+      ...prevStats,
+      ...freshStats,
+      // Keep additional stats that might not be in cacheService yet
+      refreshedEntries: freshStats.refreshedEntries || prevStats.refreshedEntries || 0,
+      priorityDistribution: freshStats.priorityDistribution || prevStats.priorityDistribution,
+      avgResponseTime: freshStats.avgResponseTime || prevStats.avgResponseTime || 0,
+      offlineUpdatesQueued: freshStats.offlineUpdatesQueued || (window.navigator.onLine ? 0 : (prevStats.offlineUpdatesQueued || 0)),
+      syncStatus: window.navigator.onLine ? 'online' : 'offline'
+    }));
   };
 
   const resetStats = () => {
@@ -52,5 +71,9 @@ export const useCacheMonitor = (refreshInterval: number = 5000) => {
     fetchStats(); // Refresh stats after reset
   };
 
-  return stats;
+  return {
+    ...stats,
+    resetStats,
+    refreshStats: fetchStats
+  };
 };
