@@ -26,14 +26,14 @@ export const TaskDependenciesBadge = ({ taskId }: TaskDependenciesBadgeProps) =>
   useEffect(() => {
     const fetchDependenciesCount = async () => {
       try {
-        // Get blocking dependencies count
+        // Get blocking dependencies count (tasks that this task blocks)
         const { count: blocksCount, error: blocksError } = await supabase
           .from('task_dependencies')
           .select('*', { count: 'exact', head: true })
           .eq('dependency_task_id', taskId)
           .in('dependency_type', ['blocks', 'finish-to-start']);
           
-        // Get blocked by dependencies count
+        // Get blocked by dependencies count (tasks that block this task)
         const { count: blockedByCount, error: blockedByError } = await supabase
           .from('task_dependencies')
           .select('*', { count: 'exact', head: true })
