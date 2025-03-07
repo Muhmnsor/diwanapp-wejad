@@ -1,83 +1,100 @@
 
-import { useCallback, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "@/types/workspace";
 
-export const useProjectTasks = (projectId?: string) => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const useProjectTasks = (projectId: string) => {
   const [completedTasksCount, setCompletedTasksCount] = useState(0);
   const [totalTasksCount, setTotalTasksCount] = useState(0);
   const [overdueTasksCount, setOverdueTasksCount] = useState(0);
-  const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   
-  const fetchTasks = useCallback(async () => {
-    if (!projectId) {
-      setTasks([]);
-      setIsLoading(false);
-      return;
-    }
-    
+  const fetchTasksData = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-      
       // Fetch tasks for this project
-      const { data, error: tasksError } = await supabase
+      const { data: tasks, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+        .eq('project_id', projectId);
       
-      if (tasksError) {
-        throw tasksError;
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        return;
       }
+
+      // Calculate metrics
+      const total = tasks ? tasks.length : 0;
+      const completed = tasks ? tasks.filter(task => task.status === 'completed').length : 0;
       
-      const fetchedTasks = data as Task[];
-      setTasks(fetchedTasks);
-      
-      // Calculate stats
-      const total = fetchedTasks.length;
-      const completed = fetchedTasks.filter(task => task.status === 'completed').length;
-      
-      // Calculate overdue tasks (due date is in the past and task is not completed)
+      // Calculate overdue tasks (tasks with due_date in the past and not completed)
       const now = new Date();
-      const overdue = fetchedTasks.filter(task => 
-        task.status !== 'completed' && 
-        task.due_date && 
-        new Date(task.due_date) < now
-      ).length;
-      
-      // Calculate completion percentage
-      const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-      
+      const overdue = tasks ? tasks.filter(task => {
+        return task.status !== 'completed' && 
+              task.due_date && 
+              new Date(task.due_date) < now;
+      }).length : 0;
+
       setTotalTasksCount(total);
       setCompletedTasksCount(completed);
       setOverdueTasksCount(overdue);
-      setCompletionPercentage(percentage);
-      
+
+      // Check if project status needs updating
+      if (total > 0) {
+        let newStatus = 'pending';
+        
+        if (completed === total) {
+          newStatus = 'completed';
+        } else if (completed > 0) {
+          newStatus = 'in_progress';
+        } else if (overdue > 0) {
+          newStatus = 'delayed';
+        }
+        
+        // Get current project status
+        const { data: projectData, error: projectError } = await supabase
+          .from('project_tasks')
+          .select('status, is_draft')
+          .eq('id', projectId)
+          .single();
+          
+        if (!projectError && projectData) {
+          // Only update if not in draft mode
+          if (!projectData.is_draft && projectData.status !== newStatus) {
+            console.log(`Updating project status from ${projectData.status} to ${newStatus}`);
+            
+            // Update project status
+            const { error: updateError } = await supabase
+              .from('project_tasks')
+              .update({ status: newStatus })
+              .eq('id', projectId);
+              
+            if (updateError) {
+              console.error("Error updating project status:", updateError);
+            }
+          }
+        }
+      }
     } catch (err) {
-      console.error("Error fetching project tasks:", err);
-      setError("فشل في تحميل المهام، يرجى المحاولة لاحقًا");
+      console.error("Error in fetchTasksData:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [projectId]);
-  
+  };
+
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
-  
+    fetchTasksData();
+  }, [projectId]);
+
+  const completionPercentage = totalTasksCount > 0 
+    ? Math.round((completedTasksCount / totalTasksCount) * 100) 
+    : 0;
+
   return {
-    tasks,
-    isLoading,
-    error,
     completedTasksCount,
-    totalTasksCount, 
+    totalTasksCount,
     overdueTasksCount,
     completionPercentage,
-    refreshTasks: fetchTasks,
-    refetchData: fetchTasks // Alias for compatibility
+    isLoading,
+    refetchData: fetchTasksData
   };
 };

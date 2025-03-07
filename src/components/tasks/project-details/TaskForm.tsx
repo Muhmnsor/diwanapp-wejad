@@ -9,7 +9,6 @@ import { TaskAssigneeField } from "./components/TaskAssigneeField";
 import { TaskFormActions } from "./components/TaskFormActions";
 import { TaskAttachmentField } from "./components/TaskAttachmentField";
 import { TaskCategoryField } from "./components/TaskCategoryField";
-import { TaskDependenciesField, TaskDependency } from "./components/TaskDependenciesField";
 import { ProjectMember } from "./hooks/useProjectMembers";
 
 export interface TaskFormProps {
@@ -22,7 +21,6 @@ export interface TaskFormProps {
     assignedTo: string | null;
     templates?: File[] | null;
     category?: string;
-    dependencies?: TaskDependency[];
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
@@ -36,10 +34,8 @@ export interface TaskFormProps {
     stageId: string;
     assignedTo: string | null;
     category?: string;
-    dependencies?: TaskDependency[];
   };
   isEditMode?: boolean;
-  projectId?: string;
 }
 
 export const TaskForm = ({ 
@@ -49,8 +45,7 @@ export const TaskForm = ({
   projectMembers,
   isGeneral,
   initialValues,
-  isEditMode = false,
-  projectId
+  isEditMode = false
 }: TaskFormProps) => {
   const [title, setTitle] = useState(initialValues?.title || "");
   const [description, setDescription] = useState(initialValues?.description || "");
@@ -60,7 +55,6 @@ export const TaskForm = ({
   const [assignedTo, setAssignedTo] = useState<string | null>(initialValues?.assignedTo || null);
   const [templates, setTemplates] = useState<File[] | null>(null);
   const [category, setCategory] = useState<string>(initialValues?.category || "إدارية");
-  const [dependencies, setDependencies] = useState<TaskDependency[]>(initialValues?.dependencies || []);
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -83,8 +77,7 @@ export const TaskForm = ({
       stageId,
       assignedTo,
       templates,
-      category: isGeneral ? category : undefined,
-      dependencies
+      category: isGeneral ? category : undefined
     });
     
     await onSubmit({ 
@@ -95,8 +88,7 @@ export const TaskForm = ({
       stageId,
       assignedTo,
       templates,
-      category: isGeneral ? category : undefined,
-      dependencies
+      category: isGeneral ? category : undefined
     });
   };
 
@@ -122,16 +114,6 @@ export const TaskForm = ({
           projectMembers={projectMembers} 
         />
       </div>
-      
-      {/* Add Task Dependencies Field */}
-      {!isGeneral && projectId && (
-        <TaskDependenciesField 
-          projectId={projectId}
-          selectedDependencies={dependencies}
-          setSelectedDependencies={setDependencies}
-          currentTaskId={isEditMode ? initialValues?.stageId : undefined}
-        />
-      )}
       
       {/* حقل النماذج فقط */}
       <TaskAttachmentField
