@@ -62,28 +62,48 @@ export const DeleteWorkspaceDialog = ({
     try {
       console.log("Deleting workspace:", workspaceId, "by user:", user.id, "Attempt:", retryCount + 1);
       
-      // Call Supabase edge function to delete workspace
-      const { data, error } = await supabase.functions.invoke('delete-workspace', {
-        body: { 
-          workspaceId, 
-          userId: user.id 
+      // Try direct database function call first
+      console.log("Trying direct RPC call to delete_workspace function");
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('delete_workspace', { 
+          p_workspace_id: workspaceId,
+          p_user_id: user.id 
+        });
+        
+      if (rpcError) {
+        console.error("RPC function error:", rpcError);
+        
+        // If RPC fails, try using the edge function as fallback
+        console.log("RPC failed, falling back to edge function");
+        const { data, error } = await supabase.functions.invoke('delete-workspace', {
+          body: { 
+            workspaceId, 
+            userId: user.id 
+          }
+        });
+
+        console.log("Edge function response:", data, error);
+
+        if (error) {
+          console.error("Edge function error:", error);
+          setError(error.message || "فشلت عملية حذف مساحة العمل");
+          setIsDeleting(false);
+          return;
         }
-      });
 
-      console.log("Delete function response:", data, error);
-
-      if (error) {
-        console.error("Edge function error:", error);
-        setError(error.message || "فشلت عملية حذف مساحة العمل");
-        setIsDeleting(false);
-        return;
-      }
-
-      if (!data || !data.success) {
-        console.error("Deletion failed:", data);
-        setError(data?.error || "فشلت عملية حذف مساحة العمل");
-        setIsDeleting(false);
-        return;
+        if (!data || !data.success) {
+          console.error("Deletion failed:", data);
+          setError(data?.error || "فشلت عملية حذف مساحة العمل");
+          setIsDeleting(false);
+          return;
+        }
+      } else {
+        console.log("RPC function successful:", rpcData);
+        if (rpcData !== true) {
+          setError("فشلت عملية حذف مساحة العمل لأسباب غير معروفة");
+          setIsDeleting(false);
+          return;
+        }
       }
 
       console.log("Workspace deleted successfully");
@@ -96,9 +116,6 @@ export const DeleteWorkspaceDialog = ({
       // Navigate away from workspace page if we're currently viewing it
       if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
         navigate("/tasks");
-      } else {
-        // Refresh the workspaces list
-        window.location.href = "/tasks#workspaces";
       }
     } catch (error) {
       console.error("Error deleting workspace:", error);

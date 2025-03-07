@@ -68,11 +68,23 @@ export const EditWorkspaceDialog = ({
       return;
     }
 
+    if (!data.name.trim()) {
+      setError("اسم مساحة العمل مطلوب");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     console.log("Updating workspace:", workspace.id, "with data:", data, "Attempt:", retryCount + 1);
     
     try {
+      // Log the update attempt for debugging
+      await supabase.from('user_activities').insert({
+        user_id: user.id,
+        activity_type: 'workspace_update_attempt',
+        details: `محاولة تحديث مساحة العمل: ${workspace.id} - ${workspace.name}`
+      });
+
       // Call Supabase to update workspace
       const { error: updateError, data: updateData } = await supabase
         .from('workspaces')
@@ -88,10 +100,25 @@ export const EditWorkspaceDialog = ({
 
       if (updateError) {
         console.error("Error updating workspace:", updateError);
+        
+        // Log the error for debugging
+        await supabase.from('user_activities').insert({
+          user_id: user.id,
+          activity_type: 'workspace_update_error',
+          details: `خطأ في تحديث مساحة العمل: ${updateError.message}`
+        });
+        
         setError(updateError.message || "حدث خطأ أثناء تحديث مساحة العمل");
         setIsSubmitting(false);
         return;
       }
+
+      // Log success
+      await supabase.from('user_activities').insert({
+        user_id: user.id,
+        activity_type: 'workspace_updated',
+        details: `تم تحديث مساحة العمل: ${workspace.name}`
+      });
 
       // Invalidate the workspaces query to refresh the list
       queryClient.invalidateQueries({queryKey: ['workspaces']});
@@ -158,7 +185,8 @@ export const EditWorkspaceDialog = ({
           
           <DialogFooter className="flex-row-reverse sm:justify-start gap-2 mt-4">
             <Button 
-              type="submit" 
+              type={error ? "button" : "submit"}
+              onClick={error ? handleRetry : undefined}
               disabled={isSubmitting}
             >
               {isSubmitting ? (

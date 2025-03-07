@@ -26,7 +26,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
   
-  const { canEdit, isLoading: permissionsLoading } = useWorkspacePermissions(workspace, user);
+  const { canEdit, isLoading: permissionsLoading, error: permissionsError } = useWorkspacePermissions(workspace, user);
   const projectCounts = useProjectCounts(workspace.id);
   const membersCount = useMembersCount(workspace.id, isMembersDialogOpen);
 
@@ -34,8 +34,11 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     // This will help us debug any permission issues
     if (!permissionsLoading) {
       console.log(`Workspace ${workspace.name} permissions:`, { canEdit });
+      if (permissionsError) {
+        console.error(`Permission check error for ${workspace.name}:`, permissionsError);
+      }
     }
-  }, [permissionsLoading, canEdit, workspace.name]);
+  }, [permissionsLoading, canEdit, workspace.name, permissionsError]);
 
   const handleClick = () => {
     navigate(`/tasks/workspace/${workspace.id}`);

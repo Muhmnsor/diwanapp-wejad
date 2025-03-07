@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Workspace } from "@/types/workspace";
 import { User } from "@/store/refactored-auth/types";
+import { toast } from "sonner";
 
 export const useWorkspacePermissions = (workspace: Workspace, user: User | null) => {
   const [canEdit, setCanEdit] = useState(false);

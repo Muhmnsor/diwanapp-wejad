@@ -4,22 +4,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { WorkspaceCard } from "./WorkspaceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Workspace } from "@/types/workspace";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const TasksWorkspaces = () => {
-  const { data: workspaces, isLoading, refetch } = useQuery({
+  const [error, setError] = useState<string | null>(null);
+  
+  const { data: workspaces, isLoading, refetch, isError } = useQuery({
     queryKey: ['workspaces'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('*');
-      
-      if (error) {
-        console.error("Error fetching workspaces:", error);
-        throw error;
+      try {
+        setError(null);
+        const { data, error } = await supabase
+          .from('workspaces')
+          .select('*');
+        
+        if (error) {
+          console.error("Error fetching workspaces:", error);
+          setError(error.message || "حدث خطأ أثناء جلب مساحات العمل");
+          throw error;
+        }
+        return data || [];
+      } catch (err) {
+        console.error("Error in workspaces query:", err);
+        setError(err instanceof Error ? err.message : "حدث خطأ غير معروف");
+        throw err;
       }
-      return data || [];
     }
   });
 
@@ -66,6 +79,11 @@ export const TasksWorkspaces = () => {
     };
   }, [refetch]);
 
+  const handleRefresh = () => {
+    setError(null);
+    refetch();
+  };
+
   if (isLoading) {
     return (
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -73,6 +91,18 @@ export const TasksWorkspaces = () => {
           <Skeleton key={i} className="h-48 w-full" />
         ))}
       </div>
+    );
+  }
+
+  if (isError || error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4 mr-2" />
+        <AlertDescription className="flex-1">{error || "حدث خطأ أثناء جلب مساحات العمل"}</AlertDescription>
+        <Button variant="outline" size="sm" onClick={handleRefresh} className="mr-2">
+          <RefreshCw className="h-4 w-4 mr-2" /> إعادة المحاولة
+        </Button>
+      </Alert>
     );
   }
 
