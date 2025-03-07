@@ -1,4 +1,4 @@
-
+<lov-code>
 import React, { useState, useEffect } from 'react';
 import { useCacheMonitor } from '@/hooks/useCacheMonitor';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
@@ -673,7 +673,7 @@ export const CacheMonitor = () => {
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <RechartsTooltip />
+                          <Tooltip />
                           <Legend />
                         </RechartsPieChart>
                       </ResponsiveContainer>
@@ -713,134 +713,4 @@ export const CacheMonitor = () => {
         
         <TabsContent value="advanced">
           <CardContent>
-            <h3 className="text-base font-medium mb-3">خيارات متقدمة</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="text-base font-medium mb-2">Service Worker</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  تحكم في Service Worker المستخدم للتخزين المؤقت على مستوى الشبكة
-                </p>
-                <div className="flex space-x-2 rtl:space-x-reverse">
-                  <Button
-                    variant="outline"
-                    onClick={handleUpdateServiceWorker}
-                    className="flex-1"
-                    disabled={!serviceWorkerActive}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    تحديث Service Worker
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={handleRegisterServiceWorker}
-                    className="flex-1"
-                    disabled={serviceWorkerActive}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    تسجيل Service Worker
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="text-base font-medium mb-2">إعادة تعيين الإحصائيات</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  إعادة تعيين جميع إحصائيات التخزين المؤقت إلى الصفر
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={handleResetStats}
-                  className="w-full"
-                >
-                  <BarChart2 className="h-4 w-4 mr-2" />
-                  إعادة تعيين الإحصائيات
-                </Button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="text-base font-medium mb-2">تحسين التخزين المؤقت</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  تحسين استخدام مساحة التخزين المؤقت وتنظيف العناصر غير المستخدمة
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={handleOptimizeStorage}
-                  className="w-full"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  تحسين مساحة التخزين المؤقت
-                </Button>
-              </div>
-              
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="text-base font-medium mb-2">إدارة الأولويات</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  عرض توزيع أولويات العناصر المخزنة مؤقتًا
-                </p>
-                <div className="h-[120px]">
-                  {priorityDistribution.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsBarChart data={priorityDistribution}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Bar dataKey="value" name="العدد">
-                          {priorityDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </RechartsBarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-sm text-muted-foreground">لا توجد بيانات متوفرة</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-card border border-amber-200 rounded-lg p-4 mb-6 bg-amber-50">
-              <div className="flex items-start mb-2">
-                <AlertTriangle className="h-5 w-5 mr-2 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-base font-medium text-amber-800 mb-1">توصيات التحسين</h4>
-                  <ul className="text-sm text-amber-700 list-disc list-inside space-y-1">
-                    <li>تفعيل ضغط البيانات لعناصر التخزين المؤقت الأكبر لتوفير المساحة</li>
-                    <li>تحسين استراتيجية تخزين المهام المؤقت للتعامل مع الحجم الكبير للمهام</li>
-                    <li>تفعيل المزيد من Views المخزنة مسبقًا للاستعلامات المتكررة</li>
-                    <li>ضبط استراتيجيات التحديث لتحسين نسبة الإصابات</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 border-t pt-6">
-              <h3 className="text-base font-medium mb-3 text-red-600">منطقة الخطر</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                ستؤدي هذه الإجراءات إلى حذف بيانات لا يمكن استعادتها. استخدم بحذر.
-              </p>
-              <Button
-                variant="destructive"
-                onClick={handleClearAllCache}
-                className="w-full"
-                disabled={isClearing}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                مسح جميع ذاكرة التخزين المؤقت والإحصائيات
-              </Button>
-            </div>
-          </CardContent>
-        </TabsContent>
-      </Tabs>
-      
-      <CardFooter className="border-t p-4 text-xs text-muted-foreground">
-        آخر تحديث: {new Date().toLocaleTimeString('ar-SA')}
-      </CardFooter>
-    </Card>
-  );
-};
+            <h3 className="text-base font-medium mb-3">خيارات متقدمة

@@ -1,3 +1,4 @@
+
 import { useTasksFetching } from "./useTasksFetching";
 import { useTaskStatusManagement } from "./useTaskStatusManagement";
 import { useTasksState } from "./useTasksState";
@@ -51,7 +52,7 @@ export const useTasksList = (projectId: string | undefined) => {
         
       if (error) throw error;
       
-      // Fix the type issue by using a type assertion for the setState function
+      // Use type assertion to help TypeScript understand this is a setter function
       setTasks((prevTasks: Task[]) => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, ...updateData } : task
