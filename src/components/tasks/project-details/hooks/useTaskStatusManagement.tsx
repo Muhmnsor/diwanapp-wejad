@@ -19,7 +19,7 @@ export const useTaskStatusManagement = (
 
   // Helper function to ensure status is a valid Task status
   const ensureValidStatus = (status: string): Task['status'] => {
-    const validStatuses: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled'];
+    const validStatuses: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled', 'delayed'];
     if (!validStatuses.includes(status as Task['status'])) {
       return 'pending';
     }

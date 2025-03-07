@@ -6,7 +6,7 @@ import { toast } from "sonner";
 export type DependencyType = 'blocks' | 'blocked_by' | 'relates_to';
 
 export interface TaskDependency {
-  id: string;
+  id?: string;
   taskId: string;
   dependencyTaskId: string;
   dependencyType: DependencyType;
@@ -57,18 +57,18 @@ export const useTaskDependencies = (taskId?: string) => {
       
       // Format the dependencies
       const formattedDependencies: TaskDependency[] = [
-        ...blockedByData.map(dep => ({
+        ...(blockedByData || []).map(dep => ({
           id: dep.id,
           taskId: dep.task_id,
           dependencyTaskId: dep.dependency_task_id,
           dependencyType: dep.dependency_type as DependencyType,
           title: dep.tasks?.title
         })),
-        ...blocksData.map(dep => ({
+        ...(blocksData || []).map(dep => ({
           id: dep.id,
           taskId: dep.dependency_task_id,
           dependencyTaskId: dep.task_id,
-          dependencyType: 'blocks', // This task blocks another
+          dependencyType: 'blocks' as DependencyType, // This task blocks another
           title: dep.tasks?.title
         }))
       ];
@@ -76,7 +76,7 @@ export const useTaskDependencies = (taskId?: string) => {
       setDependencies(formattedDependencies);
       
       // Check if any blocking dependencies are incomplete
-      const isTaskBlocked = blockedByData.some(dep => 
+      const isTaskBlocked = (blockedByData || []).some(dep => 
         dep.dependency_type === 'blocked_by' && 
         dep.tasks?.status !== 'completed'
       );
@@ -146,15 +146,18 @@ export const useTaskDependencies = (taskId?: string) => {
     if (!taskId) return { success: false, error: "No task ID provided" };
     
     try {
-      // Check for circular dependencies
-      const hasCircular = await checkCircularDependency(dependencyTaskId, dependencyType);
-      if (hasCircular) {
-        return { 
-          success: false, 
-          error: "لا يمكن إنشاء اعتمادية دائرية. هذا سيؤدي إلى تعليق المهام بشكل دائم." 
-        };
+      // Check for circular dependencies (only for blocked_by type)
+      if (dependencyType === 'blocked_by') {
+        const hasCircular = await checkCircularDependency(dependencyTaskId, dependencyType);
+        if (hasCircular) {
+          return { 
+            success: false, 
+            error: "لا يمكن إنشاء اعتمادية دائرية. هذا سيؤدي إلى تعليق المهام بشكل دائم." 
+          };
+        }
       }
       
+      // Insert the dependency
       const { data, error } = await supabase
         .from('task_dependencies')
         .insert({
@@ -203,20 +206,23 @@ export const useTaskDependencies = (taskId?: string) => {
       // Check if task has any blocking dependencies
       const { data: blockingDeps, error } = await supabase
         .from('task_dependencies')
-        .select('dependency_task_id, tasks:dependency_task_id(status)')
+        .select('dependency_task_id, tasks:dependency_task_id(status, title)')
         .eq('task_id', taskId)
         .eq('dependency_type', 'blocked_by');
         
       if (error) throw error;
       
-      const blockedBy = blockingDeps.filter(dep => 
+      const blockedBy = (blockingDeps || []).filter(dep => 
         dep.tasks && dep.tasks.status !== 'completed'
       );
       
       if (blockedBy.length > 0) {
+        // Get the names of the blocking tasks for better user feedback
+        const blockingTaskNames = blockedBy.map(dep => dep.tasks?.title || 'مهمة غير معروفة').join(', ');
+        
         return { 
           allowed: false, 
-          message: `هذه المهمة معتمدة على ${blockedBy.length} مهام غير مكتملة` 
+          message: `هذه المهمة معتمدة على ${blockedBy.length} مهام غير مكتملة: ${blockingTaskNames}` 
         };
       }
       

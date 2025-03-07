@@ -20,14 +20,14 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Plus, X, ArrowDown, ArrowUp, Link } from "lucide-react";
+import { AlertCircle, Plus, X, ArrowDown, ArrowUp, Link, GitMerge, GitBranch } from "lucide-react";
 import { Task } from "@/types/workspace";
 import { useProjectTasks } from "../hooks/useProjectTasks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-export type DependencyType = 'blocks' | 'blocked_by' | 'relates_to';
+import { DependencyType } from "../hooks/useTaskDependencies";
 
 export interface TaskDependency {
+  id?: string;
   taskId: string;
   dependencyType: DependencyType;
 }

@@ -40,15 +40,30 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
     try {
-      // New code: handle task completion for stats and achievements
-      if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
-        const taskTable = task.is_subtask ? 'subtasks' : 'tasks';
-        await handleTaskCompletion({
-          taskId: task.id,
-          taskTable,
-          userId: user.id,
-          dueDate: task.due_date
-        });
+      // Check for dependencies if we're completing the task
+      if (status === 'completed' && currentStatus !== 'completed') {
+        // Check dependencies if this is a project task
+        if (task.project_id) {
+          const { canChangeStatus } = useTaskDependencies(task.id);
+          const { allowed, message } = await canChangeStatus('completed');
+          
+          if (!allowed) {
+            toast.error(message || "لا يمكن إكمال المهمة بسبب اعتماديات غير مكتملة");
+            setIsUpdating(false);
+            return;
+          }
+        }
+        
+        // Handle task completion statistics
+        if (user?.id) {
+          const taskTable = task.is_subtask ? 'subtasks' : 'tasks';
+          await handleTaskCompletion({
+            taskId: task.id,
+            taskTable,
+            userId: user.id,
+            dueDate: task.due_date
+          });
+        }
       }
       
       // Check if the task is a subtask and use the correct table
@@ -66,7 +81,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         
         // Send notification if there's an assigned user
         if (task.assigned_to && task.assigned_to !== user?.id) {
-          const userData = await supabase.auth.getUser(user?.id || '');
+          const userData = await supabase.auth.getUser();
           const userName = userData.data?.user?.email || 'مستخدم';
           
           await sendTaskStatusUpdateNotification({
@@ -83,7 +98,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         
         // Send notification if there's an assigned user
         if (task.assigned_to && task.assigned_to !== user?.id) {
-          const userData = await supabase.auth.getUser(user?.id || '');
+          const userData = await supabase.auth.getUser();
           const userName = userData.data?.user?.email || 'مستخدم';
           
           await sendTaskStatusUpdateNotification({
