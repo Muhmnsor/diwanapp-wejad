@@ -31,14 +31,10 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const membersCount = useMembersCount(workspace.id, isMembersDialogOpen);
 
   useEffect(() => {
-    // This will help us debug any permission issues
-    if (!permissionsLoading) {
-      console.log(`Workspace ${workspace.name} permissions:`, { canEdit });
-      if (permissionsError) {
-        console.error(`Permission check error for ${workspace.name}:`, permissionsError);
-      }
+    if (permissionsError) {
+      console.error(`Permission check error for ${workspace.name}:`, permissionsError);
     }
-  }, [permissionsLoading, canEdit, workspace.name, permissionsError]);
+  }, [permissionsLoading, permissionsError, workspace.name]);
 
   const handleClick = () => {
     navigate(`/tasks/workspace/${workspace.id}`);
@@ -61,6 +57,11 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
       return;
     }
     
+    if (permissionsLoading) {
+      toast.info("يرجى الانتظار حتى يتم التحقق من الصلاحيات");
+      return;
+    }
+    
     if (!canEdit) {
       toast.error("ليس لديك صلاحية لتعديل مساحة العمل");
       return;
@@ -74,6 +75,11 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     
     if (!user) {
       toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
+      return;
+    }
+    
+    if (permissionsLoading) {
+      toast.info("يرجى الانتظار حتى يتم التحقق من الصلاحيات");
       return;
     }
     

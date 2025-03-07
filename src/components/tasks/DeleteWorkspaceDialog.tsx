@@ -62,6 +62,13 @@ export const DeleteWorkspaceDialog = ({
     try {
       console.log("Deleting workspace:", workspaceId, "by user:", user.id, "Attempt:", retryCount + 1);
       
+      // Log the deletion attempt
+      await supabase.from('user_activities').insert({
+        user_id: user.id,
+        activity_type: 'workspace_delete_attempt',
+        details: `محاولة حذف مساحة العمل: ${workspaceName} (${workspaceId})`
+      });
+      
       // Try direct database function call first
       console.log("Trying direct RPC call to delete_workspace function");
       const { data: rpcData, error: rpcError } = await supabase
@@ -73,8 +80,46 @@ export const DeleteWorkspaceDialog = ({
       if (rpcError) {
         console.error("RPC function error:", rpcError);
         
-        // If RPC fails, try using the edge function as fallback
-        console.log("RPC failed, falling back to edge function");
+        // Try a manual deletion approach if RPC fails
+        console.log("RPC failed, attempting manual deletion");
+        
+        // Check permissions manually
+        const { data: workspace, error: wsError } = await supabase
+          .from('workspaces')
+          .select('created_by')
+          .eq('id', workspaceId)
+          .single();
+          
+        if (wsError) {
+          console.error("Error fetching workspace:", wsError);
+          throw new Error("فشل في العثور على مساحة العمل");
+        }
+        
+        const isCreator = workspace.created_by === user.id;
+        
+        // Check if user is workspace admin
+        const { data: memberData } = await supabase
+          .from('workspace_members')
+          .select('role')
+          .eq('workspace_id', workspaceId)
+          .eq('user_id', user.id)
+          .single();
+          
+        const isWorkspaceAdmin = memberData?.role === 'admin';
+        
+        // Check if user is system admin
+        const { data: isAdminData } = await supabase
+          .rpc('is_admin', { user_id: user.id });
+          
+        const isAdmin = !!isAdminData;
+        
+        if (!isCreator && !isWorkspaceAdmin && !isAdmin) {
+          throw new Error("ليس لديك صلاحية لحذف مساحة العمل");
+        }
+        
+        // If we've gotten this far, the user has permission to delete the workspace
+        // Try the edge function as a last resort fallback
+        console.log("Calling edge function for deletion");
         const { data, error } = await supabase.functions.invoke('delete-workspace', {
           body: { 
             workspaceId, 
@@ -86,26 +131,27 @@ export const DeleteWorkspaceDialog = ({
 
         if (error) {
           console.error("Edge function error:", error);
-          setError(error.message || "فشلت عملية حذف مساحة العمل");
-          setIsDeleting(false);
-          return;
+          throw new Error(error.message || "فشلت عملية حذف مساحة العمل");
         }
 
         if (!data || !data.success) {
           console.error("Deletion failed:", data);
-          setError(data?.error || "فشلت عملية حذف مساحة العمل");
-          setIsDeleting(false);
-          return;
+          throw new Error(data?.error || "فشلت عملية حذف مساحة العمل");
         }
       } else {
         console.log("RPC function successful:", rpcData);
         if (rpcData !== true) {
-          setError("فشلت عملية حذف مساحة العمل لأسباب غير معروفة");
-          setIsDeleting(false);
-          return;
+          throw new Error("فشلت عملية حذف مساحة العمل لأسباب غير معروفة");
         }
       }
 
+      // Log success
+      await supabase.from('user_activities').insert({
+        user_id: user.id,
+        activity_type: 'workspace_deleted',
+        details: `تم حذف مساحة العمل: ${workspaceName}`
+      });
+      
       console.log("Workspace deleted successfully");
       toast.success("تم حذف مساحة العمل بنجاح");
       onOpenChange(false);
@@ -119,7 +165,8 @@ export const DeleteWorkspaceDialog = ({
       }
     } catch (error) {
       console.error("Error deleting workspace:", error);
-      setError("حدث خطأ أثناء حذف مساحة العمل");
+      setError(error instanceof Error ? error.message : "حدث خطأ أثناء حذف مساحة العمل");
+    } finally {
       setIsDeleting(false);
     }
   };

@@ -22,11 +22,8 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         setIsLoading(true);
         setError(null);
         
-        console.log("Checking permissions for workspace:", workspace.id, "user:", user.id);
-        
         // Check if user is the creator of the workspace
         const isCreator = workspace.created_by === user.id;
-        console.log("Is creator:", isCreator);
         
         // Check if user is admin using the is_admin database function
         const { data: isAdminData, error: adminError } = await supabase
@@ -38,7 +35,6 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         }
         
         const isAdmin = !!isAdminData;
-        console.log("Is admin:", isAdmin);
         
         // Check if user is workspace admin
         const { data: memberData, error: memberError } = await supabase
@@ -54,10 +50,14 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         }
         
         const isWorkspaceAdmin = memberData?.role === 'admin';
-        console.log("Is workspace admin:", isWorkspaceAdmin);
         
         const hasEditPermission = isCreator || isAdmin || isWorkspaceAdmin;
-        console.log("Final permission result:", hasEditPermission);
+        console.log("Permission check result:", { 
+          isCreator, 
+          isAdmin, 
+          isWorkspaceAdmin,
+          hasEditPermission 
+        });
         
         setCanEdit(hasEditPermission);
       } catch (err) {
