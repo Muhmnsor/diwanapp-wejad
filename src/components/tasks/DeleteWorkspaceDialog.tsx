@@ -16,6 +16,7 @@ import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useWorkspacePermissions } from "./workspace-card/useWorkspacePermissions";
 
 interface DeleteWorkspaceDialogProps {
   open: boolean;
@@ -35,6 +36,9 @@ export const DeleteWorkspaceDialog = ({
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const { canEdit, isLoading: permissionsLoading } = useWorkspacePermissions({ 
+    id: workspaceId 
+  }, user);
 
   const handleDelete = async () => {
     if (!user) {
@@ -52,6 +56,12 @@ export const DeleteWorkspaceDialog = ({
     console.log("[DeleteWorkspace] Timestamp:", new Date().toISOString());
     
     try {
+      // Verify permissions first
+      if (!canEdit && !permissionsLoading) {
+        console.error("[DeleteWorkspace] User doesn't have permission to delete this workspace");
+        throw new Error("ليس لديك صلاحية لحذف مساحة العمل");
+      }
+      
       // Call Supabase edge function to delete workspace with explicit parameter names
       console.log("[DeleteWorkspace] Calling delete-workspace edge function with params:", { workspaceId, userId: user.id });
       
@@ -95,7 +105,7 @@ export const DeleteWorkspaceDialog = ({
     } catch (error) {
       console.error("[DeleteWorkspace] Unexpected error during deletion:", error);
       console.error("[DeleteWorkspace] Error details:", JSON.stringify(error));
-      setError("حدث خطأ أثناء حذف مساحة العمل");
+      setError(error instanceof Error ? error.message : "حدث خطأ أثناء حذف مساحة العمل");
       setIsDeleting(false);
     }
   };
@@ -131,7 +141,7 @@ export const DeleteWorkspaceDialog = ({
           <Button 
             variant="destructive" 
             onClick={handleDelete} 
-            disabled={isDeleting}
+            disabled={isDeleting || (permissionsLoading || (!permissionsLoading && !canEdit))}
           >
             {isDeleting ? "جاري الحذف..." : "حذف مساحة العمل"}
           </Button>
