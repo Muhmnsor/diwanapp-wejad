@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -31,14 +30,14 @@ export const TaskDependenciesBadge = ({ taskId }: TaskDependenciesBadgeProps) =>
           .from('task_dependencies')
           .select('*', { count: 'exact', head: true })
           .eq('dependency_task_id', taskId)
-          .eq('dependency_type', 'blocks');
+          .in('dependency_type', ['blocks', 'finish-to-start']);
           
         // Get blocked by dependencies count
         const { count: blockedByCount, error: blockedByError } = await supabase
           .from('task_dependencies')
           .select('*', { count: 'exact', head: true })
           .eq('task_id', taskId)
-          .eq('dependency_type', 'blocked_by');
+          .in('dependency_type', ['blocked_by', 'finish-to-start', 'start-to-start']);
 
         // Get relates to dependencies count
         const { count: relatesCount, error: relatesError } = await supabase
@@ -60,7 +59,7 @@ export const TaskDependenciesBadge = ({ taskId }: TaskDependenciesBadgeProps) =>
           .from('task_dependencies')
           .select('dependency_task_id, tasks!inner(status)')
           .eq('task_id', taskId)
-          .eq('dependency_type', 'blocked_by')
+          .in('dependency_type', ['blocked_by', 'finish-to-start'])
           .neq('tasks.status', 'completed');
           
         if (blockingError) throw blockingError;

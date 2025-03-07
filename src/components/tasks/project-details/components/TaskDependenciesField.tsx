@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -52,14 +51,12 @@ export const TaskDependenciesField = ({
   
   const { tasks, isLoading, error } = useProjectTasks(projectId);
   
-  // Filter out tasks that are already selected or the current task (in edit mode)
   const availableTasks = tasks.filter(task => {
     const alreadySelected = selectedDependencies.some(dep => dep.taskId === task.id);
     const isCurrentTask = currentTaskId === task.id;
     return !alreadySelected && !isCurrentTask;
   });
 
-  // Group tasks by their status for better organization
   const tasksByStatus = {
     completed: availableTasks.filter(task => task.status === 'completed'),
     inProgress: availableTasks.filter(task => task.status === 'in_progress'),

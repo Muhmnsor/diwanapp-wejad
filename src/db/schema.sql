@@ -1,6 +1,21 @@
 
 -- ... keep existing code (table alterations)
 
+-- Update task_dependencies table to support all dependency types
+ALTER TABLE public.task_dependencies 
+ADD CONSTRAINT valid_dependency_type 
+CHECK (dependency_type IN ('blocks', 'blocked_by', 'relates_to', 'finish-to-start', 'start-to-start', 'finish-to-finish'));
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_task_dependencies_task_id 
+ON public.task_dependencies(task_id);
+
+CREATE INDEX IF NOT EXISTS idx_task_dependencies_dependency_task_id 
+ON public.task_dependencies(dependency_task_id);
+
+CREATE INDEX IF NOT EXISTS idx_task_dependencies_dependency_type 
+ON public.task_dependencies(dependency_type);
+
 -- Add a database function to handle task deletion with proper error handling and transaction support
 CREATE OR REPLACE FUNCTION public.delete_task(p_task_id uuid, p_user_id uuid)
 RETURNS boolean
@@ -98,7 +113,11 @@ BEGIN
     DELETE FROM task_history
     WHERE task_id = p_task_id;
     
-    -- 13. Finally delete the task itself
+    -- 13. Delete task dependencies
+    DELETE FROM task_dependencies
+    WHERE task_id = p_task_id OR dependency_task_id = p_task_id;
+    
+    -- 14. Finally delete the task itself
     DELETE FROM tasks
     WHERE id = p_task_id;
     
@@ -113,4 +132,3 @@ $$;
 
 -- Add permission to call the function
 GRANT EXECUTE ON FUNCTION public.delete_task TO authenticated;
-

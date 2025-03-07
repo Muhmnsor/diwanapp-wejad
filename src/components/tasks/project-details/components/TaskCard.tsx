@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip } from "lucide-react";

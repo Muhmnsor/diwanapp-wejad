@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -213,12 +212,13 @@ export const useTaskDependencies = (taskId?: string) => {
           tasks:dependency_task_id(status, title)
         `)
         .eq('task_id', taskId)
-        .in('dependency_type', ['blocked_by', 'finish-to-start']);
+        .in('dependency_type', ['blocked_by', 'finish-to-start', 'start-to-start']);
         
       if (error) throw error;
       
       const blockedBy = (blockingDeps || []).filter(dep => 
-        dep.tasks && dep.tasks.status !== 'completed'
+        dep.tasks && dep.tasks.status !== 'completed' && 
+        (dep.dependency_type === 'blocked_by' || dep.dependency_type === 'finish-to-start')
       );
       
       if (blockedBy.length > 0) {
