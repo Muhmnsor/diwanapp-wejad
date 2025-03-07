@@ -2,7 +2,7 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Workspace } from "@/types/workspace";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { WorkspaceMembersDialog } from "./WorkspaceMembersDialog";
 import { EditWorkspaceDialog } from "./EditWorkspaceDialog";
 import { DeleteWorkspaceDialog } from "./DeleteWorkspaceDialog";
@@ -13,7 +13,6 @@ import { WorkspaceCardFooter } from "./workspace-card/WorkspaceCardFooter";
 import { useWorkspacePermissions } from "./workspace-card/useWorkspacePermissions";
 import { useProjectCounts } from "./workspace-card/useProjectCounts";
 import { useMembersCount } from "./workspace-card/useMembersCount";
-import { toast } from "sonner";
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -26,15 +25,9 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user } = useAuthStore();
   
-  const { canEdit, isLoading: permissionsLoading, error: permissionsError } = useWorkspacePermissions(workspace, user);
+  const { canEdit } = useWorkspacePermissions(workspace, user);
   const projectCounts = useProjectCounts(workspace.id);
   const membersCount = useMembersCount(workspace.id, isMembersDialogOpen);
-
-  useEffect(() => {
-    if (permissionsError) {
-      console.error(`Permission check error for ${workspace.name}:`, permissionsError);
-    }
-  }, [permissionsLoading, permissionsError, workspace.name]);
 
   const handleClick = () => {
     navigate(`/tasks/workspace/${workspace.id}`);
@@ -51,43 +44,11 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!user) {
-      toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
-      return;
-    }
-    
-    if (permissionsLoading) {
-      toast.info("يرجى الانتظار حتى يتم التحقق من الصلاحيات");
-      return;
-    }
-    
-    if (!canEdit) {
-      toast.error("ليس لديك صلاحية لتعديل مساحة العمل");
-      return;
-    }
-    
     setIsEditDialogOpen(true);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!user) {
-      toast.error("يجب تسجيل الدخول للقيام بهذه العملية");
-      return;
-    }
-    
-    if (permissionsLoading) {
-      toast.info("يرجى الانتظار حتى يتم التحقق من الصلاحيات");
-      return;
-    }
-    
-    if (!canEdit) {
-      toast.error("ليس لديك صلاحية لحذف مساحة العمل");
-      return;
-    }
-    
     setIsDeleteDialogOpen(true);
   };
 
@@ -109,7 +70,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
           <ProjectStats projectCounts={projectCounts} />
         </CardContent>
         
-        <CardFooter className="p-0">
+        <CardFooter>
           <WorkspaceCardFooter
             membersCount={membersCount}
             onManageMembers={handleManageMembers}

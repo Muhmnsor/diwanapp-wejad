@@ -18,8 +18,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { useAuthStore } from "@/store/refactored-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
 
 interface EditWorkspaceDialogProps {
   open: boolean;
@@ -38,8 +36,6 @@ export const EditWorkspaceDialog = ({
   workspace,
 }: EditWorkspaceDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   
@@ -57,8 +53,6 @@ export const EditWorkspaceDialog = ({
         name: workspace.name,
         description: workspace.description || "",
       });
-      setError(null);
-      setRetryCount(0);
     }
   }, [open, reset, workspace]);
 
@@ -68,57 +62,24 @@ export const EditWorkspaceDialog = ({
       return;
     }
 
-    if (!data.name.trim()) {
-      setError("اسم مساحة العمل مطلوب");
-      return;
-    }
-
     setIsSubmitting(true);
-    setError(null);
-    console.log("Updating workspace:", workspace.id, "with data:", data, "Attempt:", retryCount + 1);
+    console.log("Updating workspace:", workspace.id, "with data:", data);
     
     try {
-      // Log the update attempt for debugging
-      await supabase.from('user_activities').insert({
-        user_id: user.id,
-        activity_type: 'workspace_update_attempt',
-        details: `محاولة تحديث مساحة العمل: ${workspace.id} - ${workspace.name}`
-      });
-
       // Call Supabase to update workspace
-      const { error: updateError, data: updateData } = await supabase
+      const { error } = await supabase
         .from('workspaces')
         .update({
           name: data.name,
           description: data.description,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', workspace.id)
-        .select();
+        .eq('id', workspace.id);
 
-      console.log("Update response:", updateData, updateError);
-
-      if (updateError) {
-        console.error("Error updating workspace:", updateError);
-        
-        // Log the error for debugging
-        await supabase.from('user_activities').insert({
-          user_id: user.id,
-          activity_type: 'workspace_update_error',
-          details: `خطأ في تحديث مساحة العمل: ${updateError.message}`
-        });
-        
-        setError(updateError.message || "حدث خطأ أثناء تحديث مساحة العمل");
-        setIsSubmitting(false);
-        return;
+      if (error) {
+        console.error("Error updating workspace:", error);
+        throw error;
       }
-
-      // Log success
-      await supabase.from('user_activities').insert({
-        user_id: user.id,
-        activity_type: 'workspace_updated',
-        details: `تم تحديث مساحة العمل: ${workspace.name}`
-      });
 
       // Invalidate the workspaces query to refresh the list
       queryClient.invalidateQueries({queryKey: ['workspaces']});
@@ -127,26 +88,14 @@ export const EditWorkspaceDialog = ({
       onOpenChange(false);
     } catch (error) {
       console.error("Error updating workspace:", error);
-      setError("حدث خطأ أثناء تحديث مساحة العمل");
+      toast.error("حدث خطأ أثناء تحديث مساحة العمل");
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
-    handleSubmit(onSubmit)();
-  };
-
-  const handleCloseDialog = () => {
-    if (!isSubmitting) {
-      setError(null);
-      setRetryCount(0);
-      onOpenChange(false);
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleCloseDialog}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
           <DialogTitle>تعديل مساحة العمل</DialogTitle>
@@ -154,13 +103,6 @@ export const EditWorkspaceDialog = ({
             قم بتحديث بيانات مساحة العمل
           </DialogDescription>
         </DialogHeader>
-        
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
           <div className="space-y-2">
@@ -185,25 +127,15 @@ export const EditWorkspaceDialog = ({
           
           <DialogFooter className="flex-row-reverse sm:justify-start gap-2 mt-4">
             <Button 
-              type={error ? "button" : "submit"}
-              onClick={error ? handleRetry : undefined}
+              type="submit" 
               disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  جاري الحفظ...
-                </>
-              ) : error ? (
-                "إعادة المحاولة"
-              ) : (
-                "حفظ التغييرات"
-              )}
+              {isSubmitting ? "جاري الحفظ..." : "حفظ التغييرات"}
             </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={handleCloseDialog}
+              onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
               إلغاء

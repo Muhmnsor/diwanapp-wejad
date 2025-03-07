@@ -15,8 +15,7 @@ import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useAuthStore } from "@/store/refactored-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
 
 interface DeleteWorkspaceDialogProps {
   open: boolean;
@@ -33,11 +32,9 @@ export const DeleteWorkspaceDialog = ({
 }: DeleteWorkspaceDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const { confirm } = useConfirm();
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     if (!user) {
@@ -60,126 +57,50 @@ export const DeleteWorkspaceDialog = ({
 
     setIsDeleting(true);
     try {
-      console.log("Deleting workspace:", workspaceId, "by user:", user.id, "Attempt:", retryCount + 1);
+      console.log("Deleting workspace:", workspaceId, "by user:", user.id);
       
-      // Log the deletion attempt
-      await supabase.from('user_activities').insert({
-        user_id: user.id,
-        activity_type: 'workspace_delete_attempt',
-        details: `محاولة حذف مساحة العمل: ${workspaceName} (${workspaceId})`
+      // Call Supabase edge function to delete workspace
+      const { data, error } = await supabase.functions.invoke('delete-workspace', {
+        body: { 
+          workspaceId, 
+          userId: user.id 
+        }
       });
-      
-      // Try direct database function call first
-      console.log("Trying direct RPC call to delete_workspace function");
-      const { data: rpcData, error: rpcError } = await supabase
-        .rpc('delete_workspace', { 
-          p_workspace_id: workspaceId,
-          p_user_id: user.id 
-        });
-        
-      if (rpcError) {
-        console.error("RPC function error:", rpcError);
-        
-        // Try a manual deletion approach if RPC fails
-        console.log("RPC failed, attempting manual deletion");
-        
-        // Check permissions manually
-        const { data: workspace, error: wsError } = await supabase
-          .from('workspaces')
-          .select('created_by')
-          .eq('id', workspaceId)
-          .single();
-          
-        if (wsError) {
-          console.error("Error fetching workspace:", wsError);
-          throw new Error("فشل في العثور على مساحة العمل");
-        }
-        
-        const isCreator = workspace.created_by === user.id;
-        
-        // Check if user is workspace admin
-        const { data: memberData } = await supabase
-          .from('workspace_members')
-          .select('role')
-          .eq('workspace_id', workspaceId)
-          .eq('user_id', user.id)
-          .single();
-          
-        const isWorkspaceAdmin = memberData?.role === 'admin';
-        
-        // Check if user is system admin
-        const { data: isAdminData } = await supabase
-          .rpc('is_admin', { user_id: user.id });
-          
-        const isAdmin = !!isAdminData;
-        
-        if (!isCreator && !isWorkspaceAdmin && !isAdmin) {
-          throw new Error("ليس لديك صلاحية لحذف مساحة العمل");
-        }
-        
-        // If we've gotten this far, the user has permission to delete the workspace
-        // Try the edge function as a last resort fallback
-        console.log("Calling edge function for deletion");
-        const { data, error } = await supabase.functions.invoke('delete-workspace', {
-          body: { 
-            workspaceId, 
-            userId: user.id 
-          }
-        });
 
-        console.log("Edge function response:", data, error);
-
-        if (error) {
-          console.error("Edge function error:", error);
-          throw new Error(error.message || "فشلت عملية حذف مساحة العمل");
-        }
-
-        if (!data || !data.success) {
-          console.error("Deletion failed:", data);
-          throw new Error(data?.error || "فشلت عملية حذف مساحة العمل");
-        }
-      } else {
-        console.log("RPC function successful:", rpcData);
-        if (rpcData !== true) {
-          throw new Error("فشلت عملية حذف مساحة العمل لأسباب غير معروفة");
-        }
+      if (error) {
+        console.error("Edge function error:", error);
+        setError(error.message || "فشلت عملية حذف مساحة العمل");
+        setIsDeleting(false);
+        return;
       }
 
-      // Log success
-      await supabase.from('user_activities').insert({
-        user_id: user.id,
-        activity_type: 'workspace_deleted',
-        details: `تم حذف مساحة العمل: ${workspaceName}`
-      });
-      
-      console.log("Workspace deleted successfully");
+      if (!data || !data.success) {
+        console.error("Deletion failed:", data);
+        setError(data?.error || "فشلت عملية حذف مساحة العمل");
+        setIsDeleting(false);
+        return;
+      }
+
       toast.success("تم حذف مساحة العمل بنجاح");
       onOpenChange(false);
-      
-      // Invalidate queries to refresh workspace data
-      queryClient.invalidateQueries({queryKey: ['workspaces']});
       
       // Navigate away from workspace page if we're currently viewing it
       if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
         navigate("/tasks");
+      } else {
+        // Force a refresh of the workspaces list
+        window.location.href = "/tasks#workspaces";
       }
     } catch (error) {
       console.error("Error deleting workspace:", error);
-      setError(error instanceof Error ? error.message : "حدث خطأ أثناء حذف مساحة العمل");
-    } finally {
+      setError("حدث خطأ أثناء حذف مساحة العمل");
       setIsDeleting(false);
     }
-  };
-
-  const handleRetryDelete = () => {
-    setRetryCount(prev => prev + 1);
-    handleDelete();
   };
 
   const handleCloseDialog = () => {
     if (!isDeleting) {
       setError(null);
-      setRetryCount(0);
       onOpenChange(false);
     }
   };
@@ -208,19 +129,10 @@ export const DeleteWorkspaceDialog = ({
         <DialogFooter className="flex-row-reverse sm:justify-start gap-2 mt-4">
           <Button 
             variant="destructive" 
-            onClick={error ? handleRetryDelete : handleDelete} 
+            onClick={handleDelete} 
             disabled={isDeleting}
           >
-            {isDeleting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                جاري الحذف...
-              </>
-            ) : error ? (
-              "إعادة المحاولة"
-            ) : (
-              "حذف مساحة العمل"
-            )}
+            {isDeleting ? "جاري الحذف..." : "حذف مساحة العمل"}
           </Button>
           <Button
             variant="outline"
