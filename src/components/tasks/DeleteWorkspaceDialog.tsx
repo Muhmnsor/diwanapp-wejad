@@ -61,10 +61,10 @@ export const DeleteWorkspaceDialog = ({
     try {
       console.log("Deleting workspace:", workspaceId, "by user:", user.id);
       
-      // Call Supabase edge function to delete workspace
+      // Call Supabase edge function to delete workspace with explicit parameter names
       const { data, error: functionError } = await supabase.functions.invoke('delete-workspace', {
         body: { 
-          workspaceId, 
+          workspaceId: workspaceId, 
           userId: user.id 
         }
       });
@@ -94,9 +94,6 @@ export const DeleteWorkspaceDialog = ({
       // Navigate away from workspace page if we're currently viewing it
       if (window.location.pathname.includes(`/tasks/workspace/${workspaceId}`)) {
         navigate("/tasks");
-      } else {
-        // Refresh the workspaces list
-        queryClient.invalidateQueries({queryKey: ['workspaces']});
       }
     } catch (error) {
       console.error("Error deleting workspace:", error);

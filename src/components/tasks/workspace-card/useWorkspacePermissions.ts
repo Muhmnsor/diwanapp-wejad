@@ -19,6 +19,7 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
       }
 
       try {
+        // Check if user is creator of workspace
         const isCreator = workspace.created_by === user.id;
         
         if (isCreator) {
@@ -27,27 +28,27 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
           return;
         }
         
-        // Check if user is admin
+        // Check if user is system admin
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('roles:role_id(name)')
           .eq('user_id', user.id)
           .single();
         
-        if (roleError) {
+        if (roleError && roleError.code !== 'PGRST116') {
           console.error('Error checking user roles:', roleError);
         }
           
-        // Safely handle the roleData which could be in different formats
+        // Handle different response formats for roles
         let isAdmin = false;
         
         if (roleData?.roles) {
-          // Handle case when roles is an object with name property
           if (typeof roleData.roles === 'object' && !Array.isArray(roleData.roles)) {
+            // Handle case when roles is a single object
             isAdmin = (roleData.roles as { name: string }).name === 'admin';
           } 
-          // Handle case when roles is an array of objects
-          else if (Array.isArray(roleData.roles) && roleData.roles.length > 0) {
+          else if (Array.isArray(roleData.roles)) {
+            // Handle case when roles is an array of objects
             isAdmin = roleData.roles.some((role: any) => 
               role && typeof role === 'object' && role.name === 'admin'
             );
