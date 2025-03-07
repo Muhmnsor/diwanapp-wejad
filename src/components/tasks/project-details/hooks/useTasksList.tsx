@@ -1,4 +1,3 @@
-
 import { useTasksFetching } from "./useTasksFetching";
 import { useTaskStatusManagement } from "./useTaskStatusManagement";
 import { useTasksState } from "./useTasksState";
@@ -52,7 +51,7 @@ export const useTasksList = (projectId: string | undefined) => {
         
       if (error) throw error;
       
-      // Fix the type issue by proper type annotation
+      // Fix the type issue by using a type assertion for the setState function
       setTasks((prevTasks: Task[]) => 
         prevTasks.map(task => 
           task.id === taskId ? { ...task, ...updateData } : task

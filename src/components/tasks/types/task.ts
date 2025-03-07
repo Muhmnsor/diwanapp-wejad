@@ -2,7 +2,7 @@
 export interface Task {
   id: string;
   title: string;
-  description?: string | null;
+  description?: string | null; // Made optional to match project-details Task interface
   status?: string;
   priority?: string;
   due_date?: string | null;

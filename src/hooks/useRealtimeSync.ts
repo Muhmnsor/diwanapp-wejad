@@ -33,7 +33,7 @@ export const useRealtimeSync = (options: UseRealtimeSyncOptions = {}) => {
   // Handle online/offline status changes
   useEffect(() => {
     const handleOnline = () => {
-      const prevStatus = syncStatus; // Store current status before update
+      const prevStatus = {...syncStatus}; // Create a copy of the current status before updating
       
       setSyncStatus(currentStatus => ({
         ...currentStatus,
