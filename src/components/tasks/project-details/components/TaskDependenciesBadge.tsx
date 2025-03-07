@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Link2, LinkOff } from "lucide-react";
+import { Link2, Link2Off } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TaskDependenciesBadgeProps {
@@ -68,7 +68,7 @@ export const TaskDependenciesBadge = ({ taskId }: TaskDependenciesBadgeProps) =>
             className="cursor-help"
           >
             {isBlocked ? (
-              <LinkOff className="h-3 w-3 mr-1" />
+              <Link2Off className="h-3 w-3 mr-1" />
             ) : (
               <Link2 className="h-3 w-3 mr-1" />
             )}
