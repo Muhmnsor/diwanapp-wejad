@@ -1,88 +1,52 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
+import { 
+  initCacheSync, 
+  subscribeToCacheSync, 
+  cleanupCacheSync,
+  sendBatchUpdate
+} from '@/utils/realtimeCacheSync';
 
-interface SyncStatus {
-  isOnline: boolean;
-  lastSyncTime: number;
-  pendingUpdates: number;
-  syncInProgress: boolean;
-}
-
-interface UseRealtimeSyncOptions {
-  batchInterval?: number;
-  syncOnReconnect?: boolean;
-  retryInterval?: number;
-  maxRetries?: number;
-}
-
-export const useRealtimeSync = (options: UseRealtimeSyncOptions = {}) => {
-  const {
-    batchInterval = 1000,
-    syncOnReconnect = true,
-    retryInterval = 5000,
-    maxRetries = 3
-  } = options;
-  
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    isOnline: navigator.onLine,
-    lastSyncTime: Date.now(),
-    pendingUpdates: 0,
-    syncInProgress: false
-  });
-  
-  // Handle online/offline status changes
+/**
+ * Enhanced hook to initialize and manage realtime cache sync
+ * with support for batch processing and reconnection handling
+ */
+export const useRealtimeSync = () => {
   useEffect(() => {
-    const handleOnline = () => {
-      setSyncStatus(prevStatus => ({
-        ...prevStatus,
-        isOnline: true
-      }));
-      
-      if (syncOnReconnect && prevStatus.pendingUpdates > 0) {
-        forceSyncNow();
-      }
+    // Initialize cache sync when component mounts
+    initCacheSync();
+    
+    // Ensure pending updates are sent before user leaves
+    const handleBeforeUnload = () => {
+      sendBatchUpdate(true);
     };
     
-    const handleOffline = () => {
-      setSyncStatus(prevStatus => ({
-        ...prevStatus,
-        isOnline: false
-      }));
-    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
     
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
+    // Cleanup when component unmounts
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      cleanupCacheSync();
     };
-  }, [syncOnReconnect]);
+  }, []);
   
-  // Force synchronization of pending updates
-  const forceSyncNow = useCallback(() => {
-    if (!navigator.onLine || syncStatus.syncInProgress) {
-      return;
-    }
-    
-    setSyncStatus(prevStatus => ({
-      ...prevStatus,
-      syncInProgress: true
-    }));
-    
-    // Simulate sync process
-    setTimeout(() => {
-      setSyncStatus(prevStatus => ({
-        ...prevStatus,
-        pendingUpdates: 0,
-        lastSyncTime: Date.now(),
-        syncInProgress: false
-      }));
-    }, 1500);
-  }, [syncStatus.syncInProgress]);
+  // Return nothing, this hook is just for setup
+  return null;
+};
+
+/**
+ * Enhanced hook to listen for specific cache sync events with a callback
+ * Supports intelligent batching and reconnection handling
+ */
+export const useSyncListener = (callback: (event: MessageEvent) => void) => {
+  // Memoize callback to prevent unnecessary re-subscriptions
+  const stableCallback = useCallback(callback, [callback]);
   
-  return {
-    syncStatus,
-    forceSyncNow
-  };
+  useEffect(() => {
+    // Subscribe to cache sync events
+    const unsubscribe = subscribeToCacheSync(stableCallback);
+    
+    // Cleanup subscription when component unmounts
+    return unsubscribe;
+  }, [stableCallback]);
 };

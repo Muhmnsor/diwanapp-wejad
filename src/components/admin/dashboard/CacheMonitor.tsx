@@ -1,86 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useCacheMonitor } from '@/hooks/useCacheMonitor';
-import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  clearCache, 
-  clearCacheByPrefix, 
-  resetCacheStats, 
-  freeUpCacheSpace,
-  getCacheStats
-} from '@/utils/cacheService';
-import { 
-  clearServiceWorkerCache, 
-  updateServiceWorker,
-  registerServiceWorker
-} from '@/utils/serviceWorkerRegistration';
+import { clearCache, clearCacheByPrefix, resetCacheStats, freeUpCacheSpace } from '@/utils/cacheService';
+import { clearServiceWorkerCache, updateServiceWorker } from '@/utils/serviceWorkerRegistration';
 import { toast } from 'sonner';
-import { 
-  BarChart, 
-  PieChart, 
-  RefreshCw, 
-  Trash2, 
-  Database, 
-  Archive, 
-  BarChart2, 
-  Clock, 
-  Network, 
-  Zap, 
-  Gauge,
-  Layers,
-  CloudOff,
-  Wifi,
-  Download,
-  Upload,
-  AlertTriangle
-} from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  BarChart as RechartsBarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  RechartsTooltip, 
-  Legend, 
-  ResponsiveContainer, 
-  PieChart as RechartsPieChart, 
-  Pie, 
-  Cell
-} from 'recharts';
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { BarChart, PieChart, RefreshCw, Trash2, Database, Archive, BarChart2, Clock, Network, Zap, Gauge } from 'lucide-react';
+import { LineChart, Line, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 export const CacheMonitor = () => {
-  const stats = useCacheMonitor(5000); // Update every 5 seconds
+  const stats = useCacheMonitor(10000); // Update every 10 seconds
   const [isClearing, setIsClearing] = useState(false);
   const [selectedTab, setSelectedTab] = useState('overview');
-  const [serviceWorkerActive, setServiceWorkerActive] = useState(false);
-  const [autoSync, setAutoSync] = useState(true);
   
-  const {
-    syncStatus, 
-    forceSyncNow
-  } = useRealtimeSync({ 
-    batchInterval: 300, 
-    syncOnReconnect: autoSync 
-  });
-  
-  useEffect(() => {
-    const checkServiceWorker = async () => {
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        setServiceWorkerActive(registrations.length > 0);
-      }
-    };
-    
-    checkServiceWorker();
-  }, []);
+  useRealtimeSync();
   
   const handleClearAllCache = async () => {
     try {
@@ -119,22 +54,10 @@ export const CacheMonitor = () => {
   const handleUpdateServiceWorker = async () => {
     try {
       await updateServiceWorker();
-      setServiceWorkerActive(true);
       toast.success('تم تحديث Service Worker بنجاح');
     } catch (error) {
       toast.error('حدث خطأ أثناء تحديث Service Worker');
       console.error('Error updating service worker:', error);
-    }
-  };
-  
-  const handleRegisterServiceWorker = async () => {
-    try {
-      await registerServiceWorker();
-      setServiceWorkerActive(true);
-      toast.success('تم تسجيل Service Worker بنجاح');
-    } catch (error) {
-      toast.error('حدث خطأ أثناء تسجيل Service Worker');
-      console.error('Error registering service worker:', error);
     }
   };
   
@@ -152,27 +75,11 @@ export const CacheMonitor = () => {
     try {
       const localRemoved = freeUpCacheSpace('local', 15);
       const sessionRemoved = freeUpCacheSpace('session', 15);
-      const memoryRemoved = freeUpCacheSpace('memory', 10);
-      toast.success(`تم تحسين المساحة بإزالة ${localRemoved + sessionRemoved + memoryRemoved} عنصر من التخزين المؤقت`);
+      toast.success(`تم تحسين المساحة بإزالة ${localRemoved + sessionRemoved} عنصر من التخزين المؤقت`);
     } catch (error) {
       toast.error('حدث خطأ أثناء تحسين المساحة');
       console.error('Error optimizing storage:', error);
     }
-  };
-  
-  const handleForceSyncNow = () => {
-    try {
-      forceSyncNow();
-      toast.success('تمت مزامنة التحديثات بنجاح');
-    } catch (error) {
-      toast.error('حدث خطأ أثناء المزامنة');
-      console.error('Error syncing updates:', error);
-    }
-  };
-  
-  const handleToggleAutoSync = (checked: boolean) => {
-    setAutoSync(checked);
-    toast.success(checked ? 'تم تفعيل المزامنة التلقائية' : 'تم تعطيل المزامنة التلقائية');
   };
   
   const storageData = [
@@ -186,14 +93,13 @@ export const CacheMonitor = () => {
     { name: 'إخفاقات', value: stats.cacheMisses, color: '#ef4444' }
   ];
   
-  const currentHitRatio = stats.cacheHitRatio;
   const historicalData = [
-    { time: '09:00', hitRatio: Math.max(0, currentHitRatio - 15), hits: Math.max(0, stats.cacheHits - 35), misses: Math.max(0, stats.cacheMisses - 5) },
-    { time: '10:00', hitRatio: Math.max(0, currentHitRatio - 10), hits: Math.max(0, stats.cacheHits - 25), misses: Math.max(0, stats.cacheMisses - 3) },
-    { time: '11:00', hitRatio: Math.max(0, currentHitRatio - 5), hits: Math.max(0, stats.cacheHits - 15), misses: Math.max(0, stats.cacheMisses - 2) },
-    { time: '12:00', hitRatio: Math.max(0, currentHitRatio - 2), hits: Math.max(0, stats.cacheHits - 10), misses: Math.max(0, stats.cacheMisses - 1) },
-    { time: '13:00', hitRatio: Math.max(0, currentHitRatio - 1), hits: Math.max(0, stats.cacheHits - 5), misses: stats.cacheMisses },
-    { time: '14:00', hitRatio: currentHitRatio, hits: stats.cacheHits, misses: stats.cacheMisses }
+    { time: '09:00', hitRatio: 65, hits: 25, misses: 15 },
+    { time: '10:00', hitRatio: 70, hits: 35, misses: 15 },
+    { time: '11:00', hitRatio: 75, hits: 45, misses: 15 },
+    { time: '12:00', hitRatio: 78, hits: 50, misses: 14 },
+    { time: '13:00', hitRatio: 80, hits: 60, misses: 15 },
+    { time: '14:00', hitRatio: stats.cacheHitRatio, hits: stats.cacheHits, misses: stats.cacheMisses }
   ];
   
   const advancedMetrics = [
@@ -201,46 +107,17 @@ export const CacheMonitor = () => {
     { name: 'تحديثات مؤجلة', value: stats.throttledUpdates || 0, color: '#ec4899' }
   ];
   
-  const priorityDistribution = stats.priorityDistribution ? [
-    { name: 'منخفضة', value: stats.priorityDistribution.low || 0, color: '#9ca3af' },
-    { name: 'عادية', value: stats.priorityDistribution.normal || 0, color: '#60a5fa' },
-    { name: 'عالية', value: stats.priorityDistribution.high || 0, color: '#f59e0b' },
-    { name: 'حرجة', value: stats.priorityDistribution.critical || 0, color: '#ef4444' }
-  ] : [];
-  
-  const networkStatusClass = syncStatus.isOnline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-  const networkStatusText = syncStatus.isOnline ? 'متصل' : 'غير متصل';
-  const pendingUpdatesClass = syncStatus.pendingUpdates > 0 ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800';
-  
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
   
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <BarChart className="h-5 w-5" />
-            مراقب التخزين المؤقت الذكي
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant={syncStatus.isOnline ? "outline" : "destructive"} className="mr-2">
-              {syncStatus.isOnline ? (
-                <Wifi className="h-3 w-3 mr-1" />
-              ) : (
-                <CloudOff className="h-3 w-3 mr-1" />
-              )}
-              {networkStatusText}
-            </Badge>
-            {syncStatus.pendingUpdates > 0 && (
-              <Badge variant="secondary">
-                <Upload className="h-3 w-3 mr-1" />
-                {syncStatus.pendingUpdates} في الانتظار
-              </Badge>
-            )}
-          </div>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart className="h-5 w-5" />
+          مراقب التخزين المؤقت الذكي
+        </CardTitle>
         <CardDescription>
-          إحصائيات أداء نظام التخزين المؤقت الذكي مع دعم المزامنة والعمل دون اتصال
+          إحصائيات أداء نظام التخزين المؤقت الذكي
         </CardDescription>
       </CardHeader>
       
@@ -258,10 +135,7 @@ export const CacheMonitor = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-card border rounded-lg p-4 text-center">
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">معدل الإصابة</h3>
-                <div className="flex flex-col items-center">
-                  <p className="text-2xl font-bold">{stats.cacheHitRatio}%</p>
-                  <Progress className="h-2 w-full mt-2" value={stats.cacheHitRatio} />
-                </div>
+                <p className="text-2xl font-bold">{stats.cacheHitRatio}%</p>
               </div>
               <div className="bg-card border rounded-lg p-4 text-center">
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">إصابات</h3>
@@ -301,59 +175,6 @@ export const CacheMonitor = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">معلومات المزامنة</h3>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">حالة الاتصال:</span>
-                  <Badge className={networkStatusClass}>
-                    {syncStatus.isOnline ? (
-                      <Wifi className="h-3 w-3 mr-1" />
-                    ) : (
-                      <CloudOff className="h-3 w-3 mr-1" />
-                    )}
-                    {networkStatusText}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">التحديثات المعلقة:</span>
-                  <Badge className={pendingUpdatesClass}>
-                    {syncStatus.pendingUpdates} تحديث
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">آخر مزامنة:</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(syncStatus.lastSyncTime).toLocaleTimeString('ar-SA')}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">حالة التخزين المؤقت</h3>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">ضغط البيانات:</span>
-                  <Badge variant="outline" className="bg-blue-50">
-                    {(stats.compressionSavings / 1024).toFixed(2)} كيلوبايت تم توفيرها
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm">Service Worker:</span>
-                  <Badge variant={serviceWorkerActive ? "outline" : "secondary"} className={serviceWorkerActive ? "bg-green-50" : ""}>
-                    {serviceWorkerActive ? "نشط" : "غير نشط"}
-                  </Badge>
-                </div>
-                {stats.refreshedEntries !== undefined && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">عناصر محدثة تلقائياً:</span>
-                    <Badge variant="outline" className="bg-green-50">
-                      {stats.refreshedEntries}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            </div>
-            
             <div className="flex flex-col sm:flex-row gap-2 mt-6">
               <Button
                 variant="outline"
@@ -363,15 +184,6 @@ export const CacheMonitor = () => {
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 مسح ذاكرة تخزين المهام المؤقتة
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleForceSyncNow}
-                className="flex-1"
-                disabled={isClearing || !syncStatus.isOnline}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                مزامنة الآن
               </Button>
               <Button
                 variant="destructive"
@@ -396,7 +208,7 @@ export const CacheMonitor = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time" />
                     <YAxis />
-                    <RechartsTooltip />
+                    <Tooltip />
                     <Legend />
                     <Line 
                       type="monotone" 
@@ -418,7 +230,7 @@ export const CacheMonitor = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time" />
                     <YAxis />
-                    <RechartsTooltip />
+                    <Tooltip />
                     <Legend />
                     <Bar dataKey="hits" name="إصابات" fill="#10b981" />
                     <Bar dataKey="misses" name="إخفاقات" fill="#ef4444" />
@@ -485,7 +297,7 @@ export const CacheMonitor = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <RechartsTooltip />
+                      <Tooltip />
                       <Legend />
                     </RechartsPieChart>
                   </ResponsiveContainer>
@@ -511,7 +323,7 @@ export const CacheMonitor = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <RechartsTooltip />
+                      <Tooltip />
                       <Legend />
                     </RechartsPieChart>
                   </ResponsiveContainer>
@@ -540,9 +352,9 @@ export const CacheMonitor = () => {
         <TabsContent value="sync">
           <CardContent>
             <div className="mb-6">
-              <h3 className="text-base font-medium mb-3">مزامنة الذاكرة المؤقت المتطورة</h3>
+              <h3 className="text-base font-medium mb-3">مزامنة الذاكرة المؤقتة</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                تتيح هذه الميزة مزامنة بيانات الذاكرة المؤقتة عبر علامات التبويب المختلفة وبين الجلسات مع دعم العمل دون اتصال.
+                تتيح هذه الميزة مزامنة بيانات الذاكرة المؤقتة عبر علامات التبويب المختلفة وبين الجلسات.
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -571,18 +383,18 @@ export const CacheMonitor = () => {
                   </p>
                   <div className="mt-4 flex justify-center">
                     <div className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-                      نشط ({stats.batchedUpdates || 0} تحديث)
+                      نشط
                     </div>
                   </div>
                 </div>
                 
                 <div className="bg-card border rounded-lg p-4">
                   <div className="flex items-center mb-2">
-                    <CloudOff className="h-4 w-4 mr-2 text-purple-500" />
-                    <h4 className="text-sm font-medium">دعم العمل دون اتصال</h4>
+                    <RefreshCw className="h-4 w-4 mr-2 text-purple-500" />
+                    <h4 className="text-sm font-medium">المزامنة عند الاتصال</h4>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    تخزين التحديثات عند عدم وجود اتصال ومزامنتها لاحقًا
+                    استئناف المزامنة تلقائيًا عند استعادة الاتصال
                   </p>
                   <div className="mt-4 flex justify-center">
                     <div className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
@@ -592,118 +404,29 @@ export const CacheMonitor = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-card border rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-3">إعدادات المزامنة</h3>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="autoSync">مزامنة تلقائية عند الاتصال</Label>
-                      <p className="text-xs text-muted-foreground">
-                        مزامنة البيانات تلقائيًا عند استعادة الاتصال
-                      </p>
-                    </div>
-                    <Switch
-                      id="autoSync"
-                      checked={autoSync}
-                      onCheckedChange={handleToggleAutoSync}
-                    />
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={handleForceSyncNow}
-                    disabled={!syncStatus.isOnline}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    مزامنة التحديثات المعلقة الآن
-                  </Button>
-                </div>
-                
-                <div className="bg-card border rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-3">حالة المزامنة</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">حالة الشبكة:</span>
-                      <Badge className={syncStatus.isOnline ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                        {syncStatus.isOnline ? "متصل" : "غير متصل"}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">تحديثات معلقة:</span>
-                      <Badge variant="outline">
-                        {syncStatus.pendingUpdates} تحديث
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">آخر مزامنة:</span>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(syncStatus.lastSyncTime).toLocaleTimeString('ar-SA')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">مزامنة تلقائية:</span>
-                      <Badge variant={autoSync ? "outline" : "secondary"} className={autoSync ? "bg-green-50" : ""}>
-                        {autoSync ? "مفعلة" : "معطلة"}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
               <div className="bg-card border rounded-lg p-4 mb-6">
-                <h3 className="text-sm font-medium mb-3">إحصائيات التزامن المتقدمة</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-xs text-muted-foreground mb-2">توزيع التحديثات</h4>
-                    <div className="h-[200px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={advancedMetrics}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}`}
-                          >
-                            {advancedMetrics.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <RechartsTooltip />
-                          <Legend />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-xs text-muted-foreground mb-2">معلومات التحسين</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs">تحديثات متجمعة</span>
-                          <span className="text-xs font-medium">{stats.batchedUpdates || 0}</span>
-                        </div>
-                        <Progress className="h-2" value={Math.min(100, ((stats.batchedUpdates || 0) / 100) * 100)} />
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs">تحديثات مؤجلة</span>
-                          <span className="text-xs font-medium">{stats.throttledUpdates || 0}</span>
-                        </div>
-                        <Progress className="h-2" value={Math.min(100, ((stats.throttledUpdates || 0) / 50) * 100)} />
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs">توفير في حجم البيانات</span>
-                          <span className="text-xs font-medium">{(stats.compressionSavings / 1024).toFixed(2)} كيلوبايت</span>
-                        </div>
-                        <Progress className="h-2" value={Math.min(100, (stats.compressionSavings / 10240) * 100)} />
-                      </div>
-                    </div>
-                  </div>
+                <h3 className="text-sm font-medium mb-2">إحصائيات المزامنة</h3>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={advancedMetrics}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                      >
+                        {advancedMetrics.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
@@ -719,27 +442,14 @@ export const CacheMonitor = () => {
                 <p className="text-sm text-muted-foreground mb-3">
                   تحكم في Service Worker المستخدم للتخزين المؤقت على مستوى الشبكة
                 </p>
-                <div className="flex space-x-2 rtl:space-x-reverse">
-                  <Button
-                    variant="outline"
-                    onClick={handleUpdateServiceWorker}
-                    className="flex-1"
-                    disabled={!serviceWorkerActive}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    تحديث Service Worker
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={handleRegisterServiceWorker}
-                    className="flex-1"
-                    disabled={serviceWorkerActive}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    تسجيل Service Worker
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleUpdateServiceWorker}
+                  className="w-full"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  تحديث Service Worker
+                </Button>
               </div>
               
               <div className="bg-card border rounded-lg p-4">
@@ -758,64 +468,19 @@ export const CacheMonitor = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="text-base font-medium mb-2">تحسين التخزين المؤقت</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  تحسين استخدام مساحة التخزين المؤقت وتنظيف العناصر غير المستخدمة
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={handleOptimizeStorage}
-                  className="w-full"
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  تحسين مساحة التخزين المؤقت
-                </Button>
-              </div>
-              
-              <div className="bg-card border rounded-lg p-4">
-                <h4 className="text-base font-medium mb-2">إدارة الأولويات</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  عرض توزيع أولويات العناصر المخزنة مؤقتًا
-                </p>
-                <div className="h-[120px]">
-                  {priorityDistribution.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsBarChart data={priorityDistribution}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Bar dataKey="value" name="العدد">
-                          {priorityDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </RechartsBarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-sm text-muted-foreground">لا توجد بيانات متوفرة</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-card border border-amber-200 rounded-lg p-4 mb-6 bg-amber-50">
-              <div className="flex items-start mb-2">
-                <AlertTriangle className="h-5 w-5 mr-2 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-base font-medium text-amber-800 mb-1">توصيات التحسين</h4>
-                  <ul className="text-sm text-amber-700 list-disc list-inside space-y-1">
-                    <li>تفعيل ضغط البيانات لعناصر التخزين المؤقت الأكبر لتوفير المساحة</li>
-                    <li>تحسين استراتيجية تخزين المهام المؤقت للتعامل مع الحجم الكبير للمهام</li>
-                    <li>تفعيل المزيد من Views المخزنة مسبقًا للاستعلامات المتكررة</li>
-                    <li>ضبط استراتيجيات التحديث لتحسين نسبة الإصابات</li>
-                  </ul>
-                </div>
-              </div>
+            <div className="bg-card border rounded-lg p-4 mb-6">
+              <h4 className="text-base font-medium mb-2">تحسين التخزين</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                تحسين استخدام مساحة التخزين المؤقت وتنظيف العناصر غير المستخدمة
+              </p>
+              <Button
+                variant="outline"
+                onClick={handleOptimizeStorage}
+                className="w-full"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                تحسين مساحة التخزين المؤقت
+              </Button>
             </div>
             
             <div className="mt-6 border-t pt-6">
@@ -843,4 +508,3 @@ export const CacheMonitor = () => {
     </Card>
   );
 };
-
