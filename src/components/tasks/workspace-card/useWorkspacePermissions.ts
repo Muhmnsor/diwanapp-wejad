@@ -25,7 +25,7 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         // Case 2: Check if user is a system admin
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
-          .select('roles:role_id(name)')
+          .select('role:role_id(name)')
           .eq('user_id', user.id)
           .single();
         
@@ -34,7 +34,8 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         }
         
         // Access the name property safely with optional chaining
-        const isAdmin = roleData?.roles?.name === 'admin' || roleData?.roles?.name === 'app_admin';
+        const roleName = roleData?.role?.name;
+        const isAdmin = roleName === 'admin' || roleName === 'app_admin';
         
         // Case 3: Check if user is workspace admin
         const { data: memberData, error: memberError } = await supabase
