@@ -15,32 +15,19 @@ export interface Workspace {
 export interface Task {
   id: string;
   title: string;
-  description: string | null;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'delayed';
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   priority: 'low' | 'medium' | 'high';
-  due_date: string | null;
+  due_date?: string;
   created_at: string;
-  updated_at: string;
   created_by?: string;
-  assigned_to: string | null;
+  assigned_to?: string;
   workspace_id: string;
   workspace_name?: string;
   project_id?: string;
   project_name?: string;
   start_date?: string; // تاريخ بداية المهمة لمخطط جانت
   end_date?: string; // تاريخ نهاية المهمة لمخطط جانت
-  
-  // Additional fields from project-details/types/task.ts
-  assigned_user_name?: string;
-  stage_id?: string | null;
-  stage_name?: string;
-  category?: string | null;
-  is_general?: boolean;
-  attachment_url?: string | null;
-  form_template?: string | null;
-  templates?: Array<{ url: string }> | null;
-  is_subtask?: boolean;
-  parent_task_id?: string | null;
 }
 
 export interface Project {
@@ -64,3 +51,4 @@ export interface WorkspaceMember {
   user_email?: string;
   user_display_name?: string;
 }
+

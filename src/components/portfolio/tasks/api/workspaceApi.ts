@@ -1,6 +1,4 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Task } from '@/types/workspace';
 
 export const getOrCreateWorkspace = async (workspaceId: string) => {
   console.log('🔍 Checking workspace:', workspaceId);
@@ -67,7 +65,7 @@ export const syncTasksWithAsana = async (workspaceId: string) => {
   }
 };
 
-export const fetchWorkspaceTasks = async (workspaceId: string): Promise<Partial<Task>[]> => {
+export const fetchWorkspaceTasks = async (workspaceId: string) => {
   console.log('🔍 Fetching tasks for workspace:', workspaceId);
   
   try {
@@ -82,10 +80,7 @@ export const fetchWorkspaceTasks = async (workspaceId: string): Promise<Partial<
         due_date,
         assigned_to,
         updated_at,
-        created_at,
-        asana_gid,
-        workspace_id,
-        project_id
+        asana_gid
       `)
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
@@ -96,18 +91,7 @@ export const fetchWorkspaceTasks = async (workspaceId: string): Promise<Partial<
     }
 
     console.log('✅ Successfully fetched tasks:', tasks);
-    
-    // Ensure all returned tasks have valid status and priority values
-    const formattedTasks = (tasks || []).map(task => ({
-      ...task,
-      status: (task.status || 'pending') as Task['status'],
-      priority: (task.priority || 'medium') as Task['priority'],
-      workspace_id: workspaceId,
-      created_at: task.created_at || new Date().toISOString(),
-      updated_at: task.updated_at || new Date().toISOString()
-    }));
-    
-    return formattedTasks;
+    return tasks;
   } catch (error) {
     console.error('❌ Error in fetchWorkspaceTasks:', error);
     throw error;

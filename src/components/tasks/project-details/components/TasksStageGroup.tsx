@@ -13,7 +13,7 @@ interface TasksStageGroupProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   projectId: string;
   onEdit?: (task: Task) => void;
-  onDelete?: (taskId: string) => Promise<void>;
+  onDelete?: (taskId: string) => void;
 }
 
 export const TasksStageGroup = ({
