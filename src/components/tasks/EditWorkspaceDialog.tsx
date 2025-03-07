@@ -20,6 +20,7 @@ import { useAuthStore } from "@/store/refactored-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useWorkspacePermissions } from "./workspace-card/useWorkspacePermissions";
 
 interface EditWorkspaceDialogProps {
   open: boolean;
@@ -41,6 +42,7 @@ export const EditWorkspaceDialog = ({
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const { canEdit, isLoading: permissionsLoading } = useWorkspacePermissions(workspace, user);
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<WorkspaceFormData>({
     defaultValues: {
@@ -78,46 +80,15 @@ export const EditWorkspaceDialog = ({
     console.log("[EditWorkspace] Old data:", { name: workspace.name, description: workspace.description });
     console.log("[EditWorkspace] New data:", data);
     
-    // Check permissions first
-    try {
-      console.log("[EditWorkspace] Checking user permissions");
-      const { data: permissionData, error: permissionError } = await supabase
-        .from('workspace_members')
-        .select('role')
-        .eq('workspace_id', workspace.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      // Also check if user is creator of workspace
-      const isCreator = workspace.created_by === user.id;
-      
-      // Check if user is system admin
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('roles:role_id(name)')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      const isAdmin = roleData?.roles && 
-        ((typeof roleData.roles === 'object' && !Array.isArray(roleData.roles)) 
-          ? (roleData.roles as { name: string }).name === 'admin'
-          : Array.isArray(roleData.roles) 
-            ? roleData.roles.some((role: any) => role && typeof role === 'object' && role.name === 'admin')
-            : false);
-      
-      const canEdit = isCreator || isAdmin || (permissionData?.role === 'admin');
-      
-      console.log("[EditWorkspace] Permission check results:", { 
-        isCreator, 
-        isAdmin, 
-        memberRole: permissionData?.role,
-        canEdit 
-      });
-      
-      if (!canEdit) {
-        throw new Error("ليس لديك صلاحية تعديل مساحة العمل");
-      }
+    // Verify user has permission (use the hook results)
+    if (!canEdit && !permissionsLoading) {
+      console.error("[EditWorkspace] User lacks permission to edit workspace");
+      setError("ليس لديك صلاحية تعديل مساحة العمل");
+      setIsSubmitting(false);
+      return;
+    }
 
+    try {
       // Call Supabase to update workspace
       console.log("[EditWorkspace] Sending update request to Supabase");
       const { data: updateData, error: updateError } = await supabase
@@ -172,6 +143,7 @@ export const EditWorkspaceDialog = ({
             <Input
               id="name"
               {...register("name", { required: "اسم مساحة العمل مطلوب" })}
+              disabled={permissionsLoading || !canEdit}
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -184,6 +156,7 @@ export const EditWorkspaceDialog = ({
               id="description"
               {...register("description")}
               rows={4}
+              disabled={permissionsLoading || !canEdit}
             />
           </div>
           
@@ -193,11 +166,22 @@ export const EditWorkspaceDialog = ({
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+
+          {permissionsLoading && (
+            <p className="text-sm text-muted-foreground">جاري التحقق من الصلاحيات...</p>
+          )}
+          
+          {!permissionsLoading && !canEdit && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>ليس لديك صلاحية لتعديل مساحة العمل</AlertDescription>
+            </Alert>
+          )}
           
           <DialogFooter className="flex-row-reverse sm:justify-start gap-2 mt-4">
             <Button 
               type="submit" 
-              disabled={isSubmitting}
+              disabled={isSubmitting || permissionsLoading || !canEdit}
             >
               {isSubmitting ? "جاري الحفظ..." : "حفظ التغييرات"}
             </Button>
