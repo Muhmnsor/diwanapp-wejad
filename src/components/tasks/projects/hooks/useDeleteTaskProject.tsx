@@ -93,67 +93,67 @@ export const useDeleteTaskProject = ({
         console.log(`Found ${taskIds.length} tasks to delete`);
         
         if (taskIds.length > 0) {
-          // 1. Delete task discussion attachments - specify fully qualified column names
+          // 1. Delete task discussion attachments - explicitly specify task_id column
           const { error: discussionAttachmentsError } = await supabase
             .from("task_discussion_attachments")
             .delete()
-            .in("task_id", taskIds);
+            .in("task_discussion_attachments.task_id", taskIds);
           
           if (discussionAttachmentsError) {
             console.error("Error deleting discussion attachments:", discussionAttachmentsError);
             // Continue despite error
           }
           
-          // 2. Delete task comments - specify fully qualified column names
+          // 2. Delete task comments - explicitly specify task_id column
           const { error: commentsError } = await supabase
             .from("task_comments")
             .delete()
-            .in("task_id", taskIds);
+            .in("task_comments.task_id", taskIds);
           
           if (commentsError) {
             console.error("Error deleting comments:", commentsError);
             // Continue despite error
           }
           
-          // 3. Delete unified comments - specify fully qualified column names
+          // 3. Delete unified comments - explicitly specify task_id and task_table
           const { error: unifiedCommentsError } = await supabase
             .from("unified_task_comments")
             .delete()
-            .eq("task_table", "tasks")
-            .in("task_id", taskIds);
+            .eq("unified_task_comments.task_table", "tasks")
+            .in("unified_task_comments.task_id", taskIds);
           
           if (unifiedCommentsError) {
             console.error("Error deleting unified comments:", unifiedCommentsError);
             // Continue despite error
           }
           
-          // 4. Delete task attachments - specify fully qualified column names
+          // 4. Delete task attachments - explicitly specify task_id column
           const { error: attachmentsError } = await supabase
             .from("task_attachments")
             .delete()
-            .in("task_id", taskIds);
+            .in("task_attachments.task_id", taskIds);
           
           if (attachmentsError) {
             console.error("Error deleting attachments:", attachmentsError);
             // Continue despite error
           }
           
-          // 5. Delete subtasks - specify fully qualified column names
+          // 5. Delete subtasks - explicitly specify task_id column
           const { error: subtasksError } = await supabase
             .from("subtasks")
             .delete()
-            .in("task_id", taskIds);
+            .in("subtasks.task_id", taskIds);
           
           if (subtasksError) {
             console.error("Error deleting subtasks:", subtasksError);
             // Continue despite error
           }
           
-          // 6. Delete tasks - specify fully qualified column names
+          // 6. Delete tasks - explicitly specify project_id column
           const { error: deleteTasksError } = await supabase
             .from("tasks")
             .delete()
-            .eq("project_id", projectId);
+            .eq("tasks.project_id", projectId);
           
           if (deleteTasksError) {
             console.error("Error deleting tasks:", deleteTasksError);
@@ -161,22 +161,22 @@ export const useDeleteTaskProject = ({
           }
         }
         
-        // 7. Delete project stages - specify fully qualified column names
+        // 7. Delete project stages - explicitly specify project_id column
         const { error: stagesError } = await supabase
           .from("project_stages")
           .delete()
-          .eq("project_id", projectId);
+          .eq("project_stages.project_id", projectId);
         
         if (stagesError) {
           console.error("Error deleting project stages:", stagesError);
           // Continue despite error
         }
         
-        // 8. Finally delete the project - specify fully qualified column names
+        // 8. Finally delete the project - explicitly specify id column
         const { error: deleteProjectError } = await supabase
           .from("project_tasks")
           .delete()
-          .eq("id", projectId);
+          .eq("project_tasks.id", projectId);
         
         if (deleteProjectError) {
           console.error("Error deleting project:", deleteProjectError);
