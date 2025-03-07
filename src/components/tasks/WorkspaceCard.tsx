@@ -8,13 +8,25 @@ import {
   UserPlus,
   AlertTriangle,
   ClipboardList,
-  PauseCircle
+  PauseCircle,
+  MoreVertical,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import { Workspace } from "@/types/workspace";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { WorkspaceMembersDialog } from "./WorkspaceMembersDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { EditWorkspaceDialog } from "./EditWorkspaceDialog";
+import { DeleteWorkspaceDialog } from "./DeleteWorkspaceDialog";
+import { useAuthStore } from "@/store/refactored-auth";
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -23,6 +35,8 @@ interface WorkspaceCardProps {
 export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const navigate = useNavigate();
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [projectCounts, setProjectCounts] = useState({
     completed: 0,
     pending: 0,
@@ -31,6 +45,43 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     total: 0
   });
   const [membersCount, setMembersCount] = useState(workspace.members_count || 0);
+  const [canEdit, setCanEdit] = useState(false);
+  const { user } = useAuthStore();
+
+  // Check if user has permission to edit/delete
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!user) {
+        setCanEdit(false);
+        return;
+      }
+
+      try {
+        // Check if user is workspace creator or admin
+        const isCreator = workspace.created_by === user.id;
+        
+        // Check if user is admin
+        const isAdmin = user.isAdmin;
+        
+        // Check if user is workspace member with admin role
+        const { data: memberData } = await supabase
+          .from('workspace_members')
+          .select('role')
+          .eq('workspace_id', workspace.id)
+          .eq('user_id', user.id)
+          .single();
+        
+        const isWorkspaceAdmin = memberData?.role === 'admin';
+        
+        setCanEdit(isCreator || isAdmin || isWorkspaceAdmin);
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+        setCanEdit(false);
+      }
+    };
+    
+    checkPermissions();
+  }, [workspace.id, workspace.created_by, user]);
 
   // Fetch project counts
   useEffect(() => {
@@ -119,6 +170,16 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     setIsMembersDialogOpen(open);
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation
+    setIsDeleteDialogOpen(true);
+  };
+
   return (
     <>
       <Card 
@@ -126,8 +187,31 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         onClick={handleClick}
       >
         <CardContent className="p-6">
-          <div className="mb-3">
+          <div className="mb-3 flex justify-between items-start">
             <h3 className="font-bold text-lg">{workspace.name}</h3>
+            
+            {canEdit && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" dir="rtl">
+                  <DropdownMenuItem onClick={handleEdit}>
+                    <Pencil className="h-4 w-4 ml-2" />
+                    <span>تعديل</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-destructive focus:text-destructive"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="h-4 w-4 ml-2" />
+                    <span>حذف</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           
           <p className="text-gray-500 mb-4 text-sm line-clamp-2">
@@ -177,6 +261,19 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         open={isMembersDialogOpen}
         onOpenChange={onMembersDialogClose}
         workspaceId={workspace.id}
+      />
+
+      <EditWorkspaceDialog 
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        workspace={workspace}
+      />
+
+      <DeleteWorkspaceDialog 
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        workspaceId={workspace.id}
+        workspaceName={workspace.name}
       />
     </>
   );
