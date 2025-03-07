@@ -1,239 +1,207 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { TaskForm } from "./TaskForm";
-import { useToast } from "@/components/ui/use-toast";
-import { useWorkspace } from "@/providers/workspace-provider";
-import { useUser } from "@/providers/user-provider";
 
-// Import the necessary hooks for task dependencies
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Task } from "./types/task";
+import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
-import { DependencyType } from "./hooks/useTaskDependencies";
-import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { ProjectMember } from "./hooks/useProjectMembers";
+import { TaskDependency } from "./components/TaskDependenciesField";
 
 interface EditTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  task: any;
-  projectStages: any[];
-  projectMembers: any[];
-  onTaskUpdated?: () => void;
+  task: Task | null;
+  projectStages: { id: string; name: string }[];
+  projectMembers: ProjectMember[];
+  onTaskUpdated: () => void;
 }
 
-export const EditTaskDialog = ({ 
-  open, 
+export const EditTaskDialog = ({
+  open,
   onOpenChange,
   task,
   projectStages,
   projectMembers,
   onTaskUpdated
 }: EditTaskDialogProps) => {
-  const { toast } = useToast();
-  const { workspaceId } = useWorkspace();
-  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [taskDependencies, setTaskDependencies] = useState<{
-    id?: string;
-    taskId: string;
-    dependencyType: DependencyType;
-  }[]>([]);
+  const [taskDependencies, setTaskDependencies] = useState<TaskDependency[]>([]);
   
   useEffect(() => {
-    // Fetch task dependencies if task is provided
+    // Fetch task dependencies when dialog opens and task is selected
     const fetchDependencies = async () => {
-      if (!task?.id) return;
+      if (!task || !open) return;
       
       try {
-        // Get dependencies where this task depends on others
-        const { data: blockedByDeps, error: blockedByError } = await supabase
+        const { data, error } = await supabase
           .from('task_dependencies')
-          .select('id, dependency_task_id, dependency_type')
+          .select('*')
           .eq('task_id', task.id);
           
-        if (blockedByError) throw blockedByError;
+        if (error) {
+          console.error("Error fetching task dependencies:", error);
+          return;
+        }
         
-        // Get dependencies where others depend on this task
-        const { data: blocksDeps, error: blocksError } = await supabase
-          .from('task_dependencies')
-          .select('id, task_id, dependency_type')
-          .eq('dependency_task_id', task.id);
-          
-        if (blocksError) throw blocksError;
-        
-        // Format the dependencies
-        const formattedDeps = [
-          ...(blockedByDeps || []).map(dep => ({
-            id: dep.id,
+        if (data) {
+          const formattedDeps: TaskDependency[] = data.map(dep => ({
             taskId: dep.dependency_task_id,
-            dependencyType: dep.dependency_type as DependencyType
-          })),
-          ...(blocksDeps || []).map(dep => ({
-            id: dep.id,
-            taskId: dep.task_id,
-            dependencyType: 'blocks' as DependencyType
-          }))
-        ];
-        
-        setTaskDependencies(formattedDeps);
+            dependencyType: dep.dependency_type
+          }));
+          
+          setTaskDependencies(formattedDeps);
+        }
       } catch (error) {
-        console.error("Error fetching task dependencies:", error);
+        console.error("Error in fetchDependencies:", error);
       }
     };
     
     fetchDependencies();
-  }, [task?.id]);
-  
-  const handleSubmit = async (formData: any) => {
+  }, [task, open]);
+
+  const handleUpdateTask = async (formData: {
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: string;
+    stageId: string;
+    assignedTo: string | null;
+    templates?: File[] | null;
+    category?: string;
+    dependencies?: TaskDependency[];
+  }) => {
     if (!task) return;
     
     setIsSubmitting(true);
-    
     try {
-      // Extract dependencies from form data
-      const { dependencies, ...taskData } = formData;
+      console.log("Updating task with data:", formData);
       
-      // Update the task
+      // Prepare update data
+      const updateData = {
+        title: formData.title,
+        description: formData.description,
+        due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        priority: formData.priority,
+        stage_id: formData.stageId,
+        assigned_to: formData.assignedTo,
+        category: task.is_general ? formData.category : undefined
+      };
+      
+      // Update task in database
       const { error } = await supabase
         .from('tasks')
-        .update({
-          title: taskData.title,
-          description: taskData.description,
-          status: taskData.status,
-          priority: taskData.priority,
-          due_date: taskData.due_date,
-          assigned_to: taskData.assigned_to,
-          stage_id: taskData.stage_id,
-          category: taskData.category,
-          attachment_url: taskData.attachment_url,
-          form_template: taskData.form_template,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', task.id);
-        
+      
       if (error) throw error;
       
-      // Handle dependencies - this requires more complex logic to add/remove correctly
-      
-      // 1. Get current dependencies
-      const { data: currentDeps, error: depsError } = await supabase
-        .from('task_dependencies')
-        .select('id, task_id, dependency_task_id, dependency_type')
-        .or(`task_id.eq.${task.id},dependency_task_id.eq.${task.id}`);
-        
-      if (depsError) throw depsError;
-      
-      // 2. Determine which dependencies to delete (those not in the new list)
-      const depsToDelete = (currentDeps || []).filter(currentDep => {
-        if (currentDep.task_id === task.id) {
-          // This is a dependency where task depends on another
-          return !dependencies.some((dep: any) => 
-            dep.taskId === currentDep.dependency_task_id && 
-            dep.dependencyType === currentDep.dependency_type
-          );
-        } else {
-          // This is a dependency where another task depends on this one
-          return !dependencies.some((dep: any) => 
-            dep.taskId === currentDep.task_id && 
-            dep.dependencyType === 'blocks'
-          );
-        }
-      });
-      
-      // 3. Determine which dependencies to add (those in the new list but not in the current list)
-      const depsToAdd = dependencies.filter((newDep: any) => {
-        if (newDep.dependencyType === 'blocks') {
-          // Task blocks another
-          return !currentDeps?.some(currentDep => 
-            currentDep.dependency_task_id === task.id && 
-            currentDep.task_id === newDep.taskId
-          );
-        } else {
-          // Task is blocked by another
-          return !currentDeps?.some(currentDep => 
-            currentDep.task_id === task.id && 
-            currentDep.dependency_task_id === newDep.taskId &&
-            currentDep.dependency_type === newDep.dependencyType
-          );
-        }
-      });
-      
-      // 4. Delete removed dependencies
-      if (depsToDelete.length > 0) {
-        const { error: deleteError } = await supabase
+      // Handle dependencies update
+      if (formData.dependencies) {
+        // Delete existing dependencies
+        await supabase
           .from('task_dependencies')
           .delete()
-          .in('id', depsToDelete.map(dep => dep.id));
+          .eq('task_id', task.id);
           
-        if (deleteError) throw deleteError;
-      }
-      
-      // 5. Add new dependencies
-      if (depsToAdd.length > 0) {
-        const newDepRecords = depsToAdd.map((dep: any) => {
-          if (dep.dependencyType === 'blocks') {
-            // Task blocks another
-            return {
-              task_id: dep.taskId,
-              dependency_task_id: task.id,
-              dependency_type: 'blocked_by' // inverse relationship
-            };
-          } else {
-            // Task is blocked by another
-            return {
-              task_id: task.id,
-              dependency_task_id: dep.taskId,
-              dependency_type: dep.dependencyType
-            };
+        // Add new dependencies if there are any
+        if (formData.dependencies.length > 0) {
+          const dependenciesData = formData.dependencies.map(dep => ({
+            task_id: task.id,
+            dependency_task_id: dep.taskId,
+            dependency_type: dep.dependencyType,
+            created_at: new Date().toISOString()
+          }));
+          
+          const { error: depsError } = await supabase
+            .from('task_dependencies')
+            .insert(dependenciesData);
+            
+          if (depsError) {
+            console.error("Error updating task dependencies:", depsError);
+            toast.warning("تم تحديث المهمة ولكن هناك مشكلة في تحديث الاعتماديات");
           }
-        });
-        
-        const { error: addError } = await supabase
-          .from('task_dependencies')
-          .insert(newDepRecords);
-          
-        if (addError) throw addError;
+        }
       }
       
-      // Success handling
-      toast.success("تم تحديث المهمة بنجاح");
-      onTaskUpdated?.();
-      onOpenChange(false);
+      // Upload templates if provided
+      if (formData.templates && formData.templates.length > 0) {
+        for (const file of formData.templates) {
+          const fileName = `${Date.now()}-${file.name}`;
+          const filePath = `task-templates/${task.id}/${fileName}`;
+          
+          // Upload file to storage
+          const { error: uploadError } = await supabase.storage
+            .from('templates')
+            .upload(filePath, file);
+          
+          if (uploadError) {
+            console.error("Error uploading template:", uploadError);
+            continue;
+          }
+          
+          // Get public URL
+          const { data: publicURL } = supabase.storage
+            .from('templates')
+            .getPublicUrl(filePath);
+          
+          // Create template record
+          const { error: templateError } = await supabase
+            .from('task_templates')
+            .insert({
+              task_id: task.id,
+              file_url: publicURL.publicUrl,
+              file_name: fileName,
+              file_type: file.type,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            });
+          
+          if (templateError) {
+            console.error("Error creating template record:", templateError);
+          }
+        }
+      }
       
+      toast.success("تم تحديث المهمة بنجاح");
+      onTaskUpdated();
+      onOpenChange(false);
     } catch (error) {
-      // Error handling
       console.error("Error updating task:", error);
       toast.error("حدث خطأ أثناء تحديث المهمة");
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
+  if (!task) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[650px]">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>تعديل المهمة</DialogTitle>
         </DialogHeader>
-        
-        {task && (
+        <div className="p-4">
           <TaskForm
-            onSubmit={handleSubmit}
+            onSubmit={handleUpdateTask}
             isSubmitting={isSubmitting}
-            onCancel={() => onOpenChange(false)}
-            projectId={task.project_id as string}
             projectStages={projectStages}
             projectMembers={projectMembers}
-            isGeneral={task.is_general}
-            initialTask={{
-              ...task,
+            isGeneral={!!task.is_general}
+            projectId={task.project_id}
+            initialValues={{
+              title: task.title,
+              description: task.description || "",
+              dueDate: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : "",
+              priority: task.priority || "medium",
+              stageId: task.stage_id || "",
+              assignedTo: task.assigned_to || null,
+              category: task.category || "إدارية",
               dependencies: taskDependencies
             }}
+            isEditMode={true}
           />
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

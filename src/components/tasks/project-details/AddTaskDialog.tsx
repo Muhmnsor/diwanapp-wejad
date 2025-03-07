@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
@@ -7,9 +8,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 import { TaskDependency } from "./components/TaskDependenciesField";
-import { DependencyType } from "./hooks/useTaskDependencies";
 
-export const AddTaskDialog = ({ 
+export function AddTaskDialog({ 
   open, 
   onOpenChange, 
   projectId, 
@@ -25,53 +25,77 @@ export const AddTaskDialog = ({
   onTaskAdded: () => void;
   projectMembers: ProjectMember[];
   isGeneral?: boolean;
-}) => {
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: {
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: string;
+    stageId: string;
+    assignedTo: string | null;
+    templates?: File[] | null;
+    category?: string;
+    dependencies?: TaskDependency[];
+  }) => {
     setIsSubmitting(true);
     
     try {
-      const { dependencies, ...taskData } = formData;
+      console.log("Submitting task data:", formData);
       
-      const { data: newTask, error } = await supabase
+      // إنشاء المهمة أولاً
+      const taskData: any = {
+        title: formData.title,
+        description: formData.description,
+        assigned_to: formData.assignedTo,
+        due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        stage_id: !isGeneral ? formData.stageId : null,
+        priority: formData.priority,
+        status: 'pending',
+        category: formData.category || null,
+        is_general: isGeneral || false
+      };
+      
+      if (!isGeneral) {
+        taskData['project_id'] = projectId;
+      }
+      
+      const { data: newTask, error: taskError } = await supabase
         .from('tasks')
-        .insert({
-          title: taskData.title,
-          description: taskData.description,
-          assigned_to: taskData.assignedTo,
-          due_date: taskData.dueDate ? new Date(taskData.dueDate).toISOString() : null,
-          stage_id: !isGeneral ? taskData.stageId : null,
-          priority: taskData.priority,
-          status: 'pending',
-          category: taskData.category || null,
-          is_general: isGeneral || false,
-          created_by: user?.id,
-          project_id: projectId || null,
-          workspace_id: isGeneral ? null : workspaceId,
-        })
+        .insert(taskData)
         .select()
         .single();
-        
-      if (error) throw error;
-      
-      if (dependencies && dependencies.length > 0) {
-        const dependencyRecords = dependencies.map((dep: { taskId: string; dependencyType: DependencyType }) => ({
+
+      if (taskError) {
+        console.error("Error creating task:", taskError);
+        toast.error("فشل في إنشاء المهمة");
+        return;
+      }
+
+      console.log("Task created successfully:", newTask);
+
+      // Create task dependencies if provided
+      if (formData.dependencies && formData.dependencies.length > 0) {
+        const dependenciesData = formData.dependencies.map(dep => ({
           task_id: newTask.id,
           dependency_task_id: dep.taskId,
-          dependency_type: dep.dependencyType
+          dependency_type: dep.dependencyType,
+          created_at: new Date().toISOString()
         }));
         
-        const { error: depError } = await supabase
+        const { error: depsError } = await supabase
           .from('task_dependencies')
-          .insert(dependencyRecords);
+          .insert(dependenciesData);
           
-        if (depError) {
-          console.error("Error adding dependencies:", depError);
+        if (depsError) {
+          console.error("Error creating task dependencies:", depsError);
+          toast.warning("تم إنشاء المهمة ولكن هناك مشكلة في إنشاء الاعتماديات");
         }
       }
 
+      // Get project details for the notification (if applicable)
       let projectTitle = '';
       if (projectId && !isGeneral) {
         const { data: projectData } = await supabase
@@ -85,11 +109,14 @@ export const AddTaskDialog = ({
         }
       }
 
+      // Send notification if task is assigned to someone
       if (formData.assignedTo) {
         try {
+          // Get current user info
           const { data: { user } } = await supabase.auth.getUser();
           
           if (user) {
+            // Get user's display name or email
             const { data: creatorProfile } = await supabase
               .from('profiles')
               .select('display_name, email')
@@ -98,6 +125,7 @@ export const AddTaskDialog = ({
               
             const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
             
+            // Send the notification
             await sendTaskAssignmentNotification({
               taskId: newTask.id,
               taskTitle: formData.title,
@@ -115,6 +143,7 @@ export const AddTaskDialog = ({
         }
       }
 
+      // معالجة النماذج إذا وجدت
       let templateErrors = false;
       if (formData.templates && formData.templates.length > 0 && newTask) {
         for (const file of formData.templates) {
@@ -127,6 +156,7 @@ export const AddTaskDialog = ({
               console.log("Template uploaded successfully:", uploadResult.url);
               
               try {
+                // حفظ النموذج في جدول نماذج المهمة
                 await saveTaskTemplate(
                   newTask.id,
                   uploadResult.url,

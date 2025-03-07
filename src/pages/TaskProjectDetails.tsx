@@ -7,29 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskProjectInfo } from "@/components/tasks/project-details/TaskProjectInfo";
 import { TasksList } from "@/components/tasks/project-details/TasksList";
-import { useProjectTasks } from "@/components/tasks/project-details/hooks/useProjectTasks";
-import { useProjectStatusUpdater } from "@/components/tasks/projects/hooks/useProjectStatusUpdater";
 
 const TaskProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [project, setProject] = useState<any>(null);
   const [error, setError] = useState<boolean>(false);
-  
-  // Use the project tasks hook to get tasks and statistics
-  const { 
-    completedTasksCount, 
-    totalTasksCount, 
-    completionPercentage
-  } = useProjectTasks(projectId);
-  
-  // Auto-update project status when all tasks complete
-  useProjectStatusUpdater({
-    projectId: projectId || '',
-    currentStatus: project?.status || '',
-    completionPercentage,
-    totalTasksCount
-  });
   
   const fetchProjectDetails = async () => {
     if (!projectId) return;
@@ -91,13 +74,7 @@ const TaskProjectDetails = () => {
               </div>
             ) : (
               <div className="space-y-8">
-                <TaskProjectInfo 
-                  project={project} 
-                  onProjectUpdated={handleProjectUpdated}
-                  completedTasksCount={completedTasksCount}
-                  totalTasksCount={totalTasksCount}
-                  completionPercentage={completionPercentage}
-                />
+                <TaskProjectInfo project={project} onProjectUpdated={handleProjectUpdated} />
                 <TasksList projectId={projectId} />
               </div>
             )}

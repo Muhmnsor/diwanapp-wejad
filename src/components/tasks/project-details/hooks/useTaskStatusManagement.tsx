@@ -3,11 +3,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/types/workspace";
 import { toast } from "sonner";
-import { useTaskDependencies } from "./useTaskDependencies";
-import { useInAppNotifications } from "@/contexts/notifications/useInAppNotifications";
-
-// Define the NotificationType type
-export type NotificationType = 'task_assignment' | 'task_update' | 'task_mention' | 'task_comment' | 'task_dependency' | 'workspace_invitation' | 'project_invitation';
 
 export const useTaskStatusManagement = (
   projectId: string | undefined,
@@ -17,12 +12,10 @@ export const useTaskStatusManagement = (
   setTasksByStage: (callback: (prev: Record<string, Task[]>) => Record<string, Task[]>) => void
 ) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const { canChangeStatus } = useTaskDependencies();
-  const { createNotification } = useInAppNotifications();
 
   // Helper function to ensure status is a valid Task status
   const ensureValidStatus = (status: string): Task['status'] => {
-    const validStatuses: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled', 'delayed'];
+    const validStatuses: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled'];
     if (!validStatuses.includes(status as Task['status'])) {
       return 'pending';
     }
@@ -37,23 +30,11 @@ export const useTaskStatusManagement = (
       // Ensure newStatus is a valid status
       const validStatus = ensureValidStatus(newStatus);
       
-      // Check if the status change is allowed based on dependencies
-      if (validStatus === 'completed') {
-        const { allowed, message } = await canChangeStatus(validStatus);
-        if (!allowed) {
-          toast.error(message || "لا يمكن إكمال هذه المهمة بسبب اعتماديات غير مكتملة");
-          setIsUpdating(false);
-          return;
-        }
-      }
-      
       // Update task status in database
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('tasks')
         .update({ status: validStatus })
-        .eq('id', taskId)
-        .select()
-        .single();
+        .eq('id', taskId);
         
       if (error) throw error;
       
@@ -86,40 +67,6 @@ export const useTaskStatusManagement = (
         
         return newTasksByStage;
       });
-      
-      // Send notifications to dependent tasks' owners
-      if (validStatus === 'completed') {
-        // Find tasks that depend on the completed task
-        const { data: dependentTasks } = await supabase
-          .from('task_dependencies')
-          .select(`
-            id,
-            task_id,
-            dependency_type,
-            tasks:task_id(title, assigned_to)
-          `)
-          .eq('dependency_task_id', taskId)
-          .in('dependency_type', ['blocked_by', 'finish-to-start']);
-          
-        if (dependentTasks && dependentTasks.length > 0) {
-          // Get the completed task title
-          const completedTask = data || tasks.find(t => t.id === taskId);
-          
-          // Send notifications to each dependent task owner
-          for (const depTask of dependentTasks) {
-            if (depTask.tasks && depTask.tasks.assigned_to) {
-              await createNotification({
-                user_id: depTask.tasks.assigned_to,
-                title: "تم اكتمال مهمة معتمدة",
-                message: `المهمة "${completedTask.title}" التي تعتمد عليها مهمتك "${depTask.tasks.title}" قد اكتملت.`,
-                notification_type: "task_dependency" as NotificationType,
-                related_entity_id: depTask.task_id,
-                related_entity_type: "task"
-              });
-            }
-          }
-        }
-      }
       
       toast.success("تم تحديث حالة المهمة بنجاح");
     } catch (error) {
