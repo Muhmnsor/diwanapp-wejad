@@ -25,7 +25,7 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         // Check if user is the creator of the workspace
         const isCreator = workspace.created_by === user.id;
         
-        // Check if user is admin using the is_admin database function
+        // Check if user is a system admin
         const { data: isAdminData, error: adminError } = await supabase
           .rpc('is_admin', { user_id: user.id });
           
@@ -36,7 +36,7 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         
         const isAdmin = !!isAdminData;
         
-        // Check if user is workspace admin
+        // Check if user is a workspace admin
         const { data: memberData, error: memberError } = await supabase
           .from('workspace_members')
           .select('role')
@@ -51,7 +51,9 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         
         const isWorkspaceAdmin = memberData?.role === 'admin';
         
+        // Determine if user has edit permission based on any of the three criteria
         const hasEditPermission = isCreator || isAdmin || isWorkspaceAdmin;
+        
         console.log("Permission check result:", { 
           isCreator, 
           isAdmin, 
