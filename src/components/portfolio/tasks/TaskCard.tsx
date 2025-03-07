@@ -17,8 +17,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
       <div className="space-y-3">
         <TaskHeader 
           title={task.title}
-          status={task.status || 'pending'}
-          priority={task.priority || 'medium'}
+          status={task.status}
+          priority={task.priority}
         />
 
         <TaskDescription description={task.description} />

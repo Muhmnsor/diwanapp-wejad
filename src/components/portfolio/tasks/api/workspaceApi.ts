@@ -84,7 +84,8 @@ export const fetchWorkspaceTasks = async (workspaceId: string): Promise<Partial<
         updated_at,
         created_at,
         asana_gid,
-        workspace_id
+        workspace_id,
+        project_id
       `)
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false });
@@ -101,7 +102,9 @@ export const fetchWorkspaceTasks = async (workspaceId: string): Promise<Partial<
       ...task,
       status: (task.status || 'pending') as Task['status'],
       priority: (task.priority || 'medium') as Task['priority'],
-      workspace_id: workspaceId
+      workspace_id: workspaceId,
+      created_at: task.created_at || new Date().toISOString(),
+      updated_at: task.updated_at || new Date().toISOString()
     }));
     
     return formattedTasks;

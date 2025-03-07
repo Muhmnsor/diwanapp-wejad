@@ -31,7 +31,7 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
       workspace_name: workspaceName,
       is_subtask: false,
       
-      // Add missing required fields from Task interface
+      // Required fields from Task interface
       workspace_id: task.workspace_id || '',
       created_at: task.created_at || new Date().toISOString(),
       updated_at: task.updated_at || new Date().toISOString(),
@@ -61,7 +61,7 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
       is_subtask: false,
       is_general: task.is_general || false,
       
-      // Add missing required fields from Task interface
+      // Required fields from Task interface
       workspace_id: task.workspace_id || '',
       created_at: task.created_at || new Date().toISOString(),
       updated_at: task.updated_at || new Date().toISOString(),
@@ -120,7 +120,7 @@ export const transformSubtasks = (
       is_subtask: true,
       parent_task_id: subtask.task_id,
       
-      // Add missing required fields from Task interface
+      // Required fields from Task interface
       workspace_id: parentTask.workspace_id || '',
       created_at: subtask.created_at || new Date().toISOString(),
       updated_at: subtask.updated_at || new Date().toISOString(),

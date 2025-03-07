@@ -23,15 +23,21 @@ export const useWorkspaceTasks = (workspaceId: string) => {
         console.log('✅ Final tasks:', tasks);
         
         // Ensure all required fields are present for Task interface
-        const formattedTasks = tasks?.map(task => ({
-          ...task,
+        const formattedTasks: Task[] = tasks.map(task => ({
+          id: task.id,
+          title: task.title,
+          description: task.description || null,
           status: (task.status || 'pending') as Task['status'],
           priority: (task.priority || 'medium') as Task['priority'],
           workspace_id: task.workspace_id || workspace.id,
+          due_date: task.due_date || null,
           created_at: task.created_at || new Date().toISOString(),
           updated_at: task.updated_at || new Date().toISOString(),
-          assigned_to: task.assigned_to || null
-        })) || [];
+          assigned_to: task.assigned_to || null,
+          project_id: task.project_id || undefined,
+          project_name: task.project_name || undefined,
+          workspace_name: task.workspace_name || undefined
+        }));
         
         return formattedTasks;
       } catch (error) {
