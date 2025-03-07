@@ -23,7 +23,7 @@ export const useTasksList = (projectId: string | undefined) => {
     tasks,
     isLoading,
     tasksByStage,
-    setTasks: originalSetTasks, // Rename to avoid direct usage
+    setTasks: originalSetTasks, 
     fetchTasks
   } = useTasksFetching(projectId);
 

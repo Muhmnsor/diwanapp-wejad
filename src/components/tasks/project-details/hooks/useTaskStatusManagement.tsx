@@ -28,7 +28,7 @@ export const useTaskStatusManagement = (
       
       // Update local state
       const updatedTasks = tasks.map(task => 
-        task.id === taskId ? { ...task, status: newStatus } : task
+        task.id === taskId ? { ...task, status: newStatus as Task['status'] } : task
       );
       
       setTasks(updatedTasks);

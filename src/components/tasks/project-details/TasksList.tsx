@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
 import { AddTaskDialog } from "./AddTaskDialog";
@@ -15,9 +14,6 @@ import { EditTaskDialog } from "./EditTaskDialog";
 interface TasksListProps {
   projectId?: string | undefined;
 }
-
-// Re-export Task interface for backward compatibility
-export type { Task };
 
 export const TasksList = ({ projectId }: TasksListProps) => {
   const {

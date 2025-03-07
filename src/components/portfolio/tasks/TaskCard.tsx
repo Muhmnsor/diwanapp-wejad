@@ -3,18 +3,10 @@ import { Card } from '@/components/ui/card';
 import { TaskHeader } from './components/TaskHeader';
 import { TaskDescription } from './components/TaskDescription';
 import { TaskMetadata } from './components/TaskMetadata';
+import { Task } from '@/types/workspace';
 
 interface TaskCardProps {
-  task: {
-    id: string;
-    title: string;
-    description: string | null;
-    due_date: string | null;
-    assigned_to: string | null;
-    status: string;
-    priority: string;
-    updated_at: string;
-  };
+  task: Task;
 }
 
 export const TaskCard = ({ task }: TaskCardProps) => {
@@ -25,8 +17,8 @@ export const TaskCard = ({ task }: TaskCardProps) => {
       <div className="space-y-3">
         <TaskHeader 
           title={task.title}
-          status={task.status}
-          priority={task.priority}
+          status={task.status || 'pending'}
+          priority={task.priority || 'medium'}
         />
 
         <TaskDescription description={task.description} />
