@@ -34,6 +34,7 @@ export const useWorkspacePermissions = (workspace: Workspace, user: User | null)
         }
         
         // Access the name property safely with optional chaining
+        // Handle the case where role could be an object with a name property
         const roleName = roleData?.role?.name;
         const isAdmin = roleName === 'admin' || roleName === 'app_admin';
         
