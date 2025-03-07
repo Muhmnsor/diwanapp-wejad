@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Task } from "@/types/workspace";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 interface TaskData {
   workspaceId: string;
@@ -46,16 +47,12 @@ export const submitTask = async (taskData: TaskData) => {
     return;
   }
 
-  // Ensure we're using a valid Task status and priority
-  const status: Task['status'] = 'pending';
-  const priority: Task['priority'] = ensureValidPriority(taskData.priority);
-
   console.log('Creating new portfolio task:', {
     workspace_id: workspace.id,
     title: taskData.title,
     description: taskData.description,
     due_date: taskData.dueDate,
-    priority,
+    priority: taskData.priority,
     asana_gid: asanaResponse.gid,
     assigned_to: taskData.assignedTo
   });
@@ -69,8 +66,8 @@ export const submitTask = async (taskData: TaskData) => {
         title: taskData.title,
         description: taskData.description,
         due_date: taskData.dueDate,
-        priority,
-        status,
+        priority: taskData.priority,
+        status: 'pending',
         asana_gid: asanaResponse.gid,
         assigned_to: taskData.assignedTo
       }
@@ -86,42 +83,37 @@ export const submitTask = async (taskData: TaskData) => {
 
   toast.success('تم إنشاء المهمة بنجاح');
 
-  // Helper function for task notification
-  const sendNotification = async () => {
-    // Get current user info
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      // Get user's display name or email
-      const { data: creatorProfile } = await supabase
-        .from('profiles')
-        .select('display_name, email')
-        .eq('id', user.id)
-        .single();
-        
-      const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
-      
-      // Import the hook and use it directly
-      const { useTaskAssignmentNotifications } = await import('@/hooks/useTaskAssignmentNotifications');
-      const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
-      
-      // Send the notification
-      await sendTaskAssignmentNotification({
-        taskId: newTask.id,
-        taskTitle: taskData.title,
-        assignedUserId: taskData.assignedTo,
-        assignedByUserId: user.id,
-        assignedByUserName: creatorName
-      });
-      
-      console.log('Task assignment notification sent to:', taskData.assignedTo);
-    }
-  };
-
   // Send notification to assigned user
   if (taskData.assignedTo) {
     try {
-      await sendNotification();
+      // Get current user info
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Get user's display name or email
+        const { data: creatorProfile } = await supabase
+          .from('profiles')
+          .select('display_name, email')
+          .eq('id', user.id)
+          .single();
+          
+        const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
+        
+        // Import the hook and use it directly
+        const { useTaskAssignmentNotifications } = await import('@/hooks/useTaskAssignmentNotifications');
+        const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
+        
+        // Send the notification
+        await sendTaskAssignmentNotification({
+          taskId: newTask.id,
+          taskTitle: taskData.title,
+          assignedUserId: taskData.assignedTo,
+          assignedByUserId: user.id,
+          assignedByUserName: creatorName
+        });
+        
+        console.log('Task assignment notification sent to:', taskData.assignedTo);
+      }
     } catch (notifyError) {
       console.error('Error sending task assignment notification:', notifyError);
       // Don't throw error here to avoid failing the task creation process
@@ -129,13 +121,4 @@ export const submitTask = async (taskData: TaskData) => {
   }
 
   return asanaResponse;
-};
-
-// Helper function to ensure priority is one of the valid values
-const ensureValidPriority = (priority: string): Task['priority'] => {
-  const validPriorities: Task['priority'][] = ['low', 'medium', 'high'];
-  if (!priority || !validPriorities.includes(priority as Task['priority'])) {
-    return 'medium';
-  }
-  return priority as Task['priority'];
 };

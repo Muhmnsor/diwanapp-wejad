@@ -19,7 +19,7 @@ interface TasksContentProps {
   projectId?: string | undefined;
   isGeneral?: boolean;
   onEditTask?: (task: Task) => void;
-  onDeleteTask?: (taskId: string) => Promise<void>;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export const TasksContent = ({

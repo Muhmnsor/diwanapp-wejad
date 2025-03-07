@@ -8,25 +8,13 @@ import {
   UserPlus,
   AlertTriangle,
   ClipboardList,
-  PauseCircle,
-  MoreVertical,
-  Pencil,
-  Trash2
+  PauseCircle
 } from "lucide-react";
 import { Workspace } from "@/types/workspace";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { WorkspaceMembersDialog } from "./WorkspaceMembersDialog";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { EditWorkspaceDialog } from "./EditWorkspaceDialog";
-import { DeleteWorkspaceDialog } from "./DeleteWorkspaceDialog";
-import { useAuthStore } from "@/store/refactored-auth";
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -35,8 +23,6 @@ interface WorkspaceCardProps {
 export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const navigate = useNavigate();
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [projectCounts, setProjectCounts] = useState({
     completed: 0,
     pending: 0,
@@ -45,41 +31,12 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     total: 0
   });
   const [membersCount, setMembersCount] = useState(workspace.members_count || 0);
-  const [canEdit, setCanEdit] = useState(false);
-  const { user } = useAuthStore();
 
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!user) {
-        setCanEdit(false);
-        return;
-      }
-
-      try {
-        const isCreator = workspace.created_by === user.id;
-        const isAdmin = user.isAdmin;
-        const { data: memberData } = await supabase
-          .from('workspace_members')
-          .select('role')
-          .eq('workspace_id', workspace.id)
-          .eq('user_id', user.id)
-          .single();
-        
-        const isWorkspaceAdmin = memberData?.role === 'admin';
-        
-        setCanEdit(isCreator || isAdmin || isWorkspaceAdmin);
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-        setCanEdit(false);
-      }
-    };
-    
-    checkPermissions();
-  }, [workspace.id, workspace.created_by, user]);
-
+  // Fetch project counts
   useEffect(() => {
     const fetchProjectCounts = async () => {
       try {
+        // Fetch all projects for this workspace
         const { data: projects, error } = await supabase
           .from('project_tasks')
           .select('status')
@@ -92,6 +49,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
 
         const total = projects?.length || 0;
         
+        // Consider a project completed if status is 'completed'
         const completed = projects?.filter(p => p.status === 'completed').length || 0;
         
         const pending = projects?.filter(p => 
@@ -100,6 +58,15 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         
         const stopped = projects?.filter(p => p.status === 'stopped' || p.status === 'on_hold').length || 0;
         const stalled = total - completed - pending - stopped;
+
+        console.log('Project counts calculation:', {
+          total,
+          completed,
+          pending,
+          stopped,
+          stalled,
+          projects
+        });
 
         setProjectCounts({
           completed,
@@ -116,6 +83,7 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     fetchProjectCounts();
   }, [workspace.id]);
 
+  // Fetch members count
   useEffect(() => {
     const fetchMembersCount = async () => {
       try {
@@ -136,29 +104,19 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
     };
 
     fetchMembersCount();
-  }, [workspace.id, isMembersDialogOpen]);
+  }, [workspace.id, isMembersDialogOpen]); // Re-fetch when dialog closes
 
   const handleClick = () => {
     navigate(`/tasks/workspace/${workspace.id}`);
   };
 
   const handleManageMembers = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent navigation to the details page
     setIsMembersDialogOpen(true);
   };
 
   const onMembersDialogClose = (open: boolean) => {
     setIsMembersDialogOpen(open);
-  };
-
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsDeleteDialogOpen(true);
   };
 
   return (
@@ -168,31 +126,8 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         onClick={handleClick}
       >
         <CardContent className="p-6">
-          <div className="mb-3 flex justify-between items-start">
+          <div className="mb-3">
             <h3 className="font-bold text-lg">{workspace.name}</h3>
-            
-            {canEdit && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleEdit}>
-                    <Pencil className="h-4 w-4 ml-2" />
-                    <span>تعديل</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="h-4 w-4 ml-2" />
-                    <span>حذف</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
           
           <p className="text-gray-500 mb-4 text-sm line-clamp-2">
@@ -242,19 +177,6 @@ export const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         open={isMembersDialogOpen}
         onOpenChange={onMembersDialogClose}
         workspaceId={workspace.id}
-      />
-
-      <EditWorkspaceDialog 
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        workspace={workspace}
-      />
-
-      <DeleteWorkspaceDialog 
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        workspaceId={workspace.id}
-        workspaceName={workspace.name}
       />
     </>
   );

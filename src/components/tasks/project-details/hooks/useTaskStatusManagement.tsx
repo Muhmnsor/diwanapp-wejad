@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "@/types/workspace";
+import { Task } from "../types/task";
 import { toast } from "sonner";
 
 export const useTaskStatusManagement = (
@@ -13,34 +13,22 @@ export const useTaskStatusManagement = (
 ) => {
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Helper function to ensure status is a valid Task status
-  const ensureValidStatus = (status: string): Task['status'] => {
-    const validStatuses: Task['status'][] = ['pending', 'in_progress', 'completed', 'cancelled'];
-    if (!validStatuses.includes(status as Task['status'])) {
-      return 'pending';
-    }
-    return status as Task['status'];
-  };
-
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     if (!taskId) return;
     
     setIsUpdating(true);
     try {
-      // Ensure newStatus is a valid status
-      const validStatus = ensureValidStatus(newStatus);
-      
       // Update task status in database
       const { error } = await supabase
         .from('tasks')
-        .update({ status: validStatus })
+        .update({ status: newStatus })
         .eq('id', taskId);
         
       if (error) throw error;
       
       // Update local state
       const updatedTasks = tasks.map(task => 
-        task.id === taskId ? { ...task, status: validStatus } : task
+        task.id === taskId ? { ...task, status: newStatus } : task
       );
       
       setTasks(updatedTasks);
