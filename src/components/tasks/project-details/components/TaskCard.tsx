@@ -1,16 +1,18 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip } from "lucide-react";
+import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip, Link2 } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDialog";
+import { TaskDependencyBadge } from "./dependencies/TaskDependencyBadge";
+import { useTaskDependencies } from "../hooks/useTaskDependencies";
+import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 
 interface TaskCardProps {
   task: Task;
@@ -33,7 +35,13 @@ export const TaskCard = ({
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
+  const [showDependencies, setShowDependencies] = useState(false);
   const { user } = useAuthStore();
+  
+  const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
+  
+  const completedDependenciesCount = dependencies.filter(dep => dep.status === 'completed').length;
+  const completedDependentsCount = dependentTasks.filter(dep => dep.status === 'completed').length;
   
   const canChangeStatus = () => {
     return (
@@ -51,7 +59,6 @@ export const TaskCard = ({
     
     setIsUpdating(true);
     try {
-      // إذا كانت المهمة قيد التغيير إلى "مكتملة"، تحقق من المهام الفرعية أولاً
       if (newStatus === 'completed') {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
         
@@ -118,6 +125,31 @@ export const TaskCard = ({
               {task.stage_name}
             </Badge>
           )}
+          
+          <div className="flex gap-2 mt-1">
+            {(dependencies.length > 0 || dependentTasks.length > 0) && (
+              <div 
+                className="cursor-pointer" 
+                onClick={() => setShowDependencies(true)}
+              >
+                {dependencies.length > 0 && (
+                  <TaskDependencyBadge 
+                    count={dependencies.length} 
+                    completedCount={completedDependenciesCount} 
+                    type="dependencies"
+                  />
+                )}
+                
+                {dependentTasks.length > 0 && (
+                  <TaskDependencyBadge 
+                    count={dependentTasks.length} 
+                    completedCount={completedDependentsCount} 
+                    type="dependents" 
+                  />
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="mt-3 flex justify-end gap-2">
             <Button 
@@ -138,6 +170,16 @@ export const TaskCard = ({
             >
               <MessageCircle className="h-3.5 w-3.5" />
               مناقشة
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowDependencies(true)}
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              الاعتماديات
             </Button>
 
             {canChangeStatus() && (
@@ -178,18 +220,23 @@ export const TaskCard = ({
         </div>
       </CardContent>
 
-      {/* Task Discussion Dialog */}
       <TaskDiscussionDialog 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
       />
       
-      {/* Task Attachment Dialog */}
       <TaskAttachmentDialog
         task={task}
         open={showAttachments}
         onOpenChange={setShowAttachments}
+      />
+      
+      <TaskDependenciesDialog
+        open={showDependencies}
+        onOpenChange={setShowDependencies}
+        task={task}
+        projectId={projectId}
       />
     </Card>
   );

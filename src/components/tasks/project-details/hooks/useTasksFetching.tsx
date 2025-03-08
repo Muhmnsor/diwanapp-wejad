@@ -86,11 +86,43 @@ export const useTasksFetching = (projectId: string | undefined) => {
         
         return task;
       }));
+
+      // Fetch task dependencies for each task
+      const tasksWithDependencies = await Promise.all(tasksWithUserData.map(async (task) => {
+        try {
+          // Fetch dependencies (tasks that this task depends on)
+          const { data: dependenciesData, error: depsError } = await supabase
+            .from('task_dependencies')
+            .select('dependency_task_id')
+            .eq('task_id', task.id);
+          
+          if (depsError) throw depsError;
+          
+          // Fetch dependent tasks (tasks that depend on this task)
+          const { data: dependentData, error: depError } = await supabase
+            .from('task_dependencies')
+            .select('task_id')
+            .eq('dependency_task_id', task.id);
+          
+          if (depError) throw depError;
+          
+          // We don't need to fetch the full task objects here as they're already in our tasksWithUserData array
+          // We'll just reference them by ID when needed
+          return {
+            ...task,
+            dependency_ids: dependenciesData?.map(d => d.dependency_task_id) || [],
+            dependent_task_ids: dependentData?.map(d => d.task_id) || []
+          };
+        } catch (error) {
+          console.error(`Error fetching dependencies for task ${task.id}:`, error);
+          return task;
+        }
+      }));
       
       // Process tasks by stage
       const tasksByStageMap: Record<string, Task[]> = {};
       
-      tasksWithUserData.forEach(task => {
+      tasksWithDependencies.forEach(task => {
         if (task.stage_id) {
           if (!tasksByStageMap[task.stage_id]) {
             tasksByStageMap[task.stage_id] = [];
@@ -99,7 +131,7 @@ export const useTasksFetching = (projectId: string | undefined) => {
         }
       });
       
-      setTasks(tasksWithUserData);
+      setTasks(tasksWithDependencies);
       setTasksByStage(tasksByStageMap);
       
     } catch (error) {

@@ -1,5 +1,5 @@
 
-import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit } from "lucide-react";
+import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
@@ -11,6 +11,8 @@ import { useAuthStore } from "@/store/authStore";
 import { SubtasksList } from "./subtasks/SubtasksList";
 import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
+import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
+import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -54,10 +56,18 @@ export const TaskItem = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showDiscussion, setShowDiscussion] = useState(false);
+  const [showDependencies, setShowDependencies] = useState(false);
   const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuthStore();
+  
+  // Add dependencies hook
+  const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
+  
+  // Calculate dependency counts
+  const hasDependencies = dependencies.length > 0;
+  const hasDependents = dependentTasks.length > 0;
   
   // جلب المرفقات الخاصة بالمكلف بالمهمة
   useEffect(() => {
@@ -165,6 +175,20 @@ export const TaskItem = ({
           setIsUpdating(false);
           return;
         }
+        
+        // Check task dependencies
+        const dependencyCheck = await checkDependenciesCompleted(task.id);
+        if (!dependencyCheck.isValid) {
+          toast.error(dependencyCheck.message);
+          if (dependencyCheck.pendingDependencies.length > 0) {
+            const pendingTasks = dependencyCheck.pendingDependencies
+              .map(task => task.title)
+              .join(", ");
+            toast.error(`المهام المعلقة: ${pendingTasks}`);
+          }
+          setIsUpdating(false);
+          return;
+        }
       }
       
       await onStatusChange(task.id, newStatus);
@@ -227,6 +251,22 @@ export const TaskItem = ({
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               }
             </Button>
+            
+            {/* Add dependency indicator */}
+            {(hasDependencies || hasDependents) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-0 h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDependencies(true);
+                }}
+                title="عرض اعتماديات المهمة"
+              >
+                <Link2 className={`h-4 w-4 ${hasDependencies && dependencies.some(d => d.status !== 'completed') ? 'text-amber-500' : 'text-blue-500'}`} />
+              </Button>
+            )}
           </div>
         </TableCell>
         <TableCell>
@@ -334,6 +374,14 @@ export const TaskItem = ({
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
+      />
+      
+      {/* Task Dependencies Dialog */}
+      <TaskDependenciesDialog
+        open={showDependencies}
+        onOpenChange={setShowDependencies}
+        task={task}
+        projectId={projectId}
       />
       
       {/* مربع حوار تأكيد الحذف */}

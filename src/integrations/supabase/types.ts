@@ -2867,6 +2867,45 @@ export type Database = {
         }
         Relationships: []
       }
+      task_dependencies: {
+        Row: {
+          created_at: string | null
+          dependency_task_id: string
+          dependency_type: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dependency_task_id: string
+          dependency_type: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dependency_task_id?: string
+          dependency_type?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_dependencies_dependency_task_id_fkey"
+            columns: ["dependency_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_discussion_attachments: {
         Row: {
           comment_id: string | null
@@ -3550,8 +3589,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      delete_project: {
+        Args: {
+          p_project_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      delete_task: {
+        Args: {
+          p_task_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       delete_user_roles: {
         Args: {
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      delete_workspace: {
+        Args: {
+          p_workspace_id: string
           p_user_id: string
         }
         Returns: boolean

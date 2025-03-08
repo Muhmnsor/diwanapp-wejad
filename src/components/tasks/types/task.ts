@@ -21,4 +21,7 @@ export interface Task {
   templates?: Array<{ url: string }> | null;
   category?: string | null;
   stage_id?: string;
+  // Added dependency fields
+  dependencies?: Task[];
+  dependent_tasks?: Task[];
 }

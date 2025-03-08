@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../types/task";
 import { toast } from "sonner";
+import { useTaskDependencies } from "./useTaskDependencies";
 
 export const useTaskStatusManagement = (
   projectId: string | undefined,
@@ -12,12 +13,34 @@ export const useTaskStatusManagement = (
   setTasksByStage: (callback: (prev: Record<string, Task[]>) => Record<string, Task[]>) => void
 ) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const { checkDependenciesCompleted } = useTaskDependencies("");
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     if (!taskId) return;
     
     setIsUpdating(true);
     try {
+      // Check dependencies only when moving to "completed" status
+      if (newStatus === 'completed') {
+        // Check if all dependencies are completed before allowing status change
+        const dependencyCheck = await checkDependenciesCompleted(taskId);
+        
+        if (!dependencyCheck.isValid) {
+          toast.error(dependencyCheck.message);
+          
+          if (dependencyCheck.pendingDependencies.length > 0) {
+            const pendingTasks = dependencyCheck.pendingDependencies
+              .map(task => task.title)
+              .join(", ");
+            
+            toast.error(`المهام المعلقة: ${pendingTasks}`);
+          }
+          
+          setIsUpdating(false);
+          return;
+        }
+      }
+
       // Update task status in database
       const { error } = await supabase
         .from('tasks')

@@ -26,4 +26,7 @@ export interface Task {
   // Subtask properties
   is_subtask?: boolean;
   parent_task_id?: string | null;
+  // Dependency properties
+  dependencies?: Task[];
+  dependent_tasks?: Task[];
 }
