@@ -162,12 +162,6 @@ export const TaskItem = ({
     
     setIsUpdating(true);
     try {
-      if (newStatus === 'completed' && task.requires_deliverable && !hasDeliverables) {
-        toast.error("هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال");
-        setIsUpdating(false);
-        return;
-      }
-      
       if (newStatus === 'completed') {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
         

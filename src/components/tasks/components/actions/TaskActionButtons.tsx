@@ -2,8 +2,6 @@
 import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
-import { useState } from "react";
-import { toast } from "sonner";
 
 interface TaskActionButtonsProps {
   currentStatus: string;
@@ -40,7 +38,6 @@ export const TaskActionButtons = ({
     hasTemplates, 
     resetDiscussionFlag 
   } = useTaskButtonStates(taskId);
-  const [isVerifying, setIsVerifying] = useState(false);
 
   console.log("Task button states for task", taskId, {
     hasNewDiscussion,
@@ -52,15 +49,6 @@ export const TaskActionButtons = ({
   const handleDiscussionClick = () => {
     resetDiscussionFlag();
     onShowDiscussion();
-  };
-
-  // تعديل هنا: إضافة التحقق من المستلمات قبل إكمال المهمة
-  const handleStatusChange = (status: string) => {
-    if (status === 'completed' && requiresDeliverable && !hasDeliverables) {
-      toast.error("هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال");
-      return;
-    }
-    onStatusChange(status);
   };
 
   // Determine upload button styling based on required deliverables and current upload status
@@ -157,8 +145,8 @@ export const TaskActionButtons = ({
             variant="outline" 
             size="sm" 
             className="text-xs flex items-center gap-1"
-            onClick={() => handleStatusChange("completed")}
-            disabled={isUpdating || isVerifying}
+            onClick={() => onStatusChange("completed")}
+            disabled={isUpdating}
           >
             <Check className="h-3.5 w-3.5 text-green-500" />
             تمت
@@ -168,7 +156,7 @@ export const TaskActionButtons = ({
             variant="outline" 
             size="sm" 
             className="text-xs flex items-center gap-1"
-            onClick={() => handleStatusChange("pending")}
+            onClick={() => onStatusChange("pending")}
             disabled={isUpdating}
           >
             <Clock className="h-3.5 w-3.5 text-amber-500" />
