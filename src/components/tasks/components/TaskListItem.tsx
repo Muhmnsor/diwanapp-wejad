@@ -69,7 +69,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   };
 
   return (
-    <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
+    <div className={`bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors ${task.is_general ? 'bg-gradient-to-br from-[#f1f5fd] to-[#f5f9ff]' : ''}`}>
       <div className="flex justify-between items-start">
         <TaskHeader 
           task={task} 
