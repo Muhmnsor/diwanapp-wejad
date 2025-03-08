@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit, Link2, FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -90,7 +91,114 @@ export const TaskItem = ({
     
     checkNewDiscussions();
     checkTemplates();
-  }, [task.id, task.assigned_to]);
+    
+    // Set up real-time subscriptions for comments, deliverables, and templates
+    const commentsChannel = supabase
+      .channel('task-comments-' + task.id)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public', 
+          table: 'unified_task_comments',
+          filter: `task_id=eq.${task.id}`
+        },
+        (payload) => {
+          if (!showDiscussion && user?.id) {
+            setHasNewDiscussion(true);
+          }
+        }
+      )
+      .subscribe();
+    
+    const deliverablesChannel = supabase
+      .channel('task-deliverables-' + task.id)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'task_deliverables',
+          filter: `task_id=eq.${task.id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            if (payload.new && payload.new.created_by === task.assigned_to && user?.id !== task.assigned_to) {
+              setHasNewDeliverables(true);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            // If all deliverables deleted by assignee, remove notification
+            if (payload.old && payload.old.created_by === task.assigned_to) {
+              checkDeliverablesExist();
+            }
+          }
+        }
+      )
+      .subscribe();
+      
+    const templatesChannel = supabase
+      .channel('task-templates-' + task.id)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for all events
+          schema: 'public',
+          table: 'task_templates',
+          filter: `task_id=eq.${task.id}`
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setHasTemplates(true);
+          } else if (payload.eventType === 'DELETE') {
+            // Check if any templates still exist
+            checkTemplatesExist();
+          }
+        }
+      )
+      .subscribe();
+      
+    // Clean up subscriptions
+    return () => {
+      supabase.removeChannel(commentsChannel);
+      supabase.removeChannel(deliverablesChannel);
+      supabase.removeChannel(templatesChannel);
+    };
+  }, [task.id, task.assigned_to, showDiscussion, user?.id]);
+
+  const checkDeliverablesExist = async () => {
+    if (!task.id || !task.assigned_to || !user?.id || user.id === task.assigned_to) return;
+    
+    try {
+      const { count, error } = await supabase
+        .from("task_deliverables")
+        .select("*", { count: 'exact', head: true })
+        .eq("task_id", task.id)
+        .eq("created_by", task.assigned_to);
+        
+      if (!error && count === 0) {
+        setHasNewDeliverables(false);
+      }
+    } catch (error) {
+      console.error("Error checking deliverables exist:", error);
+    }
+  };
+  
+  const checkTemplatesExist = async () => {
+    if (!task.id) return;
+    
+    try {
+      const { count, error } = await supabase
+        .from("task_templates")
+        .select("*", { count: 'exact', head: true })
+        .eq("task_id", task.id);
+        
+      if (!error) {
+        setHasTemplates(count > 0);
+      }
+    } catch (error) {
+      console.error("Error checking templates exist:", error);
+    }
+  };
 
   const fetchAssigneeAttachment = async () => {
     try {
