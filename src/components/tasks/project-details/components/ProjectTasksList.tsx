@@ -1,85 +1,139 @@
 
-import { useState, useEffect } from "react";
-import { Task } from "../../types/task";
-import { ProjectStagesTabs } from "./stages/ProjectStagesTabs";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ProjectStages } from "../ProjectStages";
+import { AddTaskDialog } from "../AddTaskDialog";
+import { TasksHeader } from "../components/TasksHeader";
+import { TasksFilter } from "../components/TasksFilter";
+import { TasksContent } from "../components/TasksContent";
+import { getStatusBadge, getPriorityBadge, formatDate } from "../utils/taskFormatters";
+import { useTasksList } from "../hooks/useTasksList";
+import { Task } from "../types/task";
+import { ProjectMember } from "../types/projectMember";
+import { useProjectMembers } from "../hooks/useProjectMembers";
+import { useState } from "react";
+import { EditTaskDialog } from "../EditTaskDialog";
 
 interface ProjectTasksListProps {
-  projectId?: string;
-  tasks: Task[];
-  stages: { id: string; name: string }[];
-  onStatusChange: (taskId: string, newStatus: string) => Promise<void>;
-  onDeleteTask: (taskId: string) => Promise<void>;
-  onEditTask: (task: Task) => void;
+  projectId?: string | undefined;
+  projectMembers?: ProjectMember[];
+  stages?: { id: string; name: string }[];
 }
 
-export const ProjectTasksList = ({
-  projectId = "",
-  tasks,
-  stages,
-  onStatusChange,
-  onDeleteTask,
-  onEditTask
+// Re-export Task interface for backward compatibility
+export type { Task };
+
+export const ProjectTasksList = ({ 
+  projectId,
+  projectMembers: externalProjectMembers,
+  stages: externalStages
 }: ProjectTasksListProps) => {
-  // Handle tasks that have no stage assigned
-  const [unstageTasks, setUnstageTasks] = useState<Task[]>([]);
+  const {
+    tasks,
+    isLoading,
+    activeTab,
+    setActiveTab,
+    isAddDialogOpen,
+    setIsAddDialogOpen,
+    projectStages,
+    handleStagesChange,
+    tasksByStage,
+    handleStatusChange,
+    fetchTasks,
+    isGeneral,
+    deleteTask
+  } = useTasksList(projectId);
+
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Use external project members if provided, otherwise fetch them
+  const { projectMembers: fetchedMembers } = useProjectMembers(
+    externalProjectMembers ? undefined : projectId
+  );
   
-  useEffect(() => {
-    // Filter tasks with no stage assigned
-    const tasksWithoutStage = tasks.filter(task => !task.stage_id);
-    setUnstageTasks(tasksWithoutStage);
-  }, [tasks]);
+  // Use either external members or fetched members
+  const projectMembers = externalProjectMembers || fetchedMembers;
+
+  // Use external stages if provided, otherwise use the ones from useTasksList
+  const stages = externalStages || projectStages;
+
+  const filteredTasks = tasks.filter(task => {
+    if (activeTab === "all") return true;
+    return task.status === activeTab;
+  });
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Render tasks organized by stages */}
-      {stages.length > 0 && (
-        <ProjectStagesTabs
-          projectId={projectId}
-          stages={stages}
-          tasks={tasks}
-          onStatusChange={onStatusChange}
-          onDeleteTask={onDeleteTask}
-          onEditTask={onEditTask}
+    <>
+      {!isGeneral && (
+        <ProjectStages 
+          projectId={projectId} 
+          onStagesChange={handleStagesChange} 
         />
       )}
       
-      {/* Render tasks without stages */}
-      {unstageTasks.length > 0 && (
-        <div className="mt-6">
-          <h3 className="font-medium text-lg mb-4">مهام غير مصنفة</h3>
-          <div className="space-y-4">
-            {unstageTasks.map(task => (
-              <div key={task.id} className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-all">
-                <h3 className="font-medium text-lg">{task.title}</h3>
-                {task.description && (
-                  <p className="text-gray-600 mt-1">{task.description}</p>
-                )}
-                <div className="flex justify-end gap-2 mt-4">
-                  <button 
-                    className="text-blue-600 text-sm"
-                    onClick={() => onEditTask(task)}
-                  >
-                    تعديل
-                  </button>
-                  <button 
-                    className="text-red-600 text-sm"
-                    onClick={() => onDeleteTask(task.id)}
-                  >
-                    حذف
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-0">
+          <TasksHeader onAddTask={() => setIsAddDialogOpen(true)} isGeneral={isGeneral} />
+        </CardHeader>
+        
+        <CardContent className="pt-4">
+          <TasksFilter 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+          />
+          
+          <TasksContent 
+            isLoading={isLoading}
+            activeTab={activeTab}
+            filteredTasks={filteredTasks}
+            projectStages={stages}
+            tasksByStage={tasksByStage}
+            getStatusBadge={getStatusBadge}
+            getPriorityBadge={getPriorityBadge}
+            formatDate={formatDate}
+            onStatusChange={handleStatusChange}
+            projectId={projectId}
+            isGeneral={isGeneral}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+          />
+        </CardContent>
+      </Card>
       
-      {/* Show a message if there are no tasks */}
-      {tasks.length === 0 && (
-        <div className="text-center p-8 border rounded-lg">
-          <p className="text-gray-500">لا توجد مهام في هذا المشروع</p>
-        </div>
+      <AddTaskDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        projectId={projectId || ""}
+        projectStages={stages}
+        onTaskAdded={fetchTasks}
+        projectMembers={projectMembers}
+        isGeneral={isGeneral}
+      />
+
+      {/* Dialog for editing tasks */}
+      {editingTask && (
+        <EditTaskDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          task={editingTask}
+          projectStages={stages}
+          projectMembers={projectMembers}
+          onTaskUpdated={fetchTasks}
+        />
       )}
-    </div>
+    </>
   );
 };
