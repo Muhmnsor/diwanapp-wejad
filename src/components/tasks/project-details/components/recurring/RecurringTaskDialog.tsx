@@ -50,6 +50,18 @@ export const RecurringTaskDialog = ({
     
     setIsSubmitting(true);
     try {
+      console.log("Submitting recurring task:", {
+        title,
+        description,
+        recurrence_type: frequency,
+        interval,
+        day_of_week: dayOfWeek,
+        day_of_month: dayOfMonth,
+        priority,
+        assignedTo,
+        requiresDeliverable
+      });
+      
       // Calculate next occurrence date
       const startDate = dueDate ? new Date(dueDate) : new Date();
       
@@ -82,7 +94,10 @@ export const RecurringTaskDialog = ({
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating recurring task:", error);
+        throw error;
+      }
       
       // رفع النماذج المرفقة إذا وجدت
       if (templates && templates.length > 0 && data) {

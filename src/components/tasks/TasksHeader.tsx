@@ -59,6 +59,7 @@ export const TasksHeader = () => {
           
           // تحويل البيانات إلى تنسيق ProjectMember
           const formattedMembers: ProjectMember[] = profiles.map(profile => ({
+            id: profile.id, // Make sure this is included for the ProjectMember type
             user_id: profile.id,
             user_display_name: profile.display_name,
             user_email: profile.email,

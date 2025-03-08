@@ -2425,6 +2425,7 @@ export type Database = {
           day_of_week: number | null
           description: string | null
           id: string
+          interval: number
           is_active: boolean | null
           last_generated_date: string | null
           next_generation_date: string | null
@@ -2444,6 +2445,7 @@ export type Database = {
           day_of_week?: number | null
           description?: string | null
           id?: string
+          interval?: number
           is_active?: boolean | null
           last_generated_date?: string | null
           next_generation_date?: string | null
@@ -2463,6 +2465,7 @@ export type Database = {
           day_of_week?: number | null
           description?: string | null
           id?: string
+          interval?: number
           is_active?: boolean | null
           last_generated_date?: string | null
           next_generation_date?: string | null
@@ -2474,6 +2477,13 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "recurring_tasks_assign_to_fkey"
+            columns: ["assign_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recurring_tasks_project_id_fkey"
             columns: ["project_id"]

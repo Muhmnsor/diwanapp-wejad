@@ -44,8 +44,11 @@ export const TasksRecurring = () => {
     const fetchRecurringTasks = async () => {
       setIsLoading(true);
       try {
-        const { data: isAdminData } = await supabase.rpc('is_admin');
+        const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin');
+        if (isAdminError) throw isAdminError;
+        
         setIsAdmin(isAdminData || false);
+        console.log("Is admin:", isAdminData);
 
         const { data, error } = await supabase
           .from('recurring_tasks')
@@ -58,9 +61,12 @@ export const TasksRecurring = () => {
           .order('created_at', { ascending: false });
 
         if (error) {
+          console.error("Error fetching recurring tasks:", error);
           throw error;
         }
 
+        console.log("Recurring tasks data:", data);
+        
         const formattedTasks = data.map(task => ({
           ...task,
           project_name: task.project_tasks?.name,
