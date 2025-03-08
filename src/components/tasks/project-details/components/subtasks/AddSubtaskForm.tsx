@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ProjectMember } from "../../hooks/useProjectMembers";
+import { ProjectMember } from "../../types/projectMember";
 import { SubtaskTitleField } from "./fields/SubtaskTitleField";
 import { SubtaskDueDateField } from "./fields/SubtaskDueDateField";
 import { SubtaskAssigneeField } from "./fields/SubtaskAssigneeField";

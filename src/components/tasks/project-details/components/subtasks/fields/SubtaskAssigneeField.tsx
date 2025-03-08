@@ -1,7 +1,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProjectMember } from "../../../hooks/useProjectMembers";
+import { ProjectMember } from "../../../types/projectMember";
 
 interface SubtaskAssigneeFieldProps {
   assignedTo: string;
@@ -21,7 +21,7 @@ export const SubtaskAssigneeField = ({ assignedTo, setAssignedTo, projectMembers
           <SelectItem value="none">غير محدد</SelectItem>
           {projectMembers.map((member) => (
             <SelectItem key={member.user_id} value={member.user_id}>
-              {member.display_name || member.email || 'مستخدم بلا اسم'}
+              {member.user_display_name || member.user_email || 'مستخدم بلا اسم'}
             </SelectItem>
           ))}
         </SelectContent>

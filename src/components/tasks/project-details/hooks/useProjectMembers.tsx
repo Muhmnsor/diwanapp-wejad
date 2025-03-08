@@ -1,12 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-export interface ProjectMember {
-  user_id: string;
-  display_name?: string;
-  email?: string;
-}
+import { ProjectMember } from "../types/projectMember";
 
 export const useProjectMembers = (projectId?: string) => {
   const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
@@ -28,9 +23,11 @@ export const useProjectMembers = (projectId?: string) => {
             .single();
             
           const members: ProjectMember[] = [{
+            id: profileData?.id || user.id,
             user_id: user.id,
-            display_name: profileData?.display_name || profileData?.email || user.email,
-            email: profileData?.email || user.email
+            user_display_name: profileData?.display_name || profileData?.email || user.email,
+            user_email: profileData?.email || user.email,
+            role: "member"
           }];
           
           // Get admin users
@@ -52,9 +49,11 @@ export const useProjectMembers = (projectId?: string) => {
                 .single();
                 
               members.push({
+                id: admin.user_id,
                 user_id: admin.user_id,
-                display_name: adminProfile?.display_name || adminProfile?.email || 'Admin User',
-                email: adminProfile?.email
+                user_display_name: adminProfile?.display_name || adminProfile?.email || 'Admin User',
+                user_email: adminProfile?.email,
+                role: "admin"
               });
             }
           }

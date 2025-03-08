@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
-import { ProjectMember } from "../hooks/useProjectMembers";
+import { ProjectMember } from "../types/projectMember";
 
 export interface TaskAssigneeFieldProps {
   assignedTo: string | null;
@@ -93,7 +93,7 @@ export const TaskAssigneeField = ({ assignedTo, setAssignedTo, projectMembers }:
             {projectMembers && projectMembers.length > 0 ? (
               projectMembers.map((member) => (
                 <SelectItem key={member.user_id} value={member.user_id}>
-                  {member.display_name || member.email || 'مستخدم بلا اسم'}
+                  {member.user_display_name || member.user_email || 'مستخدم بلا اسم'}
                 </SelectItem>
               ))
             ) : (
