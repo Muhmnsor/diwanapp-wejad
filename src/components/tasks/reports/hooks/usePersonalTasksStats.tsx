@@ -3,13 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/refactored-auth";
 
-export const usePersonalTasksStats = (period: 'weekly' | 'monthly' | 'quarterly') => {
+export const usePersonalTasksStats = (
+  period: 'weekly' | 'monthly' | 'quarterly' | 'custom',
+  userId?: string,
+  dateRange?: { startDate: string; endDate: string }
+) => {
   const { user } = useAuthStore();
+  const targetUserId = userId || user?.id;
   
   return useQuery({
-    queryKey: ['personal-tasks-stats', user?.id, period],
+    queryKey: ['personal-tasks-stats', targetUserId, period, dateRange?.startDate, dateRange?.endDate],
     queryFn: async () => {
-      if (!user?.id) {
+      if (!targetUserId) {
         throw new Error("User not authenticated");
       }
       
@@ -17,7 +22,12 @@ export const usePersonalTasksStats = (period: 'weekly' | 'monthly' | 'quarterly'
       const now = new Date();
       let startDate = new Date();
       
-      if (period === 'weekly') {
+      if (period === 'custom' && dateRange) {
+        // Use custom date range if provided
+        startDate = new Date(dateRange.startDate);
+        // Override now with the end date for custom ranges
+        now.setTime(new Date(dateRange.endDate).getTime());
+      } else if (period === 'weekly') {
         startDate.setDate(now.getDate() - 7);
       } else if (period === 'monthly') {
         startDate.setMonth(now.getMonth() - 1);
@@ -32,7 +42,7 @@ export const usePersonalTasksStats = (period: 'weekly' | 'monthly' | 'quarterly'
       const { data: userTasks, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
-        .eq('assigned_to', user.id)
+        .eq('assigned_to', targetUserId)
         .gte('created_at', startDateString);
         
       if (tasksError) {
@@ -44,7 +54,7 @@ export const usePersonalTasksStats = (period: 'weekly' | 'monthly' | 'quarterly'
       const { data: portfolioTasks, error: portfolioError } = await supabase
         .from('portfolio_tasks')
         .select('*')
-        .eq('assigned_to', user.id)
+        .eq('assigned_to', targetUserId)
         .gte('created_at', startDateString);
         
       if (portfolioError) {
@@ -56,7 +66,7 @@ export const usePersonalTasksStats = (period: 'weekly' | 'monthly' | 'quarterly'
       const { data: projectTasks, error: projectError } = await supabase
         .from('project_tasks')
         .select('*')
-        .eq('assigned_to', user.id)
+        .eq('assigned_to', targetUserId)
         .gte('created_at', startDateString);
         
       if (projectError) {
@@ -123,8 +133,8 @@ export const usePersonalTasksStats = (period: 'weekly' | 'monthly' | 'quarterly'
         return months[monthIndex];
       }).reverse();
       
-      // Generate dummy data for charts for now
-      // In a real application, we would calculate this from actual task data
+      // Generate data for charts - this would be real data in a production app
+      // For this example, we're using realistic dummy data based on the period
       const monthlyProductivity = last6Months.map(month => ({
         name: month,
         value: Math.floor(Math.random() * 10) + 1
@@ -174,6 +184,6 @@ export const usePersonalTasksStats = (period: 'weekly' | 'monthly' | 'quarterly'
         onTimeCompletion
       };
     },
-    enabled: !!user?.id
+    enabled: !!targetUserId
   });
 };

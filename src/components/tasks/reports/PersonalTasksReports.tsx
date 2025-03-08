@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PersonalTasksStats } from "./components/PersonalTasksStats";
 import { PersonalProductivityChart } from "./components/PersonalProductivityChart";
@@ -10,10 +9,61 @@ import { DelayTimeChart } from "./components/DelayTimeChart";
 import { OnTimeCompletionChart } from "./components/OnTimeCompletionChart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePersonalTasksStats } from "./hooks/usePersonalTasksStats";
+import { UserSelector } from "./components/UserSelector";
+import { DateRangePicker } from "./components/DateRangePicker";
+import { useAuthStore } from "@/store/refactored-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const PersonalTasksReports = () => {
-  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'quarterly'>('monthly');
-  const { data, isLoading } = usePersonalTasksStats(period);
+  const { user } = useAuthStore();
+  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'quarterly' | 'custom'>('monthly');
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+    endDate: new Date()
+  });
+  const [selectedUserId, setSelectedUserId] = useState<string | undefined>(undefined);
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Check if the current user is an admin
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const checkAdminStatus = async () => {
+      const { data, error } = await fetch('/api/check-admin-status')
+        .then(res => res.json())
+        .catch(() => ({ data: null, error: 'Failed to fetch admin status' }));
+      
+      if (!error && data?.isAdmin) {
+        setIsAdmin(true);
+      }
+    };
+    
+    // Alternative method using Supabase directly
+    const checkAdminRoles = async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*, roles(name)')
+        .eq('user_id', user.id);
+      
+      if (!error && data) {
+        const isUserAdmin = data.some(role => 
+          role.roles?.name === 'admin' || role.roles?.name === 'app_admin'
+        );
+        setIsAdmin(isUserAdmin);
+      }
+    };
+    
+    checkAdminRoles();
+  }, [user]);
+  
+  const { data, isLoading } = usePersonalTasksStats(
+    period, 
+    selectedUserId,
+    period === 'custom' ? {
+      startDate: dateRange.startDate.toISOString(),
+      endDate: dateRange.endDate.toISOString()
+    } : undefined
+  );
   
   if (isLoading) {
     return (
@@ -25,22 +75,41 @@ export const PersonalTasksReports = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h3 className="text-lg font-medium">التقارير الشخصية</h3>
-        <div className="flex space-x-2 rtl:space-x-reverse">
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 rtl:space-x-reverse w-full md:w-auto gap-2">
+          {isAdmin && (
+            <div className="w-full md:w-64">
+              <UserSelector 
+                value={selectedUserId || user?.id || ''} 
+                onChange={setSelectedUserId} 
+              />
+            </div>
+          )}
+          
           <select 
             className="px-3 py-1 border rounded-md text-sm"
             value={period}
-            onChange={(e) => setPeriod(e.target.value as 'weekly' | 'monthly' | 'quarterly')}
+            onChange={(e) => setPeriod(e.target.value as 'weekly' | 'monthly' | 'quarterly' | 'custom')}
           >
             <option value="weekly">أسبوعي</option>
             <option value="monthly">شهري</option>
             <option value="quarterly">ربع سنوي</option>
+            <option value="custom">مخصص</option>
           </select>
+          
+          {period === 'custom' && (
+            <div className="w-full md:w-64">
+              <DateRangePicker 
+                value={dateRange}
+                onChange={setDateRange}
+              />
+            </div>
+          )}
         </div>
       </div>
       
-      {/* Tasks Statistics Section */}
+      {/* Task Statistics Section */}
       <div className="space-y-6">
         <h4 className="text-lg font-medium">إحصائيات المهام الشخصية</h4>
         <PersonalTasksStats stats={data.tasksStats} />
