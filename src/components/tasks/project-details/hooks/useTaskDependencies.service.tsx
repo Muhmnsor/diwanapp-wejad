@@ -76,6 +76,7 @@ export const fetchTasksData = async (taskIds: string[], rawDependenciesMap?: Rec
       created_at: task.created_at || new Date().toISOString(),
       stage_id: task.stage_id || undefined,
       stage_name: task.stage_name,
+      is_general: task.is_general || false,
       dependency_type: dependency_type
     };
   });
@@ -132,18 +133,24 @@ export const removeTaskDependency = async (taskId: string, dependencyTaskId: str
 export const fetchAvailableTasks = async (projectId: string, taskId: string, dependencies: Task[]) => {
   console.log(`Fetching available tasks for project: ${projectId}, task: ${taskId}`);
   
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .filter('project_id', 'eq', projectId)
-    .neq('id', taskId);
+  let query = supabase.from('tasks').select('*').neq('id', taskId);
+  
+  // If we have a project ID, filter by it, otherwise get general tasks
+  if (projectId) {
+    query = query.eq('project_id', projectId);
+  } else {
+    // For general tasks, fetch other general tasks
+    query = query.eq('is_general', true);
+  }
+  
+  const { data, error } = await query;
   
   if (error) {
     console.error("Error fetching available tasks:", error);
     throw error;
   }
   
-  console.log(`Fetched ${data?.length || 0} tasks for project`);
+  console.log(`Fetched ${data?.length || 0} tasks`);
   
   if (!data || data.length === 0) {
     return [];

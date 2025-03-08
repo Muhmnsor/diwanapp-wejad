@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { useTaskDependencies } from "../../hooks/useTaskDependencies";
 import { Task } from "../../types/task";
@@ -133,10 +132,10 @@ export const DependencyProvider = ({ children, taskId, projectId }: DependencyPr
   }, [user, projectId]);
   
   useEffect(() => {
-    if (projectId && taskId) {
+    if (taskId) {
       loadAvailableTasks();
     }
-  }, [projectId, taskId, dependencies]);
+  }, [taskId, dependencies]);
   
   const loadAvailableTasks = async () => {
     setIsLoadingTasks(true);

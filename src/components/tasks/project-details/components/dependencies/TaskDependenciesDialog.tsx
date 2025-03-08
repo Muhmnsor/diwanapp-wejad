@@ -70,10 +70,14 @@ export const TaskDependenciesDialog = ({
   task,
   projectId
 }: TaskDependenciesDialogProps) => {
+  // Determine the actual projectId to use
+  // For general tasks, pass an empty string to ensure we fetch other general tasks
+  const effectiveProjectId = task.is_general ? "" : (projectId || task.project_id || "");
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="min-w-[500px]">
-        <DependencyProvider taskId={task.id} projectId={projectId}>
+        <DependencyProvider taskId={task.id} projectId={effectiveProjectId}>
           <DependencyDialogHeader />
           <DependencyDialogContent />
         </DependencyProvider>

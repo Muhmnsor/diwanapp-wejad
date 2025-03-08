@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -21,7 +20,6 @@ interface TaskListItemProps {
 }
 
 export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: TaskListItemProps) => {
-  // UI state for dialogs
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -30,7 +28,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   
   const currentStatus = task.status || "pending";
   
-  // Dependency management
   const {
     showDependencies,
     setShowDependencies,
@@ -38,7 +35,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
     dependencyIconColor
   } = useTaskDependencyManager({ taskId: task.id });
   
-  // Status management
   const { isUpdating, handleStatusChange } = useTaskStatusManager({
     taskId: task.id,
     isSubtask: !!task.parent_task_id,
@@ -106,7 +102,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         requiresDeliverable={task.requires_deliverable}
       />
       
-      {/* Dialogs */}
       <TaskDiscussionDialog 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
