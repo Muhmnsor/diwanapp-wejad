@@ -31,7 +31,11 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         .select('*')
         .eq('task_id', taskId);
       
-      if (dependenciesError) throw dependenciesError;
+      if (dependenciesError) {
+        console.error("Error fetching dependencies:", dependenciesError);
+        throw dependenciesError;
+      }
+      
       console.log("Raw dependencies data:", dependenciesData);
       setRawDependencies(dependenciesData || []);
       
@@ -41,7 +45,11 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         .select('*')
         .eq('dependency_task_id', taskId);
       
-      if (dependentError) throw dependentError;
+      if (dependentError) {
+        console.error("Error fetching dependent tasks:", dependentError);
+        throw dependentError;
+      }
+      
       console.log("Raw dependent tasks data:", dependentData);
       
       // Fetch actual task data for dependencies
@@ -53,7 +61,11 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           .select('*')
           .in('id', dependencyIds);
         
-        if (taskError) throw taskError;
+        if (taskError) {
+          console.error("Error fetching task data for dependencies:", taskError);
+          throw taskError;
+        }
+        
         console.log("Task data for dependencies:", taskData);
         
         // Cast the task data to match the Task interface
@@ -84,7 +96,11 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           .select('*')
           .in('id', dependentIds);
         
-        if (taskError) throw taskError;
+        if (taskError) {
+          console.error("Error fetching task data for dependent tasks:", taskError);
+          throw taskError;
+        }
+        
         console.log("Task data for dependent tasks:", taskData);
         
         // Cast the task data to match the Task interface
@@ -115,7 +131,10 @@ export const useTaskDependencies = (taskId: string | undefined) => {
 
   // Add dependency between tasks
   const addDependency = async (dependencyTaskId: string, dependencyType: 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish' = 'finish-to-start') => {
-    if (!taskId || !dependencyTaskId) return;
+    if (!taskId || !dependencyTaskId) {
+      console.error("Missing taskId or dependencyTaskId", { taskId, dependencyTaskId });
+      return false;
+    }
     
     try {
       console.log(`Adding dependency: Task ${taskId} depends on ${dependencyTaskId}`);
@@ -124,6 +143,17 @@ export const useTaskDependencies = (taskId: string | undefined) => {
       const result = await checkCircularDependency(taskId, dependencyTaskId);
       if (result.isCircular) {
         toast.error("لا يمكن إضافة اعتمادية دائرية بين المهام");
+        return false;
+      }
+      
+      // Make sure we don't create duplicate dependencies
+      const existingDependency = rawDependencies.find(
+        d => d.dependency_task_id === dependencyTaskId
+      );
+      
+      if (existingDependency) {
+        console.log("Dependency already exists:", existingDependency);
+        toast.error("هذه الاعتمادية موجودة بالفعل");
         return false;
       }
       
@@ -142,7 +172,6 @@ export const useTaskDependencies = (taskId: string | undefined) => {
       }
       
       console.log("Dependency added successfully:", data);
-      toast.success("تمت إضافة الاعتمادية بنجاح");
       await fetchDependencies();
       return true;
     } catch (error) {
@@ -154,7 +183,10 @@ export const useTaskDependencies = (taskId: string | undefined) => {
 
   // Remove dependency between tasks
   const removeDependency = async (dependencyTaskId: string) => {
-    if (!taskId || !dependencyTaskId) return;
+    if (!taskId || !dependencyTaskId) {
+      console.error("Missing taskId or dependencyTaskId", { taskId, dependencyTaskId });
+      return false;
+    }
     
     try {
       console.log(`Removing dependency: Task ${taskId} no longer depends on ${dependencyTaskId}`);
@@ -167,7 +199,10 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           dependency_task_id: dependencyTaskId
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error removing dependency:", error);
+        throw error;
+      }
       
       toast.success("تمت إزالة الاعتمادية بنجاح");
       await fetchDependencies();
@@ -192,7 +227,10 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         .select('dependency_task_id, dependency_type')
         .eq('task_id', taskId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error checking dependencies:", error);
+        throw error;
+      }
       
       if (!dependencies || dependencies.length === 0) {
         return { isValid: true, message: "", pendingDependencies: [] };
@@ -206,7 +244,10 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         .select('id, title, status')
         .in('id', dependencyIds);
       
-      if (taskError) throw taskError;
+      if (taskError) {
+        console.error("Error fetching task data for dependency check:", taskError);
+        throw taskError;
+      }
       
       if (!taskData) {
         return { isValid: true, message: "", pendingDependencies: [] };
@@ -273,7 +314,10 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           .select('dependency_task_id')
           .eq('task_id', currentTaskId);
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error checking circular dependency:", error);
+          throw error;
+        }
         
         if (data && data.length > 0) {
           for (const dep of data) {
