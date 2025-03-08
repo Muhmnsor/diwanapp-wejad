@@ -1,37 +1,43 @@
-// Import statements should include ProjectMember from types instead of hooks
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 import { useState } from "react";
-import { TaskForm } from "../TaskForm";
-import { RecurringTaskFormFields } from "./RecurringTaskFormFields";
-import { TaskFormActions } from "../TaskFormActions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { RecurringTaskFormFields, RecurringTaskFormValues } from "./RecurringTaskFormFields";
+import { TaskForm } from "../../TaskForm";
 import { ProjectMember } from "../../types/projectMember";
 
-interface RecurringTaskDialogProps {
+// Define the correct props interface for RecurringTaskDialog
+export interface RecurringTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
-  projectStages: { id: string; name: string }[];
   projectMembers: ProjectMember[];
-  onTaskAdded: () => void;
+  onRecurringTaskAdded?: () => void;
+  onTaskCreated?: () => void;
 }
 
 export const RecurringTaskDialog = ({
   open,
   onOpenChange,
   projectId,
-  projectStages,
   projectMembers,
-  onTaskAdded,
+  onRecurringTaskAdded,
+  onTaskCreated
 }: RecurringTaskDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [recurringSettings, setRecurringSettings] = useState({
-    frequency: "daily",
+  const [recurringValues, setRecurringValues] = useState<RecurringTaskFormValues>({
+    frequency: 'weekly',
     interval: 1,
-    startDate: new Date(),
-    endDate: null,
+    endType: 'never',
+    daysOfWeek: ['mon'],
   });
-
-  const handleSubmit = async (formData: {
+  
+  const handleRecurringChange = (values: RecurringTaskFormValues) => {
+    setRecurringValues(values);
+  };
+  
+  const handleSubmitTask = async (formData: {
     title: string;
     description: string;
     dueDate: string;
@@ -44,48 +50,87 @@ export const RecurringTaskDialog = ({
   }) => {
     setIsSubmitting(true);
     try {
-      // TODO: Implement recurring task creation logic here
-      console.log("Creating recurring task with data:", formData, recurringSettings);
-      // After successful task creation
-      onTaskAdded();
+      console.log("Creating recurring task with data:", { ...formData, ...recurringValues });
+      
+      // Calculate the next occurrence date based on the due date
+      const nextOccurrence = formData.dueDate;
+      
+      // Convert form data to recurring task data structure
+      const recurringTaskData = {
+        title: formData.title,
+        description: formData.description,
+        project_id: projectId,
+        frequency: recurringValues.frequency,
+        interval: recurringValues.interval,
+        next_occurrence: nextOccurrence,
+        assigned_to: formData.assignedTo,
+        priority: formData.priority,
+        status: 'active',
+        requires_deliverable: formData.requiresDeliverable,
+        // Conditional fields based on frequency
+        days_of_week: recurringValues.frequency === 'weekly' ? recurringValues.daysOfWeek : null,
+        day_of_month: recurringValues.frequency === 'monthly' ? recurringValues.dayOfMonth : null,
+        // End parameters
+        end_date: recurringValues.endType === 'date' ? recurringValues.endDate : null,
+        end_after: recurringValues.endType === 'count' ? recurringValues.endAfter : null,
+      };
+      
+      // Save to database
+      const { error } = await supabase
+        .from('recurring_tasks')
+        .insert(recurringTaskData);
+        
+      if (error) throw error;
+      
+      toast.success("تم إنشاء المهمة المتكررة بنجاح");
+      
+      // Call the appropriate callback
+      if (onRecurringTaskAdded) onRecurringTaskAdded();
+      if (onTaskCreated) onTaskCreated();
+      
       onOpenChange(false);
     } catch (error) {
       console.error("Error creating recurring task:", error);
+      toast.error("حدث خطأ أثناء إنشاء المهمة المتكررة");
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>إنشاء مهمة متكررة</DialogTitle>
         </DialogHeader>
-        <div className="p-4">
-          <TaskForm
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            projectStages={projectStages}
-            projectMembers={projectMembers}
-            initialValues={{
-              title: "",
-              description: "",
-              dueDate: "",
-              priority: "medium",
-              stageId: projectStages.length > 0 ? projectStages[0].id : "",
-              assignedTo: projectMembers.length > 0 ? projectMembers[0].user_id : null,
-            }}
-          />
-          <RecurringTaskFormFields
-            recurringSettings={recurringSettings}
-            setRecurringSettings={setRecurringSettings}
-          />
-          <TaskFormActions
-            isSubmitting={isSubmitting}
-            onCancel={() => onOpenChange(false)}
-            submitLabel="إنشاء مهمة متكررة"
-          />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-lg font-medium mb-4">تفاصيل المهمة</h3>
+            <TaskForm
+              onSubmit={handleSubmitTask}
+              isSubmitting={isSubmitting}
+              projectStages={[]} // Replace with actual project stages
+              projectMembers={projectMembers}
+              initialValues={{
+                title: "",
+                description: "",
+                dueDate: "",
+                priority: "medium",
+                stageId: "",
+                assignedTo: null,
+                requiresDeliverable: false
+              }}
+            />
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium mb-4">إعدادات التكرار</h3>
+            <RecurringTaskFormFields
+              values={recurringValues}
+              onChange={handleRecurringChange}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
