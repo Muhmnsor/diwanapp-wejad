@@ -17,6 +17,7 @@ import type { Task as ProjectTask } from "../project-details/types/task";
 import { handleTaskCompletion } from "./actions/handleTaskCompletion";
 import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
+import { DependencyIcon } from "./dependencies/DependencyIcon";
 
 interface TaskListItemProps {
   task: Task;
@@ -42,11 +43,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   
   const hasDependencies = dependencies.length > 0;
   const hasDependents = dependentTasks.length > 0;
-  const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed') 
-    ? 'text-amber-500' 
-    : hasDependencies || hasDependents 
-      ? 'text-blue-500' 
-      : 'text-gray-500';
+  const hasPendingDependencies = hasDependencies && dependencies.some(d => d.status !== 'completed');
 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
@@ -141,7 +138,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           status={currentStatus} 
           onShowDependencies={() => setShowDependencies(true)}
           hasDependencies={hasDependencies || hasDependents}
-          dependencyIconColor={dependencyIconColor}
+          dependencyIconColor={hasPendingDependencies
+            ? 'text-amber-500'
+            : hasDependencies
+              ? 'text-green-500'
+              : hasDependents
+                ? 'text-blue-500'
+                : 'text-gray-500'}
         />
       </div>
       

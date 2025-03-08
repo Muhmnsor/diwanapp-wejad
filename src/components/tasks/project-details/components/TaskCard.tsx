@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip, Link2 } from "lucide-react";
@@ -16,6 +15,7 @@ import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
+import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
 
 interface TaskCardProps {
   task: Task;
@@ -41,7 +41,6 @@ export const TaskCard = ({
   const [showDependencies, setShowDependencies] = useState(false);
   const { user } = useAuthStore();
   
-  // Use the enhanced permission check hook
   const { canEdit } = usePermissionCheck({
     assignedTo: task.assigned_to,
     projectId: task.project_id,
@@ -54,8 +53,8 @@ export const TaskCard = ({
   
   const completedDependenciesCount = dependencies.filter(dep => dep.status === 'completed').length;
   const completedDependentsCount = dependentTasks.filter(dep => dep.status === 'completed').length;
+  const hasPendingDependencies = dependencies.some(dep => dep.status !== 'completed');
 
-  // Use our new hook for button states
   const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -165,40 +164,23 @@ export const TaskCard = ({
 
           <div className="mt-3 flex justify-end gap-2">
             <Button 
-              variant="ghost" 
+              variant={dependencies.length > 0 || dependentTasks.length > 0 ? "outline" : "ghost"}
               size="sm" 
               className={`text-xs flex items-center gap-1 ${
-                hasDeliverables 
-                  ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50" 
-                  : "text-muted-foreground hover:text-foreground"
+                hasPendingDependencies 
+                  ? "border-amber-200 text-amber-600 hover:bg-amber-50" 
+                  : (dependencies.length > 0 || dependentTasks.length > 0)
+                    ? "border-blue-200 text-blue-600 hover:bg-blue-50"
+                    : "text-muted-foreground hover:text-foreground"
               }`}
-              onClick={() => setShowAttachments(true)}
-            >
-              <Paperclip className="h-3.5 w-3.5" />
-              المرفقات
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`text-xs flex items-center gap-1 ${
-                hasNewDiscussion 
-                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={handleShowDiscussion}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              مناقشة
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShowDependencies(true)}
             >
-              <Link2 className="h-3.5 w-3.5" />
+              <DependencyIcon 
+                hasDependencies={dependencies.length > 0} 
+                hasPendingDependencies={hasPendingDependencies}
+                hasDependents={dependentTasks.length > 0}
+                size={14}
+              />
               الاعتماديات
             </Button>
 

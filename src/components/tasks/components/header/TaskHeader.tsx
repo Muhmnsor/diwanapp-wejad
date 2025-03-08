@@ -1,5 +1,4 @@
-
-import { GitMerge, Link2 } from "lucide-react";
+import { GitMerge } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TaskPriorityBadge } from "../priority/TaskPriorityBadge";
 import { TaskStatusBadge } from "../status/TaskStatusBadge";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { DependencyIcon } from "../dependencies/DependencyIcon";
 
 interface TaskHeaderProps {
   task: Task;
@@ -100,6 +100,9 @@ export const TaskHeader = ({
     checkPermissions();
   }, [user, task.project_id]);
   
+  const hasPendingDependencies = dependencyIconColor === 'text-amber-500';
+  const hasDependents = dependencyIconColor === 'text-blue-500' && !hasPendingDependencies;
+  
   return (
     <div className="flex justify-between items-start w-full">
       <div className="max-w-[70%]">
@@ -115,11 +118,16 @@ export const TaskHeader = ({
             <Button
               variant="ghost"
               size="sm"
-              className="p-0 h-6 w-6"
+              className={`p-0 h-6 w-6 ${hasDependencies || hasDependents ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
               onClick={onShowDependencies}
               title="إدارة اعتماديات المهمة"
             >
-              <Link2 className={`h-4 w-4 ${dependencyIconColor}`} />
+              <DependencyIcon 
+                hasDependencies={hasDependencies} 
+                hasPendingDependencies={hasPendingDependencies}
+                hasDependents={hasDependents}
+                size={16}
+              />
             </Button>
           )}
         </div>

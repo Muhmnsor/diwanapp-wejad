@@ -14,6 +14,7 @@ import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
+import { DependencyIcon } from "../../components/dependencies/DependencyIcon";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +76,8 @@ export const TaskItem = ({
   
   const hasDependencies = dependencies.length > 0;
   const hasDependents = dependentTasks.length > 0;
+  const hasPendingDependencies = hasDependencies && dependencies.some(d => d.status !== 'completed');
+  
   const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed') 
     ? 'text-amber-500' 
     : hasDependencies || hasDependents 
@@ -257,14 +260,19 @@ export const TaskItem = ({
             <Button
               variant="ghost"
               size="sm"
-              className="p-0 h-7 w-7"
+              className={`p-0 h-7 w-7 ${(hasDependencies || hasDependents) ? 'bg-gray-50 hover:bg-gray-100' : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDependencies(true);
               }}
               title="إدارة اعتماديات المهمة"
             >
-              <Link2 className={`h-4 w-4 ${dependencyIconColor}`} />
+              <DependencyIcon 
+                hasDependencies={hasDependencies} 
+                hasPendingDependencies={hasPendingDependencies}
+                hasDependents={hasDependents}
+                size={16}
+              />
             </Button>
           </div>
         </TableCell>
