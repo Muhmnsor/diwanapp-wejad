@@ -47,13 +47,13 @@ export const WorkspaceHeader = ({ workspace, members }: WorkspaceHeaderProps) =>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Avatar className="cursor-pointer">
-                          <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.display_name)}&background=random`} />
-                          <AvatarFallback>{member.display_name.substring(0, 2)}</AvatarFallback>
+                          <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.user_display_name || "")}&background=random`} />
+                          <AvatarFallback>{member.user_display_name?.substring(0, 2) || "??"}</AvatarFallback>
                         </Avatar>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{member.display_name}</p>
-                        <p className="text-xs text-gray-500">{member.email}</p>
+                        <p>{member.user_display_name}</p>
+                        <p className="text-xs text-gray-500">{member.user_email}</p>
                         <p className="text-xs font-medium capitalize">{member.role}</p>
                       </TooltipContent>
                     </Tooltip>

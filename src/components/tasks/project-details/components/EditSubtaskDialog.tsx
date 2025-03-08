@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Subtask } from "../../types/subtask";
+import { Subtask } from "../types/subtask";
 import { SubtaskTitleField } from "./subtasks/fields/SubtaskTitleField";
 import { SubtaskDueDateField } from "./subtasks/fields/SubtaskDueDateField";
 import { SubtaskAssigneeField } from "./subtasks/fields/SubtaskAssigneeField";
-import { TaskFormActions } from "../TaskFormActions";
+import { TaskFormActions } from "./TaskFormActions";
 import { ProjectMember } from "../types/projectMember";
 
 interface EditSubtaskDialogProps {

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { ProjectMember } from "../project-details/types/projectMember";
 
-export interface WorkspaceAddTaskDialogProps {
+interface WorkspaceAddTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
@@ -51,9 +51,10 @@ export const WorkspaceAddTaskDialog = ({
         assigned_to: formData.assignedTo,
         created_at: new Date().toISOString(),
         workspace_id: workspaceId,
+        is_general: false,
         project_id: null,
         stage_id: null,
-        is_general: false,
+        category: formData.category,
         requires_deliverable: formData.requiresDeliverable || false
       };
       
@@ -104,12 +105,12 @@ export const WorkspaceAddTaskDialog = ({
         }
       }
       
-      toast.success("تمت إضافة مهمة مساحة العمل بنجاح");
+      toast.success("تمت إضافة المهمة بنجاح");
       await onTaskAdded();
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding workspace task:", error);
-      toast.error("حدث خطأ أثناء إضافة مهمة مساحة العمل");
+      toast.error("حدث خطأ أثناء إضافة المهمة");
     } finally {
       setIsSubmitting(false);
     }
@@ -119,7 +120,9 @@ export const WorkspaceAddTaskDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>إضافة مهمة لمساحة العمل</DialogTitle>
+          <DialogTitle>
+            إضافة مهمة لمساحة العمل
+          </DialogTitle>
         </DialogHeader>
         <div className="p-4">
           <TaskForm

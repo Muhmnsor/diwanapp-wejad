@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
 import { AddTaskDialog } from "./AddTaskDialog";
@@ -34,7 +35,7 @@ export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) =>
     fetchTasks,
     isGeneral,
     deleteTask
-  } = useTasksList(projectId);
+  } = useTasksList(projectId, isWorkspace);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
