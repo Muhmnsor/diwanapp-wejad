@@ -4,7 +4,7 @@ export interface RecurringTask {
   title: string;
   description?: string | null;
   recurrence_type: 'daily' | 'weekly' | 'monthly';
-  interval?: number;
+  interval: number;
   day_of_month?: number | null;
   day_of_week?: number | null;
   priority: 'low' | 'medium' | 'high';

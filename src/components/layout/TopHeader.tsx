@@ -7,7 +7,7 @@ import { Logo } from "./header/Logo";
 import { HomeButton } from "./header/HomeButton";
 import { AdminActions } from "./header/AdminActions";
 import { Button } from "@/components/ui/button";
-import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList } from "lucide-react";
+import { Calendar, FolderKanban, LayoutDashboard, FileText, User, ClipboardList, Repeat } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +52,8 @@ export const TopHeader = () => {
         setActiveTab('yearly-plan');
       } else if (hash === 'reports') {
         setActiveTab('reports');
+      } else if (hash === 'recurring') {
+        setActiveTab('recurring');
       } else {
         setActiveTab('overview');
       }
@@ -104,6 +106,11 @@ export const TopHeader = () => {
                   <Link to="/tasks#yearly-plan" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "yearly-plan" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("yearly-plan")}>
                     <Calendar className="h-4 w-4" />
                     <span>الخطة السنوية</span>
+                  </Link>
+                  
+                  <Link to="/tasks#recurring" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "recurring" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("recurring")}>
+                    <Repeat className="h-4 w-4" />
+                    <span>المهام المتكررة</span>
                   </Link>
                   
                   <Link to="/tasks#reports" className={`flex items-center gap-2 cursor-pointer transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 ${activeTab === "reports" ? "bg-primary/10 text-primary font-medium" : "text-gray-600 hover:text-gray-900"}`} onClick={() => handleTabChange("reports")}>
