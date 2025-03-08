@@ -68,7 +68,7 @@ export const TasksRecurring = () => {
         setIsAdmin(isAdminData || false);
         console.log("Is admin:", isAdminData);
 
-        // Explicitly defined query with properly qualified column names
+        // Explicitly defined query with properly qualified column names and left joins for nullable foreign keys
         const { data, error } = await supabase
           .from('recurring_tasks')
           .select(`
@@ -116,7 +116,7 @@ export const TasksRecurring = () => {
           project_name: task.projects ? task.projects.title : null,
           workspace_name: task.workspaces ? task.workspaces.name : null,
           assignee_name: task.profiles ? task.profiles.display_name : null,
-        }));
+        })) as RecurringTask[];
 
         console.log("Formatted recurring tasks:", formattedTasks);
         setRecurringTasks(formattedTasks);
@@ -251,7 +251,7 @@ export const TasksRecurring = () => {
         project_name: task.projects ? task.projects.title : null,
         workspace_name: task.workspaces ? task.workspaces.name : null,
         assignee_name: task.profiles ? task.profiles.display_name : null,
-      }));
+      })) as RecurringTask[];
 
       setRecurringTasks(formattedTasks);
     } catch (error) {
