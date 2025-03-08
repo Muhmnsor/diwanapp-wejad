@@ -7,9 +7,10 @@ import { Paperclip } from 'lucide-react';
 interface TaskDetailAttachmentsProps {
   task: Task;
   className?: string;
+  onAttachmentUploaded?: () => void;
 }
 
-export const TaskDetailAttachments = ({ task, className = '' }: TaskDetailAttachmentsProps) => {
+export const TaskDetailAttachments = ({ task, className = '', onAttachmentUploaded }: TaskDetailAttachmentsProps) => {
   if (!task) return null;
   
   return (
@@ -20,7 +21,7 @@ export const TaskDetailAttachments = ({ task, className = '' }: TaskDetailAttach
           <h3 className="text-sm font-medium">مرفقات المهمة</h3>
         </div>
         
-        <TaskAttachmentActions task={task} />
+        <TaskAttachmentActions task={task} onAttachmentUploaded={onAttachmentUploaded} />
       </CardContent>
     </Card>
   );

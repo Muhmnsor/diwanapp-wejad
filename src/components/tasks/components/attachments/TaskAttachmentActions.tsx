@@ -6,10 +6,10 @@ import { Task } from "../../types/task";
 
 interface TaskAttachmentActionsProps {
   task: Task;
-  onAttachmentUploaded: () => void;
+  onAttachmentUploaded?: () => void;
 }
 
-export const TaskAttachmentActions = ({ task, onAttachmentUploaded }: TaskAttachmentActionsProps) => {
+export const TaskAttachmentActions = ({ task, onAttachmentUploaded = () => {} }: TaskAttachmentActionsProps) => {
   return (
     <div className="flex flex-wrap gap-2 mt-2">
       <Button

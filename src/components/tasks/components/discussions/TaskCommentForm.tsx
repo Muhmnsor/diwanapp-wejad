@@ -6,27 +6,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
 import { PaperclipIcon, SendHorizonal, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Task } from "../../types/task";
+import { TaskComment } from "../../types/taskComment";
 
 interface TaskCommentFormProps {
-  taskId: string;
-  onCommentAdded: () => void;
+  taskId?: string;
+  task?: Task;
+  onCommentAdded: (newComment?: TaskComment) => void;
   taskTable?: string;
   placeholder?: string;
+  onTaskStatusChanged?: (taskId: string, newStatus: string) => Promise<void>;
 }
 
 export const TaskCommentForm = ({ 
   taskId, 
+  task,
   onCommentAdded, 
   taskTable = "tasks",
-  placeholder = "اكتب تعليقًا..."
+  placeholder = "اكتب تعليقًا...",
+  onTaskStatusChanged
 }: TaskCommentFormProps) => {
   const [content, setContent] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentName, setAttachmentName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Get the taskId either from direct prop or from task object
+  const actualTaskId = task?.id || taskId;
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!actualTaskId) {
+      toast.error("معرف المهمة غير متوفر");
+      return;
+    }
     
     if (!content.trim() && !attachment) {
       toast.error("يجب إدخال تعليق أو إرفاق ملف");
@@ -39,6 +53,7 @@ export const TaskCommentForm = ({
       // معالجة المرفق إذا كان موجودًا
       let attachmentUrl = null;
       let attachmentType = null;
+      let attachmentFileName = null;
       
       if (attachment) {
         const { url, error } = await uploadAttachment(attachment, "comment");
@@ -50,10 +65,11 @@ export const TaskCommentForm = ({
         if (url) {
           attachmentUrl = url;
           attachmentType = attachment.type;
+          attachmentFileName = attachment.name;
           
           // حفظ مرجع الملف المرفق في قاعدة البيانات
           await saveAttachmentReference(
-            taskId,
+            actualTaskId,
             url,
             attachment.name,
             attachment.type,
@@ -63,26 +79,33 @@ export const TaskCommentForm = ({
       }
       
       // إضافة التعليق إلى قاعدة البيانات
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("unified_task_comments")
         .insert({
-          task_id: taskId,
+          task_id: actualTaskId,
           content: content.trim(),
           attachment_url: attachmentUrl,
-          attachment_name: attachment ? attachment.name : null,
+          attachment_name: attachmentFileName,
           attachment_type: attachmentType,
           task_table: taskTable
-        });
+        })
+        .select()
+        .single();
       
       if (error) {
         throw error;
+      }
+      
+      // إذا كانت هذه هي أول مرة يتم فيها التعليق على المهمة وكانت المهمة في حالة "pending"، قم بتغيير حالتها إلى "in_progress"
+      if (task && task.status === "pending" && onTaskStatusChanged) {
+        await onTaskStatusChanged(actualTaskId, "in_progress");
       }
       
       toast.success("تمت إضافة التعليق بنجاح");
       setContent("");
       setAttachment(null);
       setAttachmentName("");
-      onCommentAdded();
+      onCommentAdded(data);
     } catch (error) {
       console.error("Error adding comment:", error);
       toast.error("حدث خطأ أثناء إضافة التعليق");
@@ -136,14 +159,14 @@ export const TaskCommentForm = ({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => document.getElementById(`comment-file-${taskId}`)?.click()}
+          onClick={() => document.getElementById(`comment-file-${actualTaskId}`)?.click()}
           disabled={isSubmitting}
         >
           <PaperclipIcon className="h-4 w-4 mr-1" />
           إرفاق ملف
         </Button>
         <input
-          id={`comment-file-${taskId}`}
+          id={`comment-file-${actualTaskId}`}
           type="file"
           className="hidden"
           onChange={handleFileChange}
