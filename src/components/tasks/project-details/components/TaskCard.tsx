@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip, Link2, FileDown } from "lucide-react";
+import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip, Link2 } from "lucide-react";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -15,7 +15,6 @@ import { TaskDependencyBadge } from "./dependencies/TaskDependencyBadge";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
-import { supabase } from "@/integrations/supabase/client";
 
 interface TaskCardProps {
   task: Task;
@@ -39,9 +38,6 @@ export const TaskCard = ({
   const [showDiscussion, setShowDiscussion] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
   const [showDependencies, setShowDependencies] = useState(false);
-  const [hasNewDiscussion, setHasNewDiscussion] = useState(false);
-  const [hasNewDeliverables, setHasNewDeliverables] = useState(false);
-  const [hasTemplates, setHasTemplates] = useState(false);
   const { user } = useAuthStore();
   
   // Use the enhanced permission check hook
@@ -57,208 +53,6 @@ export const TaskCard = ({
   
   const completedDependenciesCount = dependencies.filter(dep => dep.status === 'completed').length;
   const completedDependentsCount = dependentTasks.filter(dep => dep.status === 'completed').length;
-
-  useEffect(() => {
-    checkNewDiscussions();
-    checkDeliverables();
-    checkTemplates();
-    
-    // Set up real-time subscriptions for comments, deliverables, and templates
-    const commentsChannel = supabase
-      .channel('card-comments-' + task.id)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public', 
-          table: 'unified_task_comments',
-          filter: `task_id=eq.${task.id}`
-        },
-        (payload) => {
-          if (!showDiscussion && user?.id) {
-            setHasNewDiscussion(true);
-          }
-        }
-      )
-      .subscribe();
-    
-    const deliverablesChannel = supabase
-      .channel('card-deliverables-' + task.id)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'task_deliverables',
-          filter: `task_id=eq.${task.id}`
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            if (payload.new && payload.new.created_by === task.assigned_to && user?.id !== task.assigned_to) {
-              setHasNewDeliverables(true);
-            }
-          } else if (payload.eventType === 'DELETE') {
-            // If all deliverables deleted by assignee, remove notification
-            if (payload.old && payload.old.created_by === task.assigned_to) {
-              checkDeliverablesExist();
-            }
-          }
-        }
-      )
-      .subscribe();
-      
-    const templatesChannel = supabase
-      .channel('card-templates-' + task.id)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen for all events
-          schema: 'public',
-          table: 'task_templates',
-          filter: `task_id=eq.${task.id}`
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setHasTemplates(true);
-          } else if (payload.eventType === 'DELETE') {
-            // Check if any templates still exist
-            checkTemplatesExist();
-          }
-        }
-      )
-      .subscribe();
-      
-    // Clean up subscriptions
-    return () => {
-      supabase.removeChannel(commentsChannel);
-      supabase.removeChannel(deliverablesChannel);
-      supabase.removeChannel(templatesChannel);
-    };
-  }, [task.id, task.assigned_to, showDiscussion, user?.id]);
-  
-  const checkDeliverablesExist = async () => {
-    if (!task.id || !task.assigned_to || !user?.id || user.id === task.assigned_to) return;
-    
-    try {
-      const { count, error } = await supabase
-        .from("task_deliverables")
-        .select("*", { count: 'exact', head: true })
-        .eq("task_id", task.id)
-        .eq("created_by", task.assigned_to);
-        
-      if (!error && count === 0) {
-        setHasNewDeliverables(false);
-      }
-    } catch (error) {
-      console.error("Error checking deliverables exist:", error);
-    }
-  };
-  
-  const checkTemplatesExist = async () => {
-    if (!task.id) return;
-    
-    try {
-      const { count, error } = await supabase
-        .from("task_templates")
-        .select("*", { count: 'exact', head: true })
-        .eq("task_id", task.id);
-        
-      if (!error) {
-        setHasTemplates(count > 0);
-      }
-    } catch (error) {
-      console.error("Error checking templates exist:", error);
-    }
-  };
-
-  const checkNewDiscussions = async () => {
-    try {
-      // Check last comment date vs user's last view date
-      const { data: lastComments, error } = await supabase
-        .from("unified_task_comments")
-        .select("created_at")
-        .eq("task_id", task.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-        
-      if (error) throw error;
-      
-      if (lastComments && lastComments.length > 0 && user?.id) {
-        // Check if user has viewed this task's comments before
-        const { data: viewRecord } = await supabase
-          .from("task_comment_views")
-          .select("last_viewed_at")
-          .eq("task_id", task.id)
-          .eq("user_id", user.id)
-          .single();
-          
-        const lastCommentDate = new Date(lastComments[0].created_at);
-        const lastViewedDate = viewRecord ? new Date(viewRecord.last_viewed_at) : null;
-        
-        // If there's no view record or the last comment is newer than the last view
-        if (!lastViewedDate || lastCommentDate > lastViewedDate) {
-          setHasNewDiscussion(true);
-        }
-      }
-    } catch (error) {
-      console.error("Error checking for new discussions:", error);
-    }
-  };
-
-  const checkDeliverables = async () => {
-    try {
-      if (task.assigned_to && task.assigned_to !== user?.id) {
-        // Check for deliverables uploaded by assignee
-        const { data: attachments, error } = await supabase
-          .from("task_attachments")
-          .select("created_at")
-          .eq("task_id", task.id)
-          .eq("created_by", task.assigned_to)
-          .order("created_at", { ascending: false })
-          .limit(1);
-          
-        if (error) throw error;
-        
-        if (attachments && attachments.length > 0 && user?.id) {
-          // Check if user has viewed these attachments
-          const { data: viewRecord } = await supabase
-            .from("task_attachment_views")
-            .select("last_viewed_at")
-            .eq("task_id", task.id)
-            .eq("user_id", user.id)
-            .single();
-            
-          const lastAttachmentDate = new Date(attachments[0].created_at);
-          const lastViewedDate = viewRecord ? new Date(viewRecord.last_viewed_at) : null;
-          
-          if (!lastViewedDate || lastAttachmentDate > lastViewedDate) {
-            setHasNewDeliverables(true);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error checking for new deliverables:", error);
-    }
-  };
-
-  const checkTemplates = async () => {
-    try {
-      // Check if task has templates
-      const { data: templates, error } = await supabase
-        .from("task_templates")
-        .select("id")
-        .eq("task_id", task.id)
-        .limit(1);
-        
-      if (error) throw error;
-      
-      if (templates && templates.length > 0) {
-        setHasTemplates(true);
-      }
-    } catch (error) {
-      console.error("Error checking for templates:", error);
-    }
-  };
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!canEdit) {
@@ -290,36 +84,6 @@ export const TaskCard = ({
       toast.error("حدث خطأ أثناء تحديث حالة المهمة");
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const markDiscussionsAsViewed = () => {
-    if (user?.id && hasNewDiscussion) {
-      setHasNewDiscussion(false);
-      // Record the view in database
-      supabase
-        .from("task_comment_views")
-        .upsert({
-          task_id: task.id,
-          user_id: user.id,
-          last_viewed_at: new Date().toISOString()
-        })
-        .then();
-    }
-  };
-
-  const markAttachmentsAsViewed = () => {
-    if (user?.id && hasNewDeliverables) {
-      setHasNewDeliverables(false);
-      // Record the view in database
-      supabase
-        .from("task_attachment_views")
-        .upsert({
-          task_id: task.id,
-          user_id: user.id,
-          last_viewed_at: new Date().toISOString()
-        })
-        .then();
     }
   };
 
@@ -394,43 +158,31 @@ export const TaskCard = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className={`text-xs flex items-center gap-1 ${hasNewDeliverables 
-                ? "text-blue-600 hover:text-blue-800 font-medium" 
-                : "text-muted-foreground hover:text-foreground"}`}
-              onClick={() => {
-                setShowAttachments(true);
-                markAttachmentsAsViewed();
-              }}
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowAttachments(true)}
             >
-              <Paperclip className={`h-3.5 w-3.5 ${hasNewDeliverables ? "text-blue-600" : ""}`} />
-              {hasNewDeliverables ? "مرفقات جديدة" : "المرفقات"}
+              <Paperclip className="h-3.5 w-3.5" />
+              المرفقات
             </Button>
             
             <Button 
               variant="ghost" 
               size="sm" 
-              className={`text-xs flex items-center gap-1 ${hasNewDiscussion 
-                ? "text-purple-600 hover:text-purple-800 font-medium" 
-                : "text-muted-foreground hover:text-foreground"}`}
-              onClick={() => {
-                setShowDiscussion(true);
-                markDiscussionsAsViewed();
-              }}
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowDiscussion(true)}
             >
-              <MessageCircle className={`h-3.5 w-3.5 ${hasNewDiscussion ? "text-purple-600" : ""}`} />
-              {hasNewDiscussion ? "مناقشة جديدة" : "مناقشة"}
+              <MessageCircle className="h-3.5 w-3.5" />
+              مناقشة
             </Button>
             
             <Button 
               variant="ghost" 
               size="sm" 
-              className={`text-xs flex items-center gap-1 ${hasTemplates 
-                ? "text-orange-500 hover:text-orange-700 font-medium" 
-                : "text-muted-foreground hover:text-foreground"}`}
+              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
               onClick={() => setShowDependencies(true)}
             >
-              <Link2 className={`h-3.5 w-3.5 ${hasTemplates ? "text-orange-500" : ""}`} />
-              {hasTemplates ? "نماذج متاحة" : "الاعتماديات"}
+              <Link2 className="h-3.5 w-3.5" />
+              الاعتماديات
             </Button>
 
             {canEdit && (
@@ -473,24 +225,14 @@ export const TaskCard = ({
 
       <TaskDiscussionDialog 
         open={showDiscussion} 
-        onOpenChange={(open) => {
-          setShowDiscussion(open);
-          if (open) {
-            markDiscussionsAsViewed();
-          }
-        }}
+        onOpenChange={setShowDiscussion}
         task={task}
       />
       
       <TaskAttachmentDialog
         task={task}
         open={showAttachments}
-        onOpenChange={(open) => {
-          setShowAttachments(open);
-          if (open) {
-            markAttachmentsAsViewed();
-          }
-        }}
+        onOpenChange={setShowAttachments}
       />
       
       <TaskDependenciesDialog

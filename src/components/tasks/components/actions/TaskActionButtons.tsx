@@ -14,10 +14,6 @@ interface TaskActionButtonsProps {
   onEdit?: (taskId: string) => void;
   taskId: string;
   isGeneral?: boolean;
-  // New properties for visual indicators
-  hasNewDiscussion?: boolean;
-  hasNewDeliverables?: boolean;
-  hasTemplates?: boolean;
 }
 
 export const TaskActionButtons = ({
@@ -32,10 +28,6 @@ export const TaskActionButtons = ({
   onEdit,
   taskId,
   isGeneral,
-  // New indicator props with defaults
-  hasNewDiscussion = false,
-  hasNewDeliverables = false,
-  hasTemplates = false,
 }: TaskActionButtonsProps) => {
   return (
     <div className="flex justify-between items-center mt-3 pt-3 border-t">
@@ -43,13 +35,11 @@ export const TaskActionButtons = ({
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`text-xs flex items-center gap-1 ${hasNewDiscussion 
-            ? "text-purple-600 hover:text-purple-800 font-medium" 
-            : "text-muted-foreground hover:text-foreground"}`}
+          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
           onClick={onShowDiscussion}
         >
-          <MessageCircle className={`h-3.5 w-3.5 ${hasNewDiscussion ? "text-purple-600" : ""}`} />
-          {hasNewDiscussion ? "مناقشة جديدة" : "مناقشة"}
+          <MessageCircle className="h-3.5 w-3.5" />
+          مناقشة
         </Button>
 
         <Button
@@ -65,25 +55,21 @@ export const TaskActionButtons = ({
         <Button
           variant="ghost"
           size="sm"
-          className={`text-xs flex items-center gap-1 ${hasNewDeliverables 
-            ? "text-blue-600 hover:text-blue-800 font-medium" 
-            : "text-muted-foreground hover:text-foreground"}`}
+          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
           onClick={onOpenAttachments}
         >
-          <Paperclip className={`h-3.5 w-3.5 ${hasNewDeliverables ? "text-blue-600" : ""}`} />
-          {hasNewDeliverables ? "مستلمات جديدة" : "المستلمات"}
+          <Paperclip className="h-3.5 w-3.5" />
+          المستلمات
         </Button>
 
         <Button
           variant="ghost"
           size="sm"
-          className={`text-xs flex items-center gap-1 ${hasTemplates 
-            ? "text-orange-500 hover:text-orange-700 font-medium" 
-            : "text-muted-foreground hover:text-foreground"}`}
+          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
           onClick={onOpenTemplates}
         >
-          <FileDown className={`h-3.5 w-3.5 ${hasTemplates ? "text-orange-500" : ""}`} />
-          {hasTemplates ? "نماذج متاحة" : "نماذج المهمة"}
+          <FileDown className="h-3.5 w-3.5" />
+          نماذج المهمة
         </Button>
       </div>
       
