@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CommentForm } from "../comments/CommentForm";
 import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
@@ -32,6 +31,7 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
       
       console.log("Current user ID:", userId);
       console.log("Task ID:", task.id);
+      console.log("Task assigned to:", task.assigned_to);
       
       // رفع المرفق إذا كان موجودًا
       let attachmentUrl = null;
@@ -185,27 +185,35 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
         
         // إرسال إشعار للمكلف بالمهمة إذا كان مختلفًا عن المستخدم الحالي
         if (task.assigned_to && task.assigned_to !== userId) {
-          // الحصول على اسم المستخدم الحالي
-          const { data: userData } = await supabase
-            .from("profiles")
-            .select("display_name, email")
-            .eq("id", userId)
-            .single();
+          try {
+            // الحصول على اسم المستخدم الحالي
+            const { data: userData } = await supabase
+              .from("profiles")
+              .select("display_name, email")
+              .eq("id", userId)
+              .single();
+              
+            const userName = userData?.display_name || userData?.email || "مستخدم";
             
-          const userName = userData?.display_name || userData?.email || "مستخدم";
-          
-          // إرسال إشعار بوجود تعليق جديد وتغيير حالة المهمة
-          await sendTaskCommentNotification({
-            taskId: task.id,
-            taskTitle: task.title,
-            projectId: task.project_id,
-            projectTitle: task.project_name,
-            assignedUserId: task.assigned_to,
-            updatedByUserId: userId,
-            updatedByUserName: userName
-          });
-          
-          console.log("Notification sent to task assignee about new comment and status change");
+            console.log("Sending notification to:", task.assigned_to, "from user:", userName);
+            
+            // إرسال إشعار بوجود تعليق جديد وتغيير حالة المهمة
+            const notificationResult = await sendTaskCommentNotification({
+              taskId: task.id,
+              taskTitle: task.title,
+              projectId: task.project_id,
+              projectTitle: task.project_name,
+              assignedUserId: task.assigned_to,
+              updatedByUserId: userId,
+              updatedByUserName: userName
+            });
+            
+            console.log("Notification sending result:", notificationResult ? "Success" : "Failed");
+          } catch (notificationError) {
+            console.error("Error sending notification:", notificationError);
+          }
+        } else {
+          console.log("No notification sent: User is commenting on their own task or task has no assignee");
         }
       }
       

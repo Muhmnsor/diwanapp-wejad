@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -158,8 +159,12 @@ export const useNotificationsState = () => {
     
     fetchNotifications();
 
+    // Make sure we have a proper channel name that won't conflict with other channels
+    const channelName = `notifications_${user.id}_${Date.now()}`;
+    console.log('Creating realtime subscription channel:', channelName);
+    
     const channel = supabase
-      .channel('in_app_notification_changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -179,11 +184,20 @@ export const useNotificationsState = () => {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
+
+    // Add periodic refresh as a fallback
+    const intervalId = setInterval(() => {
+      console.log('Refreshing notifications (periodic)');
+      fetchNotifications();
+    }, 30000); // Refresh every 30 seconds
 
     return () => {
       console.log('إلغاء اشتراك الإشعارات');
       supabase.removeChannel(channel);
+      clearInterval(intervalId);
     };
   }, [isAuthenticated, user, fetchNotifications]);
 

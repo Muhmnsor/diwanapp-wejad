@@ -36,6 +36,8 @@ export const useTaskNotifications = () => {
         message += ` بواسطة ${params.updatedByUserName}`;
       }
       
+      console.log('Sending task status notification to:', params.assignedUserId, 'message:', message);
+      
       return await createNotification({
         title: `تحديث حالة المهمة`,
         message,
@@ -53,6 +55,13 @@ export const useTaskNotifications = () => {
   // إشعار إضافة تعليق على المهمة
   const sendTaskCommentNotification = async (params: TaskNotificationParams) => {
     try {
+      if (!params.assignedUserId) {
+        console.error('No assigned user ID provided for notification');
+        return null;
+      }
+      
+      console.log('Sending comment notification to assignee:', params.assignedUserId);
+      
       let message = `تمت إضافة تعليق جديد على المهمة "${params.taskTitle}"`;
       if (params.projectTitle) {
         message += ` في مشروع "${params.projectTitle}"`;
@@ -62,7 +71,9 @@ export const useTaskNotifications = () => {
       }
       message += `. تم تغيير حالة المهمة إلى قيد التنفيذ.`;
       
-      return await createNotification({
+      console.log('Notification message content:', message);
+      
+      const result = await createNotification({
         title: `تعليق جديد على المهمة`,
         message,
         notification_type: 'comment',
@@ -70,8 +81,11 @@ export const useTaskNotifications = () => {
         related_entity_type: params.projectId ? 'project_task' : 'task',
         user_id: params.assignedUserId
       });
+      
+      console.log('Notification creation result:', result ? 'Success' : 'Failed');
+      return result;
     } catch (error) {
-      console.error('Error sending task comment notification:', error);
+      console.error('Error sending task comment notification:', error, 'Params:', JSON.stringify(params));
       return null;
     }
   };

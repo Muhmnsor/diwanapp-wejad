@@ -20,31 +20,40 @@ export const useInAppNotifications = () => {
 
   const createNotification = async (params: CreateNotificationParams) => {
     if (!user && !params.user_id) {
-      console.log('No user ID provided for notification');
+      console.error('No user ID provided for notification');
       return null;
     }
 
     const targetUserId = params.user_id || user?.id;
+    console.log('Creating notification for user:', targetUserId);
     
     try {
       setIsCreating(true);
       
+      const notificationData = {
+        user_id: targetUserId,
+        title: params.title,
+        message: params.message,
+        notification_type: params.notification_type,
+        related_entity_id: params.related_entity_id,
+        related_entity_type: params.related_entity_type,
+        read: false
+      };
+      
+      console.log('Notification data:', notificationData);
+      
       const { data, error } = await supabase
         .from('in_app_notifications')
-        .insert({
-          user_id: targetUserId,
-          title: params.title,
-          message: params.message,
-          notification_type: params.notification_type,
-          related_entity_id: params.related_entity_id,
-          related_entity_type: params.related_entity_type,
-          read: false
-        })
+        .insert(notificationData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating notification:', error);
+        throw error;
+      }
       
+      console.log('Notification created successfully:', data);
       return data;
     } catch (error) {
       console.error('Error creating notification:', error);
