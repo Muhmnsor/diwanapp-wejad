@@ -1,33 +1,27 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TaskForm } from "./TaskForm";
+import { TaskForm } from "../project-details/TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-import { ProjectMember } from "./types/projectMember";
+import { ProjectMember } from "../project-details/types/projectMember";
 
-interface AddTaskDialogProps {
+export interface WorkspaceAddTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string;
-  projectStages: { id: string; name: string }[];
-  onTaskAdded: () => void;
-  projectMembers: ProjectMember[];
-  isGeneral?: boolean;
-  isWorkspace?: boolean;
+  workspaceId: string;
+  onTaskAdded: () => Promise<void>;
+  workspaceMembers: ProjectMember[];
 }
 
-export const AddTaskDialog = ({
+export const WorkspaceAddTaskDialog = ({
   open,
   onOpenChange,
-  projectId,
-  projectStages,
+  workspaceId,
   onTaskAdded,
-  projectMembers,
-  isGeneral = false,
-  isWorkspace = false
-}: AddTaskDialogProps) => {
+  workspaceMembers
+}: WorkspaceAddTaskDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSubmit = async (formData: {
@@ -56,19 +50,14 @@ export const AddTaskDialog = ({
         due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
         assigned_to: formData.assignedTo,
         created_at: new Date().toISOString(),
-        // For general tasks, set is_general to true and stage_id to null
-        is_general: isGeneral,
-        // For workspace tasks, set workspace_id
-        workspace_id: isWorkspace ? projectId : null,
-        // For project tasks, set project_id and stage_id
-        project_id: isGeneral || isWorkspace ? null : projectId,
-        stage_id: isGeneral || isWorkspace ? null : formData.stageId,
-        // Set category for general tasks
-        category: isGeneral ? formData.category : null,
+        workspace_id: workspaceId,
+        project_id: null,
+        stage_id: null,
+        is_general: false,
         requires_deliverable: formData.requiresDeliverable || false
       };
       
-      console.log("Inserting task with data:", taskData);
+      console.log("Inserting workspace task with data:", taskData);
       
       // Insert task into database
       const { error } = await supabase
@@ -115,12 +104,12 @@ export const AddTaskDialog = ({
         }
       }
       
-      toast.success("تمت إضافة المهمة بنجاح");
-      onTaskAdded();
+      toast.success("تمت إضافة مهمة مساحة العمل بنجاح");
+      await onTaskAdded();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error adding task:", error);
-      toast.error("حدث خطأ أثناء إضافة المهمة");
+      console.error("Error adding workspace task:", error);
+      toast.error("حدث خطأ أثناء إضافة مهمة مساحة العمل");
     } finally {
       setIsSubmitting(false);
     }
@@ -130,17 +119,15 @@ export const AddTaskDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>
-            {isGeneral ? "إضافة مهمة عامة" : isWorkspace ? "إضافة مهمة مساحة العمل" : "إضافة مهمة للمشروع"}
-          </DialogTitle>
+          <DialogTitle>إضافة مهمة لمساحة العمل</DialogTitle>
         </DialogHeader>
         <div className="p-4">
           <TaskForm
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
-            projectStages={projectStages}
-            projectMembers={projectMembers}
-            isGeneral={isGeneral}
+            projectStages={[]}
+            projectMembers={workspaceMembers}
+            isGeneral={false}
           />
         </div>
       </DialogContent>

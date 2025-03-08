@@ -1,116 +1,68 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FileEdit, Trash, Users } from "lucide-react";
-import { useState } from "react";
-import { formatDate } from "@/lib/utils";
-import { Workspace } from "@/types/workspace";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDate } from "../../project-details/utils/taskFormatters";
+import { ProjectMember } from "../../project-details/types/projectMember";
 
 interface WorkspaceHeaderProps {
-  workspace: Workspace;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  onManageMembers?: () => void;
+  workspace: {
+    id: string;
+    name: string;
+    description?: string;
+    created_at: string;
+    status?: string;
+  };
+  members: ProjectMember[];
 }
 
-export const WorkspaceHeader = ({ 
-  workspace, 
-  onEdit, 
-  onDelete,
-  onManageMembers
-}: WorkspaceHeaderProps) => {
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  
-  const getStatusColor = (status: string) => {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-800 border-green-300'
-      : 'bg-red-100 text-red-800 border-red-300';
-  };
-  
+export const WorkspaceHeader = ({ workspace, members }: WorkspaceHeaderProps) => {
   return (
-    <Card className="mb-6">
+    <Card>
       <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{workspace.name}</h1>
-              <Badge className={`${getStatusColor(workspace.status)} capitalize`}>
-                {workspace.status === 'active' ? 'نشطة' : 'غير نشطة'}
-              </Badge>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">تفاصيل مساحة العمل</h3>
+            <p className="text-sm text-gray-500 mb-4">{workspace.description || 'لا يوجد وصف'}</p>
             
-            {workspace.description && (
-              <p className="text-gray-600">{workspace.description}</p>
-            )}
-            
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-2">
-              <div>
-                <span className="font-semibold">تاريخ الإنشاء: </span>
-                {formatDate(workspace.created_at)}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">تاريخ الإنشاء:</span>
+                <span>{formatDate(workspace.created_at)}</span>
               </div>
               
-              <div>
-                <span className="font-semibold">عدد المهام: </span>
-                {workspace.total_tasks || 0}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">الحالة:</span>
+                <span>{workspace.status === 'active' ? 'نشط' : 'غير نشط'}</span>
               </div>
-              
-              <div>
-                <span className="font-semibold">المهام المكتملة: </span>
-                {workspace.completed_tasks || 0}
-              </div>
-              
-              {workspace.members_count !== undefined && (
-                <div>
-                  <span className="font-semibold">الأعضاء: </span>
-                  {workspace.members_count}
-                </div>
-              )}
             </div>
           </div>
           
-          <div className="flex gap-2 self-start">
-            {onManageMembers && (
-              <Button variant="outline" onClick={onManageMembers} size="sm" className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
-                إدارة الأعضاء
-              </Button>
-            )}
-            
-            {onEdit && (
-              <Button variant="outline" onClick={onEdit} size="sm" className="flex items-center gap-1">
-                <FileEdit className="h-4 w-4" />
-                تعديل
-              </Button>
-            )}
-            
-            {onDelete && (
-              <>
-                {showConfirmDelete ? (
-                  <div className="flex gap-2">
-                    <Button variant="destructive" size="sm" onClick={() => {
-                      onDelete();
-                      setShowConfirmDelete(false);
-                    }}>
-                      تأكيد الحذف
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setShowConfirmDelete(false)}>
-                      إلغاء
-                    </Button>
-                  </div>
-                ) : (
-                  <Button 
-                    variant="ghost" 
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50" 
-                    size="sm"
-                    onClick={() => setShowConfirmDelete(true)}
-                  >
-                    <Trash className="h-4 w-4 mr-1" />
-                    حذف
-                  </Button>
-                )}
-              </>
-            )}
+          <div>
+            <h3 className="text-lg font-medium mb-2">أعضاء مساحة العمل</h3>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {members.length > 0 ? (
+                members.map((member) => (
+                  <TooltipProvider key={member.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Avatar className="cursor-pointer">
+                          <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(member.display_name)}&background=random`} />
+                          <AvatarFallback>{member.display_name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{member.display_name}</p>
+                        <p className="text-xs text-gray-500">{member.email}</p>
+                        <p className="text-xs font-medium capitalize">{member.role}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">لا يوجد أعضاء</p>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

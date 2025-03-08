@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface SubtaskFormActionsProps {
   onCancel: () => void;
@@ -14,7 +15,14 @@ export const SubtaskFormActions = ({ onCancel, isLoading = false, isValid }: Sub
         إلغاء
       </Button>
       <Button type="submit" size="sm" disabled={isLoading || !isValid}>
-        {isLoading ? "جاري الإضافة..." : "إضافة"}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            جاري الإضافة...
+          </>
+        ) : (
+          "إضافة"
+        )}
       </Button>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProjectStages } from "./ProjectStages";
 import { AddTaskDialog } from "./AddTaskDialog";
@@ -14,12 +13,13 @@ import { EditTaskDialog } from "./EditTaskDialog";
 
 interface TasksListProps {
   projectId?: string | undefined;
+  isWorkspace?: boolean;
 }
 
 // Re-export Task interface for backward compatibility
 export type { Task };
 
-export const TasksList = ({ projectId }: TasksListProps) => {
+export const TasksList = ({ projectId, isWorkspace = false }: TasksListProps) => {
   const {
     tasks,
     isLoading,
@@ -62,7 +62,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
 
   return (
     <>
-      {!isGeneral && (
+      {!isGeneral && !isWorkspace && (
         <ProjectStages 
           projectId={projectId} 
           onStagesChange={handleStagesChange} 
@@ -106,6 +106,7 @@ export const TasksList = ({ projectId }: TasksListProps) => {
         onTaskAdded={fetchTasks}
         projectMembers={projectMembers}
         isGeneral={isGeneral}
+        isWorkspace={isWorkspace}
       />
 
       {/* Dialog for editing tasks */}
