@@ -1,6 +1,5 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,61 +91,58 @@ export const GeneralTasksReports = () => {
         <CardHeader>
           <h3 className="text-lg font-semibold">تقرير المهام العامة</h3>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="category">
-            <TabsList className="mb-4">
-              <TabsTrigger value="category">حسب التصنيف</TabsTrigger>
-              <TabsTrigger value="status">حسب الحالة</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="category">
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={categoryStats}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+        <CardContent className="space-y-8">
+          {/* By Category Chart Section */}
+          <div className="space-y-4">
+            <h4 className="text-md font-medium">توزيع المهام حسب التصنيف</h4>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={categoryStats}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={70} 
+                  />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value} مهمة`, 'العدد']} />
+                  <Legend />
+                  <Bar dataKey="count" name="عدد المهام" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          {/* By Status Chart Section */}
+          <div className="pt-4 border-t space-y-4">
+            <h4 className="text-md font-medium">توزيع المهام حسب الحالة</h4>
+            <div className="h-80 flex justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusStats}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45} 
-                      textAnchor="end" 
-                      height={70} 
-                    />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`${value} مهمة`, 'العدد']} />
-                    <Legend />
-                    <Bar dataKey="count" name="عدد المهام" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="status">
-              <div className="h-80 flex justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusStats}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="value"
-                      nameKey="name"
-                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {statusStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </TabsContent>
-          </Tabs>
+                    {statusStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
