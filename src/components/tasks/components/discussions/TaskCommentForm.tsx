@@ -6,16 +6,19 @@ import { Task } from "../../types/task";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TaskComment } from "../../types/taskComment";
+import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 
 interface TaskCommentFormProps {
   task: Task;
   onCommentAdded: (newComment?: TaskComment) => void;
+  onTaskStatusChanged?: (taskId: string, newStatus: string) => void;
 }
 
-export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) => {
+export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: TaskCommentFormProps) => {
   const [commentText, setCommentText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { sendTaskStatusUpdateNotification, sendTaskCommentNotification } = useTaskNotifications();
 
   const handleSubmitComment = async () => {
     if (!commentText.trim() && !selectedFile) return;
@@ -171,6 +174,33 @@ export const TaskCommentForm = ({ task, onCommentAdded }: TaskCommentFormProps) 
         
         // تمرير التعليق الجديد لتحديث القائمة بدون إعادة التحميل الكامل
         onCommentAdded(newComment);
+      }
+      
+      // تحديث حالة المهمة إذا كانت مكتملة
+      if (task.status === 'completed' && onTaskStatusChanged) {
+        console.log("Task is completed and has a new comment, updating status to in_progress");
+        
+        // تحديث حالة المهمة إلى قيد التنفيذ
+        await onTaskStatusChanged(task.id, 'in_progress');
+        
+        // إرسال إشعار للمكلف بالمهمة إذا كان مختلفًا عن المستخدم الحالي
+        if (task.assigned_to && task.assigned_to !== userId) {
+          // الحصول على اسم المستخدم الحالي
+          const userName = userData?.display_name || userData?.email || "مستخدم";
+          
+          // إرسال إشعار بوجود تعليق جديد وتغيير حالة المهمة
+          await sendTaskCommentNotification({
+            taskId: task.id,
+            taskTitle: task.title,
+            projectId: task.project_id,
+            projectTitle: task.project_name,
+            assignedUserId: task.assigned_to,
+            updatedByUserId: userId,
+            updatedByUserName: userName
+          });
+          
+          console.log("Notification sent to task assignee about new comment and status change");
+        }
       }
       
       // مسح حقل التعليق والملف بعد النجاح

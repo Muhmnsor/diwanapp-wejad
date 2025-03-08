@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -180,6 +179,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
+        onStatusChange={onStatusChange}
       />
       
       <TaskDependenciesDialog

@@ -1,3 +1,4 @@
+
 import { useInAppNotifications } from '@/contexts/notifications/useInAppNotifications';
 
 interface TaskNotificationParams {
@@ -59,6 +60,7 @@ export const useTaskNotifications = () => {
       if (params.updatedByUserName) {
         message += ` بواسطة ${params.updatedByUserName}`;
       }
+      message += `. تم تغيير حالة المهمة إلى قيد التنفيذ.`;
       
       return await createNotification({
         title: `تعليق جديد على المهمة`,

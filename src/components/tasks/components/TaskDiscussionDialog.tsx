@@ -11,14 +11,17 @@ import { AttachmentsByCategory } from "./metadata/AttachmentsByCategory";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw } from "lucide-react";
 import { TaskComment } from "../types/taskComment";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TaskDiscussionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task;
+  onStatusChange?: (taskId: string, status: string) => void;
 }
 
-export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussionDialogProps) => {
+export const TaskDiscussionDialog = ({ open, onOpenChange, task, onStatusChange }: TaskDiscussionDialogProps) => {
   const [newComment, setNewComment] = useState<TaskComment | undefined>(undefined);
 
   const {
@@ -46,6 +49,28 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
     // إذا تم تمرير تعليق جديد، نقوم بتحديث الحالة
     if (newComment) {
       setNewComment(newComment);
+    }
+  };
+
+  const handleTaskStatusChanged = async (taskId: string, newStatus: string) => {
+    try {
+      if (onStatusChange) {
+        // استخدام دالة تغيير الحالة المستلمة من المكون الأب
+        await onStatusChange(taskId, newStatus);
+      } else {
+        // تنفيذ تغيير الحالة مباشرة إذا لم يتم تمرير دالة من المكون الأب
+        const { error } = await supabase
+          .from('tasks')
+          .update({ status: newStatus })
+          .eq('id', taskId);
+          
+        if (error) throw error;
+        
+        toast.success("تم تحديث حالة المهمة إلى قيد التنفيذ بسبب وجود تعليق جديد");
+      }
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
     }
   };
 
@@ -80,7 +105,11 @@ export const TaskDiscussionDialog = ({ open, onOpenChange, task }: TaskDiscussio
         </div>
         
         <div className="mt-auto">
-          <TaskCommentForm task={task} onCommentAdded={handleCommentAdded} />
+          <TaskCommentForm 
+            task={task} 
+            onCommentAdded={handleCommentAdded}
+            onTaskStatusChanged={handleTaskStatusChanged} 
+          />
         </div>
       </DialogContent>
     </Dialog>

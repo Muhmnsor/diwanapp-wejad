@@ -365,6 +365,7 @@ export const TaskItem = ({
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
+        onStatusChange={onStatusChange}
       />
       
       <TaskDependenciesDialog
