@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,8 @@ import { TaskCard } from "@/components/tasks/project-details/components/TaskCard
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ProjectMember } from "@/components/tasks/project-details/hooks/useProjectMembers";
+import { ProjectMember } from "@/components/tasks/project-details/types/projectMember";
+import { useProjectMembers } from "@/components/tasks/project-details/hooks/useProjectMembers";
 
 export interface WorkspaceTasksListProps {
   workspaceId: string;

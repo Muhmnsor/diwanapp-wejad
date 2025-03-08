@@ -9,7 +9,7 @@ import { TaskAssigneeField } from "./components/TaskAssigneeField";
 import { TaskFormActions } from "./components/TaskFormActions";
 import { TaskAttachmentField } from "./components/TaskAttachmentField";
 import { TaskCategoryField } from "./components/TaskCategoryField";
-import { ProjectMember } from "./hooks/useProjectMembers";
+import { ProjectMember } from "./types/projectMember";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 

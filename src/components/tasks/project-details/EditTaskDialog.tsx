@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Task } from "./types/task";
 import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ProjectMember } from "./hooks/useProjectMembers";
+import { ProjectMember } from "./types/projectMember";
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -137,7 +136,7 @@ export const EditTaskDialog = ({
               priority: task.priority || "medium",
               stageId: task.stage_id || "",
               assignedTo: task.assigned_to || null,
-              category: task.category || "إدارية",
+              category: task.category || "غير محدد",
               requiresDeliverable: task.requires_deliverable || false
             }}
             isEditMode={true}

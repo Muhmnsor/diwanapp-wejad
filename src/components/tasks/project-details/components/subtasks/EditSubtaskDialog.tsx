@@ -5,8 +5,8 @@ import { Subtask } from "../../types/subtask";
 import { SubtaskTitleField } from "./fields/SubtaskTitleField";
 import { SubtaskDueDateField } from "./fields/SubtaskDueDateField";
 import { SubtaskAssigneeField } from "./fields/SubtaskAssigneeField";
-import { TaskFormActions } from "../TaskFormActions";
-import { ProjectMember } from "../../hooks/useProjectMembers";
+import { TaskFormActions } from "../../components/TaskFormActions";
+import { ProjectMember } from "../../types/projectMember";
 
 interface EditSubtaskDialogProps {
   open: boolean;

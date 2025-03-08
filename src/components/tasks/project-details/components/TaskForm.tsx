@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { TaskTitleField } from "./TaskTitleField";
 import { TaskDescriptionField } from "./TaskDescriptionField";
@@ -8,7 +7,10 @@ import { TaskStageField } from "./TaskStageField";
 import { TaskAssigneeField } from "./TaskAssigneeField";
 import { TaskFormActions } from "./TaskFormActions";
 import { TaskAttachmentField } from "./TaskAttachmentField";
-import { ProjectMember } from "../hooks/useProjectMembers";
+import { TaskCategoryField } from "./TaskCategoryField";
+import { ProjectMember } from "../types/projectMember";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export interface TaskFormProps {
   onSubmit: (formData: {
@@ -19,6 +21,7 @@ export interface TaskFormProps {
     stageId: string;
     assignedTo: string | null;
     attachment?: File[] | null;
+    category: string;
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
@@ -42,11 +45,11 @@ export const TaskForm = ({
   const [stageId, setStageId] = useState("");
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [localAttachment, setLocalAttachment] = useState<File[] | null>(null);
-  
-  // استخدم ملف المرفق من الخارج إذا تم توفيره
+  const [category, setCategory] = useState("");
+
   const fileAttachment = attachment !== undefined ? attachment : localAttachment;
   const setFileAttachment = setAttachment || setLocalAttachment;
-  
+
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
       setStageId(projectStages[0].id);
@@ -66,7 +69,8 @@ export const TaskForm = ({
       priority, 
       stageId,
       assignedTo,
-      attachment: fileAttachment
+      attachment: fileAttachment,
+      category
     });
   };
 
@@ -93,6 +97,8 @@ export const TaskForm = ({
         attachment={fileAttachment}
         setAttachment={setFileAttachment}
       />
+      
+      <TaskCategoryField category={category} setCategory={setCategory} />
       
       <TaskFormActions isSubmitting={isSubmitting} onCancel={() => console.log("Form cancelled")} />
     </form>

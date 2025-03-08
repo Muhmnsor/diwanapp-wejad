@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "../../project-details/TaskForm";
 import { useState } from "react";
@@ -6,7 +5,8 @@ import { uploadAttachment, saveTaskTemplate } from "../../services/uploadService
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
-import { ProjectMember } from "../../project-details/hooks/useProjectMembers";
+import { ProjectMember } from "../../project-details/types/projectMember";
+import { useProjectMembers } from "../../project-details/hooks/useProjectMembers";
 
 export function WorkspaceAddTaskDialog({ 
   open, 

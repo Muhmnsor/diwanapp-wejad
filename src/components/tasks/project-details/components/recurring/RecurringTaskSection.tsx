@@ -1,49 +1,42 @@
-
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { RecurringTasksList } from "./RecurringTasksList";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { RecurringTaskDialog } from "./RecurringTaskDialog";
-import { ProjectMember } from "../../hooks/useProjectMembers";
-import { RefreshCw } from "lucide-react";
+import { ProjectMember } from "../../types/projectMember";
 
 interface RecurringTaskSectionProps {
-  projectId?: string;
-  workspaceId?: string;
+  projectId: string;
   projectMembers: ProjectMember[];
+  onRecurringTaskAdded: () => void;
 }
 
-export const RecurringTaskSection = ({
+export const RecurringTaskSection: React.FC<RecurringTaskSectionProps> = ({
   projectId,
-  workspaceId,
-  projectMembers
-}: RecurringTaskSectionProps) => {
+  projectMembers,
+  onRecurringTaskAdded,
+}) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
+
+  const handleCreateRecurringTask = () => {
+    setIsDialogOpen(true);
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold">المهام المتكررة</h3>
-        <Button 
-          onClick={() => setIsDialogOpen(true)}
-          className="gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">المهام المتكررة</h3>
+        <Button onClick={handleCreateRecurringTask} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
           إضافة مهمة متكررة
         </Button>
       </div>
-      
-      <RecurringTasksList 
-        projectId={projectId} 
-        workspaceId={workspaceId} 
-        projectMembers={projectMembers} 
-      />
-      
-      <RecurringTaskDialog 
+
+      <RecurringTaskDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         projectId={projectId}
-        workspaceId={workspaceId}
         projectMembers={projectMembers}
+        onRecurringTaskAdded={onRecurringTaskAdded}
       />
     </div>
   );

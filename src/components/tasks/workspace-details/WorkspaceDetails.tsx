@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +5,8 @@ import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { WorkspaceOverview } from "./components/WorkspaceOverview";
 import { WorkspaceTasksList } from "./components/WorkspaceTasksList";
-import { ProjectMember } from "../project-details/hooks/useProjectMembers";
+import { ProjectMember } from "../project-details/types/projectMember";
+import { useProjectMembers } from "../project-details/hooks/useProjectMembers";
 
 const WorkspaceDetails = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();

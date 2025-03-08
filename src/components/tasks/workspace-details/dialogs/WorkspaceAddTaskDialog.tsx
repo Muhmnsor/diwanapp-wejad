@@ -1,27 +1,29 @@
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { TaskForm } from "@/components/tasks/project-details/TaskForm";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useProjectMembers, ProjectMember } from "../../project-details/hooks/useProjectMembers";
-import { TaskForm } from "../../project-details/TaskForm";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadAttachment, saveTaskTemplate } from "@/components/tasks/project-details/services/uploadService";
+import { ProjectMember } from "../../project-details/types/projectMember";
+import { useProjectMembers } from "../../project-details/hooks/useProjectMembers";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
 
 interface WorkspaceAddTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   onTaskAdded: () => void;
-  projectMembers: ProjectMember[];
 }
 
-export const WorkspaceAddTaskDialog = ({
+export function WorkspaceAddTaskDialog({
   open,
   onOpenChange,
   workspaceId,
   onTaskAdded,
-  projectMembers
-}: WorkspaceAddTaskDialogProps) => {
+}: WorkspaceAddTaskDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { projectMembers } = useProjectMembers();
+  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
 
   const handleSubmit = async (formData: {
     title: string;
@@ -34,79 +36,143 @@ export const WorkspaceAddTaskDialog = ({
     category?: string;
     requiresDeliverable?: boolean;
   }) => {
-    if (!workspaceId) {
-      toast.error("معرف مساحة العمل غير صالح");
-      return;
-    }
-
     setIsSubmitting(true);
+
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // Create task
-      const { data: newTask, error } = await supabase
+      console.log("Submitting task data:", formData);
+
+      // Create the task first
+      const taskData: any = {
+        title: formData.title,
+        description: formData.description,
+        assigned_to: formData.assignedTo,
+        due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        priority: formData.priority,
+        status: 'pending',
+        workspace_id: workspaceId,
+        category: formData.category || null,
+        requires_deliverable: formData.requiresDeliverable || false
+      };
+
+      const { data: newTask, error: taskError } = await supabase
         .from('tasks')
-        .insert({
-          title: formData.title,
-          description: formData.description,
-          due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-          priority: formData.priority,
-          assigned_to: formData.assignedTo,
-          workspace_id: workspaceId,
-          created_by: user?.id,
-          is_general: false,
-          category: formData.category,
-          requires_deliverable: formData.requiresDeliverable
-        })
+        .insert(taskData)
         .select()
         .single();
-        
-      if (error) {
-        throw error;
+
+      if (taskError) {
+        console.error("Error creating task:", taskError);
+        toast.error("Failed to create task");
+        return;
       }
-      
-      // Upload and attach templates if any
+
+      console.log("Task created successfully:", newTask);
+
+      // Send notification if task is assigned to someone
+      if (formData.assignedTo) {
+        try {
+          // Get current user info
+          const { data: { user } } = await supabase.auth.getUser();
+
+          if (user) {
+            // Get user's display name or email
+            const { data: creatorProfile } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('id', user.id)
+              .single();
+
+            const creatorName = creatorProfile?.display_name || creatorProfile?.email || user.email || 'مستخدم';
+
+            // Send the notification
+            await sendTaskAssignmentNotification({
+              taskId: newTask.id,
+              taskTitle: formData.title,
+              projectId: null, // No project ID for workspace tasks
+              projectTitle: 'مهام مساحة العمل',
+              assignedUserId: formData.assignedTo,
+              assignedByUserId: user.id,
+              assignedByUserName: creatorName
+            });
+
+            console.log('Task assignment notification sent to:', formData.assignedTo);
+          }
+        } catch (notifyError) {
+          console.error('Error sending task assignment notification:', notifyError);
+        }
+      }
+
+      // Process templates if they exist
+      let templateErrors = false;
       if (formData.templates && formData.templates.length > 0 && newTask) {
         for (const file of formData.templates) {
           try {
-            // File upload logic can be implemented here
-            // Similar to what's in TaskForm component
-          } catch (templateError) {
-            console.error("Error with template:", templateError);
+            console.log("Processing template file:", file.name);
+
+            const uploadResult = await uploadAttachment(file, 'template');
+
+            if (uploadResult?.url) {
+              console.log("Template uploaded successfully:", uploadResult.url);
+
+              try {
+                // Save the template in the task_templates table
+                await saveTaskTemplate(
+                  newTask.id,
+                  uploadResult.url,
+                  file.name,
+                  file.type
+                );
+                console.log("Task template saved successfully");
+              } catch (refError) {
+                console.error("Error saving template reference:", refError);
+                templateErrors = true;
+              }
+            } else {
+              console.error("Upload result error:", uploadResult?.error);
+              templateErrors = true;
+            }
+          } catch (uploadError) {
+            console.error("Error handling template file:", uploadError);
+            templateErrors = true;
           }
         }
       }
-      
-      toast.success("تمت إضافة المهمة بنجاح");
+
+      if (templateErrors) {
+        toast.warning("Task created, but some templates may not have uploaded correctly");
+      } else {
+        toast.success("Task added successfully");
+      }
+
       onTaskAdded();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error creating task:", error);
-      toast.error("حدث خطأ أثناء إنشاء المهمة");
+      console.error("Error submitting task:", error);
+      toast.error("An error occurred while saving the task");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Empty stages array since workspace tasks don't use stages
-  const emptyStages: { id: string; name: string }[] = [];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col rtl">
         <DialogHeader>
           <DialogTitle>إضافة مهمة جديدة</DialogTitle>
+          <DialogDescription>
+            أضف مهمة جديدة إلى مساحة العمل. اضغط إرسال عند الانتهاء.
+          </DialogDescription>
         </DialogHeader>
-        
-        <TaskForm
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-          projectStages={emptyStages}
-          projectMembers={projectMembers}
-          isGeneral={true} // Use category field like general tasks
-        />
+        <div className="flex-1 overflow-auto">
+          <TaskForm
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            projectStages={[]} // Empty for workspace tasks
+            projectMembers={projectMembers}
+            isGeneral={false}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

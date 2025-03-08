@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { TaskForm } from "./TaskForm";
 import { useState } from "react";
 import { uploadAttachment, saveTaskTemplate } from "../services/uploadService";
-import { useProjectMembers, ProjectMember } from "./hooks/useProjectMembers";
+import { useProjectMembers } from "./hooks/useProjectMembers";
+import { ProjectMember } from "./types/projectMember";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
