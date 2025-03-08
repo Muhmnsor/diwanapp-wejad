@@ -1,148 +1,166 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface TopPerformer {
   id: string;
   name: string;
-  email?: string;
-  avatarUrl?: string;
+  avatar?: string;
   stats: {
     completedTasks: number;
     completionRate: number;
     onTimeRate: number;
     averageCompletionTime: number;
+    achievements: number;
   };
-  achievements: number;
-  rank?: number;
 }
 
 export interface PerformanceCategory {
+  id: string;
   title: string;
   description: string;
   performers: TopPerformer[];
 }
 
-export const useTopPerformers = (period: 'monthly' | 'quarterly' | 'yearly' = 'monthly') => {
-  return useQuery({
-    queryKey: ['top-performers', period],
-    queryFn: async (): Promise<{
-      categories: PerformanceCategory[];
-      monthlyLeaders: TopPerformer[];
-      achievementLeaders: TopPerformer[];
-    }> => {
-      // Get all users with performance stats
-      const { data: statsData, error: statsError } = await supabase
-        .from('user_performance_stats')
-        .select(`
-          *,
-          user:user_id (
-            id,
-            email,
-            raw_user_meta_data
-          )
-        `)
-        .eq('stats_period', period);
+export const useTopPerformers = (period: 'weekly' | 'monthly' | 'quarterly' = 'monthly') => {
+  const [topPerformers, setTopPerformers] = useState<TopPerformer[]>([]);
+  const [categories, setCategories] = useState<PerformanceCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTopPerformers = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Calculate date range based on period
+        const endDate = new Date();
+        let startDate = new Date();
         
-      if (statsError) {
-        console.error("Error fetching top performers:", statsError);
-        throw statsError;
-      }
-      
-      // Fetch achievement counts for each user
-      const { data: achievementsData, error: achievementsError } = await supabase
-        .from('user_achievements')
-        .select('user_id, count')
-        .eq('stats_period', period);
-        
-      if (achievementsError) {
-        console.error("Error fetching achievements:", achievementsError);
-      }
-      
-      // Process the user data
-      const performers: TopPerformer[] = (statsData || []).map(record => {
-        const userData = record.user || {};
-        const metaData = userData.raw_user_meta_data || {};
-        const achievements = achievementsData?.find(a => a.user_id === record.user_id)?.count || 0;
-        
-        return {
-          id: record.user_id,
-          name: metaData.full_name || metaData.name || userData.email?.split('@')[0] || 'مستخدم',
-          email: userData.email,
-          avatarUrl: metaData.avatar_url,
-          stats: {
-            completedTasks: record.completed_tasks_count || 0,
-            completionRate: record.completion_rate || 0,
-            onTimeRate: record.on_time_completion_rate || 0,
-            averageCompletionTime: record.average_completion_time || 0
-          },
-          achievements: achievements
-        };
-      });
-      
-      // Sort by completion rate to get top overall performers
-      const topOverallPerformers = [...performers]
-        .sort((a, b) => b.stats.completionRate - a.stats.completionRate)
-        .slice(0, 5)
-        .map((performer, index) => ({...performer, rank: index + 1}));
-      
-      // Sort by on-time rate to get efficient performers
-      const topEfficientPerformers = [...performers]
-        .sort((a, b) => b.stats.onTimeRate - a.stats.onTimeRate)
-        .slice(0, 5)
-        .map((performer, index) => ({...performer, rank: index + 1}));
-      
-      // Sort by completion time (ascending) to get fastest performers
-      const topFastestPerformers = [...performers]
-        .filter(p => p.stats.averageCompletionTime > 0) // Filter out users with no completion time
-        .sort((a, b) => a.stats.averageCompletionTime - b.stats.averageCompletionTime)
-        .slice(0, 5)
-        .map((performer, index) => ({...performer, rank: index + 1}));
-      
-      // Sort by tasks completed to get most productive
-      const topProductivePerformers = [...performers]
-        .sort((a, b) => b.stats.completedTasks - a.stats.completedTasks)
-        .slice(0, 5)
-        .map((performer, index) => ({...performer, rank: index + 1}));
-        
-      // Sort by achievements to get achievement leaders
-      const achievementLeaders = [...performers]
-        .sort((a, b) => b.achievements - a.achievements)
-        .slice(0, 5)
-        .map((performer, index) => ({...performer, rank: index + 1}));
-      
-      // Create categories
-      const categories: PerformanceCategory[] = [
-        {
-          title: "أفضل الأداء الإجمالي",
-          description: "المستخدمون الذين لديهم أعلى نسبة إنجاز للمهام",
-          performers: topOverallPerformers
-        },
-        {
-          title: "الأكثر التزامًا بالمواعيد",
-          description: "المستخدمون الذين ينجزون مهامهم في الوقت المحدد",
-          performers: topEfficientPerformers
-        },
-        {
-          title: "الأسرع إنجازًا",
-          description: "المستخدمون الذين يكملون المهام في أقل وقت",
-          performers: topFastestPerformers
-        },
-        {
-          title: "الأكثر إنتاجية",
-          description: "المستخدمون الذين أكملوا أكبر عدد من المهام",
-          performers: topProductivePerformers
+        if (period === 'weekly') {
+          startDate.setDate(startDate.getDate() - 7);
+        } else if (period === 'monthly') {
+          startDate.setMonth(startDate.getMonth() - 1);
+        } else if (period === 'quarterly') {
+          startDate.setMonth(startDate.getMonth() - 3);
         }
-      ];
-      
-      // Return top performers data
-      return {
-        categories,
-        monthlyLeaders: topProductivePerformers,
-        achievementLeaders
-      };
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false
-  });
+        
+        // Get user performance stats from the database
+        const { data: statsData, error: statsError } = await supabase
+          .from('user_performance_stats')
+          .select(`
+            user_id,
+            completed_tasks_count,
+            completion_rate,
+            on_time_completion_rate,
+            average_completion_time
+          `)
+          .eq('stats_period', period);
+        
+        if (statsError) {
+          throw statsError;
+        }
+        
+        // Get user achievements count
+        const { data: achievementsData, error: achievementsError } = await supabase
+          .from('user_achievements')
+          .select('user_id, count')
+          .gte('achieved_at', startDate.toISOString())
+          .lt('achieved_at', endDate.toISOString())
+          .order('count', { ascending: false });
+          
+        if (achievementsError) {
+          console.error('Error fetching achievements:', achievementsError);
+        }
+        
+        // Get user profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name, email');
+          
+        if (profilesError) {
+          throw profilesError;
+        }
+        
+        // Process the data and create top performers list
+        const performers: TopPerformer[] = statsData?.map(stats => {
+          const profile = profilesData.find(p => p.id === stats.user_id) || { 
+            display_name: 'مستخدم غير معروف', 
+            email: '' 
+          };
+          
+          const achievements = achievementsData?.filter(a => a.user_id === stats.user_id)?.length || 0;
+          
+          return {
+            id: stats.user_id,
+            name: profile.display_name || profile.email || 'مستخدم',
+            stats: {
+              completedTasks: stats.completed_tasks_count || 0,
+              completionRate: stats.completion_rate || 0,
+              onTimeRate: stats.on_time_completion_rate || 0,
+              averageCompletionTime: stats.average_completion_time || 0,
+              achievements: achievements
+            }
+          };
+        }) || [];
+        
+        // Sort by most completed tasks
+        performers.sort((a, b) => b.stats.completedTasks - a.stats.completedTasks);
+        
+        // Create performance categories
+        const performanceCategories: PerformanceCategory[] = [
+          {
+            id: 'completion',
+            title: 'الأكثر إنجازاً للمهام',
+            description: 'المستخدمون الذين أنجزوا أكبر عدد من المهام',
+            performers: [...performers].sort((a, b) => b.stats.completedTasks - a.stats.completedTasks).slice(0, 3)
+          },
+          {
+            id: 'onTime',
+            title: 'الأفضل التزاماً بالمواعيد',
+            description: 'المستخدمون الأكثر التزاماً بمواعيد تسليم المهام',
+            performers: [...performers].sort((a, b) => b.stats.onTimeRate - a.stats.onTimeRate).slice(0, 3)
+          },
+          {
+            id: 'speed',
+            title: 'الأسرع في إنجاز المهام',
+            description: 'المستخدمون الذين ينجزون المهام في وقت أقل',
+            performers: [...performers].sort((a, b) => a.stats.averageCompletionTime - b.stats.averageCompletionTime).slice(0, 3)
+          },
+          {
+            id: 'productivity',
+            title: 'الأعلى إنتاجية',
+            description: 'المستخدمون ذوو معدل إكمال المهام الأعلى',
+            performers: [...performers].sort((a, b) => b.stats.completionRate - a.stats.completionRate).slice(0, 3)
+          },
+          {
+            id: 'achievements',
+            title: 'الأكثر تحقيقاً للإنجازات',
+            description: 'المستخدمون الذين حققوا أكبر عدد من الإنجازات',
+            performers: [...performers].sort((a, b) => b.stats.achievements - a.stats.achievements).slice(0, 3)
+          }
+        ];
+        
+        setTopPerformers(performers);
+        setCategories(performanceCategories);
+      } catch (error) {
+        console.error('Error fetching top performers:', error);
+        setError('حدث خطأ أثناء جلب بيانات أفضل المستخدمين');
+        toast.error('فشل في تحميل بيانات أفضل المستخدمين');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTopPerformers();
+  }, [period]);
+  
+  return {
+    topPerformers,
+    categories,
+    isLoading,
+    error
+  };
 };

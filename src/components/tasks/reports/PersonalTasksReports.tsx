@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PersonalTasksStats } from "./components/PersonalTasksStats";
@@ -111,7 +110,7 @@ export const PersonalTasksReports = () => {
     }
     
     return {
-      userName: userName || (user?.user_metadata?.name as string || "المستخدم"),
+      userName: userName || "المستخدم",
       userEmail: userEmail || (user?.email as string || ""),
       period: periodText,
       tasksStats: data.tasksStats,

@@ -1,68 +1,63 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { TopPerformer } from "../hooks/useTopPerformers";
-import { Trophy, Award, Star } from "lucide-react";
+import { Trophy, Clock, CheckCircle, Zap, Award } from "lucide-react";
 
 interface PerformerBadgeProps {
   performer: TopPerformer;
-  position: number;
-  size?: 'sm' | 'md' | 'lg';
+  category: string;
+  rank: number;
 }
 
-export const PerformerBadge = ({ performer, position, size = 'md' }: PerformerBadgeProps) => {
-  // Determine badge styling based on position
+export const PerformerBadge = ({ performer, category, rank }: PerformerBadgeProps) => {
   const getBadgeColor = () => {
-    switch (position) {
-      case 1:
-        return "bg-gradient-to-r from-amber-500 to-yellow-400 text-white";
-      case 2:
-        return "bg-gradient-to-r from-slate-400 to-slate-300 text-white";
-      case 3:
-        return "bg-gradient-to-r from-amber-700 to-amber-600 text-white";
-      default:
-        return "bg-gradient-to-r from-gray-200 to-gray-100 text-gray-700";
-    }
+    if (rank === 1) return "bg-amber-500";
+    if (rank === 2) return "bg-gray-400";
+    if (rank === 3) return "bg-amber-700";
+    return "bg-primary";
   };
-  
+
   const getBadgeIcon = () => {
-    switch (position) {
-      case 1:
-        return <Trophy className="h-4 w-4" />;
-      case 2:
-        return <Star className="h-4 w-4" />;
-      case 3:
-        return <Award className="h-4 w-4" />;
+    switch (category) {
+      case 'completion':
+        return <CheckCircle className="w-3 h-3 mr-1" />;
+      case 'onTime':
+        return <Clock className="w-3 h-3 mr-1" />;
+      case 'speed':
+        return <Zap className="w-3 h-3 mr-1" />;
+      case 'productivity':
+        return <Award className="w-3 h-3 mr-1" />;
+      case 'achievements':
+        return <Trophy className="w-3 h-3 mr-1" />;
       default:
         return null;
     }
   };
 
-  // Set size classes
-  const containerSizeClass = 
-    size === 'lg' ? 'h-20 w-20' : 
-    size === 'sm' ? 'h-14 w-14' : 
-    'h-16 w-16';
-  
-  const avatarSizeClass = 
-    size === 'lg' ? 'h-16 w-16 text-xl' : 
-    size === 'sm' ? 'h-12 w-12 text-xs' : 
-    'h-14 w-14 text-sm';
-  
-  const badgeSizeClass = 
-    size === 'lg' ? 'h-7 w-7 text-base bottom-0 right-0' : 
-    size === 'sm' ? 'h-5 w-5 text-xs bottom-0 right-0' : 
-    'h-6 w-6 text-sm bottom-0 right-0';
-  
+  const getBadgeText = () => {
+    switch (category) {
+      case 'completion':
+        return `أكمل ${performer.stats.completedTasks} مهمة`;
+      case 'onTime':
+        return `${(performer.stats.onTimeRate * 100).toFixed(0)}% في الموعد`;
+      case 'speed':
+        return `${performer.stats.averageCompletionTime.toFixed(1)} أيام للمهمة`;
+      case 'productivity':
+        return `${(performer.stats.completionRate * 100).toFixed(0)}% معدل الإكمال`;
+      case 'achievements':
+        return `${performer.stats.achievements} إنجازات`;
+      default:
+        return '';
+    }
+  };
+
   return (
-    <div className={`relative ${containerSizeClass}`}>
-      <Avatar className={`${avatarSizeClass} border-2 border-white shadow-md`}>
-        <AvatarImage src={performer.avatarUrl} alt={performer.name} />
-        <AvatarFallback className="font-bold">{performer.name.substring(0, 2)}</AvatarFallback>
-      </Avatar>
-      
-      <div className={`absolute flex items-center justify-center rounded-full ${getBadgeColor()} ${badgeSizeClass}`}>
-        {getBadgeIcon() || position}
-      </div>
-    </div>
+    <Badge 
+      className={`flex items-center ${getBadgeColor()} hover:${getBadgeColor()}`}
+      variant="secondary"
+    >
+      {getBadgeIcon()}
+      {getBadgeText()}
+    </Badge>
   );
 };
