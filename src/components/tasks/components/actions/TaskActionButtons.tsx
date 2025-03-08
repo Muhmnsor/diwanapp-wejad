@@ -15,6 +15,7 @@ interface TaskActionButtonsProps {
   onEdit?: (taskId: string) => void;
   taskId: string;
   isGeneral?: boolean;
+  requiresDeliverable?: boolean;
 }
 
 export const TaskActionButtons = ({
@@ -29,6 +30,7 @@ export const TaskActionButtons = ({
   onEdit,
   taskId,
   isGeneral,
+  requiresDeliverable,
 }: TaskActionButtonsProps) => {
   const { 
     hasNewDiscussion, 
@@ -40,12 +42,28 @@ export const TaskActionButtons = ({
   console.log("Task button states for task", taskId, {
     hasNewDiscussion,
     hasDeliverables,
-    hasTemplates
+    hasTemplates,
+    requiresDeliverable
   });
 
   const handleDiscussionClick = () => {
     resetDiscussionFlag();
     onShowDiscussion();
+  };
+
+  // Determine upload button styling based on required deliverables and current upload status
+  const getUploadButtonStyle = () => {
+    if (requiresDeliverable) {
+      if (hasDeliverables) {
+        // Required deliverables uploaded - show green success style
+        return "text-green-500 hover:text-green-600 hover:bg-green-50";
+      } else {
+        // Required deliverables not uploaded - show red warning style
+        return "text-red-500 hover:text-red-600 hover:bg-red-50";
+      }
+    }
+    // Not required - use default style
+    return "text-muted-foreground hover:text-foreground";
   };
 
   return (
@@ -68,11 +86,14 @@ export const TaskActionButtons = ({
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+          className={`text-xs flex items-center gap-1 ${getUploadButtonStyle()}`}
           onClick={onOpenFileUploader}
         >
           <Upload className="h-3.5 w-3.5" />
           رفع مستلمات
+          {requiresDeliverable && !hasDeliverables && (
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+          )}
         </Button>
 
         <Button
