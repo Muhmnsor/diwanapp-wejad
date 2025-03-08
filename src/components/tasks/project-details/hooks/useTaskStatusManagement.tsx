@@ -10,7 +10,7 @@ export const useTaskStatusManagement = (
   tasks: Task[],
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
   tasksByStage: Record<string, Task[]>,
-  setTasksByStage: (callback: (prev: Record<string, Task[]>) => Record<string, Task[]>) => void
+  setTasksByStage: React.Dispatch<React.SetStateAction<Record<string, Task[]>>>
 ) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { checkDependenciesCompleted } = useTaskDependencies("");
@@ -56,7 +56,7 @@ export const useTaskStatusManagement = (
       
       setTasks(updatedTasks);
       
-      // Update tasks by stage
+      // Update tasks by stage - use the setter function directly
       setTasksByStage(prev => {
         const newTasksByStage = { ...prev };
         

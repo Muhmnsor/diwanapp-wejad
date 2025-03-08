@@ -1,4 +1,3 @@
-
 import { useTasksFetching } from "./useTasksFetching";
 import { useTaskStatusManagement } from "./useTaskStatusManagement";
 import { useTasksState } from "./useTasksState";
@@ -24,6 +23,7 @@ export const useTasksList = (projectId: string | undefined) => {
     isLoading,
     tasksByStage,
     setTasks,
+    setTasksByStage,
     fetchTasks
   } = useTasksFetching(projectId);
 
@@ -33,11 +33,7 @@ export const useTasksList = (projectId: string | undefined) => {
     tasks,
     setTasks,
     tasksByStage,
-    setTasksByStage => {
-      // We're adapting the callback-based setter to a direct setter
-      const updaterFn = setTasksByStage;
-      return updaterFn;
-    }
+    setTasksByStage
   );
 
   // Update task function
