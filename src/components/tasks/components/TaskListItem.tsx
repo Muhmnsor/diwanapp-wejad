@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -16,6 +15,10 @@ import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import type { Task as ProjectTask } from "../project-details/types/task";
 import { handleTaskCompletion } from "./actions/handleTaskCompletion";
+import { Link2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
+import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
 
 interface TaskListItemProps {
   task: Task;
@@ -31,16 +34,25 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showDependencies, setShowDependencies] = useState(false);
   const currentStatus = task.status || "pending";
   const { sendTaskStatusUpdateNotification } = useTaskNotifications();
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
+  
+  const { dependencies, dependentTasks } = useTaskDependencies(task.id);
+  
+  const hasDependencies = dependencies.length > 0;
+  const hasDependents = dependentTasks.length > 0;
+  const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed') 
+    ? 'text-amber-500' 
+    : hasDependencies || hasDependents 
+      ? 'text-blue-500' 
+      : 'text-gray-500';
 
-  // Custom function to handle status change
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
     try {
-      // New code: handle task completion for stats and achievements
       if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
         const taskTable = task.is_subtask ? 'subtasks' : 'tasks';
         await handleTaskCompletion({
@@ -51,7 +63,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         });
       }
       
-      // Check if the task is a subtask and use the correct table
       if (task.is_subtask) {
         const { error } = await supabase
           .from('subtasks')
@@ -60,11 +71,9 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           
         if (error) throw error;
         
-        // We need to call the onStatusChange to update the UI
         onStatusChange(task.id, status);
         toast.success('تم تحديث حالة المهمة الفرعية');
         
-        // Send notification if there's an assigned user
         if (task.assigned_to && task.assigned_to !== user?.id) {
           const userData = await supabase.auth.getUser(user?.id || '');
           const userName = userData.data?.user?.email || 'مستخدم';
@@ -78,10 +87,8 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           }, status);
         }
       } else {
-        // Regular tasks use the parent component's handler
         onStatusChange(task.id, status);
         
-        // Send notification if there's an assigned user
         if (task.assigned_to && task.assigned_to !== user?.id) {
           const userData = await supabase.auth.getUser(user?.id || '');
           const userName = userData.data?.user?.email || 'مستخدم';
@@ -105,23 +112,20 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
     }
   };
 
-  // Handle edit task
   const handleEditTask = (taskId: string) => {
     setIsEditDialogOpen(true);
   };
 
-  // Handle task update completion
   const handleTaskUpdated = () => {
     if (onTaskUpdated) {
       onTaskUpdated();
     }
   };
 
-  // Convert to the ProjectTask type for EditTaskDialog
   const adaptTaskForEditDialog = (): ProjectTask => {
     return {
       ...task,
-      description: task.description || null, // Ensure description is never undefined
+      description: task.description || null,
       status: task.status || "pending",
       priority: task.priority || null,
       due_date: task.due_date || null,
@@ -133,7 +137,19 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
 
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
-      <TaskHeader task={task} status={currentStatus} />
+      <div className="flex justify-between items-start">
+        <TaskHeader task={task} status={currentStatus} />
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-0 h-7 w-7 ml-2 mt-1"
+          onClick={() => setShowDependencies(true)}
+          title="إدارة اعتماديات المهمة"
+        >
+          <Link2 className={`h-4 w-4 ${dependencyIconColor}`} />
+        </Button>
+      </div>
       
       <div className="mt-3">
         <TaskMetadata
@@ -159,14 +175,19 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         isGeneral={task.is_general}
       />
       
-      {/* Task Discussion Dialog */}
       <TaskDiscussionDialog 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
         task={task}
       />
       
-      {/* Attachments Dialog */}
+      <TaskDependenciesDialog
+        open={showDependencies}
+        onOpenChange={setShowDependencies}
+        task={task}
+        projectId={task.project_id || ''}
+      />
+      
       {task && (
         <TaskAttachmentDialog
           task={task}
@@ -175,7 +196,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         />
       )}
       
-      {/* File Upload Dialog */}
       {task && (
         <FileUploadDialog
           isOpen={isUploadDialogOpen}
@@ -184,7 +204,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         />
       )}
 
-      {/* Templates Dialog */}
       {task && (
         <TaskTemplatesDialog
           task={task}
@@ -193,7 +212,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         />
       )}
 
-      {/* Edit Task Dialog for General Tasks */}
       {task && task.is_general && (
         <EditTaskDialog
           open={isEditDialogOpen}

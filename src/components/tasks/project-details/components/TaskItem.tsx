@@ -1,4 +1,3 @@
-
 import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
@@ -62,14 +61,16 @@ export const TaskItem = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuthStore();
   
-  // Add dependencies hook
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
   
-  // Calculate dependency counts
   const hasDependencies = dependencies.length > 0;
   const hasDependents = dependentTasks.length > 0;
+  const dependencyIconColor = hasDependencies && dependencies.some(d => d.status !== 'completed') 
+    ? 'text-amber-500' 
+    : hasDependencies || hasDependents 
+      ? 'text-blue-500' 
+      : 'text-gray-500';
   
-  // جلب المرفقات الخاصة بالمكلف بالمهمة
   useEffect(() => {
     if (task.assigned_to) {
       fetchAssigneeAttachment();
@@ -78,7 +79,6 @@ export const TaskItem = ({
 
   const fetchAssigneeAttachment = async () => {
     try {
-      // البحث أولاً في جدول portfolio_task_attachments
       const { data: portfolioAttachments, error: portfolioError } = await supabase
         .from("portfolio_task_attachments")
         .select("*")
@@ -87,7 +87,6 @@ export const TaskItem = ({
         .order('created_at', { ascending: false })
         .limit(1);
 
-      // ثم البحث في جدول task_attachments
       const { data: taskAttachments, error: taskError } = await supabase
         .from("task_attachments")
         .select("*")
@@ -96,7 +95,6 @@ export const TaskItem = ({
         .order('created_at', { ascending: false })
         .limit(1);
       
-      // اختيار المرفق من أحد المصدرين
       if ((portfolioAttachments && portfolioAttachments.length > 0) || 
           (taskAttachments && taskAttachments.length > 0)) {
         
@@ -112,7 +110,6 @@ export const TaskItem = ({
   };
 
   const handleDownload = (fileUrl: string, fileName: string) => {
-    // إنشاء عنصر رابط مؤقت
     const link = document.createElement('a');
     link.href = fileUrl;
     link.target = '_blank';
@@ -176,7 +173,6 @@ export const TaskItem = ({
           return;
         }
         
-        // Check task dependencies
         const dependencyCheck = await checkDependenciesCompleted(task.id);
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);
@@ -252,21 +248,18 @@ export const TaskItem = ({
               }
             </Button>
             
-            {/* Add dependency indicator */}
-            {(hasDependencies || hasDependents) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-7 w-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDependencies(true);
-                }}
-                title="عرض اعتماديات المهمة"
-              >
-                <Link2 className={`h-4 w-4 ${hasDependencies && dependencies.some(d => d.status !== 'completed') ? 'text-amber-500' : 'text-blue-500'}`} />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-0 h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDependencies(true);
+              }}
+              title="إدارة اعتماديات المهمة"
+            >
+              <Link2 className={`h-4 w-4 ${dependencyIconColor}`} />
+            </Button>
           </div>
         </TableCell>
         <TableCell>
@@ -322,7 +315,6 @@ export const TaskItem = ({
               </Button>
             )}
             
-            {/* إضافة زر التعديل */}
             {onEdit && canEditDelete() && (
               <Button 
                 variant="ghost" 
@@ -338,7 +330,6 @@ export const TaskItem = ({
               </Button>
             )}
             
-            {/* إضافة زر الحذف */}
             {onDelete && canEditDelete() && (
               <Button 
                 variant="ghost" 
@@ -376,7 +367,6 @@ export const TaskItem = ({
         task={task}
       />
       
-      {/* Task Dependencies Dialog */}
       <TaskDependenciesDialog
         open={showDependencies}
         onOpenChange={setShowDependencies}
@@ -384,7 +374,6 @@ export const TaskItem = ({
         projectId={projectId}
       />
       
-      {/* مربع حوار تأكيد الحذف */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

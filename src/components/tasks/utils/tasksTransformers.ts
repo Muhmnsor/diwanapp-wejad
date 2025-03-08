@@ -32,7 +32,12 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
       is_subtask: false,
       assigned_to: task.assigned_to || null,
       created_at: task.created_at || new Date().toISOString(),
-      stage_id: task.stage_id || undefined
+      stage_id: task.stage_id || undefined,
+      // Add empty dependency arrays to ensure the property exists
+      dependencies: [],
+      dependent_tasks: [],
+      dependency_ids: [],
+      dependent_task_ids: []
     };
   });
 };
@@ -58,7 +63,12 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
       is_general: task.is_general || false,
       assigned_to: task.assigned_to || null,
       created_at: task.created_at || new Date().toISOString(),
-      stage_id: task.stage_id || undefined
+      stage_id: task.stage_id || undefined,
+      // Add empty dependency arrays to ensure the property exists
+      dependencies: [],
+      dependent_tasks: [],
+      dependency_ids: task.dependency_ids || [],
+      dependent_task_ids: task.dependent_task_ids || []
     };
   });
 };
@@ -114,7 +124,12 @@ export const transformSubtasks = (
       parent_task_id: subtask.task_id,
       assigned_to: subtask.assigned_to || null,
       created_at: subtask.created_at || new Date().toISOString(),
-      stage_id: subtask.stage_id || undefined
+      stage_id: subtask.stage_id || undefined,
+      // Add empty dependency arrays to ensure the property exists
+      dependencies: [],
+      dependent_tasks: [],
+      dependency_ids: subtask.dependency_ids || [],
+      dependent_task_ids: subtask.dependent_task_ids || []
     };
   });
 };
