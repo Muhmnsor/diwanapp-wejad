@@ -15,6 +15,7 @@ import { TaskDependencyBadge } from "./dependencies/TaskDependencyBadge";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
+import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 
 interface TaskCardProps {
   task: Task;
@@ -54,6 +55,9 @@ export const TaskCard = ({
   const completedDependenciesCount = dependencies.filter(dep => dep.status === 'completed').length;
   const completedDependentsCount = dependentTasks.filter(dep => dep.status === 'completed').length;
 
+  // Use our new hook for button states
+  const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
+
   const handleStatusUpdate = async (newStatus: string) => {
     if (!canEdit) {
       toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
@@ -85,6 +89,11 @@ export const TaskCard = ({
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleShowDiscussion = () => {
+    resetDiscussionFlag();
+    setShowDiscussion(true);
   };
 
   return (
@@ -158,7 +167,11 @@ export const TaskCard = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              className={`text-xs flex items-center gap-1 ${
+                hasDeliverables 
+                  ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
               onClick={() => setShowAttachments(true)}
             >
               <Paperclip className="h-3.5 w-3.5" />
@@ -168,8 +181,12 @@ export const TaskCard = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setShowDiscussion(true)}
+              className={`text-xs flex items-center gap-1 ${
+                hasNewDiscussion 
+                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={handleShowDiscussion}
             >
               <MessageCircle className="h-3.5 w-3.5" />
               مناقشة

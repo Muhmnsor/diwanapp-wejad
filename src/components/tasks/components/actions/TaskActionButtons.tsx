@@ -1,6 +1,7 @@
 
 import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 
 interface TaskActionButtonsProps {
   currentStatus: string;
@@ -29,14 +30,30 @@ export const TaskActionButtons = ({
   taskId,
   isGeneral,
 }: TaskActionButtonsProps) => {
+  const { 
+    hasNewDiscussion, 
+    hasDeliverables, 
+    hasTemplates, 
+    resetDiscussionFlag 
+  } = useTaskButtonStates(taskId);
+
+  const handleDiscussionClick = () => {
+    resetDiscussionFlag();
+    onShowDiscussion();
+  };
+
   return (
     <div className="flex justify-between items-center mt-3 pt-3 border-t">
       <div className="flex gap-2">
         <Button 
           variant="ghost" 
           size="sm" 
-          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-          onClick={onShowDiscussion}
+          className={`text-xs flex items-center gap-1 ${
+            hasNewDiscussion 
+              ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          onClick={handleDiscussionClick}
         >
           <MessageCircle className="h-3.5 w-3.5" />
           مناقشة
@@ -55,7 +72,11 @@ export const TaskActionButtons = ({
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+          className={`text-xs flex items-center gap-1 ${
+            hasDeliverables 
+              ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
           onClick={onOpenAttachments}
         >
           <Paperclip className="h-3.5 w-3.5" />
@@ -65,7 +86,11 @@ export const TaskActionButtons = ({
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+          className={`text-xs flex items-center gap-1 ${
+            hasTemplates 
+              ? "text-purple-500 hover:text-purple-600 hover:bg-purple-50" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
           onClick={onOpenTemplates}
         >
           <FileDown className="h-3.5 w-3.5" />

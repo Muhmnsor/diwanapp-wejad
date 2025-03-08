@@ -13,6 +13,7 @@ import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { usePermissionCheck } from "../hooks/usePermissionCheck";
+import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -80,6 +81,8 @@ export const TaskItem = ({
       ? 'text-blue-500' 
       : 'text-gray-500';
   
+  const { hasNewDiscussion, hasDeliverables, hasTemplates, resetDiscussionFlag } = useTaskButtonStates(task.id);
+
   useEffect(() => {
     if (task.assigned_to) {
       fetchAssigneeAttachment();
@@ -224,6 +227,11 @@ export const TaskItem = ({
     );
   };
 
+  const handleShowDiscussion = () => {
+    resetDiscussionFlag();
+    setShowDiscussion(true);
+  };
+
   return (
     <>
       <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
@@ -288,28 +296,36 @@ export const TaskItem = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="p-0 h-7 w-7"
+              className={`p-0 h-7 w-7 ${
+                hasNewDiscussion 
+                  ? "text-orange-500 hover:text-orange-600 hover:bg-orange-50" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                setShowDiscussion(true);
+                handleShowDiscussion();
               }}
               title="مناقشة المهمة"
             >
-              <MessageCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              <MessageCircle className="h-4 w-4" />
             </Button>
             
             {assigneeAttachment && (
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="p-0 h-7 w-7"
+                className={`p-0 h-7 w-7 ${
+                  hasDeliverables
+                    ? "text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name);
                 }}
                 title="تنزيل مرفق المكلف"
               >
-                <Download className="h-4 w-4 text-blue-500 hover:text-blue-700" />
+                <Download className="h-4 w-4" />
               </Button>
             )}
             
