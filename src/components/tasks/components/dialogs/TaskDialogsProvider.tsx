@@ -5,8 +5,8 @@ import { TaskDiscussionDialog } from "../TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "../dialogs/TaskAttachmentDialog";
 import { FileUploadDialog } from "../dialogs/FileUploadDialog";
 import { TaskTemplatesDialog } from "../dialogs/TaskTemplatesDialog";
-import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
 import { EditTaskDialog } from "../../project-details/EditTaskDialog";
+import { TaskDependenciesDialog } from "../../project-details/components/dependencies/TaskDependenciesDialog";
 import type { Task as ProjectTask } from "../../project-details/types/task";
 
 interface TaskDialogsProviderProps {
