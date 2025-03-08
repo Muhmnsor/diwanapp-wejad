@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,13 +64,14 @@ export const TasksRecurring = () => {
         setIsAdmin(isAdminData || false);
         console.log("Is admin:", isAdminData);
 
+        // Simplified query to avoid join issues
         const { data, error } = await supabase
           .from('recurring_tasks')
           .select(`
             *,
-            project_tasks(name),
-            workspaces(name),
-            profiles!recurring_tasks_assign_to_fkey(display_name)
+            projects:project_id (name),
+            workspaces:workspace_id (name),
+            assignee:assign_to (display_name)
           `)
           .order('created_at', { ascending: false });
 
@@ -82,9 +84,9 @@ export const TasksRecurring = () => {
         
         const formattedTasks = data.map(task => ({
           ...task,
-          project_name: task.project_tasks?.name,
+          project_name: task.projects?.name,
           workspace_name: task.workspaces?.name,
-          assignee_name: task.profiles?.display_name,
+          assignee_name: task.assignee?.display_name,
         }));
 
         setRecurringTasks(formattedTasks);
@@ -165,13 +167,14 @@ export const TasksRecurring = () => {
       console.log('Generate tasks response:', data);
       toast.success(`تم إنشاء ${data.tasksCreated} مهمة بنجاح`);
       
+      // Simplified refresh query to match the format above
       const { data: refreshedData, error: refreshError } = await supabase
         .from('recurring_tasks')
         .select(`
           *,
-          project_tasks(name),
-          workspaces(name),
-          profiles!recurring_tasks_assign_to_fkey(display_name)
+          projects:project_id (name),
+          workspaces:workspace_id (name),
+          assignee:assign_to (display_name)
         `)
         .order('created_at', { ascending: false });
 
@@ -179,9 +182,9 @@ export const TasksRecurring = () => {
 
       const formattedTasks = refreshedData.map(task => ({
         ...task,
-        project_name: task.project_tasks?.name,
+        project_name: task.projects?.name,
         workspace_name: task.workspaces?.name,
-        assignee_name: task.profiles?.display_name,
+        assignee_name: task.assignee?.display_name,
       }));
 
       setRecurringTasks(formattedTasks);
