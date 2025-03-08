@@ -2,12 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Task } from "../../../types/task";
+import { DependencyType } from "../../types/dependency";
 
 interface DependencyListItemProps {
   task: Task;
   onRemove: (dependencyId: string) => void;
   getStatusBadge: (status: string) => JSX.Element;
-  dependencyType?: string;
+  dependencyType?: DependencyType;
 }
 
 export const DependencyListItem = ({ 
@@ -17,7 +18,7 @@ export const DependencyListItem = ({
   dependencyType
 }: DependencyListItemProps) => {
   // Function to display dependency type in a user-friendly way
-  const getDependencyTypeLabel = (type?: string) => {
+  const getDependencyTypeLabel = (type?: DependencyType) => {
     if (!type) return "";
     
     switch (type) {

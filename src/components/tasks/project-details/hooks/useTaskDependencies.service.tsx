@@ -2,10 +2,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "../types/task";
-import { DependencyType } from "./useTaskDependencies";
+import { DependencyType, DependencyData } from "../types/dependency";
 
 // Fetch raw dependencies data from the task_dependencies table
-export const fetchRawDependencies = async (taskId: string) => {
+export const fetchRawDependencies = async (taskId: string): Promise<DependencyData[]> => {
   console.log("Fetching raw dependencies for task:", taskId);
   
   const { data, error } = await supabase
@@ -23,7 +23,7 @@ export const fetchRawDependencies = async (taskId: string) => {
 };
 
 // Fetch raw dependent tasks data from the task_dependencies table
-export const fetchRawDependentTasks = async (taskId: string) => {
+export const fetchRawDependentTasks = async (taskId: string): Promise<DependencyData[]> => {
   console.log("Fetching raw dependent tasks for task:", taskId);
   
   const { data, error } = await supabase
@@ -85,7 +85,7 @@ export const fetchTasksData = async (taskIds: string[], rawDependenciesMap?: Rec
 export const addTaskDependency = async (
   taskId: string, 
   dependencyTaskId: string, 
-  dependencyType: 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish' = 'finish-to-start'
+  dependencyType: DependencyType = 'finish-to-start'
 ) => {
   console.log(`Adding dependency: Task ${taskId} depends on ${dependencyTaskId} with type ${dependencyType}`);
   

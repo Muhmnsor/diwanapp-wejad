@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Task } from "../../../types/task";
+import { DependencyType } from "../../types/dependency";
 
 interface DependencySelectorProps {
   availableTasks: Task[];
@@ -12,8 +13,8 @@ interface DependencySelectorProps {
   onSelectedTaskChange: (taskId: string) => void;
   onAddDependency: () => void;
   isAdding: boolean;
-  dependencyType: string;
-  onDependencyTypeChange: (type: string) => void;
+  dependencyType: DependencyType;
+  onDependencyTypeChange: (type: DependencyType) => void;
 }
 
 export const DependencySelector = ({
@@ -56,7 +57,11 @@ export const DependencySelector = ({
           </div>
           
           <div className="flex gap-2">
-            <Select value={dependencyType} onValueChange={onDependencyTypeChange} defaultValue="finish-to-start">
+            <Select 
+              value={dependencyType} 
+              onValueChange={(value) => onDependencyTypeChange(value as DependencyType)} 
+              defaultValue="finish-to-start"
+            >
               <SelectTrigger className="flex-1">
                 <SelectValue placeholder="نوع الاعتمادية" />
               </SelectTrigger>

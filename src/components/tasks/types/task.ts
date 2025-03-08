@@ -1,4 +1,6 @@
 
+import { DependencyType } from "../project-details/types/dependency";
+
 export interface Task {
   id: string;
   title: string;
@@ -30,5 +32,5 @@ export interface Task {
   dependency_ids?: string[];
   dependent_task_ids?: string[];
   // Dependency type
-  dependency_type?: string;
+  dependency_type?: DependencyType;
 }

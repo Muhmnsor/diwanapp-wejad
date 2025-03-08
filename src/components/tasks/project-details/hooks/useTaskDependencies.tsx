@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Task } from "../types/task";
+import { DependencyType, DependencyData } from "../types/dependency";
 import {
   fetchRawDependencies,
   fetchRawDependentTasks,
@@ -12,19 +12,11 @@ import {
   fetchAvailableTasks
 } from "./useTaskDependencies.service";
 
-export interface DependencyType {
-  id: string;
-  task_id: string;
-  dependency_task_id: string;
-  dependency_type: 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish';
-  created_at: string;
-}
-
 export const useTaskDependencies = (taskId: string | undefined) => {
   const [dependencies, setDependencies] = useState<Task[]>([]);
   const [dependentTasks, setDependentTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [rawDependencies, setRawDependencies] = useState<DependencyType[]>([]);
+  const [rawDependencies, setRawDependencies] = useState<DependencyData[]>([]);
 
   const fetchDependencies = async () => {
     if (!taskId) return;
@@ -71,7 +63,7 @@ export const useTaskDependencies = (taskId: string | undefined) => {
   // Add dependency between tasks
   const addDependency = async (
     dependencyTaskId: string, 
-    dependencyType: 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish' = 'finish-to-start'
+    dependencyType: DependencyType = 'finish-to-start'
   ) => {
     if (!taskId || !dependencyTaskId) {
       console.error("Missing taskId or dependencyTaskId", { taskId, dependencyTaskId });

@@ -10,6 +10,7 @@ import { DependencySelector } from "./DependencySelector";
 import { DependencyList } from "./DependencyList";
 import { DependencyWarning } from "./DependencyWarning";
 import { fetchAvailableTasks } from "../../hooks/useTaskDependencies.service";
+import { DependencyType } from "../../types/dependency";
 
 interface TaskDependenciesDialogProps {
   open: boolean;
@@ -35,7 +36,7 @@ export const TaskDependenciesDialog = ({
   
   const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
-  const [dependencyType, setDependencyType] = useState<string>("finish-to-start");
+  const [dependencyType, setDependencyType] = useState<DependencyType>("finish-to-start");
   const [isAdding, setIsAdding] = useState(false);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   
