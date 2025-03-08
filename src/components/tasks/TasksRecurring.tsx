@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, Check, Clock, Pause, Play, Repeat, Trash, Edit } from "lucide-react";
+import { Calendar, Check, Clock, Pause, Play, Repeat, Trash } from "lucide-react";
 import { formatDate } from "@/utils/dateUtils";
 
 interface RecurringTask {
@@ -196,9 +195,9 @@ export const TasksRecurring = () => {
       <div className="flex justify-between items-center">
         <Tabs defaultValue="all" className="w-full max-w-md" onValueChange={setActiveFilter}>
           <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="all">جميع المهام</TabsTrigger>
-            <TabsTrigger value="active">نشطة</TabsTrigger>
             <TabsTrigger value="paused">متوقفة</TabsTrigger>
+            <TabsTrigger value="active">نشطة</TabsTrigger>
+            <TabsTrigger value="all">جميع المهام</TabsTrigger>
           </TabsList>
         </Tabs>
 
