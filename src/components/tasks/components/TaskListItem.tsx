@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -137,13 +138,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
 
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-row-reverse justify-between items-start">
         <TaskHeader task={task} status={currentStatus} />
         
         <Button
           variant="ghost"
           size="sm"
-          className="p-0 h-7 w-7 ml-2 mt-1"
+          className="p-0 h-7 w-7 mr-2 mt-1"
           onClick={() => setShowDependencies(true)}
           title="إدارة اعتماديات المهمة"
         >

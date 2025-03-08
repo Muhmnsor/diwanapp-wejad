@@ -12,12 +12,12 @@ interface TaskHeaderProps {
 
 export const TaskHeader = ({ task, status }: TaskHeaderProps) => {
   return (
-    <div className="flex justify-between items-start">
-      <div>
+    <div className="flex flex-row-reverse justify-between items-start">
+      <div className="text-right">
         {task.is_subtask && (
-          <div className="flex items-center gap-1 mb-1">
-            <GitMerge className="h-4 w-4 text-blue-500" />
+          <div className="flex items-center gap-1 mb-1 justify-end">
             <Badge variant="outline" className="text-xs bg-blue-50">مهمة فرعية</Badge>
+            <GitMerge className="h-4 w-4 text-blue-500" />
           </div>
         )}
         <h3 className="font-semibold text-lg">{task.title}</h3>
