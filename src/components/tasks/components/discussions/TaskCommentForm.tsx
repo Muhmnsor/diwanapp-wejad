@@ -186,6 +186,12 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
         // إرسال إشعار للمكلف بالمهمة إذا كان مختلفًا عن المستخدم الحالي
         if (task.assigned_to && task.assigned_to !== userId) {
           // الحصول على اسم المستخدم الحالي
+          const { data: userData } = await supabase
+            .from("profiles")
+            .select("display_name, email")
+            .eq("id", userId)
+            .single();
+            
           const userName = userData?.display_name || userData?.email || "مستخدم";
           
           // إرسال إشعار بوجود تعليق جديد وتغيير حالة المهمة
