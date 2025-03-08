@@ -38,7 +38,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
   
-  const { dependencies, dependentTasks } = useTaskDependencies(task.id);
+  const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
   
   const hasDependencies = dependencies.length > 0;
   const hasDependents = dependentTasks.length > 0;

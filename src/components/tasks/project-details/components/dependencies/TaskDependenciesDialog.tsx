@@ -11,6 +11,8 @@ import { DependencyList } from "./DependencyList";
 import { DependencyWarning } from "./DependencyWarning";
 import { fetchAvailableTasks } from "../../hooks/useTaskDependencies.service";
 import { DependencyType } from "../../types/dependency";
+import { useAuthStore } from "@/store/authStore";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskDependenciesDialogProps {
   open: boolean;
@@ -34,11 +36,88 @@ export const TaskDependenciesDialog = ({
     isLoading: isDependenciesLoading 
   } = useTaskDependencies(task.id);
   
+  const { user } = useAuthStore();
+  const [canManageDependencies, setCanManageDependencies] = useState(false);
   const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
   const [dependencyType, setDependencyType] = useState<DependencyType>("finish-to-start");
   const [isAdding, setIsAdding] = useState(false);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!user) {
+        setCanManageDependencies(false);
+        return;
+      }
+      
+      // Check if user is admin or has admin role
+      if (user.isAdmin) {
+        setCanManageDependencies(true);
+        return;
+      }
+      
+      // Check if user is the project manager (for project tasks)
+      if (projectId) {
+        try {
+          const { data: projectData, error } = await supabase
+            .from('project_tasks')
+            .select('project_manager')
+            .eq('id', projectId)
+            .single();
+          
+          if (!error && projectData && projectData.project_manager === user.id) {
+            setCanManageDependencies(true);
+            return;
+          }
+        } catch (error) {
+          console.error("Error checking project manager:", error);
+        }
+      }
+      
+      // Check if user has specific dependency management permission
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role_id')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (roleError || !roleData) {
+          setCanManageDependencies(false);
+          return;
+        }
+        
+        const { data: permissionsData, error: permError } = await supabase
+          .from('role_permissions')
+          .select('permission_id')
+          .eq('role_id', roleData.role_id);
+          
+        if (permError || !permissionsData) {
+          setCanManageDependencies(false);
+          return;
+        }
+        
+        const permissionIds = permissionsData.map(p => p.permission_id);
+        
+        // Check for dependency management permission
+        const { data: dependencyPermission, error: dpError } = await supabase
+          .from('permissions')
+          .select('id')
+          .eq('name', 'manage_task_dependencies')
+          .in('id', permissionIds);
+          
+        setCanManageDependencies(dependencyPermission && dependencyPermission.length > 0);
+      } catch (error) {
+        console.error("Error checking permissions:", error);
+        setCanManageDependencies(false);
+      }
+    };
+    
+    if (open) {
+      checkPermissions();
+    }
+  }, [open, user, projectId]);
   
   useEffect(() => {
     if (open && projectId) {
@@ -65,6 +144,11 @@ export const TaskDependenciesDialog = ({
       return;
     }
     
+    if (!canManageDependencies) {
+      toast.error("ليس لديك صلاحية لإدارة اعتماديات المهام");
+      return;
+    }
+    
     setIsAdding(true);
     try {
       const result = await addDependency(selectedTaskId, dependencyType);
@@ -84,6 +168,11 @@ export const TaskDependenciesDialog = ({
   };
   
   const handleRemoveDependency = async (dependencyId: string) => {
+    if (!canManageDependencies) {
+      toast.error("ليس لديك صلاحية لإدارة اعتماديات المهام");
+      return;
+    }
+    
     try {
       await removeDependency(dependencyId);
       await loadAvailableTasks(); // Refresh the list
@@ -131,16 +220,22 @@ export const TaskDependenciesDialog = ({
         </DialogHeader>
         
         <div className="space-y-4 mt-4">
-          <DependencySelector
-            availableTasks={availableTasks}
-            isLoadingTasks={isLoadingTasks}
-            selectedTaskId={selectedTaskId}
-            onSelectedTaskChange={setSelectedTaskId}
-            onAddDependency={handleAddDependency}
-            isAdding={isAdding}
-            dependencyType={dependencyType}
-            onDependencyTypeChange={setDependencyType}
-          />
+          {canManageDependencies ? (
+            <DependencySelector
+              availableTasks={availableTasks}
+              isLoadingTasks={isLoadingTasks}
+              selectedTaskId={selectedTaskId}
+              onSelectedTaskChange={setSelectedTaskId}
+              onAddDependency={handleAddDependency}
+              isAdding={isAdding}
+              dependencyType={dependencyType}
+              onDependencyTypeChange={setDependencyType}
+            />
+          ) : (
+            <div className="text-amber-500 text-sm p-2 bg-amber-50 rounded border border-amber-200">
+              لا تملك صلاحية إدارة اعتماديات المهام. فقط المشرف على النظام أو مدير المشروع يمكنه ذلك.
+            </div>
+          )}
           
           <Separator />
           
@@ -149,7 +244,7 @@ export const TaskDependenciesDialog = ({
             tasks={dependencies}
             isLoading={isDependenciesLoading}
             emptyMessage="لا توجد اعتماديات حالياً"
-            onRemove={handleRemoveDependency}
+            onRemove={canManageDependencies ? handleRemoveDependency : undefined}
             getStatusBadge={getStatusBadge}
           />
           

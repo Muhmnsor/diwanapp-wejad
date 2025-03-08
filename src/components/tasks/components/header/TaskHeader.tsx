@@ -5,6 +5,9 @@ import { TaskPriorityBadge } from "../priority/TaskPriorityBadge";
 import { TaskStatusBadge } from "../status/TaskStatusBadge";
 import { Task } from "../../types/task";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/authStore";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskHeaderProps {
   task: Task;
@@ -21,6 +24,82 @@ export const TaskHeader = ({
   hasDependencies = false,
   dependencyIconColor = 'text-gray-500'
 }: TaskHeaderProps) => {
+  const { user } = useAuthStore();
+  const [canManageDependencies, setCanManageDependencies] = useState(false);
+  
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!user) {
+        setCanManageDependencies(false);
+        return;
+      }
+      
+      // Check if user is admin or has admin role
+      if (user.isAdmin) {
+        setCanManageDependencies(true);
+        return;
+      }
+      
+      // Check if user is the project manager (for project tasks)
+      if (task.project_id) {
+        try {
+          const { data: projectData, error } = await supabase
+            .from('project_tasks')
+            .select('project_manager')
+            .eq('id', task.project_id)
+            .single();
+          
+          if (!error && projectData && projectData.project_manager === user.id) {
+            setCanManageDependencies(true);
+            return;
+          }
+        } catch (error) {
+          console.error("Error checking project manager:", error);
+        }
+      }
+      
+      // Check if user has specific dependency management permission
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role_id')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (roleError || !roleData) {
+          setCanManageDependencies(false);
+          return;
+        }
+        
+        const { data: permissionsData, error: permError } = await supabase
+          .from('role_permissions')
+          .select('permission_id')
+          .eq('role_id', roleData.role_id);
+          
+        if (permError || !permissionsData) {
+          setCanManageDependencies(false);
+          return;
+        }
+        
+        const permissionIds = permissionsData.map(p => p.permission_id);
+        
+        // Check for dependency management permission
+        const { data: dependencyPermission, error: dpError } = await supabase
+          .from('permissions')
+          .select('id')
+          .eq('name', 'manage_task_dependencies')
+          .in('id', permissionIds);
+          
+        setCanManageDependencies(dependencyPermission && dependencyPermission.length > 0);
+      } catch (error) {
+        console.error("Error checking permissions:", error);
+        setCanManageDependencies(false);
+      }
+    };
+    
+    checkPermissions();
+  }, [user, task.project_id]);
+  
   return (
     <div className="flex justify-between items-start w-full">
       <div className="max-w-[70%]">
@@ -32,7 +111,7 @@ export const TaskHeader = ({
         )}
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-lg">{task.title}</h3>
-          {onShowDependencies && (
+          {onShowDependencies && canManageDependencies && (
             <Button
               variant="ghost"
               size="sm"
