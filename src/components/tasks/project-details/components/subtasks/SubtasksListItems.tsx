@@ -8,17 +8,13 @@ interface SubtasksListItemsProps {
   onUpdateStatus: (subtaskId: string, newStatus: string) => Promise<void>;
   onDelete: (subtaskId: string) => Promise<void>;
   onEdit: (subtask: Subtask) => void;
-  projectId?: string | null;
-  workspaceId?: string | null;
 }
 
 export const SubtasksListItems: React.FC<SubtasksListItemsProps> = ({ 
   subtasks, 
   onUpdateStatus, 
   onDelete,
-  onEdit,
-  projectId,
-  workspaceId
+  onEdit
 }) => {
   if (subtasks.length === 0) return null;
 
@@ -31,8 +27,6 @@ export const SubtasksListItems: React.FC<SubtasksListItemsProps> = ({
           onUpdateStatus={onUpdateStatus}
           onDelete={onDelete}
           onEdit={onEdit}
-          projectId={projectId}
-          workspaceId={workspaceId}
         />
       ))}
     </div>

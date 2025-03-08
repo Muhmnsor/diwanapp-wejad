@@ -16,8 +16,6 @@ interface CategoryTasksProps {
   onStatusChange: (taskId: string, status: string) => void;
   onDelete?: (taskId: string) => void;
   onTaskUpdated?: () => void;
-  projectId?: string;
-  workspaceId?: string;
 }
 
 export const CategoryTasks = ({ 
@@ -25,9 +23,7 @@ export const CategoryTasks = ({
   tasks, 
   onStatusChange, 
   onDelete,
-  onTaskUpdated,
-  projectId,
-  workspaceId
+  onTaskUpdated
 }: CategoryTasksProps) => {
   if (!tasks || tasks.length === 0) return null;
 
@@ -98,8 +94,7 @@ export const CategoryTasks = ({
                 getPriorityBadge={getPriorityBadge}
                 formatDate={formatDate}
                 onStatusChange={onStatusChange}
-                projectId={projectId || ''}
-                workspaceId={workspaceId || ''}
+                projectId={task.project_id || ''}
                 onEdit={() => onTaskUpdated && onTaskUpdated()}
                 onDelete={onDelete}
               />

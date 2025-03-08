@@ -14,7 +14,6 @@ interface TaskActionButtonsProps {
   onEdit?: (taskId: string) => void;
   taskId: string;
   isGeneral?: boolean;
-  canEdit: boolean;
 }
 
 export const TaskActionButtons = ({
@@ -29,7 +28,6 @@ export const TaskActionButtons = ({
   onEdit,
   taskId,
   isGeneral,
-  canEdit,
 }: TaskActionButtonsProps) => {
   return (
     <div className="flex justify-between items-center mt-3 pt-3 border-t">
@@ -77,7 +75,7 @@ export const TaskActionButtons = ({
       
       <div className="flex gap-2">
         {/* Edit button for general tasks */}
-        {isGeneral && onEdit && canEdit && (
+        {isGeneral && onEdit && (
           <Button 
             variant="outline" 
             size="sm" 
@@ -90,33 +88,31 @@ export const TaskActionButtons = ({
         )}
         
         {/* Status change buttons */}
-        {canEdit && (
-          currentStatus !== "completed" ? (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs flex items-center gap-1"
-              onClick={() => onStatusChange("completed")}
-              disabled={isUpdating}
-            >
-              <Check className="h-3.5 w-3.5 text-green-500" />
-              تمت
-            </Button>
-          ) : (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs flex items-center gap-1"
-              onClick={() => onStatusChange("pending")}
-              disabled={isUpdating}
-            >
-              <Clock className="h-3.5 w-3.5 text-amber-500" />
-              قيد التنفيذ
-            </Button>
-          )
+        {currentStatus !== "completed" ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs flex items-center gap-1"
+            onClick={() => onStatusChange("completed")}
+            disabled={isUpdating}
+          >
+            <Check className="h-3.5 w-3.5 text-green-500" />
+            تمت
+          </Button>
+        ) : (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs flex items-center gap-1"
+            onClick={() => onStatusChange("pending")}
+            disabled={isUpdating}
+          >
+            <Clock className="h-3.5 w-3.5 text-amber-500" />
+            قيد التنفيذ
+          </Button>
         )}
         
-        {onDelete && canEdit && (
+        {onDelete && (
           <Button 
             variant="outline" 
             size="sm" 
@@ -126,12 +122,6 @@ export const TaskActionButtons = ({
             <XCircle className="h-3.5 w-3.5" />
             حذف
           </Button>
-        )}
-        
-        {!canEdit && (
-          <div className="text-xs italic text-gray-400 px-2">
-            مقيد الصلاحيات
-          </div>
         )}
       </div>
     </div>
