@@ -17,7 +17,6 @@ import type { Task as ProjectTask } from "../project-details/types/task";
 import { handleTaskCompletion } from "./actions/handleTaskCompletion";
 import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
-import { usePermissionCheck } from "../project-details/hooks/usePermissionCheck";
 
 interface TaskListItemProps {
   task: Task;
@@ -49,18 +48,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
       ? 'text-blue-500' 
       : 'text-gray-500';
 
-  const { canEdit } = usePermissionCheck({ 
-    assignedTo: task.assigned_to,
-    projectId: task.project_id || '',
-    workspaceId: task.workspace_id
-  });
-
   const handleStatusChange = async (status: string) => {
-    if (!canEdit && user?.id !== task.assigned_to) {
-      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها أو مدير المشروع");
-      return;
-    }
-
     setIsUpdating(true);
     try {
       if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
@@ -123,10 +111,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   };
 
   const handleEditTask = (taskId: string) => {
-    if (!canEdit) {
-      toast.error("لا يمكنك تعديل المهمة لأنك لست مدير المشروع أو مدير المساحة أو مدير النظام");
-      return;
-    }
     setIsEditDialogOpen(true);
   };
 
@@ -179,8 +163,8 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
         onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
         onStatusChange={handleStatusChange}
-        onDelete={onDelete && canEdit ? onDelete : undefined}
-        onEdit={canEdit ? handleEditTask : undefined}
+        onDelete={onDelete}
+        onEdit={handleEditTask}
         taskId={task.id}
         isGeneral={task.is_general}
       />

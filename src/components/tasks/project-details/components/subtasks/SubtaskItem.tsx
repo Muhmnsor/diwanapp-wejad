@@ -1,3 +1,4 @@
+
 import { Check, Clock, Trash, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -16,11 +17,7 @@ interface SubtaskItemProps {
 export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete, onEdit }: SubtaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { canEdit } = usePermissionCheck({ 
-    assignedTo: subtask.assigned_to,
-    projectId: subtask.project_id,
-    workspaceId: subtask.workspace_id
-  });
+  const { canEdit } = usePermissionCheck({ assignedTo: subtask.assigned_to });
   
   const handleStatusUpdate = async (newStatus: string) => {
     if (!canEdit) return;

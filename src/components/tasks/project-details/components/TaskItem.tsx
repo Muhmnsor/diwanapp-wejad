@@ -12,7 +12,6 @@ import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
-import { usePermissionCheck } from "@/hooks/usePermissionCheck";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -72,12 +71,6 @@ export const TaskItem = ({
       ? 'text-blue-500' 
       : 'text-gray-500';
   
-  const { canEdit } = usePermissionCheck({ 
-    assignedTo: task.assigned_to,
-    projectId: task.project_id || projectId,
-    workspaceId: task.workspace_id
-  });
-  
   useEffect(() => {
     if (task.assigned_to) {
       fetchAssigneeAttachment();
@@ -129,12 +122,17 @@ export const TaskItem = ({
   const canChangeStatus = () => {
     return (
       user?.id === task.assigned_to || 
-      canEdit
+      user?.isAdmin || 
+      user?.role === 'admin'
     );
   };
 
   const canEditDelete = () => {
-    return canEdit;
+    return (
+      user?.id === task.assigned_to || 
+      user?.isAdmin || 
+      user?.role === 'admin'
+    );
   };
 
   const handleDelete = async () => {
