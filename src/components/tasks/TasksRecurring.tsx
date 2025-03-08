@@ -32,6 +32,10 @@ interface RecurringTask {
   workspace_name?: string | null;
   assignee_name?: string | null;
   requires_deliverable?: boolean;
+  // Properly type the joined tables results
+  projects?: { title: string } | null;
+  workspaces?: { name: string } | null;
+  profiles?: { display_name: string } | null;
 }
 
 export const TasksRecurring = () => {
@@ -86,10 +90,10 @@ export const TasksRecurring = () => {
             last_generated_date,
             next_generation_date,
             requires_deliverable,
-            projects:project_id (
+            projects (
               title
             ),
-            workspaces:workspace_id (
+            workspaces (
               name
             ),
             profiles:assign_to (
@@ -106,11 +110,12 @@ export const TasksRecurring = () => {
 
         console.log("Recurring tasks raw data:", data);
         
+        // Fix the mapping to handle nested objects correctly
         const formattedTasks = data.map(task => ({
           ...task,
-          project_name: task.projects?.title,
-          workspace_name: task.workspaces?.name,
-          assignee_name: task.profiles?.display_name,
+          project_name: task.projects ? task.projects.title : null,
+          workspace_name: task.workspaces ? task.workspaces.name : null,
+          assignee_name: task.profiles ? task.profiles.display_name : null,
         }));
 
         console.log("Formatted recurring tasks:", formattedTasks);
@@ -223,10 +228,10 @@ export const TasksRecurring = () => {
           last_generated_date,
           next_generation_date,
           requires_deliverable,
-          projects:project_id (
+          projects (
             title
           ),
-          workspaces:workspace_id (
+          workspaces (
             name
           ),
           profiles:assign_to (
@@ -240,11 +245,12 @@ export const TasksRecurring = () => {
         throw refreshError;
       }
 
+      // Fix the mapping to handle nested objects correctly
       const formattedTasks = refreshedData.map(task => ({
         ...task,
-        project_name: task.projects?.title,
-        workspace_name: task.workspaces?.name,
-        assignee_name: task.profiles?.display_name,
+        project_name: task.projects ? task.projects.title : null,
+        workspace_name: task.workspaces ? task.workspaces.name : null,
+        assignee_name: task.profiles ? task.profiles.display_name : null,
       }));
 
       setRecurringTasks(formattedTasks);
