@@ -28,5 +28,6 @@ enabled = true
 [functions]
 enabled = true
 
-[functions.generate-recurring-tasks]
+[[functions.function]]
+name = "generate-recurring-tasks"
 verify_jwt = true
