@@ -2,12 +2,12 @@
 export interface Task {
   id: string;
   title: string;
-  description?: string | null;
-  status?: string;
-  priority?: string;
-  due_date?: string | null;
-  assigned_to?: string | null;
-  created_at?: string;
+  description: string | null;
+  status: string;
+  priority: string | null;
+  due_date: string | null;
+  assigned_to: string | null;
+  created_at: string;
   updated_at?: string;
   is_subtask?: boolean;
   parent_task_id?: string | null;
@@ -21,6 +21,8 @@ export interface Task {
   templates?: Array<{ url: string }> | null;
   category?: string | null;
   stage_id?: string;
+  assigned_user_name?: string;
+  stage_name?: string;
   // Added dependency fields
   dependencies?: Task[];
   dependent_tasks?: Task[];

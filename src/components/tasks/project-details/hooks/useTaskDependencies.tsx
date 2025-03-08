@@ -50,7 +50,21 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           .in('id', dependencyIds);
         
         if (taskError) throw taskError;
-        setDependencies(taskData || []);
+        
+        // Cast the task data to match the Task interface
+        const typedTasks: Task[] = (taskData || []).map(task => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          status: task.status || 'pending',
+          priority: task.priority,
+          due_date: task.due_date,
+          assigned_to: task.assigned_to,
+          created_at: task.created_at,
+          stage_id: task.stage_id
+        }));
+        
+        setDependencies(typedTasks);
       } else {
         setDependencies([]);
       }
@@ -65,7 +79,21 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           .in('id', dependentIds);
         
         if (taskError) throw taskError;
-        setDependentTasks(taskData || []);
+        
+        // Cast the task data to match the Task interface
+        const typedTasks: Task[] = (taskData || []).map(task => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          status: task.status || 'pending',
+          priority: task.priority,
+          due_date: task.due_date,
+          assigned_to: task.assigned_to,
+          created_at: task.created_at,
+          stage_id: task.stage_id
+        }));
+        
+        setDependentTasks(typedTasks);
       } else {
         setDependentTasks([]);
       }
@@ -167,8 +195,19 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         return { isValid: true, message: "", pendingDependencies: [] };
       }
       
-      // Find incomplete dependencies
-      const incompleteDependencies = taskData.filter(task => task.status !== 'completed');
+      // Find incomplete dependencies and properly cast them to Task type
+      const incompleteDependencies: Task[] = taskData
+        .filter(task => task.status !== 'completed')
+        .map(task => ({
+          id: task.id,
+          title: task.title,
+          status: task.status,
+          description: null,
+          priority: null,
+          due_date: null,
+          assigned_to: null,
+          created_at: new Date().toISOString()
+        }));
       
       if (incompleteDependencies.length > 0) {
         return {

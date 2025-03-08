@@ -29,4 +29,7 @@ export interface Task {
   // Dependency properties
   dependencies?: Task[];
   dependent_tasks?: Task[];
+  // Additional fields for task dependencies tracking
+  dependency_ids?: string[];
+  dependent_task_ids?: string[];
 }
