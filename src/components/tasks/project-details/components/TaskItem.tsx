@@ -162,34 +162,6 @@ export const TaskItem = ({
     
     setIsUpdating(true);
     try {
-      if (newStatus === 'completed' && task.requires_deliverable) {
-        console.log("Checking deliverables for project task completion:", task.id);
-        
-        const { data: deliverables, error: deliverablesError } = await supabase
-          .from('unified_task_attachments')
-          .select('id')
-          .eq('task_id', task.id)
-          .eq('task_table', 'tasks')
-          .eq('attachment_category', 'assignee')
-          .limit(1);
-          
-        if (deliverablesError) {
-          console.error("Error checking task deliverables:", deliverablesError);
-          toast.error("حدث خطأ أثناء التحقق من مستلمات المهمة");
-          setIsUpdating(false);
-          return;
-        }
-        
-        if (!deliverables || deliverables.length === 0) {
-          console.log("No deliverables found, preventing completion");
-          toast.error("هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال");
-          setIsUpdating(false);
-          return;
-        }
-        
-        console.log(`Found ${deliverables.length} deliverables, allowing completion`);
-      }
-      
       if (newStatus === 'completed') {
         const { hasPendingSubtasks, error } = await checkPendingSubtasks(task.id);
         

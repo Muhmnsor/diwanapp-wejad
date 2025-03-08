@@ -29,12 +29,8 @@ export const useTaskStatusManagement = (
         return;
       }
       
-      console.log(`Task status change: ${currentTask.title} to ${newStatus}, requires_deliverable: ${currentTask.requires_deliverable}`);
-      
       // Check if task requires deliverables and attempting to mark as completed
       if (newStatus === 'completed' && currentTask.requires_deliverable) {
-        console.log("Task requires deliverables and trying to mark as completed");
-        
         // Check if the task has any deliverables
         const { data: deliverables, error: deliverablesError } = await supabase
           .from('unified_task_attachments')
@@ -53,13 +49,10 @@ export const useTaskStatusManagement = (
         
         // If no deliverables found, prevent completion
         if (!deliverables || deliverables.length === 0) {
-          console.log("No deliverables found, preventing completion");
           toast.error("هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال");
           setIsUpdating(false);
           return;
         }
-        
-        console.log(`Found ${deliverables.length} deliverables, allowing completion`);
       }
       
       // Check dependencies only when moving to "completed" status

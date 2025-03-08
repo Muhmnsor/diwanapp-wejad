@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -40,12 +39,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
   const { user } = useAuthStore();
   
-  console.log("Task details in TaskListItem:", {
-    id: task.id,
-    title: task.title,
-    requiresDeliverable: task.requires_deliverable
-  });
-  
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
   
   const hasDependencies = dependencies.length > 0;
@@ -55,37 +48,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
     try {
-      // If trying to complete a task that requires deliverables
-      if (status === 'completed' && currentStatus !== 'completed' && task.requires_deliverable) {
-        console.log("Checking deliverables for task completion:", task.id);
-        
-        // Check if the task has any deliverables
-        const { data: deliverables, error: deliverablesError } = await supabase
-          .from('unified_task_attachments')
-          .select('id')
-          .eq('task_id', task.id)
-          .eq('task_table', task.is_subtask ? 'subtasks' : 'tasks')
-          .eq('attachment_category', 'assignee')
-          .limit(1);
-          
-        if (deliverablesError) {
-          console.error("Error checking task deliverables:", deliverablesError);
-          toast.error("حدث خطأ أثناء التحقق من مستلمات المهمة");
-          setIsUpdating(false);
-          return;
-        }
-        
-        // If no deliverables found, prevent completion
-        if (!deliverables || deliverables.length === 0) {
-          console.log("No deliverables found, preventing completion");
-          toast.error("هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال");
-          setIsUpdating(false);
-          return;
-        }
-        
-        console.log(`Found ${deliverables.length} deliverables, allowing completion`);
-      }
-      
       if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
         const taskTable = task.is_subtask ? 'subtasks' : 'tasks';
         await handleTaskCompletion({
