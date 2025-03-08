@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PersonalTasksStats } from "./components/PersonalTasksStats";
 import { PersonalProductivityChart } from "./components/PersonalProductivityChart";
 import { TaskCompletionTimeChart } from "./components/TaskCompletionTimeChart";
@@ -41,69 +40,66 @@ export const PersonalTasksReports = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="tasks">
-        <TabsList>
-          <TabsTrigger value="tasks">تقارير المهام الشخصية</TabsTrigger>
-          <TabsTrigger value="performance">تقارير الأداء الشخصي</TabsTrigger>
-        </TabsList>
+      {/* Tasks Statistics Section */}
+      <div className="space-y-6">
+        <h4 className="text-lg font-medium">إحصائيات المهام الشخصية</h4>
+        <PersonalTasksStats stats={data.tasksStats} />
         
-        <TabsContent value="tasks" className="space-y-6 mt-6">
-          <PersonalTasksStats stats={data.tasksStats} />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">توزيع المهام حسب الحالة</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TasksStatusDistribution data={data.statusDistribution} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">إنتاجية العمل الشهرية</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PersonalProductivityChart data={data.monthlyProductivity} />
-              </CardContent>
-            </Card>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">توزيع المهام حسب الحالة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TasksStatusDistribution data={data.statusDistribution} />
+            </CardContent>
+          </Card>
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">متوسط وقت إنجاز المهام (بالأيام)</CardTitle>
+              <CardTitle className="text-base">إنتاجية العمل الشهرية</CardTitle>
             </CardHeader>
             <CardContent>
-              <TaskCompletionTimeChart data={data.completionTime} />
+              <PersonalProductivityChart data={data.monthlyProductivity} />
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
         
-        <TabsContent value="performance" className="space-y-6 mt-6">
-          <PersonalPerformanceStats stats={data.performanceStats} />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">متوسط وقت إنجاز المهام (بالأيام)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TaskCompletionTimeChart data={data.completionTime} />
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Performance Statistics Section */}
+      <div className="space-y-6 mt-10 pt-10 border-t">
+        <h4 className="text-lg font-medium">إحصائيات الأداء الشخصي</h4>
+        <PersonalPerformanceStats stats={data.performanceStats} />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">متوسط وقت التأخير (بالأيام)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DelayTimeChart data={data.delayTime} />
+            </CardContent>
+          </Card>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">متوسط وقت التأخير (بالأيام)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DelayTimeChart data={data.delayTime} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">المهام المنجزة قبل/بعد الموعد</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <OnTimeCompletionChart data={data.onTimeCompletion} />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">المهام المنجزة قبل/بعد الموعد</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OnTimeCompletionChart data={data.onTimeCompletion} />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

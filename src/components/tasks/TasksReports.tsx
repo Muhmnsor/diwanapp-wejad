@@ -16,18 +16,14 @@ export const TasksReports = () => {
         <Tabs defaultValue="personal" dir="rtl">
           <TabsList className="mb-6 w-full">
             <TabsTrigger value="personal">التقارير الشخصية</TabsTrigger>
-            <TabsTrigger value="performance">تقارير الأداء</TabsTrigger>
             <TabsTrigger value="team">تقارير الفريق</TabsTrigger>
             <TabsTrigger value="projects">تقارير المشاريع</TabsTrigger>
             <TabsTrigger value="general">تقارير المهام العامة</TabsTrigger>
+            <TabsTrigger value="users">تقارير أداء المستخدمين</TabsTrigger>
           </TabsList>
           
           <TabsContent value="personal" className="space-y-6">
             <PersonalTasksReports />
-          </TabsContent>
-          
-          <TabsContent value="performance" className="space-y-6">
-            <UserPerformanceReport />
           </TabsContent>
           
           <TabsContent value="team" className="space-y-6">
@@ -40,6 +36,10 @@ export const TasksReports = () => {
           
           <TabsContent value="general" className="space-y-6">
             <GeneralTasksReports />
+          </TabsContent>
+          
+          <TabsContent value="users" className="space-y-6">
+            <UserPerformanceReport />
           </TabsContent>
         </Tabs>
       </Card>
