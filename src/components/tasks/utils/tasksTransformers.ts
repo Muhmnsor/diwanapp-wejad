@@ -37,7 +37,9 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
       dependencies: [],
       dependent_tasks: [],
       dependency_ids: [],
-      dependent_task_ids: []
+      dependent_task_ids: [],
+      // Include requires_deliverable flag
+      requires_deliverable: !!task.requires_deliverable
     };
   });
 };
@@ -68,7 +70,9 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
       dependencies: [],
       dependent_tasks: [],
       dependency_ids: task.dependency_ids || [],
-      dependent_task_ids: task.dependent_task_ids || []
+      dependent_task_ids: task.dependent_task_ids || [],
+      // Include requires_deliverable flag
+      requires_deliverable: !!task.requires_deliverable
     };
   });
 };
@@ -110,6 +114,11 @@ export const transformSubtasks = (
     
     console.log(`Subtask transformation result for ${subtask.id}: project_name=${projectName}, parent_task=${parentTask.id}`);
     
+    // Check if the parent task has requires_deliverable, otherwise check the subtask itself
+    const requiresDeliverable = parentTask.requires_deliverable !== undefined 
+      ? !!parentTask.requires_deliverable 
+      : !!subtask.requires_deliverable;
+    
     return {
       id: subtask.id,
       title: subtask.title,
@@ -129,7 +138,9 @@ export const transformSubtasks = (
       dependencies: [],
       dependent_tasks: [],
       dependency_ids: subtask.dependency_ids || [],
-      dependent_task_ids: subtask.dependent_task_ids || []
+      dependent_task_ids: subtask.dependent_task_ids || [],
+      // Include requires_deliverable flag, first check parent task then subtask
+      requires_deliverable: requiresDeliverable
     };
   });
 };

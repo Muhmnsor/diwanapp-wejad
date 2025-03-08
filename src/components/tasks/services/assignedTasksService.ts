@@ -17,7 +17,8 @@ export const fetchUserPortfolioTasks = async (userId: string) => {
     .select(`
       id, title, description, status, priority, due_date, project_id,
       portfolio_only_projects (id, name),
-      portfolio_workspaces (id, name)
+      portfolio_workspaces (id, name),
+      requires_deliverable
     `)
     .eq('assigned_to', userId);
     
@@ -33,7 +34,7 @@ export const fetchUserPortfolioTasks = async (userId: string) => {
 export const fetchUserRegularTasks = async (userId: string) => {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select('*, requires_deliverable')
     .eq('assigned_to', userId);
     
   if (error) {
@@ -48,7 +49,7 @@ export const fetchUserRegularTasks = async (userId: string) => {
 export const fetchAllTasks = async () => {
   const { data, error } = await supabase
     .from('tasks')
-    .select('id, title, project_id');
+    .select('id, title, project_id, requires_deliverable');
     
   if (error) {
     console.error("Error fetching all tasks:", error);
@@ -60,7 +61,7 @@ export const fetchAllTasks = async () => {
 export const fetchUserSubtasks = async (userId: string) => {
   const { data, error } = await supabase
     .from('subtasks')
-    .select('*')
+    .select('*, requires_deliverable')
     .eq('assigned_to', userId);
     
   if (error) {
