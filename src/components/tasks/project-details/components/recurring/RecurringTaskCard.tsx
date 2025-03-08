@@ -1,110 +1,98 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarRepeat, Clock, User, Trash2 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
-
-export interface RecurringTask {
-  id: string;
-  title: string;
-  description?: string;
-  frequency: string;
-  interval: number;
-  next_occurrence: string;
-  assigned_to?: string | null;
-  assigned_user_name?: string;
-  status: string;
-  end_date?: string | null;
-  end_after?: number | null;
-  days_of_week?: string[] | null;
-  day_of_month?: number | null;
-  created_at: string;
-}
+import { CalendarClock, Edit, Trash, Play } from "lucide-react";
+import { formatDate } from "../../utils/taskFormatters";
+import { RecurringTask } from "../../types/recurringTask";
 
 interface RecurringTaskCardProps {
   task: RecurringTask;
+  onEdit: (task: RecurringTask) => void;
   onDelete: (taskId: string) => void;
+  onCreateInstance: (taskId: string) => Promise<void>;
 }
 
-export const RecurringTaskCard = ({ task, onDelete }: RecurringTaskCardProps) => {
-  const getFrequencyText = () => {
-    const intervalText = task.interval > 1 ? `كل ${task.interval} ` : 'كل ';
-    
-    switch (task.frequency) {
+export const RecurringTaskCard = ({ 
+  task, 
+  onEdit, 
+  onDelete,
+  onCreateInstance 
+}: RecurringTaskCardProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const getFrequencyText = (frequency: string, interval: number) => {
+    switch (frequency) {
       case 'daily':
-        return `${intervalText} يوم`;
+        return interval === 1 ? 'يومي' : `كل ${interval} أيام`;
       case 'weekly':
-        return `${intervalText} أسبوع`;
+        return interval === 1 ? 'أسبوعي' : `كل ${interval} أسابيع`;
       case 'monthly':
-        return `${intervalText} شهر`;
+        return interval === 1 ? 'شهري' : `كل ${interval} أشهر`;
       default:
         return 'غير محدد';
     }
   };
   
-  const getDaysOfWeekText = () => {
-    if (!task.days_of_week || task.days_of_week.length === 0) return null;
-    
-    const dayNames: Record<string, string> = {
-      'sun': 'الأحد',
-      'mon': 'الإثنين',
-      'tue': 'الثلاثاء',
-      'wed': 'الأربعاء',
-      'thu': 'الخميس',
-      'fri': 'الجمعة',
-      'sat': 'السبت'
-    };
-    
-    const days = task.days_of_week.map(day => dayNames[day] || day).join('، ');
-    return `أيام ${days}`;
+  const handleCreateInstance = async () => {
+    setIsLoading(true);
+    try {
+      await onCreateInstance(task.id);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">{task.title}</CardTitle>
-          <Badge variant="outline">{getFrequencyText()}</Badge>
+    <Card className="overflow-hidden">
+      <CardHeader className="p-4 pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg line-clamp-1">{task.title}</CardTitle>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <CalendarClock className="h-3 w-3" />
+            {getFrequencyText(task.frequency, task.interval)}
+          </Badge>
         </div>
       </CardHeader>
-      
-      <CardContent className="pb-2 space-y-2">
+      <CardContent className="p-4 pt-2 pb-2">
         {task.description && (
-          <p className="text-sm text-gray-600">{task.description}</p>
+          <p className="text-sm text-gray-600 line-clamp-2 mb-2">{task.description}</p>
         )}
-        
-        <div className="flex flex-col space-y-1.5">
-          <div className="flex items-center text-sm text-gray-500">
-            <Clock className="h-4 w-4 ml-1.5" />
-            <span>المرة القادمة: {formatDate(task.next_occurrence)}</span>
-          </div>
-          
-          {task.assigned_user_name && (
-            <div className="flex items-center text-sm text-gray-500">
-              <User className="h-4 w-4 ml-1.5" />
-              <span>{task.assigned_user_name}</span>
-            </div>
-          )}
-          
-          {task.frequency === 'weekly' && getDaysOfWeekText() && (
-            <div className="flex items-center text-sm text-gray-500">
-              <CalendarRepeat className="h-4 w-4 ml-1.5" />
-              <span>{getDaysOfWeekText()}</span>
-            </div>
+        <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+          {task.next_occurrence && (
+            <span>الإستحقاق القادم: {formatDate(task.next_occurrence)}</span>
           )}
         </div>
       </CardContent>
-      
-      <CardFooter>
+      <CardFooter className="p-2 bg-muted/20 flex justify-end gap-2">
         <Button 
-          variant="destructive" 
+          variant="ghost" 
           size="sm" 
-          className="ml-auto"
+          className="h-8 px-2"
+          onClick={() => onEdit(task)}
+        >
+          <Edit className="h-4 w-4 mr-1" />
+          تعديل
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 px-2 text-destructive hover:text-destructive"
           onClick={() => onDelete(task.id)}
         >
-          <Trash2 className="h-4 w-4 ml-1.5" />
+          <Trash className="h-4 w-4 mr-1" />
           حذف
+        </Button>
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="h-8 px-2"
+          onClick={handleCreateInstance}
+          disabled={isLoading}
+        >
+          <Play className="h-4 w-4 mr-1" />
+          إنشاء مهمة
         </Button>
       </CardFooter>
     </Card>
