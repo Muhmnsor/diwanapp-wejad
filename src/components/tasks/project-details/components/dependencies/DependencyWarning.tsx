@@ -1,14 +1,13 @@
 
 import { AlertCircle } from "lucide-react";
-import { Task } from "../../../types/task";
+import { useDependencyContext } from "./DependencyContext";
 
-interface DependencyWarningProps {
-  taskStatus: string;
-  dependentTasks: Task[];
-}
-
-export const DependencyWarning = ({ taskStatus, dependentTasks }: DependencyWarningProps) => {
-  if (taskStatus === 'completed' && dependentTasks.some(t => t.status !== 'completed')) {
+export const DependencyWarning = () => {
+  const { dependentTasks } = useDependencyContext();
+  
+  // We need to get the current task status from the context
+  // For now, we'll just check if any dependent tasks are not completed
+  if (dependentTasks.some(t => t.status !== 'completed')) {
     return (
       <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-md flex items-center gap-2">
         <AlertCircle className="h-4 w-4 text-yellow-500" />

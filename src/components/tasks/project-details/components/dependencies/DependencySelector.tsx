@@ -1,32 +1,22 @@
 
-import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Task } from "../../../types/task";
-import { DependencyType } from "../../types/dependency";
+import { useState, useEffect } from "react";
+import { useDependencyContext } from "./DependencyContext";
 
-interface DependencySelectorProps {
-  availableTasks: Task[];
-  isLoadingTasks: boolean;
-  selectedTaskId: string;
-  onSelectedTaskChange: (taskId: string) => void;
-  onAddDependency: () => void;
-  isAdding: boolean;
-  dependencyType: DependencyType;
-  onDependencyTypeChange: (type: DependencyType) => void;
-}
-
-export const DependencySelector = ({
-  availableTasks,
-  isLoadingTasks,
-  selectedTaskId,
-  onSelectedTaskChange,
-  onAddDependency,
-  isAdding,
-  dependencyType,
-  onDependencyTypeChange
-}: DependencySelectorProps) => {
+export const DependencySelector = () => {
+  const {
+    availableTasks,
+    isLoadingTasks,
+    selectedTaskId,
+    setSelectedTaskId,
+    addDependency,
+    isAdding,
+    dependencyType,
+    setDependencyType
+  } = useDependencyContext();
+  
   const [selectedTaskTitle, setSelectedTaskTitle] = useState<string>("");
   
   // Update selected task title when selectedTaskId changes
@@ -74,7 +64,7 @@ export const DependencySelector = ({
       ) : (
         <div className="space-y-3">
           <div className="flex gap-2">
-            <Select value={selectedTaskId} onValueChange={onSelectedTaskChange}>
+            <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
               <SelectTrigger className="flex-1">
                 <SelectValue placeholder="اختر مهمة" />
               </SelectTrigger>
@@ -91,7 +81,7 @@ export const DependencySelector = ({
           <div className="flex gap-2">
             <Select 
               value={dependencyType} 
-              onValueChange={(value) => onDependencyTypeChange(value as DependencyType)} 
+              onValueChange={(value) => setDependencyType(value as any)} 
               defaultValue="finish-to-start"
             >
               <SelectTrigger className="flex-1">
@@ -106,7 +96,7 @@ export const DependencySelector = ({
             </Select>
             
             <Button 
-              onClick={onAddDependency} 
+              onClick={addDependency} 
               disabled={!selectedTaskId || isAdding}
             >
               {isAdding ? (

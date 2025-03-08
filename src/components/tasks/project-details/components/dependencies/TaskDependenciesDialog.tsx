@@ -1,18 +1,13 @@
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
-import { useTaskDependencies } from "../../hooks/useTaskDependencies";
+import { Dialog, DialogContent, Separator } from "@/components/ui/dialog";
 import { Task } from "../../types/task";
-import { Link2, Check } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
+import { DependencyProvider } from "./DependencyContext";
+import { DependencyDialogHeader } from "./DependencyDialogHeader";
 import { DependencySelector } from "./DependencySelector";
 import { DependencyList } from "./DependencyList";
 import { DependencyWarning } from "./DependencyWarning";
-import { fetchAvailableTasks } from "../../hooks/useTaskDependencies.service";
-import { DependencyType } from "../../types/dependency";
-import { useAuthStore } from "@/store/authStore";
-import { supabase } from "@/integrations/supabase/client";
+import { PermissionWarning } from "./PermissionWarning";
+import { useDependencyContext } from "./DependencyContext";
 
 interface TaskDependenciesDialogProps {
   open: boolean;
@@ -21,249 +16,66 @@ interface TaskDependenciesDialogProps {
   projectId: string;
 }
 
+// This component renders the dialog content and uses the DependencyContext
+const DialogContent = () => {
+  const {
+    dependencies,
+    dependentTasks,
+    canManageDependencies,
+    removeDependency,
+    getStatusBadge,
+    isDependenciesLoading
+  } = useDependencyContext();
+
+  return (
+    <div className="space-y-4 mt-4">
+      {canManageDependencies ? (
+        <DependencySelector />
+      ) : (
+        <PermissionWarning />
+      )}
+      
+      <Separator />
+      
+      <DependencyList
+        title="المهام التي تعتمد عليها هذه المهمة"
+        tasks={dependencies}
+        isLoading={isDependenciesLoading}
+        emptyMessage="لا توجد اعتماديات حالياً"
+        onRemove={canManageDependencies ? removeDependency : undefined}
+        getStatusBadge={getStatusBadge}
+      />
+      
+      <Separator />
+      
+      <DependencyList
+        title="المهام التي تعتمد على هذه المهمة"
+        tasks={dependentTasks}
+        isLoading={isDependenciesLoading}
+        emptyMessage="لا توجد مهام تعتمد على هذه المهمة"
+        getStatusBadge={getStatusBadge}
+        isDependent={true}
+      />
+      
+      <DependencyWarning />
+    </div>
+  );
+};
+
+// The main dialog component that provides the context
 export const TaskDependenciesDialog = ({
   open,
   onOpenChange,
   task,
   projectId
 }: TaskDependenciesDialogProps) => {
-  const { 
-    dependencies, 
-    dependentTasks, 
-    addDependency, 
-    removeDependency,
-    fetchDependencies,
-    isLoading: isDependenciesLoading 
-  } = useTaskDependencies(task.id);
-  
-  const { user } = useAuthStore();
-  const [canManageDependencies, setCanManageDependencies] = useState(false);
-  const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
-  const [selectedTaskId, setSelectedTaskId] = useState<string>("");
-  const [dependencyType, setDependencyType] = useState<DependencyType>("finish-to-start");
-  const [isAdding, setIsAdding] = useState(false);
-  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
-  
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!user) {
-        setCanManageDependencies(false);
-        return;
-      }
-      
-      // Check if user is admin or has admin role
-      if (user.isAdmin) {
-        setCanManageDependencies(true);
-        return;
-      }
-      
-      // Check if user is the project manager (for project tasks)
-      if (projectId) {
-        try {
-          const { data: projectData, error } = await supabase
-            .from('project_tasks')
-            .select('project_manager')
-            .eq('id', projectId)
-            .single();
-          
-          if (!error && projectData && projectData.project_manager === user.id) {
-            setCanManageDependencies(true);
-            return;
-          }
-        } catch (error) {
-          console.error("Error checking project manager:", error);
-        }
-      }
-      
-      // Check if user has specific dependency management permission
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role_id')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (roleError || !roleData) {
-          setCanManageDependencies(false);
-          return;
-        }
-        
-        const { data: permissionsData, error: permError } = await supabase
-          .from('role_permissions')
-          .select('permission_id')
-          .eq('role_id', roleData.role_id);
-          
-        if (permError || !permissionsData) {
-          setCanManageDependencies(false);
-          return;
-        }
-        
-        const permissionIds = permissionsData.map(p => p.permission_id);
-        
-        // Check for dependency management permission
-        const { data: dependencyPermission, error: dpError } = await supabase
-          .from('permissions')
-          .select('id')
-          .eq('name', 'manage_task_dependencies')
-          .in('id', permissionIds);
-          
-        setCanManageDependencies(dependencyPermission && dependencyPermission.length > 0);
-      } catch (error) {
-        console.error("Error checking permissions:", error);
-        setCanManageDependencies(false);
-      }
-    };
-    
-    if (open) {
-      checkPermissions();
-    }
-  }, [open, user, projectId]);
-  
-  useEffect(() => {
-    if (open && projectId) {
-      loadAvailableTasks();
-    }
-  }, [open, projectId, task.id, dependencies]);
-  
-  const loadAvailableTasks = async () => {
-    setIsLoadingTasks(true);
-    try {
-      const tasksData = await fetchAvailableTasks(projectId, task.id, dependencies);
-      setAvailableTasks(tasksData);
-    } catch (error) {
-      console.error("Error fetching available tasks:", error);
-      toast.error("حدث خطأ أثناء جلب المهام المتاحة");
-    } finally {
-      setIsLoadingTasks(false);
-    }
-  };
-  
-  const handleAddDependency = async () => {
-    if (!selectedTaskId) {
-      toast.error("الرجاء اختيار مهمة");
-      return;
-    }
-    
-    if (!canManageDependencies) {
-      toast.error("ليس لديك صلاحية لإدارة اعتماديات المهام");
-      return;
-    }
-    
-    setIsAdding(true);
-    try {
-      const result = await addDependency(selectedTaskId, dependencyType);
-      
-      if (result === true) {
-        setSelectedTaskId("");
-        // Refresh dependencies and available tasks
-        await fetchDependencies();
-        await loadAvailableTasks();
-      }
-    } catch (error) {
-      console.error("Error adding dependency:", error);
-      toast.error("حدث خطأ أثناء إضافة الاعتمادية");
-    } finally {
-      setIsAdding(false);
-    }
-  };
-  
-  const handleRemoveDependency = async (dependencyId: string) => {
-    if (!canManageDependencies) {
-      toast.error("ليس لديك صلاحية لإدارة اعتماديات المهام");
-      return;
-    }
-    
-    try {
-      await removeDependency(dependencyId);
-      await loadAvailableTasks(); // Refresh the list
-    } catch (error) {
-      console.error("Error removing dependency:", error);
-      toast.error("حدث خطأ أثناء إزالة الاعتمادية");
-    }
-  };
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return (
-          <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-            <Check className="mr-1 h-3 w-3" />
-            مكتمل
-          </span>
-        );
-      case 'in_progress':
-        return (
-          <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-            قيد التنفيذ
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-            معلق
-          </span>
-        );
-    }
-  };
-  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="min-w-[500px]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Link2 className="h-5 w-5" />
-            اعتماديات المهمة
-          </DialogTitle>
-          <DialogDescription>
-            إدارة الاعتماديات بين المهام
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4 mt-4">
-          {canManageDependencies ? (
-            <DependencySelector
-              availableTasks={availableTasks}
-              isLoadingTasks={isLoadingTasks}
-              selectedTaskId={selectedTaskId}
-              onSelectedTaskChange={setSelectedTaskId}
-              onAddDependency={handleAddDependency}
-              isAdding={isAdding}
-              dependencyType={dependencyType}
-              onDependencyTypeChange={setDependencyType}
-            />
-          ) : (
-            <div className="text-amber-500 text-sm p-2 bg-amber-50 rounded border border-amber-200">
-              لا تملك صلاحية إدارة اعتماديات المهام. فقط المشرف على النظام أو مدير المشروع يمكنه ذلك.
-            </div>
-          )}
-          
-          <Separator />
-          
-          <DependencyList
-            title="المهام التي تعتمد عليها هذه المهمة"
-            tasks={dependencies}
-            isLoading={isDependenciesLoading}
-            emptyMessage="لا توجد اعتماديات حالياً"
-            onRemove={canManageDependencies ? handleRemoveDependency : undefined}
-            getStatusBadge={getStatusBadge}
-          />
-          
-          <Separator />
-          
-          <DependencyList
-            title="المهام التي تعتمد على هذه المهمة"
-            tasks={dependentTasks}
-            isLoading={isDependenciesLoading}
-            emptyMessage="لا توجد مهام تعتمد على هذه المهمة"
-            getStatusBadge={getStatusBadge}
-            isDependent={true}
-          />
-          
-          <DependencyWarning
-            taskStatus={task.status}
-            dependentTasks={dependentTasks}
-          />
-        </div>
+        <DependencyProvider taskId={task.id} projectId={projectId}>
+          <DependencyDialogHeader />
+          <DialogContent />
+        </DependencyProvider>
       </DialogContent>
     </Dialog>
   );
