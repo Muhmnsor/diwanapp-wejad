@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -58,7 +59,7 @@ export const saveAttachmentReference = async (
   category = 'creator'
 ) => {
   try {
-    console.log("Saving attachment reference for task:", taskId);
+    console.log("Saving attachment reference for task:", taskId, "with category:", category);
     console.log("File details:", { fileName, fileType, category });
     
     // الحصول على معرف المستخدم الحالي
@@ -70,7 +71,7 @@ export const saveAttachmentReference = async (
     });
     
     if (tableExists && tableExists.length > 0 && tableExists[0].table_exists) {
-      console.log("Inserting into unified_task_attachments");
+      console.log("Inserting into unified_task_attachments with category:", category);
       const { data, error } = await supabase
         .from('unified_task_attachments')
         .insert({
@@ -278,6 +279,14 @@ export const saveTaskTemplate = async (
     console.log("Saving task template for task:", taskId);
     console.log("File details:", { fileName, fileType });
     
+    // Also save the template in the unified_task_attachments table with the right category
+    try {
+      await saveAttachmentReference(taskId, fileUrl, fileName, fileType, 'template');
+      console.log("Successfully saved template in unified_task_attachments");
+    } catch (error) {
+      console.error("Failed to save in unified_task_attachments, continuing with task_templates", error);
+    }
+    
     // الحصول على معرف المستخدم الحالي
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -331,6 +340,7 @@ export const saveTaskTemplate = async (
       throw error;
     }
     
+    console.log("Template saved successfully in task_templates table");
     return data;
   } catch (error) {
     console.error("Error saving task template:", error);

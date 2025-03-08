@@ -37,6 +37,12 @@ export const TaskActionButtons = ({
     resetDiscussionFlag 
   } = useTaskButtonStates(taskId);
 
+  console.log("Task button states for task", taskId, {
+    hasNewDiscussion,
+    hasDeliverables,
+    hasTemplates
+  });
+
   const handleDiscussionClick = () => {
     resetDiscussionFlag();
     onShowDiscussion();

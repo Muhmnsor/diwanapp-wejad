@@ -32,7 +32,24 @@ export const TaskTemplatesDialog = ({
   const fetchTemplates = async () => {
     if (!task?.id) return;
     setIsLoading(true);
+    console.log("Fetching templates for task:", task.id);
+    
     try {
+      // Try to fetch from unified_task_attachments first
+      const { data: unifiedData, error: unifiedError } = await supabase
+        .from('unified_task_attachments')
+        .select('*')
+        .eq('task_id', task.id)
+        .eq('attachment_category', 'template')
+        .order('created_at', { ascending: false });
+        
+      if (unifiedError) {
+        console.error('Error fetching from unified_task_attachments:', unifiedError);
+      } else {
+        console.log(`Found ${unifiedData?.length || 0} templates in unified_task_attachments`);
+      }
+      
+      // Also fetch from task_templates as a backup
       let taskTable = 'tasks';
       if (task.is_subtask) {
         taskTable = 'subtasks';
@@ -40,19 +57,33 @@ export const TaskTemplatesDialog = ({
         taskTable = 'portfolio_tasks';
       }
       
-      const { data, error } = await supabase
+      const { data: templateData, error: templateError } = await supabase
         .from('task_templates')
         .select('*')
         .eq('task_id', task.id)
         .eq('task_table', taskTable)
         .order('created_at', { ascending: false });
         
-      if (error) {
-        console.error('Error fetching templates:', error);
-        return;
+      if (templateError) {
+        console.error('Error fetching from task_templates:', templateError);
+      } else {
+        console.log(`Found ${templateData?.length || 0} templates in task_templates`);
       }
       
-      setTemplates(data || []);
+      // Combine results, prioritizing unified_task_attachments
+      const combinedTemplates = [
+        ...(unifiedData || []),
+        ...(templateData || [])
+      ];
+      
+      // Remove duplicates based on file_url
+      const uniqueTemplates = combinedTemplates.filter(
+        (template, index, self) => 
+          index === self.findIndex(t => t.file_url === template.file_url)
+      );
+      
+      console.log(`Total unique templates found: ${uniqueTemplates.length}`);
+      setTemplates(uniqueTemplates);
     } catch (error) {
       console.error('Error in fetchTemplates:', error);
     } finally {
