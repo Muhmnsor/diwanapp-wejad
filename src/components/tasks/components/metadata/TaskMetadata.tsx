@@ -1,5 +1,5 @@
 
-import { Calendar, Briefcase, FolderOpen, FileDown } from "lucide-react";
+import { Calendar, Briefcase, FolderOpen, FileDown, LayoutGrid } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,7 +23,7 @@ export const TaskMetadata = ({
 }: TaskMetadataProps) => {
   const formatDate = (date: string) => {
     const d = new Date(date);
-    return d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' });
+    return d.toLocaleDateString('ar', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   return (
@@ -39,6 +39,13 @@ export const TaskMetadata = ({
         <div className="flex items-center text-xs text-muted-foreground gap-1">
           <Briefcase className="h-3.5 w-3.5" />
           <span>{projectName}</span>
+        </div>
+      )}
+      
+      {isGeneral && (
+        <div className="flex items-center text-xs text-muted-foreground gap-1">
+          <LayoutGrid className="h-3.5 w-3.5" />
+          <span>مهمة عامة</span>
         </div>
       )}
       

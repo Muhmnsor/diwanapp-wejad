@@ -49,7 +49,7 @@ export const TaskActionButtons = ({
   };
 
   return (
-    <div className="flex justify-between items-center mt-3 pt-3 border-t">
+    <div className={`flex justify-between items-center mt-3 pt-3 border-t ${isGeneral ? 'bg-[#D3E4FD]' : ''}`}>
       <div className="flex gap-2">
         <Button 
           variant="ghost" 
