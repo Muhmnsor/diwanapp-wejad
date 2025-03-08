@@ -157,10 +157,10 @@ export const TaskCard = ({
               </div>
             )}
             
-            {task.assigned_to && task.assignee_name && (
+            {task.assigned_to && task.assigned_user_name && (
               <div className="flex items-center">
                 <User className="h-4 w-4 mr-1" />
-                <span>تم تعيينه إلى: {task.assignee_name}</span>
+                <span>تم تعيينه إلى: {task.assigned_user_name}</span>
               </div>
             )}
           </div>

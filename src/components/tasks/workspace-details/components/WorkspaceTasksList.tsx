@@ -1,68 +1,87 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Filter } from "lucide-react";
 import { Task } from "../../project-details/types/task";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TaskCard } from "../../project-details/components/TaskCard";
-import { AddTaskDialog } from "../../project-details/AddTaskDialog";
-import { EditTaskDialog } from "../../project-details/EditTaskDialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WorkspaceAddTaskDialog } from "./WorkspaceAddTaskDialog";
+import { ProjectMember } from "../../project-details/hooks/useProjectMembers";
 
 interface WorkspaceTasksListProps {
-  workspaceId: string | undefined;
-  projectMembers: { user_id: string; display_name?: string; email?: string }[];
+  workspaceId: string;
+  workspaceMembers: ProjectMember[];
 }
 
-export const WorkspaceTasksList = ({ workspaceId, projectMembers }: WorkspaceTasksListProps) => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+export const WorkspaceTasksList = ({ workspaceId, workspaceMembers }: WorkspaceTasksListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [activeTab, setActiveTab] = useState("all");
-  
-  const fetchTasks = async () => {
-    if (!workspaceId) return;
-    
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*, profiles:assigned_to(display_name)')
-        .eq('workspace_id', workspaceId)
-        .is('project_id', null)  // Only fetch tasks not assigned to a project
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      // Transform data to match the Task interface
-      const transformedTasks = data.map(task => ({
-        ...task,
-        assignee_name: task.profiles?.display_name || null
-      }));
-      
-      setTasks(transformedTasks);
-    } catch (error) {
-      console.error("Error fetching workspace tasks:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   
   useEffect(() => {
     fetchTasks();
   }, [workspaceId]);
   
-  const handleAddTask = () => {
-    setIsAddDialogOpen(true);
-  };
+  useEffect(() => {
+    if (activeTab === "all") {
+      setFilteredTasks(tasks);
+    } else {
+      setFilteredTasks(tasks.filter(task => task.status === activeTab));
+    }
+  }, [tasks, activeTab]);
   
-  const handleEditTask = (task: Task) => {
-    setTaskToEdit(task);
-    setIsEditDialogOpen(true);
+  const fetchTasks = async () => {
+    try {
+      setIsLoading(true);
+      console.log("Fetching tasks for workspace:", workspaceId);
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          id,
+          title,
+          description,
+          status,
+          priority,
+          due_date,
+          assigned_to,
+          created_at,
+          is_general,
+          category,
+          profiles:assigned_to (display_name, email)
+        `)
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        toast.error("فشل في تحميل المهام");
+        return;
+      }
+      
+      if (data) {
+        console.log("Fetched tasks:", data);
+        
+        // Transform the data to match the Task type
+        const transformedTasks = data.map(task => ({
+          ...task,
+          assigned_user_name: task.profiles ? task.profiles.display_name || task.profiles.email : null,
+        }));
+        
+        setTasks(transformedTasks);
+        setFilteredTasks(transformedTasks);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("حدث خطأ أثناء تحميل المهام");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleStatusChange = async (taskId: string, newStatus: string) => {
@@ -72,14 +91,17 @@ export const WorkspaceTasksList = ({ workspaceId, projectMembers }: WorkspaceTas
         .update({ status: newStatus })
         .eq('id', taskId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating task status:", error);
+        toast.error("فشل في تحديث حالة المهمة");
+        return;
+      }
       
-      // Update local state
-      setTasks(tasks.map(task => 
-        task.id === taskId ? { ...task, status: newStatus } : task
-      ));
+      toast.success("تم تحديث حالة المهمة بنجاح");
+      fetchTasks();
     } catch (error) {
-      console.error("Error updating task status:", error);
+      console.error("Error:", error);
+      toast.error("حدث خطأ أثناء تحديث حالة المهمة");
     }
   };
   
@@ -90,103 +112,111 @@ export const WorkspaceTasksList = ({ workspaceId, projectMembers }: WorkspaceTas
         .delete()
         .eq('id', taskId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting task:", error);
+        toast.error("فشل في حذف المهمة");
+        return;
+      }
       
-      // Update local state
-      setTasks(tasks.filter(task => task.id !== taskId));
+      toast.success("تم حذف المهمة بنجاح");
+      fetchTasks();
     } catch (error) {
-      console.error("Error deleting task:", error);
+      console.error("Error:", error);
+      toast.error("حدث خطأ أثناء حذف المهمة");
     }
   };
   
-  const filterTasksByStatus = (status: string) => {
-    if (status === "all") return tasks;
-    return tasks.filter(task => task.status === status);
+  const handleEditTask = (task: Task) => {
+    console.log("Edit task:", task);
+    // TODO: Implement task editing functionality
   };
   
-  if (!workspaceId) {
+  const handleTaskAdded = async () => {
+    await fetchTasks();
+  };
+  
+  if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center text-gray-500">
-          لم يتم تحديد مساحة العمل
-        </CardContent>
-      </Card>
+      <div className="space-y-4" dir="rtl">
+        <div className="flex justify-between items-center mb-6">
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-9 w-32" />
+        </div>
+        
+        <Skeleton className="h-12 w-full" />
+        
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-40 w-full" />
+        ))}
+      </div>
     );
   }
   
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">المهام</h2>
-        <Button onClick={handleAddTask} className="flex items-center gap-2">
+    <div dir="rtl">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold">مهام مساحة العمل</h2>
+        <Button 
+          onClick={() => setIsAddDialogOpen(true)}
+          className="flex items-center gap-2"
+        >
           <Plus className="h-4 w-4" />
           إضافة مهمة
         </Button>
       </div>
       
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4 grid grid-cols-5 h-auto">
-          <TabsTrigger value="all" className="py-2">الكل</TabsTrigger>
-          <TabsTrigger value="pending" className="py-2">قيد الانتظار</TabsTrigger>
-          <TabsTrigger value="in_progress" className="py-2">قيد التنفيذ</TabsTrigger>
-          <TabsTrigger value="completed" className="py-2">مكتملة</TabsTrigger>
-          <TabsTrigger value="delayed" className="py-2">متأخرة</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value={activeTab} className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">مهام مساحة العمل</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-24 w-full" />
-                  <Skeleton className="h-24 w-full" />
-                  <Skeleton className="h-24 w-full" />
-                </div>
-              ) : filterTasksByStatus(activeTab).length > 0 ? (
-                <div className="space-y-4">
-                  {filterTasksByStatus(activeTab).map(task => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task} 
-                      onStatusChange={handleStatusChange}
-                      onDelete={handleDeleteTask}
-                      onEdit={handleEditTask}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <div className="mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="all">جميع المهام ({tasks.length})</TabsTrigger>
+            <TabsTrigger value="pending">
+              قيد الانتظار ({tasks.filter(t => t.status === 'pending').length})
+            </TabsTrigger>
+            <TabsTrigger value="in_progress">
+              قيد التنفيذ ({tasks.filter(t => t.status === 'in_progress').length})
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              مكتملة ({tasks.filter(t => t.status === 'completed').length})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
       
-      <AddTaskDialog
+      {filteredTasks.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg border">
+          <p className="text-gray-500">لا توجد مهام {activeTab !== "all" && "بهذه الحالة"}</p>
+          {activeTab === "all" && (
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => setIsAddDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              إضافة مهمة جديدة
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredTasks.map(task => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onStatusChange={handleStatusChange}
+              onDelete={handleDeleteTask}
+              onEdit={handleEditTask}
+            />
+          ))}
+        </div>
+      )}
+      
+      <WorkspaceAddTaskDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         workspaceId={workspaceId}
-        projectId={undefined}
-        projectStages={[]}
-        onTaskAdded={fetchTasks}
-        projectMembers={projectMembers}
+        onTaskAdded={handleTaskAdded}
+        projectMembers={workspaceMembers}
       />
-      
-      {taskToEdit && (
-        <EditTaskDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          task={taskToEdit}
-          projectStages={[]}
-          projectMembers={projectMembers}
-          onTaskUpdated={fetchTasks}
-        />
-      )}
     </div>
   );
 };
