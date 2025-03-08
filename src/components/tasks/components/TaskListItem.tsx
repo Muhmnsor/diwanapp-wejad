@@ -59,16 +59,14 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
 
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
-      <div className="flex justify-between items-start">
-        <TaskHeader 
-          task={task} 
-          status={currentStatus} 
-          onDependenciesClick={() => setShowDependencies(true)}
-          hasDependencies={hasDependencies}
-          hasDependents={hasDependents}
-          dependencyIconColor={dependencyIconColor}
-        />
-      </div>
+      <TaskHeader 
+        task={task} 
+        status={currentStatus} 
+        onDependenciesClick={() => setShowDependencies(true)}
+        hasDependencies={hasDependencies}
+        hasDependents={hasDependents}
+        dependencyIconColor={dependencyIconColor}
+      />
       
       <div className="mt-3">
         <TaskMetadata
