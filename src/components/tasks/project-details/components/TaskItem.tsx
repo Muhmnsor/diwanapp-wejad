@@ -12,6 +12,7 @@ import { checkPendingSubtasks } from "../services/subtasksService";
 import { TaskDiscussionDialog } from "../../components/TaskDiscussionDialog";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
+import { usePermissionCheck } from "../hooks/usePermissionCheck";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +61,14 @@ export const TaskItem = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuthStore();
+  
+  const { canEdit } = usePermissionCheck({
+    assignedTo: task.assigned_to,
+    projectId: task.project_id,
+    workspaceId: task.workspace_id,
+    createdBy: task.created_by,
+    isGeneral: task.is_general
+  });
   
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
   
@@ -119,24 +128,13 @@ export const TaskItem = ({
     document.body.removeChild(link);
   };
 
-  const canChangeStatus = () => {
-    return (
-      user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
-    );
-  };
-
-  const canEditDelete = () => {
-    return (
-      user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
-    );
-  };
-
   const handleDelete = async () => {
-    if (!onDelete) return;
+    if (!onDelete || !canEdit) {
+      if (!canEdit) {
+        toast.error("ليس لديك صلاحية لحذف هذه المهمة");
+      }
+      return;
+    }
     
     setIsDeleting(true);
     try {
@@ -151,8 +149,8 @@ export const TaskItem = ({
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!canChangeStatus()) {
-      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها");
+    if (!canEdit) {
+      toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
       return;
     }
     
@@ -197,7 +195,7 @@ export const TaskItem = ({
   };
 
   const renderStatusChangeButton = () => {
-    if (!canChangeStatus()) {
+    if (!canEdit) {
       return null;
     }
     
@@ -315,7 +313,7 @@ export const TaskItem = ({
               </Button>
             )}
             
-            {onEdit && canEditDelete() && (
+            {onEdit && canEdit && (
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -330,7 +328,7 @@ export const TaskItem = ({
               </Button>
             )}
             
-            {onDelete && canEditDelete() && (
+            {onDelete && canEdit && (
               <Button 
                 variant="ghost" 
                 size="sm" 

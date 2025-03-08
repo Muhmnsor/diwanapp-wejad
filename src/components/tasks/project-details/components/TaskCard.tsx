@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Users, Check, Clock, ChevronDown, ChevronUp, MessageCircle, Paperclip, Link2 } from "lucide-react";
@@ -13,6 +14,7 @@ import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDia
 import { TaskDependencyBadge } from "./dependencies/TaskDependencyBadge";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
+import { usePermissionCheck } from "../hooks/usePermissionCheck";
 
 interface TaskCardProps {
   task: Task;
@@ -38,22 +40,23 @@ export const TaskCard = ({
   const [showDependencies, setShowDependencies] = useState(false);
   const { user } = useAuthStore();
   
+  // Use the enhanced permission check hook
+  const { canEdit } = usePermissionCheck({
+    assignedTo: task.assigned_to,
+    projectId: task.project_id,
+    workspaceId: task.workspace_id,
+    createdBy: task.created_by,
+    isGeneral: task.is_general
+  });
+  
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
   
   const completedDependenciesCount = dependencies.filter(dep => dep.status === 'completed').length;
   const completedDependentsCount = dependentTasks.filter(dep => dep.status === 'completed').length;
-  
-  const canChangeStatus = () => {
-    return (
-      user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
-    );
-  };
 
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!canChangeStatus()) {
-      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها");
+    if (!canEdit) {
+      toast.error("ليس لديك صلاحية لتغيير حالة هذه المهمة");
       return;
     }
     
@@ -182,7 +185,7 @@ export const TaskCard = ({
               الاعتماديات
             </Button>
 
-            {canChangeStatus() && (
+            {canEdit && (
               task.status !== 'completed' ? (
                 <Button 
                   variant="outline" 

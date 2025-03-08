@@ -98,6 +98,9 @@ const GeneralTasks = () => {
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
                     onTaskUpdated={fetchGeneralTasks}
+                    // Pass empty projectId and workspaceId since these are general tasks
+                    projectId=""
+                    workspaceId=""
                   />
                 ))
               ) : (
@@ -109,6 +112,9 @@ const GeneralTasks = () => {
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
                     onTaskUpdated={fetchGeneralTasks}
+                    // Pass empty projectId and workspaceId since these are general tasks
+                    projectId=""
+                    workspaceId=""
                   />
                 ))
               )}
