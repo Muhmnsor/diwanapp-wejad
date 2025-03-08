@@ -20,6 +20,41 @@ export const useTaskStatusManagement = (
     
     setIsUpdating(true);
     try {
+      // Find the current task
+      const currentTask = tasks.find(task => task.id === taskId);
+      
+      if (!currentTask) {
+        toast.error("لم يتم العثور على المهمة");
+        setIsUpdating(false);
+        return;
+      }
+      
+      // Check if task requires deliverables and attempting to mark as completed
+      if (newStatus === 'completed' && currentTask.requires_deliverable) {
+        // Check if the task has any deliverables
+        const { data: deliverables, error: deliverablesError } = await supabase
+          .from('unified_task_attachments')
+          .select('id')
+          .eq('task_id', taskId)
+          .eq('task_table', 'tasks')
+          .eq('attachment_category', 'assignee')
+          .limit(1);
+          
+        if (deliverablesError) {
+          console.error("Error checking task deliverables:", deliverablesError);
+          toast.error("حدث خطأ أثناء التحقق من مستلمات المهمة");
+          setIsUpdating(false);
+          return;
+        }
+        
+        // If no deliverables found, prevent completion
+        if (!deliverables || deliverables.length === 0) {
+          toast.error("هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال");
+          setIsUpdating(false);
+          return;
+        }
+      }
+      
       // Check dependencies only when moving to "completed" status
       if (newStatus === 'completed') {
         // Check if all dependencies are completed before allowing status change

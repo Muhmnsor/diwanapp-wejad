@@ -155,6 +155,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           isSubtask={!!task.parent_task_id}
           parentTaskId={task.parent_task_id}
           isGeneral={task.is_general}
+          requiresDeliverable={task.requires_deliverable}
         />
       </div>
       

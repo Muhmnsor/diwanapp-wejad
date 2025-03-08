@@ -35,6 +35,7 @@ export const EditTaskDialog = ({
     assignedTo: string | null;
     templates?: File[] | null;
     category?: string;
+    requiresDeliverable?: boolean;
   }) => {
     if (!task) return;
     
@@ -50,7 +51,8 @@ export const EditTaskDialog = ({
         priority: formData.priority,
         stage_id: formData.stageId,
         assigned_to: formData.assignedTo,
-        category: task.is_general ? formData.category : undefined
+        category: task.is_general ? formData.category : undefined,
+        requires_deliverable: formData.requiresDeliverable
       };
       
       // Update task in database
@@ -132,7 +134,8 @@ export const EditTaskDialog = ({
               priority: task.priority || "medium",
               stageId: task.stage_id || "",
               assignedTo: task.assigned_to || null,
-              category: task.category || "إدارية"
+              category: task.category || "إدارية",
+              requiresDeliverable: task.requires_deliverable || false
             }}
             isEditMode={true}
           />

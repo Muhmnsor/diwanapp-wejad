@@ -34,4 +34,6 @@ export interface Task {
   dependent_task_ids?: string[];
   // Dependency type
   dependency_type?: DependencyType;
+  // Required deliverables flag
+  requires_deliverable?: boolean;
 }

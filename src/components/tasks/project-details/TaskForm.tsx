@@ -10,6 +10,8 @@ import { TaskFormActions } from "./components/TaskFormActions";
 import { TaskAttachmentField } from "./components/TaskAttachmentField";
 import { TaskCategoryField } from "./components/TaskCategoryField";
 import { ProjectMember } from "./hooks/useProjectMembers";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export interface TaskFormProps {
   onSubmit: (formData: {
@@ -21,6 +23,7 @@ export interface TaskFormProps {
     assignedTo: string | null;
     templates?: File[] | null;
     category?: string;
+    requiresDeliverable?: boolean;
   }) => Promise<void>;
   isSubmitting: boolean;
   projectStages: { id: string; name: string }[];
@@ -34,6 +37,7 @@ export interface TaskFormProps {
     stageId: string;
     assignedTo: string | null;
     category?: string;
+    requiresDeliverable?: boolean;
   };
   isEditMode?: boolean;
 }
@@ -55,6 +59,7 @@ export const TaskForm = ({
   const [assignedTo, setAssignedTo] = useState<string | null>(initialValues?.assignedTo || null);
   const [templates, setTemplates] = useState<File[] | null>(null);
   const [category, setCategory] = useState<string>(initialValues?.category || "إدارية");
+  const [requiresDeliverable, setRequiresDeliverable] = useState<boolean>(initialValues?.requiresDeliverable || false);
   
   useEffect(() => {
     if (projectStages.length > 0 && !stageId) {
@@ -77,7 +82,8 @@ export const TaskForm = ({
       stageId,
       assignedTo,
       templates,
-      category: isGeneral ? category : undefined
+      category: isGeneral ? category : undefined,
+      requiresDeliverable
     });
     
     await onSubmit({ 
@@ -88,7 +94,8 @@ export const TaskForm = ({
       stageId,
       assignedTo,
       templates,
-      category: isGeneral ? category : undefined
+      category: isGeneral ? category : undefined,
+      requiresDeliverable
     });
   };
 
@@ -121,6 +128,21 @@ export const TaskForm = ({
         setAttachment={setTemplates}
         category="template"
       />
+      
+      {/* إضافة الخيار الجديد لجعل المستلمات إلزامية */}
+      <div className="flex items-center space-x-2 space-x-reverse">
+        <Checkbox 
+          id="requiresDeliverable"
+          checked={requiresDeliverable}
+          onCheckedChange={(checked) => setRequiresDeliverable(checked as boolean)}
+        />
+        <Label 
+          htmlFor="requiresDeliverable" 
+          className="text-sm cursor-pointer hover:text-primary transition-colors"
+        >
+          مستلمات المهمة إلزامية للإكمال
+        </Label>
+      </div>
       
       <TaskFormActions 
         isSubmitting={isSubmitting} 

@@ -1,72 +1,71 @@
 
-import { useTaskMetadataAttachments } from "../../hooks/useTaskMetadataAttachments";
-import { BasicMetadata } from "./BasicMetadata";
-import { AttachmentsByCategory } from "./AttachmentsByCategory";
+import { Calendar, Briefcase, FolderOpen, FileDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TaskMetadataProps {
   dueDate?: string | null;
   projectName?: string | null;
-  isSubtask: boolean;
+  isSubtask?: boolean;
   parentTaskId?: string | null;
-  taskId?: string | null;
-  showFileUploadButton?: boolean;
-  onFileUpload?: () => void;
   isGeneral?: boolean;
+  requiresDeliverable?: boolean;
 }
 
-export const TaskMetadata = ({ 
-  dueDate, 
-  projectName, 
-  isSubtask, 
-  parentTaskId, 
-  taskId,
-  showFileUploadButton,
-  onFileUpload,
-  isGeneral
+export const TaskMetadata = ({
+  dueDate,
+  projectName,
+  isSubtask,
+  parentTaskId,
+  isGeneral,
+  requiresDeliverable
 }: TaskMetadataProps) => {
-  const {
-    loading,
-    creatorAttachments,
-    assigneeAttachments,
-    commentAttachments,
-    handleDownload
-  } = useTaskMetadataAttachments(taskId || undefined);
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <BasicMetadata 
-        dueDate={dueDate}
-        projectName={projectName}
-        isSubtask={isSubtask}
-        parentTaskId={parentTaskId}
-        showFileUploadButton={showFileUploadButton}
-        onFileUpload={onFileUpload}
-        isGeneral={isGeneral}
-      />
-
-      <AttachmentsByCategory
-        title="مرفقات منشئ المهمة:"
-        attachments={creatorAttachments}
-        bgColor="bg-blue-50"
-        iconColor="text-blue-500"
-        onDownload={handleDownload}
-      />
-
-      <AttachmentsByCategory
-        title="مرفقات المكلف بالمهمة:"
-        attachments={assigneeAttachments}
-        bgColor="bg-green-50"
-        iconColor="text-green-500"
-        onDownload={handleDownload}
-      />
-
-      <AttachmentsByCategory
-        title="مرفقات التعليقات:"
-        attachments={commentAttachments}
-        bgColor="bg-gray-50"
-        iconColor="text-gray-500"
-        onDownload={handleDownload}
-      />
+    <div className="flex flex-wrap gap-1.5 mt-1 items-center">
+      {dueDate && (
+        <div className="flex items-center text-xs text-muted-foreground gap-1">
+          <Calendar className="h-3.5 w-3.5" />
+          <span>{formatDate(dueDate)}</span>
+        </div>
+      )}
+      
+      {projectName && !isGeneral && (
+        <div className="flex items-center text-xs text-muted-foreground gap-1">
+          <Briefcase className="h-3.5 w-3.5" />
+          <span>{projectName}</span>
+        </div>
+      )}
+      
+      {isSubtask && parentTaskId && (
+        <div className="flex items-center text-xs text-muted-foreground gap-1">
+          <FolderOpen className="h-3.5 w-3.5" />
+          <Link to={`/tasks/${parentTaskId}`} className="hover:underline">
+            المهمة الأصلية
+          </Link>
+        </div>
+      )}
+      
+      {requiresDeliverable && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="outline" className="rounded-full bg-amber-50 border-amber-200 text-amber-600 px-2 py-0.5 text-[10px]">
+                <FileDown className="h-3 w-3 mr-1" />
+                المستلمات إلزامية
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 };

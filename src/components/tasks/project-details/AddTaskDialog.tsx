@@ -37,6 +37,7 @@ export function AddTaskDialog({
     assignedTo: string | null;
     templates?: File[] | null;
     category?: string;
+    requiresDeliverable?: boolean;
   }) => {
     setIsSubmitting(true);
     
@@ -53,7 +54,8 @@ export function AddTaskDialog({
         priority: formData.priority,
         status: 'pending',
         category: formData.category || null,
-        is_general: isGeneral || false
+        is_general: isGeneral || false,
+        requires_deliverable: formData.requiresDeliverable || false
       };
       
       if (!isGeneral) {

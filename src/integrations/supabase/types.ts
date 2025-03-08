@@ -2262,6 +2262,7 @@ export type Database = {
           priority: string | null
           project_id: string | null
           project_manager: string | null
+          requires_deliverable: boolean | null
           stage_id: string | null
           start_date: string | null
           status: string | null
@@ -2282,6 +2283,7 @@ export type Database = {
           priority?: string | null
           project_id?: string | null
           project_manager?: string | null
+          requires_deliverable?: boolean | null
           stage_id?: string | null
           start_date?: string | null
           status?: string | null
@@ -2302,6 +2304,7 @@ export type Database = {
           priority?: string | null
           project_id?: string | null
           project_manager?: string | null
+          requires_deliverable?: boolean | null
           stage_id?: string | null
           start_date?: string | null
           status?: string | null
@@ -3089,6 +3092,7 @@ export type Database = {
           is_general: boolean | null
           priority: string | null
           project_id: string | null
+          requires_deliverable: boolean | null
           stage_id: string | null
           status: string | null
           title: string
@@ -3107,6 +3111,7 @@ export type Database = {
           is_general?: boolean | null
           priority?: string | null
           project_id?: string | null
+          requires_deliverable?: boolean | null
           stage_id?: string | null
           status?: string | null
           title: string
@@ -3125,6 +3130,7 @@ export type Database = {
           is_general?: boolean | null
           priority?: string | null
           project_id?: string | null
+          requires_deliverable?: boolean | null
           stage_id?: string | null
           status?: string | null
           title?: string
