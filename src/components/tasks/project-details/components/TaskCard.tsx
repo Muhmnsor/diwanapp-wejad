@@ -13,6 +13,7 @@ import { TaskAttachmentDialog } from "../../components/dialogs/TaskAttachmentDia
 import { TaskDependencyBadge } from "./dependencies/TaskDependencyBadge";
 import { useTaskDependencies } from "../hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "./dependencies/TaskDependenciesDialog";
+import { usePermissionCheck } from "../hooks/usePermissionCheck";
 
 interface TaskCardProps {
   task: Task;
@@ -43,11 +44,16 @@ export const TaskCard = ({
   const completedDependenciesCount = dependencies.filter(dep => dep.status === 'completed').length;
   const completedDependentsCount = dependentTasks.filter(dep => dep.status === 'completed').length;
   
+  const { canEdit } = usePermissionCheck({ 
+    assignedTo: task.assigned_to,
+    projectId: task.project_id || projectId,
+    workspaceId: task.workspace_id
+  });
+  
   const canChangeStatus = () => {
     return (
       user?.id === task.assigned_to || 
-      user?.isAdmin || 
-      user?.role === 'admin'
+      canEdit
     );
   };
 
