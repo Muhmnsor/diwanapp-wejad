@@ -37,11 +37,44 @@ export const TaskDiscussionContent = ({ task, newComment }: TaskDiscussionConten
     try {
       console.log("Fetching comments for task:", task.id);
       
-      // استرجاع التعليقات من الجدول الموحد
+      // تحديد جدول المهام المناسب بناءً على نوع المهمة
+      let taskTable = '';
+      
+      // Check if the task exists in the tasks table
+      const { data: regularTaskCheck, error: regularTaskError } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('id', task.id)
+        .single();
+        
+      if (!regularTaskError && regularTaskCheck) {
+        taskTable = 'tasks';
+        console.log("Task found in tasks table");
+      } else {
+        // If not in regular tasks, check portfolio_tasks
+        const { data: portfolioTaskCheck, error: portfolioTaskError } = await supabase
+          .from('portfolio_tasks')
+          .select('id')
+          .eq('id', task.id)
+          .single();
+          
+        if (!portfolioTaskError && portfolioTaskCheck) {
+          taskTable = 'portfolio_tasks';
+          console.log("Task found in portfolio_tasks table");
+        }
+      }
+      
+      if (!taskTable) {
+        console.error("Task not found in any task tables");
+        throw new Error("Task not found in database");
+      }
+      
+      // استرجاع التعليقات من الجدول الموحد أولاً
       const { data: unifiedComments, error: unifiedError } = await supabase
         .from("unified_task_comments")
         .select("*")
         .eq("task_id", task.id)
+        .eq("task_table", taskTable)
         .order("created_at", { ascending: true });
       
       if (unifiedError) {
@@ -49,44 +82,10 @@ export const TaskDiscussionContent = ({ task, newComment }: TaskDiscussionConten
         throw unifiedError;
       }
       
-      console.log("Found unified comments:", unifiedComments);
-      
-      // للتوافق مع الكود القديم، سنقوم أيضًا بالبحث في الجداول القديمة
-      const oldSources = [
-        {
-          table: "portfolio_task_comments",
-          field: "task_id"
-        },
-        {
-          table: "task_comments",
-          field: "task_id"
-        }
-      ];
-      
-      let oldComments: any[] = [];
-      
-      // استرجاع التعليقات من الجداول القديمة
-      for (const source of oldSources) {
-        const { data, error } = await supabase
-          .from(source.table)
-          .select("*")
-          .eq(source.field, task.id)
-          .order("created_at", { ascending: true });
-        
-        if (error) {
-          console.warn(`Error fetching from ${source.table}:`, error);
-        } else if (data && data.length > 0) {
-          console.log(`Found ${data.length} comments in ${source.table}`);
-          oldComments = [...oldComments, ...data];
-        }
-      }
-      
-      // دمج التعليقات من كلا المصدرين
-      const allComments = [...(unifiedComments || []), ...(oldComments || [])];
-      console.log("Combined comments data:", allComments);
+      console.log("Found unified comments:", unifiedComments?.length || 0);
       
       // إذا كان هناك بيانات، سنقوم بتحميل معلومات المستخدمين
-      const commentsWithUserInfo = await Promise.all((allComments || []).map(async (comment) => {
+      const commentsWithUserInfo = await Promise.all((unifiedComments || []).map(async (comment) => {
         // إذا كان هناك معرف للمستخدم، فسنجلب معلومات المستخدم
         if (comment.created_by) {
           try {

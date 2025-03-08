@@ -74,72 +74,81 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
         }
       }
       
-      // التحقق من وجود الـ task قبل محاولة إضافة تعليق
-      const { data: taskExists, error: taskCheckError } = await supabase
+      // تحديد جدول المهام المناسب بناءً على نوع المهمة
+      // Check if the task is a portfolio task or regular task
+      let taskTable = 'tasks';
+      let taskExists = false;
+      
+      // First, check if the task exists in the tasks table
+      const { data: regularTaskCheck, error: regularTaskError } = await supabase
         .from('tasks')
         .select('id')
         .eq('id', task.id)
         .single();
-      
-      if (taskCheckError) {
-        console.log("Task not found in tasks table, checking other tables...");
         
-        const { data: portfolioTaskExists } = await supabase
+      if (!regularTaskError && regularTaskCheck) {
+        taskTable = 'tasks';
+        taskExists = true;
+        console.log("Task found in tasks table");
+      } else {
+        // If not in regular tasks, check portfolio_tasks
+        const { data: portfolioTaskCheck, error: portfolioTaskError } = await supabase
           .from('portfolio_tasks')
           .select('id')
           .eq('id', task.id)
           .single();
           
-        if (!portfolioTaskExists) {
-          throw new Error("Task not found in any task tables");
+        if (!portfolioTaskError && portfolioTaskCheck) {
+          taskTable = 'portfolio_tasks';
+          taskExists = true;
+          console.log("Task found in portfolio_tasks table");
         }
       }
       
-      // إنشاء كائن التعليق
-      const commentData = {
+      if (!taskExists) {
+        console.error("Task not found in any task tables");
+        throw new Error("Task not found in database");
+      }
+      
+      // إنشاء كائن التعليق للجدول الموحد
+      const unifiedCommentData = {
         task_id: task.id,
         content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
         created_by: userId,
         attachment_url: attachmentUrl,
         attachment_name: attachmentName,
-        attachment_type: attachmentType
+        attachment_type: attachmentType,
+        task_table: taskTable // إضافة حقل task_table
       };
       
-      console.log("Adding comment to task_comments:", commentData);
+      console.log("Adding comment to unified_task_comments:", unifiedCommentData);
       
-      // محاولة الإضافة في جدول task_comments أولاً
-      let newCommentId = "";
-      let commentInserted = false;
-      
-      const { data: insertedComment, error: insertError } = await supabase
-        .from("task_comments")
-        .insert(commentData)
+      // محاولة الإضافة في الجدول الموحد أولاً
+      const { data: unifiedInsertedComment, error: unifiedInsertError } = await supabase
+        .from("unified_task_comments")
+        .insert(unifiedCommentData)
         .select()
         .single();
         
-      if (insertError) {
-        console.error("Error details for task_comments insert:", insertError);
-        console.log("Trying to add comment to unified_task_comments table");
+      if (unifiedInsertError) {
+        console.error("Error details for unified_task_comments insert:", unifiedInsertError);
         
-        // إذا فشل، نحاول في الجدول الموحد
-        const unifiedCommentData = {
-          ...commentData,
-          task_table: 'tasks' // إضافة حقل task_table
-        };
+        // في حالة فشل الإضافة للجدول الموحد، نستخدم دالة create-notification للتخطي
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('create-notification', {
+          body: {
+            type: 'comment_insert',
+            comment: unifiedCommentData
+          }
+        });
         
-        const { data: unifiedInsertedComment, error: unifiedInsertError } = await supabase
-          .from("unified_task_comments")
-          .insert(unifiedCommentData)
-          .select()
-          .single();
-          
-        if (unifiedInsertError) {
-          console.error("Error details for unified_task_comments insert:", unifiedInsertError);
-          throw unifiedInsertError;
-        } else if (unifiedInsertedComment) {
-          commentInserted = true;
-          newCommentId = unifiedInsertedComment.id;
-          
+        if (functionError) {
+          console.error("Error in edge function:", functionError);
+          throw new Error("Failed to create comment via edge function");
+        }
+        
+        console.log("Comment created via function:", functionData);
+        
+        if (functionData) {
           // إضافة بيانات المستخدم للتعليق المضاف
           const { data: userData } = await supabase
             .from("profiles")
@@ -148,18 +157,17 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
             .single();
             
           const newComment: TaskComment = {
-            ...unifiedInsertedComment,
-            user_name: userData?.display_name || userData?.email || "مستخدم",
-            user_email: userData?.email
+            ...functionData,
+            user_name: userData?.display_name || userData?.email || "مستخدم"
           };
           
           // تمرير التعليق الجديد لتحديث القائمة بدون إعادة التحميل الكامل
           onCommentAdded(newComment);
+        } else {
+          // إذا لم نحصل على بيانات، نقوم بتحديث القائمة
+          onCommentAdded();
         }
-      } else if (insertedComment) {
-        commentInserted = true;
-        newCommentId = insertedComment.id;
-        
+      } else if (unifiedInsertedComment) {
         // إضافة بيانات المستخدم للتعليق المضاف
         const { data: userData } = await supabase
           .from("profiles")
@@ -168,9 +176,8 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
           .single();
           
         const newComment: TaskComment = {
-          ...insertedComment,
-          user_name: userData?.display_name || userData?.email || "مستخدم",
-          user_email: userData?.email
+          ...unifiedInsertedComment,
+          user_name: userData?.display_name || userData?.email || "مستخدم"
         };
         
         // تمرير التعليق الجديد لتحديث القائمة بدون إعادة التحميل الكامل
@@ -198,59 +205,18 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
             
             console.log("Sending notification to:", task.assigned_to, "from user:", userName);
 
-            // بديل إرسال الإشعار مباشرة في حالة فشل تقنية الإشعارات عن طريق sendTaskCommentNotification
-            try {
-              // محاولة إرسال الإشعار باستخدام وظيفة sendTaskCommentNotification
-              const notificationResult = await sendTaskCommentNotification({
-                taskId: task.id,
-                taskTitle: task.title,
-                projectId: task.project_id,
-                projectTitle: task.project_name,
-                assignedUserId: task.assigned_to,
-                updatedByUserId: userId,
-                updatedByUserName: userName
-              });
-              
-              console.log("Notification sending result:", notificationResult ? "Success" : "Failed");
-              
-              // إذا فشل إرسال الإشعار، نقوم بإنشاء إشعار بشكل مباشر
-              if (!notificationResult) {
-                console.log("Trying to create notification directly as fallback...");
-                // إنشاء رسالة الإشعار
-                let message = `تمت إضافة تعليق جديد على المهمة "${task.title}"`;
-                if (task.project_name) {
-                  message += ` في مشروع "${task.project_name}"`;
-                }
-                if (userName) {
-                  message += ` بواسطة ${userName}`;
-                }
-                
-                // إرسال الإشعار مباشرة باستخدام supabase
-                const { data: notificationData, error: notificationError } = await supabase
-                  .from('in_app_notifications')
-                  .insert({
-                    user_id: task.assigned_to,
-                    title: 'تعليق جديد على المهمة',
-                    message: message,
-                    notification_type: 'comment',
-                    related_entity_id: task.id,
-                    related_entity_type: task.project_id ? 'project_task' : 'task',
-                    read: false
-                  })
-                  .select()
-                  .single();
-                  
-                if (notificationError) {
-                  console.error("Fallback notification failed:", notificationError);
-                } else {
-                  console.log("Fallback notification created successfully");
-                }
-              }
-            } catch (notificationError) {
-              console.error("Error in comment notification process:", notificationError);
-            }
-          } catch (userError) {
-            console.error("Error fetching user data for notification:", userError);
+            // إرسال الإشعار باستخدام وظيفة sendTaskCommentNotification
+            await sendTaskCommentNotification({
+              taskId: task.id,
+              taskTitle: task.title,
+              projectId: task.project_id,
+              projectTitle: task.project_name,
+              assignedUserId: task.assigned_to,
+              updatedByUserId: userId,
+              updatedByUserName: userName
+            });
+          } catch (notificationError) {
+            console.error("Error sending notification:", notificationError);
           }
         } else {
           console.log("No notification sent: User is commenting on their own task or task has no assignee");
@@ -260,11 +226,6 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
       // مسح حقل التعليق والملف بعد النجاح
       setCommentText("");
       setSelectedFile(null);
-      
-      if (!commentInserted) {
-        // إذا لم ننجح في إضافة التعليق، نقوم بتحديث القائمة
-        onCommentAdded();
-      }
       
       if (attachmentError) {
         toast.warning("تم إضافة التعليق ولكن قد يكون هناك مشكلة في رفع المرفق");

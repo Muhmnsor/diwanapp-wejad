@@ -45,7 +45,7 @@ export const useTaskNotifications = () => {
       console.log('Sending task status notification to:', params.assignedUserId, 'message:', message);
       
       try {
-        // أولاً نحاول استخدام createNotification من useInAppNotifications
+        // محاولة إنشاء الإشعار باستخدام createNotification
         const result = await createNotification({
           title: `تحديث حالة المهمة`,
           message,
@@ -57,30 +57,34 @@ export const useTaskNotifications = () => {
         
         console.log('Status notification result:', result ? 'Success' : 'Failed');
         
-        // إذا فشلت، نحاول استخدام supabase مباشرة
+        // إذا فشلت، نستخدم Edge Function
         if (!result) {
-          console.log('Trying direct insertion as fallback...');
-          const { data: directResult, error: directError } = await supabase
-            .from('in_app_notifications')
-            .insert({
-              user_id: params.assignedUserId,
-              title: `تحديث حالة المهمة`,
-              message,
-              notification_type: 'task',
-              related_entity_id: params.taskId,
-              related_entity_type: params.projectId ? 'project_task' : 'task',
-              read: false
-            })
-            .select()
-            .single();
-            
-          if (directError) {
-            console.error('Direct notification creation failed:', directError);
+          console.log('Using edge function as fallback for status notification...');
+          
+          const notificationData = {
+            user_id: params.assignedUserId,
+            title: `تحديث حالة المهمة`,
+            message,
+            notification_type: 'task',
+            related_entity_id: params.taskId,
+            related_entity_type: params.projectId ? 'project_task' : 'task',
+            read: false
+          };
+          
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('create-notification', {
+            body: {
+              type: 'notification',
+              notification: notificationData
+            }
+          });
+          
+          if (functionError) {
+            console.error('Error in edge function:', functionError);
             return null;
           }
           
-          console.log('Direct notification creation succeeded:', directResult);
-          return directResult;
+          console.log('Status notification created via function:', functionData);
+          return functionData;
         }
         
         return result;
@@ -128,32 +132,34 @@ export const useTaskNotifications = () => {
         
         console.log('Comment notification creation result:', result ? 'Success' : 'Failed');
         
+        // إذا فشلت، نستخدم Edge Function
         if (!result) {
-          console.error('Failed to create comment notification - null result returned');
+          console.log('Using edge function as fallback for comment notification...');
           
-          // محاولة إنشاء الإشعار مباشرة باستخدام Supabase
-          console.log('Trying direct insertion as fallback...');
-          const { data: directResult, error: directError } = await supabase
-            .from('in_app_notifications')
-            .insert({
-              user_id: params.assignedUserId,
-              title: `تعليق جديد على المهمة`,
-              message,
-              notification_type: 'comment',
-              related_entity_id: params.taskId,
-              related_entity_type: params.projectId ? 'project_task' : 'task',
-              read: false
-            })
-            .select()
-            .single();
-            
-          if (directError) {
-            console.error('Direct notification creation failed:', directError);
+          const notificationData = {
+            user_id: params.assignedUserId,
+            title: `تعليق جديد على المهمة`,
+            message,
+            notification_type: 'comment',
+            related_entity_id: params.taskId,
+            related_entity_type: params.projectId ? 'project_task' : 'task',
+            read: false
+          };
+          
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('create-notification', {
+            body: {
+              type: 'notification',
+              notification: notificationData
+            }
+          });
+          
+          if (functionError) {
+            console.error('Error in edge function:', functionError);
             return null;
           }
           
-          console.log('Direct notification creation succeeded:', directResult);
-          return directResult;
+          console.log('Comment notification created via function:', functionData);
+          return functionData;
         }
         
         return result;
@@ -196,30 +202,34 @@ export const useTaskNotifications = () => {
         
         console.log('Attachment notification result:', result ? 'Success' : 'Failed');
         
-        // إذا فشلت، نحاول استخدام supabase مباشرة
+        // إذا فشلت، نستخدم Edge Function
         if (!result) {
-          console.log('Trying direct insertion as fallback...');
-          const { data: directResult, error: directError } = await supabase
-            .from('in_app_notifications')
-            .insert({
-              user_id: params.assignedUserId,
-              title: `مرفق جديد للمهمة`,
-              message,
-              notification_type: 'task',
-              related_entity_id: params.taskId,
-              related_entity_type: params.projectId ? 'project_task' : 'task',
-              read: false
-            })
-            .select()
-            .single();
-            
-          if (directError) {
-            console.error('Direct attachment notification creation failed:', directError);
+          console.log('Using edge function as fallback for attachment notification...');
+          
+          const notificationData = {
+            user_id: params.assignedUserId,
+            title: `مرفق جديد للمهمة`,
+            message,
+            notification_type: 'task',
+            related_entity_id: params.taskId,
+            related_entity_type: params.projectId ? 'project_task' : 'task',
+            read: false
+          };
+          
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('create-notification', {
+            body: {
+              type: 'notification',
+              notification: notificationData
+            }
+          });
+          
+          if (functionError) {
+            console.error('Error in edge function:', functionError);
             return null;
           }
           
-          console.log('Direct attachment notification creation succeeded:', directResult);
-          return directResult;
+          console.log('Attachment notification created via function:', functionData);
+          return functionData;
         }
         
         return result;
