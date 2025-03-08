@@ -171,7 +171,6 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         onEdit={handleEditTask}
         taskId={task.id}
         isGeneral={task.is_general}
-        requiresDeliverable={task.requires_deliverable}
       />
       
       <TaskDiscussionDialog 
