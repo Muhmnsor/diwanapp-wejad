@@ -49,18 +49,21 @@ export const EditTaskDialog = ({
         description: formData.description,
         due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
         priority: formData.priority,
-        stage_id: formData.stageId,
+        // For general tasks, set stage_id to null instead of empty string
+        stage_id: task.is_general ? null : (formData.stageId || null),
         assigned_to: formData.assignedTo,
         category: task.is_general ? formData.category : undefined,
         requires_deliverable: formData.requiresDeliverable
       };
+      
+      console.log("Final update data being sent to database:", updateData);
       
       // Update task in database
       const { error } = await supabase
         .from('tasks')
         .update(updateData)
         .eq('id', task.id);
-      
+        
       if (error) throw error;
       
       // Upload templates if provided
