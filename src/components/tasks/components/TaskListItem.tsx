@@ -1,14 +1,11 @@
 
 import { useState } from "react";
 import { Task } from "../types/task";
-import { TaskHeader } from "./header/TaskHeader";
-import { TaskMetadata } from "./metadata/TaskMetadata";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "./dialogs/TaskAttachmentDialog";
 import { FileUploadDialog } from "./dialogs/FileUploadDialog";
-import { TaskActionButtons } from "./actions/TaskActionButtons";
 import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
 import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
@@ -19,6 +16,9 @@ import { handleTaskCompletion } from "./actions/handleTaskCompletion";
 import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
 import { usePermissionCheck } from "../project-details/hooks/usePermissionCheck";
+import { TaskMetadata } from "./metadata/TaskMetadata";
+import { TaskHeader } from "./TaskHeader";
+import { TaskActions } from "./TaskActions";
 
 interface TaskListItemProps {
   task: Task;
@@ -162,15 +162,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
 
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
-      <div className="flex justify-between items-start">
-        <TaskHeader 
-          task={task} 
-          status={currentStatus} 
-          onShowDependencies={() => setShowDependencies(true)}
-          hasDependencies={hasDependencies || hasDependents}
-          dependencyIconColor={dependencyIconColor}
-        />
-      </div>
+      <TaskHeader 
+        task={task} 
+        status={currentStatus} 
+        onShowDependencies={() => setShowDependencies(true)}
+        hasDependencies={hasDependencies || hasDependents}
+        dependencyIconColor={dependencyIconColor}
+      />
       
       <div className="mt-3">
         <TaskMetadata
@@ -182,7 +180,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         />
       </div>
       
-      <TaskActionButtons 
+      <TaskActions 
         currentStatus={currentStatus}
         isUpdating={isUpdating}
         onShowDiscussion={() => setShowDiscussion(true)}
