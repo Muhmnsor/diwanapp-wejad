@@ -43,13 +43,21 @@ export const TaskDependenciesDialog = ({
   
   const fetchAvailableTasks = async () => {
     try {
+      console.log(`Fetching available tasks for project: ${projectId}, type: ${typeof projectId}`);
+      
+      // Handle project_id comparison correctly regardless of type (UUID or string)
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('project_id', projectId)
+        .filter('project_id', 'eq', projectId)
         .neq('id', task.id); // Don't include the current task
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching available tasks:", error);
+        throw error;
+      }
+      
+      console.log(`Fetched ${data?.length || 0} tasks for project`);
       
       // Filter out tasks that are already dependencies
       const dependencyIds = dependencies.map(d => d.id);

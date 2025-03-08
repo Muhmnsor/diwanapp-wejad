@@ -23,6 +23,8 @@ export const useTaskDependencies = (taskId: string | undefined) => {
     
     setIsLoading(true);
     try {
+      console.log("Fetching dependencies for task:", taskId);
+      
       // Fetch raw dependencies from task_dependencies
       const { data: dependenciesData, error: dependenciesError } = await supabase
         .from('task_dependencies')
@@ -30,6 +32,7 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         .eq('task_id', taskId);
       
       if (dependenciesError) throw dependenciesError;
+      console.log("Raw dependencies data:", dependenciesData);
       setRawDependencies(dependenciesData || []);
       
       // Fetch dependent tasks (tasks that depend on this task)
@@ -39,6 +42,7 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         .eq('dependency_task_id', taskId);
       
       if (dependentError) throw dependentError;
+      console.log("Raw dependent tasks data:", dependentData);
       
       // Fetch actual task data for dependencies
       if (dependenciesData && dependenciesData.length > 0) {
@@ -50,6 +54,7 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           .in('id', dependencyIds);
         
         if (taskError) throw taskError;
+        console.log("Task data for dependencies:", taskData);
         
         // Cast the task data to match the Task interface
         const typedTasks: Task[] = (taskData || []).map(task => ({
@@ -80,6 +85,7 @@ export const useTaskDependencies = (taskId: string | undefined) => {
           .in('id', dependentIds);
         
         if (taskError) throw taskError;
+        console.log("Task data for dependent tasks:", taskData);
         
         // Cast the task data to match the Task interface
         const typedTasks: Task[] = (taskData || []).map(task => ({
@@ -112,6 +118,8 @@ export const useTaskDependencies = (taskId: string | undefined) => {
     if (!taskId || !dependencyTaskId) return;
     
     try {
+      console.log(`Adding dependency: Task ${taskId} depends on ${dependencyTaskId}`);
+      
       // Check for circular dependency
       const result = await checkCircularDependency(taskId, dependencyTaskId);
       if (result.isCircular) {
@@ -119,16 +127,21 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         return false;
       }
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('task_dependencies')
         .insert({
           task_id: taskId,
           dependency_task_id: dependencyTaskId,
           dependency_type: dependencyType
-        });
+        })
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error in addDependency:", error);
+        throw error;
+      }
       
+      console.log("Dependency added successfully:", data);
       toast.success("تمت إضافة الاعتمادية بنجاح");
       await fetchDependencies();
       return true;
@@ -144,6 +157,8 @@ export const useTaskDependencies = (taskId: string | undefined) => {
     if (!taskId || !dependencyTaskId) return;
     
     try {
+      console.log(`Removing dependency: Task ${taskId} no longer depends on ${dependencyTaskId}`);
+      
       const { error } = await supabase
         .from('task_dependencies')
         .delete()
