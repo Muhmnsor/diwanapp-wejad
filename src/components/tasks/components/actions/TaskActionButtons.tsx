@@ -2,6 +2,9 @@
 import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
+import { toast } from "sonner";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskActionButtonsProps {
   currentStatus: string;
@@ -15,6 +18,7 @@ interface TaskActionButtonsProps {
   onEdit?: (taskId: string) => void;
   taskId: string;
   isGeneral?: boolean;
+  requiresDeliverable?: boolean;
 }
 
 export const TaskActionButtons = ({
@@ -29,6 +33,7 @@ export const TaskActionButtons = ({
   onEdit,
   taskId,
   isGeneral,
+  requiresDeliverable
 }: TaskActionButtonsProps) => {
   const { 
     hasNewDiscussion, 
@@ -36,16 +41,56 @@ export const TaskActionButtons = ({
     hasTemplates, 
     resetDiscussionFlag 
   } = useTaskButtonStates(taskId);
+  const [checking, setChecking] = useState(false);
 
   console.log("Task button states for task", taskId, {
     hasNewDiscussion,
     hasDeliverables,
-    hasTemplates
+    hasTemplates,
+    requiresDeliverable
   });
 
   const handleDiscussionClick = () => {
     resetDiscussionFlag();
     onShowDiscussion();
+  };
+
+  const handleStatusChange = async (status: string) => {
+    // If not marking as completed or doesn't require deliverables, proceed normally
+    if (status !== "completed" || !requiresDeliverable) {
+      onStatusChange(status);
+      return;
+    }
+
+    setChecking(true);
+    try {
+      // Check if deliverables exist for this task in unified_task_attachments
+      const { count, error } = await supabase
+        .from("unified_task_attachments")
+        .select("*", { count: 'exact', head: true })
+        .eq("task_id", taskId);
+        
+      if (error) {
+        console.error("Error checking deliverables:", error);
+        toast.error("حدث خطأ أثناء التحقق من المستلمات");
+        return;
+      }
+      
+      // If count is 0 and deliverables are required, show error
+      if (count === 0 && requiresDeliverable) {
+        toast.error("يجب رفع مستلم واحد على الأقل قبل إكمال المهمة");
+        return;
+      }
+      
+      // If deliverables exist or not required, proceed with status change
+      onStatusChange(status);
+      
+    } catch (error) {
+      console.error("Error checking deliverables:", error);
+      toast.error("حدث خطأ أثناء التحقق من المستلمات");
+    } finally {
+      setChecking(false);
+    }
   };
 
   return (
@@ -124,8 +169,8 @@ export const TaskActionButtons = ({
             variant="outline" 
             size="sm" 
             className="text-xs flex items-center gap-1"
-            onClick={() => onStatusChange("completed")}
-            disabled={isUpdating}
+            onClick={() => handleStatusChange("completed")}
+            disabled={isUpdating || checking}
           >
             <Check className="h-3.5 w-3.5 text-green-500" />
             تمت
@@ -135,8 +180,8 @@ export const TaskActionButtons = ({
             variant="outline" 
             size="sm" 
             className="text-xs flex items-center gap-1"
-            onClick={() => onStatusChange("pending")}
-            disabled={isUpdating}
+            onClick={() => handleStatusChange("pending")}
+            disabled={isUpdating || checking}
           >
             <Clock className="h-3.5 w-3.5 text-amber-500" />
             قيد التنفيذ
