@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -227,7 +228,7 @@ export const TasksRecurring = () => {
         <Card className="bg-muted/30">
           <CardContent className="flex flex-col items-center justify-center py-10">
             <Repeat className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-xl font-medium mb-2">لا توجد مهام متكررة</h3>
+            <h3 className="text-xl font-medium mb-2 text-center">لا توجد مهام متكررة</h3>
             <p className="text-muted-foreground text-center max-w-md">
               يمكنك إنشاء مهام متكررة ليتم إنشاؤها تلقائياً حسب الجدول الزمني المحدد
             </p>
@@ -236,10 +237,9 @@ export const TasksRecurring = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTasks.map(task => (
-            <Card key={task.id} className={`overflow-hidden border-l-4 ${!task.is_active ? 'border-l-muted' : task.priority === 'high' ? 'border-l-orange-500' : task.priority === 'medium' ? 'border-l-blue-500' : 'border-l-green-500'}`}>
+            <Card key={task.id} className={`overflow-hidden border-r-4 ${!task.is_active ? 'border-r-muted' : task.priority === 'high' ? 'border-r-orange-500' : task.priority === 'medium' ? 'border-r-blue-500' : 'border-r-green-500'}`}>
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-base font-medium line-clamp-1">{task.title}</CardTitle>
+                <div className="flex flex-row-reverse justify-between items-start">
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleTaskStatus(task.id, task.is_active)}>
                       {task.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -248,51 +248,52 @@ export const TasksRecurring = () => {
                       <Trash className="h-4 w-4" />
                     </Button>
                   </div>
+                  <CardTitle className="text-base font-medium line-clamp-1 text-right">{task.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="pb-4 pt-0">
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Repeat className="h-4 w-4 shrink-0" />
                     <span>{renderRecurrence(task)}</span>
+                    <Repeat className="h-4 w-4 shrink-0 mr-auto" />
                   </div>
                   
                   {task.next_generation_date && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-4 w-4 shrink-0" />
                       <span>الإنشاء التالي: {formatDate(task.next_generation_date)}</span>
+                      <Calendar className="h-4 w-4 shrink-0 mr-auto" />
                     </div>
                   )}
                   
                   {task.last_generated_date && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-4 w-4 shrink-0" />
                       <span>آخر إنشاء: {formatDate(task.last_generated_date)}</span>
+                      <Clock className="h-4 w-4 shrink-0 mr-auto" />
                     </div>
                   )}
 
                   {task.project_name && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-muted-foreground justify-end">
                       <span>المشروع: {task.project_name}</span>
                     </div>
                   )}
 
                   {task.workspace_name && !task.project_name && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-muted-foreground justify-end">
                       <span>مساحة العمل: {task.workspace_name}</span>
                     </div>
                   )}
 
                   {task.assignee_name && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-muted-foreground justify-end">
                       <span>المسؤول: {task.assignee_name}</span>
                     </div>
                   )}
 
                   {task.requires_deliverable && (
-                    <div className="flex items-center gap-2 text-green-600">
-                      <Check className="h-4 w-4 shrink-0" />
+                    <div className="flex items-center gap-2 text-green-600 justify-end">
                       <span>تتطلب مستلمات</span>
+                      <Check className="h-4 w-4 shrink-0" />
                     </div>
                   )}
                 </div>
