@@ -1,8 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Task } from "../types/task";
 import { toast } from "sonner";
+import { Task } from "../types/task";
+import {
+  fetchRawDependencies,
+  fetchRawDependentTasks,
+  fetchTasksData,
+  addTaskDependency,
+  removeTaskDependency,
+  checkCircularDependency,
+  fetchAvailableTasks
+} from "./useTaskDependencies.service";
 
 export interface DependencyType {
   id: string;
@@ -23,101 +31,26 @@ export const useTaskDependencies = (taskId: string | undefined) => {
     
     setIsLoading(true);
     try {
-      console.log("Fetching dependencies for task:", taskId);
+      // Fetch raw dependencies and dependent tasks
+      const dependenciesData = await fetchRawDependencies(taskId);
+      setRawDependencies(dependenciesData);
       
-      // Fetch raw dependencies from task_dependencies
-      const { data: dependenciesData, error: dependenciesError } = await supabase
-        .from('task_dependencies')
-        .select('*')
-        .eq('task_id', taskId);
-      
-      if (dependenciesError) {
-        console.error("Error fetching dependencies:", dependenciesError);
-        throw dependenciesError;
-      }
-      
-      console.log("Raw dependencies data:", dependenciesData);
-      setRawDependencies(dependenciesData || []);
-      
-      // Fetch dependent tasks (tasks that depend on this task)
-      const { data: dependentData, error: dependentError } = await supabase
-        .from('task_dependencies')
-        .select('*')
-        .eq('dependency_task_id', taskId);
-      
-      if (dependentError) {
-        console.error("Error fetching dependent tasks:", dependentError);
-        throw dependentError;
-      }
-      
-      console.log("Raw dependent tasks data:", dependentData);
+      const dependentData = await fetchRawDependentTasks(taskId);
       
       // Fetch actual task data for dependencies
-      if (dependenciesData && dependenciesData.length > 0) {
+      if (dependenciesData.length > 0) {
         const dependencyIds = dependenciesData.map(dep => dep.dependency_task_id);
-        
-        const { data: taskData, error: taskError } = await supabase
-          .from('tasks')
-          .select('*')
-          .in('id', dependencyIds);
-        
-        if (taskError) {
-          console.error("Error fetching task data for dependencies:", taskError);
-          throw taskError;
-        }
-        
-        console.log("Task data for dependencies:", taskData);
-        
-        // Cast the task data to match the Task interface
-        const typedTasks: Task[] = (taskData || []).map(task => ({
-          id: task.id,
-          title: task.title,
-          description: task.description || null,
-          status: task.status || 'pending',
-          priority: task.priority || null,
-          due_date: task.due_date || null,
-          assigned_to: task.assigned_to || null,
-          created_at: task.created_at || new Date().toISOString(),
-          stage_id: task.stage_id || undefined,
-          stage_name: task.stage_name
-        }));
-        
-        setDependencies(typedTasks);
+        const taskData = await fetchTasksData(dependencyIds);
+        setDependencies(taskData);
       } else {
         setDependencies([]);
       }
       
       // Fetch actual task data for dependent tasks
-      if (dependentData && dependentData.length > 0) {
+      if (dependentData.length > 0) {
         const dependentIds = dependentData.map(dep => dep.task_id);
-        
-        const { data: taskData, error: taskError } = await supabase
-          .from('tasks')
-          .select('*')
-          .in('id', dependentIds);
-        
-        if (taskError) {
-          console.error("Error fetching task data for dependent tasks:", taskError);
-          throw taskError;
-        }
-        
-        console.log("Task data for dependent tasks:", taskData);
-        
-        // Cast the task data to match the Task interface
-        const typedTasks: Task[] = (taskData || []).map(task => ({
-          id: task.id,
-          title: task.title,
-          description: task.description || null,
-          status: task.status || 'pending',
-          priority: task.priority || null,
-          due_date: task.due_date || null,
-          assigned_to: task.assigned_to || null,
-          created_at: task.created_at || new Date().toISOString(),
-          stage_id: task.stage_id || undefined,
-          stage_name: task.stage_name
-        }));
-        
-        setDependentTasks(typedTasks);
+        const taskData = await fetchTasksData(dependentIds);
+        setDependentTasks(taskData);
       } else {
         setDependentTasks([]);
       }
@@ -130,15 +63,16 @@ export const useTaskDependencies = (taskId: string | undefined) => {
   };
 
   // Add dependency between tasks
-  const addDependency = async (dependencyTaskId: string, dependencyType: 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish' = 'finish-to-start') => {
+  const addDependency = async (
+    dependencyTaskId: string, 
+    dependencyType: 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish' = 'finish-to-start'
+  ) => {
     if (!taskId || !dependencyTaskId) {
       console.error("Missing taskId or dependencyTaskId", { taskId, dependencyTaskId });
       return false;
     }
     
     try {
-      console.log(`Adding dependency: Task ${taskId} depends on ${dependencyTaskId}`);
-      
       // Check for circular dependency
       const result = await checkCircularDependency(taskId, dependencyTaskId);
       if (result.isCircular) {
@@ -157,21 +91,9 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         return false;
       }
       
-      const { data, error } = await supabase
-        .from('task_dependencies')
-        .insert({
-          task_id: taskId,
-          dependency_task_id: dependencyTaskId,
-          dependency_type: dependencyType
-        })
-        .select();
+      await addTaskDependency(taskId, dependencyTaskId, dependencyType);
       
-      if (error) {
-        console.error("Error in addDependency:", error);
-        throw error;
-      }
-      
-      console.log("Dependency added successfully:", data);
+      toast.success("تمت إضافة الاعتمادية بنجاح");
       await fetchDependencies();
       return true;
     } catch (error) {
@@ -189,20 +111,7 @@ export const useTaskDependencies = (taskId: string | undefined) => {
     }
     
     try {
-      console.log(`Removing dependency: Task ${taskId} no longer depends on ${dependencyTaskId}`);
-      
-      const { error } = await supabase
-        .from('task_dependencies')
-        .delete()
-        .match({
-          task_id: taskId,
-          dependency_task_id: dependencyTaskId
-        });
-      
-      if (error) {
-        console.error("Error removing dependency:", error);
-        throw error;
-      }
+      await removeTaskDependency(taskId, dependencyTaskId);
       
       toast.success("تمت إزالة الاعتمادية بنجاح");
       await fetchDependencies();
@@ -215,57 +124,20 @@ export const useTaskDependencies = (taskId: string | undefined) => {
   };
 
   // Check if dependencies for a task are completed
-  const checkDependenciesCompleted = async (taskId: string): Promise<{ 
-    isValid: boolean; 
-    message: string; 
-    pendingDependencies: Task[] 
-  }> => {
+  const checkDependenciesCompleted = async (taskId: string) => {
     try {
-      // Fetch dependencies
-      const { data: dependencies, error } = await supabase
-        .from('task_dependencies')
-        .select('dependency_task_id, dependency_type')
-        .eq('task_id', taskId);
+      // Fetch dependencies for the task
+      const dependenciesData = await fetchRawDependencies(taskId);
       
-      if (error) {
-        console.error("Error checking dependencies:", error);
-        throw error;
-      }
-      
-      if (!dependencies || dependencies.length === 0) {
+      if (!dependenciesData || dependenciesData.length === 0) {
         return { isValid: true, message: "", pendingDependencies: [] };
       }
       
-      const dependencyIds = dependencies.map(dep => dep.dependency_task_id);
+      const dependencyIds = dependenciesData.map(dep => dep.dependency_task_id);
+      const taskData = await fetchTasksData(dependencyIds);
       
-      // Get task data for dependencies
-      const { data: taskData, error: taskError } = await supabase
-        .from('tasks')
-        .select('id, title, status')
-        .in('id', dependencyIds);
-      
-      if (taskError) {
-        console.error("Error fetching task data for dependency check:", taskError);
-        throw taskError;
-      }
-      
-      if (!taskData) {
-        return { isValid: true, message: "", pendingDependencies: [] };
-      }
-      
-      // Find incomplete dependencies and properly cast them to Task type
-      const incompleteDependencies: Task[] = taskData
-        .filter(task => task.status !== 'completed')
-        .map(task => ({
-          id: task.id,
-          title: task.title,
-          status: task.status || 'pending',
-          description: null,
-          priority: null,
-          due_date: null,
-          assigned_to: null,
-          created_at: new Date().toISOString()
-        }));
+      // Find incomplete dependencies
+      const incompleteDependencies = taskData.filter(task => task.status !== 'completed');
       
       if (incompleteDependencies.length > 0) {
         return {
@@ -283,54 +155,6 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         message: "حدث خطأ أثناء التحقق من اعتماديات المهمة", 
         pendingDependencies: [] 
       };
-    }
-  };
-
-  // Helper function to check for circular dependencies
-  const checkCircularDependency = async (taskId: string, dependencyTaskId: string) => {
-    // Simple check: don't allow direct circular dependencies
-    if (taskId === dependencyTaskId) {
-      return { isCircular: true, path: [taskId, dependencyTaskId] };
-    }
-    
-    try {
-      // Get all dependencies of the dependency task
-      const visited = new Set<string>();
-      const stack: string[] = [dependencyTaskId];
-      
-      while (stack.length > 0) {
-        const currentTaskId = stack.pop()!;
-        
-        if (visited.has(currentTaskId)) continue;
-        visited.add(currentTaskId);
-        
-        if (currentTaskId === taskId) {
-          return { isCircular: true, path: [...visited] };
-        }
-        
-        // Get dependencies of the current task
-        const { data, error } = await supabase
-          .from('task_dependencies')
-          .select('dependency_task_id')
-          .eq('task_id', currentTaskId);
-        
-        if (error) {
-          console.error("Error checking circular dependency:", error);
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          for (const dep of data) {
-            stack.push(dep.dependency_task_id);
-          }
-        }
-      }
-      
-      return { isCircular: false, path: [] };
-    } catch (error) {
-      console.error("Error checking circular dependency:", error);
-      // If there's an error, prevent the dependency to be safe
-      return { isCircular: true, path: [] };
     }
   };
 
