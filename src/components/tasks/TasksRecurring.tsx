@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, Check, Clock, Pause, Play, Repeat, Trash } from "lucide-react";
 import { formatDate } from "@/utils/dateUtils";
+import { TaskPriorityBadge } from "../tasks/components/priority/TaskPriorityBadge";
 
 interface RecurringTask {
   id: string;
@@ -271,6 +273,17 @@ export const TasksRecurring = () => {
                     </div>
                   )}
 
+                  <div className="flex justify-between items-center">
+                    <TaskPriorityBadge priority={task.priority} />
+                    
+                    {task.requires_deliverable && (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <span>تتطلب مستلمات</span>
+                        <Check className="h-4 w-4 shrink-0" />
+                      </div>
+                    )}
+                  </div>
+
                   {task.project_name && (
                     <div className="flex items-center gap-2 text-muted-foreground justify-end">
                       <span>المشروع: {task.project_name}</span>
@@ -286,13 +299,6 @@ export const TasksRecurring = () => {
                   {task.assignee_name && (
                     <div className="flex items-center gap-2 text-muted-foreground justify-end">
                       <span>المسؤول: {task.assignee_name}</span>
-                    </div>
-                  )}
-
-                  {task.requires_deliverable && (
-                    <div className="flex items-center gap-2 text-green-600 justify-end">
-                      <span>تتطلب مستلمات</span>
-                      <Check className="h-4 w-4 shrink-0" />
                     </div>
                   )}
                 </div>

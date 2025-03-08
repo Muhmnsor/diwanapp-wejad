@@ -5,11 +5,18 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
 import { RecurringTaskDialog } from "./project-details/components/recurring/RecurringTaskDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { ProjectMember } from "./project-details/types/projectMember";
+import { useAuthStore } from "@/store/authStore";
 
 export const TasksHeader = () => {
+  const { user } = useAuthStore();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isRecurringDialogOpen, setIsRecurringDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Detect the active tab from URL hash
   useEffect(() => {
@@ -36,6 +43,44 @@ export const TasksHeader = () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
   }, []);
+
+  // جلب الأعضاء الذين يمكن إسناد المهام لهم
+  useEffect(() => {
+    const fetchAvailableUsers = async () => {
+      if (activeTab === 'recurring' && isRecurringDialogOpen) {
+        setIsLoading(true);
+        try {
+          const { data: profiles, error } = await supabase
+            .from('profiles')
+            .select('id, display_name, email')
+            .order('display_name', { ascending: true });
+            
+          if (error) throw error;
+          
+          // تحويل البيانات إلى تنسيق ProjectMember
+          const formattedMembers: ProjectMember[] = profiles.map(profile => ({
+            user_id: profile.id,
+            user_display_name: profile.display_name,
+            user_email: profile.email,
+            role: profile.id === user?.id ? 'admin' : 'member'
+          }));
+          
+          setProjectMembers(formattedMembers);
+        } catch (error) {
+          console.error("Error fetching profiles:", error);
+          toast.error("حدث خطأ أثناء تحميل قائمة الأعضاء");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchAvailableUsers();
+  }, [activeTab, isRecurringDialogOpen, user?.id]);
+
+  const handleRecurringDialogClosed = () => {
+    setIsRecurringDialogOpen(false);
+  };
 
   return (
     <div className="flex flex-col gap-4 mb-6">
@@ -87,12 +132,14 @@ export const TasksHeader = () => {
         onOpenChange={setIsCreateDialogOpen} 
       />
 
-      {/* Add RecurringTaskDialog with necessary props */}
+      {/* Pass project members to RecurringTaskDialog */}
       <RecurringTaskDialog
         open={isRecurringDialogOpen}
         onOpenChange={setIsRecurringDialogOpen}
-        projectMembers={[]}
-        onRecurringTaskAdded={() => {}}
+        projectMembers={projectMembers}
+        onRecurringTaskAdded={() => {
+          // Refresh recurring tasks list if needed
+        }}
       />
     </div>
   );
