@@ -10,6 +10,7 @@ export interface Task {
   due_date: string | null;
   assigned_to: string | null;
   created_at: string;
+  created_by?: string;
   updated_at?: string;
   is_subtask?: boolean;
   parent_task_id?: string | null;

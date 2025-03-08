@@ -9,4 +9,6 @@ export interface Subtask {
   assigned_user_name?: string;
   priority?: string | null;
   created_at: string;
+  created_by?: string;
+  project_id?: string;
 }
