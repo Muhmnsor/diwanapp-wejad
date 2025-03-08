@@ -23,7 +23,10 @@ export interface Task {
   stage_id?: string;
   assigned_user_name?: string;
   stage_name?: string;
-  // Added dependency fields
+  // Dependency fields
   dependencies?: Task[];
   dependent_tasks?: Task[];
+  // Task dependency tracking fields
+  dependency_ids?: string[];
+  dependent_task_ids?: string[];
 }

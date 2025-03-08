@@ -9,7 +9,7 @@ export interface Task {
   assigned_user_name?: string;
   priority: string | null;
   created_at: string;
-  stage_id: string | null;
+  stage_id?: string;
   stage_name?: string;
   // Properties for general tasks
   category?: string | null;

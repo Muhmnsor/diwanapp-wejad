@@ -1,3 +1,4 @@
+
 import { Task } from "../types/task";
 
 // Transform portfolio tasks to unified format
@@ -22,13 +23,16 @@ export const transformPortfolioTasks = (portfolioTasks: any[]): Task[] => {
     return {
       id: task.id,
       title: task.title,
-      description: task.description,
-      status: task.status,
-      due_date: task.due_date,
-      priority: task.priority,
+      description: task.description || null,
+      status: task.status || 'pending',
+      due_date: task.due_date || null,
+      priority: task.priority || null,
       project_name: projectName,
       workspace_name: workspaceName,
-      is_subtask: false
+      is_subtask: false,
+      assigned_to: task.assigned_to || null,
+      created_at: task.created_at || new Date().toISOString(),
+      stage_id: task.stage_id || undefined
     };
   });
 };
@@ -43,15 +47,18 @@ export const transformRegularTasks = (regularTasks: any[], projectsMap: Record<s
     return {
       id: task.id,
       title: task.title,
-      description: task.description,
-      status: task.status as Task['status'],
-      due_date: task.due_date,
-      priority: task.priority,
+      description: task.description || null,
+      status: task.status as Task['status'] || 'pending',
+      due_date: task.due_date || null,
+      priority: task.priority || null,
       project_name: projectName,
       project_id: task.project_id,
       workspace_name: task.is_general ? 'مهمة عامة' : 'مساحة عمل افتراضية',
       is_subtask: false,
-      is_general: task.is_general || false
+      is_general: task.is_general || false,
+      assigned_to: task.assigned_to || null,
+      created_at: task.created_at || new Date().toISOString(),
+      stage_id: task.stage_id || undefined
     };
   });
 };
@@ -96,15 +103,18 @@ export const transformSubtasks = (
     return {
       id: subtask.id,
       title: subtask.title,
-      description: null,
-      status: subtask.status as Task['status'],
-      due_date: subtask.due_date,
-      priority: 'medium',
+      description: subtask.description || null,
+      status: subtask.status as Task['status'] || 'pending',
+      due_date: subtask.due_date || null,
+      priority: subtask.priority || 'medium',
       project_name: projectName,
-      project_id: parentProjectId,
+      project_id: parentProjectId || null,
       workspace_name: parentTask.workspace_name || 'مساحة عمل افتراضية',
       is_subtask: true,
-      parent_task_id: subtask.task_id
+      parent_task_id: subtask.task_id,
+      assigned_to: subtask.assigned_to || null,
+      created_at: subtask.created_at || new Date().toISOString(),
+      stage_id: subtask.stage_id || undefined
     };
   });
 };

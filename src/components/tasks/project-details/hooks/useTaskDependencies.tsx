@@ -55,13 +55,14 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         const typedTasks: Task[] = (taskData || []).map(task => ({
           id: task.id,
           title: task.title,
-          description: task.description,
+          description: task.description || null,
           status: task.status || 'pending',
-          priority: task.priority,
-          due_date: task.due_date,
-          assigned_to: task.assigned_to,
-          created_at: task.created_at,
-          stage_id: task.stage_id
+          priority: task.priority || null,
+          due_date: task.due_date || null,
+          assigned_to: task.assigned_to || null,
+          created_at: task.created_at || new Date().toISOString(),
+          stage_id: task.stage_id || undefined,
+          stage_name: task.stage_name
         }));
         
         setDependencies(typedTasks);
@@ -84,13 +85,14 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         const typedTasks: Task[] = (taskData || []).map(task => ({
           id: task.id,
           title: task.title,
-          description: task.description,
+          description: task.description || null,
           status: task.status || 'pending',
-          priority: task.priority,
-          due_date: task.due_date,
-          assigned_to: task.assigned_to,
-          created_at: task.created_at,
-          stage_id: task.stage_id
+          priority: task.priority || null,
+          due_date: task.due_date || null,
+          assigned_to: task.assigned_to || null,
+          created_at: task.created_at || new Date().toISOString(),
+          stage_id: task.stage_id || undefined,
+          stage_name: task.stage_name
         }));
         
         setDependentTasks(typedTasks);
@@ -201,7 +203,7 @@ export const useTaskDependencies = (taskId: string | undefined) => {
         .map(task => ({
           id: task.id,
           title: task.title,
-          status: task.status,
+          status: task.status || 'pending',
           description: null,
           priority: null,
           due_date: null,
