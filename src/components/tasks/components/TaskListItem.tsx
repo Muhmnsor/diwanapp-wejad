@@ -15,8 +15,6 @@ import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
 import type { Task as ProjectTask } from "../project-details/types/task";
 import { handleTaskCompletion } from "./actions/handleTaskCompletion";
-import { Link2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
 
@@ -138,17 +136,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   return (
     <div className="bg-card hover:bg-accent/5 border rounded-lg p-4 transition-colors">
       <div className="flex justify-between items-start">
-        <TaskHeader task={task} status={currentStatus} />
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-0 h-7 w-7 ml-2 mt-1"
-          onClick={() => setShowDependencies(true)}
-          title="إدارة اعتماديات المهمة"
-        >
-          <Link2 className={`h-4 w-4 ${dependencyIconColor}`} />
-        </Button>
+        <TaskHeader 
+          task={task} 
+          status={currentStatus} 
+          onShowDependencies={() => setShowDependencies(true)}
+          hasDependencies={hasDependencies || hasDependents}
+          dependencyIconColor={dependencyIconColor}
+        />
       </div>
       
       <div className="mt-3">
