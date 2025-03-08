@@ -32,7 +32,7 @@ interface RecurringTask {
   workspace_name?: string | null;
   assignee_name?: string | null;
   requires_deliverable?: boolean;
-  // Properly type the joined tables results
+  // Properly type the joined tables as optional single objects (not arrays)
   projects?: { title: string } | null;
   workspaces?: { name: string } | null;
   profiles?: { display_name: string } | null;
@@ -90,10 +90,10 @@ export const TasksRecurring = () => {
             last_generated_date,
             next_generation_date,
             requires_deliverable,
-            projects (
+            projects:project_id (
               title
             ),
-            workspaces (
+            workspaces:workspace_id (
               name
             ),
             profiles:assign_to (
@@ -110,13 +110,15 @@ export const TasksRecurring = () => {
 
         console.log("Recurring tasks raw data:", data);
         
-        // Fix the mapping to handle nested objects correctly
-        const formattedTasks = data.map(task => ({
-          ...task,
-          project_name: task.projects ? task.projects.title : null,
-          workspace_name: task.workspaces ? task.workspaces.name : null,
-          assignee_name: task.profiles ? task.profiles.display_name : null,
-        })) as RecurringTask[];
+        // Fix the mapping to handle nested objects (not arrays) correctly
+        const formattedTasks = data.map(task => {
+          return {
+            ...task,
+            project_name: task.projects?.title || null,
+            workspace_name: task.workspaces?.name || null,
+            assignee_name: task.profiles?.display_name || null,
+          };
+        }) as RecurringTask[];
 
         console.log("Formatted recurring tasks:", formattedTasks);
         setRecurringTasks(formattedTasks);
@@ -228,10 +230,10 @@ export const TasksRecurring = () => {
           last_generated_date,
           next_generation_date,
           requires_deliverable,
-          projects (
+          projects:project_id (
             title
           ),
-          workspaces (
+          workspaces:workspace_id (
             name
           ),
           profiles:assign_to (
@@ -246,12 +248,14 @@ export const TasksRecurring = () => {
       }
 
       // Fix the mapping to handle nested objects correctly
-      const formattedTasks = refreshedData.map(task => ({
-        ...task,
-        project_name: task.projects ? task.projects.title : null,
-        workspace_name: task.workspaces ? task.workspaces.name : null,
-        assignee_name: task.profiles ? task.profiles.display_name : null,
-      })) as RecurringTask[];
+      const formattedTasks = refreshedData.map(task => {
+        return {
+          ...task,
+          project_name: task.projects?.title || null,
+          workspace_name: task.workspaces?.name || null,
+          assignee_name: task.profiles?.display_name || null,
+        };
+      }) as RecurringTask[];
 
       setRecurringTasks(formattedTasks);
     } catch (error) {
