@@ -64,21 +64,35 @@ export const TasksRecurring = () => {
         setIsAdmin(isAdminData || false);
         console.log("Is admin:", isAdminData);
 
-        // Improved query with explicit joins and selections to avoid ambiguous column references
+        // Explicitly defined query with properly qualified column names
         const { data, error } = await supabase
           .from('recurring_tasks')
           .select(`
-            *,
+            id,
+            title,
+            description,
+            recurrence_type,
+            interval,
+            day_of_month,
+            day_of_week,
+            priority,
+            category,
+            project_id,
+            workspace_id,
+            created_by,
+            created_at,
+            is_active,
+            assign_to,
+            last_generated_date,
+            next_generation_date,
+            requires_deliverable,
             projects:project_id (
-              id,
               title
             ),
             workspaces:workspace_id (
-              id,
               name
             ),
-            assignee:assign_to (
-              id,
+            profiles:assign_to (
               display_name
             )
           `)
@@ -90,19 +104,19 @@ export const TasksRecurring = () => {
           throw error;
         }
 
-        console.log("Recurring tasks data:", data);
+        console.log("Recurring tasks raw data:", data);
         
         const formattedTasks = data.map(task => ({
           ...task,
           project_name: task.projects?.title,
           workspace_name: task.workspaces?.name,
-          assignee_name: task.assignee?.display_name,
+          assignee_name: task.profiles?.display_name,
         }));
 
         console.log("Formatted recurring tasks:", formattedTasks);
         setRecurringTasks(formattedTasks);
       } catch (error) {
-        console.error("Error fetching recurring tasks:", error);
+        console.error("Error in fetchRecurringTasks:", error);
         toast.error("حدث خطأ أثناء تحميل المهام المتكررة");
       } finally {
         setIsLoading(false);
@@ -191,17 +205,31 @@ export const TasksRecurring = () => {
       const { data: refreshedData, error: refreshError } = await supabase
         .from('recurring_tasks')
         .select(`
-          *,
+          id,
+          title,
+          description,
+          recurrence_type,
+          interval,
+          day_of_month,
+          day_of_week,
+          priority,
+          category,
+          project_id,
+          workspace_id,
+          created_by,
+          created_at,
+          is_active,
+          assign_to,
+          last_generated_date,
+          next_generation_date,
+          requires_deliverable,
           projects:project_id (
-            id,
             title
           ),
           workspaces:workspace_id (
-            id,
             name
           ),
-          assignee:assign_to (
-            id,
+          profiles:assign_to (
             display_name
           )
         `)
@@ -216,7 +244,7 @@ export const TasksRecurring = () => {
         ...task,
         project_name: task.projects?.title,
         workspace_name: task.workspaces?.name,
-        assignee_name: task.assignee?.display_name,
+        assignee_name: task.profiles?.display_name,
       }));
 
       setRecurringTasks(formattedTasks);

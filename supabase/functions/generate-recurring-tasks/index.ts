@@ -32,6 +32,7 @@ serve(async (req) => {
     } = await supabaseClient.auth.getUser()
 
     if (userError || !user) {
+      console.error('Authentication error:', userError?.message || 'No user found');
       throw new Error('Unauthorized')
     }
 
@@ -59,7 +60,7 @@ serve(async (req) => {
       throw error
     }
 
-    console.log('Tasks generated:', data);
+    console.log('Tasks generated successfully:', data);
 
     return new Response(
       JSON.stringify({ 
