@@ -2878,7 +2878,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           dependency_task_id: string
-          dependency_type: string
+          dependency_type?: string
           id?: string
           task_id: string
         }

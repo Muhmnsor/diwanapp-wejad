@@ -41,7 +41,7 @@ export const fetchRawDependentTasks = async (taskId: string) => {
 };
 
 // Fetch task data for a list of task IDs
-export const fetchTasksData = async (taskIds: string[]): Promise<Task[]> => {
+export const fetchTasksData = async (taskIds: string[], rawDependenciesMap?: Record<string, any>): Promise<Task[]> => {
   if (!taskIds.length) return [];
   
   console.log("Fetching tasks data for IDs:", taskIds);
@@ -59,18 +59,26 @@ export const fetchTasksData = async (taskIds: string[]): Promise<Task[]> => {
   console.log("Tasks data:", data);
   
   // Cast the task data to match the Task interface
-  return (data || []).map(task => ({
-    id: task.id,
-    title: task.title,
-    description: task.description || null,
-    status: task.status || 'pending',
-    priority: task.priority || null,
-    due_date: task.due_date || null,
-    assigned_to: task.assigned_to || null,
-    created_at: task.created_at || new Date().toISOString(),
-    stage_id: task.stage_id || undefined,
-    stage_name: task.stage_name
-  }));
+  return (data || []).map(task => {
+    // Find the dependency type for this task if rawDependenciesMap is provided
+    const dependency_type = rawDependenciesMap && rawDependenciesMap[task.id] 
+      ? rawDependenciesMap[task.id].dependency_type 
+      : undefined;
+    
+    return {
+      id: task.id,
+      title: task.title,
+      description: task.description || null,
+      status: task.status || 'pending',
+      priority: task.priority || null,
+      due_date: task.due_date || null,
+      assigned_to: task.assigned_to || null,
+      created_at: task.created_at || new Date().toISOString(),
+      stage_id: task.stage_id || undefined,
+      stage_name: task.stage_name,
+      dependency_type: dependency_type
+    };
+  });
 };
 
 // Add a dependency between tasks
@@ -79,7 +87,7 @@ export const addTaskDependency = async (
   dependencyTaskId: string, 
   dependencyType: 'finish-to-start' | 'start-to-start' | 'finish-to-finish' | 'start-to-finish' = 'finish-to-start'
 ) => {
-  console.log(`Adding dependency: Task ${taskId} depends on ${dependencyTaskId}`);
+  console.log(`Adding dependency: Task ${taskId} depends on ${dependencyTaskId} with type ${dependencyType}`);
   
   const { data, error } = await supabase
     .from('task_dependencies')

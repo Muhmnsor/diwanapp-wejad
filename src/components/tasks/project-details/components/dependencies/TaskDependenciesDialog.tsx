@@ -35,6 +35,7 @@ export const TaskDependenciesDialog = ({
   
   const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
+  const [dependencyType, setDependencyType] = useState<string>("finish-to-start");
   const [isAdding, setIsAdding] = useState(false);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   
@@ -65,7 +66,7 @@ export const TaskDependenciesDialog = ({
     
     setIsAdding(true);
     try {
-      const result = await addDependency(selectedTaskId, 'finish-to-start');
+      const result = await addDependency(selectedTaskId, dependencyType);
       
       if (result === true) {
         setSelectedTaskId("");
@@ -136,6 +137,8 @@ export const TaskDependenciesDialog = ({
             onSelectedTaskChange={setSelectedTaskId}
             onAddDependency={handleAddDependency}
             isAdding={isAdding}
+            dependencyType={dependencyType}
+            onDependencyTypeChange={setDependencyType}
           />
           
           <Separator />

@@ -50,6 +50,7 @@ export const DependencyList = ({
                 task={task} 
                 onRemove={onRemove!} 
                 getStatusBadge={getStatusBadge} 
+                dependencyType={task.dependency_type}
               />
             )
           ))}

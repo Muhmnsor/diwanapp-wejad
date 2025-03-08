@@ -29,4 +29,6 @@ export interface Task {
   // Task dependency tracking fields
   dependency_ids?: string[];
   dependent_task_ids?: string[];
+  // Dependency type
+  dependency_type?: string;
 }

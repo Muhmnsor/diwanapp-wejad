@@ -37,10 +37,16 @@ export const useTaskDependencies = (taskId: string | undefined) => {
       
       const dependentData = await fetchRawDependentTasks(taskId);
       
-      // Fetch actual task data for dependencies
+      // Create a map of dependency task IDs to their raw dependency data
+      const dependencyMap: Record<string, any> = {};
+      dependenciesData.forEach(dep => {
+        dependencyMap[dep.dependency_task_id] = dep;
+      });
+      
+      // Fetch actual task data for dependencies with dependency types
       if (dependenciesData.length > 0) {
         const dependencyIds = dependenciesData.map(dep => dep.dependency_task_id);
-        const taskData = await fetchTasksData(dependencyIds);
+        const taskData = await fetchTasksData(dependencyIds, dependencyMap);
         setDependencies(taskData);
       } else {
         setDependencies([]);
