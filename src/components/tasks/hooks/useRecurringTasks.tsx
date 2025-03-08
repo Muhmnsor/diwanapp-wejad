@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RecurringTask } from "../types/RecurringTask";
+import { RecurringTask, getProjectName, getWorkspaceName, getAssigneeName } from "../types/RecurringTask";
 import { useAuthStore } from "@/store/authStore";
 
 export const useRecurringTasks = () => {
@@ -80,16 +80,18 @@ export const useRecurringTasks = () => {
       
       // Process data
       const formattedTasks: RecurringTask[] = data.map(task => {
-        // Some explicit type handling to avoid TypeScript errors
+        // Extract related names using helper functions
+        const projectName = getProjectName(task as RecurringTask);
+        const workspaceName = getWorkspaceName(task as RecurringTask);
+        const assigneeName = getAssigneeName(task as RecurringTask);
+
         const formattedTask: RecurringTask = {
           ...task,
-          projects: task.projects as { title: string } | null,
-          workspaces: task.workspaces as { name: string } | null,
-          profiles: task.profiles as { display_name: string } | null,
-          project_name: task.projects ? (task.projects as { title: string }).title : null,
-          workspace_name: task.workspaces ? (task.workspaces as { name: string }).name : null,
-          assignee_name: task.profiles ? (task.profiles as { display_name: string }).display_name : null,
+          project_name: projectName,
+          workspace_name: workspaceName,
+          assignee_name: assigneeName,
         };
+        
         return formattedTask;
       });
 
@@ -210,18 +212,20 @@ export const useRecurringTasks = () => {
         throw refreshError;
       }
 
-      // Process refreshed data
+      // Process refreshed data using the same format function
       const formattedTasks: RecurringTask[] = refreshedData.map(task => {
-        // Some explicit type handling to avoid TypeScript errors
+        // Extract related names using helper functions
+        const projectName = getProjectName(task as RecurringTask);
+        const workspaceName = getWorkspaceName(task as RecurringTask);
+        const assigneeName = getAssigneeName(task as RecurringTask);
+
         const formattedTask: RecurringTask = {
           ...task,
-          projects: task.projects as { title: string } | null,
-          workspaces: task.workspaces as { name: string } | null,
-          profiles: task.profiles as { display_name: string } | null,
-          project_name: task.projects ? (task.projects as { title: string }).title : null,
-          workspace_name: task.workspaces ? (task.workspaces as { name: string }).name : null,
-          assignee_name: task.profiles ? (task.profiles as { display_name: string }).display_name : null,
+          project_name: projectName,
+          workspace_name: workspaceName,
+          assignee_name: assigneeName,
         };
+        
         return formattedTask;
       });
 
