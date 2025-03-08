@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PersonalTasksStats } from "./components/PersonalTasksStats";
@@ -13,6 +14,8 @@ import { UserSelector } from "./components/UserSelector";
 import { DateRangePicker } from "./components/DateRangePicker";
 import { useAuthStore } from "@/store/refactored-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { ExportButton } from "./components/ExportButton";
+import { PersonalReportData } from "@/utils/reports/exportPersonalReport";
 
 export const PersonalTasksReports = () => {
   const { user } = useAuthStore();
@@ -23,6 +26,8 @@ export const PersonalTasksReports = () => {
   });
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>(undefined);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
   
   // Check if the current user is an admin
   useEffect(() => {
@@ -56,6 +61,27 @@ export const PersonalTasksReports = () => {
     checkAdminRoles();
   }, [user]);
   
+  // Fetch selected user info
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const userId = selectedUserId || user?.id;
+      if (!userId) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email, display_name')
+        .eq('id', userId)
+        .single();
+      
+      if (!error && data) {
+        setUserName(data.display_name || "");
+        setUserEmail(data.email || "");
+      }
+    };
+    
+    fetchUserInfo();
+  }, [selectedUserId, user]);
+  
   const { data, isLoading } = usePersonalTasksStats(
     period, 
     selectedUserId,
@@ -64,6 +90,34 @@ export const PersonalTasksReports = () => {
       endDate: dateRange.endDate.toISOString()
     } : undefined
   );
+  
+  // Prepare export data
+  const getExportData = (): PersonalReportData => {
+    let periodText = "";
+    
+    switch(period) {
+      case "weekly":
+        periodText = "أسبوعي";
+        break;
+      case "monthly":
+        periodText = "شهري";
+        break;
+      case "quarterly":
+        periodText = "ربع سنوي";
+        break;
+      case "custom":
+        periodText = `${dateRange.startDate.toLocaleDateString('ar-SA')} إلى ${dateRange.endDate.toLocaleDateString('ar-SA')}`;
+        break;
+    }
+    
+    return {
+      userName: userName || (user?.user_metadata?.name as string || "المستخدم"),
+      userEmail: userEmail || (user?.email as string || ""),
+      period: periodText,
+      tasksStats: data.tasksStats,
+      performanceStats: data.performanceStats
+    };
+  };
   
   if (isLoading) {
     return (
@@ -106,6 +160,10 @@ export const PersonalTasksReports = () => {
               />
             </div>
           )}
+          
+          <div className="w-full md:w-auto">
+            <ExportButton data={getExportData()} />
+          </div>
         </div>
       </div>
       

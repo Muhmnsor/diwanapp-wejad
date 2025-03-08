@@ -23,7 +23,7 @@ interface UserSelectorProps {
 }
 
 export const UserSelector = ({ value, onChange }: UserSelectorProps) => {
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, error } = useQuery({
     queryKey: ["users-list"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -43,6 +43,15 @@ export const UserSelector = ({ value, onChange }: UserSelectorProps) => {
 
   if (isLoading) {
     return <Skeleton className="h-10 w-full" />;
+  }
+
+  if (error) {
+    console.error("Error loading users:", error);
+    return (
+      <div className="text-red-500 text-sm p-2 border border-red-300 rounded">
+        خطأ في تحميل المستخدمين
+      </div>
+    );
   }
 
   return (

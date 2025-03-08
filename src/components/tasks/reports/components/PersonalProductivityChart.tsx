@@ -10,7 +10,7 @@ interface PersonalProductivityChartProps {
 
 export const PersonalProductivityChart = ({ data }: PersonalProductivityChartProps) => {
   return (
-    <div className="h-[300px] w-full">
+    <div className="h-[300px] w-full" id="productivity-chart" data-title="إنتاجية العمل الشهرية">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
