@@ -1,27 +1,23 @@
-
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, Filter } from "lucide-react";
-import { Task } from "../../project-details/types/task";
-import { TaskCard } from "../../project-details/components/TaskCard";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { WorkspaceAddTaskDialog } from "./WorkspaceAddTaskDialog";
-import { ProjectMember } from "../../project-details/hooks/useProjectMembers";
+import { Task } from "../../project-details/types/task";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { TaskCard } from "../../project-details/components/TaskCard";
+import { useProjectMembers, ProjectMember } from "../../project-details/hooks/useProjectMembers";
+import { WorkspaceAddTaskDialog } from "../dialogs/WorkspaceAddTaskDialog";
 
 interface WorkspaceTasksListProps {
   workspaceId: string;
-  workspaceMembers: ProjectMember[];
 }
 
-export const WorkspaceTasksList = ({ workspaceId, workspaceMembers }: WorkspaceTasksListProps) => {
+export const WorkspaceTasksList = ({ workspaceId }: WorkspaceTasksListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  
+  // Get workspace members for task assignment
+  const { projectMembers } = useProjectMembers();
   
   useEffect(() => {
     fetchTasks();
@@ -215,7 +211,7 @@ export const WorkspaceTasksList = ({ workspaceId, workspaceMembers }: WorkspaceT
         onOpenChange={setIsAddDialogOpen}
         workspaceId={workspaceId}
         onTaskAdded={handleTaskAdded}
-        projectMembers={workspaceMembers}
+        projectMembers={projectMembers}
       />
     </div>
   );

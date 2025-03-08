@@ -1,56 +1,53 @@
 
-import { useState, useEffect } from 'react';
-import { getTaskAttachments } from '../services/uploadService';
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { getTaskAttachments } from "../services/uploadService";
 
-interface Attachment {
+export interface TaskAttachment {
   id: string;
   task_id: string;
   file_url: string;
   file_name: string;
-  file_type: string | null;
-  attachment_category: string;
-  created_by: string | null;
+  file_type: string;
+  created_by: string;
   created_at: string;
+  attachment_category: 'creator' | 'assignee' | 'comment' | 'template';
 }
 
-export const useTaskAttachments = (taskId: string) => {
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export const useTaskAttachments = (taskId?: string) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [creatorAttachments, setCreatorAttachments] = useState<TaskAttachment[]>([]);
+  const [assigneeAttachments, setAssigneeAttachments] = useState<TaskAttachment[]>([]);
   
   const fetchAttachments = async () => {
+    if (!taskId) return;
+    
     setIsLoading(true);
-    setError(null);
     try {
-      const data = await getTaskAttachments(taskId);
-      setAttachments(data as Attachment[]);
-    } catch (err) {
-      console.error('Error fetching task attachments:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch attachments'));
+      // Get creator attachments
+      const creatorAttachments = await getTaskAttachments(taskId, 'creator');
+      setCreatorAttachments(creatorAttachments as TaskAttachment[]);
+      
+      // Get assignee attachments
+      const assigneeAttachments = await getTaskAttachments(taskId, 'assignee');
+      setAssigneeAttachments(assigneeAttachments as TaskAttachment[]);
+      
+    } catch (error) {
+      console.error("Error fetching attachments:", error);
+      toast.error("فشل في تحميل المرفقات");
     } finally {
       setIsLoading(false);
     }
   };
   
   useEffect(() => {
-    if (taskId) {
-      fetchAttachments();
-    }
+    fetchAttachments();
   }, [taskId]);
   
   return {
-    attachments,
     isLoading,
-    error,
-    refetch: fetchAttachments,
-    
-    // Helper methods
-    getCreatorAttachments: () => attachments.filter(a => a.attachment_category === 'creator'),
-    getAssigneeAttachments: () => attachments.filter(a => a.attachment_category === 'assignee'),
-    getCommentAttachments: () => attachments.filter(a => a.attachment_category === 'comment'),
-    
-    // Stats
-    getTotalCount: () => attachments.length,
-    getCategoryCount: (category: string) => attachments.filter(a => a.attachment_category === category).length
+    creatorAttachments,
+    assigneeAttachments,
+    refreshAttachments: fetchAttachments
   };
 };

@@ -1,8 +1,8 @@
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Task } from "../../types/task";
-import { TaskCard } from "../TaskCard";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TaskCard } from "../TaskCard";
+import { ProjectStage } from "../../types/projectStage";
+import { Task } from "../../types/task";
 
 interface ProjectStagesTabsProps {
   stages: { id: string; name: string }[];

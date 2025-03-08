@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CommentForm } from "../comments/CommentForm";
 import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
@@ -43,9 +42,8 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
       if (selectedFile) {
         console.log("Starting to upload comment attachment:", selectedFile.name);
         
-        // التأكد من إضافة تصنيف 'comment' للمرفق
-        const category = 'comment';
-        const uploadResult = await uploadAttachment(selectedFile, category);
+        // Use the correct type for the attachment category
+        const uploadResult = await uploadAttachment(selectedFile, 'comment');
         
         if (uploadResult && !uploadResult.error) {
           attachmentUrl = uploadResult.url;
@@ -61,7 +59,7 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
               attachmentUrl,
               attachmentName,
               attachmentType,
-              category
+              'comment'
             );
             console.log("Attachment reference saved for comment");
           } catch (refError) {

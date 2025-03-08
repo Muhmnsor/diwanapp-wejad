@@ -1,61 +1,99 @@
-
 import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { WorkspaceHeader } from "./components/WorkspaceHeader";
+import { WorkspaceOverview } from "./components/WorkspaceOverview";
 import { WorkspaceTasksList } from "./components/WorkspaceTasksList";
-import { WorkspaceProjects } from "./components/WorkspaceProjects";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useWorkspaceDetails } from "./hooks/useWorkspaceDetails";
-import { useWorkspaceMembers } from "./hooks/useWorkspaceMembers";
-import { useProjectMembers } from "../project-details/hooks/useProjectMembers";
 
-export const WorkspaceDetails = () => {
+interface Workspace {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  created_at: string;
+}
+
+const WorkspaceDetails = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  
-  const { workspace, isLoading: isWorkspaceLoading } = useWorkspaceDetails(workspaceId);
-  const { members, isLoading: isMembersLoading } = useWorkspaceMembers(workspaceId);
-  const { projectMembers, isLoading: isProjectMembersLoading } = useProjectMembers(workspaceId);
-  
-  // Show loading state if any data is still loading
-  if (isWorkspaceLoading || isMembersLoading || isProjectMembersLoading) {
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchWorkspace = async () => {
+      if (!workspaceId) return;
+
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('workspaces')
+          .select('*')
+          .eq('id', workspaceId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching workspace:", error);
+          setError(true);
+          toast.error("Failed to load workspace details.");
+          return;
+        }
+
+        if (data) {
+          setWorkspace(data);
+        } else {
+          setError(true);
+          toast.error("Workspace not found.");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        setError(true);
+        toast.error("An unexpected error occurred.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWorkspace();
+  }, [workspaceId]);
+
+  if (isLoading) {
     return (
-      <div className="py-8 flex justify-center">
-        <div className="animate-pulse rounded-lg bg-muted h-96 w-full max-w-4xl"></div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     );
   }
-  
-  if (!workspace) {
+
+  if (error || !workspace) {
     return (
-      <div className="py-8 text-center">
-        <h2 className="text-xl font-bold">مساحة العمل غير موجودة</h2>
-        <p className="text-muted-foreground">لم يتم العثور على مساحة العمل المطلوبة</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+            Error loading workspace
+          </h2>
+          <p className="text-gray-500">
+            Please check the workspace ID or try again later.
+          </p>
+        </div>
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      
-      <Tabs defaultValue="tasks" className="w-full">
-        <TabsList className="w-full mb-6">
-          <TabsTrigger value="tasks" className="flex-1">المهام</TabsTrigger>
-          <TabsTrigger value="projects" className="flex-1">المشاريع</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="tasks">
-          <WorkspaceTasksList
-            workspaceId={workspaceId}
-            projectMembers={projectMembers}
-          />
-        </TabsContent>
-        
-        <TabsContent value="projects">
-          <WorkspaceProjects
-            workspaceId={workspaceId}
-          />
-        </TabsContent>
-      </Tabs>
+      <WorkspaceOverview workspace={workspace} />
+      <WorkspaceTasksList 
+        workspaceId={workspaceId || ""} 
+      />
     </div>
   );
 };
+
+export default WorkspaceDetails;
