@@ -35,16 +35,26 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    // Check if user is admin
-    const { data: isAdmin, error: isAdminError } = await supabaseClient.rpc('is_admin')
-    if (isAdminError || !isAdmin) {
-      throw new Error('Insufficient permissions')
+    console.log('User ID:', user.id);
+
+    // Check if user is admin - pass user ID to the function
+    const { data: isAdmin, error: isAdminError } = await supabaseClient.rpc('is_admin', { user_id: user.id })
+    
+    if (isAdminError) {
+      console.error('Admin check error:', isAdminError);
+      throw new Error('Error checking admin privileges: ' + isAdminError.message);
+    }
+    
+    if (!isAdmin) {
+      console.error('User is not admin:', user.id);
+      throw new Error('Insufficient permissions - Admin access required');
     }
 
     // Call the database function to generate tasks
     const { data, error } = await supabaseClient.rpc('generate_recurring_tasks')
     
     if (error) {
+      console.error('Error generating tasks:', error);
       throw error
     }
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { toast } from "sonner";
 import { Calendar, Check, Clock, Pause, Play, Repeat, Trash } from "lucide-react";
 import { formatDate } from "@/utils/dateUtils";
 import { TaskPriorityBadge } from "../tasks/components/priority/TaskPriorityBadge";
+import { useAuthStore } from "@/store/authStore";
 
 interface RecurringTask {
   id: string;
@@ -39,13 +39,26 @@ export const TasksRecurring = () => {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const fetchRecurringTasks = async () => {
       setIsLoading(true);
       try {
-        const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin');
-        if (isAdminError) throw isAdminError;
+        if (!user) {
+          console.log("No authenticated user found");
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Checking admin status for user:", user.id);
+        const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin', { user_id: user.id });
+        
+        if (isAdminError) {
+          console.error("Error checking admin status:", isAdminError);
+          toast.error("حدث خطأ أثناء التحقق من صلاحيات المستخدم");
+          throw isAdminError;
+        }
         
         setIsAdmin(isAdminData || false);
         console.log("Is admin:", isAdminData);
@@ -84,7 +97,7 @@ export const TasksRecurring = () => {
     };
 
     fetchRecurringTasks();
-  }, []);
+  }, [user]);
 
   const filteredTasks = recurringTasks.filter(task => {
     if (activeFilter === "all") return true;
@@ -144,8 +157,12 @@ export const TasksRecurring = () => {
     try {
       const { data, error } = await supabase.functions.invoke('generate-recurring-tasks');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error invoking function:', error);
+        throw error;
+      }
       
+      console.log('Generate tasks response:', data);
       toast.success(`تم إنشاء ${data.tasksCreated} مهمة بنجاح`);
       
       const { data: refreshedData, error: refreshError } = await supabase
@@ -170,7 +187,8 @@ export const TasksRecurring = () => {
       setRecurringTasks(formattedTasks);
     } catch (error) {
       console.error('Error generating tasks:', error);
-      toast.error('حدث خطأ أثناء إنشاء المهام');
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إنشاء المهام';
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
