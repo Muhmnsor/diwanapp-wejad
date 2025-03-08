@@ -1,9 +1,10 @@
+
+import { useState, useEffect } from "react";
 import { Calendar, Users, Check, Clock, AlertCircle, ChevronDown, ChevronUp, MessageCircle, Download, Trash2, Edit, Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Task } from "../types/task";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/authStore";
@@ -60,6 +61,9 @@ export const TaskItem = ({
   const [assigneeAttachment, setAssigneeAttachment] = useState<TaskAttachment | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [hasNewDiscussion, setHasNewDiscussion] = useState(false);
+  const [hasNewDeliverables, setHasNewDeliverables] = useState(false);
+  const [hasTemplates, setHasTemplates] = useState(false);
   const { user } = useAuthStore();
   
   const { canEdit } = usePermissionCheck({
@@ -84,6 +88,9 @@ export const TaskItem = ({
     if (task.assigned_to) {
       fetchAssigneeAttachment();
     }
+    
+    checkNewDiscussions();
+    checkTemplates();
   }, [task.id, task.assigned_to]);
 
   const fetchAssigneeAttachment = async () => {
@@ -112,9 +119,80 @@ export const TaskItem = ({
           : taskAttachments![0];
           
         setAssigneeAttachment(attachment as TaskAttachment);
+        
+        // Check if this is a new deliverable the user hasn't seen
+        if (attachment && user?.id) {
+          const { data: viewRecord } = await supabase
+            .from("task_attachment_views")
+            .select("last_viewed_at")
+            .eq("task_id", task.id)
+            .eq("user_id", user.id)
+            .single();
+            
+          const attachmentDate = new Date(attachment.created_at);
+          const lastViewedDate = viewRecord ? new Date(viewRecord.last_viewed_at) : null;
+          
+          // If there's no view record or the attachment is newer than the last view
+          if (!lastViewedDate || attachmentDate > lastViewedDate) {
+            setHasNewDeliverables(true);
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching assignee attachment:", error);
+    }
+  };
+
+  const checkNewDiscussions = async () => {
+    try {
+      // Check last comment date vs user's last view date
+      const { data: lastComments, error } = await supabase
+        .from("unified_task_comments")
+        .select("created_at")
+        .eq("task_id", task.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+        
+      if (error) throw error;
+      
+      if (lastComments && lastComments.length > 0 && user?.id) {
+        // Check if user has viewed this task's comments before
+        const { data: viewRecord } = await supabase
+          .from("task_comment_views")
+          .select("last_viewed_at")
+          .eq("task_id", task.id)
+          .eq("user_id", user.id)
+          .single();
+          
+        const lastCommentDate = new Date(lastComments[0].created_at);
+        const lastViewedDate = viewRecord ? new Date(viewRecord.last_viewed_at) : null;
+        
+        // If there's no view record or the last comment is newer than the last view
+        if (!lastViewedDate || lastCommentDate > lastViewedDate) {
+          setHasNewDiscussion(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking for new discussions:", error);
+    }
+  };
+
+  const checkTemplates = async () => {
+    try {
+      // Check if task has templates
+      const { data: templates, error } = await supabase
+        .from("task_templates")
+        .select("id")
+        .eq("task_id", task.id)
+        .limit(1);
+        
+      if (error) throw error;
+      
+      if (templates && templates.length > 0) {
+        setHasTemplates(true);
+      }
+    } catch (error) {
+      console.error("Error checking for templates:", error);
     }
   };
 
@@ -224,6 +302,36 @@ export const TaskItem = ({
     );
   };
 
+  const markDiscussionsAsViewed = () => {
+    if (user?.id && hasNewDiscussion) {
+      setHasNewDiscussion(false);
+      // Record the view in database
+      supabase
+        .from("task_comment_views")
+        .upsert({
+          task_id: task.id,
+          user_id: user.id,
+          last_viewed_at: new Date().toISOString()
+        })
+        .then();
+    }
+  };
+
+  const markAttachmentsAsViewed = () => {
+    if (user?.id && hasNewDeliverables) {
+      setHasNewDeliverables(false);
+      // Record the view in database
+      supabase
+        .from("task_attachment_views")
+        .upsert({
+          task_id: task.id,
+          user_id: user.id,
+          last_viewed_at: new Date().toISOString()
+        })
+        .then();
+    }
+  };
+
   return (
     <>
       <TableRow key={task.id} className="cursor-pointer hover:bg-gray-50">
@@ -292,13 +400,32 @@ export const TaskItem = ({
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDiscussion(true);
+                markDiscussionsAsViewed();
               }}
               title="مناقشة المهمة"
             >
-              <MessageCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+              <MessageCircle className={`h-4 w-4 ${hasNewDiscussion ? 'text-purple-600 animate-pulse' : 'text-muted-foreground hover:text-foreground'}`} />
             </Button>
             
-            {assigneeAttachment && (
+            {hasNewDeliverables && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (assigneeAttachment) {
+                    handleDownload(assigneeAttachment.file_url, assigneeAttachment.file_name);
+                  }
+                  markAttachmentsAsViewed();
+                }}
+                title="تنزيل مرفق جديد"
+              >
+                <Download className="h-4 w-4 text-blue-600 animate-pulse" />
+              </Button>
+            )}
+            
+            {!hasNewDeliverables && assigneeAttachment && (
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -310,6 +437,21 @@ export const TaskItem = ({
                 title="تنزيل مرفق المكلف"
               >
                 <Download className="h-4 w-4 text-blue-500 hover:text-blue-700" />
+              </Button>
+            )}
+            
+            {hasTemplates && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Would open templates dialog here if we had it
+                }}
+                title="نماذج متاحة"
+              >
+                <FileDown className="h-4 w-4 text-orange-500" />
               </Button>
             )}
             
@@ -361,7 +503,12 @@ export const TaskItem = ({
 
       <TaskDiscussionDialog 
         open={showDiscussion} 
-        onOpenChange={setShowDiscussion}
+        onOpenChange={(open) => {
+          setShowDiscussion(open);
+          if (open) {
+            markDiscussionsAsViewed();
+          }
+        }}
         task={task}
         onStatusChange={onStatusChange}
       />
