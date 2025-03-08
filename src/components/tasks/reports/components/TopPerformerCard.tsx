@@ -49,7 +49,7 @@ export const TopPerformerCard = ({
       case 'speed':
         return <Clock className="w-4 h-4" />;
       case 'achievements':
-        return <Trophy className="w-4 h-4" />;
+        return <Trophy className="w-4 h-4 text-amber-500" />;
       default:
         return null;
     }

@@ -2415,6 +2415,81 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_tasks: {
+        Row: {
+          assign_to: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          day_of_month: number | null
+          day_of_week: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_generated_date: string | null
+          next_generation_date: string | null
+          priority: string | null
+          project_id: string | null
+          recurrence_type: string
+          requires_deliverable: boolean | null
+          title: string
+          workspace_id: string | null
+        }
+        Insert: {
+          assign_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          priority?: string | null
+          project_id?: string | null
+          recurrence_type?: string
+          requires_deliverable?: boolean | null
+          title: string
+          workspace_id?: string | null
+        }
+        Update: {
+          assign_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          priority?: string | null
+          project_id?: string | null
+          recurrence_type?: string
+          requires_deliverable?: boolean | null
+          title?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_tasks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registrations: {
         Row: {
           arabic_name: string
@@ -3636,6 +3711,10 @@ export type Database = {
             }
             Returns: string
           }
+      generate_recurring_tasks: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_user_role: {
         Args: {
           p_user_id: string
