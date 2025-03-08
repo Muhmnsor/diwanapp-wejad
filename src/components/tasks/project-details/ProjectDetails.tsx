@@ -6,17 +6,26 @@ import { useProjectDetails } from "./hooks/useProjectDetails";
 import { useProjectMembers } from "./hooks/useProjectMembers";
 import { useProjectStages } from "./hooks/useProjectStages";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RecurringTaskSection } from "./components/recurring/RecurringTaskSection";
+import { useState } from "react";
 
 export const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const [stages, setStages] = useState<{ id: string; name: string }[]>([]);
   
   const { project, isLoading: isProjectLoading } = useProjectDetails(projectId);
-  const { members, isLoading: isMembersLoading } = useProjectMembers(projectId);
-  const { stages, isLoading: isStagesLoading } = useProjectStages(projectId);
+  const { projectMembers, isLoading: isProjectMembersLoading } = useProjectMembers(projectId);
+  
+  // Pass the onStagesChange prop to useProjectStages
+  const { 
+    isLoading: isStagesLoading, 
+    canViewStages 
+  } = useProjectStages({ 
+    projectId, 
+    onStagesChange: setStages 
+  });
   
   // Show loading state if any data is still loading
-  if (isProjectLoading || isMembersLoading || isStagesLoading) {
+  if (isProjectLoading || isProjectMembersLoading || isStagesLoading) {
     return (
       <div className="py-8 flex justify-center">
         <div className="animate-pulse rounded-lg bg-muted h-96 w-full max-w-4xl"></div>
@@ -40,21 +49,14 @@ export const ProjectDetails = () => {
       <Tabs defaultValue="tasks" className="w-full">
         <TabsList className="w-full mb-6">
           <TabsTrigger value="tasks" className="flex-1">المهام</TabsTrigger>
-          <TabsTrigger value="recurring" className="flex-1">المهام المتكررة</TabsTrigger>
+          {/* Additional tabs can be added here */}
         </TabsList>
         
         <TabsContent value="tasks">
           <ProjectTasksList
             projectId={projectId}
             stages={stages}
-            projectMembers={members}
-          />
-        </TabsContent>
-        
-        <TabsContent value="recurring">
-          <RecurringTaskSection
-            projectId={projectId}
-            projectMembers={members}
+            projectMembers={projectMembers}
           />
         </TabsContent>
       </Tabs>

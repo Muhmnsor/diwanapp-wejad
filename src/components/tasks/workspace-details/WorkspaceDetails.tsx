@@ -6,16 +6,17 @@ import { WorkspaceProjects } from "./components/WorkspaceProjects";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspaceDetails } from "./hooks/useWorkspaceDetails";
 import { useWorkspaceMembers } from "./hooks/useWorkspaceMembers";
-import { RecurringTaskSection } from "../project-details/components/recurring/RecurringTaskSection";
+import { useProjectMembers } from "../project-details/hooks/useProjectMembers";
 
 export const WorkspaceDetails = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   
   const { workspace, isLoading: isWorkspaceLoading } = useWorkspaceDetails(workspaceId);
   const { members, isLoading: isMembersLoading } = useWorkspaceMembers(workspaceId);
+  const { projectMembers, isLoading: isProjectMembersLoading } = useProjectMembers(workspaceId);
   
   // Show loading state if any data is still loading
-  if (isWorkspaceLoading || isMembersLoading) {
+  if (isWorkspaceLoading || isMembersLoading || isProjectMembersLoading) {
     return (
       <div className="py-8 flex justify-center">
         <div className="animate-pulse rounded-lg bg-muted h-96 w-full max-w-4xl"></div>
@@ -40,24 +41,18 @@ export const WorkspaceDetails = () => {
         <TabsList className="w-full mb-6">
           <TabsTrigger value="tasks" className="flex-1">المهام</TabsTrigger>
           <TabsTrigger value="projects" className="flex-1">المشاريع</TabsTrigger>
-          <TabsTrigger value="recurring" className="flex-1">المهام المتكررة</TabsTrigger>
         </TabsList>
         
         <TabsContent value="tasks">
-          <WorkspaceTasksList 
-            workspaceId={workspaceId} 
-            workspaceMembers={members}
+          <WorkspaceTasksList
+            workspaceId={workspaceId}
+            projectMembers={projectMembers}
           />
         </TabsContent>
         
         <TabsContent value="projects">
-          <WorkspaceProjects workspaceId={workspaceId} />
-        </TabsContent>
-        
-        <TabsContent value="recurring">
-          <RecurringTaskSection
+          <WorkspaceProjects
             workspaceId={workspaceId}
-            projectMembers={members}
           />
         </TabsContent>
       </Tabs>
