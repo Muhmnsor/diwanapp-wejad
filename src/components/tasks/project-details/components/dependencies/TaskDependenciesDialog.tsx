@@ -1,5 +1,6 @@
 
-import { Dialog, DialogContent, Separator } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { Task } from "../../types/task";
 import { DependencyProvider } from "./DependencyContext";
 import { DependencyDialogHeader } from "./DependencyDialogHeader";
@@ -17,7 +18,7 @@ interface TaskDependenciesDialogProps {
 }
 
 // This component renders the dialog content and uses the DependencyContext
-const DialogContent = () => {
+const DependencyDialogContent = () => {
   const {
     dependencies,
     dependentTasks,
@@ -71,10 +72,10 @@ export const TaskDependenciesDialog = ({
 }: TaskDependenciesDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-[500px]" dir="rtl">
+      <DialogContent dir="rtl" className="min-w-[500px]">
         <DependencyProvider taskId={task.id} projectId={projectId}>
           <DependencyDialogHeader />
-          <DialogContent />
+          <DependencyDialogContent />
         </DependencyProvider>
       </DialogContent>
     </Dialog>
