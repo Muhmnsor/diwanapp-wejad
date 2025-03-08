@@ -1,97 +1,134 @@
+
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { WorkspaceHeader } from "./components/WorkspaceHeader";
+import { TopHeader } from "@/components/layout/TopHeader";
+import { Footer } from "@/components/layout/Footer";
 import { WorkspaceOverview } from "./components/WorkspaceOverview";
 import { WorkspaceTasksList } from "./components/WorkspaceTasksList";
-
-interface Workspace {
-  id: string;
-  name: string;
-  description?: string;
-  status: string;
-  created_at: string;
-}
+import { ProjectMember } from "../project-details/hooks/useProjectMembers";
 
 const WorkspaceDetails = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<boolean>(false);
-
+  const [workspace, setWorkspace] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
+  
   useEffect(() => {
+    if (!workspaceId) return;
+    
     const fetchWorkspace = async () => {
-      if (!workspaceId) return;
-
       setIsLoading(true);
+      setError(null);
+      
       try {
+        // Fetch workspace details
         const { data, error } = await supabase
-          .from('workspaces')
-          .select('*')
-          .eq('id', workspaceId)
+          .from("workspaces")
+          .select("*, total_tasks:tasks(count)")
+          .eq("id", workspaceId)
           .single();
-
-        if (error) {
-          console.error("Error fetching workspace:", error);
-          setError(true);
-          toast.error("Failed to load workspace details.");
-          return;
-        }
-
-        if (data) {
-          setWorkspace(data);
-        } else {
-          setError(true);
-          toast.error("Workspace not found.");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        setError(true);
-        toast.error("An unexpected error occurred.");
+        
+        if (error) throw error;
+        
+        // Fetch completed tasks count
+        const { count: completedCount, error: completedError } = await supabase
+          .from("tasks")
+          .select("*", { count: "exact", head: true })
+          .eq("workspace_id", workspaceId)
+          .eq("status", "completed");
+        
+        if (completedError) throw completedError;
+        
+        // Fetch pending tasks count
+        const { count: pendingCount, error: pendingError } = await supabase
+          .from("tasks")
+          .select("*", { count: "exact", head: true })
+          .eq("workspace_id", workspaceId)
+          .eq("status", "pending");
+        
+        if (pendingError) throw pendingError;
+        
+        // Fetch workspace members
+        const { data: membersData, error: membersError } = await supabase
+          .from("workspace_members")
+          .select(`
+            *,
+            profiles:user_id (
+              display_name,
+              email
+            )
+          `)
+          .eq("workspace_id", workspaceId);
+        
+        if (membersError) throw membersError;
+        
+        // Convert to ProjectMember format for use with task components
+        const formattedMembers: ProjectMember[] = membersData.map(member => ({
+          user_id: member.user_id,
+          role: member.role,
+          display_name: member.profiles?.display_name || member.profiles?.email || 'مستخدم',
+          user_email: member.profiles?.email || ''
+        }));
+        
+        setProjectMembers(formattedMembers);
+        
+        // Update workspace with counts
+        setWorkspace({
+          ...data,
+          completed_tasks: completedCount,
+          pending_tasks: pendingCount,
+          members_count: membersData.length
+        });
+      } catch (err: any) {
+        console.error("Error fetching workspace details:", err);
+        setError(err.message || "فشل في تحميل بيانات مساحة العمل");
       } finally {
         setIsLoading(false);
       }
     };
-
+    
     fetchWorkspace();
   }, [workspaceId]);
-
-  if (isLoading) {
+  
+  if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-64 w-full" />
+      <div className="min-h-screen flex flex-col">
+        <TopHeader />
+        <div className="flex-grow container mx-auto px-4 py-8">
+          <div className="text-center p-8 bg-red-50 rounded-lg border border-red-100">
+            <h2 className="text-xl font-semibold text-red-700 mb-2">حدث خطأ</h2>
+            <p className="text-red-600">{error}</p>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
-
-  if (error || !workspace) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-            Error loading workspace
-          </h2>
-          <p className="text-gray-500">
-            Please check the workspace ID or try again later.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
+  
   return (
-    <div className="space-y-6">
-      <WorkspaceHeader workspace={workspace} />
-      <WorkspaceOverview workspace={workspace} />
-      <WorkspaceTasksList 
-        workspaceId={workspaceId || ""} 
-      />
+    <div className="min-h-screen flex flex-col">
+      <TopHeader />
+      <div className="flex-grow container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto" dir="rtl">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">
+              {isLoading ? "جاري التحميل..." : workspace?.name || "مساحة العمل"}
+            </h1>
+            <p className="text-gray-600">
+              {isLoading ? "..." : workspace?.description || "إدارة المهام والمشاريع"}
+            </p>
+          </div>
+          
+          {/* Workspace Overview */}
+          <WorkspaceOverview workspace={workspace} isLoading={isLoading} />
+          
+          {/* Workspace Tasks List */}
+          <WorkspaceTasksList workspaceId={workspaceId || ""} projectMembers={projectMembers} />
+        </div>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -1,42 +1,53 @@
 
-import { useState } from 'react';
-import { AssigneeAttachmentButton } from './AssigneeAttachmentButton';
-import { TaskAttachmentsList } from './TaskAttachmentsList';
-import { Task } from '../../types/task';
-import { useAuthStore } from '@/store/refactored-auth';
+import { Button } from "@/components/ui/button";
+import { FileIcon, PaperclipIcon, FileTextIcon } from "lucide-react";
+import { AssigneeAttachmentButton } from "./AssigneeAttachmentButton";
+import { Task } from "../../types/task";
 
 interface TaskAttachmentActionsProps {
   task: Task;
-  className?: string;
+  onAttachmentUploaded: () => void;
 }
 
-export const TaskAttachmentActions = ({ task, className = '' }: TaskAttachmentActionsProps) => {
-  const { user } = useAuthStore();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
-  const isAssigned = user?.id === task.assigned_to;
-  
-  // Force refresh the attachments list
-  const handleAttachmentUploaded = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
-  
+export const TaskAttachmentActions = ({ task, onAttachmentUploaded }: TaskAttachmentActionsProps) => {
   return (
-    <div className={className}>
-      {isAssigned && (
-        <div className="mb-3">
-          <AssigneeAttachmentButton 
-            taskId={task.id}
-            onAttachmentUploaded={handleAttachmentUploaded}
-            buttonText="إضافة مرفق من المكلف"
-          />
-        </div>
-      )}
+    <div className="flex flex-wrap gap-2 mt-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="file-upload-btn"
+        onClick={() => document.getElementById(`task-template-${task.id}`)?.click()}
+      >
+        <FileTextIcon className="h-4 w-4 mr-1" />
+        النماذج
+      </Button>
+      <input
+        id={`task-template-${task.id}`}
+        type="file"
+        className="hidden"
+      />
       
-      <TaskAttachmentsList 
-        key={refreshTrigger} 
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="file-upload-btn"
+        onClick={() => document.getElementById(`task-attachment-${task.id}`)?.click()}
+      >
+        <FileIcon className="h-4 w-4 mr-1" />
+        المرفقات
+      </Button>
+      <input
+        id={`task-attachment-${task.id}`}
+        type="file"
+        className="hidden"
+      />
+      
+      <AssigneeAttachmentButton 
         taskId={task.id} 
-        onDelete={handleAttachmentUploaded}
+        onAttachmentUploaded={onAttachmentUploaded}
+        buttonText="ملفات المكلف"
       />
     </div>
   );

@@ -1,91 +1,137 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { uploadAttachment, saveTaskTemplate } from "@/components/tasks/services/uploadService";
+import { uploadAttachment, saveTaskTemplate, saveAttachmentReference } from "../../services/uploadService";
 
-export const useTaskForm = () => {
+export interface UseTaskFormProps {
+  projectId?: string;
+  isGeneral?: boolean;
+  onTaskAdded?: () => void;
+  onTaskUpdated?: () => void;
+  initialValues?: {
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: string;
+    stageId: string;
+    assignedTo: string | null;
+    category?: string;
+    requiresDeliverable?: boolean;
+  };
+  taskId?: string;
+}
+
+export const useTaskForm = ({
+  projectId,
+  isGeneral = false,
+  onTaskAdded,
+  onTaskUpdated,
+  initialValues,
+  taskId
+}: UseTaskFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (
-    projectId: string,
-    workspaceId: string,
-    formData: {
-      title: string;
-      description: string;
-      dueDate: string;
-      priority: string;
-      stageId: string;
-      assignedTo: string | null;
-      templates?: File[] | null;
-      category?: string;
-      requiresDeliverable?: boolean;
-    },
-    onTaskAdded: () => void
-  ) => {
+  const handleSubmit = async (formData: {
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: string;
+    stageId: string;
+    assignedTo: string | null;
+    templates?: File[] | null;
+    category?: string;
+    requiresDeliverable?: boolean;
+  }) => {
     setIsSubmitting(true);
+    setError(null);
+
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
 
-      // Create task
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({
-          project_id: projectId,
-          workspace_id: workspaceId,
-          title: formData.title,
-          description: formData.description,
-          due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-          priority: formData.priority,
-          stage_id: formData.stageId,
-          assigned_to: formData.assignedTo,
-          created_by: user?.id,
-          category: formData.category,
-          requires_deliverable: formData.requiresDeliverable
-        })
-        .select()
-        .single();
+      const taskData = {
+        title: formData.title,
+        description: formData.description || "",
+        due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+        priority: formData.priority,
+        assigned_to: formData.assignedTo,
+        project_id: isGeneral ? null : projectId,
+        stage_id: isGeneral ? null : formData.stageId,
+        is_general: isGeneral,
+        category: isGeneral ? formData.category : null,
+        workspace_id: null, // Will be set based on project or general workspace
+        created_by: userId,
+        requires_deliverable: formData.requiresDeliverable || false
+      };
 
-      if (error) {
-        throw error;
-      }
+      console.log("Task data to insert:", taskData);
 
-      const newTaskId = data.id;
-
-      if (formData.templates && formData.templates.length > 0) {
-        for (const file of formData.templates) {
-          try {
-            console.log("Uploading template:", file.name);
-            const uploadResult = await uploadAttachment(file, 'template');
+      let result;
+      
+      if (taskId) {
+        // Update existing task
+        const { data, error } = await supabase
+          .from("tasks")
+          .update(taskData)
+          .eq("id", taskId)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        result = data;
+        
+        toast.success("تم تحديث المهمة بنجاح");
+        
+        if (onTaskUpdated) onTaskUpdated();
+      } else {
+        // Create new task
+        const { data, error } = await supabase
+          .from("tasks")
+          .insert(taskData)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        result = data;
+        
+        toast.success("تمت إضافة المهمة بنجاح");
+        
+        // Upload templates if provided
+        if (formData.templates && formData.templates.length > 0 && result) {
+          for (const file of formData.templates) {
+            const { url, error } = await uploadAttachment(file, "template");
             
-            if (uploadResult.error) {
-              toast.error(`فشل في رفع القالب ${file.name}: ${uploadResult.error}`);
+            if (error || !url) {
+              console.error("Error uploading template:", error);
               continue;
             }
             
-            // Save reference to the task_templates table
+            // Save template reference
             await saveTaskTemplate(
-              newTaskId,
-              uploadResult.url,
+              result.id,
+              url,
               file.name,
               file.type
             );
-          } catch (templateError) {
-            console.error("Error uploading template:", templateError);
-            // Continue with next template
           }
         }
+        
+        if (onTaskAdded) onTaskAdded();
       }
-
-      toast.success("تمت إضافة المهمة بنجاح");
-      onTaskAdded();
-    } catch (error) {
-      console.error("Error creating task:", error);
-      toast.error("حدث خطأ أثناء إنشاء المهمة");
+    } catch (err: any) {
+      console.error("Error submitting task:", err);
+      setError(err.message || "حدث خطأ أثناء حفظ المهمة");
+      toast.error("حدث خطأ أثناء حفظ المهمة");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return { onSubmit, isSubmitting };
+  return {
+    isSubmitting,
+    error,
+    handleSubmit
+  };
 };

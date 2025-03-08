@@ -1,235 +1,88 @@
+
 import { useState } from "react";
-import { CommentForm } from "../comments/CommentForm";
-import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
-import { Task } from "../../types/task";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
+import { PaperclipIcon, SendHorizonal, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { TaskComment } from "../../types/taskComment";
-import { useTaskNotifications } from "@/hooks/useTaskNotifications";
 
 interface TaskCommentFormProps {
-  task: Task;
-  onCommentAdded: (newComment?: TaskComment) => void;
-  onTaskStatusChanged?: (taskId: string, newStatus: string) => void;
+  taskId: string;
+  onCommentAdded: () => void;
+  taskTable?: string;
+  placeholder?: string;
 }
 
-export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: TaskCommentFormProps) => {
-  const [commentText, setCommentText] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+export const TaskCommentForm = ({ 
+  taskId, 
+  onCommentAdded, 
+  taskTable = "tasks",
+  placeholder = "اكتب تعليقًا..."
+}: TaskCommentFormProps) => {
+  const [content, setContent] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentName, setAttachmentName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { sendTaskStatusUpdateNotification, sendTaskCommentNotification } = useTaskNotifications();
-
-  const handleSubmitComment = async () => {
-    if (!commentText.trim() && !selectedFile) return;
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!content.trim() && !attachment) {
+      toast.error("يجب إدخال تعليق أو إرفاق ملف");
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
-      // الحصول على معرف المستخدم الحالي
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || null;
-      
-      console.log("Current user ID:", userId);
-      console.log("Task ID:", task.id);
-      console.log("Task assigned to:", task.assigned_to);
-      
-      // رفع المرفق إذا كان موجودًا
+      // معالجة المرفق إذا كان موجودًا
       let attachmentUrl = null;
-      let attachmentName = null;
       let attachmentType = null;
-      let attachmentError = false;
-
-      if (selectedFile) {
-        console.log("Starting to upload comment attachment:", selectedFile.name);
+      
+      if (attachment) {
+        const { url, error } = await uploadAttachment(attachment, "comment");
         
-        // Use the correct type for the attachment category
-        const uploadResult = await uploadAttachment(selectedFile, 'comment');
+        if (error) {
+          throw new Error(error);
+        }
         
-        if (uploadResult && !uploadResult.error) {
-          attachmentUrl = uploadResult.url;
-          attachmentName = selectedFile.name;
-          attachmentType = selectedFile.type;
+        if (url) {
+          attachmentUrl = url;
+          attachmentType = attachment.type;
           
-          console.log("Comment attachment uploaded successfully:", attachmentUrl);
-          
-          try {
-            // حفظ معلومات المرفق في قاعدة البيانات
-            await saveAttachmentReference(
-              task.id,
-              attachmentUrl,
-              attachmentName,
-              attachmentType,
-              'comment'
-            );
-            console.log("Attachment reference saved for comment");
-          } catch (refError) {
-            console.error("Failed to save attachment reference:", refError);
-            attachmentError = true;
-          }
-        } else {
-          console.error("Upload result error:", uploadResult?.error);
-          attachmentError = true;
+          // حفظ مرجع الملف المرفق في قاعدة البيانات
+          await saveAttachmentReference(
+            taskId,
+            url,
+            attachment.name,
+            attachment.type,
+            "comment"
+          );
         }
       }
       
-      // تحديد جدول المهام المناسب بناءً على نوع المهمة
-      // Check if the task is a portfolio task or regular task
-      let taskTable = 'tasks';
-      let taskExists = false;
-      
-      // First, check if the task exists in the tasks table
-      const { data: regularTaskCheck, error: regularTaskError } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('id', task.id)
-        .single();
-        
-      if (!regularTaskError && regularTaskCheck) {
-        taskTable = 'tasks';
-        taskExists = true;
-        console.log("Task found in tasks table");
-      } else {
-        // If not in regular tasks, check portfolio_tasks
-        const { data: portfolioTaskCheck, error: portfolioTaskError } = await supabase
-          .from('portfolio_tasks')
-          .select('id')
-          .eq('id', task.id)
-          .single();
-          
-        if (!portfolioTaskError && portfolioTaskCheck) {
-          taskTable = 'portfolio_tasks';
-          taskExists = true;
-          console.log("Task found in portfolio_tasks table");
-        }
-      }
-      
-      if (!taskExists) {
-        console.error("Task not found in any task tables");
-        throw new Error("Task not found in database");
-      }
-      
-      // إنشاء كائن التعليق للجدول الموحد
-      const unifiedCommentData = {
-        task_id: task.id,
-        content: commentText.trim() || " ", // استخدام مساحة فارغة إذا كان هناك مرفق فقط
-        created_by: userId,
-        attachment_url: attachmentUrl,
-        attachment_name: attachmentName,
-        attachment_type: attachmentType,
-        task_table: taskTable // إضافة حقل task_table
-      };
-      
-      console.log("Adding comment to unified_task_comments:", unifiedCommentData);
-      
-      // محاولة الإضافة في الجدول الموحد أولاً
-      const { data: unifiedInsertedComment, error: unifiedInsertError } = await supabase
+      // إضافة التعليق إلى قاعدة البيانات
+      const { error } = await supabase
         .from("unified_task_comments")
-        .insert(unifiedCommentData)
-        .select()
-        .single();
-        
-      if (unifiedInsertError) {
-        console.error("Error details for unified_task_comments insert:", unifiedInsertError);
-        
-        // في حالة فشل الإضافة للجدول الموحد، نستخدم دالة create-notification للتخطي
-        const { data: functionData, error: functionError } = await supabase.functions.invoke('create-notification', {
-          body: {
-            type: 'comment_insert',
-            comment: unifiedCommentData
-          }
+        .insert({
+          task_id: taskId,
+          content: content.trim(),
+          attachment_url: attachmentUrl,
+          attachment_name: attachment ? attachment.name : null,
+          attachment_type: attachmentType,
+          task_table: taskTable
         });
-        
-        if (functionError) {
-          console.error("Error in edge function:", functionError);
-          throw new Error("Failed to create comment via edge function");
-        }
-        
-        console.log("Comment created via function:", functionData);
-        
-        if (functionData) {
-          // إضافة بيانات المستخدم للتعليق المضاف
-          const { data: userData } = await supabase
-            .from("profiles")
-            .select("display_name, email")
-            .eq("id", userId)
-            .single();
-            
-          const newComment: TaskComment = {
-            ...functionData,
-            user_name: userData?.display_name || userData?.email || "مستخدم"
-          };
-          
-          // تمرير التعليق الجديد لتحديث القائمة بدون إعادة التحميل الكامل
-          onCommentAdded(newComment);
-        } else {
-          // إذا لم نحصل على بيانات، نقوم بتحديث القائمة
-          onCommentAdded();
-        }
-      } else if (unifiedInsertedComment) {
-        // إضافة بيانات المستخدم للتعليق المضاف
-        const { data: userData } = await supabase
-          .from("profiles")
-          .select("display_name, email")
-          .eq("id", userId)
-          .single();
-          
-        const newComment: TaskComment = {
-          ...unifiedInsertedComment,
-          user_name: userData?.display_name || userData?.email || "مستخدم"
-        };
-        
-        // تمرير التعليق الجديد لتحديث القائمة بدون إعادة التحميل الكامل
-        onCommentAdded(newComment);
+      
+      if (error) {
+        throw error;
       }
       
-      // تحديث حالة المهمة إذا كانت مكتملة
-      if (task.status === 'completed' && onTaskStatusChanged) {
-        console.log("Task is completed and has a new comment, updating status to in_progress");
-        
-        // تحديث حالة المهمة إلى قيد التنفيذ
-        await onTaskStatusChanged(task.id, 'in_progress');
-        
-        // إرسال إشعار للمكلف بالمهمة إذا كان مختلفًا عن المستخدم الحالي
-        if (task.assigned_to && task.assigned_to !== userId) {
-          try {
-            // الحصول على اسم المستخدم الحالي
-            const { data: userData } = await supabase
-              .from("profiles")
-              .select("display_name, email")
-              .eq("id", userId)
-              .single();
-              
-            const userName = userData?.display_name || userData?.email || "مستخدم";
-            
-            console.log("Sending notification to:", task.assigned_to, "from user:", userName);
-
-            // إرسال الإشعار باستخدام وظيفة sendTaskCommentNotification
-            await sendTaskCommentNotification({
-              taskId: task.id,
-              taskTitle: task.title,
-              projectId: task.project_id,
-              projectTitle: task.project_name,
-              assignedUserId: task.assigned_to,
-              updatedByUserId: userId,
-              updatedByUserName: userName
-            });
-          } catch (notificationError) {
-            console.error("Error sending notification:", notificationError);
-          }
-        } else {
-          console.log("No notification sent: User is commenting on their own task or task has no assignee");
-        }
-      }
-      
-      // مسح حقل التعليق والملف بعد النجاح
-      setCommentText("");
-      setSelectedFile(null);
-      
-      if (attachmentError) {
-        toast.warning("تم إضافة التعليق ولكن قد يكون هناك مشكلة في رفع المرفق");
-      } else {
-        toast.success("تم إضافة التعليق بنجاح");
-      }
+      toast.success("تمت إضافة التعليق بنجاح");
+      setContent("");
+      setAttachment(null);
+      setAttachmentName("");
+      onCommentAdded();
     } catch (error) {
       console.error("Error adding comment:", error);
       toast.error("حدث خطأ أثناء إضافة التعليق");
@@ -237,29 +90,83 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
       setIsSubmitting(false);
     }
   };
-
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      console.log("File selected for comment:", e.target.files[0].name);
-      setSelectedFile(e.target.files[0]);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setAttachment(files[0]);
+      setAttachmentName(files[0].name);
     }
   };
-
-  const handleFileRemove = () => {
-    setSelectedFile(null);
+  
+  const clearAttachment = () => {
+    setAttachment(null);
+    setAttachmentName("");
   };
-
+  
   return (
-    <CommentForm
-      onSubmit={handleSubmitComment}
-      text={commentText}
-      onTextChange={setCommentText}
-      selectedFile={selectedFile}
-      onFileChange={handleFileChange}
-      onFileRemove={handleFileRemove}
-      isSubmitting={isSubmitting}
-      placeholder="أضف تعليقك حول المهمة..."
-      workspaceId={task.workspace_id}
-    />
+    <form onSubmit={handleSubmit} className="mt-4">
+      <Textarea
+        placeholder={placeholder}
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        rows={3}
+        disabled={isSubmitting}
+        className="mb-2"
+      />
+      
+      {attachmentName && (
+        <div className="flex items-center mb-2 p-2 bg-gray-50 rounded">
+          <PaperclipIcon className="h-4 w-4 mr-2 text-gray-500" />
+          <span className="text-sm text-gray-700 truncate flex-1">{attachmentName}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={clearAttachment}
+            disabled={isSubmitting}
+          >
+            إزالة
+          </Button>
+        </div>
+      )}
+      
+      <div className="flex justify-between items-center">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => document.getElementById(`comment-file-${taskId}`)?.click()}
+          disabled={isSubmitting}
+        >
+          <PaperclipIcon className="h-4 w-4 mr-1" />
+          إرفاق ملف
+        </Button>
+        <input
+          id={`comment-file-${taskId}`}
+          type="file"
+          className="hidden"
+          onChange={handleFileChange}
+          disabled={isSubmitting}
+        />
+        
+        <Button
+          type="submit"
+          disabled={isSubmitting || (!content.trim() && !attachment)}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              جاري الإرسال...
+            </>
+          ) : (
+            <>
+              <SendHorizonal className="h-4 w-4 mr-2" />
+              إرسال
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
   );
 };
