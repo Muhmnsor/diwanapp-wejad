@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,38 @@ export const DependencySelector = ({
   dependencyType,
   onDependencyTypeChange
 }: DependencySelectorProps) => {
+  const [selectedTaskTitle, setSelectedTaskTitle] = useState<string>("");
+  
+  // Update selected task title when selectedTaskId changes
+  useEffect(() => {
+    if (selectedTaskId) {
+      const task = availableTasks.find(task => task.id === selectedTaskId);
+      if (task) {
+        setSelectedTaskTitle(task.title);
+      }
+    } else {
+      setSelectedTaskTitle("");
+    }
+  }, [selectedTaskId, availableTasks]);
+  
+  // Generate the explanation text based on dependency type and selected task
+  const getDependencyExplanation = (): string => {
+    if (!selectedTaskTitle) return "";
+    
+    switch (dependencyType) {
+      case "finish-to-start":
+        return `ستبدأ هذه المهمة فقط بعد اكتمال المهمة "${selectedTaskTitle}" (FS)`;
+      case "start-to-start":
+        return `ستبدأ هذه المهمة فقط عندما تبدأ المهمة "${selectedTaskTitle}" (SS)`;
+      case "finish-to-finish":
+        return `لا يمكن إكمال هذه المهمة حتى تكتمل المهمة "${selectedTaskTitle}" (FF)`;
+      case "start-to-finish":
+        return `لا يمكن إكمال هذه المهمة حتى تبدأ المهمة "${selectedTaskTitle}" (SF)`;
+      default:
+        return "";
+    }
+  };
+  
   return (
     <div>
       <h3 className="text-sm font-medium mb-2">إضافة اعتمادية جديدة</h3>
@@ -83,6 +115,12 @@ export const DependencySelector = ({
               إضافة
             </Button>
           </div>
+          
+          {selectedTaskId && (
+            <div className="text-sm p-2 bg-blue-50 text-blue-700 rounded border border-blue-200">
+              {getDependencyExplanation()}
+            </div>
+          )}
         </div>
       )}
       
