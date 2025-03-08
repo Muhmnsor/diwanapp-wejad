@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,7 +29,9 @@ export const useTaskButtonStates = (taskId: string) => {
       try {
         console.log("Checking templates for task:", taskId);
         
-        // First try unified_task_attachments with template category
+        let hasAnyTemplates = false;
+        
+        // Check unified_task_attachments with template category
         const { data: unifiedData, error: unifiedError } = await supabase
           .from("unified_task_attachments")
           .select("id")
@@ -40,23 +41,28 @@ export const useTaskButtonStates = (taskId: string) => {
           
         if (unifiedError) {
           console.error("Error checking unified templates:", unifiedError);
-          // fallback to task_templates
-          const { data: templateData, error: templateError } = await supabase
-            .from("task_templates")
-            .select("id")
-            .eq("task_id", taskId)
-            .limit(1);
-            
-          if (templateError) throw templateError;
-          
-          const hasTemplatesData = templateData && templateData.length > 0;
-          console.log("Templates from task_templates:", hasTemplatesData ? "Found" : "None");
-          setHasTemplates(hasTemplatesData);
-        } else {
-          const hasUnifiedTemplates = unifiedData && unifiedData.length > 0;
-          console.log("Templates from unified_task_attachments:", hasUnifiedTemplates ? "Found" : "None");
-          setHasTemplates(hasUnifiedTemplates);
+        } else if (unifiedData && unifiedData.length > 0) {
+          console.log("Found templates in unified_task_attachments:", unifiedData.length);
+          hasAnyTemplates = true;
         }
+        
+        // Always check task_templates too, regardless of previous result
+        const { data: templateData, error: templateError } = await supabase
+          .from('task_templates')
+          .select('id')
+          .eq('task_id', taskId)
+          .limit(1);
+          
+        if (templateError) {
+          console.error('Error checking task_templates:', templateError);
+        } else if (templateData && templateData.length > 0) {
+          console.log("Found templates in task_templates:", templateData.length);
+          hasAnyTemplates = true;
+        }
+        
+        // Set state based on combined results
+        setHasTemplates(hasAnyTemplates);
+        console.log(`Final templates state for task ${taskId}:`, hasAnyTemplates);
       } catch (error) {
         console.error("Error checking templates:", error);
       }

@@ -28,7 +28,13 @@ export const TaskAttachmentField = ({
       console.log(`Adding new template file with category: ${category}`);
       
       // Add new file to existing files array with category metadata
-      const fileWithMetadata = Object.assign(selectedFile, { category });
+      const fileWithMetadata = Object.assign(selectedFile, { 
+        category,
+        attachment_category: category // Add this explicit property for consistent database storage
+      });
+      
+      console.log("File with metadata:", fileWithMetadata);
+      
       const updatedAttachments = attachment ? [...attachment, fileWithMetadata] : [fileWithMetadata];
       setAttachment(updatedAttachments);
     }

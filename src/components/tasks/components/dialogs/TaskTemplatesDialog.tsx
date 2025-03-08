@@ -35,7 +35,7 @@ export const TaskTemplatesDialog = ({
     console.log("Fetching templates for task:", task.id);
     
     try {
-      // Try to fetch from unified_task_attachments first
+      // Try to fetch from unified_task_attachments 
       const { data: unifiedData, error: unifiedError } = await supabase
         .from('unified_task_attachments')
         .select('*')
@@ -46,10 +46,10 @@ export const TaskTemplatesDialog = ({
       if (unifiedError) {
         console.error('Error fetching from unified_task_attachments:', unifiedError);
       } else {
-        console.log(`Found ${unifiedData?.length || 0} templates in unified_task_attachments`);
+        console.log(`Found ${unifiedData?.length || 0} templates in unified_task_attachments:`, unifiedData);
       }
       
-      // Also fetch from task_templates as a backup
+      // Always fetch from task_templates regardless of result from unified_task_attachments
       let taskTable = 'tasks';
       if (task.is_subtask) {
         taskTable = 'subtasks';
@@ -67,10 +67,10 @@ export const TaskTemplatesDialog = ({
       if (templateError) {
         console.error('Error fetching from task_templates:', templateError);
       } else {
-        console.log(`Found ${templateData?.length || 0} templates in task_templates`);
+        console.log(`Found ${templateData?.length || 0} templates in task_templates:`, templateData);
       }
       
-      // Combine results, prioritizing unified_task_attachments
+      // Combine results from both sources
       const combinedTemplates = [
         ...(unifiedData || []),
         ...(templateData || [])
