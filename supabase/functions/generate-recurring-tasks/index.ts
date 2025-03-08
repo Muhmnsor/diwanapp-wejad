@@ -50,6 +50,7 @@ serve(async (req) => {
       throw new Error('Insufficient permissions - Admin access required');
     }
 
+    console.log('Calling generate_recurring_tasks function');
     // Call the database function to generate tasks
     const { data, error } = await supabaseClient.rpc('generate_recurring_tasks')
     
@@ -57,6 +58,8 @@ serve(async (req) => {
       console.error('Error generating tasks:', error);
       throw error
     }
+
+    console.log('Tasks generated:', data);
 
     return new Response(
       JSON.stringify({ 

@@ -64,19 +64,29 @@ export const TasksRecurring = () => {
         setIsAdmin(isAdminData || false);
         console.log("Is admin:", isAdminData);
 
-        // Simplified query to avoid join issues
+        // Improved query with explicit joins and selections to avoid ambiguous column references
         const { data, error } = await supabase
           .from('recurring_tasks')
           .select(`
             *,
-            projects:project_id (name),
-            workspaces:workspace_id (name),
-            assignee:assign_to (display_name)
+            projects:project_id (
+              id,
+              title
+            ),
+            workspaces:workspace_id (
+              id,
+              name
+            ),
+            assignee:assign_to (
+              id,
+              display_name
+            )
           `)
           .order('created_at', { ascending: false });
 
         if (error) {
           console.error("Error fetching recurring tasks:", error);
+          toast.error("حدث خطأ أثناء تحميل المهام المتكررة");
           throw error;
         }
 
@@ -84,11 +94,12 @@ export const TasksRecurring = () => {
         
         const formattedTasks = data.map(task => ({
           ...task,
-          project_name: task.projects?.name,
+          project_name: task.projects?.title,
           workspace_name: task.workspaces?.name,
           assignee_name: task.assignee?.display_name,
         }));
 
+        console.log("Formatted recurring tasks:", formattedTasks);
         setRecurringTasks(formattedTasks);
       } catch (error) {
         console.error("Error fetching recurring tasks:", error);
@@ -110,12 +121,16 @@ export const TasksRecurring = () => {
 
   const toggleTaskStatus = async (taskId: string, isActive: boolean) => {
     try {
+      console.log(`Toggling task ${taskId} status from ${isActive} to ${!isActive}`);
       const { error } = await supabase
         .from('recurring_tasks')
         .update({ is_active: !isActive })
         .eq('id', taskId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error toggling task status:', error);
+        throw error;
+      }
 
       setRecurringTasks(prev =>
         prev.map(task =>
@@ -134,12 +149,16 @@ export const TasksRecurring = () => {
     if (!confirm('هل أنت متأكد من حذف هذه المهمة المتكررة؟')) return;
 
     try {
+      console.log(`Deleting recurring task ${taskId}`);
       const { error } = await supabase
         .from('recurring_tasks')
         .delete()
         .eq('id', taskId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting task:', error);
+        throw error;
+      }
 
       setRecurringTasks(prev => prev.filter(task => task.id !== taskId));
       toast.success('تم حذف المهمة المتكررة بنجاح');
@@ -157,6 +176,7 @@ export const TasksRecurring = () => {
 
     setIsGenerating(true);
     try {
+      console.log("Invoking generate-recurring-tasks function");
       const { data, error } = await supabase.functions.invoke('generate-recurring-tasks');
 
       if (error) {
@@ -167,22 +187,34 @@ export const TasksRecurring = () => {
       console.log('Generate tasks response:', data);
       toast.success(`تم إنشاء ${data.tasksCreated} مهمة بنجاح`);
       
-      // Simplified refresh query to match the format above
+      // Refresh the recurring tasks list after generation
       const { data: refreshedData, error: refreshError } = await supabase
         .from('recurring_tasks')
         .select(`
           *,
-          projects:project_id (name),
-          workspaces:workspace_id (name),
-          assignee:assign_to (display_name)
+          projects:project_id (
+            id,
+            title
+          ),
+          workspaces:workspace_id (
+            id,
+            name
+          ),
+          assignee:assign_to (
+            id,
+            display_name
+          )
         `)
         .order('created_at', { ascending: false });
 
-      if (refreshError) throw refreshError;
+      if (refreshError) {
+        console.error("Error refreshing tasks:", refreshError);
+        throw refreshError;
+      }
 
       const formattedTasks = refreshedData.map(task => ({
         ...task,
-        project_name: task.projects?.name,
+        project_name: task.projects?.title,
         workspace_name: task.workspaces?.name,
         assignee_name: task.assignee?.display_name,
       }));
