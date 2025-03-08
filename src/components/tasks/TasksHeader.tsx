@@ -1,15 +1,13 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus, Search, RefreshCw } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
-import { useNavigate } from "react-router-dom";
 
 export const TasksHeader = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const navigate = useNavigate();
 
   // Detect the active tab from URL hash
   useEffect(() => {
@@ -20,8 +18,6 @@ export const TasksHeader = () => {
       setActiveTab('yearly-plan');
     } else if (hash === 'reports') {
       setActiveTab('reports');
-    } else if (hash === 'recurring') {
-      setActiveTab('recurring');
     } else {
       setActiveTab('overview');
     }
@@ -36,14 +32,6 @@ export const TasksHeader = () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
   }, []);
-
-  const tabs = [
-    { id: 'overview', label: 'نظرة عامة', url: '#' },
-    { id: 'workspaces', label: 'مساحات العمل', url: '#workspaces' },
-    { id: 'yearly-plan', label: 'الخطة السنوية', url: '#yearly-plan' },
-    { id: 'recurring', label: 'المهام المتكررة', url: '#recurring' },
-    { id: 'reports', label: 'التقارير', url: '#reports' },
-  ];
 
   return (
     <div className="flex flex-col gap-4 mb-6">
@@ -60,38 +48,10 @@ export const TasksHeader = () => {
           </Button>
         )}
         
-        {/* Add recurring tasks button */}
-        {activeTab === 'recurring' && (
-          <Button 
-            onClick={() => navigate('/recurring-tasks/create')}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            إنشاء مهمة متكررة
-          </Button>
-        )}
-        
         {/* You could add a reports-specific button here if needed */}
         {activeTab === 'reports' && (
           <div></div> // مكان محجوز لأزرار تبويب التقارير في المستقبل
         )}
-      </div>
-      
-      {/* Navigation Tabs */}
-      <div className="flex space-x-1 space-x-reverse border-b">
-        {tabs.map(tab => (
-          <a
-            key={tab.id}
-            href={tab.url}
-            className={`px-4 py-2 font-medium text-sm ${
-              activeTab === tab.id
-                ? 'border-b-2 border-primary text-primary'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            {tab.label}
-          </a>
-        ))}
       </div>
       
       {/* Only show the search input in the workspaces tab */}

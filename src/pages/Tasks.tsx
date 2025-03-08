@@ -6,7 +6,6 @@ import { TasksOverview } from "@/components/tasks/TasksOverview";
 import { TasksWorkspaces } from "@/components/tasks/TasksWorkspaces";
 import { TasksYearlyPlan } from "@/components/tasks/TasksYearlyPlan";
 import { TasksReports } from "@/components/tasks/TasksReports";
-import { TasksRecurring } from "@/components/tasks/TasksRecurring";
 import { useEffect, useState } from "react";
 
 const Tasks = () => {
@@ -21,8 +20,6 @@ const Tasks = () => {
       setActiveTab('yearly-plan');
     } else if (hash === 'reports') {
       setActiveTab('reports');
-    } else if (hash === 'recurring') {
-      setActiveTab('recurring');
     } else {
       setActiveTab('overview');
     }
@@ -65,7 +62,6 @@ const Tasks = () => {
         {activeTab === 'workspaces' && <TasksWorkspaces />}
         {activeTab === 'yearly-plan' && <TasksYearlyPlan />}
         {activeTab === 'reports' && <TasksReports />}
-        {activeTab === 'recurring' && <TasksRecurring />}
       </main>
 
       <Footer />
