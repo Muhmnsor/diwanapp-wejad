@@ -38,7 +38,7 @@ export const useTaskNotifications = () => {
       
       console.log('Sending task status notification to:', params.assignedUserId, 'message:', message);
       
-      return await createNotification({
+      const result = await createNotification({
         title: `تحديث حالة المهمة`,
         message,
         notification_type: 'task',
@@ -46,6 +46,9 @@ export const useTaskNotifications = () => {
         related_entity_type: params.projectId ? 'project_task' : 'task',
         user_id: params.assignedUserId
       });
+      
+      console.log('Status notification result:', result ? 'Success' : 'Failed');
+      return result;
     } catch (error) {
       console.error('Error sending task status update notification:', error);
       return null;
@@ -82,7 +85,12 @@ export const useTaskNotifications = () => {
         user_id: params.assignedUserId
       });
       
-      console.log('Notification creation result:', result ? 'Success' : 'Failed');
+      console.log('Comment notification creation result:', result ? 'Success' : 'Failed');
+      
+      if (!result) {
+        console.error('Failed to create comment notification - null result returned');
+      }
+      
       return result;
     } catch (error) {
       console.error('Error sending task comment notification:', error, 'Params:', JSON.stringify(params));
@@ -101,7 +109,7 @@ export const useTaskNotifications = () => {
         message += ` بواسطة ${params.updatedByUserName}`;
       }
       
-      return await createNotification({
+      const result = await createNotification({
         title: `مرفق جديد للمهمة`,
         message,
         notification_type: 'task',
@@ -109,6 +117,9 @@ export const useTaskNotifications = () => {
         related_entity_type: params.projectId ? 'project_task' : 'task',
         user_id: params.assignedUserId
       });
+      
+      console.log('Attachment notification result:', result ? 'Success' : 'Failed');
+      return result;
     } catch (error) {
       console.error('Error sending task attachment notification:', error);
       return null;

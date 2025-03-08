@@ -25,6 +25,12 @@ export const useInAppNotifications = () => {
     }
 
     const targetUserId = params.user_id || user?.id;
+    
+    if (!targetUserId) {
+      console.error('Cannot determine target user ID for notification');
+      return null;
+    }
+    
     console.log('Creating notification for user:', targetUserId);
     
     try {
@@ -50,13 +56,15 @@ export const useInAppNotifications = () => {
 
       if (error) {
         console.error('Error creating notification:', error);
-        throw error;
+        toast.error('فشل في إنشاء الإشعار');
+        return null;
       }
       
       console.log('Notification created successfully:', data);
       return data;
     } catch (error) {
-      console.error('Error creating notification:', error);
+      console.error('Exception while creating notification:', error);
+      toast.error('حدث خطأ أثناء إنشاء الإشعار');
       return null;
     } finally {
       setIsCreating(false);
@@ -64,7 +72,10 @@ export const useInAppNotifications = () => {
   };
 
   const markAsRead = async (notificationId: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error('No logged in user to mark notification as read');
+      return false;
+    }
     
     try {
       const { error } = await supabase
@@ -73,7 +84,10 @@ export const useInAppNotifications = () => {
         .eq('id', notificationId)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        throw error;
+      }
       
       return true;
     } catch (error) {
@@ -83,7 +97,10 @@ export const useInAppNotifications = () => {
   };
 
   const markAllAsRead = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('No logged in user to mark all notifications as read');
+      return false;
+    }
     
     try {
       const { error } = await supabase
@@ -92,7 +109,10 @@ export const useInAppNotifications = () => {
         .eq('user_id', user.id)
         .eq('read', false);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error marking all notifications as read:', error);
+        throw error;
+      }
       
       toast.success('تم تحديث جميع الإشعارات كمقروءة');
       return true;

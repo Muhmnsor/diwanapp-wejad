@@ -186,6 +186,9 @@ export const useNotificationsState = () => {
       )
       .subscribe((status) => {
         console.log('Realtime subscription status:', status);
+        if (status !== 'SUBSCRIBED') {
+          console.warn('Failed to subscribe to realtime notifications, status:', status);
+        }
       });
 
     // Add periodic refresh as a fallback
