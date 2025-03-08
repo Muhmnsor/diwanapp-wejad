@@ -1,12 +1,14 @@
 
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Calendar, Repeat } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
+import { RecurringTaskDialog } from "./project-details/components/recurring/RecurringTaskDialog";
 
 export const TasksHeader = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isRecurringDialogOpen, setIsRecurringDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
   // Detect the active tab from URL hash
@@ -18,6 +20,8 @@ export const TasksHeader = () => {
       setActiveTab('yearly-plan');
     } else if (hash === 'reports') {
       setActiveTab('reports');
+    } else if (hash === 'recurring') {
+      setActiveTab('recurring');
     } else {
       setActiveTab('overview');
     }
@@ -48,18 +52,31 @@ export const TasksHeader = () => {
           </Button>
         )}
         
+        {/* Add recurring task button in the recurring tab */}
+        {activeTab === 'recurring' && (
+          <Button 
+            onClick={() => setIsRecurringDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Repeat className="h-4 w-4" />
+            إضافة مهمة متكررة
+          </Button>
+        )}
+        
         {/* You could add a reports-specific button here if needed */}
         {activeTab === 'reports' && (
           <div></div> // مكان محجوز لأزرار تبويب التقارير في المستقبل
         )}
       </div>
       
-      {/* Only show the search input in the workspaces tab */}
-      {activeTab === 'workspaces' && (
+      {/* Only show the search input in the workspaces tab or recurring tab */}
+      {(activeTab === 'workspaces' || activeTab === 'recurring') && (
         <div className="relative">
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <Input
-            placeholder="البحث عن مهام، مشاريع، أو مساحات عمل..."
+            placeholder={activeTab === 'recurring' 
+              ? "البحث عن مهام متكررة..." 
+              : "البحث عن مهام، مشاريع، أو مساحات عمل..."}
             className="pr-10 w-full"
           />
         </div>
@@ -69,6 +86,15 @@ export const TasksHeader = () => {
         open={isCreateDialogOpen} 
         onOpenChange={setIsCreateDialogOpen} 
       />
+
+      {/* Add RecurringTaskDialog with necessary props */}
+      {activeTab === 'recurring' && (
+        <RecurringTaskDialog
+          open={isRecurringDialogOpen}
+          onOpenChange={setIsRecurringDialogOpen}
+          projectId={undefined}
+        />
+      )}
     </div>
   );
 };

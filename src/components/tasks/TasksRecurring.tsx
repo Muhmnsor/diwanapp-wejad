@@ -1,0 +1,307 @@
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Calendar, Check, Clock, Pause, Play, Repeat, Trash, Edit } from "lucide-react";
+import { formatDate } from "@/utils/dateUtils";
+
+interface RecurringTask {
+  id: string;
+  title: string;
+  description: string | null;
+  recurrence_type: string;
+  day_of_month?: number | null;
+  day_of_week?: number | null;
+  priority: string;
+  category?: string | null;
+  project_id?: string | null;
+  workspace_id?: string | null;
+  created_by: string;
+  created_at: string;
+  is_active: boolean;
+  assign_to: string | null;
+  last_generated_date: string | null;
+  next_generation_date: string | null;
+  project_name?: string | null;
+  workspace_name?: string | null;
+  assignee_name?: string | null;
+  requires_deliverable?: boolean;
+}
+
+export const TasksRecurring = () => {
+  const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Fetch recurring tasks and check admin status
+  useEffect(() => {
+    const fetchRecurringTasks = async () => {
+      setIsLoading(true);
+      try {
+        const { data: isAdminData } = await supabase.rpc('is_admin');
+        setIsAdmin(isAdminData || false);
+
+        const { data, error } = await supabase
+          .from('recurring_tasks')
+          .select(`
+            *,
+            project_tasks(name),
+            workspaces(name),
+            profiles!recurring_tasks_assign_to_fkey(display_name)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        const formattedTasks = data.map(task => ({
+          ...task,
+          project_name: task.project_tasks?.name,
+          workspace_name: task.workspaces?.name,
+          assignee_name: task.profiles?.display_name,
+        }));
+
+        setRecurringTasks(formattedTasks);
+      } catch (error) {
+        console.error("Error fetching recurring tasks:", error);
+        toast.error("حدث خطأ أثناء تحميل المهام المتكررة");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecurringTasks();
+  }, []);
+
+  // Filter tasks based on active filter
+  const filteredTasks = recurringTasks.filter(task => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "active") return task.is_active;
+    if (activeFilter === "paused") return !task.is_active;
+    return true;
+  });
+
+  // Toggle task active status
+  const toggleTaskStatus = async (taskId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('recurring_tasks')
+        .update({ is_active: !isActive })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      setRecurringTasks(prev =>
+        prev.map(task =>
+          task.id === taskId ? { ...task, is_active: !isActive } : task
+        )
+      );
+
+      toast.success(`تم ${!isActive ? 'تفعيل' : 'إيقاف'} المهمة بنجاح`);
+    } catch (error) {
+      console.error('Error toggling task status:', error);
+      toast.error('حدث خطأ أثناء تحديث حالة المهمة');
+    }
+  };
+
+  // Delete recurring task
+  const deleteTask = async (taskId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذه المهمة المتكررة؟')) return;
+
+    try {
+      const { error } = await supabase
+        .from('recurring_tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      setRecurringTasks(prev => prev.filter(task => task.id !== taskId));
+      toast.success('تم حذف المهمة المتكررة بنجاح');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('حدث خطأ أثناء حذف المهمة');
+    }
+  };
+
+  // Manual task generation (admin only)
+  const generateTasks = async () => {
+    if (!isAdmin) {
+      toast.error('لا تملك الصلاحيات الكافية لتنفيذ هذا الإجراء');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-recurring-tasks');
+
+      if (error) throw error;
+      
+      toast.success(`تم إنشاء ${data.tasksCreated} مهمة بنجاح`);
+      
+      // Refresh the task list
+      const { data: refreshedData, error: refreshError } = await supabase
+        .from('recurring_tasks')
+        .select(`
+          *,
+          project_tasks(name),
+          workspaces(name),
+          profiles!recurring_tasks_assign_to_fkey(display_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (refreshError) throw refreshError;
+
+      const formattedTasks = refreshedData.map(task => ({
+        ...task,
+        project_name: task.project_tasks?.name,
+        workspace_name: task.workspaces?.name,
+        assignee_name: task.profiles?.display_name,
+      }));
+
+      setRecurringTasks(formattedTasks);
+    } catch (error) {
+      console.error('Error generating tasks:', error);
+      toast.error('حدث خطأ أثناء إنشاء المهام');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Render recurrence description
+  const renderRecurrence = (task: RecurringTask) => {
+    if (task.recurrence_type === 'monthly' && task.day_of_month) {
+      return `شهرياً - يوم ${task.day_of_month} من كل شهر`;
+    } 
+    // Add other recurrence types as needed
+    return 'غير محدد';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Tabs defaultValue="all" className="w-full max-w-md" onValueChange={setActiveFilter}>
+          <TabsList className="grid grid-cols-3">
+            <TabsTrigger value="all">جميع المهام</TabsTrigger>
+            <TabsTrigger value="active">نشطة</TabsTrigger>
+            <TabsTrigger value="paused">متوقفة</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {isAdmin && (
+          <Button 
+            onClick={generateTasks} 
+            disabled={isGenerating}
+            variant="outline"
+            className="flex gap-2 items-center"
+          >
+            {isGenerating ? (
+              <>
+                <div className="h-4 w-4 border-2 border-current border-t-transparent animate-spin rounded-full"></div>
+                جاري الإنشاء...
+              </>
+            ) : (
+              <>
+                <Calendar className="h-4 w-4" />
+                إنشاء المهام المجدولة
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+
+      {filteredTasks.length === 0 ? (
+        <Card className="bg-muted/30">
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <Repeat className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-xl font-medium mb-2">لا توجد مهام متكررة</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              يمكنك إنشاء مهام متكررة ليتم إنشاؤها تلقائياً حسب الجدول الزمني المحدد
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredTasks.map(task => (
+            <Card key={task.id} className={`overflow-hidden border-l-4 ${!task.is_active ? 'border-l-muted' : task.priority === 'high' ? 'border-l-orange-500' : task.priority === 'medium' ? 'border-l-blue-500' : 'border-l-green-500'}`}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-base font-medium line-clamp-1">{task.title}</CardTitle>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleTaskStatus(task.id, task.is_active)}>
+                      {task.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteTask(task.id)}>
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pb-4 pt-0">
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Repeat className="h-4 w-4 shrink-0" />
+                    <span>{renderRecurrence(task)}</span>
+                  </div>
+                  
+                  {task.next_generation_date && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="h-4 w-4 shrink-0" />
+                      <span>الإنشاء التالي: {formatDate(task.next_generation_date)}</span>
+                    </div>
+                  )}
+                  
+                  {task.last_generated_date && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-4 w-4 shrink-0" />
+                      <span>آخر إنشاء: {formatDate(task.last_generated_date)}</span>
+                    </div>
+                  )}
+
+                  {task.project_name && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span>المشروع: {task.project_name}</span>
+                    </div>
+                  )}
+
+                  {task.workspace_name && !task.project_name && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span>مساحة العمل: {task.workspace_name}</span>
+                    </div>
+                  )}
+
+                  {task.assignee_name && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span>المسؤول: {task.assignee_name}</span>
+                    </div>
+                  )}
+
+                  {task.requires_deliverable && (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <Check className="h-4 w-4 shrink-0" />
+                      <span>تتطلب مستلمات</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
