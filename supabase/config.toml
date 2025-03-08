@@ -25,9 +25,6 @@ pop3_port = 54326
 [storage]
 enabled = true
 
-[functions]
-enabled = true
-
-[[functions.function]]
+[[functions]]
 name = "generate-recurring-tasks"
 verify_jwt = true
