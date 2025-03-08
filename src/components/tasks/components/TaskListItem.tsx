@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -17,6 +18,7 @@ import type { Task as ProjectTask } from "../project-details/types/task";
 import { handleTaskCompletion } from "./actions/handleTaskCompletion";
 import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
+import { usePermissionCheck } from "../project-details/hooks/usePermissionCheck";
 
 interface TaskListItemProps {
   task: Task;
@@ -48,7 +50,18 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
       ? 'text-blue-500' 
       : 'text-gray-500';
 
+  const { canEdit } = usePermissionCheck({
+    assignedTo: task.assigned_to,
+    projectId: task.project_id || null,
+    workspaceId: task.workspace_id || null
+  });
+
   const handleStatusChange = async (status: string) => {
+    if (!canEdit) {
+      toast.error("لا يمكنك تغيير حالة المهمة لأنك لست المكلف بها أو لا تملك الصلاحية");
+      return;
+    }
+    
     setIsUpdating(true);
     try {
       if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
@@ -111,12 +124,26 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   };
 
   const handleEditTask = (taskId: string) => {
+    if (!canEdit) {
+      toast.error("لا يمكنك تعديل المهمة لأنك لست المكلف بها أو لا تملك الصلاحية");
+      return;
+    }
     setIsEditDialogOpen(true);
   };
 
   const handleTaskUpdated = () => {
     if (onTaskUpdated) {
       onTaskUpdated();
+    }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    if (!canEdit) {
+      toast.error("لا يمكنك حذف المهمة لأنك لست المكلف بها أو لا تملك الصلاحية");
+      return;
+    }
+    if (onDelete) {
+      onDelete(taskId);
     }
   };
 
@@ -163,10 +190,11 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         onOpenAttachments={() => setIsAttachmentDialogOpen(true)}
         onOpenTemplates={() => setIsTemplatesDialogOpen(true)}
         onStatusChange={handleStatusChange}
-        onDelete={onDelete}
+        onDelete={handleDeleteTask}
         onEdit={handleEditTask}
         taskId={task.id}
         isGeneral={task.is_general}
+        canEdit={canEdit}
       />
       
       <TaskDiscussionDialog 

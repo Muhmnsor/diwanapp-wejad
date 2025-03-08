@@ -98,6 +98,8 @@ const GeneralTasks = () => {
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
                     onTaskUpdated={fetchGeneralTasks}
+                    projectId=""
+                    workspaceId=""
                   />
                 ))
               ) : (
@@ -109,6 +111,8 @@ const GeneralTasks = () => {
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
                     onTaskUpdated={fetchGeneralTasks}
+                    projectId=""
+                    workspaceId=""
                   />
                 ))
               )}

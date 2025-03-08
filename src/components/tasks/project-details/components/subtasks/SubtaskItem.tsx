@@ -12,12 +12,25 @@ interface SubtaskItemProps {
   onUpdateStatus: (subtaskId: string, newStatus: string) => Promise<void>;
   onDelete: (subtaskId: string) => Promise<void>;
   onEdit: (subtask: Subtask) => void;
+  projectId?: string | null;
+  workspaceId?: string | null;
 }
 
-export const SubtaskItem = ({ subtask, onUpdateStatus, onDelete, onEdit }: SubtaskItemProps) => {
+export const SubtaskItem = ({ 
+  subtask, 
+  onUpdateStatus, 
+  onDelete, 
+  onEdit,
+  projectId,
+  workspaceId
+}: SubtaskItemProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { canEdit } = usePermissionCheck({ assignedTo: subtask.assigned_to });
+  const { canEdit } = usePermissionCheck({ 
+    assignedTo: subtask.assigned_to, 
+    projectId,
+    workspaceId
+  });
   
   const handleStatusUpdate = async (newStatus: string) => {
     if (!canEdit) return;

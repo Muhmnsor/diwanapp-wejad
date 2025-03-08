@@ -5,9 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface UsePermissionCheckProps {
   assignedTo?: string | null;
+  projectId?: string | null;
+  workspaceId?: string | null;
 }
 
-export const usePermissionCheck = ({ assignedTo }: UsePermissionCheckProps) => {
+export const usePermissionCheck = ({ assignedTo, projectId, workspaceId }: UsePermissionCheckProps) => {
   const { user } = useAuthStore();
   const [canEdit, setCanEdit] = useState<boolean>(false);
   
@@ -24,6 +26,43 @@ export const usePermissionCheck = ({ assignedTo }: UsePermissionCheckProps) => {
       
       // التحقق مما إذا كان المستخدم مدير نظام أو مدير تطبيق
       let isAdmin = user.isAdmin;
+      let isProjectManager = false;
+      let isWorkspaceManager = false;
+      
+      // التحقق من إذا كان المستخدم هو مدير المشروع
+      if (projectId && user.id) {
+        try {
+          const { data: projectData, error: projectError } = await supabase
+            .from('project_tasks')
+            .select('project_manager')
+            .eq('id', projectId)
+            .single();
+          
+          if (!projectError && projectData) {
+            isProjectManager = projectData.project_manager === user.id;
+          }
+        } catch (error) {
+          console.error("خطأ في التحقق من مدير المشروع:", error);
+        }
+      }
+      
+      // التحقق من إذا كان المستخدم هو مدير مساحة العمل
+      if (workspaceId && user.id) {
+        try {
+          const { data: workspaceMember, error: workspaceError } = await supabase
+            .from('workspace_members')
+            .select('role')
+            .eq('workspace_id', workspaceId)
+            .eq('user_id', user.id)
+            .single();
+          
+          if (!workspaceError && workspaceMember) {
+            isWorkspaceManager = workspaceMember.role === 'admin';
+          }
+        } catch (error) {
+          console.error("خطأ في التحقق من مدير مساحة العمل:", error);
+        }
+      }
       
       // إذا لم تكن الحالة واضحة، تحقق من الأدوار مباشرة
       if (!isAdmin && user.id) {
@@ -58,11 +97,12 @@ export const usePermissionCheck = ({ assignedTo }: UsePermissionCheckProps) => {
       }
       
       // السماح بالتعديل إذا كان المستخدم هو المكلف أو مدير النظام أو مدير التطبيق
-      setCanEdit(isAssignee || isAdmin);
+      // أو مدير المشروع أو مدير مساحة العمل
+      setCanEdit(isAssignee || isAdmin || isProjectManager || isWorkspaceManager);
     };
     
     checkPermission();
-  }, [user, assignedTo]);
+  }, [user, assignedTo, projectId, workspaceId]);
   
   return { canEdit };
 };
