@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
@@ -18,6 +19,7 @@ import { handleTaskCompletion } from "./actions/handleTaskCompletion";
 import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
 import { DependencyIcon } from "./dependencies/DependencyIcon";
+import { useTaskButtonStates } from "../hooks/useTaskButtonStates";
 
 interface TaskListItemProps {
   task: Task;
@@ -40,6 +42,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const { user } = useAuthStore();
   
   const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
+  const { hasDeliverables } = useTaskButtonStates(task.id);
   
   const hasDependencies = dependencies.length > 0;
   const hasDependents = dependentTasks.length > 0;
@@ -48,6 +51,13 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
   const handleStatusChange = async (status: string) => {
     setIsUpdating(true);
     try {
+      // التحقق من المستلمات الإلزامية
+      if (status === 'completed' && task.requires_deliverable && !hasDeliverables) {
+        toast.error("هذه المهمة تتطلب رفع مستلم واحد على الأقل للإكمال");
+        setIsUpdating(false);
+        return;
+      }
+      
       if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
         const taskTable = task.is_subtask ? 'subtasks' : 'tasks';
         await handleTaskCompletion({
