@@ -22,8 +22,8 @@ export const TaskHeader = ({
   dependencyIconColor = 'text-gray-500'
 }: TaskHeaderProps) => {
   return (
-    <div className="flex justify-between items-start">
-      <div>
+    <div className="flex justify-between items-start w-full">
+      <div className="max-w-[70%]">
         {task.is_subtask && (
           <div className="flex items-center gap-1 mb-1">
             <GitMerge className="h-4 w-4 text-blue-500" />
@@ -48,7 +48,7 @@ export const TaskHeader = ({
           <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
         )}
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 mr-auto ml-4">
         <TaskStatusBadge status={status} dueDate={task.due_date} />
         <TaskPriorityBadge priority={task.priority} />
       </div>
