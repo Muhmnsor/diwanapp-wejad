@@ -13,10 +13,6 @@ interface TaskHeaderProps {
 export const TaskHeader = ({ task, status }: TaskHeaderProps) => {
   return (
     <div className="flex justify-between items-start">
-      <div className="flex flex-col gap-2">
-        <TaskStatusBadge status={status} dueDate={task.due_date} />
-        <TaskPriorityBadge priority={task.priority} />
-      </div>
       <div>
         {task.is_subtask && (
           <div className="flex items-center gap-1 mb-1">
@@ -24,12 +20,14 @@ export const TaskHeader = ({ task, status }: TaskHeaderProps) => {
             <Badge variant="outline" className="text-xs bg-blue-50">مهمة فرعية</Badge>
           </div>
         )}
-        <div className="flex items-center">
-          <h3 className="font-semibold text-lg">{task.title}</h3>
-        </div>
+        <h3 className="font-semibold text-lg">{task.title}</h3>
         {task.description && (
           <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{task.description}</p>
         )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <TaskStatusBadge status={status} dueDate={task.due_date} />
+        <TaskPriorityBadge priority={task.priority} />
       </div>
     </div>
   );
