@@ -10,8 +10,8 @@ import { ProjectMember } from "../../types/projectMember";
 interface RecurringTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string;
-  projectMembers: ProjectMember[];
+  projectId?: string | undefined;
+  projectMembers?: ProjectMember[];
   onTaskCreated?: () => void;
   onRecurringTaskAdded?: () => void;
 }
@@ -20,7 +20,7 @@ export const RecurringTaskDialog = ({
   open,
   onOpenChange,
   projectId,
-  projectMembers,
+  projectMembers = [],
   onTaskCreated,
   onRecurringTaskAdded
 }: RecurringTaskDialogProps) => {
@@ -49,12 +49,12 @@ export const RecurringTaskDialog = ({
         .insert({
           title,
           description,
-          frequency,
+          recurrence_type: frequency,
           interval,
-          start_date: startDate.toISOString(),
-          next_occurrence: startDate.toISOString(),
+          next_generation_date: startDate.toISOString(),
           project_id: projectId,
-          status: 'active'
+          is_active: true,
+          priority: 'medium'
         })
         .select()
         .single();

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Calendar, Repeat } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -92,7 +91,6 @@ export const TasksHeader = () => {
         <RecurringTaskDialog
           open={isRecurringDialogOpen}
           onOpenChange={setIsRecurringDialogOpen}
-          projectId={undefined}
         />
       )}
     </div>

@@ -22,8 +22,8 @@ export const RecurringTaskCard = ({
 }: RecurringTaskCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
   
-  const getFrequencyText = (frequency: string, interval: number) => {
-    switch (frequency) {
+  const getFrequencyText = (recurrenceType: string, interval: number = 1) => {
+    switch (recurrenceType) {
       case 'daily':
         return interval === 1 ? 'يومي' : `كل ${interval} أيام`;
       case 'weekly':
@@ -51,7 +51,7 @@ export const RecurringTaskCard = ({
           <CardTitle className="text-lg line-clamp-1">{task.title}</CardTitle>
           <Badge variant="outline" className="flex items-center gap-1">
             <CalendarClock className="h-3 w-3" />
-            {getFrequencyText(task.frequency, task.interval)}
+            {getFrequencyText(task.recurrence_type, task.interval)}
           </Badge>
         </div>
       </CardHeader>
@@ -60,8 +60,8 @@ export const RecurringTaskCard = ({
           <p className="text-sm text-gray-600 line-clamp-2 mb-2">{task.description}</p>
         )}
         <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-          {task.next_occurrence && (
-            <span>الإستحقاق القادم: {formatDate(task.next_occurrence)}</span>
+          {task.next_generation_date && (
+            <span>الإستحقاق القادم: {formatDate(task.next_generation_date)}</span>
           )}
         </div>
       </CardContent>

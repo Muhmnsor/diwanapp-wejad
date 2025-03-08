@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ interface RecurringTask {
   title: string;
   description: string | null;
   recurrence_type: string;
+  interval: number;
   day_of_month?: number | null;
   day_of_week?: number | null;
   priority: string;
@@ -38,7 +38,6 @@ export const TasksRecurring = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Fetch recurring tasks and check admin status
   useEffect(() => {
     const fetchRecurringTasks = async () => {
       setIsLoading(true);
@@ -79,7 +78,6 @@ export const TasksRecurring = () => {
     fetchRecurringTasks();
   }, []);
 
-  // Filter tasks based on active filter
   const filteredTasks = recurringTasks.filter(task => {
     if (activeFilter === "all") return true;
     if (activeFilter === "active") return task.is_active;
@@ -87,7 +85,6 @@ export const TasksRecurring = () => {
     return true;
   });
 
-  // Toggle task active status
   const toggleTaskStatus = async (taskId: string, isActive: boolean) => {
     try {
       const { error } = await supabase
@@ -110,7 +107,6 @@ export const TasksRecurring = () => {
     }
   };
 
-  // Delete recurring task
   const deleteTask = async (taskId: string) => {
     if (!confirm('هل أنت متأكد من حذف هذه المهمة المتكررة؟')) return;
 
@@ -130,7 +126,6 @@ export const TasksRecurring = () => {
     }
   };
 
-  // Manual task generation (admin only)
   const generateTasks = async () => {
     if (!isAdmin) {
       toast.error('لا تملك الصلاحيات الكافية لتنفيذ هذا الإجراء');
@@ -145,7 +140,6 @@ export const TasksRecurring = () => {
       
       toast.success(`تم إنشاء ${data.tasksCreated} مهمة بنجاح`);
       
-      // Refresh the task list
       const { data: refreshedData, error: refreshError } = await supabase
         .from('recurring_tasks')
         .select(`
@@ -174,13 +168,18 @@ export const TasksRecurring = () => {
     }
   };
 
-  // Render recurrence description
   const renderRecurrence = (task: RecurringTask) => {
     if (task.recurrence_type === 'monthly' && task.day_of_month) {
       return `شهرياً - يوم ${task.day_of_month} من كل شهر`;
     } 
-    // Add other recurrence types as needed
-    return 'غير محدد';
+    if (task.recurrence_type === 'weekly' && task.day_of_week !== undefined) {
+      const weekdays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      return `أسبوعياً - يوم ${weekdays[task.day_of_week]}`;
+    }
+    if (task.recurrence_type === 'daily') {
+      return task.interval === 1 ? 'يومياً' : `كل ${task.interval} أيام`;
+    }
+    return `${task.recurrence_type} (كل ${task.interval || 1})`;
   };
 
   if (isLoading) {
