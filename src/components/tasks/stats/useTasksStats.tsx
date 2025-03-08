@@ -28,18 +28,18 @@ export const useTasksStats = () => {
       }
       
       // Fetch tasks from portfolio_tasks table
-      const { data: userTasks, error } = await supabase
+      const { data: userPortfolioTasks, error: portfolioError } = await supabase
         .from('portfolio_tasks')
         .select('status, due_date')
         .eq('assigned_to', user.id);
       
-      if (error) {
-        console.error("Error fetching portfolio tasks stats:", error);
-        throw error;
+      if (portfolioError) {
+        console.error("Error fetching portfolio tasks stats:", portfolioError);
+        throw portfolioError;
       }
       
       // Fetch tasks from the regular tasks table
-      const { data: regularTasks, error: tasksError } = await supabase
+      const { data: userTasks, error: tasksError } = await supabase
         .from('tasks')
         .select('status, due_date')
         .eq('assigned_to', user.id);
@@ -50,7 +50,7 @@ export const useTasksStats = () => {
       }
       
       // Fetch subtasks assigned to the user
-      const { data: subtasks, error: subtasksError } = await supabase
+      const { data: userSubtasks, error: subtasksError } = await supabase
         .from('subtasks')
         .select('status, due_date')
         .eq('assigned_to', user.id);
@@ -61,37 +61,66 @@ export const useTasksStats = () => {
       }
       
       // Combine all tasks arrays
-      const allTasks = [
-        ...(userTasks || []), 
-        ...(regularTasks || []),
-        ...(subtasks || [])
+      const allAssignedTasks = [
+        ...(userPortfolioTasks || []), 
+        ...(userTasks || []),
+        ...(userSubtasks || [])
       ];
+      
+      console.log(`Found ${allAssignedTasks.length} tasks assigned to user ID: ${user.id}`);
+      console.log(`- Portfolio tasks: ${userPortfolioTasks?.length || 0}`);
+      console.log(`- Regular tasks: ${userTasks?.length || 0}`);
+      console.log(`- Subtasks: ${userSubtasks?.length || 0}`);
       
       const now = new Date();
       const oneWeekFromNow = new Date();
       oneWeekFromNow.setDate(now.getDate() + 7);
       
-      // Calculate stats from the fetched data
-      const totalTasks = allTasks.length || 0;
-      const completedTasks = allTasks.filter(task => task.status === 'completed').length || 0;
-      const pendingTasks = allTasks.filter(task => task.status === 'pending').length || 0;
-      const delayedTasks = allTasks.filter(task => {
-        if (!task.due_date) return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate < now && task.status !== 'completed';
-      }).length || 0;
-      const upcomingDeadlines = allTasks.filter(task => {
-        if (!task.due_date) return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate > now && dueDate <= oneWeekFromNow && task.status !== 'completed';
-      }).length || 0;
+      // Calculate stats - each task goes into exactly one category for counting purposes
+      const totalTasks = allAssignedTasks.length;
+      const completedTasks = allAssignedTasks.filter(task => task.status === 'completed').length;
       
+      // Only count tasks as pending if they're not completed, not delayed, and not upcoming
+      const pendingTasks = allAssignedTasks.filter(task => {
+        if (task.status === 'completed') return false;
+        
+        // If has due date, check if it's delayed or upcoming
+        if (task.due_date) {
+          const dueDate = new Date(task.due_date);
+          // Not delayed and not upcoming
+          return !(dueDate < now || (dueDate > now && dueDate <= oneWeekFromNow));
+        }
+        
+        // No due date, so it's pending
+        return true;
+      }).length;
+      
+      // Count tasks as delayed only if they're not completed and past due date
+      const delayedTasks = allAssignedTasks.filter(task => {
+        if (task.status === 'completed') return false;
+        if (!task.due_date) return false;
+        
+        const dueDate = new Date(task.due_date);
+        return dueDate < now;
+      }).length;
+      
+      // Count tasks as upcoming only if they're not completed and due within the next week
+      const upcomingDeadlines = allAssignedTasks.filter(task => {
+        if (task.status === 'completed') return false;
+        if (!task.due_date) return false;
+        
+        const dueDate = new Date(task.due_date);
+        return dueDate > now && dueDate <= oneWeekFromNow;
+      }).length;
+      
+      // Verify that our counts are consistent
       console.log('Calculated user tasks stats:', { 
         totalTasks, 
         completedTasks, 
         pendingTasks, 
         upcomingDeadlines,
-        delayedTasks 
+        delayedTasks,
+        sumOfCategories: completedTasks + pendingTasks + delayedTasks + upcomingDeadlines
       });
       
       return {
