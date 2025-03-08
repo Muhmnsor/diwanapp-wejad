@@ -110,15 +110,20 @@ export const TasksRecurring = () => {
 
         console.log("Recurring tasks raw data:", data);
         
-        // Fix the mapping to handle nested objects (not arrays) correctly
-        const formattedTasks = data.map(task => {
-          return {
+        // Convert the data to the correct type with proper type checks
+        const formattedTasks: RecurringTask[] = data.map(task => {
+          // Access the nested objects with optional chaining
+          const formattedTask: RecurringTask = {
             ...task,
-            project_name: task.projects?.title || null,
-            workspace_name: task.workspaces?.name || null,
-            assignee_name: task.profiles?.display_name || null,
+            projects: task.projects || null,
+            workspaces: task.workspaces || null,
+            profiles: task.profiles || null,
+            project_name: task.projects ? task.projects.title : null,
+            workspace_name: task.workspaces ? task.workspaces.name : null,
+            assignee_name: task.profiles ? task.profiles.display_name : null,
           };
-        }) as RecurringTask[];
+          return formattedTask;
+        });
 
         console.log("Formatted recurring tasks:", formattedTasks);
         setRecurringTasks(formattedTasks);
@@ -247,15 +252,20 @@ export const TasksRecurring = () => {
         throw refreshError;
       }
 
-      // Fix the mapping to handle nested objects correctly
-      const formattedTasks = refreshedData.map(task => {
-        return {
+      // Convert the refreshed data to the correct type with proper type checks
+      const formattedTasks: RecurringTask[] = refreshedData.map(task => {
+        // Access the nested objects with optional chaining
+        const formattedTask: RecurringTask = {
           ...task,
-          project_name: task.projects?.title || null,
-          workspace_name: task.workspaces?.name || null,
-          assignee_name: task.profiles?.display_name || null,
+          projects: task.projects || null,
+          workspaces: task.workspaces || null,
+          profiles: task.profiles || null,
+          project_name: task.projects ? task.projects.title : null,
+          workspace_name: task.workspaces ? task.workspaces.name : null,
+          assignee_name: task.profiles ? task.profiles.display_name : null,
         };
-      }) as RecurringTask[];
+        return formattedTask;
+      });
 
       setRecurringTasks(formattedTasks);
     } catch (error) {
