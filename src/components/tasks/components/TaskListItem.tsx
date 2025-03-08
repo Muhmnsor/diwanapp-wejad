@@ -1,23 +1,17 @@
+
 import { useState } from "react";
 import { Task } from "../types/task";
 import { TaskHeader } from "./header/TaskHeader";
 import { TaskMetadata } from "./metadata/TaskMetadata";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { TaskActionButtons } from "./actions/TaskActionButtons";
+import { useTaskStatusManager } from "./status/TaskStatusManager";
+import { useTaskDependencyManager } from "./dependencies/TaskDependencyManager";
 import { TaskDiscussionDialog } from "./TaskDiscussionDialog";
 import { TaskAttachmentDialog } from "./dialogs/TaskAttachmentDialog";
 import { FileUploadDialog } from "./dialogs/FileUploadDialog";
-import { TaskActionButtons } from "./actions/TaskActionButtons";
 import { TaskTemplatesDialog } from "./dialogs/TaskTemplatesDialog";
-import { useTaskNotifications } from "@/hooks/useTaskNotifications";
-import { useTaskAssignmentNotifications } from "@/hooks/useTaskAssignmentNotifications";
-import { useAuthStore } from "@/store/authStore";
 import { EditTaskDialog } from "../project-details/EditTaskDialog";
-import type { Task as ProjectTask } from "../project-details/types/task";
-import { handleTaskCompletion } from "./actions/handleTaskCompletion";
-import { useTaskDependencies } from "../project-details/hooks/useTaskDependencies";
 import { TaskDependenciesDialog } from "../project-details/components/dependencies/TaskDependenciesDialog";
-import { DependencyIcon } from "./dependencies/DependencyIcon";
 
 interface TaskListItemProps {
   task: Task;
@@ -27,97 +21,41 @@ interface TaskListItemProps {
 }
 
 export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: TaskListItemProps) => {
+  // UI state for dialogs
   const [showDiscussion, setShowDiscussion] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [isAttachmentDialogOpen, setIsAttachmentDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isTemplatesDialogOpen, setIsTemplatesDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [showDependencies, setShowDependencies] = useState(false);
+  
   const currentStatus = task.status || "pending";
-  const { sendTaskStatusUpdateNotification } = useTaskNotifications();
-  const { sendTaskAssignmentNotification } = useTaskAssignmentNotifications();
-  const { user } = useAuthStore();
   
-  const { dependencies, dependentTasks, checkDependenciesCompleted } = useTaskDependencies(task.id);
+  // Dependency management
+  const {
+    showDependencies,
+    setShowDependencies,
+    hasDependencies,
+    dependencyIconColor
+  } = useTaskDependencyManager({ taskId: task.id });
   
-  const hasDependencies = dependencies.length > 0;
-  const hasDependents = dependentTasks.length > 0;
-  const hasPendingDependencies = hasDependencies && dependencies.some(d => d.status !== 'completed');
-
-  const handleStatusChange = async (status: string) => {
-    setIsUpdating(true);
-    try {
-      if (status === 'completed' && currentStatus !== 'completed' && user?.id) {
-        const taskTable = task.is_subtask ? 'subtasks' : 'tasks';
-        await handleTaskCompletion({
-          taskId: task.id,
-          taskTable,
-          userId: user.id,
-          dueDate: task.due_date
-        });
-      }
-      
-      if (task.is_subtask) {
-        const { error } = await supabase
-          .from('subtasks')
-          .update({ status })
-          .eq('id', task.id);
-          
-        if (error) throw error;
-        
-        onStatusChange(task.id, status);
-        toast.success('تم تحديث حالة المهمة الفرعية');
-        
-        if (task.assigned_to && task.assigned_to !== user?.id) {
-          const userData = await supabase.auth.getUser(user?.id || '');
-          const userName = userData.data?.user?.email || 'مستخدم';
-          
-          await sendTaskStatusUpdateNotification({
-            taskId: task.id,
-            taskTitle: task.title,
-            assignedUserId: task.assigned_to,
-            updatedByUserId: user?.id,
-            updatedByUserName: userName
-          }, status);
-        }
-      } else {
-        onStatusChange(task.id, status);
-        
-        if (task.assigned_to && task.assigned_to !== user?.id) {
-          const userData = await supabase.auth.getUser(user?.id || '');
-          const userName = userData.data?.user?.email || 'مستخدم';
-          
-          await sendTaskStatusUpdateNotification({
-            taskId: task.id,
-            taskTitle: task.title,
-            projectId: task.project_id,
-            projectTitle: task.project_name,
-            assignedUserId: task.assigned_to,
-            updatedByUserId: user?.id,
-            updatedByUserName: userName
-          }, status);
-        }
-      }
-    } catch (error) {
-      console.error("Error updating task status:", error);
-      toast.error('حدث خطأ أثناء تحديث حالة المهمة');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  // Status management
+  const { isUpdating, handleStatusChange } = useTaskStatusManager({
+    taskId: task.id,
+    isSubtask: !!task.parent_task_id,
+    currentStatus,
+    dueDate: task.due_date,
+    assignedTo: task.assigned_to,
+    projectId: task.project_id,
+    projectTitle: task.project_name,
+    taskTitle: task.title,
+    onStatusChange
+  });
 
   const handleEditTask = (taskId: string) => {
     setIsEditDialogOpen(true);
   };
-
-  const handleTaskUpdated = () => {
-    if (onTaskUpdated) {
-      onTaskUpdated();
-    }
-  };
-
-  const adaptTaskForEditDialog = (): ProjectTask => {
+  
+  const adaptTaskForEditDialog = () => {
     return {
       ...task,
       description: task.description || null,
@@ -137,14 +75,8 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           task={task} 
           status={currentStatus} 
           onShowDependencies={() => setShowDependencies(true)}
-          hasDependencies={hasDependencies || hasDependents}
-          dependencyIconColor={hasPendingDependencies
-            ? 'text-amber-500'
-            : hasDependencies
-              ? 'text-green-500'
-              : hasDependents
-                ? 'text-blue-500'
-                : 'text-gray-500'}
+          hasDependencies={hasDependencies}
+          dependencyIconColor={dependencyIconColor}
         />
       </div>
       
@@ -173,6 +105,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
         isGeneral={task.is_general}
       />
       
+      {/* Dialogs */}
       <TaskDiscussionDialog 
         open={showDiscussion} 
         onOpenChange={setShowDiscussion}
@@ -218,7 +151,7 @@ export const TaskListItem = ({ task, onStatusChange, onDelete, onTaskUpdated }: 
           task={adaptTaskForEditDialog()}
           projectStages={[]}
           projectMembers={[]}
-          onTaskUpdated={handleTaskUpdated}
+          onTaskUpdated={onTaskUpdated}
         />
       )}
     </div>
