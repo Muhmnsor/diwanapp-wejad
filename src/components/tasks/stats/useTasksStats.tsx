@@ -80,19 +80,11 @@ export const useTasksStats = () => {
       const totalTasks = allAssignedTasks.length;
       const completedTasks = allAssignedTasks.filter(task => task.status === 'completed').length;
       
-      // Only count tasks as pending if they're not completed, not delayed, and not upcoming
+      // Only count tasks with explicit pending status as pending
+      // This is the key fix - we no longer include tasks without a due date automatically as pending
       const pendingTasks = allAssignedTasks.filter(task => {
-        if (task.status === 'completed') return false;
-        
-        // If has due date, check if it's delayed or upcoming
-        if (task.due_date) {
-          const dueDate = new Date(task.due_date);
-          // Not delayed and not upcoming
-          return !(dueDate < now || (dueDate > now && dueDate <= oneWeekFromNow));
-        }
-        
-        // No due date, so it's pending
-        return true;
+        // Only count as pending if status is explicitly 'pending'
+        return task.status === 'pending' || task.status === 'in_progress';
       }).length;
       
       // Count tasks as delayed only if they're not completed and past due date
@@ -113,7 +105,7 @@ export const useTasksStats = () => {
         return dueDate > now && dueDate <= oneWeekFromNow;
       }).length;
       
-      // Verify that our counts are consistent
+      // Log detailed stats to help with debugging
       console.log('Calculated user tasks stats:', { 
         totalTasks, 
         completedTasks, 
@@ -122,6 +114,14 @@ export const useTasksStats = () => {
         delayedTasks,
         sumOfCategories: completedTasks + pendingTasks + delayedTasks + upcomingDeadlines
       });
+      
+      // Log individual tasks to help identify issues
+      console.log('Tasks by status:');
+      console.log('- Completed:', allAssignedTasks.filter(task => task.status === 'completed').length);
+      console.log('- Pending/In Progress:', allAssignedTasks.filter(task => 
+        task.status === 'pending' || task.status === 'in_progress'
+      ).length);
+      console.log('- No status specified:', allAssignedTasks.filter(task => !task.status).length);
       
       return {
         totalTasks,
