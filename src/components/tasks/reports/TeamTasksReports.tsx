@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamTasksStats } from "./components/TeamTasksStats";
 import { TeamProductivityChart } from "./components/TeamProductivityChart";
 import { TeamWorkDistributionChart } from "./components/TeamWorkDistributionChart";
@@ -39,98 +38,95 @@ export const TeamTasksReports = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="productivity">
-        <TabsList>
-          <TabsTrigger value="productivity">تقارير الإنتاجية</TabsTrigger>
-          <TabsTrigger value="time">تقارير الوقت والجدولة</TabsTrigger>
-        </TabsList>
+      {/* Productivity Reports Section */}
+      <div className="space-y-6">
+        <h4 className="text-lg font-medium">تقارير الإنتاجية</h4>
+        <TeamTasksStats stats={data.teamStats} />
         
-        <TabsContent value="productivity" className="space-y-6 mt-6">
-          <TeamTasksStats stats={data.teamStats} />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">توزيع العمل بين أعضاء الفريق</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TeamWorkDistributionChart data={data.workDistribution} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">معدل إنجاز المشاريع</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ProjectCompletionRateChart data={data.projectCompletionRate} />
-              </CardContent>
-            </Card>
-          </div>
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">تحليل الأداء الجماعي</CardTitle>
+              <CardTitle className="text-base">توزيع العمل بين أعضاء الفريق</CardTitle>
             </CardHeader>
             <CardContent>
-              <TeamPerformanceChart data={data.teamPerformance} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="time" className="space-y-6 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">الوقت المستغرق في كل مشروع</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <TeamProductivityChart data={data.timePerProject} />
+              <TeamWorkDistributionChart data={data.workDistribution} />
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">تحليل الجدول الزمني للمشاريع</CardTitle>
+              <CardTitle className="text-base">معدل إنجاز المشاريع</CardTitle>
             </CardHeader>
-            <CardContent className="h-[400px] overflow-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="p-2 text-right border">المشروع</th>
-                    <th className="p-2 text-right border">تاريخ البداية</th>
-                    <th className="p-2 text-right border">الموعد النهائي</th>
-                    <th className="p-2 text-right border">الحالة</th>
-                    <th className="p-2 text-right border">الوقت المتبقي</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.timelineAnalysis.map((project, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="p-2 border">{project.name}</td>
-                      <td className="p-2 border">{project.startDate}</td>
-                      <td className="p-2 border">{project.dueDate}</td>
-                      <td className="p-2 border">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          project.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                          project.status === 'delayed' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {project.status === 'completed' ? 'مكتمل' :
-                           project.status === 'in_progress' ? 'قيد التنفيذ' :
-                           project.status === 'delayed' ? 'متأخر' :
-                           'معلق'}
-                        </span>
-                      </td>
-                      <td className="p-2 border">{project.remainingTime}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <CardContent>
+              <ProjectCompletionRateChart data={data.projectCompletionRate} />
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">تحليل الأداء الجماعي</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TeamPerformanceChart data={data.teamPerformance} />
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Time Reports Section */}
+      <div className="space-y-6 mt-10 pt-10 border-t">
+        <h4 className="text-lg font-medium">تقارير الوقت والجدولة</h4>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">الوقت المستغرق في كل مشروع</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <TeamProductivityChart data={data.timePerProject} />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">تحليل الجدول الزمني للمشاريع</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[400px] overflow-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-2 text-right border">المشروع</th>
+                  <th className="p-2 text-right border">تاريخ البداية</th>
+                  <th className="p-2 text-right border">الموعد النهائي</th>
+                  <th className="p-2 text-right border">الحالة</th>
+                  <th className="p-2 text-right border">الوقت المتبقي</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.timelineAnalysis.map((project, index) => (
+                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="p-2 border">{project.name}</td>
+                    <td className="p-2 border">{project.startDate}</td>
+                    <td className="p-2 border">{project.dueDate}</td>
+                    <td className="p-2 border">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        project.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        project.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                        project.status === 'delayed' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {project.status === 'completed' ? 'مكتمل' :
+                         project.status === 'in_progress' ? 'قيد التنفيذ' :
+                         project.status === 'delayed' ? 'متأخر' :
+                         'معلق'}
+                      </span>
+                    </td>
+                    <td className="p-2 border">{project.remainingTime}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
