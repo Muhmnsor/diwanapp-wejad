@@ -177,6 +177,15 @@ export const TaskItem = ({
           return;
         }
         
+        if (task.requires_deliverable && !hasDeliverables) {
+          toast.error("لا يمكن إكمال المهمة. المستلمات إلزامية لهذه المهمة", {
+            description: "يرجى رفع مستلم واحد على الأقل قبل إكمال المهمة",
+            duration: 5000,
+          });
+          setIsUpdating(false);
+          return;
+        }
+        
         const dependencyCheck = await checkDependenciesCompleted(task.id);
         if (!dependencyCheck.isValid) {
           toast.error(dependencyCheck.message);

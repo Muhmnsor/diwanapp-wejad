@@ -1,7 +1,8 @@
 
-import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown, Pencil } from "lucide-react";
+import { MessageCircle, Upload, Paperclip, Check, Clock, XCircle, FileDown, Pencil, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTaskButtonStates } from "../../hooks/useTaskButtonStates";
+import { toast } from "sonner";
 
 interface TaskActionButtonsProps {
   currentStatus: string;
@@ -15,6 +16,7 @@ interface TaskActionButtonsProps {
   onEdit?: (taskId: string) => void;
   taskId: string;
   isGeneral?: boolean;
+  requiresDeliverable?: boolean;
 }
 
 export const TaskActionButtons = ({
@@ -29,6 +31,7 @@ export const TaskActionButtons = ({
   onEdit,
   taskId,
   isGeneral,
+  requiresDeliverable,
 }: TaskActionButtonsProps) => {
   const { 
     hasNewDiscussion, 
@@ -40,12 +43,26 @@ export const TaskActionButtons = ({
   console.log("Task button states for task", taskId, {
     hasNewDiscussion,
     hasDeliverables,
-    hasTemplates
+    hasTemplates,
+    requiresDeliverable
   });
 
   const handleDiscussionClick = () => {
     resetDiscussionFlag();
     onShowDiscussion();
+  };
+
+  const handleStatusChange = async (status: string) => {
+    // إذا كانت المهمة تتطلب مستلمات إلزامية وطلب المستخدم إكمالها، نتحقق من وجود مستلمات
+    if (status === "completed" && requiresDeliverable && !hasDeliverables) {
+      toast.error("لا يمكن إكمال المهمة. المستلمات إلزامية لهذه المهمة", {
+        description: "يرجى رفع مستلم واحد على الأقل قبل إكمال المهمة",
+        duration: 5000,
+      });
+      return;
+    }
+    
+    onStatusChange(status);
   };
 
   return (
@@ -68,11 +85,17 @@ export const TaskActionButtons = ({
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+          className={`text-xs flex items-center gap-1 ${
+            requiresDeliverable && !hasDeliverables
+              ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50 border-amber-200 border" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
           onClick={onOpenFileUploader}
         >
           <Upload className="h-3.5 w-3.5" />
+          {requiresDeliverable && !hasDeliverables && <AlertCircle className="h-2.5 w-2.5 text-amber-500" />}
           رفع مستلمات
+          {requiresDeliverable && !hasDeliverables && "*"}
         </Button>
 
         <Button
@@ -124,7 +147,7 @@ export const TaskActionButtons = ({
             variant="outline" 
             size="sm" 
             className="text-xs flex items-center gap-1"
-            onClick={() => onStatusChange("completed")}
+            onClick={() => handleStatusChange("completed")}
             disabled={isUpdating}
           >
             <Check className="h-3.5 w-3.5 text-green-500" />
@@ -135,7 +158,7 @@ export const TaskActionButtons = ({
             variant="outline" 
             size="sm" 
             className="text-xs flex items-center gap-1"
-            onClick={() => onStatusChange("pending")}
+            onClick={() => handleStatusChange("pending")}
             disabled={isUpdating}
           >
             <Clock className="h-3.5 w-3.5 text-amber-500" />
