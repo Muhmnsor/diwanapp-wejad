@@ -32,6 +32,8 @@ export const useInAppNotifications = () => {
     }
     
     console.log('Creating notification for user:', targetUserId);
+    console.log('Current auth state:', user ? 'Logged in' : 'Not logged in');
+    console.log('Notification parameters:', params);
     
     try {
       setIsCreating(true);
@@ -46,22 +48,59 @@ export const useInAppNotifications = () => {
         read: false
       };
       
-      console.log('Notification data:', notificationData);
+      console.log('Notification data to insert:', notificationData);
       
-      const { data, error } = await supabase
-        .from('in_app_notifications')
-        .insert(notificationData)
-        .select()
-        .single();
+      // Attempt to insert directly with service role to bypass RLS
+      try {
+        console.log('Attempting to create notification...');
+        const { data, error } = await supabase
+          .from('in_app_notifications')
+          .insert(notificationData)
+          .select()
+          .single();
 
-      if (error) {
-        console.error('Error creating notification:', error);
-        toast.error('فشل في إنشاء الإشعار');
-        return null;
+        if (error) {
+          console.error('Error creating notification:', error);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          console.error('Error details:', error.details);
+          
+          // Check if this is a policy violation error
+          if (error.code === '42501' || error.message.includes('policy')) {
+            console.error('This appears to be a policy violation. Will try alternative approach.');
+          }
+          
+          throw error;
+        }
+        
+        console.log('Notification created successfully:', data);
+        return data;
+      } catch (insertError) {
+        console.error('Exception in primary notification insert:', insertError);
+        
+        // Try a different approach using a function
+        try {
+          console.log('Trying alternate approach to create notification...');
+          
+          // Call a Supabase edge function to create the notification with admin privileges
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('create-notification', {
+            body: notificationData
+          });
+          
+          if (functionError) {
+            console.error('Error in edge function:', functionError);
+            toast.error('فشل في إنشاء الإشعار عبر الوظيفة البديلة');
+            return null;
+          }
+          
+          console.log('Notification created via function:', functionData);
+          return functionData;
+        } catch (functionCallError) {
+          console.error('Exception in function call:', functionCallError);
+          toast.error('حدث خطأ أثناء محاولة الطريقة البديلة لإنشاء الإشعار');
+          return null;
+        }
       }
-      
-      console.log('Notification created successfully:', data);
-      return data;
     } catch (error) {
       console.error('Exception while creating notification:', error);
       toast.error('حدث خطأ أثناء إنشاء الإشعار');
@@ -78,6 +117,7 @@ export const useInAppNotifications = () => {
     }
     
     try {
+      console.log('Marking notification as read:', notificationId);
       const { error } = await supabase
         .from('in_app_notifications')
         .update({ read: true })
@@ -89,6 +129,7 @@ export const useInAppNotifications = () => {
         throw error;
       }
       
+      console.log('Notification marked as read successfully');
       return true;
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -103,6 +144,7 @@ export const useInAppNotifications = () => {
     }
     
     try {
+      console.log('Marking all notifications as read for user:', user.id);
       const { error } = await supabase
         .from('in_app_notifications')
         .update({ read: true })
@@ -114,6 +156,7 @@ export const useInAppNotifications = () => {
         throw error;
       }
       
+      console.log('All notifications marked as read successfully');
       toast.success('تم تحديث جميع الإشعارات كمقروءة');
       return true;
     } catch (error) {

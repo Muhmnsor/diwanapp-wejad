@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CommentForm } from "../comments/CommentForm";
 import { uploadAttachment, saveAttachmentReference } from "../../services/uploadService";
@@ -196,21 +197,60 @@ export const TaskCommentForm = ({ task, onCommentAdded, onTaskStatusChanged }: T
             const userName = userData?.display_name || userData?.email || "مستخدم";
             
             console.log("Sending notification to:", task.assigned_to, "from user:", userName);
-            
-            // إرسال إشعار بوجود تعليق جديد وتغيير حالة المهمة
-            const notificationResult = await sendTaskCommentNotification({
-              taskId: task.id,
-              taskTitle: task.title,
-              projectId: task.project_id,
-              projectTitle: task.project_name,
-              assignedUserId: task.assigned_to,
-              updatedByUserId: userId,
-              updatedByUserName: userName
-            });
-            
-            console.log("Notification sending result:", notificationResult ? "Success" : "Failed");
-          } catch (notificationError) {
-            console.error("Error sending notification:", notificationError);
+
+            // بديل إرسال الإشعار مباشرة في حالة فشل تقنية الإشعارات عن طريق sendTaskCommentNotification
+            try {
+              // محاولة إرسال الإشعار باستخدام وظيفة sendTaskCommentNotification
+              const notificationResult = await sendTaskCommentNotification({
+                taskId: task.id,
+                taskTitle: task.title,
+                projectId: task.project_id,
+                projectTitle: task.project_name,
+                assignedUserId: task.assigned_to,
+                updatedByUserId: userId,
+                updatedByUserName: userName
+              });
+              
+              console.log("Notification sending result:", notificationResult ? "Success" : "Failed");
+              
+              // إذا فشل إرسال الإشعار، نقوم بإنشاء إشعار بشكل مباشر
+              if (!notificationResult) {
+                console.log("Trying to create notification directly as fallback...");
+                // إنشاء رسالة الإشعار
+                let message = `تمت إضافة تعليق جديد على المهمة "${task.title}"`;
+                if (task.project_name) {
+                  message += ` في مشروع "${task.project_name}"`;
+                }
+                if (userName) {
+                  message += ` بواسطة ${userName}`;
+                }
+                
+                // إرسال الإشعار مباشرة باستخدام supabase
+                const { data: notificationData, error: notificationError } = await supabase
+                  .from('in_app_notifications')
+                  .insert({
+                    user_id: task.assigned_to,
+                    title: 'تعليق جديد على المهمة',
+                    message: message,
+                    notification_type: 'comment',
+                    related_entity_id: task.id,
+                    related_entity_type: task.project_id ? 'project_task' : 'task',
+                    read: false
+                  })
+                  .select()
+                  .single();
+                  
+                if (notificationError) {
+                  console.error("Fallback notification failed:", notificationError);
+                } else {
+                  console.log("Fallback notification created successfully");
+                }
+              }
+            } catch (notificationError) {
+              console.error("Error in comment notification process:", notificationError);
+            }
+          } catch (userError) {
+            console.error("Error fetching user data for notification:", userError);
           }
         } else {
           console.log("No notification sent: User is commenting on their own task or task has no assignee");
