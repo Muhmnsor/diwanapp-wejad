@@ -16,6 +16,7 @@ interface CategoryTasksProps {
   onStatusChange: (taskId: string, status: string) => void;
   onDelete?: (taskId: string) => void;
   onTaskUpdated?: () => void;
+  onEditTask?: (task: Task) => void;
   projectId?: string;
   workspaceId?: string;
 }
@@ -26,6 +27,7 @@ export const CategoryTasks = ({
   onStatusChange, 
   onDelete,
   onTaskUpdated,
+  onEditTask,
   projectId = '',
   workspaceId = ''
 }: CategoryTasksProps) => {
@@ -99,7 +101,7 @@ export const CategoryTasks = ({
                 formatDate={formatDate}
                 onStatusChange={onStatusChange}
                 projectId={projectId || task.project_id || ''}
-                onEdit={() => onTaskUpdated && onTaskUpdated()}
+                onEdit={onEditTask}
                 onDelete={onDelete}
               />
             ))}

@@ -10,10 +10,14 @@ import { useState } from "react";
 import { AddTaskDialog } from "@/components/tasks/project-details/AddTaskDialog";
 import { TasksHeader } from "@/components/tasks/project-details/components/TasksHeader";
 import { useProjectMembers } from "@/components/tasks/project-details/hooks/useProjectMembers";
+import { EditTaskDialog } from "@/components/tasks/project-details/EditTaskDialog";
+import { Task } from "@/components/tasks/project-details/types/task";
 
 const GeneralTasks = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   
   const {
     tasks,
@@ -29,6 +33,12 @@ const GeneralTasks = () => {
   // Getting members for task assignment
   // Pass empty string as project ID for general tasks
   const { projectMembers } = useProjectMembers("");
+
+  // Handler for editing a task
+  const handleEditTask = (task: Task) => {
+    setTaskToEdit(task);
+    setIsEditDialogOpen(true);
+  };
 
   // Filter tasks based on active tab
   const getFilteredTasks = (tasksList) => {
@@ -98,6 +108,7 @@ const GeneralTasks = () => {
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
                     onTaskUpdated={fetchGeneralTasks}
+                    onEditTask={handleEditTask}
                     // Pass empty projectId and workspaceId since these are general tasks
                     projectId=""
                     workspaceId=""
@@ -112,6 +123,7 @@ const GeneralTasks = () => {
                     onStatusChange={handleStatusChange}
                     onDelete={deleteTask}
                     onTaskUpdated={fetchGeneralTasks}
+                    onEditTask={handleEditTask}
                     // Pass empty projectId and workspaceId since these are general tasks
                     projectId=""
                     workspaceId=""
@@ -138,6 +150,17 @@ const GeneralTasks = () => {
         projectMembers={projectMembers}
         isGeneral={true}
       />
+      
+      {taskToEdit && (
+        <EditTaskDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          task={taskToEdit}
+          projectStages={[]} // Empty for general tasks
+          projectMembers={projectMembers}
+          onTaskUpdated={fetchGeneralTasks}
+        />
+      )}
       
       <Footer />
     </div>
