@@ -33,11 +33,6 @@ export const TaskHeader = ({
 
   return (
     <div className="flex justify-between items-start">
-      <div className="flex items-start gap-2">
-        <TaskStatusBadge status={status} dueDate={task.due_date} />
-        <TaskPriorityBadge priority={task.priority} />
-      </div>
-      
       <div>
         {task.is_subtask && (
           <div className="flex items-center gap-1 mb-1">
@@ -62,6 +57,11 @@ export const TaskHeader = ({
           <Link2 className={`h-4 w-4 ${dependencyIconColor}`} />
         </Button>
       )}
+      
+      <div className="flex items-start gap-2">
+        <TaskStatusBadge status={status} dueDate={task.due_date} />
+        <TaskPriorityBadge priority={task.priority} />
+      </div>
     </div>
   );
 };
