@@ -5,7 +5,7 @@ import { PersonalTasksReports } from "./reports/PersonalTasksReports";
 import { TeamTasksReports } from "./reports/TeamTasksReports";
 import { ProjectTasksReports } from "./reports/ProjectTasksReports";
 import { GeneralTasksReports } from "./reports/GeneralTasksReports";
-import { UserPerformanceReport } from "./reports/UserPerformanceReport";
+import { TopPerformersReport } from "./reports/TopPerformersReport";
 
 export const TasksReports = () => {
   return (
@@ -19,7 +19,7 @@ export const TasksReports = () => {
             <TabsTrigger value="team">تقارير الفريق</TabsTrigger>
             <TabsTrigger value="projects">تقارير المشاريع</TabsTrigger>
             <TabsTrigger value="general">تقارير المهام العامة</TabsTrigger>
-            <TabsTrigger value="users">تقارير أداء المستخدمين</TabsTrigger>
+            <TabsTrigger value="top-performers">أفضل المستخدمين أداءً</TabsTrigger>
           </TabsList>
           
           <TabsContent value="personal" className="space-y-6">
@@ -38,8 +38,8 @@ export const TasksReports = () => {
             <GeneralTasksReports />
           </TabsContent>
           
-          <TabsContent value="users" className="space-y-6">
-            <UserPerformanceReport />
+          <TabsContent value="top-performers" className="space-y-6">
+            <TopPerformersReport />
           </TabsContent>
         </Tabs>
       </Card>
