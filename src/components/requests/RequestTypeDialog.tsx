@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -34,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { FormSchema, FormField as FormFieldType, RequestType } from "./types";
+import { FormSchema, FormField as FormFieldType, RequestType, WorkflowStep } from "./types";
 import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -83,10 +84,14 @@ export const RequestTypeDialog = ({
   });
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
   const [currentOption, setCurrentOption] = useState("");
-  const [workflowSteps, setWorkflowSteps] = useState([]);
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
   const isEditing = !!requestType;
   const [isWorkflowSaving, setIsWorkflowSaving] = useState(false);
+
+  // Define handleWorkflowStepsUpdated before it's used
+  const handleWorkflowStepsUpdated = (steps: WorkflowStep[]) => {
+    // Just update state with the new steps, we'll save them when the form is submitted
+  };
 
   const form = useForm<RequestTypeFormValues>({
     resolver: zodResolver(requestTypeSchema),
@@ -139,7 +144,6 @@ export const RequestTypeDialog = ({
         },
       });
       setFormFields([]);
-      setWorkflowSteps([]);
       setCreatedRequestTypeId(null);
     }
   }, [requestType, form]);
@@ -210,10 +214,6 @@ export const RequestTypeDialog = ({
       ...currentField,
       options: options.filter((_, i) => i !== index),
     });
-  };
-
-  const handleWorkflowStepsUpdated = (steps) => {
-    setWorkflowSteps(steps);
   };
 
   // Save request type to database
@@ -295,42 +295,6 @@ export const RequestTypeDialog = ({
       }
     } catch (error) {
       console.error("Error creating/updating workflow:", error);
-      throw error;
-    }
-  };
-
-  // Delete existing workflow steps and create new ones
-  const saveWorkflowSteps = async (workflowId: string, steps: any[]) => {
-    try {
-      // If editing, first delete existing steps
-      if (workflowId) {
-        const { error: deleteError } = await supabase
-          .from("workflow_steps")
-          .delete()
-          .eq("workflow_id", workflowId);
-
-        if (deleteError) throw deleteError;
-      }
-
-      if (steps.length === 0) return;
-
-      const stepsToInsert = steps.map(step => ({
-        workflow_id: workflowId,
-        step_order: step.step_order,
-        step_name: step.step_name,
-        step_type: step.step_type,
-        approver_id: step.approver_id,
-        instructions: step.instructions,
-        is_required: step.is_required
-      }));
-
-      const { error } = await supabase
-        .from("workflow_steps")
-        .insert(stepsToInsert);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error saving workflow steps:", error);
       throw error;
     }
   };
