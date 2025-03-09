@@ -19,11 +19,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Plus, X, ArrowUp, ArrowDown, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 export interface WorkflowStep {
   id?: string;
   step_order: number;
   step_name: string;
+  step_type: 'opinion' | 'decision';
   approver_type: 'role' | 'user' | 'department';
   approver_id: string | null;
   instructions: string | null;
@@ -59,6 +62,7 @@ export const WorkflowStepsConfig = ({
   const [currentStep, setCurrentStep] = useState<WorkflowStep>({
     step_order: 0,
     step_name: "",
+    step_type: "opinion",
     approver_type: "user",
     approver_id: null,
     instructions: "",
@@ -134,6 +138,7 @@ export const WorkflowStepsConfig = ({
     setCurrentStep({
       step_order: workflowSteps.length, // Set to the next order
       step_name: "",
+      step_type: "opinion",
       approver_type: "user",
       approver_id: null,
       instructions: "",
@@ -255,6 +260,26 @@ export const WorkflowStepsConfig = ({
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm font-medium">نوع الخطوة</label>
+              <RadioGroup
+                value={currentStep.step_type}
+                onValueChange={(value: 'opinion' | 'decision') =>
+                  setCurrentStep({ ...currentStep, step_type: value })
+                }
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <RadioGroupItem value="opinion" id="step-type-opinion" />
+                  <Label htmlFor="step-type-opinion">رأي</Label>
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <RadioGroupItem value="decision" id="step-type-decision" />
+                  <Label htmlFor="step-type-decision">قرار</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-medium">نوع المعتمد</label>
               <Select
                 value={currentStep.approver_type}
@@ -356,6 +381,7 @@ export const WorkflowStepsConfig = ({
                 <div className="flex-1">
                   <div className="font-medium">{step.step_name}</div>
                   <div className="text-sm text-muted-foreground">
+                    {step.step_type === 'opinion' ? 'رأي' : 'قرار'} - 
                     المعتمد: {getApproverName(step)}
                     {step.is_required ? " (إلزامي)" : " (اختياري)"}
                   </div>
