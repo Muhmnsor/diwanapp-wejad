@@ -1,3 +1,4 @@
+
 export interface RequestType {
   id: string;
   name: string;
@@ -45,13 +46,16 @@ export interface User {
 }
 
 export interface WorkflowStep {
-  id?: string;
+  id: string | null;
+  workflow_id: string | null;
   step_order: number;
   step_name: string;
   step_type: 'opinion' | 'decision';
   approver_id: string | null;
+  approver_type: string;
   instructions: string | null;
   is_required: boolean;
+  created_at: string | null;
 }
 
 export interface RequestApproval {
