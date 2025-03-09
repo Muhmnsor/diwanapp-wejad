@@ -6,7 +6,7 @@ import { Request, RequestType } from "../types";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 
-// Interface for the response from request approvals query
+// Updated interface to match what Supabase actually returns
 interface RequestApprovalResponse {
   id: string;
   request_id: string;
@@ -51,16 +51,16 @@ export const useRequests = () => {
           request_id,
           step_id,
           status,
-          request:requests!inner(
+          request:requests(
             id,
             title,
             status,
             priority,
             created_at,
             current_step_id,
-            request_type:request_types!inner(id, name)
+            request_type:request_types(id, name)
           ),
-          step:workflow_steps!inner(id, step_name, step_type, approver_id)
+          step:workflow_steps(id, step_name, step_type, approver_id)
         `)
         .eq("approver_id", user.id)
         .eq("status", "pending")
@@ -73,16 +73,44 @@ export const useRequests = () => {
         return [];
       }
       
-      // Transform the data to match the expected format
-      const requests = (data as RequestApprovalResponse[])
-        .filter(item => item.request) // Filter out any null requests
-        .map(item => ({
-          ...item.request,
+      if (!data) {
+        console.log("No data returned from incoming requests query");
+        return [];
+      }
+      
+      console.log("Raw response data structure:", JSON.stringify(data, null, 2));
+      
+      // Transform the data to handle the nested array structure from Supabase
+      const requests = data.map(item => {
+        // Check if nested objects exist and extract first item if they're arrays
+        const requestData = Array.isArray(item.request) && item.request.length > 0 
+          ? item.request[0] 
+          : null;
+          
+        const stepData = Array.isArray(item.step) && item.step.length > 0 
+          ? item.step[0] 
+          : null;
+          
+        if (!requestData) {
+          console.warn(`Skipping approval ${item.id} due to missing request data`);
+          return null;
+        }
+        
+        // Extract request_type from nested array if needed
+        const requestType = Array.isArray(requestData.request_type) && requestData.request_type.length > 0
+          ? requestData.request_type[0]
+          : requestData.request_type;
+        
+        // Return the transformed data
+        return {
+          ...requestData,
+          request_type: requestType,
           approval_id: item.id,
           step_id: item.step_id,
-          step_name: item.step.step_name,
-          step_type: item.step.step_type
-        }));
+          step_name: stepData?.step_name || 'Unknown Step',
+          step_type: stepData?.step_type || 'decision'
+        };
+      }).filter(Boolean); // Remove any null items
       
       console.log(`Fetched ${requests.length} incoming requests`);
       return requests;
