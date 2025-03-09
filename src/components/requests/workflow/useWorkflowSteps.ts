@@ -231,6 +231,7 @@ export const useWorkflowSteps = ({
 
       // Insert new steps if there are any
       if (steps.length > 0) {
+        // Prepare steps for RPC function
         const stepsToInsert = steps.map((step, index) => ({
           ...step,
           workflow_id: currentWorkflowId,
@@ -240,10 +241,10 @@ export const useWorkflowSteps = ({
 
         console.log("Inserting workflow steps using RPC bypass function:", stepsToInsert);
         
-        // Convert steps to JSON array format for RPC function
+        // Convert steps to JSON string array for RPC function
         const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
         
-        // Use the RPC function to bypass RLS
+        // Use the improved RPC function to bypass RLS
         const { data: insertResult, error: rpcError } = await supabase
           .rpc('insert_workflow_steps', {
             steps: jsonSteps
@@ -251,7 +252,12 @@ export const useWorkflowSteps = ({
 
         if (rpcError) {
           console.error("Error inserting workflow steps via RPC:", rpcError);
-          throw rpcError;
+          throw new Error(`فشل في إدخال خطوات سير العمل: ${rpcError.message}`);
+        }
+
+        if (insertResult && insertResult.error) {
+          console.error("Error returned from RPC function:", insertResult.error);
+          throw new Error(`فشل في إدخال خطوات سير العمل: ${insertResult.error}`);
         }
 
         console.log("Successfully inserted workflow steps via RPC:", insertResult);
@@ -262,8 +268,8 @@ export const useWorkflowSteps = ({
       toast.success('تم حفظ خطوات سير العمل بنجاح');
     } catch (error) {
       console.error('Error saving workflow steps:', error);
-      toast.error('فشل في حفظ خطوات سير العمل');
-      setError('فشل في حفظ خطوات سير العمل');
+      toast.error(error.message || 'فشل في حفظ خطوات سير العمل');
+      setError(error.message || 'فشل في حفظ خطوات سير العمل');
     } finally {
       setIsLoading(false);
     }

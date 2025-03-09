@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -352,15 +351,24 @@ export const RequestTypeDialog = ({
 
       console.log("Inserting workflow steps:", stepsToInsert);
       
+      // Convert steps to JSON string array for RPC function
+      const jsonSteps = stepsToInsert.map(step => JSON.stringify(step));
+      
       // Use the rpc function to bypass RLS
       const { data, error } = await supabase
         .rpc('insert_workflow_steps', {
-          steps: stepsToInsert
+          steps: jsonSteps
         });
 
       if (error) {
         console.error("Error inserting workflow steps:", error);
         throw error;
+      }
+      
+      // Check if the result contains an error
+      if (data && data.error) {
+        console.error("RPC function returned an error:", data.error);
+        throw new Error(data.error);
       }
       
       console.log("Inserted workflow steps:", data);
