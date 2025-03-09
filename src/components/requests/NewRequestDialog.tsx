@@ -27,8 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { RequestType } from "./types";
 import { DynamicForm } from "./DynamicForm";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface NewRequestDialogProps {
   isOpen: boolean;
@@ -36,6 +38,7 @@ interface NewRequestDialogProps {
   requestType: RequestType;
   onSubmit: (data: any) => void;
   isSubmitting?: boolean;
+  isUploading?: boolean;
 }
 
 const formSchema = z.object({
@@ -51,8 +54,10 @@ export const NewRequestDialog = ({
   requestType,
   onSubmit,
   isSubmitting = false,
+  isUploading = false,
 }: NewRequestDialogProps) => {
   const [step, setStep] = useState(1);
+  const [error, setError] = useState<string | null>(null);
   const [requestData, setRequestData] = useState<{
     title: string;
     priority: string;
@@ -80,17 +85,43 @@ export const NewRequestDialog = ({
   };
 
   const handleStep2Submit = (formData: Record<string, any>) => {
-    const fullData = {
-      request_type_id: requestType.id,
-      title: requestData.title,
-      priority: requestData.priority,
-      form_data: formData,
-    };
-    onSubmit(fullData);
+    try {
+      setError(null);
+      const fullData = {
+        request_type_id: requestType.id,
+        title: requestData.title,
+        priority: requestData.priority,
+        form_data: formData,
+      };
+      onSubmit(fullData);
+    } catch (err) {
+      console.error("Error submitting request:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("حدث خطأ أثناء إرسال الطلب");
+      }
+    }
+  };
+
+  const handleBack = () => {
+    setStep(1);
+  };
+
+  const handleClose = () => {
+    // Reset form and state when closing
+    form.reset();
+    setRequestData({
+      title: "",
+      priority: "medium",
+    });
+    setStep(1);
+    setError(null);
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
@@ -104,6 +135,12 @@ export const NewRequestDialog = ({
               : "يرجى تعبئة نموذج الطلب بالتفاصيل المطلوبة"}
           </DialogDescription>
         </DialogHeader>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {step === 1 ? (
           <Form {...form}>
@@ -161,8 +198,16 @@ export const NewRequestDialog = ({
           <DynamicForm
             schema={requestType.form_schema}
             onSubmit={handleStep2Submit}
-            isSubmitting={isSubmitting}
+            onBack={handleBack}
+            isSubmitting={isSubmitting || isUploading}
           />
+        )}
+
+        {(isSubmitting || isUploading) && (
+          <div className="flex items-center justify-center mt-4 text-sm text-muted-foreground">
+            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+            {isUploading ? "جاري رفع الملفات..." : "جاري معالجة الطلب..."}
+          </div>
         )}
       </DialogContent>
     </Dialog>

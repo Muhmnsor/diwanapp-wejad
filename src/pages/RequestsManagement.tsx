@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { FileText, AlertCircle } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { RequestTypesList } from "@/components/requests/RequestTypesList";
 import { RequestsTable } from "@/components/requests/RequestsTable";
@@ -13,6 +13,7 @@ import { RequestDetail } from "@/components/requests/RequestDetail";
 import { useRequests } from "@/components/requests/hooks/useRequests";
 import { RequestType } from "@/components/requests/types";
 import { useAuthStore } from "@/store/authStore";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const RequestsManagement = () => {
   const { isAuthenticated } = useAuthStore();
@@ -21,13 +22,15 @@ const RequestsManagement = () => {
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | null>(null);
   const [showNewRequestDialog, setShowNewRequestDialog] = useState<boolean>(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const { 
     incomingRequests, 
     outgoingRequests, 
     incomingLoading, 
     outgoingLoading,
-    createRequest 
+    createRequest,
+    isUploading 
   } = useRequests();
 
   // Update the URL parameter when tab changes from external source
@@ -42,17 +45,24 @@ const RequestsManagement = () => {
   const handleNewRequest = () => {
     setShowNewRequestDialog(false);
     setSelectedRequestType(null);
+    setError(null);
   };
 
   const handleSelectRequestType = (requestType: RequestType) => {
     setSelectedRequestType(requestType);
     setShowNewRequestDialog(true);
+    setError(null);
   };
 
   const handleCreateRequest = (formData: any) => {
+    setError(null);
     createRequest.mutate(formData, {
       onSuccess: () => {
         handleNewRequest();
+      },
+      onError: (err: any) => {
+        console.error("Error creating request:", err);
+        setError(err.message || "حدث خطأ أثناء إنشاء الطلب");
       }
     });
   };
@@ -83,6 +93,13 @@ const RequestsManagement = () => {
             <div className="mb-6">
               <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
             </div>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>خطأ</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <RequestsTable
               requests={incomingRequests || []}
               isLoading={incomingLoading}
@@ -100,6 +117,13 @@ const RequestsManagement = () => {
             <div className="mb-6">
               <h2 className="text-xl font-semibold">الطلبات الصادرة</h2>
             </div>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>خطأ</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <RequestsTable
               requests={outgoingRequests || []}
               isLoading={outgoingLoading}
@@ -180,6 +204,7 @@ const RequestsManagement = () => {
           requestType={selectedRequestType}
           onSubmit={handleCreateRequest}
           isSubmitting={createRequest.isPending}
+          isUploading={isUploading}
         />
       )}
 
