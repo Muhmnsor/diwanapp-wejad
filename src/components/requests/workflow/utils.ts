@@ -9,6 +9,15 @@ export const getApproverName = (step: WorkflowStep, users: User[]): string => {
   return user ? (user.display_name || user.email || "غير محدد") : "غير محدد";
 };
 
+// Helper function to get step type label
+export const getStepTypeLabel = (type: string): string => {
+  const types: Record<string, string> = {
+    opinion: "رأي",
+    decision: "قرار"
+  };
+  return types[type] || type;
+};
+
 // Reset step form to initial state
 export const getInitialStepState = (stepOrder: number): WorkflowStep => ({
   step_order: stepOrder,

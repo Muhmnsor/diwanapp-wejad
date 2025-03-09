@@ -4,6 +4,7 @@ import { WorkflowStep } from "./types";
 import { StepForm } from "./workflow/StepForm";
 import { StepsList } from "./workflow/StepsList";
 import { useWorkflowSteps } from "./workflow/useWorkflowSteps";
+import { Separator } from "@/components/ui/separator";
 
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
@@ -29,7 +30,10 @@ export const WorkflowStepsConfig = ({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">إعداد خطوات سير العمل</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">خطوات سير العمل</h3>
+      </div>
+      <Separator />
       
       <StepForm
         currentStep={currentStep}

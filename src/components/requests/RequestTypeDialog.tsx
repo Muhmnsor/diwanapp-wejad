@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -21,17 +22,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, X, Move, Edit, Trash2 } from "lucide-react";
+import { Plus, X, Edit, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -40,9 +35,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { FormSchema, FormField as FormFieldType } from "./types";
+import { FormSchema, FormField as FormFieldType, RequestType } from "./types";
 import { WorkflowStepsConfig } from "./WorkflowStepsConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 const requestTypeSchema = z.object({
   name: z.string().min(3, { message: "يجب أن يحتوي الاسم على 3 أحرف على الأقل" }),
@@ -67,12 +63,14 @@ interface RequestTypeDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onRequestTypeCreated: () => void;
+  requestType?: RequestType | null;
 }
 
 export const RequestTypeDialog = ({
   isOpen,
   onClose,
   onRequestTypeCreated,
+  requestType = null,
 }: RequestTypeDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formFields, setFormFields] = useState<FormFieldType[]>([]);
@@ -86,8 +84,8 @@ export const RequestTypeDialog = ({
   const [editingFieldIndex, setEditingFieldIndex] = useState<number | null>(null);
   const [currentOption, setCurrentOption] = useState("");
   const [workflowSteps, setWorkflowSteps] = useState([]);
-  const [activeTab, setActiveTab] = useState("form-fields");
   const [createdRequestTypeId, setCreatedRequestTypeId] = useState<string | null>(null);
+  const isEditing = !!requestType;
 
   const form = useForm<RequestTypeFormValues>({
     resolver: zodResolver(requestTypeSchema),
@@ -100,6 +98,52 @@ export const RequestTypeDialog = ({
       },
     },
   });
+
+  // Load existing request type data when editing
+  useEffect(() => {
+    if (requestType) {
+      form.reset({
+        name: requestType.name,
+        description: requestType.description || "",
+        is_active: requestType.is_active,
+        form_schema: requestType.form_schema,
+      });
+      setFormFields(requestType.form_schema.fields || []);
+      setCreatedRequestTypeId(requestType.id);
+
+      // Fetch workflow steps if this request type has a default workflow
+      const fetchWorkflowSteps = async () => {
+        if (requestType.default_workflow_id) {
+          const { data, error } = await supabase
+            .from("workflow_steps")
+            .select("*")
+            .eq("workflow_id", requestType.default_workflow_id)
+            .order("step_order", { ascending: true });
+          
+          if (error) {
+            console.error("Error fetching workflow steps:", error);
+            return;
+          }
+          
+          setWorkflowSteps(data || []);
+        }
+      };
+      
+      fetchWorkflowSteps();
+    } else {
+      form.reset({
+        name: "",
+        description: "",
+        is_active: true,
+        form_schema: {
+          fields: [],
+        },
+      });
+      setFormFields([]);
+      setWorkflowSteps([]);
+      setCreatedRequestTypeId(null);
+    }
+  }, [requestType, form]);
 
   const resetFieldForm = () => {
     setCurrentField({
@@ -176,43 +220,88 @@ export const RequestTypeDialog = ({
   const saveRequestType = async (values: RequestTypeFormValues) => {
     values.form_schema = { fields: formFields };
 
-    const { data, error } = await supabase
-      .from("request_types")
-      .insert([
-        {
+    if (isEditing && requestType) {
+      // Update existing request type
+      const { data, error } = await supabase
+        .from("request_types")
+        .update({
           name: values.name,
           description: values.description || null,
           is_active: values.is_active,
           form_schema: values.form_schema,
-        },
-      ])
-      .select();
+        })
+        .eq("id", requestType.id)
+        .select();
 
-    if (error) throw error;
-    return data[0];
+      if (error) throw error;
+      return data[0];
+    } else {
+      // Create new request type
+      const { data, error } = await supabase
+        .from("request_types")
+        .insert([
+          {
+            name: values.name,
+            description: values.description || null,
+            is_active: values.is_active,
+            form_schema: values.form_schema,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+      return data[0];
+    }
   };
 
   const createWorkflow = async (requestTypeId: string) => {
     if (workflowSteps.length === 0) return null;
 
-    const { data, error } = await supabase
-      .from("request_workflows")
-      .insert([
-        {
+    if (isEditing && requestType?.default_workflow_id) {
+      // Update existing workflow
+      const { data, error } = await supabase
+        .from("request_workflows")
+        .update({
           name: `سير عمل ${form.getValues("name")}`,
           description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
-          request_type_id: requestTypeId,
           is_active: true,
-        },
-      ])
-      .select();
+        })
+        .eq("id", requestType.default_workflow_id)
+        .select();
 
-    if (error) throw error;
-    return data[0];
+      if (error) throw error;
+      return data[0];
+    } else {
+      // Create new workflow
+      const { data, error } = await supabase
+        .from("request_workflows")
+        .insert([
+          {
+            name: `سير عمل ${form.getValues("name")}`,
+            description: `سير عمل تلقائي لنوع الطلب: ${form.getValues("name")}`,
+            request_type_id: requestTypeId,
+            is_active: true,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+      return data[0];
+    }
   };
 
   const saveWorkflowSteps = async (workflowId: string) => {
     if (workflowSteps.length === 0) return;
+
+    // If editing, first delete existing steps
+    if (isEditing && requestType?.default_workflow_id) {
+      const { error: deleteError } = await supabase
+        .from("workflow_steps")
+        .delete()
+        .eq("workflow_id", requestType.default_workflow_id);
+
+      if (deleteError) throw deleteError;
+    }
 
     const stepsToInsert = workflowSteps.map(step => ({
       workflow_id: workflowId,
@@ -248,25 +337,28 @@ export const RequestTypeDialog = ({
 
     setIsLoading(true);
     try {
-      const requestType = await saveRequestType(values);
-      setCreatedRequestTypeId(requestType.id);
+      const requestTypeResult = await saveRequestType(values);
+      const requestTypeId = requestTypeResult.id;
+      setCreatedRequestTypeId(requestTypeId);
       
       if (workflowSteps.length > 0) {
-        const workflow = await createWorkflow(requestType.id);
+        const workflow = await createWorkflow(requestTypeId);
         
         if (workflow) {
           await saveWorkflowSteps(workflow.id);
           
-          await updateDefaultWorkflow(requestType.id, workflow.id);
+          if (!requestType?.default_workflow_id || requestType.default_workflow_id !== workflow.id) {
+            await updateDefaultWorkflow(requestTypeId, workflow.id);
+          }
         }
       }
 
-      toast.success("تم إنشاء نوع الطلب بنجاح");
+      toast.success(isEditing ? "تم تحديث نوع الطلب بنجاح" : "تم إنشاء نوع الطلب بنجاح");
       onRequestTypeCreated();
       onClose();
     } catch (error) {
-      console.error("Error creating request type:", error);
-      toast.error("حدث خطأ أثناء إنشاء نوع الطلب");
+      console.error("Error saving request type:", error);
+      toast.error(isEditing ? "حدث خطأ أثناء تحديث نوع الطلب" : "حدث خطأ أثناء إنشاء نوع الطلب");
     } finally {
       setIsLoading(false);
     }
@@ -289,9 +381,9 @@ export const RequestTypeDialog = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl rtl max-h-[95vh] overflow-hidden flex flex-col" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة نوع طلب جديد</DialogTitle>
+          <DialogTitle>{isEditing ? "تعديل نوع الطلب" : "إضافة نوع طلب جديد"}</DialogTitle>
           <DialogDescription>
-            أنشئ نوع طلب جديد وحدد حقول النموذج المطلوبة وخطوات سير العمل
+            {isEditing ? "عدّل بيانات نوع الطلب وحقول النموذج وخطوات سير العمل" : "أنشئ نوع طلب جديد وحدد حقول النموذج المطلوبة وخطوات سير العمل"}
           </DialogDescription>
         </DialogHeader>
 
@@ -353,192 +445,192 @@ export const RequestTypeDialog = ({
               />
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="form-fields">حقول النموذج</TabsTrigger>
-                <TabsTrigger value="workflow">خطوات سير العمل</TabsTrigger>
-              </TabsList>
-              
-              <div className="flex-1 overflow-hidden mt-4">
-                <ScrollArea className="h-[calc(65vh-220px)]">
-                  <TabsContent value="form-fields" className="mt-0 px-1">
-                    <div className="space-y-6">
-                      <h3 className="text-lg font-medium">إدارة حقول النموذج</h3>
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <h4 className="text-sm font-medium">إضافة حقل جديد</h4>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">اسم الحقل</label>
-                              <Input
-                                placeholder="اسم الحقل (بدون مسافات)"
-                                value={currentField.name}
-                                onChange={(e) =>
-                                  setCurrentField({ ...currentField, name: e.target.value })
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">عنوان الحقل</label>
-                              <Input
-                                placeholder="العنوان الظاهر للمستخدم"
-                                value={currentField.label}
-                                onChange={(e) =>
-                                  setCurrentField({ ...currentField, label: e.target.value })
-                                }
-                              />
-                            </div>
-                          </div>
+            <div className="flex-1 overflow-hidden space-y-6">
+              <ScrollArea className="h-[calc(65vh-220px)]">
+                <div className="px-1 space-y-8">
+                  {/* Form Fields Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium">حقول النموذج</h3>
+                    </div>
+                    <Separator />
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">نوع الحقل</label>
-                              <Select
-                                value={currentField.type}
-                                onValueChange={(value: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'array' | 'file') =>
-                                  setCurrentField({ ...currentField, type: value })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="اختر نوع الحقل" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="text">نص</SelectItem>
-                                  <SelectItem value="textarea">نص طويل</SelectItem>
-                                  <SelectItem value="number">رقم</SelectItem>
-                                  <SelectItem value="date">تاريخ</SelectItem>
-                                  <SelectItem value="select">قائمة اختيار</SelectItem>
-                                  <SelectItem value="file">ملف مرفق</SelectItem>
-                                  <SelectItem value="array">قائمة عناصر</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="flex items-end">
-                              <div className="flex items-center space-x-2 space-x-reverse">
-                                <Switch
-                                  id="required-field"
-                                  checked={currentField.required}
-                                  onCheckedChange={(checked) =>
-                                    setCurrentField({ ...currentField, required: checked })
-                                  }
-                                />
-                                <label
-                                  htmlFor="required-field"
-                                  className="text-sm font-medium"
-                                >
-                                  حقل مطلوب
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-
-                          {currentField.type === "select" && (
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">خيارات القائمة</label>
-                              <div className="flex space-x-2 space-x-reverse">
-                                <Input
-                                  placeholder="أدخل خياراً"
-                                  value={currentOption}
-                                  onChange={(e) => setCurrentOption(e.target.value)}
-                                />
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={handleAddOption}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="space-y-1 pt-2">
-                                {(currentField.options || []).map((option, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center justify-between bg-muted p-2 rounded-md"
-                                  >
-                                    <span>{option}</span>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleRemoveOption(index)}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                        <CardFooter>
-                          <Button
-                            type="button"
-                            onClick={handleAddField}
-                            className="mr-auto"
-                          >
-                            {editingFieldIndex !== null ? "تحديث الحقل" : "إضافة الحقل"}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-
-                      {formFields.length > 0 && (
-                        <div className="border rounded-md p-4 space-y-3">
-                          <h4 className="text-sm font-medium">حقول النموذج</h4>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <h4 className="text-sm font-medium">إضافة حقل جديد</h4>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-2">
-                            {formFields.map((field, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between bg-muted p-3 rounded-md"
-                              >
-                                <div className="flex-1">
-                                  <div className="font-medium">{field.label}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {field.name} - {getFieldTypeLabel(field.type)}
-                                    {field.required && " (مطلوب)"}
-                                  </div>
-                                </div>
-                                <div className="flex space-x-2 space-x-reverse">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditField(index)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-red-500"
-                                    onClick={() => handleRemoveField(index)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
+                            <label className="text-sm font-medium">اسم الحقل</label>
+                            <Input
+                              placeholder="اسم الحقل (بدون مسافات)"
+                              value={currentField.name}
+                              onChange={(e) =>
+                                setCurrentField({ ...currentField, name: e.target.value })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">عنوان الحقل</label>
+                            <Input
+                              placeholder="العنوان الظاهر للمستخدم"
+                              value={currentField.label}
+                              onChange={(e) =>
+                                setCurrentField({ ...currentField, label: e.target.value })
+                              }
+                            />
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </TabsContent>
 
-                  <TabsContent value="workflow" className="mt-0 px-1">
-                    <WorkflowStepsConfig 
-                      requestTypeId={createdRequestTypeId}
-                      onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
-                    />
-                  </TabsContent>
-                </ScrollArea>
-              </div>
-            </Tabs>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">نوع الحقل</label>
+                            <Select
+                              value={currentField.type}
+                              onValueChange={(value: 'text' | 'textarea' | 'number' | 'date' | 'select' | 'array' | 'file') =>
+                                setCurrentField({ ...currentField, type: value })
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="اختر نوع الحقل" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="text">نص</SelectItem>
+                                <SelectItem value="textarea">نص طويل</SelectItem>
+                                <SelectItem value="number">رقم</SelectItem>
+                                <SelectItem value="date">تاريخ</SelectItem>
+                                <SelectItem value="select">قائمة اختيار</SelectItem>
+                                <SelectItem value="file">ملف مرفق</SelectItem>
+                                <SelectItem value="array">قائمة عناصر</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-end">
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                              <Switch
+                                id="required-field"
+                                checked={currentField.required}
+                                onCheckedChange={(checked) =>
+                                  setCurrentField({ ...currentField, required: checked })
+                                }
+                              />
+                              <label
+                                htmlFor="required-field"
+                                className="text-sm font-medium"
+                              >
+                                حقل مطلوب
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {currentField.type === "select" && (
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">خيارات القائمة</label>
+                            <div className="flex space-x-2 space-x-reverse">
+                              <Input
+                                placeholder="أدخل خياراً"
+                                value={currentOption}
+                                onChange={(e) => setCurrentOption(e.target.value)}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={handleAddOption}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="space-y-1 pt-2">
+                              {(currentField.options || []).map((option, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-muted p-2 rounded-md"
+                                >
+                                  <span>{option}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveOption(index)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          type="button"
+                          onClick={handleAddField}
+                          className="mr-auto"
+                        >
+                          {editingFieldIndex !== null ? "تحديث الحقل" : "إضافة الحقل"}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+
+                    {formFields.length > 0 && (
+                      <div className="border rounded-md p-4 space-y-3">
+                        <h4 className="text-sm font-medium">حقول النموذج</h4>
+                        <div className="space-y-2">
+                          {formFields.map((field, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-muted p-3 rounded-md"
+                            >
+                              <div className="flex-1">
+                                <div className="font-medium">{field.label}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {field.name} - {getFieldTypeLabel(field.type)}
+                                  {field.required && " (مطلوب)"}
+                                </div>
+                              </div>
+                              <div className="flex space-x-2 space-x-reverse">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditField(index)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-500"
+                                  onClick={() => handleRemoveField(index)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Workflow Steps Section */}
+                  <WorkflowStepsConfig 
+                    requestTypeId={createdRequestTypeId}
+                    onWorkflowStepsUpdated={handleWorkflowStepsUpdated}
+                  />
+                </div>
+              </ScrollArea>
+            </div>
 
             <DialogFooter className="mt-4 flex-row-reverse sm:justify-start">
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "جارٍ الإنشاء..." : "إنشاء نوع الطلب"}
+                {isLoading 
+                  ? (isEditing ? "جارٍ التحديث..." : "جارٍ الإنشاء...") 
+                  : (isEditing ? "تحديث نوع الطلب" : "إنشاء نوع الطلب")
+                }
               </Button>
               <Button variant="outline" type="button" onClick={onClose}>
                 إلغاء
