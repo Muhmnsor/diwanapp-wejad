@@ -2724,6 +2724,119 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          subscription_id: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          subscription_id?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          subscription_id?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_attachments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          billing_cycle: string
+          category: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          cost: number | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          description: string | null
+          expiry_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          payment_method: string | null
+          provider: string | null
+          reminder_days: number[] | null
+          renewal_date: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          billing_cycle: string
+          category: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          cost?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          payment_method?: string | null
+          provider?: string | null
+          reminder_days?: number[] | null
+          renewal_date?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          billing_cycle?: string
+          category?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          cost?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_method?: string | null
+          provider?: string | null
+          reminder_days?: number[] | null
+          renewal_date?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       subtasks: {
         Row: {
           assigned_to: string | null

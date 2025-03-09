@@ -2,17 +2,18 @@
 import { useEffect, useState } from "react";
 import { TopHeader } from "@/components/layout/TopHeader";
 import { Footer } from "@/components/layout/Footer";
-import { Archive, FileText } from "lucide-react";
+import { Archive, FileText, Receipt } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthStore } from "@/store/auth/authStore";
+import { useAuthStore } from "@/store/authStore";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { DocumentStats } from "@/components/documents/DocumentStats";
 import { DocumentControls } from "@/components/documents/DocumentControls";
 import { AddDocumentDialog } from "@/components/documents/AddDocumentDialog";
 import { determineStatus, getStatusColor, getRemainingDays } from "@/utils/documentStatus";
 import { downloadFile, handleDelete, handleFileUpload } from "@/components/documents/DocumentOperations";
+import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
 
 interface Document {
   id: string;
@@ -149,6 +150,10 @@ const Documents = () => {
               <FileText className="h-4 w-4" />
               <span>المستندات</span>
             </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              <span>الاشتراكات</span>
+            </TabsTrigger>
             <TabsTrigger value="archive" className="flex items-center gap-2">
               <Archive className="h-4 w-4" />
               <span>الأرشيف</span>
@@ -181,6 +186,10 @@ const Documents = () => {
               downloadFile={downloadFile}
               onUpdate={fetchDocuments}
             />
+          </TabsContent>
+
+          <TabsContent value="subscriptions" className="mt-6">
+            <SubscriptionsTab />
           </TabsContent>
 
           <TabsContent value="archive" className="mt-6">

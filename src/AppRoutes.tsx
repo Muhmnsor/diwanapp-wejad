@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -93,7 +94,14 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } 
       />
-      <Route path="/documents" element={<Documents />} />
+      <Route 
+        path="/documents" 
+        element={
+          <ProtectedRoute>
+            <Documents />
+          </ProtectedRoute>
+        } 
+      />
       <Route 
         path="/tasks" 
         element={
