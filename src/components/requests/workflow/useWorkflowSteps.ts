@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { WorkflowStep, User } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { getInitialStepState } from "./utils";
 interface UseWorkflowStepsProps {
   requestTypeId: string | null;
   workflowId?: string | null;
-  onWorkflowStepsUpdated?: (steps: WorkflowStep[]) => void;
+  onWorkflowStepsUpdated?: (steps: WorkflowStep[], workflowId: string | null) => void;
 }
 
 export const useWorkflowSteps = ({ 
@@ -113,7 +113,7 @@ export const useWorkflowSteps = ({
         
         // Also call the callback if steps were found
         if (steps && steps.length > 0 && onWorkflowStepsUpdated) {
-          onWorkflowStepsUpdated(steps);
+          onWorkflowStepsUpdated(steps, workflowIdToUse);
         }
       } catch (error) {
         console.error('Error fetching workflow steps:', error);
@@ -127,8 +127,57 @@ export const useWorkflowSteps = ({
     fetchWorkflowSteps();
   }, [requestTypeId, workflowId, onWorkflowStepsUpdated]);
 
+  // Create a workflow if needed (for initial step addition)
+  const createWorkflow = useCallback(async () => {
+    if (!requestTypeId) {
+      console.error("No request type ID provided for creating workflow");
+      setError("لا يوجد معرف لنوع الطلب لإنشاء سير العمل");
+      return null;
+    }
+
+    try {
+      const { data: workflow, error } = await supabase
+        .from("request_workflows")
+        .insert([
+          {
+            name: `سير عمل مؤقت`,
+            description: `سير عمل تلقائي مؤقت`,
+            request_type_id: requestTypeId,
+            is_active: true,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+        
+      // Set the new workflow ID
+      if (workflow && workflow.length > 0) {
+        const newWorkflowId = workflow[0].id;
+        setWorkflowId(newWorkflowId);
+        
+        // Update the request type with this workflow ID
+        const { error: updateError } = await supabase
+          .from("request_types")
+          .update({ default_workflow_id: newWorkflowId })
+          .eq("id", requestTypeId);
+            
+        if (updateError) {
+          console.warn("Could not set default workflow:", updateError);
+        }
+        
+        console.log("Created new workflow:", newWorkflowId);
+        return newWorkflowId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error creating workflow:", error);
+      setError("فشل في إنشاء سير العمل");
+      return null;
+    }
+  }, [requestTypeId]);
+
   // Save workflow steps to database
-  const saveWorkflowSteps = async (steps: WorkflowStep[], workflowIdToUse: string) => {
+  const saveWorkflowSteps = async (steps: WorkflowStep[], workflowIdToUse: string | null) => {
     if (!workflowIdToUse) {
       console.error("No workflow ID provided for saving steps");
       setError("لا يوجد معرف لسير العمل لحفظ الخطوات");
@@ -193,7 +242,7 @@ export const useWorkflowSteps = ({
       
       // Call the callback if provided
       if (onWorkflowStepsUpdated) {
-        onWorkflowStepsUpdated(updatedSteps || []);
+        onWorkflowStepsUpdated(updatedSteps || [], workflowIdToUse);
       }
       
       toast.success('تم حفظ خطوات سير العمل بنجاح');
@@ -208,7 +257,7 @@ export const useWorkflowSteps = ({
     }
   };
 
-  // Add or update a step in local state only
+  // Add or update a step
   const handleAddStep = async () => {
     if (!currentStep.step_name) {
       toast.error('يرجى إدخال اسم الخطوة');
@@ -224,38 +273,19 @@ export const useWorkflowSteps = ({
     setError(null);
 
     try {
+      // Get or create workflow ID
+      let effectiveWorkflowId = workflowId;
+      
       // Create a workflow first if needed (for initial steps)
-      if (!workflowId && requestTypeId) {
-        const { data: workflow, error } = await supabase
-          .from("request_workflows")
-          .insert([
-            {
-              name: `سير عمل مؤقت`,
-              description: `سير عمل تلقائي مؤقت`,
-              request_type_id: requestTypeId,
-              is_active: true,
-            },
-          ])
-          .select();
-
-        if (error) throw error;
-        
-        // Set the new workflow ID
-        if (workflow && workflow.length > 0) {
-          setWorkflowId(workflow[0].id);
-          
-          // Update the request type with this workflow ID
-          const { error: updateError } = await supabase
-            .from("request_types")
-            .update({ default_workflow_id: workflow[0].id })
-            .eq("id", requestTypeId);
-            
-          if (updateError) {
-            console.warn("Could not set default workflow:", updateError);
-          }
-          
-          console.log("Created new workflow:", workflow[0].id);
+      if (!effectiveWorkflowId && requestTypeId) {
+        effectiveWorkflowId = await createWorkflow();
+        if (!effectiveWorkflowId) {
+          throw new Error("فشل في إنشاء سير العمل");
         }
+      }
+
+      if (!effectiveWorkflowId) {
+        throw new Error("لا يمكن إضافة خطوات بدون معرف سير العمل");
       }
 
       // Proceed with adding/updating the step
@@ -276,20 +306,10 @@ export const useWorkflowSteps = ({
         step_order: index + 1
       }));
 
-      // Save to database if we have a workflow ID
-      if (workflowId) {
-        const saved = await saveWorkflowSteps(updatedSteps, workflowId);
-        if (!saved) {
-          throw new Error("فشل في حفظ الخطوات");
-        }
-      } else {
-        // Just update state if we don't have a workflow ID yet
-        setWorkflowSteps(updatedSteps);
-        
-        // Notify parent component about the updated steps
-        if (onWorkflowStepsUpdated) {
-          onWorkflowStepsUpdated(updatedSteps);
-        }
+      // Save to database
+      const saved = await saveWorkflowSteps(updatedSteps, effectiveWorkflowId);
+      if (!saved) {
+        throw new Error("فشل في حفظ الخطوات");
       }
       
       // Reset the current step form
@@ -306,8 +326,13 @@ export const useWorkflowSteps = ({
     }
   };
 
-  // Remove a step from local state
+  // Remove a step
   const handleRemoveStep = async (index: number) => {
+    if (!workflowId) {
+      toast.error('لا يمكن حذف الخطوة بدون معرف سير العمل');
+      return;
+    }
+    
     try {
       setIsLoading(true);
       setError(null);
@@ -319,20 +344,10 @@ export const useWorkflowSteps = ({
           step_order: i + 1
         }));
       
-      // Save to database if we have a workflow ID
-      if (workflowId) {
-        const saved = await saveWorkflowSteps(updatedSteps, workflowId);
-        if (!saved) {
-          throw new Error("فشل في حذف الخطوة");
-        }
-      } else {
-        // Just update state if we don't have a workflow ID yet
-        setWorkflowSteps(updatedSteps);
-        
-        // Notify parent component
-        if (onWorkflowStepsUpdated) {
-          onWorkflowStepsUpdated(updatedSteps);
-        }
+      // Save to database
+      const saved = await saveWorkflowSteps(updatedSteps, workflowId);
+      if (!saved) {
+        throw new Error("فشل في حذف الخطوة");
       }
 
       if (editingStepIndex === index) {
@@ -358,6 +373,11 @@ export const useWorkflowSteps = ({
 
   // Move a step up or down
   const handleMoveStep = async (index: number, direction: 'up' | 'down') => {
+    if (!workflowId) {
+      toast.error('لا يمكن تحريك الخطوة بدون معرف سير العمل');
+      return;
+    }
+    
     if (
       (direction === 'up' && index === 0) || 
       (direction === 'down' && index === workflowSteps.length - 1)
@@ -380,20 +400,10 @@ export const useWorkflowSteps = ({
         step.step_order = i + 1;
       });
 
-      // Save to database if we have a workflow ID
-      if (workflowId) {
-        const saved = await saveWorkflowSteps(updatedSteps, workflowId);
-        if (!saved) {
-          throw new Error("فشل في تحريك الخطوة");
-        }
-      } else {
-        // Just update state if we don't have a workflow ID yet
-        setWorkflowSteps(updatedSteps);
-        
-        // Notify parent component
-        if (onWorkflowStepsUpdated) {
-          onWorkflowStepsUpdated(updatedSteps);
-        }
+      // Save to database
+      const saved = await saveWorkflowSteps(updatedSteps, workflowId);
+      if (!saved) {
+        throw new Error("فشل في تحريك الخطوة");
       }
       
       // Update editing index if needed
@@ -428,6 +438,7 @@ export const useWorkflowSteps = ({
     handleRemoveStep,
     handleEditStep,
     handleMoveStep,
-    saveWorkflowSteps
+    saveWorkflowSteps,
+    createWorkflow
   };
 };

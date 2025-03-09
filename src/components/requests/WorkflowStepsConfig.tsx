@@ -11,7 +11,7 @@ import { AlertCircle } from "lucide-react";
 interface WorkflowStepsConfigProps {
   requestTypeId: string | null;
   workflowId?: string | null;
-  onWorkflowStepsUpdated: (steps: WorkflowStep[]) => void;
+  onWorkflowStepsUpdated: (steps: WorkflowStep[], workflowId: string | null) => void;
 }
 
 export const WorkflowStepsConfig = ({ 
@@ -26,6 +26,7 @@ export const WorkflowStepsConfig = ({
     users,
     isLoading,
     error,
+    workflowId: actualWorkflowId,
     setCurrentStep,
     handleAddStep,
     handleRemoveStep,
@@ -37,12 +38,12 @@ export const WorkflowStepsConfig = ({
     onWorkflowStepsUpdated 
   });
 
-  // Every time workflow steps change, call the update function
+  // Every time workflow steps or workflowId change, call the update function
   useEffect(() => {
     if (workflowSteps) {
-      onWorkflowStepsUpdated(workflowSteps);
+      onWorkflowStepsUpdated(workflowSteps, actualWorkflowId);
     }
-  }, [workflowSteps, onWorkflowStepsUpdated]);
+  }, [workflowSteps, actualWorkflowId, onWorkflowStepsUpdated]);
 
   return (
     <div className="space-y-6">
