@@ -13,7 +13,6 @@ import { RequestDetail } from "@/components/requests/RequestDetail";
 import { useRequests } from "@/components/requests/hooks/useRequests";
 import { RequestType } from "@/components/requests/types";
 import { useAuthStore } from "@/store/authStore";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const RequestsManagement = () => {
   const { isAuthenticated } = useAuthStore();
@@ -30,11 +29,6 @@ const RequestsManagement = () => {
     outgoingLoading,
     createRequest 
   } = useRequests();
-
-  const setActiveTab = (tab: string) => {
-    searchParams.set("tab", tab);
-    setSearchParams(searchParams);
-  };
 
   // Update the URL parameter when tab changes from external source
   useEffect(() => {
@@ -59,8 +53,6 @@ const RequestsManagement = () => {
     createRequest.mutate(formData, {
       onSuccess: () => {
         handleNewRequest();
-        // Navigate to outgoing tab to show the newly created request
-        setActiveTab("outgoing");
       }
     });
   };
@@ -84,16 +76,9 @@ const RequestsManagement = () => {
       );
     }
 
-    return (
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="incoming">الطلبات الواردة</TabsTrigger>
-          <TabsTrigger value="outgoing">الطلبات الصادرة</TabsTrigger>
-          <TabsTrigger value="forms">تقديم طلب جديد</TabsTrigger>
-          <TabsTrigger value="approvals">سير العمل</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="incoming">
+    switch (activeTab) {
+      case "incoming":
+        return (
           <div>
             <div className="mb-6">
               <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
@@ -107,9 +92,10 @@ const RequestsManagement = () => {
               onRejectRequest={(request) => handleViewRequest(request)}
             />
           </div>
-        </TabsContent>
+        );
         
-        <TabsContent value="outgoing">
+      case "outgoing":
+        return (
           <div>
             <div className="mb-6">
               <h2 className="text-xl font-semibold">الطلبات الصادرة</h2>
@@ -121,13 +107,13 @@ const RequestsManagement = () => {
               onViewRequest={handleViewRequest}
             />
           </div>
-        </TabsContent>
+        );
         
-        <TabsContent value="approvals">
-          <AdminWorkflows />
-        </TabsContent>
+      case "approvals":
+        return <AdminWorkflows />;
         
-        <TabsContent value="forms">
+      case "forms":
+        return (
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-4">تقديم طلب جديد</h2>
             <p className="mb-6 text-muted-foreground">
@@ -135,9 +121,25 @@ const RequestsManagement = () => {
             </p>
             <RequestTypesList onSelectType={handleSelectRequestType} />
           </div>
-        </TabsContent>
-      </Tabs>
-    );
+        );
+        
+      default:
+        return (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold">الطلبات الواردة</h2>
+            </div>
+            <RequestsTable
+              requests={incomingRequests || []}
+              isLoading={incomingLoading}
+              type="incoming"
+              onViewRequest={handleViewRequest}
+              onApproveRequest={(request) => handleViewRequest(request)}
+              onRejectRequest={(request) => handleViewRequest(request)}
+            />
+          </div>
+        );
+    }
   };
 
   return (
