@@ -4122,6 +4122,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_request_details: {
+        Args: {
+          p_request_id: string
+        }
+        Returns: Json
+      }
       get_user_outgoing_requests: {
         Args: {
           p_user_id: string
