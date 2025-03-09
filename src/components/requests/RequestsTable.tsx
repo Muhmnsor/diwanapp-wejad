@@ -1,3 +1,4 @@
+
 import { 
   Table, 
   TableBody, 
@@ -16,7 +17,8 @@ import {
   Eye, 
   MoreHorizontal, 
   Check, 
-  X 
+  X,
+  FileText
 } from "lucide-react";
 import { 
   DropdownMenu,
@@ -78,13 +80,21 @@ export const RequestsTable = ({
     }
   };
 
+  const renderStepTypeBadge = (stepType: string) => {
+    if (!stepType) return null;
+    return stepType === 'opinion' ? 
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">رأي</Badge> : 
+      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">قرار</Badge>;
+  };
+
   if (isLoading) {
-    return <div>جاري التحميل...</div>;
+    return <div className="py-8 text-center">جاري التحميل...</div>;
   }
 
   if (!requests || requests.length === 0) {
     return (
       <div className="text-center py-8">
+        <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
         <p className="text-muted-foreground">لا توجد طلبات</p>
       </div>
     );
@@ -98,6 +108,7 @@ export const RequestsTable = ({
             <TableHead className="w-[100px]">رقم الطلب</TableHead>
             <TableHead>العنوان</TableHead>
             <TableHead>نوع الطلب</TableHead>
+            {type === 'incoming' && <TableHead>نوع الخطوة</TableHead>}
             <TableHead>الحالة</TableHead>
             <TableHead>الأولوية</TableHead>
             <TableHead>تاريخ الإنشاء</TableHead>
@@ -112,6 +123,14 @@ export const RequestsTable = ({
               </TableCell>
               <TableCell>{request.title}</TableCell>
               <TableCell>{request.request_type?.name || "غير معروف"}</TableCell>
+              {type === 'incoming' && (
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    {renderStepTypeBadge(request.step_type)}
+                    <span className="text-xs text-muted-foreground mt-1">{request.step_name}</span>
+                  </div>
+                </TableCell>
+              )}
               <TableCell>{renderStatusBadge(request.status)}</TableCell>
               <TableCell>{renderPriorityBadge(request.priority)}</TableCell>
               <TableCell>

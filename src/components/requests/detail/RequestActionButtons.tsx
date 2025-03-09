@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 
 interface RequestActionButtonsProps {
   status: string;
+  isCurrentApprover: boolean;
   onApprove: () => void;
   onReject: () => void;
   onClose: () => void;
@@ -11,13 +12,17 @@ interface RequestActionButtonsProps {
 
 export const RequestActionButtons = ({ 
   status, 
+  isCurrentApprover,
   onApprove, 
   onReject, 
   onClose 
 }: RequestActionButtonsProps) => {
+  // Only show approve/reject buttons if status is 'pending' or 'in_progress' AND user is the current approver
+  const showActionButtons = (status === 'pending' || status === 'in_progress') && isCurrentApprover;
+  
   return (
     <div className="flex gap-2">
-      {status === 'pending' || status === 'in_progress' ? (
+      {showActionButtons ? (
         <>
           <Button variant="outline" onClick={onReject} className="bg-red-50 text-red-600 hover:bg-red-100">
             <X className="mr-2 h-4 w-4" />

@@ -27,3 +27,18 @@ export const getInitialStepState = (stepOrder: number): WorkflowStep => ({
   instructions: "",
   is_required: true,
 });
+
+// Get class name for step type badge
+export const getStepTypeBadgeClass = (type: string): string => {
+  return type === 'opinion' 
+    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+    : 'bg-purple-50 text-purple-700 border-purple-200';
+};
+
+// Helper function to determine if a user can act on a request
+export const canUserActOnRequest = (request: any, userId: string): boolean => {
+  // Check if the user is the approver for the current step
+  if (!request || !request.current_step_id) return false;
+  
+  return request.current_approver_id === userId;
+};

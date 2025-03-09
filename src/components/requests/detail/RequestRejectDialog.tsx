@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuthStore } from "@/store/authStore";
+import { useRequests } from "../hooks/useRequests";
 
 interface RequestRejectDialogProps {
   requestId: string;
@@ -24,56 +22,29 @@ interface RequestRejectDialogProps {
 
 export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }: RequestRejectDialogProps) => {
   const [comments, setComments] = useState("");
-  const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const { rejectRequest } = useRequests();
 
-  const rejectRequest = useMutation({
-    mutationFn: async () => {
-      if (!comments.trim()) {
-        throw new Error("يجب إدخال سبب الرفض");
-      }
-
-      const { data: approvalData, error: approvalError } = await supabase
-        .from("request_approvals")
-        .insert({
-          request_id: requestId,
-          step_id: stepId,
-          approver_id: user?.id,
-          status: "rejected",
-          comments: comments,
-          approved_at: new Date().toISOString()
-        })
-        .select();
-      
-      if (approvalError) throw approvalError;
-
-      const { error: requestError } = await supabase
-        .from("requests")
-        .update({
-          status: "rejected"
-        })
-        .eq("id", requestId);
-      
-      if (requestError) throw requestError;
-
-      return approvalData;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["request-details", requestId] });
-      queryClient.invalidateQueries({ queryKey: ["requests"] });
-      toast.success("تم رفض الطلب بنجاح");
-      onOpenChange(false);
-      setComments("");
-    },
-    onError: (error) => {
-      console.error("Error rejecting request:", error);
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("حدث خطأ أثناء رفض الطلب");
-      }
+  const handleReject = () => {
+    if (!comments.trim()) {
+      toast.error("يجب إدخال سبب الرفض");
+      return;
     }
-  });
+    
+    if (!stepId) {
+      toast.error("لا يمكن رفض هذا الطلب لأنه لا يوجد خطوة حالية");
+      return;
+    }
+    
+    rejectRequest.mutate(
+      { requestId, stepId, comments },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+          setComments("");
+        }
+      }
+    );
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -103,7 +74,7 @@ export const RequestRejectDialog = ({ requestId, stepId, isOpen, onOpenChange }:
             إلغاء
           </Button>
           <Button 
-            onClick={() => rejectRequest.mutate()} 
+            onClick={handleReject} 
             disabled={rejectRequest.isPending || !comments.trim()}
             variant="destructive"
           >

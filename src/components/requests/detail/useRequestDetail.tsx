@@ -24,6 +24,14 @@ export const useRequestDetail = (requestId: string) => {
     }
   });
 
+  // Check if the current user is the approver for the current step
+  const isCurrentApprover = () => {
+    if (!data || !user) return false;
+    
+    const currentStep = data.current_step;
+    return currentStep && currentStep.id && user.id === currentStep.approver_id;
+  };
+
   const handleApproveClick = () => {
     setIsApproveDialogOpen(true);
   };
@@ -42,6 +50,7 @@ export const useRequestDetail = (requestId: string) => {
     setIsRejectDialogOpen,
     handleApproveClick,
     handleRejectClick,
+    isCurrentApprover,
     user
   };
 };

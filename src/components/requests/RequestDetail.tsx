@@ -21,7 +21,8 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
     isRejectDialogOpen,
     setIsRejectDialogOpen,
     handleApproveClick,
-    handleRejectClick
+    handleRejectClick,
+    isCurrentApprover
   } = useRequestDetail(requestId);
 
   if (isLoading) {
@@ -51,6 +52,7 @@ export const RequestDetail = ({ requestId, onClose }: RequestDetailProps) => {
           <h2 className="text-2xl font-bold">تفاصيل الطلب</h2>
           <RequestActionButtons 
             status={request.status}
+            isCurrentApprover={isCurrentApprover()}
             onApprove={handleApproveClick}
             onReject={handleRejectClick}
             onClose={onClose}

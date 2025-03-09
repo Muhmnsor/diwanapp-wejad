@@ -15,33 +15,28 @@ export const useRequests = () => {
     try {
       console.log("Fetching incoming requests for user:", user.id);
       
-      // Fetch workflow steps where user is approver
-      const { data: approverSteps, error: approverError } = await supabase
-        .from("workflow_steps")
-        .select("id")
-        .eq("approver_id", user.id);
-      
-      if (approverError) {
-        console.error("Error fetching approver steps:", approverError);
-        return [];
-      }
-      
-      if (!approverSteps || approverSteps.length === 0) {
-        console.log("No approver steps found for user");
-        return [];
-      }
-      
-      const stepIds = approverSteps.map(step => step.id);
-      console.log("Found step IDs for approver:", stepIds);
-      
-      // Fetch requests for those steps
+      // This approach is more comprehensive - it checks request_approvals table
+      // to find all requests where the current user is the approver and the status is pending
       const { data, error } = await supabase
-        .from("requests")
+        .from("request_approvals")
         .select(`
-          *,
-          request_type:request_types(name)
+          id,
+          request_id,
+          step_id,
+          status,
+          request:requests(
+            id,
+            title,
+            status,
+            priority,
+            created_at,
+            current_step_id,
+            request_type:request_types(id, name)
+          ),
+          step:workflow_steps(id, step_name, step_type, approver_id)
         `)
-        .in("current_step_id", stepIds)
+        .eq("approver_id", user.id)
+        .eq("status", "pending")
         .order("created_at", { ascending: false });
       
       if (error) {
@@ -51,8 +46,19 @@ export const useRequests = () => {
         return [];
       }
       
-      console.log(`Fetched ${data?.length || 0} incoming requests`);
-      return data || [];
+      // Transform the data to match the expected format
+      const requests = data
+        .filter(item => item.request) // Filter out any null requests
+        .map(item => ({
+          ...item.request,
+          approval_id: item.id,
+          step_id: item.step_id,
+          step_name: item.step?.step_name,
+          step_type: item.step?.step_type
+        }));
+      
+      console.log(`Fetched ${requests.length} incoming requests`);
+      return requests;
     } catch (error) {
       console.error("Error in fetchIncomingRequests:", error);
       return [];
@@ -270,24 +276,36 @@ export const useRequests = () => {
       try {
         console.log("Approving request:", { requestId, stepId, comments });
         
-        // Create approval record
-        const { data: approvalData, error: approvalError } = await supabase
+        // Find the approval record for this user
+        const { data: approvalData, error: approvalFindError } = await supabase
           .from("request_approvals")
-          .insert({
-            request_id: requestId,
-            step_id: stepId,
-            approver_id: user.id,
+          .select("id")
+          .eq("request_id", requestId)
+          .eq("step_id", stepId)
+          .eq("approver_id", user.id)
+          .eq("status", "pending")
+          .single();
+          
+        if (approvalFindError) {
+          console.error("Error finding approval record:", approvalFindError);
+          throw new Error(`Approval record not found: ${approvalFindError.message}`);
+        }
+        
+        const approvalId = approvalData.id;
+        
+        // Update the approval record
+        const { error: approvalUpdateError } = await supabase
+          .from("request_approvals")
+          .update({
             status: "approved",
             comments: comments,
             approved_at: new Date().toISOString()
           })
-          .select();
+          .eq("id", approvalId);
         
-        if (approvalError) {
-          console.error("Error creating approval:", approvalError);
-          console.error("Error code:", approvalError.code);
-          console.error("Error message:", approvalError.message);
-          throw new Error(`Failed to create approval record: ${approvalError.message}`);
+        if (approvalUpdateError) {
+          console.error("Error updating approval:", approvalUpdateError);
+          throw new Error(`Failed to update approval record: ${approvalUpdateError.message}`);
         }
         
         // Get request info
@@ -368,7 +386,7 @@ export const useRequests = () => {
           throw new Error(`Failed to update request: ${updateError.message}`);
         }
         
-        return approvalData?.[0];
+        return { requestId, stepId };
       } catch (error) {
         console.error("Error in approveRequest:", error);
         throw error;
@@ -376,7 +394,7 @@ export const useRequests = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
-      queryClient.invalidateQueries({ queryKey: ["request"] });
+      queryClient.invalidateQueries({ queryKey: ["request-details"] });
       toast.success("تمت الموافقة على الطلب بنجاح");
     },
     onError: (error: any) => {
@@ -396,24 +414,36 @@ export const useRequests = () => {
       try {
         console.log("Rejecting request:", { requestId, stepId, comments });
         
-        // Create rejection record
-        const { data: rejectionData, error: rejectionError } = await supabase
+        // Find the approval record for this user
+        const { data: approvalData, error: approvalFindError } = await supabase
           .from("request_approvals")
-          .insert({
-            request_id: requestId,
-            step_id: stepId,
-            approver_id: user.id,
+          .select("id")
+          .eq("request_id", requestId)
+          .eq("step_id", stepId)
+          .eq("approver_id", user.id)
+          .eq("status", "pending")
+          .single();
+          
+        if (approvalFindError) {
+          console.error("Error finding approval record:", approvalFindError);
+          throw new Error(`Approval record not found: ${approvalFindError.message}`);
+        }
+        
+        const approvalId = approvalData.id;
+        
+        // Update the approval record
+        const { error: approvalUpdateError } = await supabase
+          .from("request_approvals")
+          .update({
             status: "rejected",
             comments: comments,
             approved_at: new Date().toISOString()
           })
-          .select();
+          .eq("id", approvalId);
         
-        if (rejectionError) {
-          console.error("Error creating rejection:", rejectionError);
-          console.error("Error code:", rejectionError.code);
-          console.error("Error message:", rejectionError.message);
-          throw new Error(`Failed to create rejection record: ${rejectionError.message}`);
+        if (approvalUpdateError) {
+          console.error("Error updating approval:", approvalUpdateError);
+          throw new Error(`Failed to update approval record: ${approvalUpdateError.message}`);
         }
         
         // Update request status
@@ -429,7 +459,7 @@ export const useRequests = () => {
           throw new Error(`Failed to update request: ${updateError.message}`);
         }
         
-        return rejectionData?.[0];
+        return { requestId, stepId };
       } catch (error) {
         console.error("Error in rejectRequest:", error);
         throw error;
@@ -437,7 +467,7 @@ export const useRequests = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
-      queryClient.invalidateQueries({ queryKey: ["request"] });
+      queryClient.invalidateQueries({ queryKey: ["request-details"] });
       toast.success("تم رفض الطلب بنجاح");
     },
     onError: (error: any) => {
