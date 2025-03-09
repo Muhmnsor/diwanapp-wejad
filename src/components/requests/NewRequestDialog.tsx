@@ -1,8 +1,5 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -10,28 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { RequestType } from "./types";
 import { DynamicForm } from "./DynamicForm";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthStore } from "@/store/authStore";
+import { RequestBasicInfoForm, RequestBasicInfo, formSchema } from "./dialogs/RequestBasicInfoForm";
+import { RequestError } from "./dialogs/RequestError";
+import { RequestSubmitLoader } from "./dialogs/RequestSubmitLoader";
 
 interface NewRequestDialogProps {
   isOpen: boolean;
@@ -42,13 +23,6 @@ interface NewRequestDialogProps {
   isUploading?: boolean;
   submissionSuccess?: boolean;
 }
-
-const formSchema = z.object({
-  title: z.string().min(5, {
-    message: "يجب أن يحتوي العنوان على 5 أحرف على الأقل",
-  }),
-  priority: z.string(),
-});
 
 export const NewRequestDialog = ({
   isOpen,
@@ -71,15 +45,7 @@ export const NewRequestDialog = ({
     priority: "medium",
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      priority: "medium",
-    },
-  });
-
-  const handleStep1Submit = (data: z.infer<typeof formSchema>) => {
+  const handleStep1Submit = (data: RequestBasicInfo) => {
     if (!isAuthenticated || !user) {
       setError("يجب تسجيل الدخول لإنشاء طلب جديد");
       return;
@@ -124,7 +90,6 @@ export const NewRequestDialog = ({
 
   const handleClose = () => {
     // Reset form and state when closing
-    form.reset();
     setRequestData({
       title: "",
       priority: "medium",
@@ -150,64 +115,13 @@ export const NewRequestDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        <RequestError error={error} />
 
         {step === 1 ? (
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleStep1Submit)}
-              className="space-y-6"
-            >
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>عنوان الطلب</FormLabel>
-                    <FormControl>
-                      <Input placeholder="أدخل عنوان الطلب" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>أولوية الطلب</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر أولوية" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="low">منخفضة</SelectItem>
-                        <SelectItem value="medium">متوسطة</SelectItem>
-                        <SelectItem value="high">عالية</SelectItem>
-                        <SelectItem value="urgent">عاجلة</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end">
-                <Button type="submit">التالي</Button>
-              </div>
-            </form>
-          </Form>
+          <RequestBasicInfoForm 
+            onSubmit={handleStep1Submit} 
+            initialValues={requestData}
+          />
         ) : (
           <DynamicForm
             schema={requestType.form_schema}
@@ -218,12 +132,10 @@ export const NewRequestDialog = ({
           />
         )}
 
-        {(isSubmitting || isUploading) && (
-          <div className="flex items-center justify-center mt-4 text-sm text-muted-foreground">
-            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-            {isUploading ? "جاري رفع الملفات..." : "جاري معالجة الطلب..."}
-          </div>
-        )}
+        <RequestSubmitLoader 
+          isSubmitting={isSubmitting} 
+          isUploading={isUploading} 
+        />
       </DialogContent>
     </Dialog>
   );
